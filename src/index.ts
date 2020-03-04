@@ -1,7 +1,5 @@
-// Import here Polyfills if needed. Recommended core-js (npm i -D core-js)
-// import "core-js/fn/array.find"
-// ...
+import auth from './auth'
 
-console.log('Hello world!')
-
-export const test = true
+export default {
+  auth
+}
