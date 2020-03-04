@@ -1,12 +1,12 @@
 {
   "name": "fission-sdk",
-  "version": "0.0.6",
+  "version": "0.0.11",
   "description": "Fission Typescript SDK",
   "keywords": [],
   "main": "index.umd.js",
   "module": "index.es5.js",
   "typings": "types/index.d.ts",
-  "author": "Author <author@fission.codes>",
+  "author": "Daniel Holmgren <daniel@fission.codes>",
   "repository": {
     "type": "git",
     "url": ""
@@ -18,7 +18,7 @@
   "scripts": {
     "lint": "yarn eslint src/**/*.ts test/**/*.ts",
     "prebuild": "rimraf dist",
-    "build": "tsc --module commonjs && rollup -c rollup.config.ts && typedoc --out docs --target es6 --theme minimal --mode file src",
+    "build": "tsc && rollup -c rollup.config.ts && typedoc --out docs --target es6 --theme minimal --mode file src",
     "start": "rollup -c rollup.config.ts -w",
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
