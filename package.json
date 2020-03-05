@@ -90,6 +90,8 @@
     "typescript": "^3.8.2"
   },
   "dependencies": {
+    "get-ipfs": "^1.1.1",
+    "ipld-dag-pb": "^0.18.2",
     "keystore-idb": "^0.3.7",
     "query-string": "^6.11.1"
   }
