@@ -1,6 +1,15 @@
 import dagPB from 'ipld-dag-pb'
 import { getIpfs, DAGNode, DAGLink, CID } from '../ipfs'
 
+export async function addFile(file: Blob): Promise<CID> {
+  const ipfs = await getIpfs()
+  const chunks = []
+  for await (const chunk of ipfs.add(file)){
+    chunks.push(chunk)
+  }
+  return chunks[chunks.length - 1].cid.toString()
+}
+
 export async function cidToDAGLink(cid: CID, name: string): Promise<DAGLink> {
   const node = await resolveDAGNode(cid)
   return node.toDAGLink({ name })
