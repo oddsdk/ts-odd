@@ -1,6 +1,6 @@
 {
   "name": "fission-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Fission Typescript SDK",
   "keywords": [],
   "main": "index.umd.js",
