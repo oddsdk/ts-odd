@@ -2618,10 +2618,10 @@ get-caller-file@^2.0.1:
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-2.0.5.tgz#4f94412a82db32f36e3b0b9741f8a97feb031f7e"
   integrity sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==
 
-get-ipfs@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/get-ipfs/-/get-ipfs-1.1.1.tgz#e5cc0186aaae94874163527ce7c2ab4964d6098f"
-  integrity sha512-AJ1cn3Fbsr925DDiafVuoWU3oKJ4M91TP7X/wDWLBgDjJtNeI9mn1Gx7npjCRLgr8ZQ7b+dHuPKFQ1tRGVRNNQ==
+get-ipfs@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/get-ipfs/-/get-ipfs-1.2.0.tgz#a078b288566fb9d28488423311861f4e9f1becb3"
+  integrity sha512-owHCiRbiwkp2x/Q1rSddo7Jv5t1p6oEEptEf++R8mCUY7xqFVjCVgOSpkLITXuLNaJuMM3aTuVPYGGWjSPqxkg==
 
 get-own-enumerable-property-symbols@^3.0.0:
   version "3.0.2"
@@ -3781,10 +3781,10 @@ jsprim@^1.2.2:
     json-schema "0.2.3"
     verror "1.10.0"
 
-keystore-idb@^0.3.7:
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.3.7.tgz#5065ac53612e3296bc9331c010070bc5b985be33"
-  integrity sha512-ccAY3fnUK7DFEsc8G4ht1dp0tW/PPPQzxPXAeVMDLN7f7AeokSonwB9W3ZlJg35j+etRw6F9dft2UEPmsb94IA==
+keystore-idb@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.7.0.tgz#f1e481c4061fd274a36770286587993ec0695eee"
+  integrity sha512-Wu3AQYY+nzJ947mYIohKuLafCwUUXR25+UORVDQtbg687uOkWevxmghRrqzw0UkREiTR8/hOy9Wi/ceBG5vM0g==
   dependencies:
     localforage "^1.7.3"
 
