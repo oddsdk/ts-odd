@@ -1,14 +1,5 @@
-import { cidToDAGLink, addLink, addNestedLink, emptyFolder, splitPath } from './helpers'
-import { getIpfs, CID } from '../ipfs'
-
-export async function addFile(file: Blob): Promise<CID> {
-  const ipfs = await getIpfs()
-  const chunks = []
-  for await (const chunk of ipfs.add(file)){
-    chunks.push(chunk)
-  }
-  return chunks[chunks.length - 1].cid.toString()
-}
+import { addFile, cidToDAGLink, addLink, addNestedLink, emptyFolder, splitPath } from './helpers'
+import { CID } from '../ipfs'
 
 export async function addFileToFolder(file: Blob, filename: string, parent: CID): Promise<CID> {
   const fileCID = await addFile(file)
