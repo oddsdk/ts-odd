@@ -28,13 +28,13 @@ export async function mkdir(parent: CID, folderName: string): Promise<CID> {
   return addNestedLink(parent, "", childLink, false)
 }
 
-export async function mkdirp(parent: CID, folderPath: string): Promise<CID> {
+export async function mkdirp(root: CID, folderPath: string): Promise<CID> {
   const path = splitPath(folderPath)
   if(path.length === 0){
-    return parent
+    return root
   }
   const empty = await emptyFolder()
   const link = await empty.toDAGLink({ name: path[path.length -1] })
   const restOfPath = path.slice(0, path.length -1).join('/')
-  return addNestedLink(parent, restOfPath, link, false)
+  return addNestedLink(root, restOfPath, link, false)
 }
