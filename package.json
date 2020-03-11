@@ -18,7 +18,7 @@
   "scripts": {
     "lint": "yarn eslint src/**/*.ts test/**/*.ts",
     "prebuild": "rimraf dist",
-    "build": "tsc && rollup -c rollup.config.ts && typedoc --out docs --target es6 --theme minimal --mode file src",
+    "build": "tsc && rollup -c rollup.config.ts",
     "start": "rollup -c rollup.config.ts -w",
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
@@ -86,7 +86,6 @@
     "travis-deploy-once": "^5.0.11",
     "ts-jest": "^25.2.1",
     "ts-node": "^8.6.2",
-    "typedoc": "^0.16.10",
     "typescript": "^3.8.2"
   },
   "dependencies": {
