@@ -13,12 +13,7 @@ const name = 'fissionSdk'
 
 // External dependencies tell Rollup "it's ok that you can't resolve these modules;
 // don't try to bundle them but rather leave their import statements in place"
-const external = [
-  'axios',
-  'http', // imported by axios
-  'https', // imported by axios
-  'zlib' // imported by axios
-]
+const external = []
 
 const plugins = [
   // Allow json resolution
