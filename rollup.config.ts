@@ -46,7 +46,8 @@ const configUMD = {
   output: {
     name,
     file: `dist/${pkg.browser}`,
-    format: 'umd'
+    format: 'umd',
+    sourcemap: true
   },
   plugins,
   external,
@@ -63,11 +64,13 @@ const configCjsAndEs = {
   output: [
     {
       file: `dist/${pkg.main}`,
-      format: 'cjs'
+      format: 'cjs',
+      sourcemap: true
     },
     {
       file: `dist/${pkg.module}`,
-      format: 'es'
+      format: 'es',
+      sourcemap: true
     }
   ],
   plugins,
