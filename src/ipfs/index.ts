@@ -1,7 +1,8 @@
 import getIpfsWithCfg from 'get-ipfs'
 import { IPFS } from './types'
 
-const IPFS_CFG = { browserPeers: [  "/dns4/node.runfission.com/tcp/4003/wss/ipfs/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw"] }
+const PEER_WSS = "/dns4/node.fission.systems/tcp/4003/wss/ipfs/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw"
+const IPFS_CFG = { browserPeers: [ PEER_WSS ] }
 let ipfs: IPFS | null = null 
 
 // TODO: There is funky type stuff going on here with `any`s

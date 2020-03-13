@@ -1,7 +1,7 @@
 import dagPB from 'ipld-dag-pb'
-import { getIpfs, DAGNode, RawDAGNode, DAGLink, RawDAGLink, CID } from '../ipfs'
+import { getIpfs, DAGNode, DAGLink, CID, RawDAGNode, RawDAGLink } from '../ipfs'
 
-export async function emptyFolder() {
+export async function emptyFolder(): Promise<DAGNode> {
   const node = new dagPB.DAGNode(Buffer.from([8, 1]))
   await putDAGNode(node)
   return node
@@ -33,7 +33,7 @@ export async function addNestedLinkRecurse(parentID: CID | DAGNode, path: string
       child = await emptyFolder()
     }
     const updated = await addNestedLinkRecurse(child, path.slice(1), link)
-    toAdd = await updated.toDAGLink({ name: path[0] })
+    toAdd = await nodeToDAGLink(updated, path[0])
   }
   parent.rmLink(toAdd.Name)
   parent.addLink(toAdd)
@@ -41,11 +41,26 @@ export async function addNestedLinkRecurse(parentID: CID | DAGNode, path: string
   return parent
 }
 
-export async function resolveDAGNode(node: string | DAGNode): Promise<DAGNode> {
+export async function nodeToDAGLink(node: DAGNode, name: string) {
+  const cid = await toHash(node)
+  return new dagPB.DAGLink(name, node.size, cid)
+}
+
+export function rawToDAGLink(raw: RawDAGLink): DAGLink {
+  return new dagPB.DAGLink(raw._name, raw._size, raw._cid)
+}
+
+export function rawToDAGNode(raw: RawDAGNode): DAGNode {
+  const data = raw?.value?._data
+  const links = raw?.value?._links?.map(rawToDAGLink)
+  return new dagPB.DAGNode(data, links)
+}
+
+export async function resolveDAGNode(node: CID | DAGNode): Promise<DAGNode> {
   const ipfs = await getIpfs()
   if(typeof node === 'string'){
     const raw = await ipfs.dag.get(node)
-    return new dagPB.DAGNode(raw.value._data, raw.value._links)
+    return rawToDAGNode(raw)
   }else{
     return node
   }
@@ -53,6 +68,7 @@ export async function resolveDAGNode(node: string | DAGNode): Promise<DAGNode> {
 
 export async function putDAGNode(node: DAGNode): Promise<CID> { 
   const ipfs = await getIpfs()
+  // using this format so they we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
   const cid = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
   return cid.toString()
 }
@@ -62,6 +78,7 @@ export function findLink(node: DAGNode, name: string): DAGLink | undefined {
 }
 
 export async function toHash(node: DAGNode): Promise<CID> {
+  // @@TODO: investigate a better way to do this? this basically just re-serializes an obj if it's already in the cache
   return putDAGNode(node)
 }
 

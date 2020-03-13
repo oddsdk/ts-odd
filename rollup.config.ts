@@ -11,6 +11,10 @@ const pkg = require('./package.json')
 const input = 'src/index.ts'
 const name = 'fissionSdk'
 
+// For importing modules with `this` at the top level:
+// https://github.com/WebReflection/hyperHTML/issues/304#issuecomment-443950244
+const context = 'null'
+
 // External dependencies tell Rollup "it's ok that you can't resolve these modules;
 // don't try to bundle them but rather leave their import statements in place"
 const external = []
@@ -46,6 +50,7 @@ const configUMD = {
   },
   plugins,
   external,
+  context
 }
 
 // CommonJS (for Node) and ES module (for bundlers) build.
@@ -70,6 +75,7 @@ const configCjsAndEs = {
   ],
   plugins,
   external,
+  context
 }
 
 export default [configUMD, configCjsAndEs]
