@@ -9,7 +9,7 @@ import typescript from 'rollup-plugin-typescript2'
 const pkg = require('./package.json')
 
 const input = 'src/index.ts'
-const name = 'index'
+const name = 'fissionSdk'
 
 // External dependencies tell Rollup "it's ok that you can't resolve these modules;
 // don't try to bundle them but rather leave their import statements in place"
@@ -30,8 +30,8 @@ const plugins = [
   // Node modules resolution
   resolve({ browser: true, preferBuiltins: true }),
 
-  // Let's transpile our own ES6 code into ES5
-  babel({ exclude: 'node_modules/**' }),
+  // // Let's transpile our own ES6 code into ES5
+  // babel({ exclude: 'node_modules/**' }),
 
   // Most packages in node_modules are legacy CommonJS, so let's convert them to ES
   commonjs(),
