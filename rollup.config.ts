@@ -31,7 +31,7 @@ const plugins = [
   resolve({ browser: true, preferBuiltins: true }),
 
   // // Let's transpile our own ES6 code into ES5
-  // babel({ exclude: 'node_modules/**' }),
+  babel({ exclude: 'node_modules/**' }),
 
   // Most packages in node_modules are legacy CommonJS, so let's convert them to ES
   commonjs(),
