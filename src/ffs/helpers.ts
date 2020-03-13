@@ -21,17 +21,16 @@ export async function emptyFolder() {
   return node
 }
 
-export async function addLink(parent: CID | DAGNode, link: DAGLink, shouldOverwrite: boolean = true): Promise<CID> {
+export async function addLink(parent: CID | DAGNode, link: DAGLink, shouldOverwrite: boolean = true): Promise<DAGNode> {
   return addNestedLink(parent, "", link, shouldOverwrite)
 }
 
-export async function addNestedLink(parent: CID | DAGNode, folderPath: string, link: DAGLink, shouldOverwrite: boolean = true): Promise<CID> {
-  const node = await resolveDAGNode(parent)
-  const updated = await addNestedLinkRecurse(node, splitPath(folderPath), link, shouldOverwrite)
-  return toHash(updated)
+export async function addNestedLink(parent: CID | DAGNode, folderPath: string, link: DAGLink, shouldOverwrite: boolean = true): Promise<DAGNode> {
+  return addNestedLinkRecurse(parent, splitPath(folderPath), link, shouldOverwrite)
 }
 
-export async function addNestedLinkRecurse(parent: DAGNode, path: string[], link: DAGLink, shouldOverwrite: boolean = true): Promise<DAGNode> {
+export async function addNestedLinkRecurse(parentID: CID | DAGNode, path: string[], link: DAGLink, shouldOverwrite: boolean = true): Promise<DAGNode> {
+  const parent = await resolveDAGNode(parentID)
   let toAdd
   if(path.length === 0){
     // if link exists & non-destructive, then do nothing
@@ -77,7 +76,7 @@ export function findLink(node: DAGNode, name: string): DAGLink | undefined {
 }
 
 export async function toHash(node: DAGNode): Promise<CID> {
-  return (await node.toDAGLink()).Hash.toString()
+  return putDAGNode(node)
 }
 
 export function splitPath(path: string): string[] {
