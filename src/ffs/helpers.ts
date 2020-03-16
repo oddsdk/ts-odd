@@ -1,19 +1,5 @@
 import dagPB from 'ipld-dag-pb'
-import { getIpfs, DAGNode, DAGLink, CID } from '../ipfs'
-
-export async function addFile(file: Blob): Promise<CID> {
-  const ipfs = await getIpfs()
-  const chunks = []
-  for await (const chunk of ipfs.add(file)){
-    chunks.push(chunk)
-  }
-  return chunks[chunks.length - 1].cid.toString()
-}
-
-export async function cidToDAGLink(cid: CID, name: string): Promise<DAGLink> {
-  const node = await resolveDAGNode(cid)
-  return node.toDAGLink({ name })
-}
+import { getIpfs, DAGNode, RawDAGNode, DAGLink, RawDAGLink, CID } from '../ipfs'
 
 export async function emptyFolder() {
   const node = new dagPB.DAGNode(Buffer.from([8, 1]))
@@ -53,6 +39,21 @@ export async function addNestedLinkRecurse(parentID: CID | DAGNode, path: string
   parent.addLink(toAdd)
   await putDAGNode(parent)
   return parent
+}
+
+export async function nodeToDAGLink(node: DAGNode, name: string) {
+  const cid = await toHash(node)
+  return new dagPB.DAGLink(name, node.size, cid)
+}
+
+export function rawToDAGLink(raw: RawDAGLink): DAGLink {
+  return new dagPB.DAGLink(raw._name, raw._size, raw._cid)
+}
+
+export function rawToDAGNode(raw: RawDAGNode): DAGNode {
+  const data = raw?.value?._data
+  const links = raw?.value?._links?.map(rawToDAGLink)
+  return new dagPB.DAGNode(data, links)
 }
 
 export async function resolveDAGNode(node: string | DAGNode): Promise<DAGNode> {
