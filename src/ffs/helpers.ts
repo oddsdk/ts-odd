@@ -41,21 +41,6 @@ export async function addNestedLinkRecurse(parentID: CID | DAGNode, path: string
   return parent
 }
 
-export async function nodeToDAGLink(node: DAGNode, name: string) {
-  const cid = await toHash(node)
-  return new dagPB.DAGLink(name, node.size, cid)
-}
-
-export function rawToDAGLink(raw: RawDAGLink): DAGLink {
-  return new dagPB.DAGLink(raw._name, raw._size, raw._cid)
-}
-
-export function rawToDAGNode(raw: RawDAGNode): DAGNode {
-  const data = raw?.value?._data
-  const links = raw?.value?._links?.map(rawToDAGLink)
-  return new dagPB.DAGNode(data, links)
-}
-
 export async function resolveDAGNode(node: string | DAGNode): Promise<DAGNode> {
   const ipfs = await getIpfs()
   if(typeof node === 'string'){
