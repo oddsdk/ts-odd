@@ -67,7 +67,7 @@ export async function resolveDAGNode(node: string | DAGNode): Promise<DAGNode> {
 
 export async function putDAGNode(node: DAGNode): Promise<CID> { 
   const ipfs = await getIpfs()
-  const cid = await ipfs.dag.put(node, {})
+  const cid = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
   return cid.toString()
 }
 
