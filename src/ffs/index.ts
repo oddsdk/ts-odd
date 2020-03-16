@@ -1,10 +1,9 @@
+import * as file from './dir'
 import * as dir from './dir'
 import * as helpers from './helpers'
 
-export * from './dir'
-export * from './helpers'
-
 export default {
-  ...dir,
-  ...helpers
+  file,
+  dir,
+  helpers
 }
