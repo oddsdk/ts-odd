@@ -8,7 +8,6 @@ export async function add(content: FileContent): Promise<CID> {
   for await (const chunk of ipfs.add(content)){
     chunks.push(chunk)
   }
-  console.log("CHUNKS: ", chunks)
   // return cid of last object (root)
   return chunks[chunks.length - 1].cid.toString()
 }
