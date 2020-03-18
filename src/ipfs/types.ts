@@ -12,7 +12,7 @@ export type DAGNode = {
   toDAGLink: (opt?: { name?: string }) => Promise<DAGLink>
   addLink: (link: DAGLink) => void
   rmLink: (name: string) => void
-  serialize: () => any
+  toJSON: () => object
 }
 
 export type DAGLink = {

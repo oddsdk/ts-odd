@@ -15,8 +15,7 @@ export async function add(content: FileContent): Promise<CID> {
 export async function addToFolder(content: FileContent, filename: string, root: CID, folderPath: string = ''): Promise<CID> {
   const fileCID = await add(content)
   const link = await cidToDAGLink(fileCID, filename)
-  const updated = await addNestedLink(root, folderPath, link, true)
-  return toHash(updated)
+  return addNestedLink(root, folderPath, link, { shouldOverwrite: true })
 }
 
 export async function catRaw(cid: CID): Promise<Uint8Array[]> {

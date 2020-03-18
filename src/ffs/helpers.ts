@@ -1,47 +1,62 @@
 import dagPB from 'ipld-dag-pb'
-import { getIpfs, DAGNode, DAGLink, CID, RawDAGNode, RawDAGLink } from '../ipfs'
+import file from './file'
+import { getIpfs, DAGNode, DAGLink, CID, RawDAGNode, RawDAGLink, FileContent } from '../ipfs'
+import { encryptDAGNode, encryptContent } from './private'
 
-export async function emptyFolder(): Promise<DAGNode> {
-  const node = new dagPB.DAGNode(Buffer.from([8, 1]))
-  await putDAGNode(node)
-  return node
+export function emptyDir(): DAGNode {
+  return new dagPB.DAGNode(Buffer.from([8, 1]))
 }
 
-export async function addLink(parent: CID | DAGNode, link: DAGLink, shouldOverwrite: boolean = true): Promise<DAGNode> {
-  return addNestedLink(parent, "", link, shouldOverwrite)
+export async function emptyDirCID(): Promise<CID> {
+  const node = await emptyDir()
+  return putDAGNode(node)
 }
 
-export async function addNestedLink(parent: CID | DAGNode, folderPath: string, link: DAGLink, shouldOverwrite: boolean = true): Promise<DAGNode> {
-  return addNestedLinkRecurse(parent, splitPath(folderPath), link, shouldOverwrite)
+type AddLinkOpts = {
+  shouldOverwrite?: boolean
+  symmKey?: string
 }
 
-export async function addNestedLinkRecurse(parentID: CID | DAGNode, path: string[], link: DAGLink, shouldOverwrite: boolean = true): Promise<DAGNode> {
+export async function addLink(parent: CID, link: DAGLink, opts: AddLinkOpts = {}): Promise<CID> {
+  return addNestedLink(parent, "", link, opts)
+}
+
+export async function addNestedLink(parent: CID, folderPath: string, link: DAGLink, opts: AddLinkOpts = {}): Promise<CID> {
+  return addNestedLinkRecurse(parent, splitPath(folderPath), link, opts)
+}
+
+export async function addNestedLinkRecurse(parentID: CID, path: string[], link: DAGLink, opts: AddLinkOpts = {}): Promise<CID> {
+  const { shouldOverwrite = true, symmKey } = opts
   const parent = await resolveDAGNode(parentID)
   let toAdd
   if(path.length === 0){
     // if link exists & non-destructive, then do nothing
     if(findLink(parent, link.Name) !== undefined && !shouldOverwrite){
-      return parent
+      return parentID
     }
     toAdd = link
   }else{
     const childLink = findLink(parent, path[0])
-    let child
+    let childCID
     if(childLink){
-      child = await resolveDAGNode(childLink.Hash.toString())
+      childCID = childLink.Hash.toString()
     }else {
-      child = await emptyFolder()
+      childCID = await emptyDirCID()
     }
-    const updated = await addNestedLinkRecurse(child, path.slice(1), link)
-    toAdd = await nodeToDAGLink(updated, path[0])
+    const updatedCID = await addNestedLinkRecurse(childCID, path.slice(1), link)
+    toAdd = toDAGLink(updatedCID, path[0])
   }
   parent.rmLink(toAdd.Name)
   parent.addLink(toAdd)
-  await putDAGNode(parent)
-  return parent
+  return putObj(parent, symmKey)
 }
 
-export async function nodeToDAGLink(node: DAGNode, name: string) {
+export function toDAGLink(cid: CID, name: string): DAGLink {
+  // @@ TODO make size not null
+  return new dagPB.DAGLink(name, null, cid)
+}
+
+export async function nodeToDAGLink(node: DAGNode, name: string): Promise<DAGLink> {
   const cid = await toHash(node)
   return new dagPB.DAGLink(name, node.size, cid)
 }
@@ -66,6 +81,24 @@ export async function resolveDAGNode(node: CID | DAGNode): Promise<DAGNode> {
   }
 }
 
+export async function putObj(node: DAGNode | FileContent, symmKey?: string): Promise<CID> {
+  if(node instanceof dagPB.DAGNode) {
+    if(symmKey === undefined) {
+      return putDAGNode(node as DAGNode)
+    }else{
+      const encrypted = await encryptDAGNode(node as DAGNode, symmKey)
+      return file.add(encrypted) 
+    }
+  } else {
+    if(symmKey === undefined) {
+      return file.add(node)
+    } else{
+      const encrypted = await encryptContent(node, symmKey)
+      return file.add(encrypted)
+    }
+  }
+}
+
 export async function putDAGNode(node: DAGNode): Promise<CID> { 
   const ipfs = await getIpfs()
   // using this format so they we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
@@ -84,4 +117,19 @@ export async function toHash(node: DAGNode): Promise<CID> {
 
 export function splitPath(path: string): string[] {
   return path.split('/').filter(p => p.length > 0)
+}
+
+export default{
+  emptyDir,
+  addLink,
+  addNestedLink,
+  addNestedLinkRecurse,
+  nodeToDAGLink,
+  rawToDAGLink,
+  rawToDAGNode,
+  resolveDAGNode,
+  putDAGNode,
+  findLink,
+  toHash,
+  splitPath,
 }
