@@ -1,6 +1,5 @@
-import dagPB from 'ipld-dag-pb'
-import { addNestedLink, toHash } from './helpers'
-import { getIpfs, DAGLink, CID, FileContent } from '../ipfs'
+import { addNestedLink, cidToDAGLink } from './helpers'
+import { getIpfs, CID, FileContent } from '../ipfs'
 
 export async function add(content: FileContent): Promise<CID> {
   const ipfs = await getIpfs()
@@ -32,16 +31,9 @@ export async function cat(cid: CID): Promise<string> {
   return Buffer.concat(raw).toString()
 }
 
-export async function cidToDAGLink(cid: CID, name: string): Promise<DAGLink> {
-  const ipfs = await getIpfs()
-  const stat = await ipfs.object.stat(cid)
-  return new dagPB.DAGLink(name, stat.CumulativeSize, cid)
-}
-
 export default {
   add,
   addToFolder,
   catRaw,
   cat,
-  cidToDAGLink,
 }

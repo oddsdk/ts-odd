@@ -1,7 +1,6 @@
-import file from './file'
-import { addNestedLink, emptyDir, splitPath, nodeToDAGLink, toDAGLink, addLink } from './helpers'
+import { addNestedLink, emptyDir, splitPath, nodeToDAGLink, cidToDAGLink, addLink, resolveDAGNode, findLink } from './helpers'
 import { emptyPrivateDir } from './private'
-import { getIpfs, UnixFSFile, CID } from '../ipfs'
+import { getIpfs, UnixFSFile, CID, DAGNode } from '../ipfs'
 
 export async function list(cid: CID): Promise<UnixFSFile[]> {
   const ipfs = await getIpfs()
@@ -20,6 +19,26 @@ export async function list(cid: CID): Promise<UnixFSFile[]> {
   return array
 }
 
+export async function get(root: CID, path: string): Promise<DAGNode | null> {
+  const parts = path.split('/')
+  return getRecurse(root, parts)
+}
+
+export async function getRecurse(cid: CID, path: string[]): Promise<DAGNode | null> {
+  const node = await resolveDAGNode(cid)
+  if(!node) {
+    return null
+  }
+  if(path.length === 0) {
+    return node
+  }
+  const link = findLink(node, path[0])
+  if(!link) {
+    return null
+  }
+  return getRecurse(link.Hash.toString(), path.slice(1))
+}
+
 export async function make(root: CID, folderPath: string): Promise<CID> {
   const path = splitPath(folderPath)
   if(path.length === 0){
@@ -33,11 +52,12 @@ export async function make(root: CID, folderPath: string): Promise<CID> {
 
 export async function addPrivateDir(root: CID): Promise<CID> {
   const priv = await emptyPrivateDir()
-  const link = toDAGLink(priv, 'private')
+  const link = await cidToDAGLink(priv, 'private')
   return addLink(root, link)
 }
 
 export default {
   make,
   list,
+  get
 }

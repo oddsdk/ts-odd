@@ -1,7 +1,8 @@
 import dagPB from 'ipld-dag-pb'
 import file from './file'
-import { getIpfs, DAGNode, DAGLink, CID, RawDAGNode, RawDAGLink, FileContent } from '../ipfs'
 import { encryptDAGNode, encryptContent } from './private'
+import { AddLinkOpts } from './types'
+import { getIpfs, DAGNode, DAGLink, CID, RawDAGNode, RawDAGLink, FileContent } from '../ipfs'
 
 export function emptyDir(): DAGNode {
   return new dagPB.DAGNode(Buffer.from([8, 1]))
@@ -10,11 +11,6 @@ export function emptyDir(): DAGNode {
 export async function emptyDirCID(): Promise<CID> {
   const node = await emptyDir()
   return putDAGNode(node)
-}
-
-type AddLinkOpts = {
-  shouldOverwrite?: boolean
-  symmKey?: string
 }
 
 export async function addLink(parent: CID, link: DAGLink, opts: AddLinkOpts = {}): Promise<CID> {
@@ -44,16 +40,17 @@ export async function addNestedLinkRecurse(parentID: CID, path: string[], link: 
       childCID = await emptyDirCID()
     }
     const updatedCID = await addNestedLinkRecurse(childCID, path.slice(1), link)
-    toAdd = toDAGLink(updatedCID, path[0])
+    toAdd = await cidToDAGLink(updatedCID, path[0])
   }
   parent.rmLink(toAdd.Name)
   parent.addLink(toAdd)
   return putObj(parent, symmKey)
 }
 
-export function toDAGLink(cid: CID, name: string): DAGLink {
-  // @@ TODO make size not null
-  return new dagPB.DAGLink(name, null, cid)
+export async function cidToDAGLink(cid: CID, name: string): Promise<DAGLink> {
+  const ipfs = await getIpfs()
+  const stat = await ipfs.object.stat(cid)
+  return new dagPB.DAGLink(name, stat.CumulativeSize, cid)
 }
 
 export async function nodeToDAGLink(node: DAGNode, name: string): Promise<DAGLink> {
@@ -119,11 +116,12 @@ export function splitPath(path: string): string[] {
   return path.split('/').filter(p => p.length > 0)
 }
 
-export default{
+export default {
   emptyDir,
   addLink,
   addNestedLink,
   addNestedLinkRecurse,
+  cidToDAGLink,
   nodeToDAGLink,
   rawToDAGLink,
   rawToDAGNode,
