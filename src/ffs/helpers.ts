@@ -98,7 +98,7 @@ export async function putObj(node: DAGNode | FileContent, symmKey?: string): Pro
 
 export async function putDAGNode(node: DAGNode): Promise<CID> { 
   const ipfs = await getIpfs()
-  // using this format so they we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
+  // using this format so that we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
   const cid = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
   return cid.toString()
 }
@@ -108,7 +108,8 @@ export function findLink(node: DAGNode, name: string): DAGLink | undefined {
 }
 
 export async function toHash(node: DAGNode): Promise<CID> {
-  // @@TODO: investigate a better way to do this? this basically just re-serializes an obj if it's already in the cache
+  // @@TODO: investigate a better way to do this?
+  // this basically just re-serializes an obj if it's already in the cache, which isn't bad
   return putDAGNode(node)
 }
 

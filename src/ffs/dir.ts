@@ -19,18 +19,18 @@ export async function list(cid: CID): Promise<UnixFSFile[]> {
   return array
 }
 
-export async function get(root: CID, path: string): Promise<DAGNode | null> {
+export async function get(root: CID, path: string): Promise<CID | null> {
   const parts = path.split('/')
   return getRecurse(root, parts)
 }
 
-export async function getRecurse(cid: CID, path: string[]): Promise<DAGNode | null> {
+export async function getRecurse(cid: CID, path: string[]): Promise<CID | null> {
+  if(path.length === 0) {
+    return cid
+  }
   const node = await resolveDAGNode(cid)
   if(!node) {
     return null
-  }
-  if(path.length === 0) {
-    return node
   }
   const link = findLink(node, path[0])
   if(!link) {
@@ -59,5 +59,6 @@ export async function addPrivateDir(root: CID): Promise<CID> {
 export default {
   make,
   list,
-  get
+  get,
+  addPrivateDir
 }
