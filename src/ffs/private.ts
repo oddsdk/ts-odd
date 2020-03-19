@@ -65,8 +65,6 @@ export async function addToPrivateFolder(content: FileContent, filename: string,
   if(privDirCID === null){
     throw new Error("no priv dir")
   }
-  const fileCID = await file.add(content)
-  const link = await cidToDAGLink(fileCID, filename)
   // @@TODO: get a real key here
   const encryptedKey = await getEncryptedKeyForPrivDir(root)
   if(!encryptedKey){
@@ -75,6 +73,9 @@ export async function addToPrivateFolder(content: FileContent, filename: string,
   const ks = await keystore.get()
   const ownPubkey = await ks.publicReadKey()
   const symmKey = await ks.decrypt(encryptedKey, ownPubkey)
+  const encrypted = await encryptContent(content, symmKey)
+  const fileCID = await file.add(encrypted)
+  const link = await cidToDAGLink(fileCID, filename)
   const updatedCID = await addNestedLinkRecurse(privDirCID, paths.slice(1), link, {
     shouldOverwrite: true,
     symmKey

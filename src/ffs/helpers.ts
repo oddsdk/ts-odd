@@ -22,7 +22,7 @@ export async function addNestedLink(parent: CID, folderPath: string, link: DAGLi
 }
 
 export async function addNestedLinkRecurse(parentID: CID, path: string[], link: DAGLink, opts: AddLinkOpts = {}): Promise<CID> {
-  const { shouldOverwrite = true, symmKey } = opts
+  const { shouldOverwrite = true, symmKey, encryptRoot = false } = opts
   const parent = await resolveDAGNode(parentID)
   let toAdd
   if(path.length === 0){
@@ -39,12 +39,15 @@ export async function addNestedLinkRecurse(parentID: CID, path: string[], link: 
     }else {
       childCID = await emptyDirCID()
     }
-    const updatedCID = await addNestedLinkRecurse(childCID, path.slice(1), link)
+    const updatedCID = await addNestedLinkRecurse(childCID, path.slice(1), link, {
+      ...opts,
+      encryptRoot: true
+    })
     toAdd = await cidToDAGLink(updatedCID, path[0])
   }
   parent.rmLink(toAdd.Name)
   parent.addLink(toAdd)
-  return putObj(parent, symmKey)
+  return putObj(parent, encryptRoot ? symmKey: undefined)
 }
 
 export async function cidToDAGLink(cid: CID, name: string): Promise<DAGLink> {
