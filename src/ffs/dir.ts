@@ -1,5 +1,6 @@
 import { addNestedLink, emptyDir, splitPath, nodeToDAGLink, cidToDAGLink, addLink, resolveDAGNode, findLink } from './helpers'
-import { emptyPrivateDir } from './private'
+import { emptyPrivateDir, decryptDAGNode, getSymmKeyForDir } from './private'
+import file from './file'
 import { getIpfs, UnixFSFile, CID, DAGNode } from '../ipfs'
 
 export async function list(cid: CID): Promise<UnixFSFile[]> {
@@ -19,16 +20,29 @@ export async function list(cid: CID): Promise<UnixFSFile[]> {
   return array
 }
 
-export async function get(root: CID, path: string): Promise<CID | null> {
-  const parts = path.split('/')
-  return getRecurse(root, parts)
+export async function get(root: CID, path: string, symmKey: string | null = null): Promise<CID | null> {
+  return getRecurse(root, splitPath(path), symmKey)
 }
 
-export async function getRecurse(cid: CID, path: string[]): Promise<CID | null> {
+export async function getRecurse(cid: CID, path: string[], symmKey: string | null = null): Promise<CID | null> {
   if(path.length === 0) {
     return cid
   }
-  const node = await resolveDAGNode(cid)
+  let node: DAGNode
+  console.log('cid: ', cid)
+  console.log('path: ', path)
+  console.log('symmKey: ', symmKey)
+  if(symmKey === null) {
+    console.log('resolving')
+    node = await resolveDAGNode(cid)
+    console.log('resolved')
+  } else {
+    console.log('catting')
+    const raw = await file.cat(cid)
+    console.log('decrypting')
+    node = await decryptDAGNode(raw, symmKey)
+    console.log('decrypted')
+  }
   if(!node) {
     return null
   }
@@ -36,7 +50,12 @@ export async function getRecurse(cid: CID, path: string[]): Promise<CID | null> 
   if(!link) {
     return null
   }
-  return getRecurse(link.Hash.toString(), path.slice(1))
+  const nextCID = link.Hash.toString()
+  if(path[0] === 'private' && path[1] !== 'header'){
+    // if heading into private data dir
+    symmKey = await getSymmKeyForDir(nextCID)
+  }
+  return getRecurse(nextCID, path.slice(1), symmKey)
 }
 
 export async function make(root: CID, folderPath: string): Promise<CID> {
@@ -60,5 +79,6 @@ export default {
   make,
   list,
   get,
+  getRecurse,
   addPrivateDir
 }

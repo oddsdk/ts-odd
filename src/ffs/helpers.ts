@@ -1,6 +1,6 @@
 import dagPB from 'ipld-dag-pb'
 import file from './file'
-import { encryptDAGNode, encryptContent } from './private'
+import { encryptDAGNode, decryptDAGNode, encryptContent } from './private'
 import { AddLinkOpts } from './types'
 import { getIpfs, DAGNode, DAGLink, CID, RawDAGNode, RawDAGLink, FileContent } from '../ipfs'
 
@@ -71,7 +71,13 @@ export function rawToDAGNode(raw: RawDAGNode): DAGNode {
   return new dagPB.DAGNode(data, links)
 }
 
-export async function resolveDAGNode(node: CID | DAGNode): Promise<DAGNode> {
+export async function resolveDAGNode(cid: CID): Promise<DAGNode> {
+  const ipfs = await getIpfs()
+  const raw = await ipfs.dag.get(cid)
+  return rawToDAGNode(raw)
+}
+
+export async function cidToNode(node: CID | DAGNode, symmKey?: string): Promise<DAGNode> {
   const ipfs = await getIpfs()
   if(typeof node === 'string'){
     const raw = await ipfs.dag.get(node)
