@@ -2,7 +2,8 @@ import cbor from 'borc'
 import { CID, FileContent } from '../ipfs'
 import aes from 'keystore-idb/aes'
 import file from './file'
-import { splitPath } from './helpers'
+import { splitPath, splitPathNonEmpty, nextPathNonEmpty } from './helpers'
+import { NonEmptyPath } from './types'
 
 type PrivateNode = {
   key: string // symmetric key
@@ -15,11 +16,9 @@ type Link = {
   size?: number // the size of all children
 }
 
-type NonEmptyPath = string[]
-
 export async function mkdir(root: CID, path: string, rootKey: string) {
-  const parts = splitPath(path)
-  if(parts.length === 0){
+  const parts = splitPathNonEmpty(path)
+  if(parts === null) {
     return root
   }
   const toAdd = await emptyDir()
@@ -28,13 +27,19 @@ export async function mkdir(root: CID, path: string, rootKey: string) {
 
 export async function addChild(root: CID, path: string, rootKey: string, toAdd: PrivateNode, shouldOverwrite: boolean = true): Promise<CID> {
   const node = await resolve(root, rootKey)
-  const updated = await addChildRecurse(node, splitPath(path), toAdd, name, shouldOverwrite)
+  const parts = splitPathNonEmpty(path)
+  if(parts === null) {
+    return root
+  }
+  const updated = await addChildRecurse(node, parts, toAdd, shouldOverwrite)
   return putPrivate(updated, rootKey)
 }
 
-export async function addChildRecurse(node: PrivateNode, path: string[], child: PrivateNode, name: string, shouldOverwrite: boolean = true): Promise<PrivateNode> {
+export async function addChildRecurse(node: PrivateNode, path: NonEmptyPath, child: PrivateNode, shouldOverwrite: boolean = true): Promise<PrivateNode> {
+  const name = path[0]
+  const nextPath = nextPathNonEmpty(path)
   let toAdd: PrivateNode
-  if(path.length === 0) {
+  if(nextPath === null) {
     if(findLink(node, name) !== null && !shouldOverwrite) {
       return node
     }
@@ -45,7 +50,7 @@ export async function addChildRecurse(node: PrivateNode, path: string[], child: 
       nextLink === null 
       ? await emptyDir()
       : await resolve(nextLink.cid, node.key)
-    toAdd = await addChildRecurse(nextNode, path.slice(1), child, name)
+    toAdd = await addChildRecurse(nextNode, nextPath, child, shouldOverwrite)
   }
   const cid = await putPrivate(toAdd, node.key)
   const link = { name, cid }

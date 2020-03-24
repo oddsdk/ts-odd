@@ -1,7 +1,7 @@
 import dagPB from 'ipld-dag-pb'
 import file from './file'
 import { encryptDAGNode, decryptDAGNode, encryptContent } from './private'
-import { AddLinkOpts } from './types'
+import { AddLinkOpts, NonEmptyPath } from './types'
 import { getIpfs, DAGNode, DAGLink, CID, RawDAGNode, RawDAGLink, FileContent } from '../ipfs'
 
 export function emptyDir(): DAGNode {
@@ -124,6 +124,22 @@ export async function toHash(node: DAGNode): Promise<CID> {
 
 export function splitPath(path: string): string[] {
   return path.split('/').filter(p => p.length > 0)
+}
+
+export function splitPathNonEmpty(path: string): NonEmptyPath | null {
+  const parts = splitPath(path)
+  if(parts.length < 1){
+    return null
+  }
+  return parts as NonEmptyPath
+}
+
+export function nextPathNonEmpty(parts: NonEmptyPath): NonEmptyPath | null {
+  const next = parts.slice(1)
+  if(next.length < 1){
+    return null
+  }
+  return next as NonEmptyPath
 }
 
 export default {
