@@ -26,14 +26,20 @@ export async function catRaw(cid: CID): Promise<Uint8Array[]> {
   return chunks
 }
 
-export async function cat(cid: CID): Promise<string> {
+export async function catBuf(cid: CID): Promise<Uint8Array> {
   const raw = await catRaw(cid)
-  return Buffer.concat(raw).toString()
+  return Buffer.concat(raw)
+}
+
+export async function cat(cid: CID): Promise<string> {
+  const buf = await catBuf(cid)
+  return buf.toString()
 }
 
 export default {
   add,
   addToFolder,
   catRaw,
+  catBuf,
   cat,
 }

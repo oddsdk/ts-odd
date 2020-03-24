@@ -92,6 +92,7 @@
     "typescript": "^3.8.2"
   },
   "dependencies": {
+    "borc": "^2.1.1",
     "get-ipfs": "^1.2.0",
     "ipld-dag-pb": "^0.18.2",
     "keystore-idb": "^0.7.0",
