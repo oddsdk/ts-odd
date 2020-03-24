@@ -1,4 +1,3 @@
-import { addNestedLink, cidToDAGLink } from './helpers'
 import { getIpfs, CID, FileContent } from '../ipfs'
 
 export async function add(content: FileContent): Promise<CID> {
@@ -9,12 +8,6 @@ export async function add(content: FileContent): Promise<CID> {
   }
   // return cid of last object (root)
   return chunks[chunks.length - 1].cid.toString()
-}
-
-export async function addToFolder(content: FileContent, filename: string, root: CID, folderPath: string = ''): Promise<CID> {
-  const fileCID = await add(content)
-  const link = await cidToDAGLink(fileCID, filename)
-  return addNestedLink(root, folderPath, link, true)
 }
 
 export async function catRaw(cid: CID): Promise<Uint8Array[]> {
@@ -38,7 +31,6 @@ export async function cat(cid: CID): Promise<string> {
 
 export default {
   add,
-  addToFolder,
   catRaw,
   catBuf,
   cat,

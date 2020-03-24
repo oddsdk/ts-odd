@@ -1,16 +1,16 @@
 import { emptyDir, encryptNode, decryptNode } from './helpers'
 import file from '../file'
-import { PrivateNodeData, Link } from '../types'
+import { PrivateNodeData, Link, Node } from '../types'
 import { CID } from '../../ipfs'
 
-export class PrivateNode {
+export class PrivateNode implements Node {
 
-  key: string
   links: Link[]
+  key: string
 
-  constructor(key: string, links: Link[]) {
-    this.key = key
+  constructor(links: Link[], key: string) {
     this.links = links
+    this.key = key
   }
 
   async put(keyStr: string): Promise<CID> {
@@ -18,8 +18,8 @@ export class PrivateNode {
     return file.add(encrypted)
   }
 
-  async updateChild(toAdd: PrivateNode, name: string): Promise<PrivateNode> {
-    const cid = await toAdd.put(this.key)
+  async updateChild(child: PrivateNode, name: string): Promise<PrivateNode> {
+    const cid = await child.put(this.key)
     const link = { name, cid }
     return this.replaceLink(link)
   }
@@ -37,7 +37,7 @@ export class PrivateNode {
     if(maybeChild !== null){
       return maybeChild
     }
-    return this.updateChild(await empty(), name)
+    return empty()
   }
 
   data(): PrivateNodeData {
@@ -70,13 +70,13 @@ export class PrivateNode {
 
 export async function empty(): Promise<PrivateNode> {
   const { key, links } = await emptyDir()
-  return new PrivateNode(key, links)
+  return new PrivateNode(links, key)
 }
 
 export async function resolve(cid: CID, keyStr: string): Promise<PrivateNode> {
   const content = await file.catBuf(cid)
   const { key, links } = await decryptNode(content, keyStr)
-  return new PrivateNode(key, links)
+  return new PrivateNode(links, key)
 }
 
 

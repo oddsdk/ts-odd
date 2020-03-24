@@ -18,8 +18,9 @@ export type Link = {
 }
 
 export interface Node {
-  links: Link[]
-  put(keyStr: string): Promise<CID>
+  updateChild(child: Node, name: string): Promise<Node>
+  resolveChild(name: string): Promise<Node | null>
+  resolveOrAddChild(name: string): Promise<Node>
   findLink(name: string): Link | null
   addLink(link: Link): Node
   rmLink(name: string): Node
