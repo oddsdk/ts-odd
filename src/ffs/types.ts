@@ -1,5 +1,5 @@
 export type AddLinkOpts = {
   shouldOverwrite?: boolean
-  symmKey?: string
-  encryptRoot?: boolean
 }
+
+export type NonEmptyPath = [string, ...string[]]

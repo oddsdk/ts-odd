@@ -1,19 +1,19 @@
 import cbor from 'borc'
-import { CID, FileContent } from '../ipfs'
+import { CID, FileContent } from '../../ipfs'
 import aes from 'keystore-idb/aes'
-import file from './file'
-import { splitPath, splitPathNonEmpty, nextPathNonEmpty } from './helpers'
-import { NonEmptyPath } from './types'
+import file from '../file'
+import { splitPath, splitPathNonEmpty, nextPathNonEmpty } from '../helpers'
+import { NonEmptyPath } from '../types'
 
 type PrivateNode = {
-  key: string // symmetric key
+  key: string
   links: Link[]
 }
 
 type Link = {
   name: string
-  cid: CID // IPFS-compatible multihash (CIDv0/CIDv1)
-  size?: number // the size of all children
+  cid: CID
+  size?: number 
 }
 
 export async function mkdir(root: CID, path: string, rootKey: string) {
@@ -22,7 +22,7 @@ export async function mkdir(root: CID, path: string, rootKey: string) {
     return root
   }
   const toAdd = await emptyDir()
-  return addChild(root, path, rootKey, toAdd)
+  return addChild(root, path, rootKey, toAdd, false)
 }
 
 export async function addChild(root: CID, path: string, rootKey: string, toAdd: PrivateNode, shouldOverwrite: boolean = true): Promise<CID> {
@@ -98,7 +98,7 @@ export async function getFile(root: CID, path: string, rootKey: string): Promise
 
 export async function listDirectory(root: CID, path: string, rootKey: string): Promise<Link[] | null> {
   const node = await get(root, path, rootKey)
-  return node?.links || null
+  return node?.links || []
 }
 
 export async function get(root: CID, path: string, rootKey: string): Promise<PrivateNode | null> {

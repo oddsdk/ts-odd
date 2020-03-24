@@ -1,6 +1,5 @@
 import dagPB from 'ipld-dag-pb'
 import file from './file'
-import { encryptDAGNode, decryptDAGNode, encryptContent } from './private'
 import { AddLinkOpts, NonEmptyPath } from './types'
 import { getIpfs, DAGNode, DAGLink, CID, RawDAGNode, RawDAGLink, FileContent } from '../ipfs'
 
@@ -13,16 +12,15 @@ export async function emptyDirCID(): Promise<CID> {
   return putDAGNode(node)
 }
 
-export async function addLink(parent: CID, link: DAGLink, opts: AddLinkOpts = {}): Promise<CID> {
-  return addNestedLink(parent, "", link, opts)
+export async function addLink(parent: CID, link: DAGLink, shouldOverwrite: boolean = true): Promise<CID> {
+  return addNestedLink(parent, "", link, shouldOverwrite)
 }
 
-export async function addNestedLink(parent: CID, folderPath: string, link: DAGLink, opts: AddLinkOpts = {}): Promise<CID> {
-  return addNestedLinkRecurse(parent, splitPath(folderPath), link, opts)
+export async function addNestedLink(parent: CID, folderPath: string, link: DAGLink, shouldOverwrite: boolean = true): Promise<CID> {
+  return addNestedLinkRecurse(parent, splitPath(folderPath), link, shouldOverwrite)
 }
 
-export async function addNestedLinkRecurse(parentID: CID, path: string[], link: DAGLink, opts: AddLinkOpts = {}): Promise<CID> {
-  const { shouldOverwrite = true, symmKey, encryptRoot = false } = opts
+export async function addNestedLinkRecurse(parentID: CID, path: string[], link: DAGLink, shouldOverwrite: boolean = true): Promise<CID> {
   const parent = await resolveDAGNode(parentID)
   let toAdd
   if(path.length === 0){
@@ -39,15 +37,12 @@ export async function addNestedLinkRecurse(parentID: CID, path: string[], link: 
     }else {
       childCID = await emptyDirCID()
     }
-    const updatedCID = await addNestedLinkRecurse(childCID, path.slice(1), link, {
-      ...opts,
-      encryptRoot: true
-    })
+    const updatedCID = await addNestedLinkRecurse(childCID, path.slice(1), link, shouldOverwrite)
     toAdd = await cidToDAGLink(updatedCID, path[0])
   }
   parent.rmLink(toAdd.Name)
   parent.addLink(toAdd)
-  return putObj(parent, encryptRoot ? symmKey: undefined)
+  return putObj(parent)
 }
 
 export async function cidToDAGLink(cid: CID, name: string): Promise<DAGLink> {
@@ -87,21 +82,11 @@ export async function cidToNode(node: CID | DAGNode, symmKey?: string): Promise<
   }
 }
 
-export async function putObj(node: DAGNode | FileContent, symmKey?: string): Promise<CID> {
+export async function putObj(node: DAGNode | FileContent): Promise<CID> {
   if(node instanceof dagPB.DAGNode) {
-    if(symmKey === undefined) {
-      return putDAGNode(node as DAGNode)
-    }else{
-      const encrypted = await encryptDAGNode(node as DAGNode, symmKey)
-      return file.add(encrypted) 
-    }
+    return putDAGNode(node as DAGNode)
   } else {
-    if(symmKey === undefined) {
-      return file.add(node)
-    } else{
-      const encrypted = await encryptContent(node, symmKey)
-      return file.add(encrypted)
-    }
+    return file.add(node)
   }
 }
 
