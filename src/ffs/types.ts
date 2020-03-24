@@ -1,4 +1,4 @@
-import { CID } from '../ipfs'
+import { FileContent, CID } from '../ipfs'
 
 export type AddLinkOpts = {
   shouldOverwrite?: boolean
@@ -26,3 +26,14 @@ export interface Node {
   rmLink(name: string): Node
   replaceLink(link: Link): Node
 }
+
+export interface Tree {
+  put(): Promise<CID>
+  cid(): Promise<CID>
+  listDir(path: string): Promise<Link[] | null>
+  makeDir(path: string): Promise<Tree>
+  addFile(path: string, content: FileContent): Promise<Tree>
+  get(path: string): Promise<Node | null>
+  addChild(path: string, toAdd: Node, shouldOverwrite: boolean): Promise<Tree>
+}
+  

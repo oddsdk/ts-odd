@@ -1,12 +1,21 @@
 import cbor from 'borc'
 import aes from 'keystore-idb/aes'
 import { PrivateNodeData } from '../types'
+import { FileContent } from '../../ipfs'
+
+export function contentToBytes(content: FileContent): Uint8Array {
+  return cbor.encode(content)
+}
+
+export async function genKeyStr(): Promise<string> {
+  const key = await aes.makeKey()
+  return aes.exportKey(key)
+}
 
 export async function emptyDir(): Promise<PrivateNodeData> {
-  const key = await aes.makeKey()
-  const keyStr = await aes.exportKey(key)
+  const key = await genKeyStr()
   return {
-    key: keyStr,
+    key: key,
     links: []
   }
 }

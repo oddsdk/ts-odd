@@ -1,6 +1,7 @@
 import { emptyDir, rawToDAGNode, toDAGLink, toLink, putDAGNode } from './helpers'
 import { Link, Node } from '../types'
-import { getIpfs, DAGNode, DAGLink, CID } from '../../ipfs'
+import file from '../file'
+import { getIpfs, DAGNode, DAGLink, CID, FileContent } from '../../ipfs'
 
 export class PublicNode implements Node {
 
@@ -35,7 +36,23 @@ export class PublicNode implements Node {
     }
     return empty()
   }
-  
+
+  async resolveContent(): Promise<FileContent | null> {
+    const link = this.findLink('index')
+    if(link === null) {
+      return null
+    }
+    return file.catBuf(link.cid)
+  }
+
+  isFile(): boolean {
+    return this.findLink('index') !== null
+  }
+
+  links(): Link[] {
+    return this.dagNode.Links.map(toLink)
+  }
+
   findDAGLink(name: string): DAGLink | null {
     return this.dagNode.Links?.find(link => link.Name === name) || null
   }
@@ -77,4 +94,18 @@ export async function resolve(cid: CID): Promise<PublicNode> {
   const raw = await ipfs.dag.get(cid)
   const dagNode = rawToDAGNode(raw)
   return new PublicNode(dagNode)
+}
+
+export async function fromContent(content: FileContent): Promise<PublicNode> {
+  const dir = await empty()
+  const cid = await file.add(content)
+  const link = { name: 'index', cid} 
+  return dir.addLink(link)
+}
+
+export default {
+  PublicNode,
+  empty,
+  resolve,
+  fromContent
 }

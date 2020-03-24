@@ -1,7 +1,7 @@
-import { emptyDir, encryptNode, decryptNode } from './helpers'
+import { emptyDir, encryptNode, decryptNode, decrypt, encrypt, contentToBytes } from './helpers'
 import file from '../file'
 import { PrivateNodeData, Link, Node } from '../types'
-import { CID } from '../../ipfs'
+import { CID, FileContent } from '../../ipfs'
 
 export class PrivateNode implements Node {
 
@@ -39,12 +39,25 @@ export class PrivateNode implements Node {
     }
     return empty()
   }
+  
+  async resolveContent(): Promise<FileContent | null> {
+    const link = this.findLink('index')
+    if(link === null) {
+      return null
+    }
+    const content = await file.catBuf(link.cid)
+    return decrypt(content, this.key)
+  }
 
   data(): PrivateNodeData {
     return {
       key: this.key,
       links: this.links
     }
+  }
+
+  isFile(): boolean {
+    return this.findLink('index') !== null
   }
 
   findLink(name: string): Link | null {
@@ -79,9 +92,18 @@ export async function resolve(cid: CID, keyStr: string): Promise<PrivateNode> {
   return new PrivateNode(links, key)
 }
 
+export async function fromContent(content: FileContent): Promise<PrivateNode> {
+  const dir = await empty()
+  const bytes = contentToBytes(content)
+  const encrypted = encrypt(bytes, dir.key)
+  const cid = await file.add(encrypted)
+  const link = { name: 'index', cid }
+  return dir.addLink(link)
+}
 
 export default {
   PrivateNode,
   empty,
-  resolve
+  resolve,
+  fromContent
 }

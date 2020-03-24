@@ -1,9 +1,9 @@
-import path from './path'
+import pathUtil from './path'
 import { Node, NonEmptyPath } from './types'
 
-export async function addChildRecurse(node: Node, folderPath: NonEmptyPath, child: Node, shouldOverwrite: boolean = true): Promise<Node> {
-  const name = folderPath[0]
-  const nextPath = path.nextNonEmpty(folderPath)
+export async function addChildRecurse(node: Node, path: NonEmptyPath, child: Node, shouldOverwrite: boolean = true): Promise<Node> {
+  const name = path[0]
+  const nextPath = pathUtil.nextNonEmpty(path)
   const nextLink = await node.findLink(name)
   let toAdd: Node
   if(nextPath === null) {
