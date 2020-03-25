@@ -3,6 +3,10 @@ import aes from 'keystore-idb/aes'
 import { PrivateNodeData } from '../types'
 import { FileContent } from '../../ipfs'
 
+export function bytesToContent(content: Uint8Array): FileContent {
+  return cbor.encode(content)
+}
+
 export function contentToBytes(content: FileContent): Uint8Array {
   return cbor.encode(content)
 }
@@ -43,6 +47,7 @@ export async function decryptNode(encrypted: Uint8Array, keyStr: string): Promis
 }
 
 export default {
+  bytesToContent,
   contentToBytes,
   genKeyStr,
   emptyDir,

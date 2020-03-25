@@ -1,4 +1,4 @@
-import { emptyDir, encryptNode, decryptNode, decrypt, encrypt, contentToBytes } from './helpers'
+import { emptyDir, encryptNode, decryptNode, decrypt, encrypt, contentToBytes, bytesToContent } from './helpers'
 import file from '../file'
 import { PrivateNodeData, Link, Node } from '../types'
 import { CID, FileContent } from '../../ipfs'
@@ -46,7 +46,8 @@ export class PrivateNode implements Node {
       return null
     }
     const content = await file.catBuf(link.cid)
-    return decrypt(content, this.key)
+    const decrypted = await decrypt(content, this.key)
+    return bytesToContent(decrypted)
   }
 
   data(): PrivateNodeData {
