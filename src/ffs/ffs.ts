@@ -24,46 +24,35 @@ class FFS {
     return this.put()
   }
 
+  whichTree(isPublic: boolean): Tree {
+    return isPublic ? this.pubTree : this.privTree
+  }
+
   async listDir(path: string, isPublic: boolean = false): Promise<Link[] | null> {
-    if(isPublic) {
-      return this.pubTree.listDir(path)
-    } else {
-      return this.privTree.listDir(path)
-    }
+    const tree = this.whichTree(isPublic)
+    return tree.listDir(path)
   }
 
   async makeDir(path: string, isPublic: boolean = false): Promise<FFS> {
-    if(isPublic) {
-      this.pubTree = await this.pubTree.makeDir(path)
-    } else {
-      this.privTree = await this.privTree.makeDir(path)
-    }
+    const tree = this.whichTree(isPublic)
+    await tree.makeDir(path)
     return this.updateRoot()
   }
 
   async addFile(path: string, content: FileContent, isPublic: boolean = false): Promise<FFS> {
-    if(isPublic) {
-      this.pubTree = await this.pubTree.addFile(path, content)
-    } else {
-      this.privTree = await this.privTree.addFile(path, content)
-    }
+    const tree = this.whichTree(isPublic)
+    await tree.addFile(path, content)
     return this.updateRoot()
   }
 
   async getFile(path: string, fromPublic: boolean = false): Promise<FileContent | null> {
-    if(fromPublic) {
-      return this.pubTree.get(path)
-    } else {
-      return this.privTree.get(path)
-    }
+    const tree = this.whichTree(fromPublic)
+    return tree.getFile(path)
   }
 
   async get(path: string, fromPublic: boolean = false): Promise<Node | null> {
-    if(fromPublic) {
-      return this.pubTree.get(path)
-    } else {
-      return this.privTree.get(path)
-    }
+    const tree = this.whichTree(fromPublic)
+    return tree.get(path)
   }
 
   async updateRoot(): Promise<FFS> {
