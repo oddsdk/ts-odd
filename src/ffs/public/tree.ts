@@ -4,7 +4,7 @@ import { Tree, Link } from "../types"
 import { CID, FileContent } from '../../ipfs'
 import { getRecurse, addChildRecurse } from "../helpers"
 
-class PublicTree implements Tree {
+export class PublicTree implements Tree {
 
   root: PublicNode
 

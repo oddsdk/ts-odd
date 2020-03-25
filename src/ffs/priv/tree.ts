@@ -5,7 +5,7 @@ import { Tree, Link } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import { genKeyStr } from './helpers'
 
-class PrivateTree implements Tree {
+export class PrivateTree implements Tree {
 
   root: PrivateNode
   key: string
