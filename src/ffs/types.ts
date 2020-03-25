@@ -34,7 +34,7 @@ export interface Tree {
   makeDir(path: string): Promise<Tree>
   addFile(path: string, content: FileContent): Promise<Tree>
   getFile(path: string): Promise<FileContent | null>
-  get(path: string): Promise<Node | null>
+  getNode(path: string): Promise<Node | null>
   addChild(path: string, toAdd: Node, shouldOverwrite: boolean): Promise<Tree>
 }
   

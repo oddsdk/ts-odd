@@ -4,7 +4,7 @@ import pubNode, { PublicNode } from './pub/node'
 import { Tree, Node, Link } from './types'
 import { CID, FileContent } from '../ipfs'
 
-class FFS {
+export class FFS {
 
   root: PublicNode
   pubTree: PublicTree
@@ -46,9 +46,9 @@ class FFS {
     return tree.getFile(path)
   }
 
-  async get(path: string, fromPublic: boolean = false): Promise<Node | null> {
+  async getNode(path: string, fromPublic: boolean = false): Promise<Node | null> {
     const tree = this.whichTree(fromPublic)
-    return tree.get(path)
+    return tree.getNode(path)
   }
 
   async updateRoot(): Promise<FFS> {
@@ -86,5 +86,7 @@ export async function resolve(cid: CID, keyStr: string): Promise<FFS | null> {
 }
 
 export default {
-  FFS
+  FFS,
+  empty,
+  resolve
 }

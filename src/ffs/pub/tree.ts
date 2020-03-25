@@ -21,7 +21,7 @@ export class PublicTree implements Tree {
   }
 
   async listDir(path: string): Promise<Link[] | null> {
-    const node = await this.get(path)
+    const node = await this.getNode(path)
     return node?.links() || []
   }
 
@@ -36,14 +36,14 @@ export class PublicTree implements Tree {
   }
 
   async getFile(path: string): Promise<FileContent | null> {
-    const node = await this.get(path)
+    const node = await this.getNode(path)
     if(node === null) {
       return null
     }
     return node.resolveContent()
   }
 
-  async get(path: string): Promise<PublicNode | null> {
+  async getNode(path: string): Promise<PublicNode | null> {
     const node = await getRecurse(this.root, pathUtil.split(path))
     if(node === null) {
       return null

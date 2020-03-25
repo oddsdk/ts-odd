@@ -1,6 +1,6 @@
 export * from './ffs'
 
-import ffs from '../'
+import ffs from './ffs'
 import priv from './priv'
 import pub from './pub'
 import file from './file'
