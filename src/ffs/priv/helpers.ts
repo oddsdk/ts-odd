@@ -41,3 +41,13 @@ export async function decryptNode(encrypted: Uint8Array, keyStr: string): Promis
   const decrypted = await decrypt(encrypted, keyStr)
   return cbor.decode(decrypted)
 }
+
+export default {
+  contentToBytes,
+  genKeyStr,
+  emptyDir,
+  encryptNode,
+  encrypt,
+  decrypt,
+  decryptNode,
+}

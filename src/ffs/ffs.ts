@@ -1,6 +1,6 @@
-import pubTree, { PublicTree } from './public/tree'
+import pubTree, { PublicTree } from './pub/tree'
 import privTree, { PrivateTree } from './priv/tree'
-import pubNode, { PublicNode } from './public/node'
+import pubNode, { PublicNode } from './pub/node'
 import { Tree, Node, Link } from './types'
 import { CID, FileContent } from '../ipfs'
 
@@ -22,10 +22,6 @@ class FFS {
 
   async cid(): Promise<CID> {
     return this.put()
-  }
-
-  whichTree(isPublic: boolean): Tree {
-    return isPublic ? this.pubTree : this.privTree
   }
 
   async listDir(path: string, isPublic: boolean = false): Promise<Link[] | null> {
@@ -63,6 +59,10 @@ class FFS {
     this.root.replaceLink(pubLink)
     this.root.replaceLink(privLink)
     return this
+  }
+
+  whichTree(isPublic: boolean): Tree {
+    return isPublic ? this.pubTree : this.privTree
   }
 }
 

@@ -36,3 +36,12 @@ export async function putDAGNode(node: DAGNode): Promise<CID> {
   const cid = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
   return cid.toString()
 }
+
+export default {
+  emptyDir,
+  rawToDAGLink,
+  rawToDAGNode,
+  toDAGLink,
+  toLink,
+  putDAGNode
+}
