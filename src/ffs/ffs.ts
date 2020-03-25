@@ -1,7 +1,7 @@
 import pubTree, { PublicTree } from './public/tree'
 import privTree, { PrivateTree } from './priv/tree'
 import pubNode, { PublicNode } from './public/node'
-import { Node, Link } from './types'
+import { Tree, Node, Link } from './types'
 import { CID, FileContent } from '../ipfs'
 
 class FFS {
@@ -48,6 +48,14 @@ class FFS {
       this.privTree = await this.privTree.addFile(path, content)
     }
     return this.updateRoot()
+  }
+
+  async getFile(path: string, fromPublic: boolean = false): Promise<FileContent | null> {
+    if(fromPublic) {
+      return this.pubTree.get(path)
+    } else {
+      return this.privTree.get(path)
+    }
   }
 
   async get(path: string, fromPublic: boolean = false): Promise<Node | null> {

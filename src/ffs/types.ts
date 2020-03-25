@@ -33,6 +33,7 @@ export interface Tree {
   listDir(path: string): Promise<Link[] | null>
   makeDir(path: string): Promise<Tree>
   addFile(path: string, content: FileContent): Promise<Tree>
+  getFile(path: string): Promise<FileContent | null>
   get(path: string): Promise<Node | null>
   addChild(path: string, toAdd: Node, shouldOverwrite: boolean): Promise<Tree>
 }

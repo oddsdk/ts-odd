@@ -38,6 +38,14 @@ export class PrivateTree implements Tree {
     return this.addChild(path, toAdd, true)
   }
 
+  async getFile(path: string): Promise<FileContent | null> {
+    const node = await this.get(path)
+    if(node === null) {
+      return null
+    }
+    return node.resolveContent()
+  }
+
   async get(path: string): Promise<PrivateNode | null> {
     const node = await getRecurse(this.root, pathUtil.split(path)) 
     if(node === null) {
