@@ -68,5 +68,7 @@ export async function resolve(cid: CID, keyStr: string) {
 }
 
 export default {
-  PrivateTree
+  PrivateTree,
+  empty,
+  resolve
 }

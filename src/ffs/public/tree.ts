@@ -51,9 +51,20 @@ class PublicTree implements Tree {
     this.root = (await addChildRecurse(this.root, parts, toAdd, shouldOverwrite)) as PublicNode
     return this
   }
+}
 
+export async function empty() {
+  const root = await publicNode.empty()
+  return new PublicTree(root)
+}
+
+export async function resolve(cid: CID) {
+  const root = await publicNode.resolve(cid)
+  return new PublicTree(root)
 }
 
 export default {
-  PublicTree
+  PublicTree,
+  empty,
+  resolve
 }

@@ -95,7 +95,7 @@ export async function resolve(cid: CID, keyStr: string): Promise<PrivateNode> {
 export async function fromContent(content: FileContent): Promise<PrivateNode> {
   const dir = await empty()
   const bytes = contentToBytes(content)
-  const encrypted = encrypt(bytes, dir.key)
+  const encrypted = await encrypt(bytes, dir.key)
   const cid = await file.add(encrypted)
   const link = { name: 'index', cid }
   return dir.addLink(link)

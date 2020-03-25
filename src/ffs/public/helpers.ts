@@ -25,7 +25,7 @@ export function toLink(dagLink: DAGLink): Link {
   const { Name, Hash, Size } = dagLink
   return {
     name: Name,
-    cid: Hash,
+    cid: Hash.toString(),
     size: Size
   }
 }
