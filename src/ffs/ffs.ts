@@ -3,6 +3,7 @@ import privTree, { PrivateTree } from './priv/tree'
 import pubNode, { PublicNode } from './pub/node'
 import { Tree, Node, Link } from './types'
 import { CID, FileContent } from '../ipfs'
+import pathUtil from './path'
 
 export class FFS {
 
@@ -24,31 +25,31 @@ export class FFS {
     return this.put()
   }
 
-  async listDir(path: string, isPublic: boolean = false): Promise<Link[] | null> {
-    const tree = this.whichTree(isPublic)
-    return tree.listDir(path)
+  async listDir(path: string): Promise<Link[] | null> {
+    const { tree, tail } = this.parsePath(path)
+    return tree.listDir(tail)
   }
 
-  async makeDir(path: string, isPublic: boolean = false): Promise<FFS> {
-    const tree = this.whichTree(isPublic)
-    await tree.makeDir(path)
+  async makeDir(path: string): Promise<FFS> {
+    const { tree, tail } = this.parsePath(path)
+    await tree.makeDir(tail)
     return this.updateRoot()
   }
 
-  async addFile(path: string, content: FileContent, isPublic: boolean = false): Promise<FFS> {
-    const tree = this.whichTree(isPublic)
-    await tree.addFile(path, content)
+  async addFile(path: string, content: FileContent): Promise<FFS> {
+    const { tree, tail } = this.parsePath(path)
+    await tree.addFile(tail, content)
     return this.updateRoot()
   }
 
-  async getFile(path: string, fromPublic: boolean = false): Promise<FileContent | null> {
-    const tree = this.whichTree(fromPublic)
-    return tree.getFile(path)
+  async getFile(path: string): Promise<FileContent | null> {
+    const { tree, tail } = this.parsePath(path)
+    return tree.getFile(tail)
   }
 
-  async getNode(path: string, fromPublic: boolean = false): Promise<Node | null> {
-    const tree = this.whichTree(fromPublic)
-    return tree.getNode(path)
+  async getNode(path: string): Promise<Node | null> {
+    const { tree, tail } = this.parsePath(path)
+    return tree.getNode(tail)
   }
 
   async updateRoot(): Promise<FFS> {
@@ -61,8 +62,19 @@ export class FFS {
     return this
   }
 
-  whichTree(isPublic: boolean): Tree {
-    return isPublic ? this.pubTree : this.privTree
+  parsePath(path: string): { tree: Tree, tail: string } {
+    const parts = pathUtil.split(path)
+    const head = parts[0]
+    const tail = pathUtil.join(parts.slice(1))
+    let tree: Tree
+    if(head === 'public') {
+      tree = this.pubTree
+    }else if(head === 'private') {
+      tree = this.privTree
+    }else {
+      throw new Error("Not a valid FFS path")
+    }
+    return { tree, tail }
   }
 }
 

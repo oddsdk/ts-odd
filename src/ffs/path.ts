@@ -4,6 +4,10 @@ export function split(path: string): string[] {
   return path.split('/').filter(p => p.length > 0)
 }
 
+export function join(parts: string[]): string {
+  return parts.join('/')
+}
+
 export function splitNonEmpty(path: string): NonEmptyPath | null {
   const parts = split(path)
   if(parts.length < 1){
@@ -23,6 +27,7 @@ export function nextNonEmpty(parts: NonEmptyPath): NonEmptyPath | null {
 
 export default {
   split,
+  join,
   splitNonEmpty,
   nextNonEmpty
 }
