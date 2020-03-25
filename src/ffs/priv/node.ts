@@ -46,7 +46,7 @@ export class PrivateNode implements Node {
       return null
     }
     const content = await file.catBuf(link.cid)
-    const decrypted = await decrypt(content, this.key)
+    const decrypted = await decrypt(new Uint8Array(content), this.key)
     return bytesToContent(decrypted)
   }
 

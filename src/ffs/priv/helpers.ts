@@ -4,7 +4,7 @@ import { PrivateNodeData } from '../types'
 import { FileContent } from '../../ipfs'
 
 export function bytesToContent(content: Uint8Array): FileContent {
-  return cbor.encode(content)
+  return cbor.decode(content)
 }
 
 export function contentToBytes(content: FileContent): Uint8Array {
