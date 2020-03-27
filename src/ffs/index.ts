@@ -1,3 +1,3 @@
-import ffs from './ffs'
+import FileSystem from './ffs'
 
-export default ffs
+export default FileSystem

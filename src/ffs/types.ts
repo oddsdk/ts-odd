@@ -6,7 +6,7 @@ export type AddLinkOpts = {
 
 export type NonEmptyPath = [string, ...string[]]
 
-export type PrivateNodeData = {
+export type PrivateTreeData = {
   key: string
   links: Link[]
 }
@@ -17,24 +17,38 @@ export type Link = {
   size?: number 
 }
 
-export interface Node {
-  updateChild(child: Node, name: string): Promise<Node>
-  resolveChild(name: string): Promise<Node | null>
-  resolveOrAddChild(name: string): Promise<Node>
-  findLink(name: string): Link | null
-  addLink(link: Link): Node
-  rmLink(name: string): Node
-  replaceLink(link: Link): Node
+export interface PrivateTreeStatic extends TreeStatic {
+  fromCIDWithKey: (cid: CID, keyStr: string) => Promise<Tree>
+}
+
+export interface TreeStatic {
+  empty: () => Promise<Tree>
+  fromCID: (cid: CID) => Promise<Tree>
+  fromContent: (content: FileContent) => Promise<Tree>
 }
 
 export interface Tree {
+  static: TreeStatic
+  links: Link[]
+
+  ls(path: string): Promise<Link[]>
+  mkdir(path: string): Promise<Tree>
+  cat(path: string): Promise<FileContent | null>
+  add(path: string, content: FileContent): Promise<Tree>
+  getTree(path: string): Promise<Tree | null>
+  pathExists(path: string): Promise<boolean> 
+  addChild(path: string, toAdd: Tree): Promise<Tree>
+
   put(): Promise<CID>
-  cid(): Promise<CID>
-  listDir(path: string): Promise<Link[] | null>
-  makeDir(path: string): Promise<Tree>
-  addFile(path: string, content: FileContent): Promise<Tree>
-  getFile(path: string): Promise<FileContent | null>
-  getNode(path: string): Promise<Node | null>
-  addChild(path: string, toAdd: Node, shouldOverwrite: boolean): Promise<Tree>
+  updateDirectChild(child: Tree, name: string): Promise<Tree>
+  getDirectChild(name: string): Promise<Tree | null>
+  getOrCreateDirectChild(name: string): Promise<Tree>
+  getOwnContent(): Promise<FileContent | null>
+
+  isFile(): boolean
+  copyWithLinks(links: Link[]): Tree
+  findLink(name: string): Link | null
+  addLink(link: Link): Tree
+  rmLink(name: string): Tree
+  replaceLink(link: Link): Tree
 }
-  

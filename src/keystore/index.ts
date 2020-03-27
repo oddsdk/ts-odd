@@ -1,18 +1,10 @@
-import keystore from 'keystore-idb'
-import { KeyStore, CryptoSystem } from 'keystore-idb/types'
+export * from './config'
+export * from './basic'
 
-const KEYSTORE_CFG = { type: CryptoSystem.RSA }
-
-let ks: KeyStore | null = null
-
-export async function get(): Promise<KeyStore> {
-  if(ks){
-    return ks
-  }
-  ks = await keystore.init(KEYSTORE_CFG)
-  return ks
-}
+import config from './config'
+import basic from './basic'
 
 export default {
-  get
+  ...config,
+  ...basic
 }
