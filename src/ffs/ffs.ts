@@ -25,14 +25,14 @@ export class FFS {
   }
 
   // upgrade public IPFS folder to FileSystem
-  static async fromPublicCID(cid: CID, rootKeyName: string = 'filesystem-root'): Promise<FFS> {
+  static async upgradePublicCID(cid: CID, rootKeyName: string = 'filesystem-root'): Promise<FFS> {
     const root = await pubNode.empty()
     const pubTreeInstance = await pubTree.resolve(cid)
     const privTreeInstance = await privTree.empty(rootKeyName)
     return new FFS(root, pubTreeInstance, privTreeInstance)
   }
 
-  static async resolve(cid: CID, rootKeyName: string = 'filesystem-root'): Promise<FFS | null> {
+  static async fromCID(cid: CID, rootKeyName: string = 'filesystem-root'): Promise<FFS | null> {
     const root = await pubNode.resolve(cid)
     const pubLink = root.findLink('public')
     const privLink = root.findLink('private')
