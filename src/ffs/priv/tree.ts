@@ -3,7 +3,7 @@ import { addChildRecurse, getRecurse } from '../helpers'
 import privNode, { PrivateNode } from './node'
 import { Tree, Link } from '../types'
 import { CID, FileContent } from '../../ipfs'
-import { genKeyStr } from './helpers'
+import keystore from '../../keystore'
 
 export class PrivateTree implements Tree {
 
@@ -64,15 +64,18 @@ export class PrivateTree implements Tree {
   }
 }
 
-export async function empty() {
+export async function empty(keyName: string) {
+  const ks = await keystore.get()
+  const key = await ks.exportSymmKey(keyName)
   const root = await privNode.empty()
-  const key = await genKeyStr()
   return new PrivateTree(root, key)
 }
 
-export async function resolve(cid: CID, keyStr: string) {
-  const root = await privNode.resolve(cid, keyStr)
-  return new PrivateTree(root, keyStr)
+export async function resolve(cid: CID, keyName: string) {
+  const ks = await keystore.get()
+  const key = await ks.exportSymmKey(keyName)
+  const root = await privNode.resolve(cid, key)
+  return new PrivateTree(root, key)
 }
 
 export default {

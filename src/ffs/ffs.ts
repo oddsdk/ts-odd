@@ -17,7 +17,35 @@ export class FFS {
     this.privTree = privTree
   }
 
+  static async empty(rootKeyName: string = 'filesystem-root'): Promise<FFS> {
+    const root = await pubNode.empty()
+    const pubTreeInstance = await pubTree.empty()
+    const privTreeInstance = await privTree.empty(rootKeyName)
+    return new FFS(root, pubTreeInstance, privTreeInstance)
+  }
+
+  // upgrade public IPFS folder to FileSystem
+  static async fromPublicCID(cid: CID, rootKeyName: string = 'filesystem-root'): Promise<FFS> {
+    const root = await pubNode.empty()
+    const pubTreeInstance = await pubTree.resolve(cid)
+    const privTreeInstance = await privTree.empty(rootKeyName)
+    return new FFS(root, pubTreeInstance, privTreeInstance)
+  }
+
+  static async resolve(cid: CID, rootKeyName: string = 'filesystem-root'): Promise<FFS | null> {
+    const root = await pubNode.resolve(cid)
+    const pubLink = root.findLink('public')
+    const privLink = root.findLink('private')
+    if(pubLink === null || privLink === null) {
+      return null
+    }
+    const pubTreeInstance = await pubTree.resolve(pubLink.cid)
+    const privTreeInstance = await privTree.resolve(privLink.cid, rootKeyName)
+    return new FFS(root, pubTreeInstance, privTreeInstance)
+  }
+
   async put(): Promise<CID> {
+    await this.updateRoot()
     return this.root.put()
   }
 
@@ -78,27 +106,4 @@ export class FFS {
   }
 }
 
-export async function empty(): Promise<FFS> {
-  const root = await pubNode.empty()
-  const pubTreeInstance = await pubTree.empty()
-  const privTreeInstance = await privTree.empty()
-  return new FFS(root, pubTreeInstance, privTreeInstance)
-}
-
-export async function resolve(cid: CID, keyStr: string): Promise<FFS | null> {
-  const root = await pubNode.resolve(cid)
-  const pubLink = root.findLink('public')
-  const privLink = root.findLink('private')
-  if(pubLink === null || privLink === null) {
-    return null
-  }
-  const pubTreeInstance = await pubTree.resolve(pubLink.cid)
-  const privTreeInstance = await privTree.resolve(privLink.cid, keyStr)
-  return new FFS(root, pubTreeInstance, privTreeInstance)
-}
-
-export default {
-  FFS,
-  empty,
-  resolve
-}
+export default FFS
