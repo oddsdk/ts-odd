@@ -2,6 +2,7 @@ import babel from 'rollup-plugin-babel'
 import resolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
 import json from 'rollup-plugin-json'
+import inject from '@rollup/plugin-inject'
 import polyfills from 'rollup-plugin-node-polyfills'
 import typescript from 'rollup-plugin-typescript2'
 
@@ -34,6 +35,10 @@ const plugins = [
 
   // Most packages in node_modules are legacy CommonJS, so let's convert them to ES
   commonjs(),
+
+  inject({
+    Buffer: ['buffer/', 'Buffer']
+  }),
 
   // Polyfills for node builtins/globals
   polyfills(),

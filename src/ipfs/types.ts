@@ -1,5 +1,3 @@
-import { Buffer } from 'buffer/'
-
 export type IPFS = {
   add(data: FileContent, options?: any): AsyncIterable<UnixFSFile>
   cat(cid: CID): AsyncIterable<FileContentRaw>

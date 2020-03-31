@@ -1,5 +1,4 @@
 import { getIpfs, CID, FileContent } from '../ipfs'
-import { Buffer } from 'buffer/'
 
 export async function add(content: FileContent): Promise<CID> {
   const ipfs = await getIpfs()

@@ -930,7 +930,16 @@
     "@types/yargs" "^15.0.0"
     chalk "^3.0.0"
 
-"@rollup/pluginutils@^3.0.1":
+"@rollup/plugin-inject@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@rollup/plugin-inject/-/plugin-inject-4.0.1.tgz#e492d9889e02da3d2594b41742aa5bee15b26216"
+  integrity sha512-Rp08zyniSaBpZHh9Zk4vTkJcLWV10S5lm57c5T6QuTrgkkgY5o2LnHRnmF73tXMTTQpY+Y7NR0l48dAJJ7cMRw==
+  dependencies:
+    "@rollup/pluginutils" "^3.0.4"
+    estree-walker "^1.0.1"
+    magic-string "^0.25.5"
+
+"@rollup/pluginutils@^3.0.1", "@rollup/pluginutils@^3.0.4":
   version "3.0.8"
   resolved "https://registry.yarnpkg.com/@rollup/pluginutils/-/pluginutils-3.0.8.tgz#4e94d128d94b90699e517ef045422960d18c8fde"
   integrity sha512-rYGeAc4sxcZ+kPG/Tw4/fwJODC3IXHYDH4qusdN/b6aLw5LPUbzpecYbEJh4sVQGPFJxd2dBU4kc1H3oy9/bnw==
@@ -1545,14 +1554,6 @@ buffer@^5.4.3:
   version "5.4.3"
   resolved "https://registry.yarnpkg.com/buffer/-/buffer-5.4.3.tgz#3fbc9c69eb713d323e3fc1a895eee0710c072115"
   integrity sha512-zvj65TkFeIt3i6aj5bIvJDzjjQQGs4o/sNoezg1F1kYap9Nu2jcUdpwzRSJTHMMzG0H7bZkn4rNQpImhuxWX2A==
-  dependencies:
-    base64-js "^1.0.2"
-    ieee754 "^1.1.4"
-
-buffer@^5.5.0:
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/buffer/-/buffer-5.5.0.tgz#9c3caa3d623c33dd1c7ef584b89b88bf9c9bc1ce"
-  integrity sha512-9FTEDjLjwoAkEwyMGDjYJQN2gfRgOKBKRfiglhvibGbpeeU/pQn1bJxQqm32OD/AIeEuHxU9roxXxg34Byp/Ww==
   dependencies:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
@@ -4035,7 +4036,7 @@ magic-string@^0.25.2:
   dependencies:
     sourcemap-codec "^1.4.4"
 
-magic-string@^0.25.3:
+magic-string@^0.25.3, magic-string@^0.25.5:
   version "0.25.7"
   resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.25.7.tgz#3f497d6fd34c669c6798dcb821f2ef31f5445051"
   integrity sha512-4CrMT5DOHTDk4HYDlzmwu4FVCcIYI8gauveasrdCu2IKIFOJ3f0v/8MDGJCDL9oD2ppz/Av1b0Nj345H9M+XIA==
