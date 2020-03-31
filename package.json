@@ -95,7 +95,7 @@
     "borc": "^2.1.1",
     "get-ipfs": "^1.2.0",
     "ipld-dag-pb": "^0.18.2",
-    "keystore-idb": "0.8.0-alpha",
+    "keystore-idb": "^0.8.0",
     "query-string": "^6.11.1"
   }
 }
