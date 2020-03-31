@@ -1,4 +1,5 @@
 import { getIpfs, CID, FileContent } from '../ipfs'
+import { Buffer } from 'buffer/'
 
 export async function add(content: FileContent): Promise<CID> {
   const ipfs = await getIpfs()
@@ -10,7 +11,7 @@ export async function add(content: FileContent): Promise<CID> {
   return chunks[chunks.length - 1].cid.toString()
 }
 
-export async function catRaw(cid: CID): Promise<Uint8Array[]> {
+export async function catRaw(cid: CID): Promise<Buffer[]> {
   const ipfs = await getIpfs()
   const chunks = []
   for await (const chunk of ipfs.cat(cid)){
@@ -19,7 +20,7 @@ export async function catRaw(cid: CID): Promise<Uint8Array[]> {
   return chunks
 }
 
-export async function catBuf(cid: CID): Promise<Uint8Array> {
+export async function catBuf(cid: CID): Promise<Buffer> {
   const raw = await catRaw(cid)
   return Buffer.concat(raw)
 }

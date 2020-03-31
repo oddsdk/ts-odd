@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer/'
+
 export type IPFS = {
   add(data: FileContent, options?: any): AsyncIterable<UnixFSFile>
   cat(cid: CID): AsyncIterable<FileContentRaw>
@@ -62,7 +64,7 @@ export type CIDObj = {
 }
 
 export type FileContent = Object | Blob | string
-export type FileContentRaw = Uint8Array
+export type FileContentRaw = Buffer
 
 export type FileMode = number
 

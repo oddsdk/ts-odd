@@ -1,6 +1,7 @@
 import dagPB from 'ipld-dag-pb'
 import { getIpfs, CID, DAGNode, RawDAGNode, DAGLink, RawDAGLink } from '../../ipfs'
 import { Link } from '../types'
+import { Buffer } from 'buffer/'
 
 export function emptyDir(): DAGNode {
   return new dagPB.DAGNode(Buffer.from([8, 1]))
