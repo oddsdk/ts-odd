@@ -1,4 +1,6 @@
-import { getIpfs, CID, FileContent } from '../ipfs'
+import { getIpfs } from './config'
+import { CID, FileContent, DAGNode } from './types'
+import util from './util'
 
 export async function add(content: FileContent): Promise<CID> {
   const ipfs = await getIpfs()
@@ -29,9 +31,24 @@ export async function cat(cid: CID): Promise<string> {
   return buf.toString()
 }
 
+export async function dagGet(cid: CID): Promise<DAGNode> {
+  const ipfs = await getIpfs()
+  const raw = await ipfs.dag.get(cid)
+  return util.rawToDAGNode(raw)
+}
+
+export async function dagPut(node: DAGNode): Promise<CID> {
+  const ipfs = await getIpfs()
+  // using this format so that we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
+  const cid = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
+  return cid.toString()
+}
+
 export default {
   add,
   catRaw,
   catBuf,
   cat,
+  dagGet,
+  dagPut
 }
