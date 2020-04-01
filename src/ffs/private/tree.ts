@@ -1,5 +1,5 @@
 import util from './util'
-import { PrivateTreeData, Tree, Link, PrivateTreeStatic } from '../types'
+import { PrivateTreeData, Tree, Links, PrivateTreeStatic } from '../types'
 import ipfs, { CID, FileContent } from '../../ipfs'
 import PublicTree from '../public/tree'
 
@@ -8,7 +8,7 @@ export class PrivateTree extends PublicTree {
   private key: string
   static: PrivateTreeStatic
 
-  constructor(links: Link[], key: string) {
+  constructor(links: Links, key: string) {
     super(links)
     this.key = key
     this.static = PrivateTree
@@ -20,7 +20,7 @@ export class PrivateTree extends PublicTree {
  
   static async empty(key?: string): Promise<PrivateTree> {
     const keyStr = key ? key : await util.genKeyStr()
-    return new PrivateTree([], keyStr)
+    return new PrivateTree({}, keyStr)
   }
 
   static async fromCID(_cid: CID): Promise<Tree> {
@@ -42,7 +42,7 @@ export class PrivateTree extends PublicTree {
   }
 
   async put(): Promise<CID> {
-    throw new Error("This is a private node. Use node.putEncrtyped")
+    throw new Error("This is a private node. Use node.putEncrypted")
   }
 
   async putEncrypted(key: string): Promise<CID> {
@@ -77,7 +77,7 @@ export class PrivateTree extends PublicTree {
     }
   }
 
-  copyWithLinks(links: Link[]): Tree {
+  copyWithLinks(links: Links): Tree {
     return new PrivateTree(links, this.key)
   }
 

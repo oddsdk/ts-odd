@@ -12,7 +12,7 @@ export async function emptyDir(): Promise<PrivateTreeData> {
   const key = await genKeyStr()
   return {
     key: key,
-    links: []
+    links: {}
   }
 }
 

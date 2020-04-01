@@ -1,6 +1,6 @@
 import dagPB from 'ipld-dag-pb'
 import ipfs, { CID, DAGLink } from '../../ipfs'
-import { NonEmptyPath, Tree, Link } from '../types'
+import { NonEmptyPath, Tree, Link, Links } from '../types'
 import pathUtil from '../path'
 
 export const dagNodeData = Buffer.from([8, 1])
@@ -19,13 +19,16 @@ export function toLink(dagLink: DAGLink): Link {
   }
 }
 
-export async function linksFromCID(cid: CID): Promise<Link[]> {
+export async function linksFromCID(cid: CID): Promise<Links> {
   const dagNode = await ipfs.dagGet(cid)
-  return dagNode.Links?.map(toLink) || []
+  return dagNode.Links?.reduce((acc, cur) => {
+    acc[cur.Name] = toLink(cur)
+    return acc
+  }, {} as Links)
 }
 
-export async function putLinks(links: Link[]): Promise<CID> { 
-  const dagLinks = links.map(toDAGLink)
+export async function putLinks(links: Links): Promise<CID> { 
+  const dagLinks = Object.values(links).map(toDAGLink)
   const node = new dagPB.DAGNode(dagNodeData, dagLinks)
   return ipfs.dagPut(node)
 }

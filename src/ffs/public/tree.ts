@@ -1,14 +1,14 @@
 import util from './util'
 import pathUtil from '../path'
-import { Link, Tree, TreeStatic } from '../types'
+import { Link, Links, Tree, TreeStatic } from '../types'
 import ipfs, { CID, FileContent } from '../../ipfs'
 
 class PublicTree implements Tree {
 
-  links: Link[]
+  links: Links
   static: TreeStatic
 
-  constructor(links: Link[]) {
+  constructor(links: Links) {
     this.links = links
     this.static = PublicTree
   }
@@ -18,7 +18,7 @@ class PublicTree implements Tree {
   }
 
   static async empty(): Promise<PublicTree> {
-    return new PublicTree([])
+    return new PublicTree({})
   }
 
   static async fromCID(cid: CID): Promise<PublicTree> {
@@ -32,9 +32,9 @@ class PublicTree implements Tree {
     return dir.addLink({ name: 'index', cid })
   }
 
-  async ls(path: string): Promise<Link[]> {
+  async ls(path: string): Promise<Links> {
     const tree = await this.getTree(path)
-    return tree ? tree.links : []
+    return tree ? tree.links : {}
   }
 
   async mkdir(path: string): Promise<Tree> {
@@ -99,23 +99,26 @@ class PublicTree implements Tree {
   }
 
   findLink(name: string): Link | null { 
-    return this.links.find(l => l.name === name ) || null
+    return this.links[name] || null
   }
 
   addLink(link: Link): Tree { 
-    return this.copyWithLinks([...this.links, link])
+    return this.copyWithLinks({
+      ...this.links,
+      [link.name]: link
+    })
   }
 
   rmLink(name: string): Tree { 
-    const filtered = this.links.filter(l => l.name !== name)
-    return this.copyWithLinks(filtered)
+    delete this.links[name]
+    return this.copyWithLinks(this.links)
   }
 
   replaceLink(link: Link): Tree { 
     return this.rmLink(link.name).addLink(link)
   }
 
-  copyWithLinks(links: Link[]): Tree {
+  copyWithLinks(links: Links): Tree {
     return new PublicTree(links)
   }
 }

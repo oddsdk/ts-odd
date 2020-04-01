@@ -8,7 +8,7 @@ export type NonEmptyPath = [string, ...string[]]
 
 export type PrivateTreeData = {
   key: string
-  links: Link[]
+  links: Links
 }
 
 export type Link = {
@@ -16,6 +16,8 @@ export type Link = {
   cid: CID
   size?: number 
 }
+
+export type Links = { [name: string]: Link }
 
 export interface PrivateTreeStatic extends TreeStatic {
   fromCIDWithKey: (cid: CID, keyStr: string) => Promise<Tree>
@@ -29,9 +31,9 @@ export interface TreeStatic {
 
 export interface Tree {
   static: TreeStatic
-  links: Link[]
+  links: Links
 
-  ls(path: string): Promise<Link[]>
+  ls(path: string): Promise<Links>
   mkdir(path: string): Promise<Tree>
   cat(path: string): Promise<FileContent | null>
   add(path: string, content: FileContent): Promise<Tree>
@@ -46,9 +48,9 @@ export interface Tree {
   getOwnContent(): Promise<FileContent | null>
 
   isFile(): boolean
-  copyWithLinks(links: Link[]): Tree
   findLink(name: string): Link | null
   addLink(link: Link): Tree
   rmLink(name: string): Tree
   replaceLink(link: Link): Tree
+  copyWithLinks(links: Links): Tree
 }
