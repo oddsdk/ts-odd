@@ -35,8 +35,7 @@ export class PrivateTree extends PublicTree {
 
   static async fromContent(content: FileContent, key?: string): Promise<Tree> {
     const keyStr = key ? key : await util.genKeyStr()
-    const bytes = util.contentToBytes(content)
-    const encrypted = await util.encrypt(bytes, keyStr)
+    const encrypted = await util.encryptContent(content, keyStr)
     const cid = await ipfs.add(encrypted)
     const dir = await PrivateTree.empty(keyStr)
     return dir.addLink({ name: 'index', cid })
@@ -62,6 +61,15 @@ export class PrivateTree extends PublicTree {
     return link ? this.static.fromCIDWithKey(link.cid, this.key) : null
   }
 
+  async getOwnContent(): Promise<FileContent | null> {
+    const link = this.findLink('index')
+    if(link === null) {
+      return null
+    }
+    const encrypted = await ipfs.catBuf(link.cid)
+    return util.decryptContent(encrypted, this.key)
+  }
+
   data(): PrivateTreeData {
     return {
       key: this.key,
@@ -76,19 +84,3 @@ export class PrivateTree extends PublicTree {
 }
 
 export default PrivateTree
-
-
-// export async function empty(keyName: string) {
-//   const ks = await keystore.get()
-//   const key = await ks.exportSymmKey(keyName)
-//   const root = await privNode.empty()
-//   return new PrivateTree(root, key)
-// }
-
-// export async function resolve(cid: CID, keyName: string) {
-//   const ks = await keystore.get()
-//   const key = await ks.exportSymmKey(keyName)
-//   const root = await privNode.resolve(cid, key)
-//   return new PrivateTree(root, key)
-// }
-

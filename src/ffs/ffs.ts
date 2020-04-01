@@ -48,30 +48,36 @@ export class FileSystem {
     return new FileSystem(root, pubTreeInstance, privTreeInstance, key)
   }
 
-  async ls(path: string): Promise<Link[] | null> {
-    return this.root.ls(path)
+  async ls(path: string): Promise<Link[]> {
+    return this.runOnTree(path, false, (tree, relPath) => {
+      return tree.ls(relPath)
+    })
   }
 
   async mkdir(path: string): Promise<CID> {
-    await this.runOnTree(path, (tree, tail) => {
-      return tree.mkdir(tail)
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.mkdir(relPath)
     })
     return this.sync()
   }
 
   async add(path: string, content: FileContent): Promise<CID> {
-    await this.runOnTree(path, (tree, tail) => {
-      return tree.add(tail, content)
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.add(relPath, content)
     })
     return this.sync()
   }
 
   async cat(path: string): Promise<FileContent | null> {
-    return this.root.cat(path)
+    return this.runOnTree(path, false, (tree, relPath) => {
+      return tree.cat(relPath)
+    })
   }
 
   async getTree(path: string): Promise<Tree | null> {
-    return this.root.getTree(path)
+    return this.runOnTree(path, false, (tree, relPath) => {
+      return tree.getTree(relPath)
+    })
   }
 
   async sync(): Promise<CID> {
@@ -85,19 +91,19 @@ export class FileSystem {
     return this.root.put()
   }
 
-  async runOnTree(path: string, fn: (tree: Tree, relPath: string) => Promise<Tree>): Promise<Tree> {
+  async runOnTree<a>(path: string, updateTree: boolean, fn: (tree: Tree, relPath: string) => Promise<a>): Promise<a> {
     const parts = pathUtil.split(path)
     const head = parts[0]
     const relPath = pathUtil.join(parts.slice(1))
-    let result: Tree
+    let result: a
     if(head === 'public') {
       result = await fn(this.publicTree, relPath)
-      if(PublicTree.instanceOf(result)){
+      if(updateTree && PublicTree.instanceOf(result)){
         this.publicTree = result
       } 
     }else if(head === 'private') {
       result = await fn(this.privateTree, relPath)
-      if(PrivateTree.instanceOf(result)){
+      if(updateTree && PrivateTree.instanceOf(result)){
         this.privateTree = result
       }
       return result
