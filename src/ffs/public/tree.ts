@@ -1,6 +1,7 @@
 import util from './util'
 import pathUtil from '../path'
-import { Link, Links, Tree, TreeStatic } from '../types'
+import link from '../link'
+import { Link, Links, FullLinks, Tree, TreeStatic } from '../types'
 import ipfs, { CID, FileContent } from '../../ipfs'
 
 class PublicTree implements Tree {
@@ -32,9 +33,9 @@ class PublicTree implements Tree {
     return dir.addLink({ name: 'index', cid })
   }
 
-  async ls(path: string): Promise<Links> {
+  async ls(path: string): Promise<FullLinks> {
     const tree = await this.getTree(path)
-    return tree ? tree.links : {}
+    return tree ? tree.fullLinks() : {}
   }
 
   async mkdir(path: string): Promise<Tree> {
@@ -76,7 +77,7 @@ class PublicTree implements Tree {
 
   async updateDirectChild(child: PublicTree, name: string): Promise<Tree> {
     const cid = await child.put()
-    return this.replaceLink({ name, cid })
+    return this.replaceLink(link.make( name, cid ))
   }
 
   async getDirectChild(name: string): Promise<Tree | null> {
@@ -92,6 +93,10 @@ class PublicTree implements Tree {
   async getOwnContent(): Promise<FileContent | null> {
     const link = this.findLink('index')
     return link ? ipfs.catBuf(link.cid) : null
+  }
+
+  async fullLinks(): Promise<FullLinks> {
+    return link.upgradeLinks(this)
   }
 
   isFile(): boolean { 

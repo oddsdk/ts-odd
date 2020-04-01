@@ -1,34 +1,21 @@
 import dagPB from 'ipld-dag-pb'
-import ipfs, { CID, DAGLink } from '../../ipfs'
-import { NonEmptyPath, Tree, Link, Links } from '../types'
+import ipfs, { CID } from '../../ipfs'
+import { NonEmptyPath, Tree, Links } from '../types'
+import link from '../link'
 import pathUtil from '../path'
 
 export const dagNodeData = Buffer.from([8, 1])
 
-export function toDAGLink(link: Link): DAGLink {
-  const { name, cid, size } = link
-  return new dagPB.DAGLink(name, size, cid)
-}
-
-export function toLink(dagLink: DAGLink): Link {
-  const { Name, Hash, Size } = dagLink
-  return {
-    name: Name,
-    cid: Hash.toString(),
-    size: Size
-  }
-}
-
 export async function linksFromCID(cid: CID): Promise<Links> {
-  const dagNode = await ipfs.dagGet(cid)
-  return dagNode.Links?.reduce((acc, cur) => {
-    acc[cur.Name] = toLink(cur)
+  const links = await ipfs.ls(cid)
+  return links.reduce((acc, cur) => {
+    acc[cur.name || ''] = link.fromFSFile(cur)
     return acc
   }, {} as Links)
 }
 
 export async function putLinks(links: Links): Promise<CID> { 
-  const dagLinks = Object.values(links).map(toDAGLink)
+  const dagLinks = Object.values(links).map(link.toDAGLink)
   const node = new dagPB.DAGNode(dagNodeData, dagLinks)
   return ipfs.dagPut(node)
 }
@@ -58,8 +45,6 @@ export async function getRecurse(tree: Tree, path: string[]): Promise<Tree | nul
 }
 
 export default {
-  toDAGLink,
-  toLink,
   linksFromCID,
   putLinks,
   addRecurse,

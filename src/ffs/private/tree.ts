@@ -1,4 +1,5 @@
 import util from './util'
+import link from '../link'
 import { PrivateTreeData, Tree, Links, PrivateTreeStatic } from '../types'
 import ipfs, { CID, FileContent } from '../../ipfs'
 import PublicTree from '../public/tree'
@@ -52,8 +53,7 @@ export class PrivateTree extends PublicTree {
 
   async updateDirectChild(child: PrivateTree, name: string): Promise<Tree> {
     const cid = await child.putEncrypted(this.key)
-    const link = { name, cid }
-    return this.replaceLink(link)
+    return this.replaceLink(link.make(name, cid))
   }
 
   async getDirectChild(name: string): Promise<Tree | null> {

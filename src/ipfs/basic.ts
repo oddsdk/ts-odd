@@ -1,5 +1,5 @@
 import { getIpfs } from './config'
-import { CID, FileContent, DAGNode } from './types'
+import { CID, FileContent, DAGNode, UnixFSFile } from './types'
 import util from './util'
 
 export async function add(content: FileContent): Promise<CID> {
@@ -31,6 +31,15 @@ export async function cat(cid: CID): Promise<string> {
   return buf.toString()
 }
 
+export async function ls(cid: CID): Promise<UnixFSFile[]> {
+  const ipfs = await getIpfs()
+  const links = []
+  for await (const link of ipfs.ls(cid)) {
+    links.push(link)
+  }
+  return links
+}
+
 export async function dagGet(cid: CID): Promise<DAGNode> {
   const ipfs = await getIpfs()
   const raw = await ipfs.dag.get(cid)
@@ -49,6 +58,7 @@ export default {
   catRaw,
   catBuf,
   cat,
+  ls,
   dagGet,
   dagPut
 }

@@ -15,9 +15,15 @@ export type Link = {
   name: string
   cid: CID
   size?: number 
+  mtime?: number
+}
+
+export type FullLink = Link & {
+  isFile: boolean
 }
 
 export type Links = { [name: string]: Link }
+export type FullLinks = { [name: string]: FullLink }
 
 export interface PrivateTreeStatic extends TreeStatic {
   fromCIDWithKey: (cid: CID, keyStr: string) => Promise<Tree>
@@ -33,7 +39,7 @@ export interface Tree {
   static: TreeStatic
   links: Links
 
-  ls(path: string): Promise<Links>
+  ls(path: string): Promise<FullLinks>
   mkdir(path: string): Promise<Tree>
   cat(path: string): Promise<FileContent | null>
   add(path: string, content: FileContent): Promise<Tree>
@@ -47,6 +53,7 @@ export interface Tree {
   getOrCreateDirectChild(name: string): Promise<Tree>
   getOwnContent(): Promise<FileContent | null>
 
+  fullLinks(): Promise<FullLinks>
   isFile(): boolean
   findLink(name: string): Link | null
   addLink(link: Link): Tree

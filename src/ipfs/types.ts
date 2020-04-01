@@ -1,9 +1,10 @@
 export type IPFS = {
   add(data: FileContent, options?: any): AsyncIterable<UnixFSFile>
   cat(cid: CID): AsyncIterable<FileContentRaw>
-  ls(cid: CID): Promise<UnixFSFile[]> | AsyncIterable<UnixFSFile>
+  ls(cid: CID): AsyncIterable<UnixFSFile>
   dag: DagAPI
   object: ObjectAPI
+  files: any
 }
 
 export type DAGNode = {

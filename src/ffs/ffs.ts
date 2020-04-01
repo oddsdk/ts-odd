@@ -1,6 +1,6 @@
 import PublicTree from './public'
 import PrivateTree from './private'
-import { Tree, Links } from './types'
+import { Tree, FullLinks } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
 import keystore from '../keystore'
@@ -48,7 +48,7 @@ export class FileSystem {
     return new FileSystem(root, pubTreeInstance, privTreeInstance, key)
   }
 
-  async ls(path: string): Promise<Links> {
+  async ls(path: string): Promise<FullLinks> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.ls(relPath)
     })
