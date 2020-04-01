@@ -6,7 +6,7 @@ import pathUtil from '../path'
 
 export const dagNodeData = Buffer.from([8, 1])
 
-export async function linksFromCID(cid: CID): Promise<Links> {
+export const linksFromCID = async (cid: CID): Promise<Links> => {
   const links = await ipfs.ls(cid)
   return links.reduce((acc, cur) => {
     acc[cur.name || ''] = link.fromFSFile(cur)
@@ -14,13 +14,13 @@ export async function linksFromCID(cid: CID): Promise<Links> {
   }, {} as Links)
 }
 
-export async function putLinks(links: Links): Promise<CID> { 
+export const putLinks = async (links: Links): Promise<CID> => { 
   const dagLinks = Object.values(links).map(link.toDAGLink)
   const node = new dagPB.DAGNode(dagNodeData, dagLinks)
   return ipfs.dagPut(node)
 }
 
-export async function addRecurse(tree: Tree, path: NonEmptyPath, child: Tree): Promise<Tree> {
+export const addRecurse = async (tree: Tree, path: NonEmptyPath, child: Tree): Promise<Tree> => {
   const name = path[0]
   const nextPath = pathUtil.nextNonEmpty(path)
   let toAdd: Tree
@@ -33,7 +33,7 @@ export async function addRecurse(tree: Tree, path: NonEmptyPath, child: Tree): P
   return tree.updateDirectChild(toAdd, name)
 }
 
-export async function getRecurse(tree: Tree, path: string[]): Promise<Tree | null> {
+export const getRecurse = async (tree: Tree, path: string[]): Promise<Tree | null> => {
   if(path.length === 0){
     return tree
   }

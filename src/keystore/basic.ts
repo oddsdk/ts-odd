@@ -1,6 +1,6 @@
 import { getKeystore } from './config'
 
-export async function getKeyByName(keyName: string) {
+export const getKeyByName = async (keyName: string): Promise<string> => {
   const ks = await getKeystore()
   return ks.exportSymmKey(keyName)
 }

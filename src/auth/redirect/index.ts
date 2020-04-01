@@ -7,7 +7,7 @@ export const DEFAULT_URL = 'https://auth.fission.codes'
 export * from './types'
 
 // PARENT
-export async function redirectReq(folderCID: string, readKey: string, url: string = DEFAULT_URL): Promise<void> {
+export const redirectReq = async (folderCID: string, readKey: string, url: string = DEFAULT_URL): Promise<void> => {
   const redirect = window.location.origin + window.location.pathname
   const query = queryString.stringify({
     redirect,
@@ -17,7 +17,7 @@ export async function redirectReq(folderCID: string, readKey: string, url: strin
   window.location.replace(`${url}?${query}`)
 }
 
-export function parseRes(): ResQuery | null {
+export const parseRes = (): ResQuery | null => {
   const { encryptedKey, readKey } = queryString.parse(window.location.search)
   if ( typeof encryptedKey !== 'string'
     || typeof readKey !== 'string'
@@ -27,7 +27,7 @@ export function parseRes(): ResQuery | null {
   return { encryptedKey, readKey }
 }
 
-export async function parseKeyFromRes(ks: KeyStore): Promise<string | null> {
+export const parseKeyFromRes = async (ks: KeyStore): Promise<string | null> => {
   const res = parseRes()
   if(!res){
     return null
@@ -37,7 +37,7 @@ export async function parseKeyFromRes(ks: KeyStore): Promise<string | null> {
 }
 
 // CHILD
-export function parseReq(): ReqQuery | null {
+export const parseReq = (): ReqQuery | null => {
   const { redirect, folderCID, readKey } = queryString.parse(window.location.search)
   if ( typeof redirect !== 'string'
     || typeof folderCID !== 'string'
@@ -48,7 +48,7 @@ export function parseReq(): ReqQuery | null {
   return { redirect, folderCID, readKey }
 }
 
-export async function redirectRes(ks: KeyStore | null, req: ReqQuery | null) {
+export const redirectRes = async (ks: KeyStore | null, req: ReqQuery | null) => {
   if(!ks) {
     throw new Error("Could not load keystore")
   }

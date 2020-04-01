@@ -3,12 +3,12 @@ import aes from 'keystore-idb/aes'
 import { PrivateTreeData } from '../types'
 import { FileContent } from '../../ipfs'
 
-export async function genKeyStr(): Promise<string> {
+export const genKeyStr = async (): Promise<string> => {
   const key = await aes.makeKey()
   return aes.exportKey(key)
 }
 
-export async function emptyDir(): Promise<PrivateTreeData> {
+export const emptyDir = async (): Promise<PrivateTreeData> => {
   const key = await genKeyStr()
   return {
     key: key,
@@ -16,34 +16,34 @@ export async function emptyDir(): Promise<PrivateTreeData> {
   }
 }
 
-export async function encrypt(data: Uint8Array, keyStr: string): Promise<Uint8Array> {
+export const encrypt = async (data: Uint8Array, keyStr: string): Promise<Uint8Array> => {
   const key = await aes.importKey(keyStr)
   const encrypted = await aes.encryptBytes(data.buffer, key)
   return new Uint8Array(encrypted)
 }
 
-export async function encryptNode(node: PrivateTreeData, keyStr: string): Promise<Uint8Array> {
+export const encryptNode = async (node: PrivateTreeData, keyStr: string): Promise<Uint8Array> => {
   const encoded = cbor.encode(node)
   return encrypt(encoded, keyStr)
 }
 
-export async function encryptContent(content: FileContent, keyStr: string): Promise<Uint8Array> {
+export const encryptContent = async (content: FileContent, keyStr: string): Promise<Uint8Array> => {
   const encoded = cbor.encode(content)
   return encrypt(encoded, keyStr)
 }
 
-export async function decrypt(encrypted: Uint8Array, keyStr: string): Promise<Uint8Array> {
+export const decrypt = async (encrypted: Uint8Array, keyStr: string): Promise<Uint8Array> => {
   const key = await aes.importKey(keyStr)
   const decryptedBuf = await aes.decryptBytes(encrypted.buffer, key)
   return new Uint8Array(decryptedBuf)
 }
 
-export async function decryptNode(encrypted: Uint8Array, keyStr: string): Promise<PrivateTreeData> {
+export const decryptNode = async (encrypted: Uint8Array, keyStr: string): Promise<PrivateTreeData> => {
   const decrypted = await decrypt(encrypted, keyStr)
   return cbor.decode(decrypted)
 }
 
-export async function decryptContent(encrypted: Uint8Array, keyStr: string): Promise<FileContent> {
+export const decryptContent = async (encrypted: Uint8Array, keyStr: string): Promise<FileContent> => {
   const decrypted = await decrypt(encrypted, keyStr)
   return cbor.decode(decrypted)
 }

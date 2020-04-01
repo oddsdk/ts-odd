@@ -9,11 +9,11 @@ let ipfs: IPFS | null = null
 // This is because we need to redo the types for js-ipfs.
 // get-ipfs is still on old types, and this pkg is progressively creating the new types
 
-export function setIpfs(userIpfs: any) {
+export const setIpfs = (userIpfs: any): void => {
   ipfs = userIpfs as IPFS
 }
 
-export async function getIpfs() {
+export const getIpfs = async (): Promise<IPFS> => {
   if(ipfs){
     return ipfs
   }

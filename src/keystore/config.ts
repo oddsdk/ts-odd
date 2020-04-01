@@ -5,7 +5,7 @@ const KEYSTORE_CFG = { type: CryptoSystem.RSA }
 
 let ks: KeyStore | null = null
 
-export async function getKeystore(): Promise<KeyStore> {
+export const getKeystore = async (): Promise<KeyStore> => {
   if(ks){
     return ks
   }

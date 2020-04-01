@@ -1,14 +1,14 @@
 import { NonEmptyPath } from './types'
 
-export function split(path: string): string[] {
+export const split = (path: string): string[] => {
   return path.split('/').filter(p => p.length > 0)
 }
 
-export function join(parts: string[]): string {
+export const join = (parts: string[]): string => {
   return parts.join('/')
 }
 
-export function splitNonEmpty(path: string): NonEmptyPath | null {
+export const splitNonEmpty = (path: string): NonEmptyPath | null => {
   const parts = split(path)
   if(parts.length < 1){
     return null
@@ -16,7 +16,7 @@ export function splitNonEmpty(path: string): NonEmptyPath | null {
   return parts as NonEmptyPath
 }
 
-export function nextNonEmpty(parts: NonEmptyPath): NonEmptyPath | null {
+export const nextNonEmpty = (parts: NonEmptyPath): NonEmptyPath | null => {
   const next = parts.slice(1)
   if(next.length < 1){
     return null
