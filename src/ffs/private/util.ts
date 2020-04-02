@@ -30,7 +30,6 @@ export const encryptNode = async (node: PrivateTreeData, keyStr: string): Promis
 export const encryptContent = async (content: FileContent, keyStr: string): Promise<Uint8Array> => {
   if(isBlob(content)){
     content = await blobToBuffer(content)
-    console.log('content: ', content)
   }
   const encoded = cbor.encode(content)
   return encrypt(encoded, keyStr)
