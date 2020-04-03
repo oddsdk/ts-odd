@@ -1,9 +1,3 @@
-import * as file from './dir'
-import * as dir from './dir'
-import * as helpers from './helpers'
+import FileSystem from './ffs'
 
-export default {
-  file,
-  dir,
-  helpers
-}
+export default FileSystem

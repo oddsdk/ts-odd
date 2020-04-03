@@ -1,9 +1,10 @@
 export type IPFS = {
   add(data: FileContent, options?: any): AsyncIterable<UnixFSFile>
   cat(cid: CID): AsyncIterable<FileContentRaw>
-  ls(cid: CID): Promise<UnixFSFile[]> | AsyncIterable<UnixFSFile>
+  ls(cid: CID): AsyncIterable<UnixFSFile>
   dag: DagAPI
   object: ObjectAPI
+  files: any
 }
 
 export type DAGNode = {
@@ -12,7 +13,7 @@ export type DAGNode = {
   toDAGLink: (opt?: { name?: string }) => Promise<DAGLink>
   addLink: (link: DAGLink) => void
   rmLink: (name: string) => void
-  serialize: () => any
+  toJSON: () => object
 }
 
 export type DAGLink = {
@@ -62,7 +63,7 @@ export type CIDObj = {
 }
 
 export type FileContent = Object | Blob | string
-export type FileContentRaw = Uint8Array
+export type FileContentRaw = Buffer
 
 export type FileMode = number
 
@@ -73,6 +74,7 @@ export type UnixFSFile = {
   mode?: FileMode
   mtime?: number 
   name?: string
+  type?: string
 }
 
 export type ObjStat = {
