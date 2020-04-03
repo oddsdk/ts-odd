@@ -1,8 +1,9 @@
 import PublicTree from './public'
 import PrivateTree from './private'
-import { Tree, FullLinks } from './types'
+import { Tree, File, Links } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
+import link from './link'
 import keystore from '../keystore'
 
 export class FileSystem {
@@ -48,7 +49,7 @@ export class FileSystem {
     return new FileSystem(root, pubTreeInstance, privTreeInstance, key)
   }
 
-  async ls(path: string): Promise<FullLinks> {
+  async ls(path: string): Promise<Links> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.ls(relPath)
     })
@@ -74,20 +75,20 @@ export class FileSystem {
     })
   }
 
-  async getTree(path: string): Promise<Tree | null> {
+  async get(path: string): Promise<Tree | File | null> {
     return this.runOnTree(path, false, (tree, relPath) => {
-      return tree.getTree(relPath)
+      return tree.get(relPath)
     })
   }
 
   async sync(): Promise<CID> {
     const pubCID = await this.publicTree.put()
     const privCID = await this.privateTree.putEncrypted(this.key)
-    const pubLink = { name: 'public', cid: pubCID }
-    const privLink = { name: 'private', cid: privCID }
+    const pubLink = link.make('public', pubCID, false)
+    const privLink = link.make('private', privCID, false)
     this.root = this.root
-                  .replaceLink(pubLink)
-                  .replaceLink(privLink)
+                  .updateLink(pubLink)
+                  .updateLink(privLink)
     return this.root.put()
   }
 

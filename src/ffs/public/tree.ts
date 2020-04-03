@@ -1,17 +1,25 @@
 import util from './util'
 import pathUtil from '../path'
 import link from '../link'
-import { Link, Links, FullLinks, Tree, TreeStatic } from '../types'
-import ipfs, { CID, FileContent } from '../../ipfs'
+import { Link, Links, Tree, TreeStatic, FileStatic, File } from '../types'
+import { CID, FileContent } from '../../ipfs'
+import PublicFile from './file'
 
 class PublicTree implements Tree {
 
   links: Links
-  static: TreeStatic
+  isFile = false
+  static: {
+    tree: TreeStatic
+    file: FileStatic
+  }
 
   constructor(links: Links) {
     this.links = links
-    this.static = PublicTree
+    this.static = {
+      tree: PublicTree,
+      file: PublicFile
+    }
   }
 
   static instanceOf(obj: any): obj is PublicTree {
@@ -27,15 +35,12 @@ class PublicTree implements Tree {
     return new PublicTree(links)
   }
 
-  static async fromContent(content: FileContent): Promise<Tree> {
-    const cid = await ipfs.add(content)
-    const dir = await PublicTree.empty()
-    return dir.addLink({ name: 'index', cid })
-  }
-
-  async ls(path: string): Promise<FullLinks> {
-    const tree = await this.getTree(path)
-    return tree ? tree.fullLinks() : {}
+  async ls(path: string): Promise<Links> {
+    const tree = await this.get(path)
+    if(util.isFile(tree)) {
+      throw new Error('Can not `ls` a file')
+    }
+    return tree.links
   }
 
   async mkdir(path: string): Promise<Tree> {
@@ -43,30 +48,38 @@ class PublicTree implements Tree {
     if(exists) {
       throw new Error(`Path already exists: ${path}`)
     }
-    const toAdd = await this.static.empty()
+    const toAdd = await this.static.tree.empty()
     return this.addChild(path, toAdd)
   }
 
-  async cat(path: string): Promise<FileContent | null> {
-    const tree = await this.getTree(path)
-    return tree ? tree.getOwnContent() : null
+  async cat(path: string): Promise<FileContent> {
+    const file = await this.get(path)
+    if(!util.isFile(file)){
+      throw new Error('Can not `cat` a directory')
+    }
+    return file.content
   }
 
   async add(path: string, content: FileContent): Promise<Tree> {
-    const toAdd = await this.static.fromContent(content)
-    return this.addChild(path, toAdd)
+    const file = this.static.file.create(content)
+    return this.addChild(path, file)
   }
 
   async pathExists(path: string): Promise<boolean> {
-    const tree = await this.getTree(path)
-    return tree !== null
+    try{
+      await this.get(path)
+      return true
+    }catch(_err){
+      return false
+
+    }
   }
 
-  async getTree(path: string): Promise<Tree | null> {
+  async get(path: string): Promise<Tree | File> {
     return util.getRecurse(this, pathUtil.split(path))
   }
 
-  async addChild(path: string, toAdd: Tree): Promise<Tree> {
+  async addChild(path: string, toAdd: Tree | File): Promise<Tree> {
     const parts = pathUtil.splitNonEmpty(path)
     return parts ? util.addRecurse(this, parts, toAdd) : this
   }
@@ -75,39 +88,30 @@ class PublicTree implements Tree {
     return util.putLinks(this.links)
   }
 
-  async updateDirectChild(child: PublicTree, name: string): Promise<Tree> {
+  async updateDirectChild(child: Tree | File, name: string): Promise<Tree> {
     const cid = await child.put()
-    return this.replaceLink(link.make( name, cid ))
+    const isFile = util.isFile(child)
+    return this.updateLink(link.make(name, cid, isFile))
   }
 
-  async getDirectChild(name: string): Promise<Tree | null> {
+  async getDirectChild(name: string): Promise<Tree | File | null> {
     const link = this.findLink(name)
-    return link ? this.static.fromCID(link.cid) : null
+    if(link === null) {
+      return null
+    }
+    return link.isFile ? this.static.file.fromCID(link.cid) : this.static.tree.fromCID(link.cid)
   }
 
-  async getOrCreateDirectChild(name: string): Promise<Tree> {
+  async getOrCreateDirectChild(name: string): Promise<Tree | File> {
     const child = await this.getDirectChild(name)
-    return child ? child : this.static.empty()
-  }
-
-  async getOwnContent(): Promise<FileContent | null> {
-    const link = this.findLink('index')
-    return link ? ipfs.catBuf(link.cid) : null
-  }
-
-  async fullLinks(): Promise<FullLinks> {
-    return link.upgradeLinks(this)
-  }
-
-  isFile(): boolean { 
-    return this.findLink('index') !== null
+    return child ? child : this.static.tree.empty()
   }
 
   findLink(name: string): Link | null { 
     return this.links[name] || null
   }
 
-  addLink(link: Link): Tree { 
+  updateLink(link: Link): Tree { 
     return this.copyWithLinks({
       ...this.links,
       [link.name]: link
@@ -117,10 +121,6 @@ class PublicTree implements Tree {
   rmLink(name: string): Tree { 
     delete this.links[name]
     return this.copyWithLinks(this.links)
-  }
-
-  replaceLink(link: Link): Tree { 
-    return this.rmLink(link.name).addLink(link)
   }
 
   copyWithLinks(links: Links): Tree {

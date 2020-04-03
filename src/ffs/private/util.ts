@@ -1,3 +1,4 @@
+import publicUtil from '../public/util'
 import cbor from 'borc'
 import aes from 'keystore-idb/aes'
 import { PrivateTreeData } from '../types'
@@ -76,6 +77,7 @@ const isBlob = (obj: any): obj is Blob => {
 }
 
 export default {
+  ...publicUtil,
   genKeyStr,
   emptyDir,
   encrypt,

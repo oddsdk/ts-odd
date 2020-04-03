@@ -16,48 +16,58 @@ export type Link = {
   cid: CID
   size?: number 
   mtime?: number
-}
-
-export type FullLink = Link & {
   isFile: boolean
 }
 
 export type Links = { [name: string]: Link }
-export type FullLinks = { [name: string]: FullLink }
 
-export interface PrivateTreeStatic extends TreeStatic {
-  fromCIDWithKey: (cid: CID, keyStr: string) => Promise<Tree>
+export interface FileStatic {
+  create: (content: FileContent) => File
+  fromCID: (cid: CID) => Promise<File>
+}
+
+export interface PrivateFileStatic extends FileStatic{
+  fromCIDWithKey: (cid: CID, key: string) => Promise<File>
+}
+
+export interface File {
+  content: FileContent
+  put(): Promise<CID>
 }
 
 export interface TreeStatic {
   empty: () => Promise<Tree>
   fromCID: (cid: CID) => Promise<Tree>
-  fromContent: (content: FileContent) => Promise<Tree>
+}
+
+export interface PrivateTreeStatic extends TreeStatic {
+  fromCIDWithKey: (cid: CID, key: string) => Promise<Tree>
 }
 
 export interface Tree {
-  static: TreeStatic
   links: Links
+  isFile: boolean
+  static: {
+    tree: TreeStatic
+    file: FileStatic
+  }
 
-  ls(path: string): Promise<FullLinks>
+
+  ls(path: string): Promise<Links>
   mkdir(path: string): Promise<Tree>
-  cat(path: string): Promise<FileContent | null>
+  cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<Tree>
-  getTree(path: string): Promise<Tree | null>
+  get(path: string): Promise<Tree | File>
   pathExists(path: string): Promise<boolean> 
-  addChild(path: string, toAdd: Tree): Promise<Tree>
+  addChild(path: string, toAdd: Tree | File): Promise<Tree>
 
   put(): Promise<CID>
-  updateDirectChild(child: Tree, name: string): Promise<Tree>
-  getDirectChild(name: string): Promise<Tree | null>
-  getOrCreateDirectChild(name: string): Promise<Tree>
-  getOwnContent(): Promise<FileContent | null>
+  updateDirectChild(child: Tree | File, name: string): Promise<Tree>
+  getDirectChild(name: string): Promise<Tree | File | null>
+  getOrCreateDirectChild(name: string): Promise<Tree | File>
 
-  fullLinks(): Promise<FullLinks>
-  isFile(): boolean
   findLink(name: string): Link | null
-  addLink(link: Link): Tree
+  updateLink(link: Link): Tree
   rmLink(name: string): Tree
-  replaceLink(link: Link): Tree
   copyWithLinks(links: Links): Tree
 }

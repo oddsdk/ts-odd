@@ -74,6 +74,7 @@ export type UnixFSFile = {
   mode?: FileMode
   mtime?: number 
   name?: string
+  type?: string
 }
 
 export type ObjStat = {
