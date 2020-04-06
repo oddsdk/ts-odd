@@ -4,7 +4,7 @@ export type IPFS = {
   ls(cid: CID): AsyncIterable<UnixFSFile>
   dag: DagAPI
   object: ObjectAPI
-  files: any
+  dns(domain: string): Promise<CID>
 }
 
 export type DAGNode = {
