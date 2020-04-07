@@ -1,5 +1,10 @@
 import { FileContent, CID } from '../ipfs'
 
+export enum FileSystemVersion {
+  v0_0_0 = "0.0.0",
+  v1_0_0 = "1.0.0"
+}
+
 export type AddLinkOpts = {
   shouldOverwrite?: boolean
 }
@@ -20,6 +25,11 @@ export type Link = {
 }
 
 export type Links = { [name: string]: Link }
+
+export type Metadata = {
+  isFile: boolean
+  mtime: number
+}
 
 export interface FileStatic {
   create: (content: FileContent) => File
@@ -45,6 +55,7 @@ export interface PrivateTreeStatic extends TreeStatic {
 }
 
 export interface Tree {
+  version: FileSystemVersion
   links: Links
   isFile: boolean
   static: {
