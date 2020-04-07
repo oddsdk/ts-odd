@@ -5,6 +5,7 @@ import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
 import link from './link'
 import keystore from '../keystore'
+import user from '../user'
 
 export class FileSystem {
 
@@ -38,6 +39,11 @@ export class FileSystem {
       return null
     }
     return new FileSystem(root, publicTree, privateTree, key)
+  }
+
+  static async forUser(username: string, keyName: string): Promise<FileSystem | null> {
+    const cid = await user.fileRoot(username)
+    return FileSystem.fromCID(cid, keyName)
   }
 
   // upgrade public IPFS folder to FileSystem

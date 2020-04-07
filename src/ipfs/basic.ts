@@ -53,6 +53,11 @@ export const dagPut = async (node: DAGNode): Promise<CID> => {
   return cid.toString()
 }
 
+export const dns = async (domain: string): Promise<CID> => {
+  const ipfs = await getIpfs()
+  return ipfs.dns(domain)
+}
+
 export default {
   add,
   catRaw,
@@ -60,5 +65,6 @@ export default {
   cat,
   ls,
   dagGet,
-  dagPut
+  dagPut,
+  dns
 }
