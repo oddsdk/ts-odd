@@ -51,14 +51,9 @@ export class PrivateTree extends PublicTree {
   }
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string): Promise<Tree> {
-    try{
-      const cid = await child.putEncrypted(this.key)
-      const isFile = util.isFile(child)
-      return this.updateLink(link.make(name, cid, isFile))
-    }catch(err){
-      console.log(child)
-      throw err
-    }
+    const cid = await child.putEncrypted(this.key)
+    const isFile = util.isFile(child)
+    return this.updateLink(link.make(name, cid, isFile))
   }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {

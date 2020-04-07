@@ -16,10 +16,13 @@ export type PrivateTreeData = {
   links: Links
 }
 
-export type Link = {
+export type BasicLink = {
   name: string
   cid: CID
   size?: number 
+}
+
+export type Link = BasicLink & {
   mtime?: number
   isFile: boolean
 }

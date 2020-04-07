@@ -1,8 +1,8 @@
 import dagPB from 'ipld-dag-pb'
 import { DAGLink, UnixFSFile } from '../ipfs'
-import { Link } from './types'
+import { BasicLink, Link } from './types'
 
-export const toDAGLink = (link: Link): DAGLink => {
+export const toDAGLink = (link: BasicLink): DAGLink => {
   const { name, cid, size } = link
   return new dagPB.DAGLink(name, size, cid)
 }

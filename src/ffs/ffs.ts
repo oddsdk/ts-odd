@@ -21,7 +21,7 @@ export class FileSystem {
   }
 
   static async empty(keyName: string = 'filesystem-root'): Promise<FileSystem> {
-    const root = await PublicTree.empty(FileSystemVersion.v0_0_0)
+    const root = await PublicTree.empty(FileSystemVersion.v1_0_0)
     const publicTreeInstance = await PublicTree.empty()
     const privateTreeInstance = await PrivateTree.empty()
     const key = await keystore.getKeyByName(keyName)

@@ -19,7 +19,7 @@ export const putFile = async (content: FileContent, _metadata: Partial<Metadata>
 }
 
 export const putTree = async (links: Links, _metadata: Partial<Metadata>): Promise<CID> => { 
-  return util.putLinks(links)
+  return util.putLinks(Object.values(links))
 }
 
 export default {
