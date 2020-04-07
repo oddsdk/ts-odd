@@ -1,12 +1,14 @@
-import util from './util'
+import util from '../util'
 import pathUtil from '../path'
 import link from '../link'
-import { Link, Links, Tree, TreeStatic, FileStatic, File } from '../types'
+import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, FileSystemVersion } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
+import normalizer from '../normalizer'
 
 class PublicTree implements Tree {
 
+  version: FileSystemVersion
   links: Links
   isFile = false
   static: {
@@ -14,7 +16,8 @@ class PublicTree implements Tree {
     file: FileStatic
   }
 
-  constructor(links: Links) {
+  constructor(links: Links, version: FileSystemVersion) {
+    this.version = version
     this.links = links
     this.static = {
       tree: PublicTree,
@@ -26,13 +29,14 @@ class PublicTree implements Tree {
     return obj.getDirectChild !== undefined
   }
 
-  static async empty(): Promise<PublicTree> {
-    return new PublicTree({})
+  static async empty(version: FileSystemVersion = FileSystemVersion.v1_0_0): Promise<PublicTree> {
+    return new PublicTree({}, version)
   }
 
   static async fromCID(cid: CID): Promise<PublicTree> {
-    const links = await util.linksFromCID(cid)
-    return new PublicTree(links)
+    const version = await normalizer.getVersion(cid)
+    const { links }  = await normalizer.getTreeData(cid)
+    return new PublicTree(links, version)
   }
 
   async ls(path: string): Promise<Links> {
@@ -50,7 +54,7 @@ class PublicTree implements Tree {
     if(exists) {
       throw new Error(`Path already exists: ${path}`)
     }
-    const toAdd = await this.static.tree.empty()
+    const toAdd = await this.static.tree.empty(this.version)
     return this.addChild(path, toAdd)
   }
 
@@ -65,7 +69,7 @@ class PublicTree implements Tree {
   }
 
   async add(path: string, content: FileContent): Promise<Tree> {
-    const file = this.static.file.create(content)
+    const file = this.static.file.create(content, this.version)
     return this.addChild(path, file)
   }
 
@@ -81,11 +85,12 @@ class PublicTree implements Tree {
 
   async addChild(path: string, toAdd: Tree | File): Promise<Tree> {
     const parts = pathUtil.splitNonEmpty(path)
-    return parts ? util.addRecurse(this, parts, toAdd) : this
+    const result = parts ? await util.addRecurse(this, parts, toAdd) : this
+    return result
   }
 
   async put(): Promise<CID> {
-    return util.putLinks(this.links)
+    return normalizer.putTree(this.version, this.data())
   }
 
   async updateDirectChild(child: Tree | File, name: string): Promise<Tree> {
@@ -104,7 +109,11 @@ class PublicTree implements Tree {
 
   async getOrCreateDirectChild(name: string): Promise<Tree | File> {
     const child = await this.getDirectChild(name)
-    return child ? child : this.static.tree.empty()
+    return child ? child : this.static.tree.empty(this.version)
+  }
+
+  data(): TreeData {
+    return { links: this.links }
   }
 
   findLink(name: string): Link | null { 
@@ -124,8 +133,9 @@ class PublicTree implements Tree {
   }
 
   copyWithLinks(links: Links): Tree {
-    return new PublicTree(links)
+    return new PublicTree(links, this.version)
   }
+
 }
 
 export default PublicTree
