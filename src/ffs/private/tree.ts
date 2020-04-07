@@ -1,6 +1,6 @@
 import util from './util'
 import link from '../link'
-import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic } from '../types'
+import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, FileSystemVersion } from '../types'
 import ipfs, { CID } from '../../ipfs'
 import PublicTree from '../public/tree'
 import PrivateFile from './file'
@@ -13,8 +13,8 @@ export class PrivateTree extends PublicTree {
     file: PrivateFileStatic
   }
 
-  constructor(links: Links, key: string) {
-    super(links)
+  constructor(links: Links, version: FileSystemVersion, key: string) {
+    super(links, version)
     this.key = key
     this.static = {
       tree: PrivateTree,
@@ -28,7 +28,7 @@ export class PrivateTree extends PublicTree {
  
   static async empty(key?: string): Promise<PrivateTree> {
     const keyStr = key ? key : await util.genKeyStr()
-    return new PrivateTree({}, keyStr)
+    return new PrivateTree({}, FileSystemVersion.v1_0_0, keyStr)
   }
 
   static async fromCID(_cid: CID): Promise<PublicTree> {
@@ -38,7 +38,7 @@ export class PrivateTree extends PublicTree {
   static async fromCIDWithKey(cid: CID, keyStr: string): Promise<PrivateTree> {
     const content = await ipfs.catBuf(cid)
     const { key, links } = await util.decryptNode(content, keyStr)
-    return new PrivateTree(links, key)
+    return new PrivateTree(links, FileSystemVersion.v1_0_0, key)
   }
 
   async put(): Promise<CID> {
@@ -74,7 +74,7 @@ export class PrivateTree extends PublicTree {
   }
 
   copyWithLinks(links: Links): Tree {
-    return new PrivateTree(links, this.key)
+    return new PrivateTree(links, this.version, this.key)
   }
 
 }

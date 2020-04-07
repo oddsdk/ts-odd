@@ -1,12 +1,14 @@
 import util from './util'
 import pathUtil from '../path'
 import link from '../link'
-import { Link, Links, Tree, TreeStatic, FileStatic, File } from '../types'
+import { Link, Links, Tree, TreeStatic, FileStatic, File, FileSystemVersion } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
+import resolver from './resolver'
 
 class PublicTree implements Tree {
 
+  version: FileSystemVersion
   links: Links
   isFile = false
   static: {
@@ -14,7 +16,8 @@ class PublicTree implements Tree {
     file: FileStatic
   }
 
-  constructor(links: Links) {
+  constructor(links: Links, version: FileSystemVersion) {
+    this.version = version
     this.links = links
     this.static = {
       tree: PublicTree,
@@ -26,13 +29,14 @@ class PublicTree implements Tree {
     return obj.getDirectChild !== undefined
   }
 
-  static async empty(): Promise<PublicTree> {
-    return new PublicTree({})
+  static async empty(version: FileSystemVersion = FileSystemVersion.v1_0_0): Promise<PublicTree> {
+    return new PublicTree({}, version)
   }
 
   static async fromCID(cid: CID): Promise<PublicTree> {
-    const links = await util.linksFromCID(cid)
-    return new PublicTree(links)
+    const version = await resolver.getVersion(cid)
+    const links = await resolver.getLinks(cid)
+    return new PublicTree(links, version)
   }
 
   async ls(path: string): Promise<Links> {
@@ -85,7 +89,7 @@ class PublicTree implements Tree {
   }
 
   async put(): Promise<CID> {
-    return util.putLinks(this.links)
+    return resolver.putTree(this.version, this.links)
   }
 
   async updateDirectChild(child: Tree | File, name: string): Promise<Tree> {
@@ -124,7 +128,7 @@ class PublicTree implements Tree {
   }
 
   copyWithLinks(links: Links): Tree {
-    return new PublicTree(links)
+    return new PublicTree(links, this.version)
   }
 }
 
