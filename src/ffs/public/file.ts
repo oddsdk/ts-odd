@@ -19,7 +19,7 @@ class PublicFile implements File {
 
   static async fromCID(cid: CID): Promise<PublicFile> {
     const version = await resolver.getVersion(cid)
-    const content = await resolver.getLinks(cid)
+    const content = await resolver.getFile(cid)
     return new PublicFile(content, version)
   }
 
