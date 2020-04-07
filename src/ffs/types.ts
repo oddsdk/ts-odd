@@ -32,7 +32,7 @@ export type Metadata = {
 }
 
 export interface FileStatic {
-  create: (content: FileContent) => File
+  create: (content: FileContent, version?: FileSystemVersion) => File
   fromCID: (cid: CID) => Promise<File>
 }
 
@@ -46,7 +46,7 @@ export interface File {
 }
 
 export interface TreeStatic {
-  empty: () => Promise<Tree>
+  empty: (version?: FileSystemVersion) => Promise<Tree>
   fromCID: (cid: CID) => Promise<Tree>
 }
 

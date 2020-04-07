@@ -52,7 +52,7 @@ class PublicTree implements Tree {
     if(exists) {
       throw new Error(`Path already exists: ${path}`)
     }
-    const toAdd = await this.static.tree.empty()
+    const toAdd = await this.static.tree.empty(this.version)
     return this.addChild(path, toAdd)
   }
 
@@ -65,7 +65,7 @@ class PublicTree implements Tree {
   }
 
   async add(path: string, content: FileContent): Promise<Tree> {
-    const file = this.static.file.create(content)
+    const file = this.static.file.create(content, this.version)
     return this.addChild(path, file)
   }
 
@@ -108,7 +108,7 @@ class PublicTree implements Tree {
 
   async getOrCreateDirectChild(name: string): Promise<Tree | File> {
     const child = await this.getDirectChild(name)
-    return child ? child : this.static.tree.empty()
+    return child ? child : this.static.tree.empty(this.version)
   }
 
   findLink(name: string): Link | null { 

@@ -1,6 +1,6 @@
 import PublicTree from './public'
 import PrivateTree from './private'
-import { Tree, File, Links } from './types'
+import { Tree, File, Links, FileSystemVersion } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
 import link from './link'
@@ -21,7 +21,7 @@ export class FileSystem {
   }
 
   static async empty(keyName: string = 'filesystem-root'): Promise<FileSystem> {
-    const root = await PublicTree.empty()
+    const root = await PublicTree.empty(FileSystemVersion.v0_0_0)
     const publicTreeInstance = await PublicTree.empty()
     const privateTreeInstance = await PrivateTree.empty()
     const key = await keystore.getKeyByName(keyName)
