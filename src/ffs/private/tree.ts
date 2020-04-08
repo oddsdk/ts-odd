@@ -26,9 +26,9 @@ export class PrivateTree extends PublicTree {
     return obj.putEncrypted !== undefined
   }
  
-  static async empty(key?: string): Promise<PrivateTree> {
+  static async empty(version: FileSystemVersion = FileSystemVersion.v1_0_0, key?: string): Promise<PrivateTree> {
     const keyStr = key ? key : await util.genKeyStr()
-    return new PrivateTree({}, FileSystemVersion.v1_0_0, keyStr)
+    return new PrivateTree({}, version, keyStr)
   }
 
   static async fromCID(_cid: CID): Promise<PublicTree> {
@@ -38,7 +38,7 @@ export class PrivateTree extends PublicTree {
   static async fromCIDWithKey(cid: CID, keyStr: string): Promise<PrivateTree> {
     const content = await ipfs.catBuf(cid)
     const { key, links } = await util.decryptNode(content, keyStr)
-    return new PrivateTree(links, FileSystemVersion.v1_0_0, key)
+    return new PrivateTree(links, FileSystemVersion.v0_0_0, key)
   }
 
   async put(): Promise<CID> {
