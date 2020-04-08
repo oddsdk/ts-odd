@@ -43,7 +43,7 @@ export const didJWT = async () => {
   }
 
   const payload = {
-    exp: Date.now() + 120 * 1000 * 30,
+    exp: Date.now() + 10 * 60 * 1000, // JWT expires in 10 minutes
     iss: await didKey(),
     nbf: null
   }
