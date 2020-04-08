@@ -1,15 +1,16 @@
 import cbor from 'borc'
 import ipfs, { CID, FileContent } from '../../../ipfs'
-import { Links, Metadata, FileSystemVersion } from '../../types'
+import { Links, Metadata, FileSystemVersion, BasicLink } from '../../types'
 import link from '../../link'
 import util from './util'
+import { notNull } from '../../../common'
 
 export const getFile = async (cid: CID): Promise<FileContent> => {
   const indexCID = await util.getLinkCID(cid, 'index')
   if(!indexCID) {
     throw new Error("File does not exist")
   }
-  return ipfs.catBuf(indexCID)
+  return util.getFile(indexCID)
 }
 
 export const getLinks = async (cid: CID): Promise<Links> => {
@@ -17,13 +18,13 @@ export const getLinks = async (cid: CID): Promise<Links> => {
   if(!indexCID) {
     throw new Error("Links do not exist")
   }
-  const links = await util.getLinks(indexCID)
+  const links = await util.getLinksArr(indexCID)
   const withMetadata = await util.interpolateMetadata(links, getMetadata)
   return link.arrToMap(withMetadata)
 }
 
 export const getMetadata = async (cid: CID): Promise<Metadata> => {
-  const links = link.arrToMap(await util.getLinks(cid))
+  const links = await util.getLinks(cid)
   const [isFile, mtime] = await Promise.all([
     links['isFile']?.cid ? ipfs.encoded.getBool(links['isFile'].cid) : undefined,
     links['mtime']?.cid ? ipfs.encoded.getInt(links['mtime'].cid) : undefined
@@ -42,18 +43,18 @@ export const putWithMetadata = async(index: CID, metadata: Metadata): Promise<CI
   const links = await Promise.all(
     Object.entries(withVersion).map(async ([name, val]) => {
       if(val !== undefined){
-        const cid = await ipfs.add(cbor.encode(val))
+        const cid = await util.putFile(cbor.encode(val))
         return { name, cid, isFile: true }
       }
       return null
     })
-  )
-  links.push({ name: 'index', cid: index, isFile: true })
-  return util.putLinks(links.filter(util.notNull))
+  ) as BasicLink[]
+  links.push({ name: 'index', cid: index })
+  return util.putLinks(links.filter(notNull))
 }
 
 export const putFile = async (content: FileContent, metadata: Partial<Metadata>): Promise<CID> => {
-  const index = await ipfs.add(content)
+  const index = await util.putFile(content)
   return putWithMetadata(index, {
     ...metadata,
     isFile: true,
