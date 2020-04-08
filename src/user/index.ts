@@ -3,10 +3,11 @@ import utils from 'keystore-idb/utils'
 
 import type { UserProperties } from './types'
 import ipfs, { CID } from '../ipfs'
+import { base64UrlEncode, makeBase64UrlSafe } from '../common'
 import { getKeystore } from '../keystore'
 
 
-const API_ENDPOINT = 'http://localhost:3000' // 'https://runfission.com'
+const API_ENDPOINT = 'https://runfission.com'
 
 const ED_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
 const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
@@ -43,15 +44,18 @@ export const didJWT = async () => {
     iss: await didKey()
   }
 
+  // Encode parts in JSON
+  const encodedHeader = JSON.stringify(header)
+  const encodedPayload = JSON.stringify(payload)
+
   // Signature
   const ks = await getKeystore()
-  const hashedKey = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload.iss))
-  const signature = await ks.sign(new TextDecoder().decode(hashedKey))
-
-  console.log(ks)
+  const signature = await ks.sign(`${encodedHeader}.${encodedPayload}`)
 
   // Make JWT
-  return btoa(`${JSON.stringify(header)}.${JSON.stringify(payload)}.${signature}`)
+  return base64UrlEncode(encodedHeader) + '.' +
+         base64UrlEncode(encodedPayload) + '.' +
+         makeBase64UrlSafe(signature)
 }
 
 /**
@@ -71,6 +75,9 @@ export const didKey = async () => {
   return 'did:key:z' + base58.encode(new Uint8Array(prefixedBuf))
 }
 
+/**
+ * Get the CID of a user's data root.
+ */
 export const fileRoot = async (username: string): Promise<CID> => {
   try {
     const result = await ipfs.dns(`files.${username}.fission.name`)
@@ -80,11 +87,15 @@ export const fileRoot = async (username: string): Promise<CID> => {
   }
 }
 
+/**
+ * Update a user's data root.
+ */
 export const updateRoot = async (cid: string, apiEndpoint: string = API_ENDPOINT): Promise<any> => {
   return fetch(`${apiEndpoint}/user/data/${cid}`, {
     method: 'PATCH'
   })
 }
+
 
 export default {
   createAccount,
