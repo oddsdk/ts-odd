@@ -23,7 +23,7 @@ export const createAccount = async (
   return fetch(`${apiEndpoint}/user`, {
     method: 'PUT',
     headers: {
-      'authorization': 'Bearer ' + didKey(),
+      'authorization': 'Bearer ' + await didJWT(),
       'content-type': 'application/json'
     },
     body: JSON.stringify(userProps)
@@ -43,7 +43,7 @@ export const didJWT = async () => {
   }
 
   const payload = {
-    exp: Date.now() + 10 * 60 * 1000, // JWT expires in 10 minutes
+    exp: Date.now() + 5 * 60 * 1000, // JWT expires in 5 minutes
     iss: await didKey(),
     nbf: null
   }
