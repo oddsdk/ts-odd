@@ -1,6 +1,6 @@
 import dagPB from 'ipld-dag-pb'
 import { DAGLink, UnixFSFile } from '../ipfs'
-import { BasicLink, Link } from './types'
+import { BasicLink, Link, Links } from './types'
 
 export const toDAGLink = (link: BasicLink): DAGLink => {
   const { name, cid, size } = link
@@ -28,8 +28,16 @@ export const make = (name: string, cid: string, isFile: boolean, size?: number):
   }
 }
 
+export const arrToMap = (arr: Link[]): Links => {
+  return arr.reduce((acc, cur) => {
+    acc[cur.name] = cur
+    return acc
+  }, {} as Links)
+}
+
 export default {
   toDAGLink,
   fromFSFile,
   make,
+  arrToMap
 }

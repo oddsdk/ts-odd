@@ -30,8 +30,8 @@ export type Link = BasicLink & {
 export type Links = { [name: string]: Link }
 
 export type Metadata = {
-  isFile: boolean
-  mtime: number
+  isFile?: boolean
+  mtime?: number
 }
 
 export interface FileStatic {
