@@ -7,7 +7,7 @@ export const getFile = async (cid: CID): Promise<FileContent> => {
 }
 
 export const getLinks = async (cid: CID): Promise<Links> => {
-  return util.getLinksMap(cid)
+  return util.getLinks(cid)
 }
 
 export const getMetadata = async (_cid: CID): Promise<Partial<Metadata>> => {

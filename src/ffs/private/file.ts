@@ -1,7 +1,7 @@
 import PublicFile from '../public/file'
-import util from './util'
-import ipfs, { CID, FileContent } from '../../ipfs'
+import { CID, FileContent } from '../../ipfs'
 import { FileSystemVersion } from '../types'
+import resolver from './resolver'
 
 class PrivateFile extends PublicFile {
   
@@ -18,9 +18,9 @@ class PrivateFile extends PublicFile {
   }
 
   static async fromCIDWithKey(cid: CID, key: string): Promise<PrivateFile> {
-    const encrypted = await ipfs.catBuf(cid)
-    const content = await util.decryptContent(encrypted, key)
-    return new PrivateFile(content, FileSystemVersion.v1_0_0)
+    const version = await resolver.getVersion(cid, key)
+    const content = await resolver.getFile(cid, key)
+    return new PrivateFile(content, version)
   }
 
 
@@ -29,8 +29,7 @@ class PrivateFile extends PublicFile {
   }
 
   async putEncrypted(key: string): Promise<CID> {
-    const encrypted = await util.encryptContent(this.content, key)
-    return ipfs.add(encrypted)
+    return resolver.putFile(this.version, this.content, key)
   }
 
 }

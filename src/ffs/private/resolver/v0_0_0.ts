@@ -1,5 +1,5 @@
 import { CID, FileContent } from '../../../ipfs'
-import { Links, Metadata, PrivateTreeData } from '../../types'
+import { Metadata, PrivateTreeData } from '../../types'
 import util from './util'
 
 export const getFile = async (cid: CID, key: string): Promise<FileContent> => {
@@ -7,10 +7,11 @@ export const getFile = async (cid: CID, key: string): Promise<FileContent> => {
 }
 
 export const getTree = async (cid: CID, key: string): Promise<PrivateTreeData> => {
+  console.log("v 0 resolver")
   return util.getTree(cid, key)
 }
 
-export const getMetadata = async (_cid: CID): Promise<Partial<Metadata>> => {
+export const getMetadata = async (_cid: CID, _key: string): Promise<Partial<Metadata>> => {
   return { }
 }
 

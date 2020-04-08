@@ -1,4 +1,3 @@
-import cbor from 'borc'
 import dagPB from 'ipld-dag-pb'
 import ipfs, { CID, FileContent } from '../../../ipfs'
 import { BasicLink, Link, Links, FileSystemVersion, Metadata } from '../../types'
@@ -8,18 +7,18 @@ export const getFile = async (cid: CID): Promise<FileContent> => {
   return ipfs.catBuf(cid)
 }
 
-export const getLinks = async (cid: CID): Promise<Link[]> => {
+export const getLinksArr = async (cid: CID): Promise<Link[]> => {
   const links = await ipfs.ls(cid)
   return links.map(link.fromFSFile)
 }
 
-export const getLinksMap = async (cid: CID): Promise<Links> => {
-  const links = await getLinks(cid)
+export const getLinks = async (cid: CID): Promise<Links> => {
+  const links = await getLinksArr(cid)
   return link.arrToMap(links)
 }
 
 export const getLinkCID = async(cid: CID, name: string): Promise<CID | null> => {
-  const links = await getLinks(cid)
+  const links = await getLinksArr(cid)
   return links.find(l => l.name === name)?.cid || null
 }
 
@@ -63,18 +62,13 @@ export const interpolateMetadata = async (
   )
 }
 
-export const notNull = <T>(obj: T | null): obj is T => {
-  return obj !== null
-}
-
 export default {
   getFile,
+  getLinksArr,
   getLinks,
-  getLinksMap,
   getLinkCID,
   putFile,
   putLinks,
   getVersion,
   interpolateMetadata,
-  notNull
 }
