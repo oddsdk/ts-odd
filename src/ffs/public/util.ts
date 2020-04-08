@@ -1,7 +1,4 @@
-import dagPB from 'ipld-dag-pb'
-import ipfs, { CID } from '../../ipfs'
-import { NonEmptyPath, Tree, Links, File } from '../types'
-import link from '../link'
+import { NonEmptyPath, Tree, File } from '../types'
 import pathUtil from '../path'
 
 export const isFile = (obj: any): obj is File => {

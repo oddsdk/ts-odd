@@ -1,15 +1,11 @@
 import cbor from 'borc'
 import ipfs, { CID, FileContent } from '../../../ipfs'
-import { Link, Links, Metadata, FileSystemVersion } from '../../types'
+import { Links, Metadata, FileSystemVersion } from '../../types'
+import link from '../../link'
 import util from './util'
 
-export const getIndexCID = async (cid: CID): Promise<CID | null> => {
-  const links = await util.getLinks(cid)
-  return links['index']?.cid || null
-}
-
 export const getFile = async (cid: CID): Promise<FileContent> => {
-  const indexCID = await getIndexCID(cid)
+  const indexCID = await util.getLinkCID(cid, 'index')
   if(!indexCID) {
     throw new Error("File does not exist")
   }
@@ -17,55 +13,20 @@ export const getFile = async (cid: CID): Promise<FileContent> => {
 }
 
 export const getLinks = async (cid: CID): Promise<Links> => {
-  const indexCID = await getIndexCID(cid)
+  const indexCID = await util.getLinkCID(cid, 'index')
   if(!indexCID) {
     throw new Error("Links do not exist")
   }
   const links = await util.getLinks(indexCID)
-  return interpolateMetadata(links)
+  const withMetadata = await util.interpolateMetadata(links, getMetadata)
+  return link.arrToMap(withMetadata)
 }
 
-const linkArrToMap = (arr: Link[]): Links => {
-  return arr.reduce((acc, cur) => {
-    acc[cur.name] = cur
-    return acc
-  }, {} as Links)
-}
-
-const interpolateMetadata = async (links: Links): Promise<Links> => {
-  const linkArr = await Promise.all(
-    Object.values(links).map(async (link) => {
-      const { isFile = false, mtime = Date.now() } = await getMetadata(link.cid)
-      return {
-        ...link,
-        isFile,
-        mtime
-      }
-    })
-  )
-  return linkArrToMap(linkArr)
-}
-
-const getBool = async (cid: CID): Promise<boolean | undefined> => {
-  const buf = await ipfs.catBuf(cid)
-  const bool = cbor.decode(buf)
-  return typeof bool === 'boolean' ? bool : undefined
-}
-
-const getInt = async (cid: CID): Promise<number | undefined> => {
-  const buf = await ipfs.catBuf(cid)
-  const int = cbor.decode(buf)
-  return typeof int === 'number' ? int : undefined
-}
-
-export const getMetadata = async (cid: CID): Promise<Partial<Metadata>> => {
-  const links = await util.getLinks(cid)
-  if(!links){
-    throw new Error("bad node")
-  }
+export const getMetadata = async (cid: CID): Promise<Metadata> => {
+  const links = link.arrToMap(await util.getLinks(cid))
   const [isFile, mtime] = await Promise.all([
-    links['isFile']?.cid ? getBool(links['isFile'].cid) : undefined,
-    links['mtime']?.cid ? getInt(links['mtime'].cid) : undefined
+    links['isFile']?.cid ? ipfs.encoded.getBool(links['isFile'].cid) : undefined,
+    links['mtime']?.cid ? ipfs.encoded.getInt(links['mtime'].cid) : undefined
   ])
   return {
     isFile,
@@ -73,11 +34,7 @@ export const getMetadata = async (cid: CID): Promise<Partial<Metadata>> => {
   }
 }
 
-const notNull = <T>(obj: T | null): obj is T => {
-  return obj !== null
-}
-
-export const putWithMetadata = async(index: CID, metadata: Partial<Metadata>): Promise<CID> => {
+export const putWithMetadata = async(index: CID, metadata: Metadata): Promise<CID> => {
   const withVersion = {
     ...metadata,
     version: FileSystemVersion.v1_0_0
@@ -92,14 +49,15 @@ export const putWithMetadata = async(index: CID, metadata: Partial<Metadata>): P
     })
   )
   links.push({ name: 'index', cid: index, isFile: true })
-  return util.putLinks(links.filter(notNull))
+  return util.putLinks(links.filter(util.notNull))
 }
 
 export const putFile = async (content: FileContent, metadata: Partial<Metadata>): Promise<CID> => {
   const index = await ipfs.add(content)
   return putWithMetadata(index, {
     ...metadata,
-    isFile: true
+    isFile: true,
+    mtime: Date.now()
   })
 }
 
@@ -107,7 +65,8 @@ export const putTree = async(links: Links, metadata: Partial<Metadata>): Promise
   const index = await util.putLinks(Object.values(links))
   return putWithMetadata(index, {
     ...metadata,
-    isFile: false
+    isFile: false,
+    mtime: Date.now()
   })
 }
 
