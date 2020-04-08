@@ -43,8 +43,9 @@ export const didJWT = async () => {
   }
 
   const payload = {
-    exp: Date.now() + 120 * 1000,
-    iss: await didKey()
+    exp: Date.now() + 120 * 1000 * 30,
+    iss: await didKey(),
+    nbf: null
   }
 
   // Encode parts in JSON
