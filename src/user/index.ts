@@ -7,7 +7,7 @@ import { base64UrlEncode, isRSAKeystore, makeBase64UrlSafe } from '../common'
 import { getKeystore } from '../keystore'
 
 
-const API_ENDPOINT = 'https://runfission.com'
+const API_ENDPOINT = 'http://localhost:1337' // 'https://runfission.com'
 
 const ED_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
 const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
@@ -92,6 +92,18 @@ export const fileRoot = async (username: string): Promise<CID> => {
 }
 
 /**
+ * Check if a username is available.
+ */
+export const isUsernameAvailable = async (username: string): Promise<boolean> => {
+  try {
+    const resp = await fetch(`https://${username}.fission.name`, { method: "HEAD" })
+    return resp.status >= 300
+  } catch (_) {
+    return true
+  }
+}
+
+/**
  * Update a user's data root.
  */
 export const updateRoot = async (cid: string, apiEndpoint: string = API_ENDPOINT): Promise<any> => {
@@ -106,5 +118,6 @@ export default {
   didJWT,
   didKey,
   fileRoot,
+  isUsernameAvailable,
   updateRoot
 }
