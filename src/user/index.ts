@@ -3,7 +3,7 @@ import utils from 'keystore-idb/utils'
 
 import type { UserProperties } from './types'
 import ipfs, { CID } from '../ipfs'
-import { base64UrlEncode, makeBase64UrlSafe } from '../common'
+import { base64UrlEncode, isRSAKeystore, makeBase64UrlSafe } from '../common'
 import { getKeystore } from '../keystore'
 
 
@@ -34,8 +34,11 @@ export const createAccount = async (
  * Create a DID key to authenticate with and wrap it in a JWT.
  */
 export const didJWT = async () => {
+  const ks = await getKeystore()
+
+  // Parts
   const header = {
-    alg: 'RS256',
+    alg: isRSAKeystore(ks) ? 'RS256' : 'Ed25519',
     typ: 'JWT'
   }
 
@@ -49,7 +52,6 @@ export const didJWT = async () => {
   const encodedPayload = JSON.stringify(payload)
 
   // Signature
-  const ks = await getKeystore()
   const signature = await ks.sign(`${encodedHeader}.${encodedPayload}`)
 
   // Make JWT
@@ -69,7 +71,8 @@ export const didKey = async () => {
   const pwBuf = utils.base64ToArrBuf(pwB64)
 
   // Prefix public-write key
-  const prefixedBuf = utils.joinBufs(RSA_DID_PREFIX, pwBuf)
+  const prefix = isRSAKeystore(ks) ? RSA_DID_PREFIX : ED_DID_PREFIX
+  const prefixedBuf = utils.joinBufs(prefix, pwBuf)
 
   // Encode prefixed
   return 'did:key:z' + base58.encode(new Uint8Array(prefixedBuf))

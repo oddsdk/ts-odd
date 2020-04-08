@@ -1,11 +1,26 @@
-export function base64UrlDecode(a: string) {
+import { KeyStore } from 'keystore-idb/types'
+
+
+// BASE64
+
+
+export function base64UrlDecode(a: string): string {
   return atob(a).replace(/\_/g, "/").replace(/\-/g, "+")
 }
 
-export function base64UrlEncode(b: string) {
+export function base64UrlEncode(b: string): string {
   return makeBase64UrlSafe(btoa(b))
 }
 
-export function makeBase64UrlSafe(a: string) {
+export function makeBase64UrlSafe(a: string): string {
   return a.replace(/\//g, "_").replace(/\+/g, "-").replace(/=+$/, "")
+}
+
+
+
+// CRYPTO
+
+
+export function isRSAKeystore(ks: KeyStore): boolean {
+  return ks.writeKey.privateKey.algorithm.name.startsWith("RSA-")
 }
