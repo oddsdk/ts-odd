@@ -22,5 +22,5 @@ export function makeBase64UrlSafe(a: string): string {
 
 
 export function isRSAKeystore(ks: KeyStore): boolean {
-  return ks.writeKey.privateKey.algorithm.name.startsWith("RSA-")
+  return ks.writeKey.privateKey.algorithm.name.startsWith("RSA")
 }
