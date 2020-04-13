@@ -1,4 +1,4 @@
-import { CID, FileContent } from '../../../ipfs'
+import ipfs, { CID, FileContent } from '../../../ipfs'
 import { Metadata, FileSystemVersion, PrivateTreeData } from '../../types'
 import link from '../../link'
 import util from './util'
@@ -38,8 +38,8 @@ export const getKey = async (cid: CID, key: string): Promise<string | null> => {
 export const getMetadata = async (cid: CID, key: string): Promise<Metadata> => {
   const links = await util.getDirectLinks(cid, key)
   const [isFile, mtime] = await Promise.all([
-    links['isFile']?.cid ? util.getEncryptedBool(links['isFile'].cid, key) : undefined,
-    links['mtime']?.cid ? util.getEncryptedInt(links['mtime'].cid, key) : undefined
+    links['isFile']?.cid ? ipfs.encoded.getBool(links['isFile'].cid, key) : undefined,
+    links['mtime']?.cid ? ipfs.encoded.getInt(links['mtime'].cid, key) : undefined
   ])
   return {
     isFile,

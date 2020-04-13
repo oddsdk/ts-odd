@@ -1,40 +1,55 @@
+import cbor from 'borc'
 import ipfs, { CID, FileContent } from '../../../ipfs'
+import keystore from '../../../keystore'
 import { BasicLink, Link, Links, Metadata, FileSystemVersion, PrivateTreeData } from '../../types'
-import util from '../util'
+import { isBlob, blobToBuffer } from '../../../common'
 
 export const getDirectFile = async (cid: CID, key: string): Promise<FileContent> => {
   const encrypted = await ipfs.catBuf(cid)
-  return await util.decryptContent(encrypted, key)
+  return await decryptContent(encrypted, key)
 }
 
 const isTreeData = (obj: PrivateTreeData | Links): obj is PrivateTreeData => {
   return obj.links !== undefined && obj.key !== undefined
 }
 
+export const encryptNode = async (node: PrivateTreeData | Links, keyStr: string): Promise<Uint8Array> => {
+  const encoded = cbor.encode(node)
+  return keystore.encrypt(encoded, keyStr)
+}
+
+export const encryptContent = async (content: FileContent, keyStr: string): Promise<Uint8Array> => {
+  if(isBlob(content)){
+    content = await blobToBuffer(content)
+  }
+  const encoded = cbor.encode(content)
+  return keystore.encrypt(encoded, keyStr)
+}
+
+export const decryptNode = async (encrypted: Uint8Array, keyStr: string): Promise<PrivateTreeData | Links> => {
+  const decrypted = await keystore.decrypt(encrypted, keyStr)
+  return cbor.decode(decrypted)
+}
+
+export const decryptContent = async (encrypted: Uint8Array, keyStr: string): Promise<FileContent> => {
+  const decrypted = await keystore.decrypt(encrypted, keyStr)
+  return cbor.decode(decrypted)
+}
+
+
+
 export const getDirectTree = async (cid: CID, key: string): Promise<PrivateTreeData> => {
   const content = await ipfs.catBuf(cid)
-  const decrypted = await util.decryptNode(content, key)
+  const decrypted = await decryptNode(content, key)
   if(!isTreeData(decrypted)){
     throw new Error("Not full tree")
   }
   return decrypted
 }
 
-export const getEncryptedBool = async (cid: CID, key: string): Promise<boolean | undefined> => {
-  const encrypted = await ipfs.catBuf(cid)
-  const bool = await util.decryptContent(encrypted, key)
-  return typeof bool === 'boolean' ? bool : undefined
-}
-
-export const getEncryptedInt = async (cid: CID, key: string): Promise<number | undefined> => {
-  const encrypted = await ipfs.catBuf(cid)
-  const int = await util.decryptContent(encrypted, key)
-  return typeof int === 'number' ? int : undefined
-}
-
 export const getDirectLinks = async (cid: CID, key: string): Promise<Links> => {
   const content = await ipfs.catBuf(cid)
-  const decrypted = await util.decryptNode(content, key)
+  const decrypted = await decryptNode(content, key)
   return isTreeData(decrypted) ? decrypted.links : decrypted
 }
 
@@ -49,17 +64,17 @@ export const getDirectLinkCID = async(cid: CID, name: string, key: string): Prom
 }
 
 export const putDirectFile = async (content: FileContent, key: string): Promise<CID> => {
-  const encrypted = await util.encryptContent(content, key)
+  const encrypted = await encryptContent(content, key)
   return ipfs.add(encrypted)
 }
 
 export const putDirectTree = async (data: PrivateTreeData, key: string): Promise<CID> => { 
-  const encrypted = await util.encryptNode(data, key)
+  const encrypted = await encryptNode(data, key)
   return ipfs.add(encrypted)
 }
 
 export const putDirectLinks = async (links: Links, key: string): Promise<CID> => { 
-  const encrypted = await util.encryptNode(links, key)
+  const encrypted = await encryptNode(links, key)
   return ipfs.add(encrypted)
 }
 
@@ -95,8 +110,6 @@ export const interpolateMetadata = async (
 
 
 export default {
-  getEncryptedBool,
-  getEncryptedInt,
   getDirectFile,
   getDirectTree,
   getDirectLinks,

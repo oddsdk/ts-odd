@@ -1,5 +1,5 @@
-import { NonEmptyPath, Tree, File } from '../types'
-import pathUtil from '../path'
+import { NonEmptyPath, Tree, File } from './types'
+import pathUtil from './path'
 
 export const isFile = (obj: any): obj is File => {
   return obj.isFile
