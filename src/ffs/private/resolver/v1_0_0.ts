@@ -17,13 +17,13 @@ export const getTree = async (cid: CID, key: string): Promise<PrivateTreeData> =
   if(!index) {
     throw new Error("Links do not exist")
   }
-  const links = await util.getDirectLinksArr(index, key)
+  const links = await util.getDirectLinks(index, key)
   const childKey = await getKey(cid, key)
   if(!childKey){
     throw new Error ("Could not retrieve key")
   }
   const withMetadata = await util.interpolateMetadata(links, (linkCID: CID) => getMetadata(linkCID, childKey))
-  return { links: link.arrToMap(withMetadata), key: childKey } 
+  return { links: withMetadata, key: childKey } 
 }
 
 export const getKey = async (cid: CID, key: string): Promise<string | null> => {
