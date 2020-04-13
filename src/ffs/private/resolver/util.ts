@@ -1,8 +1,9 @@
 import cbor from 'borc'
 import ipfs, { CID, FileContent } from '../../../ipfs'
 import keystore from '../../../keystore'
-import { BasicLink, Link, Links, Metadata, FileSystemVersion, PrivateTreeData } from '../../types'
+import { BasicLinks, Link, Links, Metadata, FileSystemVersion, PrivateTreeData } from '../../types'
 import { isBlob, blobToBuffer } from '../../../common'
+import { mapObjAsync } from '../../../common'
 
 export const getDirectFile = async (cid: CID, key: string): Promise<FileContent> => {
   const encrypted = await ipfs.catBuf(cid)
@@ -35,8 +36,6 @@ export const decryptContent = async (encrypted: Uint8Array, keyStr: string): Pro
   const decrypted = await keystore.decrypt(encrypted, keyStr)
   return cbor.decode(decrypted)
 }
-
-
 
 export const getDirectTree = async (cid: CID, key: string): Promise<PrivateTreeData> => {
   const content = await ipfs.catBuf(cid)
@@ -93,21 +92,18 @@ export const getVersion = async(cid: CID, key: string): Promise<FileSystemVersio
 }
 
 export const interpolateMetadata = async (
-  links: BasicLink[],
+  links: BasicLinks,
   getMetadata: (cid: CID) => Promise<Metadata>
-): Promise<Link[]> => {
-  return Promise.all(
-    links.map(async (link) => {
-      const { isFile = false, mtime } = await getMetadata(link.cid)
-      return {
-        ...link,
-        isFile,
-        mtime
-      }
-    })
-  )
+): Promise<Links> => {
+  return mapObjAsync(links, async (link) => {
+    const { isFile = false, mtime } = await getMetadata(link.cid)
+    return {
+      ...link,
+      isFile,
+      mtime
+    }
+  })
 }
-
 
 export default {
   getDirectFile,

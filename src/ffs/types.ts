@@ -28,6 +28,7 @@ export type Link = BasicLink & {
 }
 
 export type Links = { [name: string]: Link }
+export type BasicLinks = { [name: string]: BasicLink }
 
 export type Metadata = {
   isFile?: boolean

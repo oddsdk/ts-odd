@@ -1,25 +1,23 @@
 import dagPB from 'ipld-dag-pb'
-import ipfs, { CID, FileContent } from '../../../ipfs'
-import { BasicLink, Link, Links, FileSystemVersion, Metadata } from '../../types'
+import ipfs, { CID, FileContent, DAG_NODE_DATA } from '../../../ipfs'
+import { BasicLinks, BasicLink, Link, Links, FileSystemVersion, Metadata } from '../../types'
 import link from '../../link'
+import { mapObjAsync } from '../../../common'
 
 export const getFile = async (cid: CID): Promise<FileContent> => {
   return ipfs.catBuf(cid)
 }
 
-export const getLinksArr = async (cid: CID): Promise<Link[]> => {
-  const links = await ipfs.ls(cid)
-  return links.map(link.fromFSFile)
-}
-
 export const getLinks = async (cid: CID): Promise<Links> => {
-  const links = await getLinksArr(cid)
-  return link.arrToMap(links)
+  const raw = await ipfs.ls(cid)
+  return link.arrToMap(
+    raw.map(link.fromFSFile)
+  )
 }
 
 export const getLinkCID = async(cid: CID, name: string): Promise<CID | null> => {
-  const links = await getLinksArr(cid)
-  return links.find(l => l.name === name)?.cid || null
+  const links = await getLinks(cid)
+  return links[name]?.cid || null
 }
 
 export const putFile = async (content: FileContent): Promise<CID> => {
@@ -28,7 +26,7 @@ export const putFile = async (content: FileContent): Promise<CID> => {
 
 export const putLinks = async (links: BasicLink[]): Promise<CID> => { 
   const dagLinks = Object.values(links).map(link.toDAGLink)
-  const node = new dagPB.DAGNode(Buffer.from([8, 1]), dagLinks)
+  const node = new dagPB.DAGNode(DAG_NODE_DATA, dagLinks)
   return ipfs.dagPut(node)
 }
 
@@ -47,24 +45,21 @@ export const getVersion = async(cid: CID): Promise<FileSystemVersion> => {
 }
 
 export const interpolateMetadata = async (
-  links: BasicLink[],
+  links: BasicLinks,
   getMetadata: (cid: CID) => Promise<Metadata>
-): Promise<Link[]> => {
-  return Promise.all(
-    links.map(async (link) => {
-      const { isFile = false, mtime } = await getMetadata(link.cid)
-      return {
-        ...link,
-        isFile,
-        mtime
-      }
-    })
-  )
+): Promise<Links> => {
+  return mapObjAsync(links, async (link) => {
+    const { isFile = false, mtime } = await getMetadata(link.cid)
+    return {
+      ...link,
+      isFile,
+      mtime
+    }
+  })
 }
 
 export default {
   getFile,
-  getLinksArr,
   getLinks,
   getLinkCID,
   putFile,

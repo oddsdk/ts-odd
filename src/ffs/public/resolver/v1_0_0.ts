@@ -1,7 +1,6 @@
 import cbor from 'borc'
 import ipfs, { CID, FileContent } from '../../../ipfs'
 import { Links, Metadata, FileSystemVersion, BasicLink } from '../../types'
-import link from '../../link'
 import util from './util'
 import { notNull } from '../../../common'
 
@@ -18,9 +17,8 @@ export const getLinks = async (cid: CID): Promise<Links> => {
   if(!indexCID) {
     throw new Error("Links do not exist")
   }
-  const links = await util.getLinksArr(indexCID)
-  const withMetadata = await util.interpolateMetadata(links, getMetadata)
-  return link.arrToMap(withMetadata)
+  const links = await util.getLinks(indexCID)
+  return await util.interpolateMetadata(links, getMetadata)
 }
 
 export const getMetadata = async (cid: CID): Promise<Metadata> => {
