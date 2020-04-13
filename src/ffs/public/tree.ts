@@ -1,4 +1,4 @@
-import util from './util'
+import util from '../util'
 import pathUtil from '../path'
 import link from '../link'
 import { Link, Links, Tree, TreeStatic, FileStatic, File, FileSystemVersion } from '../types'
