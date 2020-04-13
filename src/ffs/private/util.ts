@@ -1,7 +1,7 @@
 import publicUtil from '../public/util'
 import cbor from 'borc'
 import aes from 'keystore-idb/aes'
-import { PrivateTreeData } from '../types'
+import { Links, PrivateTreeData } from '../types'
 import { FileContent } from '../../ipfs'
 
 export const genKeyStr = async (): Promise<string> => {
@@ -23,7 +23,7 @@ export const encrypt = async (data: Uint8Array, keyStr: string): Promise<Uint8Ar
   return new Uint8Array(encrypted)
 }
 
-export const encryptNode = async (node: PrivateTreeData, keyStr: string): Promise<Uint8Array> => {
+export const encryptNode = async (node: PrivateTreeData | Links, keyStr: string): Promise<Uint8Array> => {
   const encoded = cbor.encode(node)
   return encrypt(encoded, keyStr)
 }
@@ -42,7 +42,7 @@ export const decrypt = async (encrypted: Uint8Array, keyStr: string): Promise<Ui
   return new Uint8Array(decryptedBuf)
 }
 
-export const decryptNode = async (encrypted: Uint8Array, keyStr: string): Promise<PrivateTreeData> => {
+export const decryptNode = async (encrypted: Uint8Array, keyStr: string): Promise<PrivateTreeData | Links> => {
   const decrypted = await decrypt(encrypted, keyStr)
   return cbor.decode(decrypted)
 }

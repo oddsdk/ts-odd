@@ -3,12 +3,11 @@ import { Metadata, PrivateTreeData } from '../../types'
 import util from './util'
 
 export const getFile = async (cid: CID, key: string): Promise<FileContent> => {
-  return util.getFile(cid, key)
+  return util.getDirectFile(cid, key)
 }
 
 export const getTree = async (cid: CID, key: string): Promise<PrivateTreeData> => {
-  console.log("v 0 resolver")
-  return util.getTree(cid, key)
+  return util.getDirectTree(cid, key)
 }
 
 export const getMetadata = async (_cid: CID, _key: string): Promise<Partial<Metadata>> => {
@@ -16,11 +15,11 @@ export const getMetadata = async (_cid: CID, _key: string): Promise<Partial<Meta
 }
 
 export const putFile = async (content: FileContent, key: string, _metadata: Partial<Metadata>): Promise<CID> => {
-  return util.putFile(content, key)
+  return util.putDirectFile(content, key)
 }
 
 export const putTree = async (data: PrivateTreeData, key: string, _metadata: Partial<Metadata>): Promise<CID> => { 
-  return util.putTree(data, key)
+  return util.putDirectTree(data, key)
 }
 
 export default {
