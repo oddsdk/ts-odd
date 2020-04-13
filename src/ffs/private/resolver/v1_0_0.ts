@@ -1,11 +1,10 @@
-import ipfs, { CID, FileContent } from '../../../ipfs'
+import { CID, FileContent } from '../../../ipfs'
 import { Metadata, FileSystemVersion, PrivateTreeData } from '../../types'
 import link from '../../link'
 import util from './util'
 import { notNull } from '../../../common'
 
 export const getFile = async (cid: CID, key: string): Promise<FileContent> => {
-  console.log('getting file')
   const index = await util.getDirectLinkCID(cid, 'index', key)
   if(!index) {
     throw new Error("File does not exist")
@@ -14,20 +13,16 @@ export const getFile = async (cid: CID, key: string): Promise<FileContent> => {
 }
 
 export const getTree = async (cid: CID, key: string): Promise<PrivateTreeData> => {
-  console.log("getting tree")
   const index = await util.getDirectLinkCID(cid, 'index', key)
   if(!index) {
     throw new Error("Links do not exist")
   }
   const links = await util.getDirectLinksArr(index, key)
-  console.log("links: ", links)
   const childKey = await getKey(cid, key)
-  console.log("childKey: ", childKey)
   if(!childKey){
     throw new Error ("Could not retrieve key")
   }
   const withMetadata = await util.interpolateMetadata(links, (linkCID: CID) => getMetadata(linkCID, childKey))
-  console.log("withMetadata: ", withMetadata)
   return { links: link.arrToMap(withMetadata), key: childKey } 
 }
 
@@ -41,9 +36,7 @@ export const getKey = async (cid: CID, key: string): Promise<string | null> => {
 }
 
 export const getMetadata = async (cid: CID, key: string): Promise<Metadata> => {
-  console.log("getMetadata")
   const links = await util.getDirectLinks(cid, key)
-  console.log("links: ", links)
   const [isFile, mtime] = await Promise.all([
     links['isFile']?.cid ? util.getEncryptedBool(links['isFile'].cid, key) : undefined,
     links['mtime']?.cid ? util.getEncryptedInt(links['mtime'].cid, key) : undefined
