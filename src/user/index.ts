@@ -1,4 +1,6 @@
 import * as base58 from 'base58-universal/main.js'
+import eccOperations from 'keystore-idb/ecc/operations'
+import rsaOperations from 'keystore-idb/rsa/operations'
 import utils from 'keystore-idb/utils'
 
 import type { UserProperties } from './types'
@@ -35,10 +37,11 @@ export const createAccount = async (
  */
 export const didJWT = async () => {
   const ks = await getKeystore()
+  const isRSA = isRSAKeystore(ks)
 
   // Parts
   const header = {
-    alg: isRSAKeystore(ks) ? 'RS256' : 'Ed25519',
+    alg: isRSA ? 'RS256' : 'Ed25519',
     typ: 'JWT'
   }
 
@@ -49,16 +52,27 @@ export const didJWT = async () => {
   }
 
   // Encode parts in JSON & Base64Url
-  const encodedHeader = base64UrlEncode(JSON.stringify(header))
-  const encodedPayload = base64UrlEncode(JSON.stringify(payload))
+  const jsonHeader = JSON.stringify(header)
+  const jsonPayload = JSON.stringify(payload)
 
   // Signature
-  const signature = await ks.sign(`${encodedHeader}.${encodedPayload}`)
+  const operator = isRSA
+    ? rsaOperations
+    : eccOperations
+
+  const signed = await operator.signBytes(
+    utils.strToArrBuf(base64UrlEncode(`${jsonHeader}.${jsonPayload}`), ks.cfg.charSize),
+    ks.writeKey.privateKey,
+    ks.cfg.hashAlg
+  )
+
+  const hashed = await crypto.subtle.digest("SHA-256", signed)
+  const encodedSignature = utils.arrBufToStr(hashed, 8)
 
   // Make JWT
-  return encodedHeader + '.' +
-         encodedPayload + '.' +
-         makeBase64UrlSafe(signature)
+  return base64UrlEncode(jsonHeader) + '.' +
+         base64UrlEncode(jsonPayload) + '.' +
+         base64UrlEncode(encodedSignature)
 }
 
 /**
