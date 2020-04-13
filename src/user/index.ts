@@ -48,16 +48,16 @@ export const didJWT = async () => {
     nbf: Math.floor(Date.now() / 1000)
   }
 
-  // Encode parts in JSON
-  const encodedHeader = JSON.stringify(header)
-  const encodedPayload = JSON.stringify(payload)
+  // Encode parts in JSON & Base64Url
+  const encodedHeader = base64UrlEncode(JSON.stringify(header))
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload))
 
   // Signature
   const signature = await ks.sign(`${encodedHeader}.${encodedPayload}`)
 
   // Make JWT
-  return base64UrlEncode(encodedHeader) + '.' +
-         base64UrlEncode(encodedPayload) + '.' +
+  return encodedHeader + '.' +
+         encodedPayload + '.' +
          makeBase64UrlSafe(signature)
 }
 
