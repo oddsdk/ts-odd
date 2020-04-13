@@ -25,7 +25,7 @@ export const createAccount = async (
   return fetch(`${apiEndpoint}/user`, {
     method: 'PUT',
     headers: {
-      'authorization': '"Bearer ' + await didJWT() + '"',
+      'authorization': 'Bearer ' + await didJWT(),
       'content-type': 'application/json'
     },
     body: JSON.stringify(userProps)
@@ -48,12 +48,11 @@ export const didJWT = async () => {
   const payload = {
     iss: await didKey(),
     exp: Math.floor((Date.now() + 5 * 60 * 1000) / 1000), // JWT expires in 5 minutes
-    nbf: Math.floor(Date.now() / 1000)
   }
 
   // Encode parts in JSON & Base64Url
-  const jsonHeader = JSON.stringify(header)
-  const jsonPayload = JSON.stringify(payload)
+  const encodedHeader = base64UrlEncode(JSON.stringify(header))
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload))
 
   // Signature
   const operator = isRSA
@@ -61,18 +60,18 @@ export const didJWT = async () => {
     : eccOperations
 
   const signed = await operator.signBytes(
-    utils.strToArrBuf(base64UrlEncode(`${jsonHeader}.${jsonPayload}`), ks.cfg.charSize),
+    utils.strToArrBuf(`${encodedHeader}.${encodedPayload}`, ks.cfg.charSize),
     ks.writeKey.privateKey,
     ks.cfg.hashAlg
   )
 
   const hashed = await crypto.subtle.digest("SHA-256", signed)
-  const encodedSignature = utils.arrBufToStr(hashed, 8)
+  const encodedSignature = base64UrlEncode(utils.arrBufToStr(hashed, 8))
 
   // Make JWT
-  return base64UrlEncode(jsonHeader) + '.' +
-         base64UrlEncode(jsonPayload) + '.' +
-         base64UrlEncode(encodedSignature)
+  return encodedHeader + '.' +
+         encodedPayload + '.' +
+         encodedSignature
 }
 
 /**
