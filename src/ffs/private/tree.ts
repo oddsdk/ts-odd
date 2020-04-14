@@ -39,7 +39,7 @@ export class PrivateTree extends PublicTree {
 
   static async fromCIDWithKey(cid: CID, parentKey: string): Promise<PrivateTree> {
     const version = await normalizer.getVersion(cid, parentKey)
-    const { links, key } = await normalizer.getPrviateTreeData(cid, parentKey)
+    const { links, key } = await normalizer.getPrivateTreeData(cid, parentKey)
     return new PrivateTree(links, version, key)
   }
 

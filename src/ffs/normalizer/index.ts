@@ -14,7 +14,7 @@ export const getTreeData = async (cid: CID, key?: string): Promise<TreeData> => 
   return fns.getTreeData(cid, key)
 }
 
-export const getPrviateTreeData = async (cid: CID, key: string): Promise<PrivateTreeData> => {
+export const getPrivateTreeData = async (cid: CID, key: string): Promise<PrivateTreeData> => {
   const data = await getTreeData(cid, key)
   if(!isPrivateTreeData(data)) {
     throw new Error(`Not valid private tree node: ${cid}`)
@@ -54,7 +54,7 @@ const switchVersion = (version: FileSystemVersion) => {
 export default {
   getFile,
   getTreeData,
-  getPrviateTreeData,
+  getPrivateTreeData,
   getMetadata,
   getVersion,
   putFile,

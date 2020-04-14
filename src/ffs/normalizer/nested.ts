@@ -15,7 +15,7 @@ export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
 export const getTreeData = async (cid: CID, key?: string): Promise<TreeData | PrivateTreeData> => {
   const indexCID = await util.getLinkCID(cid, 'index', key)
   if(!indexCID) {
-    throw new Error("Links do not exist")
+    throw new Error(`Links do not exist: ${indexCID}`)
   }
   const links = await util.getLinks(indexCID, key)
   const childKey = key ? await getChildKey(cid, key) : undefined
@@ -27,7 +27,9 @@ export const getTreeData = async (cid: CID, key?: string): Promise<TreeData | Pr
 
 export const getChildKey = async (cid: CID, key: string): Promise<string> => {
   const keyCID = await util.getLinkCID(cid, "key", key)
+  console.log('keyCID: ', keyCID)
   const childKey = keyCID ? await util.getFile(keyCID, key) : undefined
+  console.log('childKey: ', childKey)
   if(typeof childKey !== 'string'){
     throw new Error (`Could not retrieve child key: ${cid}`)
   }
@@ -62,7 +64,7 @@ export const putWithMetadata = async(index: CID, header: Header, key?: string): 
   )
   linksArr.push({ name: 'index', cid: index, isFile: false })
   const links = link.arrToMap(linksArr.filter(notNull))
-  return util.putLinks(links)
+  return util.putLinks(links, key)
 }
 
 export const putFile = async (content: FileContent, metadata: Partial<Metadata>, key?: string): Promise<CID> => {
@@ -70,16 +72,18 @@ export const putFile = async (content: FileContent, metadata: Partial<Metadata>,
   return putWithMetadata(index, {
     ...metadata,
     isFile: true,
-    mtime: Date.now()
+    mtime: Date.now(),
   }, key)
 }
 
-export const putTree = async(data: TreeData, metadata: Partial<Metadata>, key?: string): Promise<CID> => {
+export const putTree = async(data: TreeData | PrivateTreeData, metadata: Partial<Metadata>, key?: string): Promise<CID> => {
   const index = await util.putLinks(data.links, key)
+  const childKey = util.isPrivateTreeData(data) ? data.key : undefined
   return putWithMetadata(index, {
     ...metadata,
     isFile: false,
-    mtime: Date.now()
+    mtime: Date.now(),
+    key: childKey
   }, key)
 }
 
