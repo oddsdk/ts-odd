@@ -85,7 +85,8 @@ class PublicTree implements Tree {
 
   async addChild(path: string, toAdd: Tree | File): Promise<Tree> {
     const parts = pathUtil.splitNonEmpty(path)
-    return parts ? util.addRecurse(this, parts, toAdd) : this
+    const result = parts ? await util.addRecurse(this, parts, toAdd) : this
+    return result
   }
 
   async put(): Promise<CID> {
