@@ -5,20 +5,17 @@ import v1_0_0 from './v1_0_0'
 import util from './util'
 
 export const getFile = async (cid: CID, key: string): Promise<FileContent> => {
-  const version = await util.getVersion(cid, key)
-  const fns = switchVersion(version)
+  const fns = await getAndSwitchVersion(cid, key)
   return fns.getFile(cid, key)
 }
 
 export const getTree = async (cid: CID, key: string): Promise<PrivateTreeData> => {
-  const version = await util.getVersion(cid, key)
-  const fns = switchVersion(version)
+  const fns = await getAndSwitchVersion(cid, key)
   return fns.getTree(cid, key)
 }
 
 export const getMetadata = async (cid: CID, key: string): Promise<Partial<Metadata>> => {
-  const version = await util.getVersion(cid, key)
-  const fns = switchVersion(version)
+  const fns = await getAndSwitchVersion(cid, key)
   return fns.getMetadata(cid, key)
 }
 
@@ -34,6 +31,11 @@ export const putFile = async (version: FileSystemVersion, content: FileContent, 
 export const putTree = async(version: FileSystemVersion, data: PrivateTreeData, key: string, metadata: Partial<Metadata> = {}): Promise<CID> => {
   const fns = switchVersion(version)
   return fns.putTree(data, key, metadata)
+}
+
+const getAndSwitchVersion = async (cid: CID, key: string) => {
+  const version = await util.getVersion(cid, key)
+  return switchVersion(version)
 }
 
 const switchVersion = (version: FileSystemVersion) => {

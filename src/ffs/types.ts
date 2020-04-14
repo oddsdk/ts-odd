@@ -11,9 +11,12 @@ export type AddLinkOpts = {
 
 export type NonEmptyPath = [string, ...string[]]
 
-export type PrivateTreeData = {
-  key: string
+export type TreeData = {
   links: Links
+}
+
+export type PrivateTreeData = TreeData & {
+  key: string
 }
 
 export type BasicLink = {
