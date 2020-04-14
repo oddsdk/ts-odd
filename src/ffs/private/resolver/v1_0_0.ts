@@ -1,5 +1,5 @@
 import ipfs, { CID, FileContent } from '../../../ipfs'
-import { Metadata, FileSystemVersion, PrivateTreeData } from '../../types'
+import { Metadata, FileSystemVersion, PrivateTreeData, Header } from '../../types'
 import link from '../../link'
 import util from './util'
 import { notNull } from '../../../common'
@@ -47,9 +47,9 @@ export const getMetadata = async (cid: CID, key: string): Promise<Metadata> => {
   }
 }
 
-export const putWithMetadata = async(index: CID, key: string, metadata: Metadata & { key?: string }): Promise<CID> => {
+export const putWithMetadata = async(index: CID, key: string, header: Header): Promise<CID> => {
   const withVersion = {
-    ...metadata,
+    ...header,
     version: FileSystemVersion.v1_0_0
   }
   const linksArr = await Promise.all(

@@ -6,7 +6,7 @@ export const getFile = async (cid: CID, key: string): Promise<FileContent> => {
   return operations.getFile(cid, key)
 }
 
-export const getTree = async (cid: CID, key: string): Promise<PrivateTreeData> => {
+export const getTree = async (cid: CID, key: string): Promise<PrivateTreeData | > => {
   const data = await operations.getTreeData(cid, key)
   if(!operations.isPrivateTreeData(data)){
     throw new Error(`Not a valid private tree node: ${cid}`)

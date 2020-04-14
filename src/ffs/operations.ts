@@ -1,18 +1,16 @@
-import dagPB from 'ipld-dag-pb'
-import ipfs, { CID, FileContent, DAG_NODE_DATA } from '../ipfs'
-import { BasicLinks, BasicLink, Link, Links, FileSystemVersion, Metadata, PrivateTreeData } from './types'
+import ipfs, { CID, FileContent } from '../ipfs'
+import { Link, Links, BasicLinks, PrivateTreeData, Metadata, FileSystemVersion } from './types'
 import link from './link'
-import { isBlob, blobToBuffer, mapObjAsync } from '../common'
 import { TreeData } from './types'
-import { getTree } from './private/resolver/v0_0_0'
+import { mapObjAsync } from '../common'
 
 export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
-  return ipfs.encoded.catAndDecode(cid, key)
+  return key ? ipfs.encoded.catAndDecode(cid, key) : ipfs.catBuf(cid)
 }
 
 export const getTreeData = async (cid: CID, key?: string): Promise<TreeData> => {
-  if(key){
-    const maybeData = ipfs.encoded.catAndDecode(cid, key)
+  if(key) {
+    const maybeData = await ipfs.encoded.catAndDecode(cid, key)
     if(isTreeData(maybeData)) {
       return maybeData
     } else {
@@ -42,7 +40,7 @@ export const isLink = (link: any): link is Link => {
 }
 
 export const isLinks = (obj: any): obj is Links => {
-  return Object.values(obj).every(isLink)
+  return typeof obj === 'object' && Object.values(obj).every(isLink)
 }
 
 export const isTreeData = (obj: any): obj is TreeData => {
@@ -61,7 +59,7 @@ export const putTree = async (data: TreeData, key?: string): Promise<CID> => {
   }
 }
 
-export const putLinks = async (links: Links, key?: string): Promise<CID> => {
+export const putLinks = async (links: BasicLinks, key?: string): Promise<CID> => {
   if(key) {
     return ipfs.encoded.add(links, key)
   } else {
@@ -72,6 +70,34 @@ export const putLinks = async (links: Links, key?: string): Promise<CID> => {
 
 export const putFile = async (content: FileContent, key?: string): Promise<CID> => {
   return key ? ipfs.encoded.add(content, key) : ipfs.add(content)
+}
+
+export const getVersion = async(cid: CID, key?: string): Promise<FileSystemVersion> => {
+  const versionCID = await getLinkCID(cid, "version", key)
+  if(!versionCID){
+    return FileSystemVersion.v0_0_0
+  }
+  const versionStr = await ipfs.encoded.getString(versionCID, key)
+  switch(versionStr) {
+    case "1.0.0": 
+      return FileSystemVersion.v1_0_0
+    default: 
+      return FileSystemVersion.v0_0_0
+  }
+}
+
+export const interpolateMetadata = async (
+  links: BasicLinks,
+  getMetadata: (cid: CID) => Promise<Metadata>
+): Promise<Links> => {
+  return mapObjAsync(links, async (link) => {
+    const { isFile = false, mtime } = await getMetadata(link.cid)
+    return {
+      ...link,
+      isFile,
+      mtime
+    }
+  })
 }
 
 export default {
@@ -86,4 +112,6 @@ export default {
   putTree,
   putLinks,
   putFile,
+  getVersion,
+  interpolateMetadata,
 }

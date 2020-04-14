@@ -1,29 +1,29 @@
 import { CID, FileContent } from '../../../ipfs'
 import { Links, Metadata, FileSystemVersion } from '../../types'
+import operations from '../../operations'
 import v0_0_0 from './v0_0_0'
 import v1_0_0 from './v1_0_0'
-import util from './util'
 
 export const getFile = async (cid: CID): Promise<FileContent> => {
-  const version = await util.getVersion(cid)
+  const version = await operations.getVersion(cid)
   const fns = switchVersion(version)
   return fns.getFile(cid)
 }
 
 export const getLinks = async (cid: CID): Promise<Links> => {
-  const version = await util.getVersion(cid)
+  const version = await operations.getVersion(cid)
   const fns = switchVersion(version)
   return fns.getLinks(cid)
 }
 
 export const getMetadata = async (cid: CID): Promise<Partial<Metadata>> => {
-  const version = await util.getVersion(cid)
+  const version = await operations.getVersion(cid)
   const fns = switchVersion(version)
   return fns.getMetadata(cid)
 }
 
 export const getVersion = async(cid: CID): Promise<FileSystemVersion> => {
-  return util.getVersion(cid)
+  return operations.getVersion(cid)
 }
 
 export const putFile = async (version: FileSystemVersion, content: FileContent, metadata: Partial<Metadata> = {}): Promise<CID> => {

@@ -1,28 +1,29 @@
 import cbor from 'borc'
 import ipfs, { CID, FileContent } from '../../../ipfs'
-import { Links, Metadata, FileSystemVersion, BasicLink } from '../../types'
-import util from './util'
+import { Links, Metadata, FileSystemVersion, Header } from '../../types'
+import operations from '../../operations'
 import { notNull } from '../../../common'
+import link from '../../link'
 
 export const getFile = async (cid: CID): Promise<FileContent> => {
-  const indexCID = await util.getLinkCID(cid, 'index')
+  const indexCID = await operations.getLinkCID(cid, 'index')
   if(!indexCID) {
     throw new Error("File does not exist")
   }
-  return util.getFile(indexCID)
+  return operations.getFile(indexCID)
 }
 
 export const getLinks = async (cid: CID): Promise<Links> => {
-  const indexCID = await util.getLinkCID(cid, 'index')
+  const indexCID = await operations.getLinkCID(cid, 'index')
   if(!indexCID) {
     throw new Error("Links do not exist")
   }
-  const links = await util.getLinks(indexCID)
-  return await util.interpolateMetadata(links, getMetadata)
+  const links = await operations.getLinks(indexCID)
+  return await operations.interpolateMetadata(links, getMetadata)
 }
 
 export const getMetadata = async (cid: CID): Promise<Metadata> => {
-  const links = await util.getLinks(cid)
+  const links = await operations.getLinks(cid)
   const [isFile, mtime] = await Promise.all([
     links['isFile']?.cid ? ipfs.encoded.getBool(links['isFile'].cid) : undefined,
     links['mtime']?.cid ? ipfs.encoded.getInt(links['mtime'].cid) : undefined
@@ -33,26 +34,27 @@ export const getMetadata = async (cid: CID): Promise<Metadata> => {
   }
 }
 
-export const putWithMetadata = async(index: CID, metadata: Metadata): Promise<CID> => {
+export const putWithMetadata = async(index: CID, header: Header): Promise<CID> => {
   const withVersion = {
-    ...metadata,
+    ...header,
     version: FileSystemVersion.v1_0_0
   }
-  const links = await Promise.all(
+  const linksArr = await Promise.all(
     Object.entries(withVersion).map(async ([name, val]) => {
       if(val !== undefined){
-        const cid = await util.putFile(cbor.encode(val))
+        const cid = await operations.putFile(cbor.encode(val))
         return { name, cid, isFile: true }
       }
       return null
     })
-  ) as BasicLink[]
-  links.push({ name: 'index', cid: index })
-  return util.putLinks(links.filter(notNull))
+  )
+  linksArr.push({ name: 'index', cid: index, isFile: false })
+  const links = link.arrToMap(linksArr.filter(notNull))
+  return operations.putLinks(links)
 }
 
 export const putFile = async (content: FileContent, metadata: Partial<Metadata>): Promise<CID> => {
-  const index = await util.putFile(content)
+  const index = await operations.putFile(content)
   return putWithMetadata(index, {
     ...metadata,
     isFile: true,
@@ -61,7 +63,7 @@ export const putFile = async (content: FileContent, metadata: Partial<Metadata>)
 }
 
 export const putTree = async(links: Links, metadata: Partial<Metadata>): Promise<CID> => {
-  const index = await util.putLinks(Object.values(links))
+  const index = await operations.putLinks(links)
   return putWithMetadata(index, {
     ...metadata,
     isFile: false,
