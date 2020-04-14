@@ -19,7 +19,6 @@ export const getPrivateTreeData = async (cid: CID, key: string): Promise<Private
 export const getLinks = async (cid: CID, key?: string): Promise<Links> => {
   if(key) {
     const obj = await ipfs.encoded.catAndDecode(cid, key)
-    console.log('obj:', obj)
     if(isTreeData(obj)){
       return obj.links
     } else if(isLinks(obj)) {

@@ -1,5 +1,5 @@
 import ipfs, { CID, FileContent } from '../../ipfs'
-import { Links, Metadata, FileSystemVersion, Header, TreeData, PrivateTreeData } from '../types'
+import { Metadata, FileSystemVersion, Header, TreeData, PrivateTreeData } from '../types'
 import util from './util'
 import { notNull } from '../../common'
 import link from '../link'
@@ -27,9 +27,7 @@ export const getTreeData = async (cid: CID, key?: string): Promise<TreeData | Pr
 
 export const getChildKey = async (cid: CID, key: string): Promise<string> => {
   const keyCID = await util.getLinkCID(cid, "key", key)
-  console.log('keyCID: ', keyCID)
   const childKey = keyCID ? await util.getFile(keyCID, key) : undefined
-  console.log('childKey: ', childKey)
   if(typeof childKey !== 'string'){
     throw new Error (`Could not retrieve child key: ${cid}`)
   }
@@ -37,7 +35,7 @@ export const getChildKey = async (cid: CID, key: string): Promise<string> => {
 }
 
 export const getMetadata = async (cid: CID, key?: string): Promise<Metadata> => {
-  const links = await util.getLinks(cid)
+  const links = await util.getLinks(cid, key)
   const [isFile, mtime] = await Promise.all([
     links['isFile']?.cid ? ipfs.encoded.getBool(links['isFile'].cid, key) : undefined,
     links['mtime']?.cid ? ipfs.encoded.getInt(links['mtime'].cid, key) : undefined
