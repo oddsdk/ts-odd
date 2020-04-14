@@ -2,7 +2,7 @@ import { CID, FileContent } from '../../../ipfs'
 import { Metadata, FileSystemVersion, PrivateTreeData } from '../../types'
 import v0_0_0 from './v0_0_0'
 import v1_0_0 from './v1_0_0'
-import util from './util'
+import operations from '../../operations'
 
 export const getFile = async (cid: CID, key: string): Promise<FileContent> => {
   const fns = await getAndSwitchVersion(cid, key)
@@ -20,7 +20,7 @@ export const getMetadata = async (cid: CID, key: string): Promise<Partial<Metada
 }
 
 export const getVersion = async(cid: CID, key: string): Promise<FileSystemVersion> => {
-  return util.getVersion(cid, key)
+  return operations.getVersion(cid, key)
 }
 
 export const putFile = async (version: FileSystemVersion, content: FileContent, key: string, metadata: Partial<Metadata> = {}): Promise<CID> => {
@@ -34,7 +34,7 @@ export const putTree = async(version: FileSystemVersion, data: PrivateTreeData, 
 }
 
 const getAndSwitchVersion = async (cid: CID, key: string) => {
-  const version = await util.getVersion(cid, key)
+  const version = await getVersion(cid, key)
   return switchVersion(version)
 }
 
