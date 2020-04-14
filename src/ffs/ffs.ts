@@ -1,6 +1,6 @@
 import PublicTree from './public'
 import PrivateTree from './private'
-import { Tree, File, Links, FileSystemVersion } from './types'
+import { Tree, File, Links, FileSystemVersion, FileSystemOptions } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
 import link from './link'
@@ -20,15 +20,17 @@ export class FileSystem {
     this.key = key
   }
 
-  static async empty(keyName: string = 'filesystem-root'): Promise<FileSystem> {
-    const root = await PublicTree.empty(FileSystemVersion.v1_0_0)
-    const publicTreeInstance = await PublicTree.empty(FileSystemVersion.v1_0_0)
-    const privateTreeInstance = await PrivateTree.empty(FileSystemVersion.v1_0_0)
+  static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
+    const { keyName = 'filesystem-root', version = FileSystemVersion.v0_0_0 } = opts
+    const root = await PublicTree.empty(version)
+    const publicTreeInstance = await PublicTree.empty(version)
+    const privateTreeInstance = await PrivateTree.empty(version)
     const key = await keystore.getKeyByName(keyName)
     return new FileSystem(root, publicTreeInstance, privateTreeInstance, key)
   }
 
-  static async fromCID(cid: CID, keyName: string = 'filesystem-root'): Promise<FileSystem | null> {
+  static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
+    const { keyName = 'filesystem-root' } = opts
     const root = await PublicTree.fromCID(cid)
     const publicTree = (await root.getDirectChild('public')) as PublicTree
     const privLink = root.findLink('private')
