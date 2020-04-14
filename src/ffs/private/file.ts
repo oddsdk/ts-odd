@@ -1,7 +1,7 @@
 import PublicFile from '../public/file'
 import { CID, FileContent } from '../../ipfs'
 import { FileSystemVersion } from '../types'
-import resolver from './resolver'
+import normalizer from '../normalizer'
 
 class PrivateFile extends PublicFile {
   
@@ -18,8 +18,8 @@ class PrivateFile extends PublicFile {
   }
 
   static async fromCIDWithKey(cid: CID, key: string): Promise<PrivateFile> {
-    const version = await resolver.getVersion(cid, key)
-    const content = await resolver.getFile(cid, key)
+    const version = await normalizer.getVersion(cid, key)
+    const content = await normalizer.getFile(cid, key)
     return new PrivateFile(content, version)
   }
 
@@ -29,7 +29,7 @@ class PrivateFile extends PublicFile {
   }
 
   async putEncrypted(key: string): Promise<CID> {
-    return resolver.putFile(this.version, this.content, key)
+    return normalizer.putFile(this.version, this.content, {}, key)
   }
 
 }

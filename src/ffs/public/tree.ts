@@ -1,10 +1,10 @@
 import util from '../util'
 import pathUtil from '../path'
 import link from '../link'
-import { Link, Links, Tree, TreeStatic, FileStatic, File, FileSystemVersion } from '../types'
+import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, FileSystemVersion } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
-import resolver from './resolver'
+import normalizer from '../normalizer'
 
 class PublicTree implements Tree {
 
@@ -34,8 +34,8 @@ class PublicTree implements Tree {
   }
 
   static async fromCID(cid: CID): Promise<PublicTree> {
-    const version = await resolver.getVersion(cid)
-    const links = await resolver.getLinks(cid)
+    const version = await normalizer.getVersion(cid)
+    const { links }  = await normalizer.getTreeData(cid)
     return new PublicTree(links, version)
   }
 
@@ -89,7 +89,7 @@ class PublicTree implements Tree {
   }
 
   async put(): Promise<CID> {
-    return resolver.putTree(this.version, this.links)
+    return normalizer.putTree(this.version, this.data())
   }
 
   async updateDirectChild(child: Tree | File, name: string): Promise<Tree> {
@@ -109,6 +109,10 @@ class PublicTree implements Tree {
   async getOrCreateDirectChild(name: string): Promise<Tree | File> {
     const child = await this.getDirectChild(name)
     return child ? child : this.static.tree.empty(this.version)
+  }
+
+  data(): TreeData {
+    return { links: this.links }
   }
 
   findLink(name: string): Link | null { 
