@@ -1,7 +1,6 @@
 export * from './types'
 export * from './config'
 export * from './basic'
-export * from './encoded'
 export * from './constants'
 
 import config from './config'
