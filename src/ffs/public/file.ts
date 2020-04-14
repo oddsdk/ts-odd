@@ -1,6 +1,6 @@
 import { File, FileSystemVersion } from '../types'
 import { CID, FileContent } from '../../ipfs'
-import resolver from './resolver'
+import normalizer from '../normalizer'
 
 class PublicFile implements File {
 
@@ -18,13 +18,13 @@ class PublicFile implements File {
   }
 
   static async fromCID(cid: CID): Promise<PublicFile> {
-    const version = await resolver.getVersion(cid)
-    const content = await resolver.getFile(cid)
+    const version = await normalizer.getVersion(cid)
+    const content = await normalizer.getFile(cid)
     return new PublicFile(content, version)
   }
 
   put(): Promise<CID> {
-    return resolver.putFile(this.version, this.content)
+    return normalizer.putFile(this.version, this.content)
   }
 
 }

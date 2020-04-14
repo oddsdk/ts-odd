@@ -89,6 +89,7 @@ export interface Tree {
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string): Promise<Tree | File>
 
+  data(): TreeData
   findLink(name: string): Link | null
   updateLink(link: Link): Tree
   rmLink(name: string): Tree

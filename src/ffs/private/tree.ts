@@ -5,7 +5,7 @@ import { CID } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree from '../public/tree'
 import PrivateFile from './file'
-import resolver from './resolver'
+import normalizer from '../normalizer'
 
 export class PrivateTree extends PublicTree {
 
@@ -38,8 +38,8 @@ export class PrivateTree extends PublicTree {
   }
 
   static async fromCIDWithKey(cid: CID, parentKey: string): Promise<PrivateTree> {
-    const version = await resolver.getVersion(cid, parentKey)
-    const { links, key } = await resolver.getTree(cid, parentKey)
+    const version = await normalizer.getVersion(cid, parentKey)
+    const { links, key } = await normalizer.getPrviateTreeData(cid, parentKey)
     return new PrivateTree(links, version, key)
   }
 
@@ -48,7 +48,7 @@ export class PrivateTree extends PublicTree {
   }
 
   async putEncrypted(key: string): Promise<CID> {
-    return resolver.putTree(this.version, this.data(), key)
+    return normalizer.putTree(this.version, this.data(), {}, key)
   }
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string): Promise<Tree> {
