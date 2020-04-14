@@ -1,5 +1,10 @@
 import { FileContent, CID } from '../ipfs'
 
+export type FileSystemOptions = {
+  version?: FileSystemVersion
+  keyName?: string
+}
+
 export enum FileSystemVersion {
   v0_0_0 = "0.0.0",
   v1_0_0 = "1.0.0"
