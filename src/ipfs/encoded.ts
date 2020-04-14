@@ -5,13 +5,14 @@ import keystore from '../keystore'
 
 export const add = async (content: any, key?: string): Promise<CID> => {
   const encoded = cbor.encode(content)
-  const toAdd = key !== undefined ? keystore.encrypt(encoded, key) : encoded 
+  const toAdd = key !== undefined ? await keystore.encrypt(encoded, key) : encoded 
   return basic.add(toAdd)
 }
 
 export const catAndDecode = async (cid: CID, key?: string): Promise<any> => {
   const buf = await basic.catBuf(cid)
-  return key === undefined ? cbor.decode(buf) : keystore.decrypt(buf, key)
+  const toDecode = key !== undefined ? await keystore.decrypt(buf, key) : buf
+  return cbor.decode(toDecode)
 }
 
 export const getBool = async (cid: CID, key?: string): Promise<boolean | undefined> => {

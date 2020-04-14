@@ -38,6 +38,11 @@ export type Metadata = {
   mtime?: number
 }
 
+export type Header = Metadata & {
+  version?: FileSystemVersion
+  key?: string
+}
+
 export interface FileStatic {
   create: (content: FileContent, version?: FileSystemVersion) => File
   fromCID: (cid: CID) => Promise<File>
