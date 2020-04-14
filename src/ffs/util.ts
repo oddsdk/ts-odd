@@ -22,7 +22,9 @@ export const addRecurse = async (tree: Tree, path: NonEmptyPath, child: Tree | F
 }
 
 export const getRecurse = async (tree: Tree, path: string[]): Promise<Tree | File> => {
+  console.log('getting: ', path)
   const nextTree = await tree.getDirectChild(path[0])
+  console.log('nextTree: ', nextTree)
   if(path.length <= 1 && nextTree !== null){
     return nextTree
   }
