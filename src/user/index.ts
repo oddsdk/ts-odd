@@ -60,13 +60,14 @@ export const didJWT = async () => {
     : eccOperations
 
   const signed = await operator.signBytes(
-    utils.strToArrBuf(`${encodedHeader}.${encodedPayload}`, ks.cfg.charSize),
+    utils.strToArrBuf(`${encodedHeader}.${encodedPayload}`, 8),
     ks.writeKey.privateKey,
     ks.cfg.hashAlg
   )
 
-  const hashed = await crypto.subtle.digest("SHA-256", signed)
-  const encodedSignature = base64UrlEncode(utils.arrBufToStr(hashed, 8))
+  const encodedSignature = base64UrlEncode(
+    utils.arrBufToStr(signed, 8)
+  )
 
   // Make JWT
   return encodedHeader + '.' +
