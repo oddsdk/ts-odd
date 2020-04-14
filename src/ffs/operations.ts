@@ -8,26 +8,26 @@ export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
   return key ? ipfs.encoded.catAndDecode(cid, key) : ipfs.catBuf(cid)
 }
 
-export const getTreeData = async (cid: CID, key?: string): Promise<TreeData> => {
-  if(key) {
-    const maybeData = await ipfs.encoded.catAndDecode(cid, key)
-    if(isTreeData(maybeData)) {
-      return maybeData
-    } else {
-      throw new Error(`Not a tree: ${cid}`)
-    }
-  } else {
-    const raw = await ipfs.ls(cid)
-    const links = link.arrToMap(
-      raw.map(link.fromFSFile)
-    )
-    return { links }
-  }
+export const getPrivateTreeData = async (cid: CID, key: string): Promise<PrivateTreeData | undefined> => {
+  const data = await ipfs.encoded.catAndDecode(cid, key)
+  return isPrivateTreeData(data) ? data : undefined
 }
 
 export const getLinks = async (cid: CID, key?: string): Promise<Links> => {
-  const data = await getTreeData(cid, key)
-  return data.links
+  if(key) {
+    const links = await ipfs.encoded.catAndDecode(cid, key)
+    if(isLinks(links)) {
+      return links
+    } else {
+      console.log(links)
+      throw new Error(`Links do not exist: ${cid}`)
+    }
+  } else {
+    const raw = await ipfs.ls(cid)
+    return link.arrToMap(
+      raw.map(link.fromFSFile)
+    )
+  }
 }
 
 export const getLinkCID = async(cid: CID, name: string, key?: string): Promise<CID | null> => {
@@ -102,7 +102,7 @@ export const interpolateMetadata = async (
 
 export default {
   getFile,
-  getTreeData,
+  getPrivateTreeData,
   getLinks,
   getLinkCID,
   isLink,
