@@ -1,5 +1,5 @@
 import { isString, isObject } from '../../common'
-import { Link, Links, TreeData, PrivateTreeData, PinMap } from './types'
+import { Link, Links, TreeData, PrivateTreeData, PinMap } from '../types'
 import { CID } from '../../ipfs'
 
 export const isLink = (link: any): link is Link => {

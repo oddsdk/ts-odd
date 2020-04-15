@@ -1,4 +1,4 @@
-import { FileContent, CID } from '../../ipfs'
+import { FileContent, CID } from '../ipfs'
 
 export type FileSystemOptions = {
   version?: FileSystemVersion

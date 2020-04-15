@@ -1,9 +1,10 @@
 import { CID, FileContent } from '../../../ipfs'
-import { Metadata, Header, TreeData, PrivateTreeData, PinMap, isPinMap } from '../../types'
+import { Metadata, Header, TreeData, PrivateTreeData, PinMap } from '../../types'
 import check from '../../types/check'
 import basic from '../basic'
 import header from '../header'
 import { isNum, isBool } from '../../../common'
+import { defaultError } from '../errors'
 
 export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
   const indexCID = await basic.getLinkCID(cid, 'index', key)
@@ -20,14 +21,15 @@ export const getTreeData = async (cid: CID, key?: string): Promise<TreeData | Pr
   }
   const links = await basic.getLinks(indexCID, key)
   const childKey = key ? await header.getChildKey(cid, key) : undefined
-  const withMetadata = await basic.interpolateMetadata(links, 
+  const withMetadata = await header.interpolateMetadata(links, 
     (linkCID: CID) => getMetadata(linkCID, childKey)
   )
   return { links: withMetadata, key: childKey }
 }
 
 export const getPins = async(cid: CID, key: string): Promise<PinMap> => {
-  return (await header.getValue(cid, "pins", isPinMap, key)) || {}
+  const pins = await header.getValue(cid, "pins", check.isPinMap, key)
+  return defaultError(pins, {})
 }
 
 export const getMetadata = async (cid: CID, key?: string): Promise<Metadata> => {
@@ -37,8 +39,8 @@ export const getMetadata = async (cid: CID, key?: string): Promise<Metadata> => 
     header.getValue(links, 'mtime', isNum, key)
   ])
   return {
-    isFile: isFile || undefined,
-    mtime: mtime || undefined
+    isFile: defaultError(isFile, undefined),
+    mtime: defaultError(mtime, undefined)
   }
 }
 export const putFile = async (content: FileContent, headerVal: Partial<Header>, key?: string): Promise<CID> => {

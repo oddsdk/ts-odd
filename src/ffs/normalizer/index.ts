@@ -1,7 +1,7 @@
 import { CID, FileContent } from '../../ipfs'
 import { Metadata, Header, FileSystemVersion, TreeData, PrivateTreeData, PinMap } from '../types'
 import check from '../types/check'
-import { getVersion } from './basic'
+import { getVersion } from './header'
 import basic from './versions/v0_0_0'
 import nested from './versions/v1_0_0'
 
@@ -54,6 +54,8 @@ const switchVersion = (version: FileSystemVersion) => {
       return basic
     case FileSystemVersion.v1_0_0:
       return nested
+    default:
+      return basic
   }
 }
 

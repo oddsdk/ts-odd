@@ -1,9 +1,8 @@
 import ipfs, { CID, FileContent } from '../../ipfs'
-import { Links, BasicLinks, PrivateTreeData, Metadata, FileSystemVersion } from '../types'
+import { Links, BasicLinks, PrivateTreeData } from '../types'
 import link from '../link'
 import { TreeData } from '../types'
 import check from '../types/check'
-import { mapObjAsync } from '../../common'
 
 export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
   return key ? ipfs.encoded.catAndDecode(cid, key) : ipfs.catBuf(cid)
@@ -61,34 +60,6 @@ export const putFile = async (content: FileContent, key?: string): Promise<CID> 
   return key ? ipfs.encoded.add(content, key) : ipfs.add(content)
 }
 
-export const getVersion = async(cid: CID, key?: string): Promise<FileSystemVersion> => {
-  const versionCID = await getLinkCID(cid, "version", key)
-  if(!versionCID){
-    return FileSystemVersion.v0_0_0
-  }
-  const versionStr = await ipfs.encoded.getString(versionCID, key)
-  switch(versionStr) {
-    case "1.0.0": 
-      return FileSystemVersion.v1_0_0
-    default: 
-      return FileSystemVersion.v0_0_0
-  }
-}
-
-export const interpolateMetadata = async (
-  links: BasicLinks,
-  getMetadata: (cid: CID) => Promise<Metadata>
-): Promise<Links> => {
-  return mapObjAsync(links, async (link) => {
-    const { isFile = false, mtime } = await getMetadata(link.cid)
-    return {
-      ...link,
-      isFile,
-      mtime
-    }
-  })
-}
-
 export default {
   getFile,
   getPrivateTreeData,
@@ -97,6 +68,4 @@ export default {
   putTree,
   putLinks,
   putFile,
-  getVersion,
-  interpolateMetadata,
 }
