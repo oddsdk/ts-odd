@@ -1,6 +1,13 @@
 import { KeyStore } from 'keystore-idb/types'
 
 
+// CONSTANTS
+
+
+export const API_ENDPOINT = 'http://localhost:1337' // 'https://runfission.com'
+
+
+
 // BASE64
 
 
