@@ -22,10 +22,12 @@ export const createAccount = async (
   userProps: UserProperties,
   apiEndpoint: string = API_ENDPOINT
 ): Promise<any> => {
+  const jwt = await didJWT()
+
   return fetch(`${apiEndpoint}/user`, {
     method: 'PUT',
     headers: {
-      'authorization': 'Bearer ' + await didJWT(),
+      'authorization': `Bearer ${jwt}`,
       'content-type': 'application/json'
     },
     body: JSON.stringify(userProps)
