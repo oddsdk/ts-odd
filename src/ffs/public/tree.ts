@@ -37,7 +37,9 @@ class PublicTree implements Tree {
 
   async ls(path: string): Promise<Links> {
     const tree = await this.get(path)
-    if(util.isFile(tree)) {
+    if(tree === null){
+      throw new Error("Path does not exist")
+    } else if(util.isFile(tree)) {
       throw new Error('Can not `ls` a file')
     }
     return tree.links
@@ -54,7 +56,9 @@ class PublicTree implements Tree {
 
   async cat(path: string): Promise<FileContent> {
     const file = await this.get(path)
-    if(!util.isFile(file)){
+    if(file === null){
+      throw new Error("Path does not exist")
+    } else if(!util.isFile(file)){
       throw new Error('Can not `cat` a directory')
     }
     return file.content
@@ -66,17 +70,13 @@ class PublicTree implements Tree {
   }
 
   async pathExists(path: string): Promise<boolean> {
-    try{
-      await this.get(path)
-      return true
-    }catch(_err){
-      return false
-
-    }
+    const node = await this.get(path)
+    return node !== null
   }
 
-  async get(path: string): Promise<Tree | File> {
-    return util.getRecurse(this, pathUtil.split(path))
+  async get(path: string): Promise<Tree | File | null> {
+    const parts = pathUtil.splitNonEmpty(path)
+    return parts ? util.getRecurse(this, parts) : this
   }
 
   async addChild(path: string, toAdd: Tree | File): Promise<Tree> {

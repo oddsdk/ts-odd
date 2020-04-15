@@ -40,15 +40,16 @@ export const addRecurse = async (tree: Tree, path: NonEmptyPath, child: Tree | F
   return tree.updateDirectChild(toAdd, name)
 }
 
-export const getRecurse = async (tree: Tree, path: string[]): Promise<Tree | File> => {
-  const nextTree = await tree.getDirectChild(path[0])
-  if(path.length <= 1 && nextTree !== null){
+export const getRecurse = async (tree: Tree, path: NonEmptyPath): Promise<Tree | File | null> => {
+  const head = path[0]
+  const nextPath = pathUtil.nextNonEmpty(path)
+  const nextTree = await tree.getDirectChild(head)
+  if(nextPath === null){
     return nextTree
-  }
-  if(nextTree === null || isFile(nextTree)){
-    throw new Error("Path does not exist")
-  }
-  return getRecurse(nextTree, path.slice(1))
+  } else if (nextTree === null || isFile(nextTree)){
+    return null
+  } 
+  return getRecurse(nextTree, nextPath)
 }
 
 
