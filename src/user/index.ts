@@ -21,9 +21,7 @@ export const createAccount = async (
       'content-type': 'application/json'
     },
     body: JSON.stringify(userProps)
-  }).then(r => (
-    { success: r.status < 300 }
-  ))
+  })
 }
 
 /**
