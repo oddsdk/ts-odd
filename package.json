@@ -68,7 +68,6 @@
     "@rollup/plugin-inject": "^4.0.1",
     "@types/jest": "^25.2.1",
     "@types/node": "^13.7.4",
-    "@types/node-fetch": "^2.5.5",
     "@typescript-eslint/eslint-plugin": "^2.22.0",
     "@typescript-eslint/parser": "^2.22.0",
     "braces": "^3.0.2",
