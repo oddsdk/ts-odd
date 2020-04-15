@@ -18,7 +18,7 @@ export const getValueFromLinks = async <T>(links: Links, name: string, checkFn: 
   if(!linkCID) {
     return new LinkDoesNotExistError(name)
   }
-  const value = await basic.getFile(linkCID, key)
+  const value = await ipfs.encoded.catAndDecode(linkCID, key)
   return checkFn(value) ? value : new ContentTypeMismatchError(linkCID)
 }
 
