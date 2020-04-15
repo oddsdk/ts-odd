@@ -83,6 +83,11 @@ export class FileSystem {
     })
   }
 
+  async pinList(): Promise<CID[]> {
+    const rootCID = await this.sync()
+    return this.privateTree.pinList().concat([ rootCID ])
+  }
+
   async sync(): Promise<CID> {
     const pubCID = await this.publicTree.put()
     const privCID = await this.privateTree.putEncrypted(this.key)

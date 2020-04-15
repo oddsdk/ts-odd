@@ -135,6 +135,7 @@ class PublicTree implements Tree {
   copyWithLinks(links: Links): Tree {
     return new PublicTree(links, this.version)
   }
+
 }
 
 export default PublicTree
