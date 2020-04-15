@@ -43,16 +43,17 @@ export class FileSystem {
     return new FileSystem(root, publicTree, privateTree, key)
   }
 
-  static async forUser(username: string, keyName: string): Promise<FileSystem | null> {
+  static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const cid = await user.fileRoot(username)
-    return FileSystem.fromCID(cid, keyName)
+    return FileSystem.fromCID(cid, opts)
   }
 
   // upgrade public IPFS folder to FileSystem
-  static async upgradePublicCID(cid: CID, keyName: string = 'filesystem-root'): Promise<FileSystem> {
-    const root = await PublicTree.empty()
+  static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
+    const { keyName = 'filesystem-root', version = FileSystemVersion.v0_0_0 } = opts
+    const root = await PublicTree.empty(version)
     const pubTreeInstance = await PublicTree.fromCID(cid)
-    const privTreeInstance = await PrivateTree.empty()
+    const privTreeInstance = await PrivateTree.empty(version)
     const key = await keystore.getKeyByName(keyName)
     return new FileSystem(root, pubTreeInstance, privTreeInstance, key)
   }
