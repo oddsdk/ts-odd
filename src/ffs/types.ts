@@ -57,7 +57,7 @@ export interface Tree {
   mkdir(path: string): Promise<Tree>
   cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<Tree>
-  get(path: string): Promise<Tree | File>
+  get(path: string): Promise<Tree | File | null>
   pathExists(path: string): Promise<boolean> 
   addChild(path: string, toAdd: Tree | File): Promise<Tree>
 
