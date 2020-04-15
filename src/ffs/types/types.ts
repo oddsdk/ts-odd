@@ -1,4 +1,4 @@
-import { FileContent, CID } from '../ipfs'
+import { FileContent, CID } from '../../ipfs'
 
 export type FileSystemOptions = {
   version?: FileSystemVersion
@@ -43,9 +43,14 @@ export type Metadata = {
   mtime?: number
 }
 
+export type PinMap = {
+  [cid: string]: CID[]
+}
+
 export type Header = Metadata & {
   version?: FileSystemVersion
   key?: string
+  pins?: PinMap
 }
 
 export interface FileStatic {
