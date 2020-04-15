@@ -13,7 +13,7 @@ import ipfs, { CID } from '../ipfs'
 export const createAccount = async (
   userProps: UserProperties,
   apiEndpoint: string = API_ENDPOINT
-): Promise<{ success: boolean }> => {
+): Promise<any> => {
   return fetch(`${apiEndpoint}/user`, {
     method: 'PUT',
     headers: {
