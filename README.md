@@ -1,4 +1,4 @@
-f![](https://github.com/fission-suite/PROJECTNAME/raw/master/assets/logo.png?sanitize=true)
+![](https://github.com/fission-suite/PROJECTNAME/raw/master/assets/logo.png?sanitize=true)
 
 # Fission SDK
 
@@ -68,7 +68,7 @@ Params:
 
 Example:
 ```ts
-import FileSystem from 'fission-sdk/ffs'
+import FileSystem from 'fission-sdk/fs'
 const wnfs = await FileSystem.empty()
 ```
 
@@ -84,7 +84,7 @@ Params:
 
 Example:
 ```ts
-import FileSystem from 'fission-sdk/ffs'
+import FileSystem from 'fission-sdk/fs'
 const cid = "QmWKst5WVNTPfMsSFCQEJYBJLEsUZfghqrKXJBVU4EuA76"
 const wnfs = await FileSystem.empty(cid)
 ```
@@ -101,7 +101,7 @@ Params:
 
 Example:
 ```ts
-import FileSystem from 'fission-sdk/ffs'
+import FileSystem from 'fission-sdk/fs'
 const wnfs = await FileSystem.foruser("boris")
 ```
 
