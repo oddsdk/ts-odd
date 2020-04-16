@@ -1,6 +1,6 @@
 import { FileContent, CID } from '../ipfs'
 
-export type FileSystemOptions = {
+export type FileSystemConfig = {
   version?: FileSystemVersion
   keyName?: string
 }

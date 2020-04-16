@@ -1,6 +1,6 @@
 import PublicTree from './public'
 import PrivateTree from './private'
-import { Tree, File, Links, FileSystemVersion, FileSystemOptions } from './types'
+import { Tree, File, Links, FileSystemVersion, FileSystemConfig } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
 import link from './link'
@@ -21,8 +21,8 @@ export class FileSystem {
     this.key = key
   }
 
-  static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', version = FileSystemVersion.v0_0_0 } = opts
+  static async empty(cfg: FileSystemConfig = {}): Promise<FileSystem> {
+    const { keyName = 'filesystem-root', version = FileSystemVersion.v0_0_0 } = cfg
     const root = await PublicTree.empty(version)
     const publicTreeInstance = await PublicTree.empty(version)
     const privateTreeInstance = await PrivateTree.empty(version)
@@ -30,8 +30,8 @@ export class FileSystem {
     return new FileSystem(root, publicTreeInstance, privateTreeInstance, key)
   }
 
-  static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { keyName = 'filesystem-root' } = opts
+  static async fromCID(cid: CID, cfg: FileSystemConfig = {}): Promise<FileSystem | null> {
+    const { keyName = 'filesystem-root' } = cfg
     const root = await PublicTree.fromCID(cid)
     const publicTree = (await root.getDirectChild('public')) as PublicTree
     const privLink = root.findLink('private')
@@ -43,14 +43,14 @@ export class FileSystem {
     return new FileSystem(root, publicTree, privateTree, key)
   }
 
-  static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
+  static async forUser(username: string, cfg: FileSystemConfig = {}): Promise<FileSystem | null> {
     const cid = await user.fileRoot(username)
-    return FileSystem.fromCID(cid, opts)
+    return FileSystem.fromCID(cid, cfg)
   }
 
   // upgrade public IPFS folder to FileSystem
-  static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', version = FileSystemVersion.v0_0_0 } = opts
+  static async upgradePublicCID(cid: CID, cfg: FileSystemConfig = {}): Promise<FileSystem> {
+    const { keyName = 'filesystem-root', version = FileSystemVersion.v0_0_0 } = cfg
     const root = await PublicTree.empty(version)
     const pubTreeInstance = await PublicTree.fromCID(cid)
     const privTreeInstance = await PrivateTree.empty(version)

@@ -5,6 +5,10 @@ const KEYSTORE_CFG = { type: CryptoSystem.RSA }
 
 let ks: KeyStore | null = null
 
+export const setKeystore = (userKeystore: KeyStore): void => {
+  ks = userKeystore
+}
+
 export const getKeystore = async (): Promise<KeyStore> => {
   if(ks){
     return ks
@@ -12,7 +16,6 @@ export const getKeystore = async (): Promise<KeyStore> => {
   ks = await keystore.init(KEYSTORE_CFG)
   return ks
 }
-
 
 export default {
   getKeystore,
