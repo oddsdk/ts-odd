@@ -29,7 +29,8 @@ export const createAccount = async (
  */
 export const fileRoot = async (username: string): Promise<CID> => {
   try {
-    const result = await ipfs.dns(`files.${username}.fission.name`)
+    // TODO: This'll be `files.${username}.fission.name` later
+    const result = await ipfs.dns(`${username}.fission.name`)
     return result.replace(/^\/ipfs\//, "")
   } catch(err) {
     throw new Error("Could not locate user root in dns")
