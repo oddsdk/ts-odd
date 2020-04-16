@@ -2,6 +2,8 @@ import type { UserProperties } from './types'
 
 import { API_ENDPOINT } from '../common'
 import { FileSystem } from '../ffs/ffs'
+
+import { USERNAME_BLACKLIST } from './blacklist'
 import { didJWT, didKey } from './identity'
 
 import ipfs, { CID } from '../ipfs'
@@ -50,6 +52,16 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
 }
 
 /**
+ * Check if a username is valid.
+ */
+export const isUsernameValid = (username: string): boolean => {
+  return !username.startsWith("-") &&
+         !username.endsWith("-") &&
+         !!username.match(/[a-zA-Z1-9\-]+/) &&
+         !USERNAME_BLACKLIST.includes(username)
+}
+
+/**
  * Update a user's data root.
  */
 export const updateRoot = async (
@@ -73,5 +85,6 @@ export default {
   didKey,
   fileRoot,
   isUsernameAvailable,
+  isUsernameValid,
   updateRoot
 }
