@@ -66,6 +66,8 @@ Creates a file system with an empty public tree & an empty private tree at the r
 Params: 
 - cfg: `FileSystemConfig` _optional_
 
+Returns: `FileSystem` instance
+
 Example:
 ```ts
 import FileSystem from 'fission-sdk/fs'
@@ -81,6 +83,8 @@ Loads an existing file system from a CID
 Params: 
 - cid: `CID` (`string`) **required**
 - cfg: `FileSystemConfig` _optional_
+
+Returns: `FileSystem` instance
 
 Example:
 ```ts
@@ -98,6 +102,8 @@ Loads an existing file system from a username
 Params: 
 - username: `string` **required**
 - cfg: `FileSystemConfig` _optional_
+
+Returns: `FileSystem` instance
 
 Example:
 ```ts
@@ -117,6 +123,8 @@ Returns a list of links at a given directory path
 Params: 
 - path: `string` **required**
 
+Returns: `Links[]` list of links
+
 Example:
 ```ts
 // public
@@ -134,6 +142,8 @@ Creates a directory at the given path
 Params: 
 - path: `string` **required**
 
+Returns: `CID` the updated _root_ CID for the file system
+
 Example:
 ```ts
 const updatedCID = await wnfs.mkdir("public/some/directory/path")
@@ -148,7 +158,9 @@ Adds some file content at a given path
 
 Params: 
 - path: `string` **required**
-- content: `FileContent` (`object | string | Blob`) **required**
+- content: `FileContent` (`object | string | Blob | Buffer`) **required**
+
+Returns: `CID` the updated _root_ CID for the file system
 
 Example:
 ```ts
@@ -165,6 +177,8 @@ Retrieves some file content at a given path
 
 Params: 
 - path: `string` **required**
+
+Returns: `FileContent` (`object | string | Blob | Buffer`) the content at the given location
 
 Example:
 ```ts
@@ -192,6 +206,8 @@ const node = await wnfs.get("public/some/path")
 Ensures the latest version of the file system is added to IPFS and returns the root CID
 
 Params: _none_
+
+Returns: `CID` the updated _root_ CID for the file system
 
 Example:
 ```ts
