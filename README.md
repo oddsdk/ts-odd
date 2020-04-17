@@ -178,7 +178,7 @@ Retrieves some file content at a given path
 Params: 
 - path: `string` **required**
 
-Returns: `FileContent` (`object | string | Blob | Buffer`) the content at the given location
+Returns: `FileContent` (`object | string | Blob | Buffer`)
 
 Example:
 ```ts
@@ -193,6 +193,8 @@ Retrieves the node at the given path, either a `File` or `Tree` object
 
 Params: 
 - path: `string` **required**
+
+Returns: `Tree | File | null`
 
 Example:
 ```ts
@@ -218,9 +220,11 @@ const rootCID = await wnfs.sync()
 
 **pinList**
 
-Returns an array of all CIDs that need to be pinned in order to backup the FS.
+Retrieves an array of all CIDs that need to be pinned in order to backup the FS.
 
 Params: _none_
+
+Returns: `CID[]`
 
 Example:
 ```ts
