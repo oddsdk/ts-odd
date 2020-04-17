@@ -1,11 +1,11 @@
 import dagPB from 'ipld-dag-pb'
-import { getIpfs } from './config'
+import config from './config'
 import { CID, FileContent, DAGNode, UnixFSFile, DAGLink } from './types'
 import util from './util'
 import { DAG_NODE_DATA } from './constants'
 
 export const add = async (content: FileContent): Promise<CID> => {
-  const ipfs = await getIpfs()
+  const ipfs = await config.getIpfs()
   const chunks = []
   for await (const chunk of ipfs.add(content)){
     chunks.push(chunk)
@@ -15,7 +15,7 @@ export const add = async (content: FileContent): Promise<CID> => {
 }
 
 export const catRaw = async (cid: CID): Promise<Buffer[]> => {
-  const ipfs = await getIpfs()
+  const ipfs = await config.getIpfs()
   const chunks = []
   for await (const chunk of ipfs.cat(cid)){
     chunks.push(chunk)
@@ -34,7 +34,7 @@ export const cat = async (cid: CID): Promise<string> => {
 }
 
 export const ls = async (cid: CID): Promise<UnixFSFile[]> => {
-  const ipfs = await getIpfs()
+  const ipfs = await config.getIpfs()
   const links = []
   for await (const link of ipfs.ls(cid)) {
     links.push(link)
@@ -43,13 +43,13 @@ export const ls = async (cid: CID): Promise<UnixFSFile[]> => {
 }
 
 export const dagGet = async (cid: CID): Promise<DAGNode> => {
-  const ipfs = await getIpfs()
+  const ipfs = await config.getIpfs()
   const raw = await ipfs.dag.get(cid)
   return util.rawToDAGNode(raw)
 }
 
 export const dagPut = async (node: DAGNode): Promise<CID> => {
-  const ipfs = await getIpfs()
+  const ipfs = await config.getIpfs()
   // using this format so that we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
   const cid = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
   return cid.toString()
@@ -61,7 +61,7 @@ export const dagPutLinks = async (links: DAGLink[]): Promise<CID> => {
 }
 
 export const dns = async (domain: string): Promise<CID> => {
-  const ipfs = await getIpfs()
+  const ipfs = await config.getIpfs()
   return ipfs.dns(domain)
 }
 
