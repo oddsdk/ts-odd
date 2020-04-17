@@ -29,12 +29,6 @@ const rawDAGNode = {
   }
 }
 const dagNode = util.rawToDAGNode(rawDAGNode as unknown as RawDAGNode)
-// const dagNode = {
-//   Links: [
-//     { Name: 'one', Hash: cid1, Size: 8 },
-//     { Name: 'two', Hash: cid2, Size: 12 }
-//   ]
-// }
 
 type MethodCallDetails = {
   params: any[]
