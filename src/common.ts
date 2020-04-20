@@ -22,12 +22,3 @@ export function base64UrlEncode(b: string): string {
 export function makeBase64UrlSafe(a: string): string {
   return a.replace(/\//g, "_").replace(/\+/g, "-").replace(/=+$/, "")
 }
-
-
-
-// CRYPTO
-
-
-export function isRSAKeystore(ks: KeyStore): boolean {
-  return ks.writeKey.privateKey.algorithm.name.startsWith("RSA")
-}
