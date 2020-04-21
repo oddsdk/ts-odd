@@ -1596,14 +1596,6 @@ buffer@^5.4.3:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
 
-buffer@^5.6.0:
-  version "5.6.0"
-  resolved "https://registry.yarnpkg.com/buffer/-/buffer-5.6.0.tgz#a31749dc7d81d84db08abf937b6b8c4033f62786"
-  integrity sha512-/gDYp/UtU0eA1ys8bOs9J6a+E/KWIY+DZ+Q2WESNUA0jFRsJOc0SNUO6xJ5SGA1xueg3NL65W6s+NY5l9cunuw==
-  dependencies:
-    base64-js "^1.0.2"
-    ieee754 "^1.1.4"
-
 builtin-modules@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/builtin-modules/-/builtin-modules-3.1.0.tgz#aad97c15131eb76b65b50ef208e7584cd76a7484"
@@ -3793,10 +3785,10 @@ just-extend@^4.0.2:
   resolved "https://registry.yarnpkg.com/just-extend/-/just-extend-4.1.0.tgz#7278a4027d889601640ee0ce0e5a00b992467da4"
   integrity sha512-ApcjaOdVTJ7y4r08xI5wIqpvwS48Q0PBG4DJROcEkH1f8MdAiNFyFxz3xoL0LWAVwjrwPYZdVHHxhRHcx/uGLA==
 
-keystore-idb@^0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.8.0.tgz#012afc0f20c2419b08ad9c517c4fc33393d76c4f"
-  integrity sha512-6jsDL8j7LnDfvMSdKrfhxt+ziE6RrXkY/ftfXkOqV4u/chvDN6qRLFkstVVRvU9ulCQ8XAGaW90nhtYBM0VouA==
+keystore-idb@0.10.0-alpha:
+  version "0.10.0-alpha"
+  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.10.0-alpha.tgz#79cc6c3b24658cf20ef83011c493967d5d65a408"
+  integrity sha512-lEAI2ZjC+x2KWTnF2DjpBCTp/87DEbK91c/t/0gAdeaLIcBYE0HXJeTo6Z5y8MvozfYrRw+lXlCgURoEW5r6Bw==
   dependencies:
     localforage "^1.7.3"
 

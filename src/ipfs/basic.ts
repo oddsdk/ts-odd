@@ -28,11 +28,6 @@ export const catBuf = async (cid: CID): Promise<Buffer> => {
   return Buffer.concat(raw)
 }
 
-export const cat = async (cid: CID): Promise<string> => {
-  const buf = await catBuf(cid)
-  return buf.toString()
-}
-
 export const ls = async (cid: CID): Promise<UnixFSFile[]> => {
   const ipfs = await config.getIpfs()
   const links = []
@@ -69,7 +64,6 @@ export default {
   add,
   catRaw,
   catBuf,
-  cat,
   ls,
   dagGet,
   dagPut,
