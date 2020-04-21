@@ -1,25 +1,13 @@
 import { FileContent, CID } from '../ipfs'
 
-export type AddLinkOpts = {
-  shouldOverwrite?: boolean
+
+// FILES
+// -----
+
+export interface File {
+  content: FileContent
+  put(): Promise<CID>
 }
-
-export type NonEmptyPath = [string, ...string[]]
-
-export type PrivateTreeData = {
-  key: string
-  links: Links
-}
-
-export type Link = {
-  name: string
-  cid: CID
-  size?: number 
-  mtime?: number
-  isFile: boolean
-}
-
-export type Links = { [name: string]: Link }
 
 export interface FileStatic {
   create: (content: FileContent) => File
@@ -30,14 +18,38 @@ export interface PrivateFileStatic extends FileStatic{
   fromCIDWithKey: (cid: CID, key: string) => Promise<File>
 }
 
-export interface File {
-  content: FileContent
-  put(): Promise<CID>
+
+// LINKS
+// -----
+
+export type AddLinkOpts = {
+  shouldOverwrite?: boolean
 }
 
-export interface TreeStatic {
-  empty: () => Promise<Tree>
-  fromCID: (cid: CID) => Promise<Tree>
+export type Link = {
+  name: string
+  cid: CID
+  size?: number
+  mtime?: number
+  isFile: boolean
+}
+
+export type Links = { [name: string]: Link }
+
+
+// MISC
+// ----
+
+export type NonEmptyPath = [string, ...string[]]
+export type SyncHook = (cid: CID) => any
+
+
+// TREE
+// ----
+
+export type PrivateTreeData = {
+  key: string
+  links: Links
 }
 
 export interface PrivateTreeStatic extends TreeStatic {
@@ -47,18 +59,18 @@ export interface PrivateTreeStatic extends TreeStatic {
 export interface Tree {
   links: Links
   isFile: boolean
+
   static: {
     tree: TreeStatic
     file: FileStatic
   }
-
 
   ls(path: string): Promise<Links>
   mkdir(path: string): Promise<Tree>
   cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<Tree>
   get(path: string): Promise<Tree | File | null>
-  pathExists(path: string): Promise<boolean> 
+  pathExists(path: string): Promise<boolean>
   addChild(path: string, toAdd: Tree | File): Promise<Tree>
 
   put(): Promise<CID>
@@ -70,4 +82,9 @@ export interface Tree {
   updateLink(link: Link): Tree
   rmLink(name: string): Tree
   copyWithLinks(links: Links): Tree
+}
+
+export interface TreeStatic {
+  empty: () => Promise<Tree>
+  fromCID: (cid: CID) => Promise<Tree>
 }

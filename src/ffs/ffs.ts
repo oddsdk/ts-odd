@@ -1,6 +1,6 @@
 import PublicTree from './public'
 import PrivateTree from './private'
-import { Tree, File, Links } from './types'
+import { File, Links, SyncHook, Tree } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
 import link from './link'
@@ -12,6 +12,8 @@ export class FileSystem {
   root: PublicTree
   publicTree: PublicTree
   privateTree: PrivateTree
+  syncHooks: Array<SyncHook>
+
   private key: string
 
   constructor(root: PublicTree, publicTree: PublicTree, privateTree: PrivateTree, key: string) {
@@ -19,6 +21,7 @@ export class FileSystem {
     this.publicTree = publicTree
     this.privateTree = privateTree
     this.key = key
+    this.syncHooks = []
   }
 
   static async empty(keyName: string = 'filesystem-root'): Promise<FileSystem> {
@@ -92,10 +95,27 @@ export class FileSystem {
     const privCID = await this.privateTree.putEncrypted(this.key)
     const pubLink = link.make('public', pubCID, false)
     const privLink = link.make('private', privCID, false)
+
     this.root = this.root
                   .updateLink(pubLink)
                   .updateLink(privLink)
-    return this.root.put()
+
+    const cid = await this.root.put()
+
+    this.syncHooks.forEach(hook => {
+      hook(cid)
+    })
+
+    return cid
+  }
+
+  addSyncHook(hook: SyncHook): Array<SyncHook> {
+    this.syncHooks.push(hook)
+    return this.syncHooks
+  }
+
+  removeSyncHook(hook: SyncHook): Array<SyncHook> {
+    return this.syncHooks.filter(h => h !== hook)
   }
 
   async runOnTree<a>(path: string, updateTree: boolean, fn: (tree: Tree, relPath: string) => Promise<a>): Promise<a> {
@@ -107,7 +127,7 @@ export class FileSystem {
       result = await fn(this.publicTree, relPath)
       if(updateTree && PublicTree.instanceOf(result)){
         this.publicTree = result
-      } 
+      }
     }else if(head === 'private') {
       result = await fn(this.privateTree, relPath)
       if(updateTree && PrivateTree.instanceOf(result)){
