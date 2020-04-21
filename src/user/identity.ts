@@ -6,7 +6,7 @@ import { base64UrlEncode, makeBase64UrlSafe } from '../common'
 import { getKeystore } from '../keystore'
 
 
-const ECC_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
+const EDW_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
 const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
 
 
@@ -68,7 +68,6 @@ export const didKey = async () => {
  */
 function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
   switch (cryptoSystem) {
-    case CryptoSystem.ECC: return 'Ed25519';
     case CryptoSystem.RSA: return 'RS256';
     default: return null
   }
@@ -80,7 +79,6 @@ function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
  */
 function magicBytes(cryptoSystem: CryptoSystem): ArrayBuffer | null {
   switch (cryptoSystem) {
-    case CryptoSystem.ECC: return ECC_DID_PREFIX;
     case CryptoSystem.RSA: return RSA_DID_PREFIX;
     default: return null
   }
