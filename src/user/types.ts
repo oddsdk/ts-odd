@@ -1,4 +1,4 @@
 export type UserProperties = {
-  email: string,
+  email: string
   username: string
 }

@@ -57,7 +57,7 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
 export const isUsernameValid = (username: string): boolean => {
   return !username.startsWith("-") &&
          !username.endsWith("-") &&
-         !!username.match(/[a-zA-Z1-9\-]+/) &&
+         !!username.match(/[a-zA-Z1-9-]+/) &&
          !USERNAME_BLACKLIST.includes(username)
 }
 

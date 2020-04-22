@@ -62,7 +62,7 @@ export type CIDObj = {
   version: number
 }
 
-export type FileContent = Object | Blob | string
+export type FileContent = object | Blob | string
 export type FileContentRaw = Buffer
 
 export type FileMode = number
