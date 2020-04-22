@@ -33,8 +33,20 @@ export const getRecurse = async (tree: Tree, path: NonEmptyPath): Promise<Tree |
   return getRecurse(nextTree, nextPath)
 }
 
+export const rmNested = async (tree: Tree, path: NonEmptyPath): Promise<Tree> => {
+  const filename = path[path.length -1]
+  const parentPath = path.slice(0, path.length -1)
+  const node = await tree.get(pathUtil.join(parentPath))
+  if(node === null || isFile(node)){
+    throw new Error("Path does not exist")
+  }
+  const updated = await node.removeDirectChild(filename)
+  return tree.addChild(pathUtil.join(parentPath), updated)
+}
+
 export default {
   isFile,
   addRecurse,
   getRecurse,
+  rmNested
 }

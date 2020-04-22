@@ -114,12 +114,14 @@ export interface Tree {
   mkdir(path: string): Promise<Tree>
   cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<Tree>
+  rm(path: string): Promise<Tree>
   get(path: string): Promise<Tree | File | null>
   pathExists(path: string): Promise<boolean>
   addChild(path: string, toAdd: Tree | File): Promise<Tree>
 
   put(): Promise<CID>
   updateDirectChild(child: Tree | File, name: string): Promise<Tree>
+  removeDirectChild(name: string): Promise<Tree>
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string): Promise<Tree | File>
 

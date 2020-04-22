@@ -88,6 +88,13 @@ export class FileSystem {
     })
   }
 
+  async rm(path: string): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.rm(relPath)
+    })
+    return this.sync()
+  }
+
   async get(path: string): Promise<Tree | File | null> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.get(relPath)
