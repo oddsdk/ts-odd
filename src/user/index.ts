@@ -2,6 +2,7 @@ import type { UserProperties } from './types'
 
 import { API_ENDPOINT } from '../common'
 import { FileSystem } from '../fs/filesystem'
+import * as dns from '../common/dns'
 
 import { USERNAME_BLACKLIST } from './blacklist'
 import { didJWT, didKey } from './identity'
@@ -32,8 +33,7 @@ export const createAccount = async (
 export const fileRoot = async (username: string): Promise<CID> => {
   try {
     // TODO: This'll be `files.${username}.fission.name` later
-    const result = await ipfs.dns(`${username}.fission.name`)
-    return result.replace(/^\/ipfs\//, "")
+    return await dns.lookupDnsLink(`${username}.fission.name`)
   } catch(err) {
     throw new Error("Could not locate user root in dns")
   }
@@ -68,7 +68,7 @@ export const updateRoot = async (
   ffs: FileSystem,
   apiEndpoint: string = API_ENDPOINT
 ): Promise<any> => {
-  const cid = await ffs.sync().toString()
+  const cid = await ffs.root.put()
 
   return fetch(`${apiEndpoint}/user/data/${cid}`, {
     method: 'PATCH',
