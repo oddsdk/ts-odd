@@ -41,7 +41,7 @@ export type Links = { [name: string]: Link }
 // ----
 
 export type NonEmptyPath = [string, ...string[]]
-export type SyncHook = (cid: CID) => any
+export type SyncHook = (cid: CID) => unknown
 
 
 // TREE

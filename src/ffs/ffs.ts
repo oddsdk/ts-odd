@@ -24,7 +24,7 @@ export class FileSystem {
     this.syncHooks = []
   }
 
-  static async empty(keyName: string = 'filesystem-root'): Promise<FileSystem> {
+  static async empty(keyName = 'filesystem-root'): Promise<FileSystem> {
     const root = await PublicTree.empty()
     const publicTreeInstance = await PublicTree.empty()
     const privateTreeInstance = await PrivateTree.empty()
@@ -32,7 +32,7 @@ export class FileSystem {
     return new FileSystem(root, publicTreeInstance, privateTreeInstance, key)
   }
 
-  static async fromCID(cid: CID, keyName: string = 'filesystem-root'): Promise<FileSystem | null> {
+  static async fromCID(cid: CID, keyName = 'filesystem-root'): Promise<FileSystem | null> {
     const root = await PublicTree.fromCID(cid)
     const publicTree = (await root.getDirectChild('public')) as PublicTree
     const privLink = root.findLink('private')
@@ -50,7 +50,7 @@ export class FileSystem {
   }
 
   // upgrade public IPFS folder to FileSystem
-  static async upgradePublicCID(cid: CID, keyName: string = 'filesystem-root'): Promise<FileSystem> {
+  static async upgradePublicCID(cid: CID, keyName = 'filesystem-root'): Promise<FileSystem> {
     const root = await PublicTree.empty()
     const pubTreeInstance = await PublicTree.fromCID(cid)
     const privTreeInstance = await PrivateTree.empty()
