@@ -110,12 +110,13 @@ export class FileSystem {
   }
 
   addSyncHook(hook: SyncHook): Array<SyncHook> {
-    this.syncHooks.push(hook)
+    this.syncHooks = [...this.syncHooks, hook]
     return this.syncHooks
   }
 
   removeSyncHook(hook: SyncHook): Array<SyncHook> {
-    return this.syncHooks.filter(h => h !== hook)
+    this.syncHooks = this.syncHooks.filter(h => h !== hook)
+    return this.syncHooks
   }
 
   async runOnTree<a>(path: string, updateTree: boolean, fn: (tree: Tree, relPath: string) => Promise<a>): Promise<a> {
