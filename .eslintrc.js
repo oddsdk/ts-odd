@@ -15,10 +15,6 @@ module.exports = {
         "delimiter": "none",
         "requireLast": false
       },
-      "singleline": {
-        "delimiter": "comma",
-        "requireLast": false
-      }
     }],
     "@typescript-eslint/no-use-before-define": ["off"]
   }
