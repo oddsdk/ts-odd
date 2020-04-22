@@ -1,11 +1,12 @@
 import link from '../link'
 import util from '../util'
-import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, FileSystemVersion } from '../types'
+import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, SemVer } from '../types'
 import { CID } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree from '../public/tree'
 import PrivateFile from './file'
 import normalizer from '../normalizer'
+import semver from '../semver'
 
 type PinMap = {
   [cid: string]: CID[]
@@ -20,7 +21,7 @@ export class PrivateTree extends PublicTree {
     file: PrivateFileStatic
   }
 
-  constructor(links: Links, version: FileSystemVersion, key: string, pinMap: PinMap) {
+  constructor(links: Links, version: SemVer, key: string, pinMap: PinMap) {
     super(links, version)
     this.key = key
     this.pinMap = pinMap
@@ -34,7 +35,7 @@ export class PrivateTree extends PublicTree {
     return obj.putEncrypted !== undefined
   }
  
-  static async empty(version: FileSystemVersion = FileSystemVersion.v1_0_0, key?: string): Promise<PrivateTree> {
+  static async empty(version: SemVer = semver.latest, key?: string): Promise<PrivateTree> {
     const keyStr = key ? key : await keystore.genKeyStr()
     return new PrivateTree({}, version, keyStr, {})
   }

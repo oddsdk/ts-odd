@@ -1,9 +1,10 @@
 import ipfs, { CID } from '../../ipfs'
-import { BasicLinks, Links, FileSystemVersion, Header, Metadata } from '../types'
+import { BasicLinks, Links, Header, Metadata, SemVer } from '../types'
 import basic from './basic'
 import { isDecodingError, DecodingError, LinkDoesNotExistError, ContentTypeMismatchError } from './errors'
 import { isString, mapObjAsync } from '../../common'
 import link from '../link'
+import semver from '../semver'
 
 export const getValue = async <T>(linksOrCID: Links | CID, name: string, checkFn: (obj: any) => obj is T, key?: string): Promise<T | DecodingError> => {
   if(typeof linksOrCID === "string") {
@@ -33,7 +34,7 @@ export const getChildKey = async (cid: CID, key: string): Promise<string> => {
 export const put = async(index: CID, header: Header, key?: string): Promise<CID> => {
   const withVersion = {
     ...header,
-    version: FileSystemVersion.v1_0_0
+    version: semver.encode(1, 0, 0)
   }
   const linksArr = await Promise.all(
     Object.entries(withVersion)
@@ -48,14 +49,12 @@ export const put = async(index: CID, header: Header, key?: string): Promise<CID>
   return basic.putLinks(links, key)
 }
 
-export const getVersion = async(cid: CID, key?: string): Promise<FileSystemVersion> => {
+export const getVersion = async(cid: CID, key?: string): Promise<SemVer> => {
   const version = await getValue(cid, 'version', isString, key)
-  switch(version) {
-    case "1.0.0": 
-      return FileSystemVersion.v1_0_0
-    default: 
-      return FileSystemVersion.v0_0_0
+  if(isDecodingError(version)){
+    return semver.v0
   }
+  return semver.fromString(version) || semver.v0
 }
 
 export const interpolateMetadata = async (

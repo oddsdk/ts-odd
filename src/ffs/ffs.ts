@@ -1,9 +1,10 @@
 import PublicTree from './public'
 import PrivateTree from './private'
-import { Tree, File, Links, SyncHook, FileSystemVersion, FileSystemOptions } from './types'
+import { Tree, File, Links, SyncHook, FileSystemOptions } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
 import link from './link'
+import semver from './semver'
 import keystore from '../keystore'
 import user from '../user'
 
@@ -25,7 +26,7 @@ export class FileSystem {
   }
 
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', version = FileSystemVersion.v0_0_0 } = opts
+    const { keyName = 'filesystem-root', version = semver.latest } = opts
     const root = await PublicTree.empty(version)
     const publicTreeInstance = await PublicTree.empty(version)
     const privateTreeInstance = await PrivateTree.empty(version)
@@ -53,7 +54,7 @@ export class FileSystem {
 
   // upgrade public IPFS folder to FileSystem
   static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', version = FileSystemVersion.v0_0_0 } = opts
+    const { keyName = 'filesystem-root', version = semver.latest } = opts
     const root = await PublicTree.empty(version)
     const pubTreeInstance = await PublicTree.fromCID(cid)
     const privTreeInstance = await PrivateTree.empty(version)

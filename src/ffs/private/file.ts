@@ -1,15 +1,16 @@
 import PublicFile from '../public/file'
 import { CID, FileContent } from '../../ipfs'
-import { FileSystemVersion } from '../types'
+import { SemVer } from '../types'
 import normalizer from '../normalizer'
+import semver from '../semver'
 
 class PrivateFile extends PublicFile {
   
-  constructor(content: FileContent, version: FileSystemVersion) {
+  constructor(content: FileContent, version: SemVer) {
     super(content, version)
   }
 
-  static create(content: FileContent, version: FileSystemVersion = FileSystemVersion.v1_0_0): PrivateFile {
+  static create(content: FileContent, version: SemVer = semver.latest): PrivateFile {
     return new PrivateFile(content, version)
   }
 

@@ -4,13 +4,8 @@ import { FileContent, CID } from '../ipfs'
 // -----
 
 export type FileSystemOptions = {
-  version?: FileSystemVersion
+  version?: SemVer
   keyName?: string
-}
-
-export enum FileSystemVersion {
-  v0_0_0 = "0.0.0",
-  v1_0_0 = "1.0.0"
 }
 
 
@@ -23,7 +18,7 @@ export interface File {
 }
 
 export interface FileStatic {
-  create: (content: FileContent, version?: FileSystemVersion) => File
+  create: (content: FileContent, version?: SemVer) => File
   fromCID: (cid: CID) => Promise<File>
 }
 
@@ -67,7 +62,7 @@ export type PinMap = {
 }
 
 export type Header = Metadata & {
-  version?: FileSystemVersion
+  version?: SemVer
   key?: string
   pins?: PinMap
 }
@@ -77,6 +72,12 @@ export type Header = Metadata & {
 
 export type NonEmptyPath = [string, ...string[]]
 export type SyncHook = (cid: CID) => unknown
+
+export type SemVer = {
+  major: number
+  minor: number
+  patch: number
+}
 
 
 // TREE
@@ -91,7 +92,7 @@ export type PrivateTreeData = TreeData & {
 }
 
 export interface TreeStatic {
-  empty: (version?: FileSystemVersion) => Promise<Tree>
+  empty: (version?: SemVer) => Promise<Tree>
   fromCID: (cid: CID) => Promise<Tree>
 }
 
@@ -100,7 +101,7 @@ export interface PrivateTreeStatic extends TreeStatic {
 }
 
 export interface Tree {
-  version: FileSystemVersion
+  version: SemVer
   links: Links
   isFile: boolean
 

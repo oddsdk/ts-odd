@@ -1,5 +1,5 @@
 import { CID, FileContent } from '../../ipfs'
-import { Metadata, Header, FileSystemVersion, TreeData, PrivateTreeData, PinMap } from '../types'
+import { Metadata, Header, SemVer, TreeData, PrivateTreeData, PinMap } from '../types'
 import check from '../types/check'
 import { getVersion } from './header'
 import basic from './versions/v0_0_0'
@@ -33,12 +33,12 @@ export const getPins = async (cid: CID, key: string): Promise<PinMap> => {
   return fns.getPins(cid, key)
 }
 
-export const putFile = async (version: FileSystemVersion, content: FileContent, header: Partial<Header> = {}, key?: string): Promise<CID> => {
+export const putFile = async (version: SemVer, content: FileContent, header: Partial<Header> = {}, key?: string): Promise<CID> => {
   const fns = switchVersion(version)
   return fns.putFile(content, header, key)
 }
 
-export const putTree = async(version: FileSystemVersion, data: TreeData, header: Partial<Header> = {}, key?: string): Promise<CID> => {
+export const putTree = async(version: SemVer, data: TreeData, header: Partial<Header> = {}, key?: string): Promise<CID> => {
   const fns = switchVersion(version)
   return fns.putTree(data, header, key)
 }
@@ -48,11 +48,11 @@ const getAndSwitchVersion = async (cid: CID, key?: string) => {
   return switchVersion(version)
 }
 
-const switchVersion = (version: FileSystemVersion) => {
-  switch(version) {
-    case FileSystemVersion.v0_0_0:
+const switchVersion = (version: SemVer) => {
+  switch(version.major) {
+    case 0:
       return basic
-    case FileSystemVersion.v1_0_0:
+    case 1:
       return nested
     default:
       return basic

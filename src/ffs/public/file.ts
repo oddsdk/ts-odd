@@ -1,19 +1,20 @@
-import { File, FileSystemVersion } from '../types'
+import { File, SemVer } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import normalizer from '../normalizer'
+import semver from '../semver'
 
 class PublicFile implements File {
 
   isFile = true
   content: FileContent
-  version: FileSystemVersion
+  version: SemVer
 
-  constructor(content: FileContent, version: FileSystemVersion) {
+  constructor(content: FileContent, version: SemVer) {
     this.content = content
     this.version = version
   }
 
-  static create(content: FileContent, version: FileSystemVersion = FileSystemVersion.v1_0_0): PublicFile {
+  static create(content: FileContent, version: SemVer = semver.latest): PublicFile {
     return new PublicFile(content, version)
   }
 

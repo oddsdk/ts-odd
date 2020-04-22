@@ -1,14 +1,15 @@
 import util from '../util'
 import pathUtil from '../path'
 import link from '../link'
-import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, FileSystemVersion } from '../types'
+import semver from '../semver'
+import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
 import normalizer from '../normalizer'
 
 class PublicTree implements Tree {
 
-  version: FileSystemVersion
+  version: SemVer
   links: Links
   isFile = false
   static: {
@@ -16,7 +17,7 @@ class PublicTree implements Tree {
     file: FileStatic
   }
 
-  constructor(links: Links, version: FileSystemVersion) {
+  constructor(links: Links, version: SemVer) {
     this.version = version
     this.links = links
     this.static = {
@@ -29,7 +30,7 @@ class PublicTree implements Tree {
     return obj.getDirectChild !== undefined
   }
 
-  static async empty(version: FileSystemVersion = FileSystemVersion.v1_0_0): Promise<PublicTree> {
+  static async empty(version: SemVer = semver.latest): Promise<PublicTree> {
     return new PublicTree({}, version)
   }
 
