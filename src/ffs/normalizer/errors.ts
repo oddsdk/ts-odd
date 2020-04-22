@@ -1,6 +1,7 @@
+import { BaseError } from 'make-error'
 import { CID } from '../../ipfs'
 
-export class DecodingError extends Error { }
+export class DecodingError extends BaseError { }
 
 export class ContentTypeMismatchError extends DecodingError {
   constructor(cid: CID) {
