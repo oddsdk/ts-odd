@@ -7,6 +7,7 @@ import PublicTree from '../public/tree'
 import PrivateFile from './file'
 import normalizer from '../normalizer'
 import semver from '../semver'
+import { rmKey } from '../../common'
 
 type PinMap = {
   [cid: string]: CID[]
@@ -67,6 +68,15 @@ export class PrivateTree extends PublicTree {
             .updateLink(link.make(name, cid, isFile))
   }
 
+  async removeDirectChild(name: string): Promise<Tree> {
+    const link = this.findLink(name)
+    return link === null 
+      ? this
+      : this
+          .updatePinMap(link.cid, null)
+          .rmLink(name)
+  }
+
   async getDirectChild(name: string): Promise<Tree | File | null> {
     const link = this.findLink(name)
     if(link === null) {
@@ -84,11 +94,14 @@ export class PrivateTree extends PublicTree {
     }
   }
 
-  updatePinMap(key: string, pinList: CID[]): Tree {
-    return new PrivateTree(this.links, this.version, this.key, {
-      ...this.pinMap,
-      [key]: pinList
-    })
+  updatePinMap(key: string, pinList: CID[] | null): Tree {
+    const updated = pinList === null 
+      ? rmKey(this.pinMap, key) 
+      : {
+        ...this.pinMap,
+        [key]: pinList
+      }
+    return new PrivateTree(this.links, this.version, this.key, updated)
   }
 
   copyWithLinks(links: Links): Tree {

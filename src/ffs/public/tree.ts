@@ -6,6 +6,7 @@ import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer } fro
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
 import normalizer from '../normalizer'
+import { rmKey } from '../../common'
 
 class PublicTree implements Tree {
 
@@ -141,8 +142,7 @@ class PublicTree implements Tree {
   }
 
   rmLink(name: string): Tree { 
-    delete this.links[name]
-    return this.copyWithLinks(this.links)
+    return this.copyWithLinks(rmKey(this.links, name))
   }
 
   copyWithLinks(links: Links): Tree {
