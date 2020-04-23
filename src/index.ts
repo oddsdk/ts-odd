@@ -1,12 +1,12 @@
 import auth from './auth'
-import * as ffs from './ffs'
+import fs from './fs'
 import ipfs from './ipfs'
 import keystore from './keystore'
 import user from './user'
 
 export default {
   auth,
-  ffs,
+  fs,
   ipfs,
   keystore,
   user

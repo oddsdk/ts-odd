@@ -1,7 +1,7 @@
 import type { UserProperties } from './types'
 
 import { API_ENDPOINT } from '../common'
-import { FileSystem } from '../ffs/ffs'
+import { FileSystem } from '../fs/filesystem'
 
 import { USERNAME_BLACKLIST } from './blacklist'
 import { didJWT, didKey } from './identity'
