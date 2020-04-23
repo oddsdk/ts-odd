@@ -6,6 +6,7 @@ import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer } fro
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
 import normalizer from '../normalizer'
+import { rmKey } from '../../common'
 
 class PublicTree implements Tree {
 
@@ -74,6 +75,14 @@ class PublicTree implements Tree {
     return this.addChild(path, file)
   }
 
+  async rm(path: string): Promise<Tree> {
+    const parts = pathUtil.splitNonEmpty(path)
+    if(parts === null){
+      throw new Error("Path does not exist")
+    }
+    return util.rmNested(this, parts)
+  }
+
   async pathExists(path: string): Promise<boolean> {
     const node = await this.get(path)
     return node !== null
@@ -98,6 +107,10 @@ class PublicTree implements Tree {
     const cid = await child.put()
     const isFile = util.isFile(child)
     return this.updateLink(link.make(name, cid, isFile))
+  }
+
+  async removeDirectChild(name: string): Promise<Tree> {
+    return this.rmLink(name)
   }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
@@ -129,8 +142,7 @@ class PublicTree implements Tree {
   }
 
   rmLink(name: string): Tree { 
-    delete this.links[name]
-    return this.copyWithLinks(this.links)
+    return this.copyWithLinks(rmKey(this.links, name))
   }
 
   copyWithLinks(links: Links): Tree {

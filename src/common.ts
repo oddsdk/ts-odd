@@ -73,6 +73,11 @@ export const blobToBuffer = async (blob: Blob): Promise<Buffer> => {
 
 // MISC
 
+export const rmKey = <T>(obj: {[k: string]: T}, key: string): {[k: string]: T} => {
+  const { [key]: omit, ...rest } = obj
+  return rest
+}
+
 export const mapObj = <T, S>(obj: {[k: string]: T}, fn: (t: T, k?: string) => S): {[k: string]: S}  => {
   const newObj = {} as {[key: string]: S}
   Object.entries(obj).forEach(([key, value]) => {
@@ -102,6 +107,7 @@ export default {
   isObject,
   isBlob,
   blobToBuffer,
+  rmKey,
   mapObj,
   mapObjAsync,
 }
