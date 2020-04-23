@@ -1,9 +1,10 @@
 import PublicTree from './public'
 import PrivateTree from './private'
-import { File, Links, SyncHook, Tree } from './types'
+import { Tree, File, Links, SyncHook, FileSystemOptions } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
 import link from './link'
+import semver from './semver'
 import keystore from '../keystore'
 import user from '../user'
 
@@ -24,15 +25,17 @@ export class FileSystem {
     this.syncHooks = []
   }
 
-  static async empty(keyName = 'filesystem-root'): Promise<FileSystem> {
-    const root = await PublicTree.empty()
-    const publicTreeInstance = await PublicTree.empty()
-    const privateTreeInstance = await PrivateTree.empty()
+  static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
+    const { keyName = 'filesystem-root', version = semver.latest } = opts
+    const root = await PublicTree.empty(version)
+    const publicTreeInstance = await PublicTree.empty(version)
+    const privateTreeInstance = await PrivateTree.empty(version)
     const key = await keystore.getKeyByName(keyName)
     return new FileSystem(root, publicTreeInstance, privateTreeInstance, key)
   }
 
-  static async fromCID(cid: CID, keyName = 'filesystem-root'): Promise<FileSystem | null> {
+  static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
+    const { keyName = 'filesystem-root' } = opts
     const root = await PublicTree.fromCID(cid)
     const publicTree = (await root.getDirectChild('public')) as PublicTree
     const privLink = root.findLink('private')
@@ -44,16 +47,17 @@ export class FileSystem {
     return new FileSystem(root, publicTree, privateTree, key)
   }
 
-  static async forUser(username: string, keyName: string): Promise<FileSystem | null> {
+  static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const cid = await user.fileRoot(username)
-    return FileSystem.fromCID(cid, keyName)
+    return FileSystem.fromCID(cid, opts)
   }
 
   // upgrade public IPFS folder to FileSystem
-  static async upgradePublicCID(cid: CID, keyName = 'filesystem-root'): Promise<FileSystem> {
-    const root = await PublicTree.empty()
+  static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
+    const { keyName = 'filesystem-root', version = semver.latest } = opts
+    const root = await PublicTree.empty(version)
     const pubTreeInstance = await PublicTree.fromCID(cid)
-    const privTreeInstance = await PrivateTree.empty()
+    const privTreeInstance = await PrivateTree.empty(version)
     const key = await keystore.getKeyByName(keyName)
     return new FileSystem(root, pubTreeInstance, privTreeInstance, key)
   }
@@ -84,10 +88,22 @@ export class FileSystem {
     })
   }
 
+  async rm(path: string): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.rm(relPath)
+    })
+    return this.sync()
+  }
+
   async get(path: string): Promise<Tree | File | null> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.get(relPath)
     })
+  }
+
+  async pinList(): Promise<CID[]> {
+    const rootCID = await this.sync()
+    return this.privateTree.pinList().concat([ rootCID ])
   }
 
   async sync(): Promise<CID> {

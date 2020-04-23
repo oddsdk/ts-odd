@@ -1,6 +1,8 @@
+import dagPB from 'ipld-dag-pb'
 import { getIpfs } from './config'
-import { CID, FileContent, DAGNode, UnixFSFile } from './types'
+import { CID, FileContent, DAGNode, UnixFSFile, DAGLink } from './types'
 import util from './util'
+import { DAG_NODE_DATA } from './constants'
 
 export const add = async (content: FileContent): Promise<CID> => {
   const ipfs = await getIpfs()
@@ -53,6 +55,11 @@ export const dagPut = async (node: DAGNode): Promise<CID> => {
   return cid.toString()
 }
 
+export const dagPutLinks = async (links: DAGLink[]): Promise<CID> => {
+  const node = new dagPB.DAGNode(DAG_NODE_DATA, links)
+  return dagPut(node)
+}
+
 export const dns = async (domain: string): Promise<CID> => {
   const ipfs = await getIpfs()
   return ipfs.dns(domain)
@@ -66,5 +73,6 @@ export default {
   ls,
   dagGet,
   dagPut,
-  dns
+  dagPutLinks,
+  dns,
 }

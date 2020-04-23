@@ -1,21 +1,31 @@
-import util from './util'
 import link from '../link'
-import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic } from '../types'
-import ipfs, { CID } from '../../ipfs'
+import util from '../util'
+import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, SemVer } from '../types'
+import { CID } from '../../ipfs'
+import keystore from '../../keystore'
 import PublicTree from '../public/tree'
 import PrivateFile from './file'
+import normalizer from '../normalizer'
+import semver from '../semver'
+import { rmKey } from '../../common'
+
+type PinMap = {
+  [cid: string]: CID[]
+}
 
 export class PrivateTree extends PublicTree {
 
+  pinMap: PinMap
   private key: string
   static: {
     tree: PrivateTreeStatic
     file: PrivateFileStatic
   }
 
-  constructor(links: Links, key: string) {
-    super(links)
+  constructor(links: Links, version: SemVer, key: string, pinMap: PinMap) {
+    super(links, version)
     this.key = key
+    this.pinMap = pinMap
     this.static = {
       tree: PrivateTree,
       file: PrivateFile
@@ -26,19 +36,20 @@ export class PrivateTree extends PublicTree {
     return obj.putEncrypted !== undefined
   }
  
-  static async empty(key?: string): Promise<PrivateTree> {
-    const keyStr = key ? key : await util.genKeyStr()
-    return new PrivateTree({}, keyStr)
+  static async empty(version: SemVer = semver.latest, key?: string): Promise<PrivateTree> {
+    const keyStr = key ? key : await keystore.genKeyStr()
+    return new PrivateTree({}, version, keyStr, {})
   }
 
   static async fromCID(_cid: CID): Promise<PublicTree> {
     throw new Error("This is a private node. Use PrivateNode.fromCIDEncrypted")
   }
 
-  static async fromCIDWithKey(cid: CID, keyStr: string): Promise<PrivateTree> {
-    const content = await ipfs.catBuf(cid)
-    const { key, links } = await util.decryptNode(content, keyStr)
-    return new PrivateTree(links, key)
+  static async fromCIDWithKey(cid: CID, parentKey: string): Promise<PrivateTree> {
+    const version = await normalizer.getVersion(cid, parentKey)
+    const { links, key } = await normalizer.getPrivateTreeData(cid, parentKey)
+    const pinMap = await normalizer.getPins(cid, parentKey)
+    return new PrivateTree(links, version, key, pinMap)
   }
 
   async put(): Promise<CID> {
@@ -46,14 +57,24 @@ export class PrivateTree extends PublicTree {
   }
 
   async putEncrypted(key: string): Promise<CID> {
-    const encrypted = await util.encryptNode(this.data(), key)
-    return ipfs.add(encrypted)
+    return normalizer.putTree(this.version, this.data(), { pins: this.pinMap }, key)
   }
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string): Promise<Tree> {
     const cid = await child.putEncrypted(this.key)
-    const isFile = util.isFile(child)
-    return this.updateLink(link.make(name, cid, isFile))
+    const [ isFile, pinList ] = util.isFile(child) ? [true, []] : [false, child.pinList()]
+    return this
+            .updatePinMap(cid, pinList)
+            .updateLink(link.make(name, cid, isFile))
+  }
+
+  async removeDirectChild(name: string): Promise<Tree> {
+    const link = this.findLink(name)
+    return link === null 
+      ? this
+      : this
+          .updatePinMap(link.cid, null)
+          .rmLink(name)
   }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
@@ -73,8 +94,29 @@ export class PrivateTree extends PublicTree {
     }
   }
 
+  updatePinMap(key: string, pinList: CID[] | null): Tree {
+    const updated = pinList === null 
+      ? rmKey(this.pinMap, key) 
+      : {
+        ...this.pinMap,
+        [key]: pinList
+      }
+    return new PrivateTree(this.links, this.version, this.key, updated)
+  }
+
   copyWithLinks(links: Links): Tree {
-    return new PrivateTree(links, this.key)
+    return new PrivateTree(links, this.version, this.key, this.pinMap)
+  }
+
+  pinList(): CID[] {
+    return Object.entries(this.pinMap).reduce((acc, cur) => {
+      const [parent, children] = cur
+      return [
+        ...acc,
+        ...children,
+        parent
+      ]
+    }, [] as CID[])
   }
 
 }
