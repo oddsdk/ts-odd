@@ -1,5 +1,5 @@
-import { isString, isObject } from '../../common'
-import { Link, Links, TreeData, PrivateTreeData, PinMap } from '../types'
+import { isString, isObject, isNum } from '../../common'
+import { Link, Links, TreeData, PrivateTreeData, PinMap, SemVer } from '../types'
 import { CID } from '../../ipfs'
 
 export const isLink = (link: any): link is Link => {
@@ -26,11 +26,18 @@ export const isPinMap = (obj: any): obj is PinMap => {
   return isObject(obj) && Object.values(obj).every(isCIDList)
 }
 
+export const isSemVer = (obj: any): obj is SemVer => {
+  if (!isObject(obj)) return false
+  const { major, minor, patch } = obj as any
+  return isNum(major) && isNum(minor) && isNum(patch)
+}
+
 export default {
   isLink,
   isLinks,
   isTreeData,
   isPrivateTreeData,
   isCIDList,
-  isPinMap
+  isPinMap,
+  isSemVer
 }

@@ -3,6 +3,7 @@ import { Metadata, Header, TreeData, PrivateTreeData, PinMap } from '../../types
 import check from '../../types/check'
 import basic from '../basic'
 import header from '../header'
+import semver from '../../semver'
 import { isNum, isBool } from '../../../common'
 import { defaultError } from '../errors'
 
@@ -49,6 +50,7 @@ export const putFile = async (content: FileContent, headerVal: Partial<Header>, 
     ...headerVal,
     isFile: true,
     mtime: Date.now(),
+    version: semver.encode(1, 0, 0)
   }, key)
 }
 
@@ -59,6 +61,7 @@ export const putTree = async(data: TreeData | PrivateTreeData, headerVal: Partia
     ...headerVal,
     isFile: false,
     mtime: Date.now(),
+    version: semver.encode(1, 0, 0),
     key: childKey
   }, key)
 }

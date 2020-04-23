@@ -5,6 +5,7 @@ import { isDecodingError, DecodingError, LinkDoesNotExistError, ContentTypeMisma
 import { isString, mapObjAsync } from '../../common'
 import link from '../link'
 import semver from '../semver'
+import { isSemVer } from '../types/check'
 
 export const getValue = async <T>(linksOrCID: Links | CID, name: string, checkFn: (obj: any) => obj is T, key?: string): Promise<T | DecodingError> => {
   if(typeof linksOrCID === "string") {
@@ -32,12 +33,8 @@ export const getChildKey = async (cid: CID, key: string): Promise<string> => {
 }
 
 export const put = async(index: CID, header: Header, key?: string): Promise<CID> => {
-  const withVersion = {
-    ...header,
-    version: semver.encode(1, 0, 0)
-  }
   const linksArr = await Promise.all(
-    Object.entries(withVersion)
+    Object.entries(header)
       .filter(([_name, val]) => val !== undefined)
       .map(async ([name, val]) => {
         const cid = await ipfs.encoded.add(val, key)
@@ -50,11 +47,11 @@ export const put = async(index: CID, header: Header, key?: string): Promise<CID>
 }
 
 export const getVersion = async(cid: CID, key?: string): Promise<SemVer> => {
-  const version = await getValue(cid, 'version', isString, key)
+  const version = await getValue(cid, 'version', isSemVer, key)
   if(isDecodingError(version)){
     return semver.v0
   }
-  return semver.fromString(version) || semver.v0
+  return version
 }
 
 export const interpolateMetadata = async (
