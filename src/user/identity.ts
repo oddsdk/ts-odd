@@ -2,8 +2,7 @@ import * as base58 from 'base58-universal/main.js'
 import { CryptoSystem } from 'keystore-idb/types'
 import utils from 'keystore-idb/utils'
 
-import { base64UrlEncode, makeBase64UrlSafe } from '../common'
-import * as api from  "../common/api"
+import { api, base64 } from '../common'
 import { getKeystore } from '../keystore'
 
 
@@ -35,12 +34,12 @@ export const didJWT = async ({ scope = "/" } = {}) => {
   }
 
   // Encode parts in JSON & Base64Url
-  const encodedHeader = base64UrlEncode(JSON.stringify(header))
-  const encodedPayload = base64UrlEncode(JSON.stringify(payload))
+  const encodedHeader = base64.urlEncode(JSON.stringify(header))
+  const encodedPayload = base64.urlEncode(JSON.stringify(payload))
 
   // Signature
   const signed = await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
-  const encodedSignature = makeBase64UrlSafe(signed)
+  const encodedSignature = base64.makeUrlSafe(signed)
 
   // Make JWT
   return encodedHeader + '.' +

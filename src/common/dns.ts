@@ -23,3 +23,8 @@ export async function lookupDnsLink(host: string): Promise<string> {
 
   return t.replace(/^\/ipfs\//, "")
 }
+
+export default {
+  lookupTxtRecord,
+  lookupDnsLink
+}
