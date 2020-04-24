@@ -1,8 +1,10 @@
-import ipfs, { CID, FileContent, FileContentRaw } from '../../ipfs'
-import { BasicLinks, Links, Header, Metadata, SemVer, PinMap } from '../types'
+import _ from 'lodash'
+import map from 'lodash/map'
+import ipfs, { CID } from '../../ipfs'
+import { BasicLinks, Links, Header, Metadata, SemVer } from '../types'
 import basic from './basic'
 import { isDecodingError, DecodingError, LinkDoesNotExistError, ContentTypeMismatchError } from './errors'
-import { isString, mapObjAsync, notNull } from '../../common'
+import { isString, mapObjAsync, isDefined } from '../../common'
 import link from '../link'
 import semver from '../semver'
 import { isSemVer } from '../types/check'
@@ -32,24 +34,13 @@ export const getChildKey = async (cid: CID, key: string): Promise<string> => {
   return childKey
 }
 
-const removeUndefinedVals = <T>(obj: {[key: string]: T | undefined}): {[key: string]: T} => {
-  return Object.entries(obj).reduce((acc, cur) => {
-    const [key, val] = cur
-    if(val !== undefined){
-      acc[key] = val
-    }
-    return acc
-  }, {} as {[key: string]: T})
-}
-
 export const put = async(index: CID, header: Header, key?: string): Promise<CID> => {
-  const noUndefined = removeUndefinedVals(header)
+  const noUndefined = _.pickBy(header, isDefined)
   const linksArr = await Promise.all(
-    Object.entries(noUndefined)
-      .map(async ([name, val]) => {
-        const cid = await ipfs.encoded.add(val, key)
-        return { name, cid, isFile: true }
-      })
+    _.map(noUndefined, async (val, name) => {
+      const cid = await ipfs.encoded.add(val, key)
+      return { name, cid, isFile: true }
+    })
   )
   linksArr.push({ name: 'index', cid: index, isFile: false })
   const links = link.arrToMap(linksArr)

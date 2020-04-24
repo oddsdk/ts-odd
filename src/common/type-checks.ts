@@ -1,3 +1,7 @@
+
+export const isDefined = <T>(val: T | undefined): val is T => {
+  return val !== undefined
+}
 export const notNull = <T>(obj: T | null): obj is T => {
   return obj !== null
 }
@@ -26,6 +30,7 @@ export const isBlob = (obj: any): obj is Blob => {
 }
 
 export default {
+  isDefined,
   notNull,
   isBool,
   isNum,
