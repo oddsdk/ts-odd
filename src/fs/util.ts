@@ -41,7 +41,9 @@ export const rmNested = async (tree: Tree, path: NonEmptyPath): Promise<Tree> =>
     throw new Error("Path does not exist")
   }
   const updated = await node.removeDirectChild(filename)
-  return tree.addChild(pathUtil.join(parentPath), updated)
+  return parentPath.length > 0 
+          ? tree.addChild(pathUtil.join(parentPath), updated) 
+          : updated
 }
 
 export default {
