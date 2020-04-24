@@ -3,6 +3,7 @@ import { CryptoSystem } from 'keystore-idb/types'
 import utils from 'keystore-idb/utils'
 
 import { base64UrlEncode, makeBase64UrlSafe } from '../common'
+import * as api from  "../common/api"
 import { getKeystore } from '../keystore'
 
 
@@ -13,18 +14,24 @@ const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
 /**
  * Create a DID key to authenticate with and wrap it in a JWT.
  */
-export const didJWT = async () => {
+export const didJWT = async ({ scope = "/" } = {}) => {
   const ks = await getKeystore()
+  const apiDID = await api.didKey()
 
   // Parts
   const header = {
-    alg: jwtAlgorithm(ks.cfg.type) || 'unknownAlgorithm',
-    typ: 'JWT'
+    alg: jwtAlgorithm(ks.cfg.type) || 'UnknownAlgorithm',
+    typ: 'JWT',
+    uav: '0.1.0',
   }
 
   const payload = {
-    iss: await didKey(),
+    aud: apiDID,
     exp: Math.floor((Date.now() + 30 * 1000) / 1000), // JWT expires in 30 seconds
+    iss: await didKey(),
+    prf: null,
+    pty: "APPEND",
+    scp: scope,
   }
 
   // Encode parts in JSON & Base64Url

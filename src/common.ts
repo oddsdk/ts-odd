@@ -1,12 +1,9 @@
-// CONSTANTS
-
+// 🏔
 
 export const API_ENDPOINT = 'https://runfission.com'
 
 
-
 // BASE64
-
 
 export function base64UrlDecode(a: string): string {
   return atob(a).replace(/\_/g, "/").replace(/\-/g, "+")
@@ -95,6 +92,7 @@ export const mapObjAsync = async <T, S>(obj: {[k: string]: T}, fn: (t: T, k?: st
   )
   return newObj
 }
+
 
 export default {
   base64UrlDecode,
