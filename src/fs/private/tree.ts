@@ -1,5 +1,5 @@
 import link from '../link'
-import util from '../util'
+import operations from '../operations'
 import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, SemVer } from '../types'
 import { CID } from '../../ipfs'
 import keystore from '../../keystore'
@@ -62,7 +62,7 @@ export class PrivateTree extends PublicTree {
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string): Promise<Tree> {
     const cid = await child.putEncrypted(this.key)
-    const [ isFile, pinList ] = util.isFile(child) ? [true, []] : [false, child.pinList()]
+    const [ isFile, pinList ] = operations.isFile(child) ? [true, []] : [false, child.pinList()]
     return this
             .updatePinMap(cid, pinList)
             .updateLink(link.make(name, cid, isFile))

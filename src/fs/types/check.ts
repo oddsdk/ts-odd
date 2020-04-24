@@ -1,6 +1,10 @@
 import { isString, isObject, isNum } from '../../common'
-import { Link, Links, TreeData, PrivateTreeData, PinMap, SemVer } from '../types'
+import { File, Link, Links, TreeData, PrivateTreeData, PinMap, SemVer } from '../types'
 import { CID } from '../../ipfs'
+
+export const isFile = (obj: any): obj is File => {
+  return obj.isFile
+}
 
 export const isLink = (link: any): link is Link => {
   return typeof link?.name === 'string' && typeof link?.cid === 'string'
@@ -33,6 +37,7 @@ export const isSemVer = (obj: any): obj is SemVer => {
 }
 
 export default {
+  isFile,
   isLink,
   isLinks,
   isTreeData,
