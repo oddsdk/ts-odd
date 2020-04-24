@@ -8,11 +8,7 @@ import {
 } from './mock'
 import { ipfsTest, encodedTest } from './util'
 
-const sinon = require('sinon')
-
 describe('ipfs', () => {
-
-  beforeEach(() => sinon.restore())
 
   ipfsTest({
     name: 'add',

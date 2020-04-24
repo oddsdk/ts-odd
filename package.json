@@ -33,33 +33,6 @@
       "git add"
     ]
   },
-  "jest": {
-    "transform": {
-      ".(ts|tsx)": "ts-jest"
-    },
-    "testEnvironment": "node",
-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/test/"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 90,
-        "functions": 95,
-        "lines": 95,
-        "statements": 95
-      }
-    },
-    "collectCoverageFrom": [
-      "src/**/*.{js,ts}"
-    ]
-  },
   "prettier": {
     "semi": false,
     "singleQuote": true
@@ -87,7 +60,6 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-sourcemaps": "^0.5.0",
     "rollup-plugin-typescript2": "^0.26.0",
-    "sinon": "^9.0.2",
     "travis-deploy-once": "^5.0.11",
     "ts-jest": "^25.2.1",
     "ts-node": "^8.6.2",

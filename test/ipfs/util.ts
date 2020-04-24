@@ -3,8 +3,6 @@ import keystore from '../../src/keystore'
 
 import { FakeIpfs, MethodCallDetails, dagLink2 } from './mock'
 
-const sinon = require('sinon')
-
 type IpfsTestOpts = {
   name: string
   ipfsMethod: string
@@ -24,14 +22,15 @@ type EncodedIpfsTestOpts = IpfsTestOpts & {
 export const ipfsTest = (opts: IpfsTestOpts) => {
   return describe(opts.name, () => {
 
-    let fakeGetIpfs: any
+    let fakeGetIpfs: jest.SpyInstance
     let fakeIpfs: FakeIpfs
     let resp: any
 
     beforeAll(async () => {
       fakeIpfs = new FakeIpfs()
-      fakeGetIpfs = sinon.fake.returns(fakeIpfs)
-      sinon.stub(config, 'getIpfs').callsFake(fakeGetIpfs)
+      fakeGetIpfs = jest.spyOn(config, 'getIpfs')
+      fakeGetIpfs.mockResolvedValue(fakeIpfs)
+
       resp = await opts.req()
     })
 
@@ -53,19 +52,18 @@ export const ipfsTest = (opts: IpfsTestOpts) => {
 export const encodedTest = (opts: EncodedIpfsTestOpts) => {
   return describe(opts.name, () => {
 
-    let fakeGetIpfs: any
+    let fakeGetIpfs: jest.SpyInstance
     let fakeIpfs: FakeIpfs
-    let fakeKsMethod: any
+    let fakeKsMethod: jest.SpyInstance
     let respWithKey: any
 
     beforeEach(() => {
       fakeIpfs = new FakeIpfs()
-      fakeGetIpfs = sinon.fake.returns(fakeIpfs)
-      sinon.stub(config, 'getIpfs').callsFake(fakeGetIpfs)
+      fakeGetIpfs = jest.spyOn(config, 'getIpfs')
+      fakeGetIpfs.mockResolvedValue(fakeIpfs)
 
-      fakeKsMethod = sinon.fake.returns(new Uint8Array([1, 2, 3, 4]))
-      sinon.stub(keystore, 'encrypt').callsFake(fakeKsMethod)
-
+      fakeKsMethod = jest.spyOn(keystore, 'encrypt')
+      fakeKsMethod.mockResolvedValue(new Uint8Array([1, 2, 3, 4]))
     })
 
     describe('without key', () => {
