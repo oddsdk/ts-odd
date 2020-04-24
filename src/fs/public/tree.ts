@@ -95,6 +95,9 @@ class PublicTree implements Tree {
 
   async addChild(path: string, toAdd: Tree | File): Promise<Tree> {
     const parts = pathUtil.splitNonEmpty(path)
+    if(parts === null) {
+      throw new Error("Path not specified")
+    }
     const result = parts ? await util.addRecurse(this, parts, toAdd) : this
     return result
   }
