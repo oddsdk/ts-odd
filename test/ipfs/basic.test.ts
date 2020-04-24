@@ -58,15 +58,15 @@ describe('ipfs', () => {
     expectedResp: dnsContent
   })
 
-  encodedTest({
-    name: 'encoded add',
-    ipfsMethod: 'add',
-    req: async (key?: string) => await encoded.add(filecontent, key),
-    expectedParams: [cbor.encode(filecontent)],
-    expectedResp: cid2,
-    ksMethod: 'encrypt',
-    expectedKsResp: null,
-    expectedKsParams: [],
-  })
+  // encodedTest({
+  //   name: 'encoded add',
+  //   ipfsMethod: 'add',
+  //   req: async (key?: string) => await encoded.add(filecontent, key),
+  //   expectedParams: [cbor.encode(filecontent)],
+  //   expectedResp: cid2,
+  //   ksMethod: 'encrypt',
+  //   expectedKsResp: null,
+  //   expectedKsParams: [],
+  // })
 
 })

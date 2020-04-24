@@ -1,8 +1,11 @@
 module.exports = { // eslint-disable-line
+  preset: './jest-preset.js',
   transform: {
     ".(ts|tsx)": "ts-jest"
   },
-  testEnvironment: "node",
+  globalSetup: "jest-environment-puppeteer/setup",
+  globalTeardown: "jest-environment-puppeteer/teardown",
+  testEnvironment: "jest-environment-puppeteer",
   testRegex: "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
   moduleFileExtensions: [
     "ts",
@@ -11,9 +14,10 @@ module.exports = { // eslint-disable-line
   ],
   coveragePathIgnorePatterns: [
     "/node_modules/",
-    "/test/"
+    "/test/",
+    "/src/" // remove later
   ],
-  coverageThreshold: {
+  coverageThreshold: { // bump up later
     global: {
       branches: 0,
       functions: 0,
@@ -22,6 +26,6 @@ module.exports = { // eslint-disable-line
     }
   },
   collectCoverageFrom: [
-    "src/*.{js,ts}"
+    "src/**/*.{js,ts}"
   ]
 }
