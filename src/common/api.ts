@@ -21,3 +21,7 @@ export async function didKey(): Promise<string> {
 
   return didCache.didKey
 }
+
+export default {
+  didKey
+}
