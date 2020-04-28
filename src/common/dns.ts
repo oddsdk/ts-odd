@@ -18,7 +18,14 @@ export async function lookupDnsLink(host: string): Promise<string> {
   try {
     t = await ipfs.dns(host)
   } catch (_) {
-    t = await lookupTxtRecord(host)
+    let prefixedHost
+
+    prefixedHost = host.match(/^https?\:\/\//) ? host : `https://${host}`
+    prefixedHost = prefixedHost.includes("_dnslink.")
+      ? prefixedHost
+      : prefixedHost.replace("://", "://_dnslink.")
+
+    t = await lookupTxtRecord(prefixedHost)
   }
 
   return t.replace(/^\/ipfs\//, "")
