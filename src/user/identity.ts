@@ -16,6 +16,7 @@ const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
 export const didJWT = async ({ scope = "/" } = {}) => {
   const ks = await getKeystore()
   const apiDID = await api.didKey()
+  const currentTimeInSeconds = Math.floor(Date.now() / 1000)
 
   // Parts
   const header = {
@@ -26,8 +27,9 @@ export const didJWT = async ({ scope = "/" } = {}) => {
 
   const payload = {
     aud: apiDID,
-    exp: Math.floor((Date.now() + 30 * 1000) / 1000), // JWT expires in 30 seconds
+    exp: currentTimeInSeconds + 30, // JWT expires in 30 seconds
     iss: await didKey(),
+    nbf: currentTimeInSeconds - 60,
     prf: null,
     pty: "APPEND",
     scp: scope,
