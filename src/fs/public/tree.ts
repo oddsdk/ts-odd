@@ -1,4 +1,4 @@
-import util from '../util'
+import operations from '../operations'
 import pathUtil from '../path'
 import link from '../link'
 import semver from '../semver'
@@ -45,7 +45,7 @@ class PublicTree implements Tree {
     const tree = await this.get(path)
     if(tree === null){
       throw new Error("Path does not exist")
-    } else if(util.isFile(tree)) {
+    } else if(operations.isFile(tree)) {
       throw new Error('Can not `ls` a file')
     }
     return tree.links
@@ -64,7 +64,7 @@ class PublicTree implements Tree {
     const file = await this.get(path)
     if(file === null){
       throw new Error("Path does not exist")
-    } else if(!util.isFile(file)){
+    } else if(!operations.isFile(file)){
       throw new Error('Can not `cat` a directory')
     }
     return file.content
@@ -80,7 +80,7 @@ class PublicTree implements Tree {
     if(parts === null){
       throw new Error("Path does not exist")
     }
-    return util.rmNested(this, parts)
+    return operations.rmNested(this, parts)
   }
 
   async pathExists(path: string): Promise<boolean> {
@@ -90,12 +90,15 @@ class PublicTree implements Tree {
 
   async get(path: string): Promise<Tree | File | null> {
     const parts = pathUtil.splitNonEmpty(path)
-    return parts ? util.getRecurse(this, parts) : this
+    return parts ? operations.getRecurse(this, parts) : this
   }
 
   async addChild(path: string, toAdd: Tree | File): Promise<Tree> {
     const parts = pathUtil.splitNonEmpty(path)
-    const result = parts ? await util.addRecurse(this, parts, toAdd) : this
+    if(parts === null) {
+      throw new Error("Path not specified")
+    }
+    const result = parts ? await operations.addRecurse(this, parts, toAdd) : this
     return result
   }
 
@@ -105,7 +108,7 @@ class PublicTree implements Tree {
 
   async updateDirectChild(child: Tree | File, name: string): Promise<Tree> {
     const cid = await child.put()
-    const isFile = util.isFile(child)
+    const isFile = operations.isFile(child)
     return this.updateLink(link.make(name, cid, isFile))
   }
 

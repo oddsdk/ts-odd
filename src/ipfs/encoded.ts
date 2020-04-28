@@ -2,7 +2,8 @@ import cbor from 'borc'
 import { CID, FileContent } from './types'
 import basic from './basic'
 import keystore from '../keystore'
-import { blob, isBlob } from '../common'
+import { isBlob } from '../common/type-checks'
+import blob from '../common/blob'
 
 export const add = async (content: FileContent, key?: string): Promise<CID> => {
   // can't cbor encode blobs ie file streams

@@ -1,9 +1,6 @@
 import { NonEmptyPath, Tree, File } from './types'
+import { isFile } from './types/check'
 import pathUtil from './path'
-
-export const isFile = (obj: any): obj is File => {
-  return obj.isFile
-}
 
 export const addRecurse = async (tree: Tree, path: NonEmptyPath, child: Tree | File): Promise<Tree> => {
   const name = path[0]
@@ -41,7 +38,9 @@ export const rmNested = async (tree: Tree, path: NonEmptyPath): Promise<Tree> =>
     throw new Error("Path does not exist")
   }
   const updated = await node.removeDirectChild(filename)
-  return tree.addChild(pathUtil.join(parentPath), updated)
+  return parentPath.length > 0 
+          ? tree.addChild(pathUtil.join(parentPath), updated) 
+          : updated
 }
 
 export default {
