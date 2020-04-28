@@ -7,9 +7,9 @@ import blob from '../common/blob'
 
 export const add = async (content: FileContent, key?: string): Promise<CID> => {
   // can't cbor encode blobs ie file streams
-  content = isBlob(content) ? blob.toBuffer(content): content
+  content = isBlob(content) ? await blob.toBuffer(content) : content
   const encoded = cbor.encode(content)
-  const toAdd = key !== undefined ? await keystore.encrypt(encoded, key) : encoded 
+  const toAdd = key !== undefined ? await keystore.encrypt(encoded, key) : encoded
   return basic.add(toAdd)
 }
 
