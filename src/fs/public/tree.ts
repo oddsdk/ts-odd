@@ -121,9 +121,7 @@ class PublicTree implements Tree {
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
     const link = this.findLink(name)
-    if (link === null) {
-      return null
-    }
+    if (link === null) return null
     return link.isFile ? this.static.file.fromCID(link.cid) : this.static.tree.fromCID(link.cid)
   }
 

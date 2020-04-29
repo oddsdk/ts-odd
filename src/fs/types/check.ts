@@ -1,6 +1,8 @@
 import { isString, isObject, isNum } from '../../common'
-import { File, Link, Links, TreeData, PrivateTreeData, PinMap, SemVer } from '../types'
 import { CID } from '../../ipfs'
+
+import { File, Link, Links, TreeData, PrivateTreeData, PinMap, SemVer } from '../types'
+
 
 export const isFile = (obj: any): obj is File => {
   return obj.isFile
@@ -35,6 +37,7 @@ export const isSemVer = (obj: any): obj is SemVer => {
   const { major, minor, patch } = obj as any
   return isNum(major) && isNum(minor) && isNum(patch)
 }
+
 
 export default {
   isFile,

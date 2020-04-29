@@ -1,11 +1,16 @@
 import { CID, FileContent } from '../../../ipfs'
+import { isNum, isBool } from '../../../common'
+import semver from '../../semver'
+
 import { Metadata, Header, TreeData, PrivateTreeData, PinMap } from '../../types'
 import check from '../../types/check'
+
+// Normalization
+
 import basic from '../basic'
 import header from '../header'
-import semver from '../../semver'
-import { isNum, isBool } from '../../../common'
 import { defaultError } from '../errors'
+
 
 export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
   const indexCID = await basic.getLinkCID(cid, 'index', key)
@@ -44,6 +49,7 @@ export const getMetadata = async (cid: CID, key?: string): Promise<Metadata> => 
     mtime: defaultError(mtime, undefined)
   }
 }
+
 export const putFile = async (
   content: FileContent,
   headerVal: Partial<Header>,

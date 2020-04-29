@@ -3,6 +3,7 @@ import { CID, FileContent } from '../../ipfs'
 import normalizer from '../normalizer'
 import semver from '../semver'
 
+
 class PublicFile implements File {
 
   isFile = true
@@ -29,5 +30,6 @@ class PublicFile implements File {
   }
 
 }
+
 
 export default PublicFile

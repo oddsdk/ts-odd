@@ -1,9 +1,14 @@
 import { CID, FileContent } from '../../ipfs'
+
 import { Metadata, Header, SemVer, TreeData, PrivateTreeData, PinMap } from '../types'
 import check from '../types/check'
+
+// Normalization
+
 import { getVersion } from './header'
 import basic from './versions/v0_0_0'
 import nested from './versions/v1_0_0'
+
 
 export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
   const fns = await getAndSwitchVersion(cid, key)

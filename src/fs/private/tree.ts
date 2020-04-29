@@ -19,6 +19,7 @@ export class PrivateTree extends PublicTree {
 
   pinMap: PinMap
   private key: string
+
   static: {
     tree: PrivateTreeStatic
     file: PrivateFileStatic
@@ -26,6 +27,7 @@ export class PrivateTree extends PublicTree {
 
   constructor(links: Links, version: SemVer, key: string, pinMap: PinMap) {
     super(links, version)
+
     this.key = key
     this.pinMap = pinMap
     this.static = {
@@ -81,9 +83,7 @@ export class PrivateTree extends PublicTree {
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
     const link = this.findLink(name)
-    if (link === null) {
-      return null
-    }
+    if (link === null) return null
     return link.isFile
             ? this.static.file.fromCIDWithKey(link.cid, this.key)
             : this.static.tree.fromCIDWithKey(link.cid, this.key)

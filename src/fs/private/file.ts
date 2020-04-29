@@ -4,8 +4,9 @@ import { SemVer } from '../types'
 import normalizer from '../normalizer'
 import semver from '../semver'
 
+
 class PrivateFile extends PublicFile {
-  
+
   constructor(content: FileContent, version: SemVer) {
     super(content, version)
   }
@@ -34,5 +35,6 @@ class PrivateFile extends PublicFile {
   }
 
 }
+
 
 export default PrivateFile

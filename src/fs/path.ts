@@ -1,5 +1,6 @@
 import { NonEmptyPath } from './types'
 
+
 export const split = (path: string): string[] => {
   return path.split('/').filter(p => p.length > 0)
 }

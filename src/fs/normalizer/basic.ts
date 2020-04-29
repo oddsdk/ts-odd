@@ -1,8 +1,12 @@
 import ipfs, { CID, FileContent } from '../../ipfs'
-import { Links, BasicLinks, PrivateTreeData } from '../types'
-import link from '../link'
-import { TreeData } from '../types'
+
+import { Links, BasicLinks, PrivateTreeData, TreeData } from '../types'
 import check from '../types/check'
+
+// Normalization
+
+import link from '../link'
+
 
 export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
   return key ? ipfs.encoded.catAndDecode(cid, key) : ipfs.catBuf(cid)

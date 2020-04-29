@@ -8,6 +8,7 @@ import semver from './semver'
 import keystore from '../keystore'
 import user from '../user'
 
+
 export class FileSystem {
 
   root: PublicTree
@@ -145,17 +146,18 @@ export class FileSystem {
       if (updateTree && PublicTree.instanceOf(result)) {
         this.publicTree = result
       }
-    }else if (head === 'private') {
+    } else if (head === 'private') {
       result = await fn(this.privateTree, relPath)
       if (updateTree && PrivateTree.instanceOf(result)) {
         this.privateTree = result
       }
       return result
-    }else {
+    } else {
       throw new Error("Not a valid FileSystem path")
     }
     return result
   }
 }
+
 
 export default FileSystem

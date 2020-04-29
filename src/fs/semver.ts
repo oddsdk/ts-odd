@@ -1,5 +1,6 @@
 import { SemVer } from './types'
 
+
 const encode = (major: number, minor: number, patch: number): SemVer => {
   return {
     major,
@@ -27,6 +28,7 @@ const toString = (version: SemVer): string => {
 
 const v0 = encode(0, 0, 0)
 const latest = encode(1, 0, 0)
+
 
 export default {
   encode,

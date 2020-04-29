@@ -1,6 +1,8 @@
 import { CID, FileContent } from '../../../ipfs'
 import { TreeData, PrivateTreeData, Metadata, PinMap } from '../../types'
+
 import basic from '../basic'
+
 
 export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
   return basic.getFile(cid, key)
