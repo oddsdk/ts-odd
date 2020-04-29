@@ -9,9 +9,11 @@ import normalizer from '../normalizer'
 import semver from '../semver'
 import { rmKey } from '../../common'
 
+
 type PinMap = {
   [cid: string]: CID[]
 }
+
 
 export class PrivateTree extends PublicTree {
 
@@ -35,7 +37,7 @@ export class PrivateTree extends PublicTree {
   static instanceOf(obj: any): obj is PrivateTree {
     return obj.putEncrypted !== undefined
   }
- 
+
   static async empty(version: SemVer = semver.latest, key?: string): Promise<PrivateTree> {
     const keyStr = key ? key : await keystore.genKeyStr()
     return new PrivateTree({}, version, keyStr, {})
@@ -70,7 +72,7 @@ export class PrivateTree extends PublicTree {
 
   async removeDirectChild(name: string): Promise<Tree> {
     const link = this.findLink(name)
-    return link === null 
+    return link === null
       ? this
       : this
           .updatePinMap(link.cid, null)
@@ -95,8 +97,8 @@ export class PrivateTree extends PublicTree {
   }
 
   updatePinMap(key: string, pinList: CID[] | null): Tree {
-    const updated = pinList === null 
-      ? rmKey(this.pinMap, key) 
+    const updated = pinList === null
+      ? rmKey(this.pinMap, key)
       : {
         ...this.pinMap,
         [key]: pinList

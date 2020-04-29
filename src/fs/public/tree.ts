@@ -8,11 +8,14 @@ import PublicFile from './file'
 import normalizer from '../normalizer'
 import { rmKey } from '../../common'
 
+
 class PublicTree implements Tree {
 
   version: SemVer
   links: Links
+
   isFile = false
+
   static: {
     tree: TreeStatic
     file: FileStatic
@@ -133,18 +136,18 @@ class PublicTree implements Tree {
     return { links: this.links }
   }
 
-  findLink(name: string): Link | null { 
+  findLink(name: string): Link | null {
     return this.links[name] || null
   }
 
-  updateLink(link: Link): Tree { 
+  updateLink(link: Link): Tree {
     return this.copyWithLinks({
       ...this.links,
       [link.name]: link
     })
   }
 
-  rmLink(name: string): Tree { 
+  rmLink(name: string): Tree {
     return this.copyWithLinks(rmKey(this.links, name))
   }
 
