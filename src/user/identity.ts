@@ -30,8 +30,8 @@ export const didJWT = async ({ scope = "/" } = {}) => {
     exp: currentTimeInSeconds + 30, // JWT expires in 30 seconds
     iss: await didKey(),
     nbf: currentTimeInSeconds - 60,
+    pcy: "APPEND",
     prf: null,
-    pty: "APPEND",
     scp: scope,
   }
 
