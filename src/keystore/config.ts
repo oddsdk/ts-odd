@@ -10,7 +10,7 @@ export const setKeystore = async (userKeystore: KeyStore): Promise<void> => {
 }
 
 export const getKeystore = async (): Promise<KeyStore> => {
-  if(ks){
+  if (ks) {
     return ks
   }
   ks = await keystore.init(KEYSTORE_CFG)

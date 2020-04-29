@@ -10,18 +10,18 @@ export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
 
 export const getPrivateTreeData = async (cid: CID, key: string): Promise<PrivateTreeData> => {
   const data = await ipfs.encoded.catAndDecode(cid, key)
-  if(!check.isPrivateTreeData(data)){
+  if (!check.isPrivateTreeData(data)) {
     throw new Error(`Does not contain tree data: ${cid}`)
   }
   return data
 }
 
 export const getLinks = async (cid: CID, key?: string): Promise<Links> => {
-  if(key) {
+  if (key) {
     const obj = await ipfs.encoded.catAndDecode(cid, key)
-    if(check.isTreeData(obj)){
+    if (check.isTreeData(obj)) {
       return obj.links
-    } else if(check.isLinks(obj)) {
+    } else if (check.isLinks(obj)) {
       return obj
     } else {
       return {}
@@ -34,13 +34,13 @@ export const getLinks = async (cid: CID, key?: string): Promise<Links> => {
   }
 }
 
-export const getLinkCID = async(cid: CID, name: string, key?: string): Promise<CID | null> => {
+export const getLinkCID = async (cid: CID, name: string, key?: string): Promise<CID | null> => {
   const links = await getLinks(cid, key)
   return links[name]?.cid || null
 }
 
-export const putTree = async (data: TreeData, key?: string): Promise<CID> => { 
-  if(key) {
+export const putTree = async (data: TreeData, key?: string): Promise<CID> => {
+  if (key) {
     return ipfs.encoded.add(data, key)
   } else {
     return putLinks(data.links)
@@ -48,7 +48,7 @@ export const putTree = async (data: TreeData, key?: string): Promise<CID> => {
 }
 
 export const putLinks = async (links: BasicLinks, key?: string): Promise<CID> => {
-  if(key) {
+  if (key) {
     return ipfs.encoded.add(links, key)
   } else {
     const dagLinks = Object.values(links).map(link.toDAGLink)

@@ -1,40 +1,65 @@
 import _ from 'lodash'
 import map from 'lodash/map'
-import ipfs, { CID } from '../../ipfs'
+
 import { BasicLinks, Links, Header, Metadata, SemVer } from '../types'
-import basic from './basic'
-import { isDecodingError, DecodingError, LinkDoesNotExistError, ContentTypeMismatchError } from './errors'
-import { isString, mapObjAsync, isDefined } from '../../common'
-import link from '../link'
-import semver from '../semver'
 import { isSemVer } from '../types/check'
 
-export const getValue = async <T>(linksOrCID: Links | CID, name: string, checkFn: (obj: any) => obj is T, key?: string): Promise<T | DecodingError> => {
-  if(typeof linksOrCID === "string") {
+import { isString, mapObjAsync, isDefined } from '../../common'
+import ipfs, { CID } from '../../ipfs'
+
+// Filesystem
+
+import link from '../link'
+import semver from '../semver'
+
+// Normalizer
+
+import basic from './basic'
+
+import {
+  isDecodingError,
+  DecodingError,
+  LinkDoesNotExistError,
+  ContentTypeMismatchError
+} from './errors'
+
+
+export const getValue = async <T>(
+  linksOrCID: Links | CID,
+  name: string,
+  checkFn: (obj: any) => obj is T,
+  key?: string
+): Promise<T | DecodingError> => {
+  if (typeof linksOrCID === "string") {
     const links = await basic.getLinks(linksOrCID, key)
     return getValueFromLinks(links, name, checkFn, key)
   }
+
   return getValueFromLinks(linksOrCID, name, checkFn, key)
 }
 
-export const getValueFromLinks = async <T>(links: Links, name: string, checkFn: (obj: any) => obj is T, key?: string): Promise<T | DecodingError> => {
+export const getValueFromLinks = async <T>(
+  links: Links,
+  name: string,
+  checkFn: (obj: any) => obj is T,
+  key?: string
+): Promise<T | DecodingError> => {
   const linkCID = links[name]?.cid
-  if(!linkCID) {
-    return new LinkDoesNotExistError(name)
-  }
+  if (!linkCID) return new LinkDoesNotExistError(name)
+
   const value = await ipfs.encoded.catAndDecode(linkCID, key)
   return checkFn(value) ? value : new ContentTypeMismatchError(linkCID)
 }
 
 export const getChildKey = async (cid: CID, key: string): Promise<string> => {
   const childKey = await getValue(cid, "key", isString, key)
-  if(isDecodingError(childKey)){
+  if (isDecodingError(childKey)) {
     throw new Error(`Could not retrieve child key: ${cid}. ${childKey.toString()}`)
   }
   return childKey
 }
 
-export const put = async(index: CID, header: Header, key?: string): Promise<CID> => {
+export const put = async (index: CID, header: Header, key?: string): Promise<CID> => {
   const noUndefined = _.pickBy(header, isDefined)
   const linksArr = await Promise.all(
     _.map(noUndefined, async (val, name) => {
@@ -47,11 +72,9 @@ export const put = async(index: CID, header: Header, key?: string): Promise<CID>
   return basic.putLinks(links, key)
 }
 
-export const getVersion = async(cid: CID, key?: string): Promise<SemVer> => {
+export const getVersion = async (cid: CID, key?: string): Promise<SemVer> => {
   const version = await getValue(cid, 'version', isSemVer, key)
-  if(isDecodingError(version)){
-    return semver.v0
-  }
+  if (isDecodingError(version)) return semver.v0
   return version
 }
 
@@ -74,6 +97,6 @@ export default {
   getValueFromLinks,
   getChildKey,
   put,
-  getVersion, 
+  getVersion,
   interpolateMetadata,
 }

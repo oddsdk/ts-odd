@@ -43,9 +43,9 @@ class PublicTree implements Tree {
 
   async ls(path: string): Promise<Links> {
     const tree = await this.get(path)
-    if(tree === null){
+    if (tree === null) {
       throw new Error("Path does not exist")
-    } else if(operations.isFile(tree)) {
+    } else if (operations.isFile(tree)) {
       throw new Error('Can not `ls` a file')
     }
     return tree.links
@@ -53,7 +53,7 @@ class PublicTree implements Tree {
 
   async mkdir(path: string): Promise<Tree> {
     const exists = await this.pathExists(path)
-    if(exists) {
+    if (exists) {
       throw new Error(`Path already exists: ${path}`)
     }
     const toAdd = await this.static.tree.empty(this.version)
@@ -62,9 +62,9 @@ class PublicTree implements Tree {
 
   async cat(path: string): Promise<FileContent> {
     const file = await this.get(path)
-    if(file === null){
+    if (file === null) {
       throw new Error("Path does not exist")
-    } else if(!operations.isFile(file)){
+    } else if (!operations.isFile(file)) {
       throw new Error('Can not `cat` a directory')
     }
     return file.content
@@ -77,7 +77,7 @@ class PublicTree implements Tree {
 
   async rm(path: string): Promise<Tree> {
     const parts = pathUtil.splitNonEmpty(path)
-    if(parts === null){
+    if (parts === null) {
       throw new Error("Path does not exist")
     }
     return operations.rmNested(this, parts)
@@ -95,7 +95,7 @@ class PublicTree implements Tree {
 
   async addChild(path: string, toAdd: Tree | File): Promise<Tree> {
     const parts = pathUtil.splitNonEmpty(path)
-    if(parts === null) {
+    if (parts === null) {
       throw new Error("Path not specified")
     }
     const result = parts ? await operations.addRecurse(this, parts, toAdd) : this
@@ -118,7 +118,7 @@ class PublicTree implements Tree {
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
     const link = this.findLink(name)
-    if(link === null) {
+    if (link === null) {
       return null
     }
     return link.isFile ? this.static.file.fromCID(link.cid) : this.static.tree.fromCID(link.cid)

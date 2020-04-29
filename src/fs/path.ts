@@ -10,7 +10,7 @@ export const join = (parts: string[]): string => {
 
 export const splitNonEmpty = (path: string): NonEmptyPath | null => {
   const parts = split(path)
-  if(parts.length < 1){
+  if (parts.length < 1) {
     return null
   }
   return parts as NonEmptyPath
@@ -18,7 +18,7 @@ export const splitNonEmpty = (path: string): NonEmptyPath | null => {
 
 export const nextNonEmpty = (parts: NonEmptyPath): NonEmptyPath | null => {
   const next = parts.slice(1)
-  if(next.length < 1){
+  if (next.length < 1) {
     return null
   }
   return next as NonEmptyPath

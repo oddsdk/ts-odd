@@ -7,7 +7,7 @@ export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
 }
 
 export const getTreeData = async (cid: CID, key?: string): Promise<TreeData | PrivateTreeData> => {
-  if(key){
+  if (key) {
     return basic.getPrivateTreeData(cid, key)
   } else {
     const links = await basic.getLinks(cid, key)
@@ -16,18 +16,26 @@ export const getTreeData = async (cid: CID, key?: string): Promise<TreeData | Pr
 }
 
 export const getMetadata = async (_cid: CID): Promise<Partial<Metadata>> => {
-  return { }
+  return {}
 }
 
 export const getPins = async (cid: CID, key?: string): Promise<PinMap> => {
   return {}
 }
 
-export const putFile = async (content: FileContent, _metadata: Partial<Metadata>, key?: string): Promise<CID> => {
+export const putFile = async (
+  content: FileContent,
+  _metadata: Partial<Metadata>,
+  key?: string
+): Promise<CID> => {
   return basic.putFile(content, key)
 }
 
-export const putTree = async (data: TreeData, _metadata: Partial<Metadata>, key?: string): Promise<CID> => { 
+export const putTree = async (
+  data: TreeData,
+  _metadata: Partial<Metadata>,
+  key?: string
+): Promise<CID> => {
   return basic.putTree(data, key)
 }
 

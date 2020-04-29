@@ -14,7 +14,7 @@ export const setIpfs = (userIpfs: unknown): void => {
 }
 
 export const getIpfs = async (): Promise<IPFS> => {
-  if(ipfs){
+  if (ipfs) {
     return ipfs
   }
   ipfs = (await getIpfsWithCfg(IPFS_CFG)) as unknown as IPFS

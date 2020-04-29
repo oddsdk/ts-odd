@@ -4,7 +4,7 @@ export const toBuffer = async (blob: Blob): Promise<Buffer> => {
     const reader = new FileReader()
     reader.addEventListener('load', (e) => {
       const arrbuf = e?.target?.result || null
-      if(arrbuf === null){
+      if (arrbuf === null) {
         fail()
       }
       resolve(Buffer.from(arrbuf as ArrayBuffer))

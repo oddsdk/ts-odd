@@ -10,7 +10,7 @@ const encode = (major: number, minor: number, patch: number): SemVer => {
 
 const fromString = (str: string): SemVer | null => {
   const parts = str.split('.').map(parseInt)
-  if(parts.length !== 3 || parts.some(p => typeof p !== 'number')) {
+  if (parts.length !== 3 || parts.some(p => typeof p !== 'number')) {
     return null
   }
   return {

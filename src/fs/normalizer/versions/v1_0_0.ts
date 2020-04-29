@@ -9,7 +9,7 @@ import { defaultError } from '../errors'
 
 export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
   const indexCID = await basic.getLinkCID(cid, 'index', key)
-  if(!indexCID) {
+  if (!indexCID) {
     throw new Error("File does not exist")
   }
   return basic.getFile(indexCID, key)
@@ -17,18 +17,18 @@ export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
 
 export const getTreeData = async (cid: CID, key?: string): Promise<TreeData | PrivateTreeData> => {
   const indexCID = await basic.getLinkCID(cid, 'index', key)
-  if(!indexCID) {
-    throw new Error(`Links do not exist: ${indexCID}`)
-  }
+  if (!indexCID) throw new Error(`Links do not exist: ${indexCID}`)
+
   const links = await basic.getLinks(indexCID, key)
   const childKey = key ? await header.getChildKey(cid, key) : undefined
-  const withMetadata = await header.interpolateMetadata(links, 
+  const withMetadata = await header.interpolateMetadata(links,
     (linkCID: CID) => getMetadata(linkCID, childKey)
   )
+
   return { links: withMetadata, key: childKey }
 }
 
-export const getPins = async(cid: CID, key: string): Promise<PinMap> => {
+export const getPins = async (cid: CID, key: string): Promise<PinMap> => {
   const pins = await header.getValue(cid, "pins", check.isPinMap, key)
   return defaultError(pins, {})
 }
@@ -44,7 +44,11 @@ export const getMetadata = async (cid: CID, key?: string): Promise<Metadata> => 
     mtime: defaultError(mtime, undefined)
   }
 }
-export const putFile = async (content: FileContent, headerVal: Partial<Header>, key?: string): Promise<CID> => {
+export const putFile = async (
+  content: FileContent,
+  headerVal: Partial<Header>,
+  key?: string
+): Promise<CID> => {
   const index = await basic.putFile(content, key)
   return header.put(index, {
     ...headerVal,
@@ -54,7 +58,11 @@ export const putFile = async (content: FileContent, headerVal: Partial<Header>, 
   }, key)
 }
 
-export const putTree = async(data: TreeData | PrivateTreeData, headerVal: Partial<Header>, key?: string): Promise<CID> => {
+export const putTree = async (
+  data: TreeData | PrivateTreeData,
+  headerVal: Partial<Header>,
+  key?: string
+): Promise<CID> => {
   const index = await basic.putLinks(data.links, key)
   const childKey = check.isPrivateTreeData(data) ? data.key : undefined
   return header.put(index, {

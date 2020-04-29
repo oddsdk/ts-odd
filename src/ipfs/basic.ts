@@ -7,7 +7,7 @@ import { DAG_NODE_DATA } from './constants'
 export const add = async (content: FileContent): Promise<CID> => {
   const ipfs = await getIpfs()
   const chunks = []
-  for await (const chunk of ipfs.add(content)){
+  for await (const chunk of ipfs.add(content)) {
     chunks.push(chunk)
   }
   // return cid of last object (root)
@@ -17,7 +17,7 @@ export const add = async (content: FileContent): Promise<CID> => {
 export const catRaw = async (cid: CID): Promise<Buffer[]> => {
   const ipfs = await getIpfs()
   const chunks = []
-  for await (const chunk of ipfs.cat(cid)){
+  for await (const chunk of ipfs.cat(cid)) {
     chunks.push(chunk)
   }
   return chunks

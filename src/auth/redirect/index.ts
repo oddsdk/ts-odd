@@ -21,7 +21,7 @@ export const parseRes = (): ResQuery | null => {
   const { encryptedKey, readKey } = queryString.parse(window.location.search)
   if ( typeof encryptedKey !== 'string'
     || typeof readKey !== 'string'
-    ){
+  ) {
     return null
   }
   return { encryptedKey, readKey }
@@ -29,9 +29,7 @@ export const parseRes = (): ResQuery | null => {
 
 export const parseKeyFromRes = async (ks: KeyStore): Promise<string | null> => {
   const res = parseRes()
-  if(!res){
-    return null
-  }
+  if (!res) return null
   const { encryptedKey, readKey } = res
   return ks.decrypt(encryptedKey, readKey)
 }
@@ -42,17 +40,17 @@ export const parseReq = (): ReqQuery | null => {
   if ( typeof redirect !== 'string'
     || typeof folderCID !== 'string'
     || typeof readKey !== 'string'
-    ){
+    ) {
     return null
   }
   return { redirect, folderCID, readKey }
 }
 
 export const redirectRes = async (ks: KeyStore | null, req: ReqQuery | null) => {
-  if(!ks) {
+  if (!ks) {
     throw new Error("Could not load keystore")
   }
-  if(!req) {
+  if (!req) {
     throw new Error("Could not determine request from querystring")
   }
 

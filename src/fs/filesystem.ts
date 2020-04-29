@@ -41,7 +41,7 @@ export class FileSystem {
     const privLink = root.findLink('private')
     const key = await keystore.getKeyByName(keyName)
     const privateTree = privLink ? await PrivateTree.fromCIDWithKey(privLink.cid, key) : null
-    if(publicTree === null || privateTree === null) {
+    if (publicTree === null || privateTree === null) {
       return null
     }
     return new FileSystem(root, publicTree, privateTree, key)
@@ -140,14 +140,14 @@ export class FileSystem {
     const head = parts[0]
     const relPath = pathUtil.join(parts.slice(1))
     let result: a
-    if(head === 'public') {
+    if (head === 'public') {
       result = await fn(this.publicTree, relPath)
-      if(updateTree && PublicTree.instanceOf(result)){
+      if (updateTree && PublicTree.instanceOf(result)) {
         this.publicTree = result
       }
-    }else if(head === 'private') {
+    }else if (head === 'private') {
       result = await fn(this.privateTree, relPath)
-      if(updateTree && PrivateTree.instanceOf(result)){
+      if (updateTree && PrivateTree.instanceOf(result)) {
         this.privateTree = result
       }
       return result

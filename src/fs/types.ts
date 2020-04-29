@@ -1,6 +1,7 @@
 import { FileContent, CID } from '../ipfs'
 
-// FILESYSTEM 
+
+// FILESYSTEM
 // -----
 
 export type FileSystemOptions = {
@@ -37,7 +38,7 @@ export type AddLinkOpts = {
 export type BasicLink = {
   name: string
   cid: CID
-  size?: number 
+  size?: number
 }
 
 export type Link = BasicLink & {
@@ -66,6 +67,7 @@ export type Header = Metadata & {
   key?: string
   pins?: PinMap
 }
+
 
 // MISC
 // ----
