@@ -1,9 +1,14 @@
 import cbor from 'borc'
-import { CID, FileContent } from './types'
-import basic from './basic'
-import keystore from '../keystore'
+
 import { isBlob } from '../common/type-checks'
 import blob from '../common/blob'
+import keystore from '../keystore'
+
+// IPFS
+
+import { CID, FileContent } from './types'
+import basic from './basic'
+
 
 export const add = async (content: FileContent, key?: string): Promise<CID> => {
   // can't cbor encode blobs ie file streams
@@ -18,6 +23,7 @@ export const catAndDecode = async (cid: CID, key?: string): Promise<any> => {
   const toDecode = key !== undefined ? await keystore.decrypt(buf, key) : buf
   return cbor.decode(toDecode)
 }
+
 
 export default {
   add,

@@ -60,11 +60,6 @@ export const dagPutLinks = async (links: DAGLink[]): Promise<CID> => {
   return dagPut(node)
 }
 
-export const dns = async (domain: string): Promise<CID> => {
-  const ipfs = await getIpfs()
-  return ipfs.dns(domain)
-}
-
 export default {
   add,
   catRaw,
@@ -74,5 +69,4 @@ export default {
   dagGet,
   dagPut,
   dagPutLinks,
-  dns,
 }

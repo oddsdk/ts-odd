@@ -53,7 +53,7 @@ export class FileSystem {
     return FileSystem.fromCID(cid, opts)
   }
 
-  // upgrade public IPFS folder to FileSystem
+  // Upgrade public IPFS folder to FileSystem
   static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root', version = semver.latest } = opts
     const root = await PublicTree.empty(version)
@@ -136,7 +136,11 @@ export class FileSystem {
     return this.syncHooks
   }
 
-  async runOnTree<a>(path: string, updateTree: boolean, fn: (tree: Tree, relPath: string) => Promise<a>): Promise<a> {
+  async runOnTree<a>(
+    path: string,
+    updateTree: boolean,
+    fn: (tree: Tree, relPath: string) => Promise<a>
+  ): Promise<a> {
     const parts = pathUtil.split(path)
     const head = parts[0]
     const relPath = pathUtil.join(parts.slice(1))

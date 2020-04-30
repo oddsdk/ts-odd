@@ -23,6 +23,7 @@ export const getPrivateTreeData = async (cid: CID, key: string): Promise<Private
 export const getLinks = async (cid: CID, key?: string): Promise<Links> => {
   if (key) {
     const obj = await ipfs.encoded.catAndDecode(cid, key)
+
     if (check.isTreeData(obj)) {
       return obj.links
     } else if (check.isLinks(obj)) {
@@ -30,11 +31,13 @@ export const getLinks = async (cid: CID, key?: string): Promise<Links> => {
     } else {
       return {}
     }
+
   } else {
     const raw = await ipfs.ls(cid)
     return link.arrToMap(
       raw.map(link.fromFSFile)
     )
+
   }
 }
 
