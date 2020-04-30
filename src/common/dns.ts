@@ -1,4 +1,4 @@
-import ipfs from '../ipfs'
+import { getIpfs } from '../ipfs'
 
 
 export function lookupTxtRecord(host: string): Promise<string> {
@@ -13,6 +13,8 @@ export function lookupTxtRecord(host: string): Promise<string> {
 
 
 export async function lookupDnsLink(host: string): Promise<string> {
+  const ipfs = await getIpfs()
+
   let t
 
   try {
