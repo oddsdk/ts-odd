@@ -9,6 +9,15 @@ import keystore from '../keystore'
 import user from '../user'
 
 
+type ConstructorParams = {
+  root: PublicTree,
+  publicTree: PublicTree,
+  prettyTree: PublicTree,
+  privateTree: PrivateTree,
+  key: string
+}
+
+
 export class FileSystem {
 
   root: PublicTree
@@ -19,13 +28,7 @@ export class FileSystem {
 
   private key: string
 
-  constructor(
-    root: PublicTree,
-    publicTree: PublicTree,
-    prettyTree: PublicTree,
-    privateTree: PrivateTree,
-    key: string
-  ) {
+  constructor({ root, publicTree, prettyTree, privateTree, key }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
@@ -38,13 +41,19 @@ export class FileSystem {
     const { keyName = 'filesystem-root', version = semver.latest } = opts
 
     const root = await PublicTree.empty(version)
-    const publicTreeInstance = await PublicTree.empty(version)
-    const prettyTreeInstance = await PublicTree.empty(semver.v0)
+    const publicTree = await PublicTree.empty(version)
+    const prettyTree = await PublicTree.empty(semver.v0)
 
-    const privateTreeInstance = await PrivateTree.empty(version)
+    const privateTree = await PrivateTree.empty(version)
     const key = await keystore.getKeyByName(keyName)
 
-    return new FileSystem(root, publicTreeInstance, prettyTreeInstance, privateTreeInstance, key)
+    return new FileSystem({
+      root,
+      publicTree,
+      prettyTree,
+      privateTree,
+      key
+    })
   }
 
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
@@ -61,7 +70,13 @@ export class FileSystem {
 
     if (publicTree === null || privateTree === null) return null
 
-    return new FileSystem(root, publicTree, prettyTree, privateTree, key)
+    return new FileSystem({
+      root,
+      publicTree,
+      prettyTree,
+      privateTree,
+      key
+    })
   }
 
   static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
@@ -76,12 +91,19 @@ export class FileSystem {
     const { keyName = 'filesystem-root', version = semver.latest } = opts
 
     const root = await PublicTree.empty(version)
-    const pubTreeInstance = await PublicTree.fromCID(cid)
-    const pretTreeInstance = await PublicTree.fromCID(cid, semver.v0)
-    const privTreeInstance = await PrivateTree.empty(version)
+    const publicTree = await PublicTree.fromCID(cid)
+    const prettyTree = await PublicTree.fromCID(cid, semver.v0)
+    const privateTree = await PrivateTree.empty(version)
 
     const key = await keystore.getKeyByName(keyName)
-    return new FileSystem(root, pubTreeInstance, pretTreeInstance, privTreeInstance, key)
+
+    return new FileSystem({
+      root,
+      publicTree,
+      prettyTree,
+      privateTree,
+      key
+    })
   }
 
   async ls(path: string): Promise<Links> {
