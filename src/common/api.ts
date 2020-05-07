@@ -8,7 +8,7 @@ const didCache = {
 
 
 /**
- * The API's DID key.
+ * Default Fission API DID key.
  */
 export async function didKey(): Promise<string> {
   const now = Date.now() // in milliseconds

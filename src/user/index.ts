@@ -1,11 +1,10 @@
 import type { UserProperties } from './types'
 
-import { API_ENDPOINT } from '../common'
+import { API_ENDPOINT, api, dns } from '../common'
 import { FileSystem } from '../fs/filesystem'
-import * as dns from '../common/dns'
 
 import { USERNAME_BLACKLIST } from './blacklist'
-import { didJWT, didKey } from './identity'
+import { ucan, didKey } from './identity'
 
 import ipfs, { CID } from '../ipfs'
 
@@ -15,12 +14,20 @@ import ipfs, { CID } from '../ipfs'
  */
 export const createAccount = async (
   userProps: UserProperties,
-  apiEndpoint: string = API_ENDPOINT
+  apiEndpoint: string = API_ENDPOINT,
+  apiDidKey?: string
 ): Promise<any> => {
+  apiDidKey = apiDidKey || await api.didKey()
+
+  const jwt = await ucan({
+    audience: apiDidKey,
+    issuer: await didKey(),
+  })
+
   return fetch(`${apiEndpoint}/user`, {
     method: 'PUT',
     headers: {
-      'authorization': `Bearer ${await didJWT()}`,
+      'authorization': `Bearer ${jwt}`,
       'content-type': 'application/json'
     },
     body: JSON.stringify(userProps)
@@ -66,14 +73,21 @@ export const isUsernameValid = (username: string): boolean => {
  */
 export const updateRoot = async (
   ffs: FileSystem,
-  apiEndpoint: string = API_ENDPOINT
+  apiEndpoint: string = API_ENDPOINT,
+  apiDidKey?: string
 ): Promise<any> => {
+  apiDidKey = apiDidKey || await api.didKey()
+
   const cid = await ffs.root.put()
+  const jwt = await ucan({
+    audience: apiDidKey,
+    issuer: await didKey(),
+  })
 
   return fetch(`${apiEndpoint}/user/data/${cid}`, {
     method: 'PATCH',
     headers: {
-      'authorization': `Bearer ${await didJWT()}`
+      'authorization': `Bearer ${jwt}`
     }
   })
 }
@@ -81,10 +95,10 @@ export const updateRoot = async (
 
 export default {
   createAccount,
-  didJWT,
   didKey,
   fileRoot,
   isUsernameAvailable,
   isUsernameValid,
+  ucan,
   updateRoot
 }

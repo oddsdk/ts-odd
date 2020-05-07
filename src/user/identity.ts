@@ -11,11 +11,45 @@ const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
 
 
 /**
- * Create a DID key to authenticate with and wrap it in a JWT.
+ * Params for `ucan`
  */
-export const didJWT = async ({ scope = "/" } = {}) => {
+type ucanParams = {
+  audience: string,
+  issuer: string,
+  lifetimeInSeconds?: number,
+  proof?: string,
+  scope?: string
+}
+
+/**
+ * Create a UCAN, User Controlled Authorization Networks, JWT.
+ * This JWT can be used for authorization.
+ *
+ * ## Header
+ *
+ * `alg`, Algorithm, the type of signature.
+ * `typ`, Type, the type of this data structure, JWT.
+ * `uav`, UCAN version.
+ *
+ * ## Body
+ *
+ * `aud`, Audience, the ID of who it's intended for.
+ * `exp`, Expiry, unix timestamp of when the jwt is no longer valid.
+ * `iss`, Issuer, the ID of who sent this.
+ * `nbf`, Not Before, unix timestamp of when the jwt becomes valid.
+ * `prf`, Proof, an optional nested token with equal or greater privileges.
+ * `ptc`, Potency, which rights come with the token.
+ * `scp`, Scope, the path of the things that can be changed.
+ *
+ */
+export const ucan = async ({
+  audience,
+  issuer,
+  lifetimeInSeconds = 30,
+  proof,
+  scope = "/"
+}: ucanParams) => {
   const ks = await getKeystore()
-  const apiDID = await api.didKey()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
 
   // Parts
@@ -26,11 +60,11 @@ export const didJWT = async ({ scope = "/" } = {}) => {
   }
 
   const payload = {
-    aud: apiDID,
-    exp: currentTimeInSeconds + 30, // JWT expires in 30 seconds
-    iss: await didKey(),
+    aud: audience,
+    exp: currentTimeInSeconds + lifetimeInSeconds,
+    iss: issuer,
     nbf: currentTimeInSeconds - 60,
-    prf: null,
+    prf: proof,
     ptc: "APPEND",
     scp: scope,
   }
