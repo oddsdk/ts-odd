@@ -40,7 +40,7 @@ export class FileSystem {
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root', version = semver.latest } = opts
 
-    const root = await PublicTree.empty(version)
+    const root = await PublicTree.empty(semver.v0)
     const publicTree = await PublicTree.empty(version)
     const prettyTree = await PublicTree.empty(semver.v0)
 
@@ -90,7 +90,7 @@ export class FileSystem {
   static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root', version = semver.latest } = opts
 
-    const root = await PublicTree.empty(version)
+    const root = await PublicTree.empty(semver.v0)
     const publicTree = await PublicTree.fromCID(cid)
     const prettyTree = await PublicTree.fromCID(cid, semver.v0)
     const privateTree = await PrivateTree.empty(version)
