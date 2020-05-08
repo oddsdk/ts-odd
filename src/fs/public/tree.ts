@@ -38,9 +38,9 @@ class PublicTree implements Tree {
     return new PublicTree({}, version)
   }
 
-  static async fromCID(cid: CID): Promise<PublicTree> {
-    const version = await normalizer.getVersion(cid)
-    const { links }  = await normalizer.getTreeData(cid)
+  static async fromCID(cid: CID, version?: SemVer): Promise<PublicTree> {
+    version = version || await normalizer.getVersion(cid)
+    const { links } = await normalizer.getTreeData(cid)
     return new PublicTree(links, version)
   }
 

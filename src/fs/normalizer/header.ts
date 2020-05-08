@@ -59,6 +59,22 @@ export const getChildKey = async (cid: CID, key: string): Promise<string> => {
   return childKey
 }
 
+/**
+ * Stores a DAG structure, optionally encrypted, on IPFS.
+ * With the following format:
+ *
+ * ```javascript
+ * {
+ *   "index": { "name": "index", "cid": "Qm1", "isFile": false },
+ *
+ *   // Metadata
+ *   "isFile": { "name": "isFile", "cid": "Qm2", "isFile": true },
+ *   "mtime": { "name": "mtime", "cid": "Qm2", "isFile": true },
+ *   "version": { "name": "version", "cid": "Qm2", "isFile": true },
+ *   ...
+ * }
+ * ```
+ */
 export const put = async (index: CID, header: Header, key?: string): Promise<CID> => {
   const noUndefined = _.pickBy(header, isDefined)
   const linksArr = await Promise.all(
