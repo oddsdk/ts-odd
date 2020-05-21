@@ -1,10 +1,11 @@
-// Not really related to Fission,
-// but these might come in handy when building apps.
+// Bits and pieces
 
-import dns from '../common/dns'
+import api from './api'
+import dns from './dns'
 
-export { dns }
+export { api, dns }
 
 export default {
-  dns,
+  api,
+  dns
 }

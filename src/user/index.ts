@@ -1,12 +1,12 @@
 import type { UserProperties } from './types'
 
-import { API_ENDPOINT, api, dns } from '../common'
+import { API_ENDPOINT } from '../common'
 import { FileSystem } from '../fs/filesystem'
+import { api, dns } from '../misc'
+import ipfs, { CID } from '../ipfs'
 
 import { USERNAME_BLACKLIST } from './blacklist'
 import { ucan, didKey } from './identity'
-
-import ipfs, { CID } from '../ipfs'
 
 
 /**

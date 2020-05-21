@@ -2,7 +2,7 @@ import * as base58 from 'base58-universal/main.js'
 import { CryptoSystem } from 'keystore-idb/types'
 import utils from 'keystore-idb/utils'
 
-import { api, base64 } from '../common'
+import { base64 } from '../common'
 import { getKeystore } from '../keystore'
 
 
