@@ -1,4 +1,4 @@
-import type { UserProperties } from './types'
+import type { UpdateRootProperties, UserProperties } from './types'
 
 import { API_ENDPOINT } from '../common'
 import { FileSystem } from '../fs/filesystem'
@@ -71,17 +71,15 @@ export const isUsernameValid = (username: string): boolean => {
 /**
  * Update a user's data root.
  */
-export const updateRoot = async (
-  ffs: FileSystem,
-  apiEndpoint: string = API_ENDPOINT,
-  apiDidKey?: string
-): Promise<any> => {
-  apiDidKey = apiDidKey || await api.didKey()
+export const updateRoot = async (props: UpdateRootProperties): Promise<any> => {
+  const apiDid = props.apiDid || await api.didKey()
+  const apiEndpoint = props.apiEndpoint || API_ENDPOINT
 
-  const cid = await ffs.root.put()
+  const cid = await props.fileSystem.root.put()
   const jwt = await ucan({
-    audience: apiDidKey,
+    audience: apiDid,
     issuer: await didKey(),
+    proof: props.authUcan
   })
 
   return fetch(`${apiEndpoint}/user/data/${cid}`, {
