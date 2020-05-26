@@ -1,4 +1,4 @@
-![](https://github.com/fission-suite/PROJECTNAME/raw/master/assets/logo.png?sanitize=true)
+![](https://github.com/fission-suite/ts-sdk/raw/master/assets/logo.png?sanitize=true)
 
 
 # Fission SDK
