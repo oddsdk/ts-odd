@@ -2,7 +2,7 @@ import { CID, FileContent } from '../../../ipfs'
 import { isNum, isBool, Maybe } from '../../../common'
 import semver from '../../semver'
 
-import { Metadata, Header, TreeData, PrivateTreeData, PinMap } from '../../types'
+import { Metadata, Header, TreeData, PrivateTreeData, PinMap, CacheData, CacheMap } from '../../types'
 import check from '../../types/check'
 
 // Normalization
@@ -39,6 +39,11 @@ export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeDat
 export const getPins = async (cid: CID, key: string): Promise<PinMap> => {
   const pins = await header.getValue(cid, "pins", check.isPinMap, key)
   return defaultError(pins, {})
+}
+
+export const getCache = async (cid: CID, key: Maybe<string>): Promise<CacheMap> => {
+  const cache = await header.getValue(cid, "cache", check.isCacheMap, key)
+  return defaultError(cache, {})
 }
 
 export const getMetadata = async (cid: CID, key: Maybe<string>): Promise<Metadata> => {
@@ -88,6 +93,7 @@ export default {
   getTreeData,
   getMetadata,
   getPins,
+  getCache,
   putFile,
   putTree
 }

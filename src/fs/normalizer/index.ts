@@ -1,6 +1,6 @@
 import { CID, FileContent } from '../../ipfs'
 
-import { Metadata, Header, SemVer, TreeData, PrivateTreeData, PinMap } from '../types'
+import { Metadata, Header, SemVer, TreeData, PrivateTreeData, PinMap, CacheMap } from '../types'
 import check from '../types/check'
 
 // Normalization
@@ -37,6 +37,11 @@ export const getMetadata = async (cid: CID, key: Maybe<string>): Promise<Partial
 export const getPins = async (cid: CID, key: string): Promise<PinMap> => {
   const fns = await getAndSwitchVersion(cid, key)
   return fns.getPins(cid, key)
+}
+
+export const getCacheMap = async (cid: CID, key: string): Promise<CacheMap> => {
+  const fns = await getAndSwitchVersion(cid, key)
+  return fns.getCache(cid, key)
 }
 
 export const putFile = async (

@@ -1,18 +1,13 @@
 import link from '../link'
 import operations from '../operations'
-import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, SemVer } from '../types'
+import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, SemVer, PinMap } from '../types'
 import { CID } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree from '../public/tree'
 import PrivateFile from './file'
 import normalizer from '../normalizer'
 import semver from '../semver'
-import { rmKey } from '../../common'
-
-
-type PinMap = {
-  [cid: string]: CID[]
-}
+import { rmKeyFromObj } from '../../common'
 
 
 export class PrivateTree extends PublicTree {
@@ -98,7 +93,7 @@ export class PrivateTree extends PublicTree {
 
   updatePinMap(key: string, pinList: CID[] | null): Tree {
     const updated = pinList === null
-      ? rmKey(this.pinMap, key)
+      ? rmKeyFromObj(this.pinMap, key)
       : {
         ...this.pinMap,
         [key]: pinList

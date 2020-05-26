@@ -22,7 +22,7 @@ export const isString = (obj: any): obj is string => {
   return typeof obj === 'string'
 }
 
-export const isObject = (obj: any): obj is object => {
+export const isObject = (obj: any): obj is Object => {
   return obj !== null && typeof obj === 'object'
 }
 

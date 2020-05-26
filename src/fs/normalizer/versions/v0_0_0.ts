@@ -1,5 +1,5 @@
 import { CID, FileContent } from '../../../ipfs'
-import { TreeData, PrivateTreeData, Metadata, PinMap } from '../../types'
+import { TreeData, PrivateTreeData, Metadata, PinMap, CacheMap } from '../../types'
 import { Maybe } from '../../../common'
 
 import basic from '../basic'
@@ -22,7 +22,11 @@ export const getMetadata = async (_cid: CID): Promise<Partial<Metadata>> => {
   return {}
 }
 
-export const getPins = async (cid: CID, key: Maybe<string>): Promise<PinMap> => {
+export const getPins = async (_cid: CID, _key: Maybe<string>): Promise<PinMap> => {
+  return {}
+}
+
+export const getCache = async (_cid: CID, _key: Maybe<string>): Promise<CacheMap> => {
   return {}
 }
 
@@ -47,6 +51,7 @@ export default {
   getTreeData,
   getMetadata,
   getPins,
+  getCache,
   putFile,
   putTree
 }

@@ -1,7 +1,7 @@
-import { isString, isObject, isNum } from '../../common'
+import { isString, isObject, isNum, arrContains } from '../../common'
 import { CID } from '../../ipfs'
 
-import { File, Link, Links, TreeData, PrivateTreeData, PinMap, SemVer } from '../types'
+import { File, Link, Links, TreeData, PrivateTreeData, CacheData, CacheMap, PinMap, SemVer } from '../types'
 
 
 export const isFile = (obj: any): obj is File => {
@@ -17,11 +17,23 @@ export const isLinks = (obj: any): obj is Links => {
 }
 
 export const isTreeData = (obj: any): obj is TreeData => {
-  return isLinks(obj?.links)
+  return isObject(obj) && isLinks(obj.links)
 }
 
 export const isPrivateTreeData = (data: any): data is PrivateTreeData => {
   return data?.key !== undefined
+}
+
+export const cacheValues = ['links', 'key', 'isFile', 'mtime', 'version'] 
+
+export const isCacheData = (obj: any): obj is CacheData => {
+  return isObject(obj) 
+    && isLinks(obj.links)
+    && Object.keys(obj).every(key => arrContains(cacheValues, key))
+}
+
+export const isCacheMap = (obj: any): obj is CacheMap => {
+  return isObject(obj) && Object.values(obj).every(isCacheData)
 }
 
 export const isCIDList = (obj: any): obj is CID[] => {
@@ -45,6 +57,8 @@ export default {
   isLinks,
   isTreeData,
   isPrivateTreeData,
+  isCacheData,
+  isCacheMap,
   isCIDList,
   isPinMap,
   isSemVer

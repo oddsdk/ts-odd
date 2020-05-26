@@ -6,13 +6,14 @@ import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer } fro
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
 import normalizer from '../normalizer'
-import { rmKey } from '../../common'
+import { rmKeyFromObj } from '../../common'
 
 
 class PublicTree implements Tree {
 
   version: SemVer
   links: Links
+  protected cache: Cache | null
 
   isFile = false
 
@@ -24,6 +25,7 @@ class PublicTree implements Tree {
   constructor(links: Links, version: SemVer) {
     this.version = version
     this.links = links
+    this.cache  = null
     this.static = {
       tree: PublicTree,
       file: PublicFile
@@ -146,7 +148,7 @@ class PublicTree implements Tree {
   }
 
   rmLink(name: string): Tree {
-    return this.copyWithLinks(rmKey(this.links, name))
+    return this.copyWithLinks(rmKeyFromObj(this.links, name))
   }
 
   copyWithLinks(links: Links): Tree {

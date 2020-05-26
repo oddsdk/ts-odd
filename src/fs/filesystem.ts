@@ -10,7 +10,7 @@ import user from '../user'
 
 
 type ConstructorParams = {
-  root: PublicTree
+  root: Tree
   publicTree: PublicTree
   prettyTree: PublicTree
   privateTree: PrivateTree
@@ -20,7 +20,7 @@ type ConstructorParams = {
 
 export class FileSystem {
 
-  root: PublicTree
+  root: Tree
   publicTree: PublicTree
   prettyTree: PublicTree
   privateTree: PrivateTree

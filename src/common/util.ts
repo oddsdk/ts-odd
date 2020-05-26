@@ -1,4 +1,4 @@
-export const rmKey = <T>(obj: {[k: string]: T}, key: string): {[k: string]: T} => {
+export const rmKeyFromObj = <T>(obj: {[k: string]: T}, key: string): {[k: string]: T} => {
   const { [key]: omit, ...rest } = obj
   return rest
 }
@@ -21,8 +21,13 @@ export const mapObjAsync = async <T, S>(obj: {[k: string]: T}, fn: (t: T, k?: st
   return newObj
 }
 
+export const arrContains = <T>(arr: T[], val: T): boolean => {
+  return arr.indexOf(val) > -1
+}
+
 export default {
-  rmKey,
+  rmKeyFromObj,
   mapObj,
-  mapObjAsync
+  mapObjAsync,
+  arrContains
 }

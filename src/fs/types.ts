@@ -59,9 +59,17 @@ export type Metadata = {
   mtime?: number
 }
 
-export type PinMap = {
-  [cid: string]: CID[]
+export type CacheData = {
+  links: Links
+  key?: string
+  isFile?: boolean
+  mtime?: number
+  version?: SemVer
 }
+
+export type CacheMap = { [cid: string]: CacheData }
+
+export type PinMap = { [cid: string]: CID[] }
 
 export type Header = Metadata & {
   version?: SemVer
