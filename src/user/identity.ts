@@ -14,10 +14,10 @@ const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
  * Params for `ucan`
  */
 type ucanParams = {
-  audience: string,
-  issuer: string,
-  lifetimeInSeconds?: number,
-  proof?: string,
+  audience: string
+  issuer: string
+  lifetimeInSeconds?: number
+  proof?: string
   scope?: string
 }
 
