@@ -7,11 +7,11 @@ import * as keystore from '../keystore'
 
 // IPFS
 
-import { CID, FileContent } from './types'
+import { CID, FileContent, AddResult } from './types'
 import basic from './basic'
 
 
-export const add = async (content: FileContent, key: Maybe<string>): Promise<CID> => {
+export const add = async (content: FileContent, key: Maybe<string>): Promise<AddResult> => {
   // can't cbor encode blobs ie file streams
   content = isBlob(content) ? await blob.toBuffer(content) : content
   const encoded = cbor.encode(content)

@@ -1,74 +1,75 @@
-import PublicTree from './public'
-import PrivateTree from './private'
-
-import { Tree, File, Links, SyncHook, FileSystemOptions } from './types'
+import PublicTreeBare, { constructors as PublicTreeBareConstructors } from './bare/tree'
+import PublicTree, { constructors as PublicTreeConstructors } from './v1/PublicTree'
+import PrivateTree, { constructors as PrivateTreeConstructors } from './v1/PrivateTree'
+import { SimpleTree, Tree, SimpleFile, Links, SyncHook, FileSystemOptions } from './types'
 import { CID, FileContent } from '../ipfs'
 import { dataRoot } from '../data-root'
 
 import * as keystore from '../keystore'
 import pathUtil from './path'
-import link from './link'
 import semver from './semver'
+import { asyncWaterfall } from '../common/util'
 
 
 type ConstructorParams = {
-  root: PublicTree
+  root: SimpleTree
   publicTree: PublicTree
-  prettyTree: PublicTree
+  prettyTree: PublicTreeBare
   privateTree: PrivateTree
-  key: string
 }
 
 
 export class FileSystem {
 
-  root: PublicTree
+  root: SimpleTree
   publicTree: PublicTree
-  prettyTree: PublicTree
+  prettyTree: PublicTreeBare
   privateTree: PrivateTree
   syncHooks: Array<SyncHook>
 
-  private key: string
-
-  constructor({ root, publicTree, prettyTree, privateTree, key }: ConstructorParams) {
+  constructor({ root, publicTree, prettyTree, privateTree }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
-    this.key = key
     this.syncHooks = []
   }
 
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root', version = semver.latest } = opts
 
-    const root = await PublicTree.empty(semver.v0)
-    const publicTree = await PublicTree.empty(version)
-    const prettyTree = await PublicTree.empty(semver.v0)
+    const root = await PublicTreeBareConstructors.empty()
+    const publicTree = await PublicTreeConstructors.empty()
+    const prettyTree = await PublicTreeBareConstructors.empty()
 
-    const privateTree = await PrivateTree.empty(version)
     const key = await keystore.getKeyByName(keyName)
+    const privateTree = await PrivateTreeConstructors.empty(key)
 
     return new FileSystem({
       root,
       publicTree,
       prettyTree,
       privateTree,
-      key
     })
   }
 
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const { keyName = 'filesystem-root' } = opts
 
-    const root = await PublicTree.fromCID(cid)
-    const publicTree = (await root.getDirectChild('public')) as PublicTree
-    const prettyTree = (await root.getDirectChild('pretty')) as PublicTree ||
-                        await PublicTree.empty(semver.v0)
+    const root = await PublicTreeBareConstructors.fromCID(cid)
+    const publicCID = root.findLinkCID('public')
+    const publicTree = publicCID !== null 
+                        ? await PublicTreeConstructors.fromCID(publicCID)
+                        : null
 
-    const privLink = root.findLink('private')
+    const prettyTree = (await root.getDirectChild('pretty')) as PublicTreeBare ||
+                        await PublicTreeBareConstructors.empty()
+
+    const privateCID = root.findLinkCID('private')
     const key = await keystore.getKeyByName(keyName)
-    const privateTree = privLink ? await PrivateTree.fromCIDWithKey(privLink.cid, key) : null
+    const privateTree = privateCID !== null 
+                          ? await PrivateTreeConstructors.fromCID(privateCID, key) 
+                          : null
 
     if (publicTree === null || privateTree === null) return null
 
@@ -77,7 +78,6 @@ export class FileSystem {
       publicTree,
       prettyTree,
       privateTree,
-      key
     })
   }
 
@@ -92,19 +92,18 @@ export class FileSystem {
   static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root', version = semver.latest } = opts
 
-    const root = await PublicTree.empty(semver.v0)
-    const publicTree = await PublicTree.fromCID(cid)
-    const prettyTree = await PublicTree.fromCID(cid, semver.v0)
-    const privateTree = await PrivateTree.empty(version)
+    const root = await PublicTreeBareConstructors.empty()
+    const publicTree = await PublicTreeConstructors.fromCID(cid)
+    const prettyTree = await PublicTreeBareConstructors.fromCID(cid)
 
     const key = await keystore.getKeyByName(keyName)
+    const privateTree = await PrivateTreeConstructors.empty(key)
 
     return new FileSystem({
       root,
       publicTree,
       prettyTree,
       privateTree,
-      key
     })
   }
 
@@ -141,29 +140,29 @@ export class FileSystem {
     return this.sync()
   }
 
-  async get(path: string): Promise<Tree | File | null> {
+  async get(path: string): Promise<SimpleTree | SimpleFile | null> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.get(relPath)
     })
   }
 
   async pinList(): Promise<CID[]> {
+    const privateResult = await this.privateTree.putWithPins()
+    const publicResult = await this.publicTree.putWithPins()
     const rootCID = await this.sync()
-    return this.privateTree.pinList().concat([ rootCID ])
+    return [
+      ...privateResult.pins,
+      ...publicResult.pins,
+      rootCID
+    ]
   }
 
   async sync(): Promise<CID> {
-    const pubCID = await this.publicTree.put()
-    const pretCID = await this.prettyTree.put()
-    const privCID = await this.privateTree.putEncrypted(this.key)
-    const pubLink = link.make('public', pubCID, false)
-    const pretLink = link.make('pretty', pretCID, false)
-    const privLink = link.make('private', privCID, false)
-
-    this.root = this.root
-                  .updateLink(pubLink)
-                  .updateLink(pretLink)
-                  .updateLink(privLink)
+    this.root = await asyncWaterfall(this.root, [
+      (t: SimpleTree) => t.addChild('public', this.publicTree),
+      (t: SimpleTree) => t.addChild('pretty', this.prettyTree),
+      (t: SimpleTree) => t.addChild('private', this.privateTree)
+    ])
 
     const cid = await this.root.put()
 
@@ -187,9 +186,9 @@ export class FileSystem {
   async runOnTree<a>(
     path: string,
     updateTree: boolean, // ie. do a mutation
-    fn: (tree: Tree, relPath: string) => Promise<a>
+    fn: (tree: SimpleTree, relPath: string) => Promise<a>
   ): Promise<a> {
-    const parts = pathUtil.split(path)
+    const parts = pathUtil.splitParts(path)
     const head = parts[0]
     const relPath = pathUtil.join(parts.slice(1))
 
@@ -203,7 +202,7 @@ export class FileSystem {
         resultPretty = await fn(this.prettyTree, relPath)
 
         this.publicTree = result
-        this.prettyTree = resultPretty as unknown as PublicTree
+        this.prettyTree = resultPretty as unknown as PublicTreeBare
       }
 
     } else if (head === 'private') {

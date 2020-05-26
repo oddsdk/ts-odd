@@ -85,3 +85,8 @@ export type ObjStat = {
   DataSize: number
   CumulativeSize: number
 }
+
+export type AddResult = {
+  cid: CID
+  size: number
+}

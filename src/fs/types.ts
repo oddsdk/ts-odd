@@ -14,20 +14,15 @@ export type FileSystemOptions = {
 // FILES
 // -----
 
-export interface File {
+export interface SimpleFile {
   content: FileContent
   put(): Promise<CID>
 }
 
-export interface FileStatic {
-  create: (content: FileContent, version?: SemVer) => File
-  fromCID: (cid: CID) => Promise<File>
+export interface File extends SimpleFile {
+  getHeader(): HeaderV1
+  putWithPins(): Promise<PutResult>
 }
-
-export interface PrivateFileStatic extends FileStatic{
-  fromCIDWithKey: (cid: CID, key: string) => Promise<File>
-}
-
 
 // LINKS
 // -----
@@ -55,20 +50,32 @@ export type BasicLinks = { [name: string]: BasicLink }
 // -----
 
 export type Metadata = {
-  isFile?: boolean
+  name?: string
+  isFile: boolean
   mtime?: number
+  size: number
 }
 
-export type PinMap = {
-  [cid: string]: CID[]
+export type HeaderV1 = {
+  name: string
+  isFile: boolean
+  mtime: number
+  size: number
+  version: SemVer
+  key: Maybe<string>
+  fileIndex: NodeMap
+  pins: PinMap
 }
 
-export type Header = Metadata & {
-  version?: SemVer
-  key?: string
-  pins?: PinMap
+export type PinMap = { [cid: string]: CID[] }
+
+export type NodeInfo = HeaderV1 & {
+  cid: CID
 }
 
+export type NodeMap = { [name: string]: NodeInfo }
+
+export type UnstructuredHeader = { [name: string]: unknown }
 
 // MISC
 // ----
@@ -82,55 +89,47 @@ export type SemVer = {
   patch: number
 }
 
+export type PutResult = {
+  cid: CID
+  pins: CID[]
+}
 
 // TREE
 // ----
 
-export type TreeData = {
-  links: Links
-}
-
-export type PrivateTreeData = TreeData & {
-  key: string
-}
-
-export interface TreeStatic {
-  empty: (version?: SemVer) => Promise<Tree>
-  fromCID: (cid: CID) => Promise<Tree>
-}
-
-export interface PrivateTreeStatic extends TreeStatic {
-  fromCIDWithKey: (cid: CID, key: string) => Promise<Tree>
-}
-
-export interface Tree {
+export interface SimpleTree {
   version: SemVer
-  links: Links
-  isFile: boolean
-
-  static: {
-    tree: TreeStatic
-    file: FileStatic
-  }
 
   ls(path: string): Promise<Links>
-  mkdir(path: string): Promise<Tree>
+  mkdir(path: string): Promise<this>
   cat(path: string): Promise<FileContent>
-  add(path: string, content: FileContent): Promise<Tree>
-  rm(path: string): Promise<Tree>
-  get(path: string): Promise<Tree | File | null>
+  add(path: string, content: FileContent): Promise<this>
+  rm(path: string): Promise<SimpleTree>
+  get(path: string): Promise<SimpleTree | SimpleFile | null>
   pathExists(path: string): Promise<boolean>
-  addChild(path: string, toAdd: Tree | File): Promise<Tree>
+  addChild(path: string, toAdd: SimpleTree | SimpleFile): Promise<this>
+  addRecurse (path: NonEmptyPath, child: SimpleTree | FileContent): Promise<this>
 
   put(): Promise<CID>
-  updateDirectChild(child: Tree | File, name: string): Promise<Tree>
-  removeDirectChild(name: string): Promise<Tree>
-  getDirectChild(name: string): Promise<Tree | File | null>
-  getOrCreateDirectChild(name: string): Promise<Tree | File>
+  updateDirectChild (child: SimpleTree | SimpleFile, name: string): Promise<this>
+  removeDirectChild(name: string): Promise<this>
+  getDirectChild(name: string): Promise<SimpleTree | SimpleFile | null>
+  getOrCreateDirectChild(name: string): Promise<SimpleTree | SimpleFile>
 
-  data(): TreeData
-  findLink(name: string): Link | null
-  updateLink(link: Link): Tree
-  rmLink(name: string): Tree
-  copyWithLinks(links: Links): Tree
+  createEmptyTree(): Promise<SimpleTree>
+  createTreeFromCID(cid: CID): Promise<SimpleTree>
+  createFile(content: FileContent): Promise<SimpleFile>
+  createFileFromCID(cid: CID): Promise<SimpleFile>
+
+  getLinks(): Links
 }
+
+export interface Tree extends SimpleTree {
+  getHeader(): HeaderV1
+  updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
+
+  createTreeFromHeader(heaer: HeaderV1): SimpleTree
+
+  putWithPins(): Promise<PutResult>
+}
+

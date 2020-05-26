@@ -1,5 +1,4 @@
 import * as core from '../core'
-import * as dns from '../dns'
 import { dataRoot } from '../data-root'
 
 import { USERNAME_BLOCKLIST } from './blocklist'
@@ -10,11 +9,11 @@ import { USERNAME_BLOCKLIST } from './blocklist'
  */
 export const createAccount = async (
   userProps: {
-    email: string,
+    email: string
     username: string
   },
   options: {
-    apiEndpoint?: string,
+    apiEndpoint?: string
     apiDid?: string
   } = {}
 ): Promise<void> => {

@@ -1,9 +1,30 @@
-export const rmKey = <T>(obj: {[k: string]: T}, key: string): {[k: string]: T} => {
+import { Maybe } from "./types"
+
+export const removeKeyFromObj = <T> ( 
+    obj: {[key: string]: T},
+    key: string
+  ): {[key: string]: T} => {
   const { [key]: omit, ...rest } = obj
   return rest
 }
 
-export const mapObj = <T, S>(obj: {[k: string]: T}, fn: (t: T, k?: string) => S): {[k: string]: S}  => {
+export const updateOrRemoveKeyFromObj = <T> ( 
+    obj: {[key: string]: T},
+    key: string,
+    val: Maybe<T>
+  ): {[key: string]: T} => (
+  val === null
+    ? removeKeyFromObj(obj, key)
+    : {
+      ...obj,
+      [key]: val
+    }
+)
+
+export const mapObj = <T, S> (
+    obj: {[key: string]: T},
+    fn: (val: T, key: string) => S
+  ): {[key: string]: S}  => {
   const newObj = {} as {[key: string]: S}
   Object.entries(obj).forEach(([key, value]) => {
     newObj[key] = fn(value, key)
@@ -11,7 +32,10 @@ export const mapObj = <T, S>(obj: {[k: string]: T}, fn: (t: T, k?: string) => S)
   return newObj
 }
 
-export const mapObjAsync = async <T, S>(obj: {[k: string]: T}, fn: (t: T, k?: string) => Promise<S>): Promise<{[k: string]: S}> => {
+export const mapObjAsync = async <T, S> (
+    obj: {[key: string]: T},
+    fn: (val: T, key: string) => Promise<S>
+  ): Promise<{[key: string]: S}> => {
   const newObj = {} as {[key: string]: S}
   await Promise.all(
     Object.entries(obj).map(async ([key, value]) => {
@@ -19,4 +43,16 @@ export const mapObjAsync = async <T, S>(obj: {[k: string]: T}, fn: (t: T, k?: st
     })
   )
   return newObj
+}
+
+export const arrContains = <T>(arr: T[], val: T): boolean => {
+  return arr.indexOf(val) > -1
+}
+
+export const asyncWaterfall = async <T>(val: T, operations: ((val: T) => Promise<T>)[]): Promise<T> => {
+  let acc = val
+  for(let i=0; i<operations.length; i++){
+    acc = await operations[i](acc)
+  }
+  return acc
 }
