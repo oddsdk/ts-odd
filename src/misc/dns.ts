@@ -22,7 +22,7 @@ export async function lookupDnsLink(host: string): Promise<string> {
   } catch (_) {
     let prefixedHost
 
-    prefixedHost = host.match(/^https?\:\/\//) ? host : `https://${host}`
+    prefixedHost = host.match(/^https?:\/\//) ? host : `https://${host}`
     prefixedHost = prefixedHost.includes("_dnslink.")
       ? prefixedHost
       : prefixedHost.replace("://", "://_dnslink.")

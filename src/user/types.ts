@@ -4,7 +4,7 @@ import { FileSystem } from '../fs/filesystem'
 export type UpdateRootProperties = {
   apiEndpoint?: string
   apiDid?: string
-  authUcan: string,
+  authUcan: string
   fileSystem: FileSystem
 }
 

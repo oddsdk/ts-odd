@@ -10,10 +10,10 @@ import user from '../user'
 
 
 type ConstructorParams = {
-  root: PublicTree,
-  publicTree: PublicTree,
-  prettyTree: PublicTree,
-  privateTree: PrivateTree,
+  root: PublicTree
+  publicTree: PublicTree
+  prettyTree: PublicTree
+  privateTree: PrivateTree
   key: string
 }
 
