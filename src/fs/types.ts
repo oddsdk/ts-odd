@@ -1,4 +1,5 @@
 import { FileContent, CID } from '../ipfs'
+import { Maybe } from '../common/types'
 
 
 // FILESYSTEM

@@ -4,7 +4,7 @@ import map from 'lodash/map'
 import { BasicLinks, Links, Header, Metadata, SemVer } from '../types'
 import { isSemVer } from '../types/check'
 
-import { isString, mapObjAsync, isDefined } from '../../common'
+import { isString, mapObjAsync, isDefined, Maybe } from '../../common'
 import ipfs, { CID } from '../../ipfs'
 
 // Filesystem
@@ -28,7 +28,7 @@ export const getValue = async <T>(
   linksOrCID: Links | CID,
   name: string,
   checkFn: (obj: any) => obj is T,
-  key?: string
+  key: Maybe<string>
 ): Promise<T | DecodingError> => {
   if (typeof linksOrCID === "string") {
     const links = await basic.getLinks(linksOrCID, key)
@@ -42,7 +42,7 @@ export const getValueFromLinks = async <T>(
   links: Links,
   name: string,
   checkFn: (obj: any) => obj is T,
-  key?: string
+  key: Maybe<string>
 ): Promise<T | DecodingError> => {
   const linkCID = links[name]?.cid
   if (!linkCID) return new LinkDoesNotExistError(name)
@@ -75,7 +75,7 @@ export const getChildKey = async (cid: CID, key: string): Promise<string> => {
  * }
  * ```
  */
-export const put = async (index: CID, header: Header, key?: string): Promise<CID> => {
+export const put = async (index: CID, header: Header, key: Maybe<string>): Promise<CID> => {
   const noUndefined = _.pickBy(header, isDefined)
   const linksArr = await Promise.all(
     _.map(noUndefined, async (val, name) => {
@@ -88,7 +88,7 @@ export const put = async (index: CID, header: Header, key?: string): Promise<CID
   return basic.putLinks(links, key)
 }
 
-export const getVersion = async (cid: CID, key?: string): Promise<SemVer> => {
+export const getVersion = async (cid: CID, key: Maybe<string>): Promise<SemVer> => {
   const version = await getValue(cid, 'version', isSemVer, key)
   if (isDecodingError(version)) return semver.v0
   return version

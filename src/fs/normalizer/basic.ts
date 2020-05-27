@@ -1,6 +1,7 @@
 import ipfs, { CID, FileContent } from '../../ipfs'
 
 import { Links, BasicLinks, PrivateTreeData, TreeData } from '../types'
+import { Maybe } from '../../common'
 import check from '../types/check'
 
 // Normalization
@@ -8,7 +9,7 @@ import check from '../types/check'
 import link from '../link'
 
 
-export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
+export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
   return key ? ipfs.encoded.catAndDecode(cid, key) : ipfs.catBuf(cid)
 }
 
@@ -20,7 +21,7 @@ export const getPrivateTreeData = async (cid: CID, key: string): Promise<Private
   return data
 }
 
-export const getLinks = async (cid: CID, key?: string): Promise<Links> => {
+export const getLinks = async (cid: CID, key: Maybe<string>): Promise<Links> => {
   if (key) {
     const obj = await ipfs.encoded.catAndDecode(cid, key)
 
@@ -41,20 +42,20 @@ export const getLinks = async (cid: CID, key?: string): Promise<Links> => {
   }
 }
 
-export const getLinkCID = async (cid: CID, name: string, key?: string): Promise<CID | null> => {
+export const getLinkCID = async (cid: CID, name: string, key: Maybe<string>): Promise<CID | null> => {
   const links = await getLinks(cid, key)
   return links[name]?.cid || null
 }
 
-export const putTree = async (data: TreeData, key?: string): Promise<CID> => {
+export const putTree = async (data: TreeData, key: Maybe<string>): Promise<CID> => {
   if (key) {
     return ipfs.encoded.add(data, key)
   } else {
-    return putLinks(data.links)
+    return putLinks(data.links, null)
   }
 }
 
-export const putLinks = async (links: BasicLinks, key?: string): Promise<CID> => {
+export const putLinks = async (links: BasicLinks, key: Maybe<string>): Promise<CID> => {
   if (key) {
     return ipfs.encoded.add(links, key)
   } else {
@@ -63,7 +64,7 @@ export const putLinks = async (links: BasicLinks, key?: string): Promise<CID> =>
   }
 }
 
-export const putFile = async (content: FileContent, key?: string): Promise<CID> => {
+export const putFile = async (content: FileContent, key: Maybe<string>): Promise<CID> => {
   return key ? ipfs.encoded.add(content, key) : ipfs.add(content)
 }
 

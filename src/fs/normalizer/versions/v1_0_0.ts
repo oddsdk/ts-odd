@@ -1,5 +1,5 @@
 import { CID, FileContent } from '../../../ipfs'
-import { isNum, isBool } from '../../../common'
+import { isNum, isBool, Maybe } from '../../../common'
 import semver from '../../semver'
 
 import { Metadata, Header, TreeData, PrivateTreeData, PinMap } from '../../types'
@@ -12,7 +12,7 @@ import header from '../header'
 import { defaultError } from '../errors'
 
 
-export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
+export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
   const indexCID = await basic.getLinkCID(cid, 'index', key)
   if (!indexCID) {
     throw new Error("File does not exist")
@@ -20,17 +20,20 @@ export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
   return basic.getFile(indexCID, key)
 }
 
-export const getTreeData = async (cid: CID, key?: string): Promise<TreeData | PrivateTreeData> => {
+export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeData | PrivateTreeData> => {
   const indexCID = await basic.getLinkCID(cid, 'index', key)
   if (!indexCID) throw new Error(`Links do not exist: ${indexCID}`)
 
   const links = await basic.getLinks(indexCID, key)
-  const childKey = key ? await header.getChildKey(cid, key) : undefined
+  const childKey = key ? await header.getChildKey(cid, key) : null
   const withMetadata = await header.interpolateMetadata(links,
     (linkCID: CID) => getMetadata(linkCID, childKey)
   )
 
-  return { links: withMetadata, key: childKey }
+  return { 
+    links: withMetadata,
+    key: childKey || undefined
+  }
 }
 
 export const getPins = async (cid: CID, key: string): Promise<PinMap> => {
@@ -38,7 +41,7 @@ export const getPins = async (cid: CID, key: string): Promise<PinMap> => {
   return defaultError(pins, {})
 }
 
-export const getMetadata = async (cid: CID, key?: string): Promise<Metadata> => {
+export const getMetadata = async (cid: CID, key: Maybe<string>): Promise<Metadata> => {
   const links = await basic.getLinks(cid, key)
   const [isFile, mtime] = await Promise.all([
     header.getValue(links, 'isFile', isBool, key),
@@ -53,7 +56,7 @@ export const getMetadata = async (cid: CID, key?: string): Promise<Metadata> => 
 export const putFile = async (
   content: FileContent,
   headerVal: Partial<Header>,
-  key?: string
+  key: Maybe<string>
 ): Promise<CID> => {
   const index = await basic.putFile(content, key)
   return header.put(index, {
@@ -67,7 +70,7 @@ export const putFile = async (
 export const putTree = async (
   data: TreeData | PrivateTreeData,
   headerVal: Partial<Header>,
-  key?: string
+  key: Maybe<string>
 ): Promise<CID> => {
   const index = await basic.putLinks(data.links, key)
   const childKey = check.isPrivateTreeData(data) ? data.key : undefined
