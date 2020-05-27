@@ -2,7 +2,7 @@ import { CID, FileContent } from '../../../ipfs'
 import { isNum, isBool, Maybe } from '../../../common'
 import semver from '../../semver'
 
-import { Metadata, Header, TreeData, PrivateTreeData, PinMap, CacheData, CacheMap } from '../../types'
+import { Metadata, Header, TreeData, PrivateTreeData, PinMap, CacheMap } from '../../types'
 import check from '../../types/check'
 
 // Normalization
@@ -66,6 +66,7 @@ export const putFile = async (
   const index = await basic.putFile(content, key)
   return header.put(index, {
     ...headerVal,
+    cache: headerVal.cache || {},
     isFile: true,
     mtime: Date.now(),
     version: semver.encode(1, 0, 0)
@@ -81,6 +82,7 @@ export const putTree = async (
   const childKey = check.isPrivateTreeData(data) ? data.key : undefined
   return header.put(index, {
     ...headerVal,
+    cache: headerVal.cache || {},
     isFile: false,
     mtime: Date.now(),
     version: semver.encode(1, 0, 0),

@@ -2,13 +2,13 @@ import { CID, FileContent } from '../../ipfs'
 
 import { Metadata, Header, SemVer, TreeData, PrivateTreeData, PinMap, CacheMap } from '../types'
 import check from '../types/check'
+import { Maybe, isJust } from '../../common'
 
 // Normalization
 
 import { getVersion } from './header'
 import basic from './versions/v0_0_0'
 import nested from './versions/v1_0_0'
-import { Maybe } from '../../common'
 
 
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
@@ -39,9 +39,23 @@ export const getPins = async (cid: CID, key: string): Promise<PinMap> => {
   return fns.getPins(cid, key)
 }
 
-export const getCacheMap = async (cid: CID, key: string): Promise<CacheMap> => {
+export const getCacheMap = async (cid: CID, key: Maybe<string>): Promise<CacheMap> => {
   const fns = await getAndSwitchVersion(cid, key)
   return fns.getCache(cid, key)
+}
+
+export const getHeader = async(cid: CID, key: Maybe<string>): Promise<Header> => {
+  const version = await getVersion(cid, key)
+  const { isFile, mtime } = await getMetadata(cid, key)
+  const pins = isJust(key) ? await getPins(cid, key) : {}
+  const cache = await getCacheMap(cid, key)
+  return {
+    version,
+    pins,
+    cache,
+    isFile,
+    mtime
+  }
 }
 
 export const putFile = async (
@@ -57,8 +71,8 @@ export const putFile = async (
 export const putTree = async (
   version: SemVer,
   data: TreeData,
-  header: Partial<Header>,
-  key: Maybe<string>
+  key: Maybe<string>,
+  header: Partial<Header>
 ): Promise<CID> => {
   const fns = switchVersion(version)
   return fns.putTree(data, header, key)
@@ -84,6 +98,8 @@ export default {
   getMetadata,
   getVersion,
   getPins,
+  getCacheMap,
+  getHeader,
   putFile,
   putTree
 }

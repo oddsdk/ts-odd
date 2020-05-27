@@ -17,6 +17,7 @@ export type FileSystemOptions = {
 export interface File {
   content: FileContent
   put(): Promise<CID>
+  getHeader(): Header
 }
 
 export interface FileStatic {
@@ -59,22 +60,15 @@ export type Metadata = {
   mtime?: number
 }
 
-export type CacheData = {
-  links: Links
-  key?: string
-  isFile?: boolean
-  mtime?: number
-  version?: SemVer
-}
-
-export type CacheMap = { [cid: string]: CacheData }
+export type CacheMap = { [cid: string]: Header }
 
 export type PinMap = { [cid: string]: CID[] }
 
 export type Header = Metadata & {
-  version?: SemVer
+  version: SemVer
   key?: string
   pins?: PinMap
+  cache?: CacheMap
 }
 
 
@@ -112,7 +106,6 @@ export interface PrivateTreeStatic extends TreeStatic {
 }
 
 export interface Tree {
-  version: SemVer
   links: Links
   isFile: boolean
 
@@ -137,6 +130,10 @@ export interface Tree {
   getOrCreateDirectChild(name: string): Promise<Tree | File>
 
   data(): TreeData
+  getHeader(): Header
+
+  updateCache(cid: CID, childCache: Maybe<Header>): Tree
+
   findLink(name: string): Link | null
   updateLink(link: Link): Tree
   rmLink(name: string): Tree

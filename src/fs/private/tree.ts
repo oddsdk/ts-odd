@@ -1,18 +1,17 @@
 import link from '../link'
 import operations from '../operations'
-import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, SemVer, PinMap } from '../types'
+import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, SemVer, PinMap, Header } from '../types'
 import { CID } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree from '../public/tree'
 import PrivateFile from './file'
 import normalizer from '../normalizer'
 import semver from '../semver'
-import { rmKeyFromObj } from '../../common'
+import { rmKeyFromObj, Maybe } from '../../common'
 
 
 export class PrivateTree extends PublicTree {
 
-  pinMap: PinMap
   private key: string
 
   static: {
@@ -20,11 +19,10 @@ export class PrivateTree extends PublicTree {
     file: PrivateFileStatic
   }
 
-  constructor(links: Links, version: SemVer, key: string, pinMap: PinMap) {
-    super(links, version)
+  protected constructor(links: Links, key: string, header: Header) {
+    super(links, header)
 
     this.key = key
-    this.pinMap = pinMap
     this.static = {
       tree: PrivateTree,
       file: PrivateFile
@@ -37,7 +35,10 @@ export class PrivateTree extends PublicTree {
 
   static async empty(version: SemVer = semver.latest, key?: string): Promise<PrivateTree> {
     const keyStr = key ? key : await keystore.genKeyStr()
-    return new PrivateTree({}, version, keyStr, {})
+    return new PrivateTree({}, keyStr, {
+      version,
+      cache: {}
+    })
   }
 
   static async fromCID(_cid: CID): Promise<PublicTree> {
@@ -47,8 +48,13 @@ export class PrivateTree extends PublicTree {
   static async fromCIDWithKey(cid: CID, parentKey: string): Promise<PrivateTree> {
     const version = await normalizer.getVersion(cid, parentKey)
     const { links, key } = await normalizer.getPrivateTreeData(cid, parentKey)
-    const pinMap = await normalizer.getPins(cid, parentKey)
-    return new PrivateTree(links, version, key, pinMap)
+    const pins = await normalizer.getPins(cid, parentKey)
+    const cache = await normalizer.getCacheMap(cid, parentKey)
+    return new PrivateTree(links, key, {
+      version,
+      pins,
+      cache
+    })
   }
 
   async put(): Promise<CID> {
@@ -56,14 +62,16 @@ export class PrivateTree extends PublicTree {
   }
 
   async putEncrypted(key: string): Promise<CID> {
-    return normalizer.putTree(this.version, this.data(), { pins: this.pinMap }, key)
+    return normalizer.putTree(this.header.version, this.data(), key, this.header)
   }
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string): Promise<Tree> {
     const cid = await child.putEncrypted(this.key)
-    const [ isFile, pinList ] = operations.isFile(child) ? [true, []] : [false, child.pinList()]
+    const [ isFile, pinList ] = operations.isFile(child) ? [true, [], ] : [false, child.pinList()]
+    const header = await normalizer.getHeader(cid, this.key)
     return this
-            .updatePinMap(cid, pinList)
+            .updatePins(cid, pinList)
+            .updateCache(cid, header)
             .updateLink(link.make(name, cid, isFile))
   }
 
@@ -72,7 +80,8 @@ export class PrivateTree extends PublicTree {
     return link === null
       ? this
       : this
-          .updatePinMap(link.cid, null)
+          .updatePins(link.cid, null)
+          .updateCache(link.cid, null)
           .rmLink(name)
   }
 
@@ -91,22 +100,22 @@ export class PrivateTree extends PublicTree {
     }
   }
 
-  updatePinMap(key: string, pinList: CID[] | null): Tree {
-    const updated = pinList === null
-      ? rmKeyFromObj(this.pinMap, key)
+  private updatePins(cid: CID, childPins: Maybe<CID[]>): Tree {
+    const pins = this.header.pins || {}
+    const updated = childPins === null
+      ? rmKeyFromObj(pins, cid)
       : {
-        ...this.pinMap,
-        [key]: pinList
+        ...pins,
+        [cid]: childPins
       }
-    return new PrivateTree(this.links, this.version, this.key, updated)
-  }
-
-  copyWithLinks(links: Links): Tree {
-    return new PrivateTree(links, this.version, this.key, this.pinMap)
+    return new PrivateTree(this.links, this.key, {
+      ...this.header,
+      pins: updated
+    })
   }
 
   pinList(): CID[] {
-    return Object.entries(this.pinMap).reduce((acc, cur) => {
+    return Object.entries(this.header.pins || {}).reduce((acc, cur) => {
       const [parent, children] = cur
       return [
         ...acc,
@@ -114,6 +123,14 @@ export class PrivateTree extends PublicTree {
         parent
       ]
     }, [] as CID[])
+  }
+
+  copyWithLinks(links: Links): Tree {
+    return new PrivateTree(links, this.key, this.header)
+  }
+
+  copyWithHeader(header: Header): Tree {
+    return new PrivateTree(this.links, this.key, header)
   }
 
 }
