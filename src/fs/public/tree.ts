@@ -2,7 +2,7 @@ import operations from '../operations'
 import pathUtil from '../path'
 import link from '../link'
 import semver from '../semver'
-import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer, Metadata, Header } from '../types'
+import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer, Metadata, Header, CacheData } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
 import normalizer from '../normalizer'
@@ -119,17 +119,18 @@ class PublicTree implements Tree {
     const cid = await child.put()
     const isFile = operations.isFile(child)
     const header = await normalizer.getHeader(cid, null)
+    const cache = {
+      ...header,
+      cid
+    }
     return this
-            .updateCache(cid, header)
+            .updateCache(name, cache)
             .updateLink(link.make(name, cid, isFile))
   }
 
   async removeDirectChild(name: string): Promise<Tree> {
-    const link = this.findLink(name)
-    return link === null
-      ? this
-      : this
-        .updateCache(link.cid, null)
+    return this
+        .updateCache(name, null)
         .rmLink(name)
   }
 
@@ -148,13 +149,13 @@ class PublicTree implements Tree {
     return { links: this.links }
   }
 
-  updateCache(cid: CID, childCache: Maybe<Header>): Tree {
+  updateCache(name: string, childCache: Maybe<CacheData>): Tree {
     const cache = this.header.cache || {}
     const updated = childCache === null
-      ? rmKeyFromObj(cache, cid)
+      ? rmKeyFromObj(cache, name)
       : {
         ...cache,
-        [cid]: childCache
+        [name]: childCache
       }
     return this.copyWithHeader({
       ...this.header,

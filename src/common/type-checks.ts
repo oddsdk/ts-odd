@@ -1,5 +1,3 @@
-import { Maybe } from './types'
-
 export const isDefined = <T>(val: T | undefined): val is T => {
   return val !== undefined
 }

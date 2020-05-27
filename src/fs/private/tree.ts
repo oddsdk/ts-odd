@@ -69,9 +69,13 @@ export class PrivateTree extends PublicTree {
     const cid = await child.putEncrypted(this.key)
     const [ isFile, pinList ] = operations.isFile(child) ? [true, [], ] : [false, child.pinList()]
     const header = await normalizer.getHeader(cid, this.key)
+    const cache = {
+      ...header,
+      cid
+    }
     return this
             .updatePins(cid, pinList)
-            .updateCache(cid, header)
+            .updateCache(name, cache)
             .updateLink(link.make(name, cid, isFile))
   }
 
@@ -81,7 +85,7 @@ export class PrivateTree extends PublicTree {
       ? this
       : this
           .updatePins(link.cid, null)
-          .updateCache(link.cid, null)
+          .updateCache(name, null)
           .rmLink(name)
   }
 

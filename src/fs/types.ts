@@ -60,7 +60,7 @@ export type Metadata = {
   mtime?: number
 }
 
-export type CacheMap = { [cid: string]: Header }
+export type CacheMap = { [name: string]: CacheData }
 
 export type PinMap = { [cid: string]: CID[] }
 
@@ -69,6 +69,10 @@ export type Header = Metadata & {
   key?: string
   pins?: PinMap
   cache?: CacheMap
+}
+
+export type CacheData = Header & {
+  cid: CID
 }
 
 
