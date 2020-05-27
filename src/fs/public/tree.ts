@@ -39,8 +39,8 @@ class PublicTree implements Tree {
   }
 
   static async fromCID(cid: CID, version?: SemVer): Promise<PublicTree> {
-    version = version || await normalizer.getVersion(cid)
-    const { links } = await normalizer.getTreeData(cid)
+    version = version || await normalizer.getVersion(cid, null)
+    const { links } = await normalizer.getTreeData(cid, null)
     return new PublicTree(links, version)
   }
 
@@ -106,7 +106,7 @@ class PublicTree implements Tree {
   }
 
   async put(): Promise<CID> {
-    return normalizer.putTree(this.version, this.data())
+    return normalizer.putTree(this.version, this.data(), {}, null)
   }
 
   async updateDirectChild(child: Tree | File, name: string): Promise<Tree> {

@@ -8,14 +8,15 @@ import check from '../types/check'
 import { getVersion } from './header'
 import basic from './versions/v0_0_0'
 import nested from './versions/v1_0_0'
+import { Maybe } from '../../common'
 
 
-export const getFile = async (cid: CID, key?: string): Promise<FileContent> => {
+export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
   const fns = await getAndSwitchVersion(cid, key)
   return fns.getFile(cid, key)
 }
 
-export const getTreeData = async (cid: CID, key?: string): Promise<TreeData> => {
+export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeData> => {
   const fns = await getAndSwitchVersion(cid, key)
   return fns.getTreeData(cid, key)
 }
@@ -28,7 +29,7 @@ export const getPrivateTreeData = async (cid: CID, key: string): Promise<Private
   return data
 }
 
-export const getMetadata = async (cid: CID, key?: string): Promise<Partial<Metadata>> => {
+export const getMetadata = async (cid: CID, key: Maybe<string>): Promise<Partial<Metadata>> => {
   const fns = await getAndSwitchVersion(cid, key)
   return fns.getMetadata(cid, key)
 }
@@ -41,8 +42,8 @@ export const getPins = async (cid: CID, key: string): Promise<PinMap> => {
 export const putFile = async (
   version: SemVer,
   content: FileContent,
-  header: Partial<Header> = {},
-  key?: string
+  header: Partial<Header>,
+  key: Maybe<string>
 ): Promise<CID> => {
   const fns = switchVersion(version)
   return fns.putFile(content, header, key)
@@ -51,14 +52,14 @@ export const putFile = async (
 export const putTree = async (
   version: SemVer,
   data: TreeData,
-  header: Partial<Header> = {},
-  key?: string
+  header: Partial<Header>,
+  key: Maybe<string>
 ): Promise<CID> => {
   const fns = switchVersion(version)
   return fns.putTree(data, header, key)
 }
 
-const getAndSwitchVersion = async (cid: CID, key?: string) => {
+const getAndSwitchVersion = async (cid: CID, key: Maybe<string>) => {
   const version = await getVersion(cid, key)
   return switchVersion(version)
 }
