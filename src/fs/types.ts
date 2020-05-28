@@ -21,14 +21,9 @@ export interface File {
 }
 
 export interface FileStatic {
-  create: (content: FileContent, version?: SemVer) => File
-  fromCID: (cid: CID) => Promise<File>
+  create: (content: FileContent, version: SemVer) => File
+  fromCID: (cid: CID, key?: string) => Promise<File>
 }
-
-export interface PrivateFileStatic extends FileStatic{
-  fromCIDWithKey: (cid: CID, key: string) => Promise<File>
-}
-
 
 // LINKS
 // -----
@@ -101,12 +96,8 @@ export type PrivateTreeData = TreeData & {
 }
 
 export interface TreeStatic {
-  empty: (version?: SemVer) => Promise<Tree>
-  fromCID: (cid: CID) => Promise<Tree>
-}
-
-export interface PrivateTreeStatic extends TreeStatic {
-  fromCIDWithKey: (cid: CID, key: string) => Promise<Tree>
+  empty: (version: SemVer, key?: string) => Promise<Tree>
+  fromCID: (cid: CID, key?: string) => Promise<Tree>
 }
 
 export interface Tree {

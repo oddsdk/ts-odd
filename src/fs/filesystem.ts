@@ -66,7 +66,7 @@ export class FileSystem {
 
     const privLink = root.findLink('private')
     const key = await keystore.getKeyByName(keyName)
-    const privateTree = privLink ? await PrivateTree.fromCIDWithKey(privLink.cid, key) : null
+    const privateTree = privLink ? await PrivateTree.fromCID(privLink.cid, key) : null
 
     if (publicTree === null || privateTree === null) return null
 

@@ -1,6 +1,10 @@
-import { NonEmptyPath, Tree, File } from './types'
+import { NonEmptyPath, Tree, File, Links, Header, CacheData } from './types'
 import { isFile } from './types/check'
+import { CID } from '../ipfs/types'
+import { Maybe } from '../common/types'
 import pathUtil from './path'
+import _ from 'lodash'
+import { mapObj, isValue } from '../common'
 
 
 export const addRecurse = async (
@@ -45,6 +49,70 @@ export const getRecurse = async (
   return getRecurse(nextTree, nextPath)
 }
 
+type RecurseCacheInfo = {
+  cacheData: CacheData
+  parentKey: Maybe<string>
+}
+
+export const recurseCache = (
+  header: Header,
+  path: NonEmptyPath
+): RecurseCacheInfo | null => {
+  const head = path[0]
+  const nextPath = pathUtil.nextNonEmpty(path)
+  const nextCache = header.cache[head]
+
+  if(!nextCache){
+    return null
+  }else if (nextPath === null) {
+    return {
+      cacheData: nextCache,
+      parentKey: header.key
+    }
+  } else if (nextCache.isFile) {
+    return null
+  }
+
+  return recurseCache(nextCache, nextPath)
+}
+
+export const getCached = async (
+  tree: Tree,
+  path: NonEmptyPath
+): Promise<Tree | File | null> => {
+  const result = recurseCache(tree.getHeader(), path)
+  if(result === null) {
+    return null
+  }
+
+  const { cacheData, parentKey  } = result
+  const { cid, isFile } = cacheData
+  if(isFile){
+    return tree.static.file.fromCID(cid, parentKey || undefined)
+  }else{
+    return tree.static.tree.fromCID(cid, parentKey || undefined)
+  }
+}
+
+export const lsCached = (
+  tree: Tree,
+  path: NonEmptyPath
+): Links | null => {
+  const result = recurseCache(tree.getHeader(), path)
+  if(result === null) {
+    return null
+  }else if (result.cacheData.isFile){
+    throw new Error('Can not `ls` a file')
+  }
+
+  const cache = result.cacheData.cache
+  const filtered = _.pickBy(cache, isValue)
+  return mapObj(filtered, (data, name) => {
+    const { cid, mtime, isFile = false } = data
+    return { name, cid, mtime, isFile }
+  })
+}
+
 export const rmNested = async (
   tree: Tree,
   path: NonEmptyPath
@@ -68,5 +136,7 @@ export default {
   isFile,
   addRecurse,
   getRecurse,
+  getCached,
+  lsCached,
   rmNested
 }

@@ -1,12 +1,11 @@
 import link from '../link'
 import operations from '../operations'
-import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, SemVer, PinMap, Header } from '../types'
+import { PrivateTreeData, Tree, Links, File, SemVer, Header } from '../types'
 import { CID } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree from '../public/tree'
 import PrivateFile from './file'
 import normalizer from '../normalizer'
-import semver from '../semver'
 import header from '../header'
 import { rmKeyFromObj, Maybe } from '../../common'
 
@@ -14,11 +13,6 @@ import { rmKeyFromObj, Maybe } from '../../common'
 export class PrivateTree extends PublicTree {
 
   private key: string
-
-  static: {
-    tree: PrivateTreeStatic
-    file: PrivateFileStatic
-  }
 
   protected constructor(links: Links, key: string, header: Header) {
     super(links, header)
@@ -34,7 +28,7 @@ export class PrivateTree extends PublicTree {
     return obj.putEncrypted !== undefined
   }
 
-  static async empty(version: SemVer = semver.latest, key?: string): Promise<PrivateTree> {
+  static async empty(version: SemVer, key?: string): Promise<PrivateTree> {
     const keyStr = key ? key : await keystore.genKeyStr()
     return new PrivateTree({}, keyStr, {
       ...header.empty(),
@@ -42,11 +36,10 @@ export class PrivateTree extends PublicTree {
     })
   }
 
-  static async fromCID(_cid: CID): Promise<PublicTree> {
-    throw new Error("This is a private node. Use PrivateNode.fromCIDEncrypted")
-  }
-
-  static async fromCIDWithKey(cid: CID, parentKey: string): Promise<PrivateTree> {
+  static async fromCID(cid: CID, parentKey?: string): Promise<PrivateTree> {
+    if(parentKey === undefined) {
+      throw new Error("This is a private node. Use PrivateNode.fromCIDEncrypted")
+    }
     const { links, key } = await normalizer.getPrivateTreeData(cid, parentKey)
     const header = await normalizer.getHeader(cid, parentKey)
     return new PrivateTree(links, key, header)
@@ -88,8 +81,8 @@ export class PrivateTree extends PublicTree {
     const link = this.findLink(name)
     if (link === null) return null
     return link.isFile
-            ? this.static.file.fromCIDWithKey(link.cid, this.key)
-            : this.static.tree.fromCIDWithKey(link.cid, this.key)
+            ? this.static.file.fromCID(link.cid, this.key)
+            : this.static.tree.fromCID(link.cid, this.key)
   }
 
   data(): PrivateTreeData {

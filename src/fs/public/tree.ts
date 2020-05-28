@@ -1,9 +1,8 @@
 import operations from '../operations'
 import pathUtil from '../path'
 import link from '../link'
-import semver from '../semver'
 import header from '../header'
-import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer, Metadata, Header, CacheData } from '../types'
+import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer, Header, CacheData } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
 import normalizer from '../normalizer'
@@ -11,10 +10,10 @@ import { rmKeyFromObj, Maybe } from '../../common'
 
 class PublicTree implements Tree {
 
+  isFile = false
+
   links: Links
   protected header: Header
-
-  isFile = false
 
   static: {
     tree: TreeStatic
@@ -34,27 +33,26 @@ class PublicTree implements Tree {
     return obj.getDirectChild !== undefined
   }
 
-  static async empty(version: SemVer = semver.latest): Promise<PublicTree> {
+  static async empty(version: SemVer, _key?: string): Promise<PublicTree> {
     return new PublicTree({}, {
       ...header.empty(),
       version,
     })
   }
 
-  static async fromCID(cid: CID): Promise<PublicTree> {
+  static async fromCID(cid: CID, _key?: string): Promise<PublicTree> {
     const { links } = await normalizer.getTreeData(cid, null)
     const header = await normalizer.getHeader(cid, null)
     return new PublicTree(links, header) 
   }
 
   async ls(path: string): Promise<Links> {
-    const tree = await this.get(path)
-    if (tree === null) {
+    const parts = pathUtil.splitNonEmpty(path)
+    const list = parts ? operations.lsCached(this, parts) : null
+    if (list === null) {
       throw new Error("Path does not exist")
-    } else if (operations.isFile(tree)) {
-      throw new Error('Can not `ls` a file')
     }
-    return tree.links
+    return list
   }
 
   async mkdir(path: string): Promise<Tree> {
@@ -96,7 +94,7 @@ class PublicTree implements Tree {
 
   async get(path: string): Promise<Tree | File | null> {
     const parts = pathUtil.splitNonEmpty(path)
-    return parts ? operations.getRecurse(this, parts) : this
+    return parts ? operations.getCached(this, parts) : this
   }
 
   async addChild(path: string, toAdd: Tree | File): Promise<Tree> {

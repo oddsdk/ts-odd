@@ -1,7 +1,6 @@
 import { File, SemVer, Header } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import normalizer from '../normalizer'
-import semver from '../semver'
 import header from '../header'
 
 
@@ -16,7 +15,7 @@ class PublicFile implements File {
     this.header = header
   }
 
-  static create(content: FileContent, version: SemVer = semver.latest): PublicFile {
+  static create(content: FileContent, version: SemVer): PublicFile {
     return new PublicFile(content, { 
       ...header.empty(),
       isFile: true,
@@ -24,7 +23,7 @@ class PublicFile implements File {
     })
   }
 
-  static async fromCID(cid: CID): Promise<PublicFile> {
+  static async fromCID(cid: CID, _key?: string): Promise<PublicFile> {
     const header = await normalizer.getHeader(cid, null)
     const content = await normalizer.getFile(cid, null)
     return new PublicFile(content, header)
