@@ -1,6 +1,6 @@
 import { CID, FileContent } from '../../../ipfs'
 import { TreeData, PrivateTreeData, Metadata, PinMap, CacheMap } from '../../types'
-import { Maybe } from '../../../common'
+import { Maybe, isJust } from '../../../common'
 
 import basic from '../basic'
 
@@ -10,7 +10,7 @@ export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent
 }
 
 export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeData | PrivateTreeData> => {
-  if (key) {
+  if (isJust(key)) {
     return basic.getPrivateTreeData(cid, key)
   } else {
     const links = await basic.getLinks(cid, key)

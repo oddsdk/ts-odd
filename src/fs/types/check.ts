@@ -8,31 +8,42 @@ export const isFile = (obj: any): obj is File => {
 }
 
 export const isLink = (link: any): link is Link => {
-  return typeof link?.name === 'string' && typeof link?.cid === 'string'
+  return typeof link?.name === 'string' 
+      && typeof link?.cid === 'string'
 }
 
 export const isLinks = (obj: any): obj is Links => {
-  return typeof obj === 'object' && Object.values(obj).every(isLink)
+  return typeof obj === 'object' 
+      && Object.values(obj).every(isLink)
 }
 
 export const isTreeData = (obj: any): obj is TreeData => {
-  return isObject(obj) && isLinks(obj.links)
+  return isObject(obj) 
+      && isLinks(obj.links)
 }
 
 export const isPrivateTreeData = (data: any): data is PrivateTreeData => {
-  return isObject(data) && data?.key !== undefined
+  return isObject(data) 
+      && data?.key !== undefined
 }
 
 export const isHeader = (obj: any): obj is Header => {
-  return isObject(obj) && isSemVer(obj.version)
+  return isObject(obj) 
+      && isSemVer(obj.version)
+      && (isString(obj.key) || obj.key === null)
+      && isPinMap(obj.pins)
+      && isCacheMap(obj.cache)
 }
 
 export const isCacheData = (obj: any): obj is CacheData => {
-  return isObject(obj) && isSemVer(obj.version) && isCID(obj.cid)
+  return isObject(obj) 
+      && isCID(obj.cid) 
+      && isHeader(obj)
 }
 
 export const isCacheMap = (obj: any): obj is CacheMap => {
-  return isObject(obj) && Object.values(obj).every(isCacheData)
+  return isObject(obj) 
+      && Object.values(obj).every(isCacheData)
 }
 
 export const isCID = (obj: any): obj is CID => {
@@ -40,11 +51,13 @@ export const isCID = (obj: any): obj is CID => {
 }
 
 export const isCIDList = (obj: any): obj is CID[] => {
-  return Array.isArray(obj) && obj.every(isCID)
+  return Array.isArray(obj)
+      && obj.every(isCID)
 }
 
 export const isPinMap = (obj: any): obj is PinMap => {
-  return isObject(obj) && Object.values(obj).every(isCIDList)
+  return isObject(obj) 
+      && Object.values(obj).every(isCIDList)
 }
 
 export const isSemVer = (obj: any): obj is SemVer => {

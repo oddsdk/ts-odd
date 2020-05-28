@@ -3,6 +3,7 @@ import { CID, FileContent } from '../../ipfs'
 import { SemVer, Header } from '../types'
 import normalizer from '../normalizer'
 import semver from '../semver'
+import header from '../header'
 
 
 class PrivateFile extends PublicFile {
@@ -12,7 +13,10 @@ class PrivateFile extends PublicFile {
   }
 
   static create(content: FileContent, version: SemVer = semver.latest): PrivateFile {
-    return new PrivateFile(content, { version })
+    return new PrivateFile(content, { 
+      ...header.empty(),
+      version
+    })
   }
 
   static async fromCID(_cid: CID): Promise<PublicFile> {
@@ -20,9 +24,9 @@ class PrivateFile extends PublicFile {
   }
 
   static async fromCIDWithKey(cid: CID, key: string): Promise<PrivateFile> {
-    const version = await normalizer.getVersion(cid, key)
     const content = await normalizer.getFile(cid, key)
-    return new PrivateFile(content, { version })
+    const header = await normalizer.getHeader(cid, key)
+    return new PrivateFile(content, header)
   }
 
 

@@ -24,7 +24,7 @@ export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeDat
 export const getPrivateTreeData = async (cid: CID, key: string): Promise<PrivateTreeData> => {
   const data = await getTreeData(cid, key)
   if (!check.isPrivateTreeData(data)) {
-    throw new Error(`Not valid private tree node: ${cid}`)
+    throw new Error(`Not a valid private tree node: ${cid}`)
   }
   return data
 }
@@ -49,8 +49,11 @@ export const getHeader = async(cid: CID, key: Maybe<string>): Promise<Header> =>
   const { isFile, mtime } = await getMetadata(cid, key)
   const pins = isJust(key) ? await getPins(cid, key) : {}
   const cache = await getCacheMap(cid, key)
+  const data = await getTreeData(cid, key)
+  const childKey = check.isPrivateTreeData(data) ? data.key : null
   return {
     version,
+    key: childKey,
     pins,
     cache,
     isFile,

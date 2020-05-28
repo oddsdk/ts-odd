@@ -1,6 +1,7 @@
 import { CID, FileContent } from '../../../ipfs'
-import { isNum, isBool, Maybe } from '../../../common'
+import { isNum, isBool, isString, Maybe } from '../../../common'
 import semver from '../../semver'
+import { empty as emptyHeader } from '../../header'
 
 import { Metadata, Header, TreeData, PrivateTreeData, PinMap, CacheMap } from '../../types'
 import check from '../../types/check'
@@ -25,7 +26,8 @@ export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeDat
   if (!indexCID) throw new Error(`Links do not exist: ${indexCID}`)
 
   const links = await basic.getLinks(indexCID, key)
-  const childKey = key ? await header.getChildKey(cid, key) : null
+  const keyOrErr = await header.getValue(cid, 'key', isString, key)
+  const childKey = defaultError(keyOrErr, null)
   const withMetadata = await header.interpolateMetadata(links,
     (linkCID: CID) => getMetadata(linkCID, childKey)
   )
@@ -65,8 +67,8 @@ export const putFile = async (
 ): Promise<CID> => {
   const index = await basic.putFile(content, key)
   return header.put(index, {
+    ...emptyHeader(),
     ...headerVal,
-    cache: headerVal.cache || {},
     isFile: true,
     mtime: Date.now(),
     version: semver.encode(1, 0, 0)
@@ -79,10 +81,10 @@ export const putTree = async (
   key: Maybe<string>
 ): Promise<CID> => {
   const index = await basic.putLinks(data.links, key)
-  const childKey = check.isPrivateTreeData(data) ? data.key : undefined
+  const childKey = check.isPrivateTreeData(data) ? data.key : null
   return header.put(index, {
+    ...emptyHeader(),
     ...headerVal,
-    cache: headerVal.cache || {},
     isFile: false,
     mtime: Date.now(),
     version: semver.encode(1, 0, 0),

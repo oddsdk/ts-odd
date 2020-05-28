@@ -66,9 +66,9 @@ export type PinMap = { [cid: string]: CID[] }
 
 export type Header = Metadata & {
   version: SemVer
-  key?: string
-  pins?: PinMap
-  cache?: CacheMap
+  key: Maybe<string>
+  pins: PinMap
+  cache: CacheMap
 }
 
 export type CacheData = Header & {

@@ -2,6 +2,7 @@ import operations from '../operations'
 import pathUtil from '../path'
 import link from '../link'
 import semver from '../semver'
+import header from '../header'
 import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer, Metadata, Header, CacheData } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
@@ -35,19 +36,15 @@ class PublicTree implements Tree {
 
   static async empty(version: SemVer = semver.latest): Promise<PublicTree> {
     return new PublicTree({}, {
+      ...header.empty(),
       version,
-      cache: {}
     })
   }
 
-  static async fromCID(cid: CID, version?: SemVer): Promise<PublicTree> {
-    version = version || await normalizer.getVersion(cid, null)
+  static async fromCID(cid: CID): Promise<PublicTree> {
     const { links } = await normalizer.getTreeData(cid, null)
-    const cache = await normalizer.getCacheMap(cid, null)
-    return new PublicTree(links, {
-      version,
-      cache
-    })
+    const header = await normalizer.getHeader(cid, null)
+    return new PublicTree(links, header) 
   }
 
   async ls(path: string): Promise<Links> {

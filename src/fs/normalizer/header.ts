@@ -4,7 +4,7 @@ import map from 'lodash/map'
 import { BasicLinks, Links, Header, Metadata, SemVer } from '../types'
 import { isSemVer } from '../types/check'
 
-import { isString, mapObjAsync, isDefined, Maybe } from '../../common'
+import { isString, mapObjAsync, isValue, Maybe } from '../../common'
 import ipfs, { CID } from '../../ipfs'
 
 // Filesystem
@@ -51,14 +51,6 @@ export const getValueFromLinks = async <T>(
   return checkFn(value) ? value : new ContentTypeMismatchError(linkCID)
 }
 
-export const getChildKey = async (cid: CID, key: string): Promise<string> => {
-  const childKey = await getValue(cid, "key", isString, key)
-  if (isDecodingError(childKey)) {
-    throw new Error(`Could not retrieve child key: ${cid}. ${childKey.toString()}`)
-  }
-  return childKey
-}
-
 /**
  * Stores a DAG structure, optionally encrypted, on IPFS.
  * With the following format:
@@ -75,8 +67,9 @@ export const getChildKey = async (cid: CID, key: string): Promise<string> => {
  * }
  * ```
  */
+
 export const put = async (index: CID, header: Header, key: Maybe<string>): Promise<CID> => {
-  const noUndefined = _.pickBy(header, isDefined)
+  const noUndefined = _.pickBy(header, isValue)
   const linksArr = await Promise.all(
     _.map(noUndefined, async (val, name) => {
       const cid = await ipfs.encoded.add(val, key)
@@ -112,7 +105,6 @@ export const interpolateMetadata = async (
 export default {
   getValue,
   getValueFromLinks,
-  getChildKey,
   put,
   getVersion,
   interpolateMetadata,

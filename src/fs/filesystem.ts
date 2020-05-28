@@ -92,7 +92,7 @@ export class FileSystem {
 
     const root = await PublicTree.empty(semver.v0)
     const publicTree = await PublicTree.fromCID(cid)
-    const prettyTree = await PublicTree.fromCID(cid, semver.v0)
+    const prettyTree = await PublicTree.fromCID(cid)
     const privateTree = await PrivateTree.empty(version)
 
     const key = await keystore.getKeyByName(keyName)

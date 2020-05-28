@@ -7,6 +7,7 @@ import PublicTree from '../public/tree'
 import PrivateFile from './file'
 import normalizer from '../normalizer'
 import semver from '../semver'
+import header from '../header'
 import { rmKeyFromObj, Maybe } from '../../common'
 
 
@@ -36,8 +37,8 @@ export class PrivateTree extends PublicTree {
   static async empty(version: SemVer = semver.latest, key?: string): Promise<PrivateTree> {
     const keyStr = key ? key : await keystore.genKeyStr()
     return new PrivateTree({}, keyStr, {
+      ...header.empty(),
       version,
-      cache: {}
     })
   }
 
@@ -46,15 +47,9 @@ export class PrivateTree extends PublicTree {
   }
 
   static async fromCIDWithKey(cid: CID, parentKey: string): Promise<PrivateTree> {
-    const version = await normalizer.getVersion(cid, parentKey)
     const { links, key } = await normalizer.getPrivateTreeData(cid, parentKey)
-    const pins = await normalizer.getPins(cid, parentKey)
-    const cache = await normalizer.getCacheMap(cid, parentKey)
-    return new PrivateTree(links, key, {
-      version,
-      pins,
-      cache
-    })
+    const header = await normalizer.getHeader(cid, parentKey)
+    return new PrivateTree(links, key, header)
   }
 
   async put(): Promise<CID> {
