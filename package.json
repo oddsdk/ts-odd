@@ -1,6 +1,6 @@
 {
   "name": "fission-sdk",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Fission Typescript SDK",
   "keywords": [],
   "main": "index.cjs.js",
@@ -10,7 +10,7 @@
   "author": "Daniel Holmgren <daniel@fission.codes>",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/fission-suite/keystore-idb"
   },
   "license": "Apache-2.0",
   "engines": {
