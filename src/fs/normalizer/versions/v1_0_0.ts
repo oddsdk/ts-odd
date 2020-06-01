@@ -50,13 +50,15 @@ export const getCache = async (cid: CID, key: Maybe<string>): Promise<CacheMap> 
 
 export const getMetadata = async (cid: CID, key: Maybe<string>): Promise<Metadata> => {
   const links = await basic.getLinks(cid, key)
-  const [isFile, mtime] = await Promise.all([
+  const [isFile, mtime, size] = await Promise.all([
     header.getValue(links, 'isFile', isBool, key),
-    header.getValue(links, 'mtime', isNum, key)
+    header.getValue(links, 'mtime', isNum, key),
+    header.getValue(links, 'size', isNum, key)
   ])
   return {
     isFile: defaultError(isFile, undefined),
-    mtime: defaultError(mtime, undefined)
+    mtime: defaultError(mtime, undefined),
+    size: defaultError(size, 0),
   }
 }
 
@@ -65,10 +67,11 @@ export const putFile = async (
   headerVal: Partial<Header>,
   key: Maybe<string>
 ): Promise<CID> => {
-  const index = await basic.putFile(content, key)
-  return header.put(index, {
+  const { cid, size } = await basic.putFile(content, key)
+  return header.put(cid, {
     ...emptyHeader(),
     ...headerVal,
+    size,
     isFile: true,
     mtime: Date.now(),
     version: semver.encode(1, 0, 0)
@@ -82,9 +85,13 @@ export const putTree = async (
 ): Promise<CID> => {
   const index = await basic.putLinks(data.links, key)
   const childKey = check.isPrivateTreeData(data) ? data.key : null
+  const size = Object.values(headerVal.cache || {})
+              .reduce((acc, cur) => acc + cur.size, 0)
+
   return header.put(index, {
     ...emptyHeader(),
     ...headerVal,
+    size,
     isFile: false,
     mtime: Date.now(),
     version: semver.encode(1, 0, 0),

@@ -53,6 +53,7 @@ export type BasicLinks = { [name: string]: BasicLink }
 export type Metadata = {
   isFile?: boolean
   mtime?: number
+  size: number
 }
 
 export type CacheMap = { [name: string]: CacheData }
@@ -127,10 +128,10 @@ export interface Tree {
   data(): TreeData
   getHeader(): Header
 
-  updateCache(cid: CID, childCache: Maybe<Header>): Tree
+  updateHeader(cid: CID, childCache: Maybe<Header>): Tree
 
-  findLink(name: string): Link | null
   updateLink(link: Link): Tree
+  findLink(name: string): Link | null
   rmLink(name: string): Tree
   copyWithLinks(links: Links): Tree
 }

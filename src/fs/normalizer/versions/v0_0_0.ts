@@ -18,8 +18,10 @@ export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeDat
   }
 }
 
-export const getMetadata = async (_cid: CID): Promise<Partial<Metadata>> => {
-  return {}
+export const getMetadata = async (_cid: CID): Promise<Metadata> => {
+  return {
+    size: 0
+  }
 }
 
 export const getPins = async (_cid: CID, _key: Maybe<string>): Promise<PinMap> => {
@@ -35,7 +37,8 @@ export const putFile = async (
   _metadata: Partial<Metadata>,
   key: Maybe<string>
 ): Promise<CID> => {
-  return basic.putFile(content, key)
+  const { cid } = await basic.putFile(content, key)
+  return cid
 }
 
 export const putTree = async (

@@ -63,7 +63,7 @@ export class PrivateTree extends PublicTree {
     }
     return this
             .updatePins(cid, pinList)
-            .updateCache(name, cache)
+            .updateHeader(name, cache)
             .updateLink(link.make(name, cid, isFile))
   }
 
@@ -73,7 +73,7 @@ export class PrivateTree extends PublicTree {
       ? this
       : this
           .updatePins(link.cid, null)
-          .updateCache(name, null)
+          .updateHeader(name, null)
           .rmLink(name)
   }
 

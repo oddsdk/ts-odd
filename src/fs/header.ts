@@ -7,7 +7,8 @@ export const empty = (): Header => ({
   pins: {},
   cache: {},
   isFile: false,
-  mtime: Date.now()
+  mtime: Date.now(),
+  size: 0
 })
 
 export default {

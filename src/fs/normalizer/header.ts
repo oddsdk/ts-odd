@@ -1,10 +1,9 @@
 import _ from 'lodash'
-import map from 'lodash/map'
 
 import { BasicLinks, Links, Header, Metadata, SemVer } from '../types'
 import { isSemVer } from '../types/check'
 
-import { isString, mapObjAsync, isValue, Maybe } from '../../common'
+import { mapObjAsync, isValue, Maybe } from '../../common'
 import ipfs, { CID } from '../../ipfs'
 
 // Filesystem
@@ -72,11 +71,16 @@ export const put = async (index: CID, header: Header, key: Maybe<string>): Promi
   const noUndefined = _.pickBy(header, isValue)
   const linksArr = await Promise.all(
     _.map(noUndefined, async (val, name) => {
-      const cid = await ipfs.encoded.add(val, key)
-      return { name, cid, isFile: true }
+      const { cid, size } = await ipfs.encoded.add(val, key)
+      return { name, cid, isFile: true, size }
     })
   )
-  linksArr.push({ name: 'index', cid: index, isFile: false })
+  linksArr.push({ 
+    name: 'index', 
+    cid: index,
+    isFile: false,
+    size: header.size
+  })
   const links = link.arrToMap(linksArr)
   return basic.putLinks(links, key)
 }

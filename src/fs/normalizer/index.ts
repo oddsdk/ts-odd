@@ -29,7 +29,7 @@ export const getPrivateTreeData = async (cid: CID, key: string): Promise<Private
   return data
 }
 
-export const getMetadata = async (cid: CID, key: Maybe<string>): Promise<Partial<Metadata>> => {
+export const getMetadata = async (cid: CID, key: Maybe<string>): Promise<Metadata> => {
   const fns = await getAndSwitchVersion(cid, key)
   return fns.getMetadata(cid, key)
 }
@@ -46,7 +46,7 @@ export const getCacheMap = async (cid: CID, key: Maybe<string>): Promise<CacheMa
 
 export const getHeader = async(cid: CID, key: Maybe<string>): Promise<Header> => {
   const version = await getVersion(cid, key)
-  const { isFile, mtime } = await getMetadata(cid, key)
+  const { isFile, mtime, size } = await getMetadata(cid, key)
   const pins = isJust(key) ? await getPins(cid, key) : {}
   const cache = await getCacheMap(cid, key)
   const data = await getTreeData(cid, key)
@@ -57,7 +57,8 @@ export const getHeader = async(cid: CID, key: Maybe<string>): Promise<Header> =>
     pins,
     cache,
     isFile,
-    mtime
+    mtime,
+    size
   }
 }
 

@@ -119,13 +119,13 @@ class PublicTree implements Tree {
       cid
     }
     return this
-            .updateCache(name, cache)
+            .updateHeader(name, cache)
             .updateLink(link.make(name, cid, isFile))
   }
 
   async removeDirectChild(name: string): Promise<Tree> {
     return this
-        .updateCache(name, null)
+        .updateHeader(name, null)
         .rmLink(name)
   }
 
@@ -146,22 +146,20 @@ class PublicTree implements Tree {
     return { links: this.links }
   }
 
-  updateCache(name: string, childCache: Maybe<CacheData>): Tree {
-    const cache = this.header.cache || {}
+  updateHeader(name: string, childCache: Maybe<CacheData>): Tree {
+    const cache = this.header.cache
     const updated = childCache === null
       ? rmKeyFromObj(cache, name)
       : {
         ...cache,
         [name]: childCache
       }
+    const sizeDiff = (childCache?.size || 0) - (this.header.cache[name]?.size || 0)
     return this.copyWithHeader({
       ...this.header,
+      size: this.header.size + sizeDiff,
       cache: updated
     }) 
-  }
-
-  findLink(name: string): Link | null {
-    return this.links[name] || null
   }
 
   updateLink(link: Link): Tree {
@@ -169,6 +167,10 @@ class PublicTree implements Tree {
       ...this.links,
       [link.name]: link
     })
+  }
+
+  findLink(name: string): Link | null {
+    return this.links[name] || null
   }
 
   rmLink(name: string): Tree {

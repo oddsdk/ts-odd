@@ -1,4 +1,4 @@
-import ipfs, { CID, FileContent } from '../../ipfs'
+import ipfs, { CID, FileContent, AddResult } from '../../ipfs'
 
 import { Links, BasicLinks, PrivateTreeData, TreeData } from '../types'
 import { Maybe } from '../../common'
@@ -49,7 +49,8 @@ export const getLinkCID = async (cid: CID, name: string, key: Maybe<string>): Pr
 
 export const putTree = async (data: TreeData, key: Maybe<string>): Promise<CID> => {
   if (key) {
-    return ipfs.encoded.add(data, key)
+    const { cid } = await ipfs.encoded.add(data, key)
+    return cid
   } else {
     return putLinks(data.links, null)
   }
@@ -57,14 +58,15 @@ export const putTree = async (data: TreeData, key: Maybe<string>): Promise<CID> 
 
 export const putLinks = async (links: BasicLinks, key: Maybe<string>): Promise<CID> => {
   if (key) {
-    return ipfs.encoded.add(links, key)
+    const { cid } = await ipfs.encoded.add(links, key)
+    return cid
   } else {
     const dagLinks = Object.values(links).map(link.toDAGLink)
     return ipfs.dagPutLinks(dagLinks)
   }
 }
 
-export const putFile = async (content: FileContent, key: Maybe<string>): Promise<CID> => {
+export const putFile = async (content: FileContent, key: Maybe<string>): Promise<AddResult> => {
   return key ? ipfs.encoded.add(content, key) : ipfs.add(content)
 }
 
