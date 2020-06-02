@@ -22,23 +22,21 @@ export const getPrivateTreeData = async (cid: CID, key: string): Promise<Private
 }
 
 export const getLinks = async (cid: CID, key: Maybe<string>): Promise<Links> => {
-  if (key) {
-    const obj = await ipfs.encoded.catAndDecode(cid, key)
-
-    if (check.isTreeData(obj)) {
-      return obj.links
-    } else if (check.isLinks(obj)) {
-      return obj
-    } else {
-      return {}
-    }
-
-  } else {
+  if(key === null){
     const raw = await ipfs.ls(cid)
     return link.arrToMap(
       raw.map(link.fromFSFile)
     )
+  }
 
+  const obj = await ipfs.encoded.catAndDecode(cid, key)
+
+  if (check.isTreeData(obj)) {
+    return obj.links
+  } else if (check.isLinks(obj)) {
+    return obj
+  } else {
+    return {}
   }
 }
 
@@ -61,7 +59,9 @@ export const putLinks = async (links: BasicLinks, key: Maybe<string>): Promise<C
     const { cid } = await ipfs.encoded.add(links, key)
     return cid
   } else {
+    // console.log('putting links: ', links)
     const dagLinks = Object.values(links).map(link.toDAGLink)
+    // console.log('putting dagLinks: ', dagLinks)
     return ipfs.dagPutLinks(dagLinks)
   }
 }

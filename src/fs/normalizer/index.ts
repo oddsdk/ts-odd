@@ -1,6 +1,6 @@
 import { CID, FileContent } from '../../ipfs'
 
-import { Metadata, Header, SemVer, TreeData, PrivateTreeData, PinMap, CacheMap } from '../types'
+import { Metadata, Header, SemVer, TreeData, PrivateTreeData, CacheMap } from '../types'
 import check from '../types/check'
 import { Maybe, isJust } from '../../common'
 
@@ -34,11 +34,6 @@ export const getMetadata = async (cid: CID, key: Maybe<string>): Promise<Metadat
   return fns.getMetadata(cid, key)
 }
 
-export const getPins = async (cid: CID, key: string): Promise<PinMap> => {
-  const fns = await getAndSwitchVersion(cid, key)
-  return fns.getPins(cid, key)
-}
-
 export const getCacheMap = async (cid: CID, key: Maybe<string>): Promise<CacheMap> => {
   const fns = await getAndSwitchVersion(cid, key)
   return fns.getCache(cid, key)
@@ -46,15 +41,14 @@ export const getCacheMap = async (cid: CID, key: Maybe<string>): Promise<CacheMa
 
 export const getHeader = async(cid: CID, key: Maybe<string>): Promise<Header> => {
   const version = await getVersion(cid, key)
-  const { isFile, mtime, size } = await getMetadata(cid, key)
-  const pins = isJust(key) ? await getPins(cid, key) : {}
+  const { name, isFile, mtime, size } = await getMetadata(cid, key)
   const cache = await getCacheMap(cid, key)
   const data = await getTreeData(cid, key)
   const childKey = check.isPrivateTreeData(data) ? data.key : null
   return {
+    name,
     version,
     key: childKey,
-    pins,
     cache,
     isFile,
     mtime,
@@ -73,13 +67,11 @@ export const putFile = async (
 }
 
 export const putTree = async (
-  version: SemVer,
-  data: TreeData,
+  header: Header,
   key: Maybe<string>,
-  header: Partial<Header>
 ): Promise<CID> => {
-  const fns = switchVersion(version)
-  return fns.putTree(data, header, key)
+  const fns = switchVersion(header.version)
+  return fns.putTree(header, key)
 }
 
 const getAndSwitchVersion = async (cid: CID, key: Maybe<string>) => {
@@ -101,7 +93,6 @@ export default {
   getPrivateTreeData,
   getMetadata,
   getVersion,
-  getPins,
   getCacheMap,
   getHeader,
   putFile,

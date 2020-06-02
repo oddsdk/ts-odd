@@ -1,10 +1,26 @@
-export const rmKeyFromObj = <T> ( 
+import { Maybe } from "./types"
+import { isString } from './type-checks'
+
+export const removeKeyFromObj = <T> ( 
     obj: {[key: string]: T},
     key: string
   ): {[key: string]: T} => {
   const { [key]: omit, ...rest } = obj
   return rest
 }
+
+export const updateOrRemoveKeyFromObj = <T> ( 
+    obj: {[key: string]: T},
+    key: string,
+    val: Maybe<T>
+  ): {[key: string]: T} => (
+  val === null
+    ? removeKeyFromObj(obj, key)
+    : {
+      ...obj,
+      [key]: val
+    }
+)
 
 export const mapObj = <T, S> (
     obj: {[key: string]: T},
@@ -35,7 +51,8 @@ export const arrContains = <T>(arr: T[], val: T): boolean => {
 }
 
 export default {
-  rmKeyFromObj,
+  removeKeyFromObj,
+  updateOrRemoveKeyFromObj,
   mapObj,
   mapObjAsync,
   arrContains

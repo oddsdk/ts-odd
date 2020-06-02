@@ -2,9 +2,9 @@ import { Header } from './types'
 import semver from './semver'
 
 export const empty = (): Header => ({
+  name: '',
   version: semver.latest,
   key: null,
-  pins: {},
   cache: {},
   isFile: false,
   mtime: Date.now(),

@@ -1,8 +1,12 @@
 import { CID, FileContent } from '../../../ipfs'
-import { TreeData, PrivateTreeData, Metadata, PinMap, CacheMap } from '../../types'
-import { Maybe, isJust } from '../../../common'
+import { TreeData, PrivateTreeData, Metadata, CacheMap, Header } from '../../types'
+import { Maybe, isJust, mapObj } from '../../../common'
+import semver from '../../semver'
+import header from '../../header'
 
 import basic from '../basic'
+import { isPrivateTreeData } from '../../types/check'
+import link from '../../link'
 
 
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
@@ -20,16 +24,27 @@ export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeDat
 
 export const getMetadata = async (_cid: CID): Promise<Metadata> => {
   return {
-    size: 0
+    name: '', // TODO fix this
+    size: 0,
+    isFile: false // and this
   }
 }
 
-export const getPins = async (_cid: CID, _key: Maybe<string>): Promise<PinMap> => {
-  return {}
-}
-
-export const getCache = async (_cid: CID, _key: Maybe<string>): Promise<CacheMap> => {
-  return {}
+export const getCache = async (cid: CID, parentKey: Maybe<string>): Promise<CacheMap> => {
+  const data = await getTreeData(cid, parentKey)
+  return mapObj(data.links, (val, _key) => {
+    const { name, cid, size, mtime, isFile } = val
+    return {
+      ...header.empty(),
+      name,
+      cid,
+      version: semver.v0,
+      key: isPrivateTreeData(data) ? data.key : null,
+      isFile,
+      mtime,
+      size: size || 0
+    }
+  })
 }
 
 export const putFile = async (
@@ -42,18 +57,19 @@ export const putFile = async (
 }
 
 export const putTree = async (
-  data: TreeData,
-  _metadata: Partial<Metadata>,
-  key: Maybe<string>
+  headerVal: Header,
+  parentKey: Maybe<string>
 ): Promise<CID> => {
-  return basic.putTree(data, key)
+  const { cache, key } = headerVal
+  const links = link.fromNodeMap(cache)
+  const data = { links, key}
+  return basic.putTree(data, parentKey)
 }
 
 export default {
   getFile,
   getTreeData,
   getMetadata,
-  getPins,
   getCache,
   putFile,
   putTree
