@@ -1,5 +1,4 @@
 import { Maybe } from "./types"
-import { isString } from './type-checks'
 
 export const removeKeyFromObj = <T> ( 
     obj: {[key: string]: T},

@@ -1,10 +1,10 @@
 import { CID, FileContent } from '../../../ipfs'
-import { isNum, isBool, isString, Maybe, mapObj } from '../../../common'
+import { isNum, isBool, isString, Maybe } from '../../../common'
 import semver from '../../semver'
 import link from '../../link'
 import { empty as emptyHeader } from '../../header'
 
-import { Metadata, Header, TreeData, PrivateTreeData, CacheMap, NodeMap, Links, NodeInfo } from '../../types'
+import { Metadata, Header, TreeData, PrivateTreeData, CacheMap } from '../../types'
 import check from '../../types/check'
 
 // Normalization
@@ -41,7 +41,6 @@ export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeDat
 
 export const getCache = async (cid: CID, key: Maybe<string>): Promise<CacheMap> => {
   const cache = await header.getValue(cid, "cache", check.isCacheMap, key)
-  console.log("getCache: ", cache)
   return defaultError(cache, {})
 }
 

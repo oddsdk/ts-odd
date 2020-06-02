@@ -2,7 +2,7 @@ import { CID, FileContent } from '../../ipfs'
 
 import { Metadata, Header, SemVer, TreeData, PrivateTreeData, CacheMap } from '../types'
 import check from '../types/check'
-import { Maybe, isJust } from '../../common'
+import { Maybe } from '../../common'
 
 // Normalization
 

@@ -132,27 +132,14 @@ class PublicTree implements Tree {
 
   async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree> {
     const { cache } = this.header
-
-    // if(isJust(childInfo)){
-    //   childHeader = await normalizer.getHeader(childCID, null)
-    //   console.log("childHeader: ", childHeader)
-    //   console.log("child.header: ", child?.getHeader())
-    //   console.log("child", child)
-    //   childCache = { ...childHeader, name, cid: childCID } 
-    // }
-
     const updatedCache = updateOrRemoveKeyFromObj(cache, name, childInfo)
     const sizeDiff = (childInfo?.size || 0) - (cache[name]?.size || 0)
 
-    // console.log('cache: ', cache)
-    // console.log('updatedCache: ', updatedCache)
-
-    return this
-      .copyWithHeader({
-        ...this.header,
-        cache: updatedCache,
-        size: this.header.size + sizeDiff,
-      }) 
+    return this.copyWithHeader({
+      ...this.header,
+      cache: updatedCache,
+      size: this.header.size + sizeDiff,
+    }) 
   }
 
   updateLink(info: NodeInfo): Tree {

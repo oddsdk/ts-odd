@@ -1,10 +1,9 @@
 import { NonEmptyPath, Tree, File, Links, Header, CacheData } from './types'
-import { isFile, isCID } from './types/check'
+import { isFile } from './types/check'
 import { Maybe } from '../common/types'
 import pathUtil from './path'
 import _ from 'lodash'
 import { mapObj, isValue } from '../common'
-import { CID } from '../ipfs'
 
 
 export const addRecurse = async (

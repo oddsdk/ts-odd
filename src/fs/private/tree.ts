@@ -1,7 +1,4 @@
-import link from '../link'
-import operations from '../operations'
-import { PrivateTreeData, Tree, Links, File, SemVer, Header } from '../types'
-import check from '../types/check'
+import { Tree, File, SemVer, Header } from '../types'
 import { CID } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree from '../public/tree'
@@ -60,30 +57,11 @@ export class PrivateTree extends PublicTree {
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string): Promise<Tree> {
     const cid = await child.putEncrypted(this.key)
-    // const [ isFile, pinList ] = operations.isFile(child) ? [true, [], ] : [false, child.pinList()]
-    // const isFile = await check.isFile(child)
-    // const header = await normalizer.getHeader(cid, this.key)
-    // const cache = {
-    //   ...header,
-    //   cid
-    // }
-    console.log("HERE")
     return this.updateHeader(name, {
       ...child.getHeader(),
       cid
     })
   }
-
-  // async removeDirectChild(name: string): Promise<Tree> {
-  //   const link = this.findLink(name)
-  //   return link === null
-  //     ? this
-  //     : this
-  //         // .updatePins(link.cid, null)
-  //         .updateHeader(name, null)
-  //         .rmLink(name)
-  //   return this.updateHeader()
-  // }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
     const link = this.findLink(name)
