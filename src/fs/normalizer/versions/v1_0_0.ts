@@ -41,6 +41,7 @@ export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeDat
 
 export const getCache = async (cid: CID, key: Maybe<string>): Promise<CacheMap> => {
   const cache = await header.getValue(cid, "cache", check.isCacheMap, key)
+  console.log("getCache: ", cache)
   return defaultError(cache, {})
 }
 

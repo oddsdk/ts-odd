@@ -67,7 +67,11 @@ export class PrivateTree extends PublicTree {
     //   ...header,
     //   cid
     // }
-    return this.updateHeader(name, cid)
+    console.log("HERE")
+    return this.updateHeader(name, {
+      ...child.getHeader(),
+      cid
+    })
   }
 
   // async removeDirectChild(name: string): Promise<Tree> {

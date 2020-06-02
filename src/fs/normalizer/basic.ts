@@ -59,9 +59,7 @@ export const putLinks = async (links: BasicLinks, key: Maybe<string>): Promise<C
     const { cid } = await ipfs.encoded.add(links, key)
     return cid
   } else {
-    // console.log('putting links: ', links)
     const dagLinks = Object.values(links).map(link.toDAGLink)
-    // console.log('putting dagLinks: ', dagLinks)
     return ipfs.dagPutLinks(dagLinks)
   }
 }

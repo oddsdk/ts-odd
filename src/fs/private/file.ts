@@ -14,7 +14,8 @@ class PrivateFile extends PublicFile {
   static create(content: FileContent, version: SemVer): PrivateFile {
     return new PrivateFile(content, { 
       ...header.empty(),
-      version
+      version,
+      isFile: true
     })
   }
 

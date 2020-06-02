@@ -1,17 +1,14 @@
 import operations from '../operations'
 import pathUtil from '../path'
-import link from '../link'
 import header from '../header'
-import { Link, Links, Tree, TreeData, TreeStatic, FileStatic, File, SemVer, Header, CacheData, NodeInfo } from '../types'
+import { Links, Tree, TreeStatic, FileStatic, File, SemVer, Header, NodeInfo } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
 import normalizer from '../normalizer'
-import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj, isJust } from '../../common'
+import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj } from '../../common'
 
 class PublicTree implements Tree {
-
-  isFile = false
 
   protected header: Header
 
@@ -110,7 +107,10 @@ class PublicTree implements Tree {
 
   async updateDirectChild(child: Tree | File, name: string): Promise<Tree> {
     const cid = await child.put()
-    return this.updateHeader(name, cid)
+    return this.updateHeader(name, {
+      ...child.getHeader(),
+      cid
+    })
   }
 
   async removeDirectChild(name: string): Promise<Tree> {
@@ -130,19 +130,22 @@ class PublicTree implements Tree {
     return child ? child : this.static.tree.empty(this.header.version)
   }
 
-  async updateHeader(name: string, childCID: Maybe<CID>): Promise<Tree> {
+  async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree> {
     const { cache } = this.header
 
-    let childHeader = null, childCache = null
-    if(isJust(childCID)){
-      childHeader = await normalizer.getHeader(childCID, null)
-      childCache = { ...childHeader, name, cid: childCID } 
-    }
+    // if(isJust(childInfo)){
+    //   childHeader = await normalizer.getHeader(childCID, null)
+    //   console.log("childHeader: ", childHeader)
+    //   console.log("child.header: ", child?.getHeader())
+    //   console.log("child", child)
+    //   childCache = { ...childHeader, name, cid: childCID } 
+    // }
 
-    const updatedCache = updateOrRemoveKeyFromObj(cache, name, childCache)
-    const sizeDiff = (childHeader?.size || 0) - (cache[name]?.size || 0)
+    const updatedCache = updateOrRemoveKeyFromObj(cache, name, childInfo)
+    const sizeDiff = (childInfo?.size || 0) - (cache[name]?.size || 0)
 
-    // TODO: update links
+    // console.log('cache: ', cache)
+    // console.log('updatedCache: ', updatedCache)
 
     return this
       .copyWithHeader({

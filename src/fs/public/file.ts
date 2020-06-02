@@ -6,7 +6,6 @@ import header from '../header'
 
 class PublicFile implements File {
 
-  isFile = true
   content: FileContent
   protected header: Header
 

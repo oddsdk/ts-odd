@@ -104,8 +104,6 @@ export interface TreeStatic {
 }
 
 export interface Tree {
-  isFile: boolean
-
   static: {
     tree: TreeStatic
     file: FileStatic
@@ -129,7 +127,7 @@ export interface Tree {
   // data(): TreeData
   getHeader(): Header
 
-  updateHeader(name: string, childCID: Maybe<CID>): Promise<Tree>
+  updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
 
   updateLink(link: NodeInfo): Tree
   findLink(name: string): NodeInfo | null
