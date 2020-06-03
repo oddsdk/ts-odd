@@ -4,7 +4,7 @@ import semver from '../../semver'
 import link from '../../link'
 import { empty as emptyHeader } from '../../header'
 
-import { Metadata, Header, TreeData, PrivateTreeData, CacheMap } from '../../types'
+import { Tree, File, Metadata, Header, TreeData, PrivateTreeData, CacheMap } from '../../types'
 import check from '../../types/check'
 
 // Normalization
@@ -13,6 +13,14 @@ import basic from '../basic'
 import header from '../header'
 import { defaultError } from '../errors'
 
+
+export const getDirectChild = async (tree: Tree, name: string): Promise<Tree | File | null>  => {
+  const childHeader = tree.findLink(name)
+  if (childHeader === null) return null
+  return childHeader.isFile
+          ? tree.static.file.fromCID(childHeader.cid, childHeader.key || undefined)
+          : tree.static.tree.fromHeader(childHeader)
+}
 
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
   const indexCID = await basic.getLinkCID(cid, 'index', key)
@@ -96,6 +104,7 @@ export const putTree = async (
 }
 
 export default {
+  getDirectChild,
   getFile,
   getTreeData,
   getMetadata,

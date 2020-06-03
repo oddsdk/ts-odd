@@ -41,9 +41,16 @@ export class PrivateTree extends PublicTree {
     }
     const header = await normalizer.getHeader(cid, parentKey)
     if(header.key === null){
-      throw new Error("This is not a private node")
+      throw new Error("This is not a private node: no key")
     }
    
+    return new PrivateTree(header, header.key)
+  }
+
+  static async fromHeader(header: Header): Promise<PrivateTree> {
+    if(header.key === null){
+      throw new Error("This is not a private node: no key")
+    }
     return new PrivateTree(header, header.key)
   }
 
@@ -61,14 +68,6 @@ export class PrivateTree extends PublicTree {
       ...child.getHeader(),
       cid
     })
-  }
-
-  async getDirectChild(name: string): Promise<Tree | File | null> {
-    const link = this.findLink(name)
-    if (link === null) return null
-    return link.isFile
-            ? this.static.file.fromCID(link.cid, this.key)
-            : this.static.tree.fromCID(link.cid, this.key)
   }
 
   copyWithHeader(header: Header): Tree {

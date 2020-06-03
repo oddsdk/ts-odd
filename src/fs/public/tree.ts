@@ -6,7 +6,7 @@ import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
 import normalizer from '../normalizer'
-import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj } from '../../common'
+import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj, isJust } from '../../common'
 
 class PublicTree implements Tree {
 
@@ -41,6 +41,10 @@ class PublicTree implements Tree {
     return new PublicTree(header) 
   }
 
+  static async fromHeader(header: Header): Promise<PublicTree> {
+    return new PublicTree(header) 
+  }
+
   async ls(path: string): Promise<Links> {
     const parts = pathUtil.splitNonEmpty(path)
     const list = parts ? operations.lsCached(this, parts) : null
@@ -61,9 +65,11 @@ class PublicTree implements Tree {
 
   async cat(path: string): Promise<FileContent> {
     const file = await this.get(path)
+    console.log('file: ', file)
     if (file === null) {
       throw new Error("Path does not exist")
     } else if (!check.isFile(file)) {
+      console.log('check: ', check.isFile(file))
       throw new Error('Can not `cat` a directory')
     }
     return file.content
@@ -89,7 +95,7 @@ class PublicTree implements Tree {
 
   async get(path: string): Promise<Tree | File | null> {
     const parts = pathUtil.splitNonEmpty(path)
-    return parts ? operations.getCached(this, parts) : this
+    return parts ? operations.getRecurse(this, parts) : this
   }
 
   async addChild(path: string, toAdd: Tree | File): Promise<Tree> {
@@ -109,7 +115,8 @@ class PublicTree implements Tree {
     const cid = await child.put()
     return this.updateHeader(name, {
       ...child.getHeader(),
-      cid
+      cid,
+      isFile: check.isFile(child)
     })
   }
 
@@ -118,11 +125,7 @@ class PublicTree implements Tree {
   }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
-    const link = this.findLink(name)
-    if (link === null) return null
-    return link.isFile 
-            ? this.static.file.fromCID(link.cid)
-            : this.static.tree.fromCID(link.cid)
+    return normalizer.getDirectChild(this, name)
   }
 
   async getOrCreateDirectChild(name: string): Promise<Tree | File> {
@@ -132,6 +135,9 @@ class PublicTree implements Tree {
 
   async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree> {
     const { cache } = this.header
+    if(isJust(childInfo)){
+      childInfo.name = name
+    }
     const updatedCache = updateOrRemoveKeyFromObj(cache, name, childInfo)
     const sizeDiff = (childInfo?.size || 0) - (cache[name]?.size || 0)
 
@@ -147,7 +153,7 @@ class PublicTree implements Tree {
       ...this.header,
       cache: {
         ...this.header.cache,
-        [info.name]: info
+        [info.name = '']: info
       }
     })
   }
@@ -167,17 +173,9 @@ class PublicTree implements Tree {
     })
   }
 
-  // copyWithLinks(links: Links): Tree {
-  //   return new PublicTree(links, this.header)
-  // }
-
   copyWithHeader(header: Header): Tree {
     return new PublicTree(header)
   }
-
-  // pinList(): CID[] {
-  //   return operations.pinMapToList(this.header.pins)
-  // }
 
   getHeader(): Header {
     return this.header

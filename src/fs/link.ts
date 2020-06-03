@@ -23,7 +23,7 @@ export const fromFSFile = (fsObj: UnixFSFile): Link => {
 
 export const fromNodeMap = (nodes: NodeMap): Links => {
   return mapObj(nodes, val => {
-    const { name, cid, size, mtime, isFile } = val
+    const { name = '', cid, size, mtime, isFile } = val
     return { name, cid, size, mtime, isFile }
   })
 }

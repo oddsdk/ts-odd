@@ -1,5 +1,5 @@
 import { CID, FileContent } from '../../../ipfs'
-import { TreeData, PrivateTreeData, Metadata, CacheMap, Header } from '../../types'
+import { File, Tree, TreeData, PrivateTreeData, Metadata, CacheMap, Header } from '../../types'
 import { Maybe, isJust, mapObj } from '../../../common'
 import semver from '../../semver'
 import header from '../../header'
@@ -8,6 +8,13 @@ import basic from '../basic'
 import { isPrivateTreeData } from '../../types/check'
 import link from '../../link'
 
+export const getDirectChild = async (tree: Tree, name: string): Promise<Tree | File | null>  => {
+  const link = tree.findLink(name)
+  if (link === null) return null
+  return link.isFile 
+          ? tree.static.file.fromCID(link.cid, link.key || undefined)
+          : tree.static.tree.fromCID(link.cid, link.key || undefined)
+}
 
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
   return basic.getFile(cid, key)
@@ -24,7 +31,6 @@ export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeDat
 
 export const getMetadata = async (_cid: CID): Promise<Metadata> => {
   return {
-    name: '', // TODO fix this
     size: 0,
     isFile: false // and this
   }
@@ -62,11 +68,13 @@ export const putTree = async (
 ): Promise<CID> => {
   const { cache, key } = headerVal
   const links = link.fromNodeMap(cache)
-  const data = { links, key}
+  const data = { links, key }
+  console.log('data: ', data)
   return basic.putTree(data, parentKey)
 }
 
 export default {
+  getDirectChild,
   getFile,
   getTreeData,
   getMetadata,

@@ -25,7 +25,10 @@ class PublicFile implements File {
   static async fromCID(cid: CID, _key?: string): Promise<PublicFile> {
     const header = await normalizer.getHeader(cid, null)
     const content = await normalizer.getFile(cid, null)
-    return new PublicFile(content, header)
+    return new PublicFile(content, {
+      ...header,
+      isFile: true
+    })
   }
 
   put(): Promise<CID> {

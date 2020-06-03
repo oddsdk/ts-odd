@@ -1,8 +1,8 @@
+import _ from 'lodash'
 import { NonEmptyPath, Tree, File, Links, Header, CacheData } from './types'
 import { isFile } from './types/check'
 import { Maybe } from '../common/types'
 import pathUtil from './path'
-import _ from 'lodash'
 import { mapObj, isValue } from '../common'
 
 

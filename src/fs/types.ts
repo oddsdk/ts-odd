@@ -51,7 +51,7 @@ export type BasicLinks = { [name: string]: BasicLink }
 // -----
 
 export type Metadata = {
-  name: string
+  name?: string
   isFile: boolean
   mtime?: number
   size: number
@@ -101,6 +101,7 @@ export type PrivateTreeData = TreeData & {
 export interface TreeStatic {
   empty: (version: SemVer, key?: string) => Promise<Tree>
   fromCID: (cid: CID, key?: string) => Promise<Tree>
+  fromHeader: (header: Header) => Promise<Tree>
 }
 
 export interface Tree {
