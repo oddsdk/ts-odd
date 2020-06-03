@@ -11,9 +11,10 @@ import link from '../../link'
 export const getDirectChild = async (tree: Tree, name: string): Promise<Tree | File | null>  => {
   const link = tree.findLink(name)
   if (link === null) return null
+  const parentKey = tree.getHeader().key
   return link.isFile 
-          ? tree.static.file.fromCID(link.cid, link.key || undefined)
-          : tree.static.tree.fromCID(link.cid, link.key || undefined)
+          ? tree.static.file.fromCID(link.cid, parentKey || undefined)
+          : tree.static.tree.fromCID(link.cid, parentKey || undefined)
 }
 
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
@@ -69,7 +70,6 @@ export const putTree = async (
   const { cache, key } = headerVal
   const links = link.fromNodeMap(cache)
   const data = { links, key }
-  console.log('data: ', data)
   return basic.putTree(data, parentKey)
 }
 

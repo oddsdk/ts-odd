@@ -65,11 +65,9 @@ class PublicTree implements Tree {
 
   async cat(path: string): Promise<FileContent> {
     const file = await this.get(path)
-    console.log('file: ', file)
     if (file === null) {
       throw new Error("Path does not exist")
     } else if (!check.isFile(file)) {
-      console.log('check: ', check.isFile(file))
       throw new Error('Can not `cat` a directory')
     }
     return file.content

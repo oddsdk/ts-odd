@@ -1,10 +1,11 @@
 import { Tree, File, SemVer, Header } from '../types'
-import { CID } from '../../ipfs'
+import ipfs, { CID } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree from '../public/tree'
 import PrivateFile from './file'
 import normalizer from '../normalizer'
 import header from '../header'
+import check from '../types/check'
 
 
 export class PrivateTree extends PublicTree {
@@ -64,9 +65,11 @@ export class PrivateTree extends PublicTree {
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string): Promise<Tree> {
     const cid = await child.putEncrypted(this.key)
+    const content = await ipfs.encoded.catAndDecode(cid, this.key)
     return this.updateHeader(name, {
       ...child.getHeader(),
-      cid
+      cid,
+      isFile: check.isFile(child)
     })
   }
 
