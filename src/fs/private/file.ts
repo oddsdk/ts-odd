@@ -33,7 +33,7 @@ class PrivateFile extends PublicFile {
   }
 
   async putEncrypted(key: string): Promise<CID> {
-    return normalizer.putFile(this.header.version, this.content, {}, key)
+    return normalizer.putFile(this.content, this.header, key)
   }
 
 }

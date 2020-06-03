@@ -21,12 +21,12 @@ export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent
   return fns.getFile(cid, key)
 }
 
-export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeData> => {
+export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeData | null> => {
   const fns = await getAndSwitchVersion(cid, key)
   return fns.getTreeData(cid, key)
 }
 
-export const getPrivateTreeData = async (cid: CID, key: string): Promise<PrivateTreeData> => {
+export const getPrivateTreeData = async (cid: CID, key: string): Promise<PrivateTreeData | null> => {
   const data = await getTreeData(cid, key)
   if (!check.isPrivateTreeData(data)) {
     throw new Error(`Not a valid private tree node: ${cid}`)
@@ -55,19 +55,18 @@ export const getHeader = async(cid: CID, key: Maybe<string>): Promise<Header> =>
     version,
     key: childKey,
     cache,
-    isFile,
+    isFile: isFile || data === null,
     mtime,
     size
   }
 }
 
 export const putFile = async (
-  version: SemVer,
   content: FileContent,
-  header: Partial<Header>,
+  header: Header,
   key: Maybe<string>
 ): Promise<CID> => {
-  const fns = switchVersion(version)
+  const fns = switchVersion(header.version)
   return fns.putFile(content, header, key)
 }
 

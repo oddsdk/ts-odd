@@ -32,7 +32,7 @@ class PublicFile implements File {
   }
 
   put(): Promise<CID> {
-    return normalizer.putFile(this.header.version, this.content, {}, null)
+    return normalizer.putFile(this.content, this.header, null)
   }
 
   getHeader(): Header {

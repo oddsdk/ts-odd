@@ -18,7 +18,7 @@ export const getDirectChild = async (tree: Tree, name: string): Promise<Tree | F
   const childHeader = tree.findLink(name)
   if (childHeader === null) return null
   return childHeader.isFile
-          ? tree.static.file.fromCID(childHeader.cid, childHeader.key || undefined)
+          ? tree.static.file.fromCID(childHeader.cid, tree.getHeader().key || undefined)
           : tree.static.tree.fromHeader(childHeader)
 }
 
@@ -70,7 +70,7 @@ export const getMetadata = async (cid: CID, key: Maybe<string>): Promise<Metadat
 
 export const putFile = async (
   content: FileContent,
-  headerVal: Partial<Header>,
+  headerVal: Header,
   key: Maybe<string>
 ): Promise<CID> => {
   const { cid, size } = await basic.putFile(content, key)
