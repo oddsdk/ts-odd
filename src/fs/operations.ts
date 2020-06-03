@@ -1,9 +1,8 @@
+import _ from 'lodash'
 import { NonEmptyPath, Tree, File, Links, Header, CacheData } from './types'
 import { isFile } from './types/check'
-import { CID } from '../ipfs/types'
 import { Maybe } from '../common/types'
 import pathUtil from './path'
-import _ from 'lodash'
 import { mapObj, isValue } from '../common'
 
 
@@ -131,12 +130,27 @@ export const rmNested = async (
           : updated
 }
 
+// export const pinMapToList = (obj: PinMap | CID ): CID[] => {
+//   if(isCID(obj)) {
+//     return [obj]
+//   }
+//   return Object.entries(obj).reduce((acc, cur) => {
+//     const [parent, children] = cur
+//     const childList = pinMapToList(children)
+//     return [
+//       ...acc,
+//       ...childList,
+//       parent
+//     ]
+//   }, [] as CID[])
+// }
+
 
 export default {
-  isFile,
   addRecurse,
   getRecurse,
   getCached,
   lsCached,
-  rmNested
+  rmNested,
+  // pinMapToList
 }

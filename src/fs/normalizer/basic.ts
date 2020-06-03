@@ -1,7 +1,7 @@
 import ipfs, { CID, FileContent, AddResult } from '../../ipfs'
 
 import { Links, BasicLinks, PrivateTreeData, TreeData } from '../types'
-import { Maybe } from '../../common'
+import { Maybe, isJust } from '../../common'
 import check from '../types/check'
 
 // Normalization
@@ -13,33 +13,32 @@ export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent
   return key ? ipfs.encoded.catAndDecode(cid, key) : ipfs.catBuf(cid)
 }
 
-export const getPrivateTreeData = async (cid: CID, key: string): Promise<PrivateTreeData> => {
-  const data = await ipfs.encoded.catAndDecode(cid, key)
-  if (!check.isPrivateTreeData(data)) {
-    throw new Error(`Does not contain tree data: ${cid}`)
+export const getTreeData = async (cid: CID, parentKey: Maybe<string>): Promise<TreeData | PrivateTreeData | null> => {
+  if (parentKey === null) {
+    const links = await getLinks(cid, null)
+    return { links }
   }
-  return data
+  const data = parentKey ? await ipfs.encoded.catAndDecode(cid, parentKey) : await ipfs.catBuf(cid)
+  if(check.isTreeData(data)) {
+    return data
+  } else if(check.isLinks(data)) {
+    return { links: data }
+  }
+  else {
+    return null
+  }
 }
 
 export const getLinks = async (cid: CID, key: Maybe<string>): Promise<Links> => {
-  if (key) {
-    const obj = await ipfs.encoded.catAndDecode(cid, key)
-
-    if (check.isTreeData(obj)) {
-      return obj.links
-    } else if (check.isLinks(obj)) {
-      return obj
-    } else {
-      return {}
-    }
-
-  } else {
+  if(key === null){
     const raw = await ipfs.ls(cid)
     return link.arrToMap(
       raw.map(link.fromFSFile)
     )
-
   }
+
+  const data = await getTreeData(cid, key)
+  return isJust(data) ? data.links : {}
 }
 
 export const getLinkCID = async (cid: CID, name: string, key: Maybe<string>): Promise<CID | null> => {
@@ -72,7 +71,7 @@ export const putFile = async (content: FileContent, key: Maybe<string>): Promise
 
 export default {
   getFile,
-  getPrivateTreeData,
+  getTreeData,
   getLinks,
   getLinkCID,
   putTree,

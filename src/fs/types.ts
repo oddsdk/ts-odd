@@ -51,25 +51,27 @@ export type BasicLinks = { [name: string]: BasicLink }
 // -----
 
 export type Metadata = {
-  isFile?: boolean
+  name?: string
+  isFile: boolean
   mtime?: number
   size: number
 }
 
 export type CacheMap = { [name: string]: CacheData }
 
-export type PinMap = { [cid: string]: CID[] }
-
 export type Header = Metadata & {
   version: SemVer
   key: Maybe<string>
-  pins: PinMap
   cache: CacheMap
 }
 
 export type CacheData = Header & {
   cid: CID
 }
+
+export type NodeInfo = CacheData
+
+export type NodeMap = { [name: string]: NodeInfo }
 
 
 // MISC
@@ -99,12 +101,10 @@ export type PrivateTreeData = TreeData & {
 export interface TreeStatic {
   empty: (version: SemVer, key?: string) => Promise<Tree>
   fromCID: (cid: CID, key?: string) => Promise<Tree>
+  fromHeader: (header: Header) => Promise<Tree>
 }
 
 export interface Tree {
-  links: Links
-  isFile: boolean
-
   static: {
     tree: TreeStatic
     file: FileStatic
@@ -125,13 +125,14 @@ export interface Tree {
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string): Promise<Tree | File>
 
-  data(): TreeData
+  // data(): TreeData
   getHeader(): Header
 
-  updateHeader(cid: CID, childCache: Maybe<Header>): Tree
+  updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
 
-  updateLink(link: Link): Tree
-  findLink(name: string): Link | null
+  updateLink(link: NodeInfo): Tree
+  findLink(name: string): NodeInfo | null
+  findLinkCID(name: string): CID | null
   rmLink(name: string): Tree
-  copyWithLinks(links: Links): Tree
+  // copyWithLinks(links: Links): Tree
 }

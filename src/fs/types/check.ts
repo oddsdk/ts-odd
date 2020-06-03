@@ -1,10 +1,10 @@
 import { isString, isObject, isNum } from '../../common'
 import { CID } from '../../ipfs'
-import { File, Link, Links, TreeData, PrivateTreeData, Header, CacheMap, PinMap, SemVer, CacheData } from '../types'
+import { Tree, File, Link, Links, TreeData, PrivateTreeData, Header, CacheMap, SemVer, CacheData } from '../types'
 
 
-export const isFile = (obj: any): obj is File => {
-  return obj.isFile
+export const isFile = (obj: Tree | File): obj is File => {
+  return obj.getHeader().isFile
 }
 
 export const isLink = (link: any): link is Link => {
@@ -31,7 +31,6 @@ export const isHeader = (obj: any): obj is Header => {
   return isObject(obj) 
       && isSemVer(obj.version)
       && (isString(obj.key) || obj.key === null)
-      && isPinMap(obj.pins)
       && isCacheMap(obj.cache)
 }
 
@@ -55,11 +54,6 @@ export const isCIDList = (obj: any): obj is CID[] => {
       && obj.every(isCID)
 }
 
-export const isPinMap = (obj: any): obj is PinMap => {
-  return isObject(obj) 
-      && Object.values(obj).every(isCIDList)
-}
-
 export const isSemVer = (obj: any): obj is SemVer => {
   if (!isObject(obj)) return false
   const { major, minor, patch } = obj 
@@ -76,6 +70,5 @@ export default {
   isHeader,
   isCacheMap,
   isCIDList,
-  isPinMap,
   isSemVer
 }
