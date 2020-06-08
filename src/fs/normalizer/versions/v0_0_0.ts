@@ -1,5 +1,5 @@
 import { CID, FileContent } from '../../../ipfs'
-import { File, Tree, TreeData, PrivateTreeData, Metadata, CacheMap, Header } from '../../types'
+import { File, Tree, TreeData, PrivateTreeData, Metadata, NodeMap, Header } from '../../types'
 import { Maybe, mapObj } from '../../../common'
 import semver from '../../semver'
 import header from '../../header'
@@ -32,7 +32,7 @@ export const getMetadata = async (_cid: CID): Promise<Metadata> => {
   }
 }
 
-export const getCache = async (cid: CID, parentKey: Maybe<string>): Promise<CacheMap> => {
+export const getCache = async (cid: CID, parentKey: Maybe<string>): Promise<NodeMap> => {
   const data = await basic.getTreeData(cid, parentKey)
   return mapObj(data?.links || {}, (val, _key) => {
     const { name, cid, size, mtime, isFile } = val

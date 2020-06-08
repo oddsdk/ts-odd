@@ -57,19 +57,15 @@ export type Metadata = {
   size: number
 }
 
-export type CacheMap = { [name: string]: CacheData }
-
 export type Header = Metadata & {
   version: SemVer
   key: Maybe<string>
-  cache: CacheMap
+  cache: NodeMap
 }
 
-export type CacheData = Header & {
+export type NodeInfo = Header & {
   cid: CID
 }
-
-export type NodeInfo = CacheData
 
 export type NodeMap = { [name: string]: NodeInfo }
 

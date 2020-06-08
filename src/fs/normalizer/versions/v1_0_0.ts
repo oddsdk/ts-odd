@@ -4,7 +4,7 @@ import semver from '../../semver'
 import link from '../../link'
 import { empty as emptyHeader } from '../../header'
 
-import { Tree, File, Metadata, Header, TreeData, PrivateTreeData, CacheMap } from '../../types'
+import { Tree, File, Metadata, Header, TreeData, PrivateTreeData, NodeMap } from '../../types'
 import check from '../../types/check'
 
 // Normalization
@@ -47,8 +47,8 @@ export const getTreeData = async (cid: CID, key: Maybe<string>): Promise<TreeDat
   }
 }
 
-export const getCache = async (cid: CID, key: Maybe<string>): Promise<CacheMap> => {
-  const cache = await header.getValue(cid, "cache", check.isCacheMap, key)
+export const getCache = async (cid: CID, key: Maybe<string>): Promise<NodeMap> => {
+  const cache = await header.getValue(cid, "cache", check.isNodeMap, key)
   return defaultError(cache, {})
 }
 

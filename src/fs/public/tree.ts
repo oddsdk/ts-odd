@@ -7,6 +7,7 @@ import { CID, FileContent } from '../../ipfs'
 import PublicFile from './file'
 import normalizer from '../normalizer'
 import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj, isJust } from '../../common'
+import link from '../link'
 
 class PublicTree implements Tree {
 
@@ -46,12 +47,13 @@ class PublicTree implements Tree {
   }
 
   async ls(path: string): Promise<Links> {
-    const parts = pathUtil.splitNonEmpty(path)
-    const list = parts ? operations.lsCached(this, parts) : null
-    if (list === null) {
+    const dir = await this.get(path)
+    if (dir === null) {
       throw new Error("Path does not exist")
+    } else if (check.isFile(dir)) {
+      throw new Error('Can not `ls` a file')
     }
-    return list
+    return link.fromNodeMap(dir.getHeader().cache)
   }
 
   async mkdir(path: string): Promise<Tree> {

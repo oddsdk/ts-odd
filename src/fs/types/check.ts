@@ -1,6 +1,6 @@
 import { isString, isObject, isNum } from '../../common'
 import { CID } from '../../ipfs'
-import { Tree, File, Link, Links, TreeData, PrivateTreeData, Header, CacheMap, SemVer, CacheData } from '../types'
+import { Tree, File, Link, Links, TreeData, PrivateTreeData, Header, NodeMap, SemVer, NodeInfo } from '../types'
 
 
 export const isFile = (obj: Tree | File): obj is File => {
@@ -31,18 +31,18 @@ export const isHeader = (obj: any): obj is Header => {
   return isObject(obj) 
       && isSemVer(obj.version)
       && (isString(obj.key) || obj.key === null)
-      && isCacheMap(obj.cache)
+      && isNodeMap(obj.cache)
 }
 
-export const isCacheData = (obj: any): obj is CacheData => {
+export const isNodeInfo = (obj: any): obj is NodeInfo => {
   return isObject(obj) 
       && isCID(obj.cid) 
       && isHeader(obj)
 }
 
-export const isCacheMap = (obj: any): obj is CacheMap => {
+export const isNodeMap = (obj: any): obj is NodeMap => {
   return isObject(obj) 
-      && Object.values(obj).every(isCacheData)
+      && Object.values(obj).every(isNodeInfo)
 }
 
 export const isCID = (obj: any): obj is CID => {
@@ -68,7 +68,7 @@ export default {
   isTreeData,
   isPrivateTreeData,
   isHeader,
-  isCacheMap,
+  isNodeMap,
   isCIDList,
   isSemVer
 }
