@@ -100,7 +100,7 @@ export interface TreeStatic {
   fromHeader: (header: Header) => Promise<Tree>
 }
 
-export interface Tree {
+export interface Tree extends SimpleTree {
   static: {
     tree: TreeStatic
     file: FileStatic
@@ -131,4 +131,38 @@ export interface Tree {
   findLinkCID(name: string): CID | null
   rmLink(name: string): Tree
   // copyWithLinks(links: Links): Tree
+}
+
+export interface SimpleTree {
+  static: {
+    tree: TreeStatic
+    file: FileStatic
+  }
+  version: SemVer
+  links: Links
+
+  ls(path: string): Promise<Links>
+  mkdir(path: string): Promise<Tree>
+  cat(path: string): Promise<FileContent>
+  add(path: string, content: FileContent): Promise<Tree>
+  rm(path: string): Promise<SimpleTree>
+  get(path: string): Promise<SimpleTree | File | null>
+  pathExists(path: string): Promise<boolean>
+  addChild(path: string, toAdd: Tree | File): Promise<Tree>
+
+  put(): Promise<CID>
+  updateDirectChild(child: Tree | File, name: string): Promise<Tree>
+  removeDirectChild(name: string): Promise<Tree>
+  getDirectChild(name: string): Promise<Tree | File | null>
+  getOrCreateDirectChild(name: string): Promise<Tree | File>
+
+  // data(): TreeData
+
+  updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
+
+  updateLink(link: NodeInfo): Tree
+  findLink(name: string): NodeInfo | null
+  findLinkCID(name: string): CID | null
+  rmLink(name: string): Tree
+  copyWithLinks(links: Links): Tree
 }

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { NonEmptyPath, Tree, File } from './types'
+import { NonEmptyPath, SimpleTree, Tree, File } from './types'
 import { isFile } from './types/check'
 import pathUtil from './path'
 
@@ -30,9 +30,9 @@ export const addRecurse = async (
 }
 
 export const getRecurse = async (
-  tree: Tree,
+  tree: SimpleTree,
   path: NonEmptyPath
-): Promise<Tree | File | null> => {
+): Promise<SimpleTree | File | null> => {
   const head = path[0]
   const nextPath = pathUtil.nextNonEmpty(path)
   const nextTree = await tree.getDirectChild(head)
@@ -47,9 +47,9 @@ export const getRecurse = async (
 }
 
 export const rmNested = async (
-  tree: Tree,
+  tree: SimpleTree,
   path: NonEmptyPath
-): Promise<Tree> => {
+): Promise<SimpleTree> => {
   const filename = path[path.length - 1]
   const parentPath = path.slice(0, path.length - 1)
   const node = await tree.get(pathUtil.join(parentPath))

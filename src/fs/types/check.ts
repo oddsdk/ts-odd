@@ -1,10 +1,10 @@
 import { isString, isObject, isNum } from '../../common'
 import { CID } from '../../ipfs'
-import { Tree, File, Link, Links, TreeData, PrivateTreeData, Header, NodeMap, SemVer, NodeInfo } from '../types'
+import { SimpleTree, File, Link, Links, TreeData, PrivateTreeData, Header, NodeMap, SemVer, NodeInfo } from '../types'
 
 
-export const isFile = (obj: Tree | File): obj is File => {
-  return obj.getHeader().isFile
+export const isFile = (obj: SimpleTree | File): obj is File => {
+  return (obj as any).ls === undefined 
 }
 
 export const isLink = (link: any): link is Link => {

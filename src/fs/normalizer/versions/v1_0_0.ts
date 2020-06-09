@@ -2,7 +2,6 @@ import { CID, FileContent } from '../../../ipfs'
 import { isNum, isBool, isString, Maybe } from '../../../common'
 import semver from '../../semver'
 import link from '../../link'
-import { empty as emptyHeader } from '../../header'
 
 import { Tree, File, Metadata, Header, TreeData, PrivateTreeData, NodeMap } from '../../types'
 import check from '../../types/check'
@@ -75,7 +74,6 @@ export const putFile = async (
 ): Promise<CID> => {
   const { cid, size } = await basic.putFile(content, key)
   return header.put(cid, {
-    ...emptyHeader(),
     ...headerVal,
     size,
     isFile: true,
