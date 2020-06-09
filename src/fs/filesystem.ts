@@ -1,9 +1,9 @@
+import PublicTreeBare, { constructors as PublicTreeBareConstructors } from './public/tree'
 import PublicTree, { constructors as PublicTreeConstructors } from './public/tree'
 import PrivateTree, { constructors as PrivateTreeConstructors } from './private/tree'
-import { SimpleTree, Tree, File, Links, SyncHook, FileSystemOptions } from './types'
+import { SimpleTree, Tree, SimpleFile, Links, SyncHook, FileSystemOptions } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'
-import link from './link'
 import semver from './semver'
 import keystore from '../keystore'
 import user from '../user'
@@ -13,9 +13,8 @@ import { asyncWaterfall } from '../common/util'
 type ConstructorParams = {
   root: Tree
   publicTree: PublicTree
-  prettyTree: PublicTree
+  prettyTree: PublicTreeBare
   privateTree: PrivateTree
-  key: string
 }
 
 
@@ -23,18 +22,15 @@ export class FileSystem {
 
   root: Tree
   publicTree: PublicTree
-  prettyTree: PublicTree
+  prettyTree: PublicTreeBare
   privateTree: PrivateTree
   syncHooks: Array<SyncHook>
 
-  private key: string
-
-  constructor({ root, publicTree, prettyTree, privateTree, key }: ConstructorParams) {
+  constructor({ root, publicTree, prettyTree, privateTree }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
-    this.key = key
     this.syncHooks = []
   }
 
@@ -43,7 +39,7 @@ export class FileSystem {
 
     const root = await PublicTreeConstructors.empty(semver.v0)
     const publicTree = await PublicTreeConstructors.empty(version)
-    const prettyTree = await PublicTreeConstructors.empty(semver.v0)
+    const prettyTree = await PublicTreeBareConstructors.empty(semver.v0)
 
     const key = await keystore.getKeyByName(keyName)
     const privateTree = await PrivateTreeConstructors.empty(version, key)
@@ -53,7 +49,6 @@ export class FileSystem {
       publicTree,
       prettyTree,
       privateTree,
-      key
     })
   }
 
@@ -76,7 +71,6 @@ export class FileSystem {
       publicTree,
       prettyTree,
       privateTree,
-      key
     })
   }
 
@@ -103,7 +97,6 @@ export class FileSystem {
       publicTree,
       prettyTree,
       privateTree,
-      key
     })
   }
 
@@ -140,7 +133,7 @@ export class FileSystem {
     return this.sync()
   }
 
-  async get(path: string): Promise<SimpleTree | File | null> {
+  async get(path: string): Promise<SimpleTree | SimpleFile | null> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.get(relPath)
     })

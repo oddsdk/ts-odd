@@ -2,7 +2,7 @@ import header from '../header'
 import { Links, Tree, File, SemVer, Header, NodeInfo } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
-import BaseTree from '../basetree'
+import BaseTree from '../base/tree'
 import { constructors as PublicFileConstructors } from './file'
 import normalizer from '../normalizer'
 import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj, isJust } from '../../common'
@@ -47,7 +47,7 @@ export class PublicTree extends BaseTree implements Tree {
     return this.updateHeader(name, {
       ...child.getHeader(),
       cid,
-      isFile: check.isFile(child)
+      isFile: check.isSimpleFile(child)
     })
   }
 

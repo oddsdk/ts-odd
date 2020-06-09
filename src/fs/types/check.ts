@@ -1,10 +1,10 @@
 import { isString, isObject, isNum } from '../../common'
 import { CID } from '../../ipfs'
-import { SimpleTree, File, Link, Links, TreeData, PrivateTreeData, Header, NodeMap, SemVer, NodeInfo } from '../types'
+import { SimpleTree, SimpleFile, Link, Links, TreeData, PrivateTreeData, Header, NodeMap, SemVer, NodeInfo } from '../types'
 
 
-export const isFile = (obj: SimpleTree | File): obj is File => {
-  return (obj as any).ls === undefined 
+export const isSimpleFile = (obj: SimpleTree | SimpleFile): obj is SimpleFile => {
+  return (obj as any).content !== undefined 
 }
 
 export const isLink = (link: any): link is Link => {
@@ -62,7 +62,7 @@ export const isSemVer = (obj: any): obj is SemVer => {
 
 
 export default {
-  isFile,
+  isSimpleFile,
   isLink,
   isLinks,
   isTreeData,

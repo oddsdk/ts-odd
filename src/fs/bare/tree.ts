@@ -1,14 +1,14 @@
 import basic from '../normalizer/basic'
-import { Link, Links, SimpleTree, File } from '../types'
+import { Link, Links, SimpleTree, SimpleFile } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
-import { constructors as PublicFileConstructors } from '../public/file'
-import BaseTree from '../basetree'
+import { constructors as BareFileConstructors } from '../bare/file'
+import BaseTree from '../base/tree'
 import { removeKeyFromObj } from '../../common'
 import link from '../link'
 import semver from '../semver'
 
-class PublicTreeBare extends BaseTree implements SimpleTree {
+class BareTree extends BaseTree {
 
   links: Links
 
@@ -17,20 +17,20 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
     this.links = links
   }
 
-  async createEmptyTree(): Promise<PublicTreeBare> {
+  async createEmptyTree(): Promise<BareTree> {
     return constructors.empty()
   }
 
-  async createTreeFromCID(cid: CID): Promise<PublicTreeBare> {
+  async createTreeFromCID(cid: CID): Promise<BareTree> {
     return constructors.fromCID(cid)
   }
 
-  createFile(content: FileContent): File {
-    return PublicFileConstructors.create(content, semver.v0)
+  createFile(content: FileContent): SimpleFile {
+    return BareFileConstructors.create(content)
   }
 
-  async createFileFromCID(cid: CID): Promise<File> {
-    return PublicFileConstructors.fromCID(cid)
+  async createFileFromCID(cid: CID): Promise<SimpleFile> {
+    return BareFileConstructors.fromCID(cid)
   }
 
   async put(): Promise<CID> {
@@ -38,9 +38,9 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
     return basic.putTree(data, null)
   }
 
-  async updateDirectChild(child: SimpleTree | File, name: string): Promise<this> {
+  async updateDirectChild(child: SimpleTree | SimpleFile, name: string): Promise<this> {
     const cid = await child.put()
-    const childLink = link.make(name, cid, check.isFile(child))
+    const childLink = link.make(name, cid, check.isSimpleFile(child))
     
     return this.updateLink(childLink)
   }
@@ -49,7 +49,7 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
     return this.rmLink(name)
   }
 
-  async getDirectChild(name: string): Promise<SimpleTree | File | null> {
+  async getDirectChild(name: string): Promise<SimpleTree | SimpleFile | null> {
     const link = this.findLink(name)
     if(link === null) return null
     return link.isFile
@@ -57,7 +57,7 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
           : this.createTreeFromCID(link.cid)
   }
 
-  async getOrCreateDirectChild(name: string): Promise<SimpleTree | File> {
+  async getOrCreateDirectChild(name: string): Promise<SimpleTree | SimpleFile> {
     const child = await this.getDirectChild(name)
     return child ? child : this.createEmptyTree()
   }
@@ -87,16 +87,16 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
 
 // CONSTRUCTORS
 
-export const empty = async (): Promise<PublicTreeBare> => {
-  return new PublicTreeBare({})
+export const empty = async (): Promise<BareTree> => {
+  return new BareTree({})
 }
 
-export const fromCID = async (cid: CID): Promise<PublicTreeBare> => {
+export const fromCID = async (cid: CID): Promise<BareTree> => {
   const links = await basic.getLinks(cid, null)
-  return new PublicTreeBare(links) 
+  return new BareTree(links) 
 }
 
 export const constructors = { empty, fromCID }
 
 
-export default PublicTreeBare
+export default BareTree

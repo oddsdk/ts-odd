@@ -1,16 +1,16 @@
 import { File, SemVer, Header } from '../types'
 import { CID, FileContent } from '../../ipfs'
+import BaseFile from '../base/file'
 import normalizer from '../normalizer'
 import header from '../header'
 
 
-export class PublicFile implements File {
+export class PublicFile extends BaseFile implements File {
 
-  content: FileContent
   protected header: Header
 
   constructor(content: FileContent, header: Header) {
-    this.content = content
+    super(content)
     this.header = header
   }
 

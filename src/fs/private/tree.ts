@@ -6,7 +6,6 @@ import { constructors as PrivateFileConstructors } from './file'
 import normalizer from '../normalizer'
 import header from '../header'
 import semver from '../semver'
-import check from '../types/check'
 
 
 export class PrivateTree extends PublicTree {

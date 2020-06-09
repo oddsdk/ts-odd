@@ -14,9 +14,12 @@ export type FileSystemOptions = {
 // FILES
 // -----
 
-export interface File {
+export interface SimpleFile {
   content: FileContent
   put(): Promise<CID>
+}
+
+export interface File extends SimpleFile {
   getHeader(): Header
 }
 
@@ -150,23 +153,23 @@ export interface SimpleTree {
   cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<this>
   rm(path: string): Promise<SimpleTree>
-  get(path: string): Promise<SimpleTree | File | null>
+  get(path: string): Promise<SimpleTree | SimpleFile | null>
   pathExists(path: string): Promise<boolean>
-  addChild(path: string, toAdd: SimpleTree | File): Promise<this>
+  addChild(path: string, toAdd: SimpleTree | SimpleFile): Promise<this>
 
-  addRecurse (path: NonEmptyPath, child: SimpleTree | File): Promise<this>
+  addRecurse (path: NonEmptyPath, child: SimpleTree | SimpleFile): Promise<this>
 
 
   put(): Promise<CID>
-  updateDirectChild (child: SimpleTree | File, name: string): Promise<this>
+  updateDirectChild (child: SimpleTree | SimpleFile, name: string): Promise<this>
   removeDirectChild(name: string): Promise<this>
-  getDirectChild(name: string): Promise<SimpleTree | File | null>
-  getOrCreateDirectChild(name: string): Promise<SimpleTree | File>
+  getDirectChild(name: string): Promise<SimpleTree | SimpleFile | null>
+  getOrCreateDirectChild(name: string): Promise<SimpleTree | SimpleFile>
 
   createEmptyTree(): Promise<SimpleTree>
   createTreeFromCID(cid: CID): Promise<SimpleTree>
-  createFile(content: FileContent): File
-  createFileFromCID(cid: CID): Promise<File>
+  createFile(content: FileContent): SimpleFile
+  createFileFromCID(cid: CID): Promise<SimpleFile>
 
   getLinks(): Links
 
