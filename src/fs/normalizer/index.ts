@@ -10,12 +10,6 @@ import { getVersion } from './header'
 import basic from './versions/v0_0_0'
 import nested from './versions/v1_0_0'
 
-export const getDirectChild = async (tree: Tree, name: string): Promise<Tree | File | null>  => {
-  const version = tree.getHeader().version
-  const fns = switchVersion(version)
-  return fns.getDirectChild(tree, name)
-}
-
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
   const fns = await getAndSwitchVersion(cid, key)
   return fns.getFile(cid, key)
@@ -92,7 +86,6 @@ const switchVersion = (version: SemVer) => {
 }
 
 export default {
-  getDirectChild,
   getFile,
   getTreeData,
   getPrivateTreeData,

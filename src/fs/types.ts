@@ -82,7 +82,6 @@ export type SemVer = {
   patch: number
 }
 
-
 // TREE
 // ----
 
@@ -144,20 +143,23 @@ export interface SimpleTree {
   //   file: FileStatic
   // }
   version: SemVer
-  links: Links
+  // links: Links
 
   ls(path: string): Promise<Links>
-  mkdir(path: string): Promise<SimpleTree>
+  mkdir(path: string): Promise<this>
   cat(path: string): Promise<FileContent>
-  add(path: string, content: FileContent): Promise<SimpleTree>
+  add(path: string, content: FileContent): Promise<this>
   rm(path: string): Promise<SimpleTree>
   get(path: string): Promise<SimpleTree | File | null>
   pathExists(path: string): Promise<boolean>
-  addChild(path: string, toAdd: SimpleTree | File): Promise<SimpleTree>
+  addChild(path: string, toAdd: SimpleTree | File): Promise<this>
+
+  addRecurse (path: NonEmptyPath, child: SimpleTree | File): Promise<this>
+
 
   put(): Promise<CID>
-  updateDirectChild(child: SimpleTree | File, name: string): Promise<SimpleTree>
-  removeDirectChild(name: string): Promise<SimpleTree>
+  updateDirectChild (child: SimpleTree | File, name: string): Promise<this>
+  removeDirectChild(name: string): Promise<this>
   getDirectChild(name: string): Promise<SimpleTree | File | null>
   getOrCreateDirectChild(name: string): Promise<SimpleTree | File>
 
@@ -165,6 +167,8 @@ export interface SimpleTree {
   createTreeFromCID(cid: CID): Promise<SimpleTree>
   createFile(content: FileContent): File
   createFileFromCID(cid: CID): Promise<File>
+
+  getLinks(): Links
 
   // data(): SimpleTreeData
   // updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<SimpleTree>
@@ -181,6 +185,8 @@ export interface Tree extends SimpleTree {
   //   tree: TreeStatic<Tree>
   //   file: FileStatic
   // }
+
+  // addChild(path: string, toAdd: Tree | File): Promise<Tree>
 
   getHeader(): Header
   updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>

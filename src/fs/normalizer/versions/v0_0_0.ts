@@ -8,15 +8,6 @@ import basic from '../basic'
 import { isPrivateTreeData } from '../../types/check'
 import link from '../../link'
 
-export const getDirectChild = async (tree: Tree, name: string): Promise<Tree | File | null>  => {
-  const link = tree.findLink(name)
-  if (link === null) return null
-  const parentKey = tree.getHeader().key
-  return link.isFile 
-          ? tree.static.file.fromCID(link.cid, parentKey || undefined)
-          : tree.static.tree.fromCID(link.cid, parentKey || undefined)
-}
-
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
   return basic.getFile(cid, key)
 }
@@ -69,7 +60,6 @@ export const putTree = async (
 }
 
 export default {
-  getDirectChild,
   getFile,
   getTreeData,
   getMetadata,

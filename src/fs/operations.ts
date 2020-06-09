@@ -4,15 +4,15 @@ import { isFile } from './types/check'
 import pathUtil from './path'
 
 
-export const addRecurse = async (
-  tree: SimpleTree,
+export const addRecurse = async <T extends SimpleTree> (
+  tree: T,
   path: NonEmptyPath,
-  child: SimpleTree | File
-): Promise<SimpleTree> => {
+  child: T | File
+): Promise<T> => {
   const name = path[0]
   const nextPath = pathUtil.nextNonEmpty(path)
 
-  let toAdd: SimpleTree | File
+  let toAdd: T | File
 
   if (nextPath === null) {
     toAdd = child
@@ -23,7 +23,7 @@ export const addRecurse = async (
       throw new Error("Attempted to add a child to a File")
     }
 
-    toAdd = await addRecurse(nextTree, nextPath, child)
+    toAdd = (await addRecurse(nextTree, nextPath, child)) as T
   }
 
   return tree.updateDirectChild(toAdd, name)
@@ -63,7 +63,6 @@ export const rmNested = async (
           ? tree.addChild(pathUtil.join(parentPath), updated)
           : updated
 }
-
 
 export default {
   addRecurse,

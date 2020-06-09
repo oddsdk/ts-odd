@@ -49,10 +49,19 @@ export const arrContains = <T>(arr: T[], val: T): boolean => {
   return arr.indexOf(val) > -1
 }
 
+export const asyncWaterfall = async <T>(val: T, operations: ((val: T) => Promise<T>)[]): Promise<T> => {
+  let acc = val
+  for(let i=0; i<operations.length; i++){
+    acc = await operations[i](acc)
+  }
+  return acc
+}
+
 export default {
   removeKeyFromObj,
   updateOrRemoveKeyFromObj,
   mapObj,
   mapObjAsync,
-  arrContains
+  arrContains,
+  asyncWaterfall
 }

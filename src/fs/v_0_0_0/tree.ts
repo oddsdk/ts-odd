@@ -10,8 +10,11 @@ import semver from '../semver'
 
 class PublicTreeBare extends BaseTree implements SimpleTree {
 
+  links: Links
+
   constructor(links: Links) {
-    super(semver.v0, links)
+    super(semver.v0)
+    this.links = links
   }
 
   async createEmptyTree(): Promise<PublicTreeBare> {
@@ -35,14 +38,14 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
     return basic.putTree(data, null)
   }
 
-  async updateDirectChild(child: SimpleTree | File, name: string): Promise<SimpleTree> {
+  async updateDirectChild(child: SimpleTree | File, name: string): Promise<this> {
     const cid = await child.put()
     const childLink = link.make(name, cid, check.isFile(child))
     
     return this.updateLink(childLink)
   }
 
-  async removeDirectChild(name: string): Promise<SimpleTree> {
+  async removeDirectChild(name: string): Promise<this> {
     return this.rmLink(name)
   }
 
@@ -59,11 +62,9 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
     return child ? child : this.createEmptyTree()
   }
 
-  updateLink(link: Link): SimpleTree {
-    return this.copyWithLinks({
-      ...this.links,
-      [link.name]: link
-    })
+  updateLink(link: Link): this {
+    this.links[link.name] = link
+    return this
   }
 
   findLink(name: string): Link | null {
@@ -74,15 +75,17 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
     return this.findLink(name)?.cid || null
   }
 
-  rmLink(name: string): SimpleTree {
-    const updated = removeKeyFromObj(this.links, name)
-    return this.copyWithLinks(updated)
+  rmLink(name: string): this {
+    this.links = removeKeyFromObj(this.links, name)
+    return this
   }
 
-  copyWithLinks(links: Links): SimpleTree {
-    return new PublicTreeBare(links)
+  getLinks(): Links {
+    return this.links
   }
 }
+
+// CONSTRUCTORS
 
 export const empty = async (): Promise<PublicTreeBare> => {
   return new PublicTreeBare({})

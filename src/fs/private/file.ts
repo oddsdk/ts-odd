@@ -19,6 +19,8 @@ export class PrivateFile extends PublicFile {
 
 }
 
+// CONSTRUCTORS
+
 export const create = (content: FileContent, version: SemVer, parentKey: string): PrivateFile => {
   return new PrivateFile(content, { 
       ...header.empty(),

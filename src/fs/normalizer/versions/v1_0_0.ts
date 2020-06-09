@@ -13,14 +13,6 @@ import header from '../header'
 import { defaultError } from '../errors'
 
 
-export const getDirectChild = async (tree: Tree, name: string): Promise<Tree | File | null>  => {
-  const childHeader = tree.findLink(name)
-  if (childHeader === null) return null
-  return childHeader.isFile
-          ? tree.static.file.fromCID(childHeader.cid, tree.getHeader().key || undefined)
-          : tree.static.tree.fromHeader(childHeader)
-}
-
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
   const indexCID = await basic.getLinkCID(cid, 'index', key)
   if (!indexCID) {
@@ -102,7 +94,6 @@ export const putTree = async (
 }
 
 export default {
-  getDirectChild,
   getFile,
   getTreeData,
   getMetadata,

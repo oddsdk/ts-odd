@@ -1,8 +1,8 @@
 import { Tree, File, SemVer, Header } from '../types'
-import ipfs, { CID, FileContent } from '../../ipfs'
+import { CID, FileContent } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree  from '../public/tree'
-import PrivateFile, { constructors as PrivateFileConstructors } from './file'
+import { constructors as PrivateFileConstructors } from './file'
 import normalizer from '../normalizer'
 import header from '../header'
 import semver from '../semver'
@@ -21,9 +21,9 @@ export class PrivateTree extends PublicTree {
     this.ownKey = ownKey
   }
 
-  // static instanceOf(obj: any): obj is PrivateTree {
-  //   return obj.putEncrypted !== undefined
-  // }
+  static instanceOf(obj: any): obj is PrivateTree {
+    return obj.owenKey !== undefined
+  }
 
   async createEmptyTree(key?: string): Promise<PrivateTree> {
     return constructors.empty(semver.latest, this.ownKey, key) // TODO: don't hardcode version
@@ -45,15 +45,14 @@ export class PrivateTree extends PublicTree {
     return normalizer.putTree(this.header, this.parentKey)
   }
 
-  async updateDirectChild(child: PrivateTree | PrivateFile, name: string): Promise<Tree> {
-    const cid = await child.put()
-    const content = await ipfs.encoded.catAndDecode(cid, this.ownKey)
-    return this.updateHeader(name, {
-      ...child.getHeader(),
-      cid,
-      isFile: check.isFile(child)
-    })
+  async getDirectChild(name: string): Promise<Tree | File | null> {
+    const childHeader = this.findLink(name)
+    if(childHeader === null) return null
+    return childHeader.isFile
+          ? PrivateFileConstructors.fromCID(childHeader.cid, this.ownKey)
+          : constructors.fromHeader(childHeader, this.ownKey)
   }
+
 
   copyWithHeader(header: Header): Tree {
     return new PrivateTree(header, this.parentKey, this.ownKey)
@@ -72,6 +71,8 @@ export const empty = async (version: SemVer, parentKey: string, ownKey?: string)
   keyStr
   )
 }
+
+// CONSTRUCTORS
 
 export const fromCID = async (cid: CID, parentKey: string): Promise<PrivateTree> => {
   const header = await normalizer.getHeader(cid, parentKey)

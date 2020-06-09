@@ -1,18 +1,14 @@
-import operations from './operations'
 import pathUtil from './path'
-import { Link, Links, SimpleTree, Tree, StaticMethods, TreeStatic, FileStatic, File, SemVer, NodeInfo } from './types'
+import { Links, SimpleTree, File, SemVer, NonEmptyPath } from './types'
 import check from './types/check'
 import { CID, FileContent } from '../ipfs'
-import { Maybe } from '../common'
 
 abstract class BaseTree implements SimpleTree {
 
   version: SemVer
-  links: Links
 
-  constructor(version: SemVer, links: Links) {
+  constructor(version: SemVer) {
     this.version = version
-    this.links = links
   }
 
   async ls(path: string): Promise<Links> {
@@ -22,10 +18,10 @@ abstract class BaseTree implements SimpleTree {
     } else if (check.isFile(dir)) {
       throw new Error('Can not `ls` a file')
     }
-    return dir.links
+    return dir.getLinks()
   }
 
-  async mkdir(path: string): Promise<SimpleTree> {
+  async mkdir(path: string): Promise<this> {
     const exists = await this.pathExists(path)
     if (exists) {
       throw new Error(`Path already exists: ${path}`)
@@ -44,26 +40,62 @@ abstract class BaseTree implements SimpleTree {
     return file.content
   }
 
-  async add(path: string, content: FileContent): Promise<SimpleTree> {
+  async add(path: string, content: FileContent): Promise<this> {
     const file = this.createFile(content)
     return this.addChild(path, file)
   }
 
-  async addChild(path: string, toAdd: SimpleTree | File): Promise<SimpleTree> {
+  async addChild(path: string, toAdd: SimpleTree | File): Promise<this> {
     const parts = pathUtil.splitNonEmpty(path)
     if (parts === null) {
       throw new Error("Path not specified")
     }
-    const result = parts ? await operations.addRecurse(this, parts, toAdd) : this
+    const result = parts ? await this.addRecurse(parts, toAdd) : this
     return result
   }
 
-  async rm(path: string): Promise<SimpleTree> {
+  async addRecurse(path: NonEmptyPath, child: SimpleTree | File): Promise<this> {
+    const name = path[0]
+    const nextPath = pathUtil.nextNonEmpty(path)
+
+    let toAdd: SimpleTree | File
+
+    if (nextPath === null) {
+      toAdd = child
+    } else {
+      const nextTree = await this.getOrCreateDirectChild(name)
+
+      if (check.isFile(nextTree)) {
+        throw new Error("Attempted to add a child to a File")
+      }
+
+      toAdd = await nextTree.addRecurse(nextPath, child)
+    }
+
+    return this.updateDirectChild(toAdd, name)
+  }
+
+  async rm(path: string): Promise<this> {
     const parts = pathUtil.splitNonEmpty(path)
     if (parts === null) {
       throw new Error("Path does not exist")
     }
-    return operations.rmNested(this, parts)
+    return this.rmNested(parts)
+  }
+
+  async rmNested(path: NonEmptyPath): Promise<this> {
+    const filename = path[path.length - 1]
+    const parentPath = path.slice(0, path.length - 1)
+    const node = await this.get(pathUtil.join(parentPath))
+
+    if (node === null || check.isFile(node)) {
+      throw new Error("Path does not exist")
+    }
+
+    const updated = await node.removeDirectChild(filename)
+    return parentPath.length > 0
+            ? this.addChild(pathUtil.join(parentPath), updated)
+            : updated as this
   }
 
   async pathExists(path: string): Promise<boolean> {
@@ -72,26 +104,33 @@ abstract class BaseTree implements SimpleTree {
   }
 
   async get(path: string): Promise<SimpleTree | File | null> {
-    const parts = pathUtil.splitNonEmpty(path)
-    return parts ? operations.getRecurse(this, parts) : this
+    const { head, nextPath } = pathUtil.takeHead(path)
+    if(head === null) return this
+    const nextTree = await this.getDirectChild(head)
+
+    if (nextPath === null) {
+      return nextTree
+    } else if (nextTree === null || check.isFile(nextTree)) {
+      return null
+    }
+
+    return nextTree.get(nextPath)
   }
 
+
+
   abstract async put(): Promise<CID>
-  abstract async updateDirectChild(child: SimpleTree | File, name: string): Promise<SimpleTree>
-  abstract async removeDirectChild(name: string): Promise<SimpleTree>
+  abstract async updateDirectChild (child: SimpleTree | File, name: string): Promise<this>
+  abstract async removeDirectChild(name: string): Promise<this>
   abstract async getDirectChild(name: string): Promise<SimpleTree | File | null>
   abstract async getOrCreateDirectChild(name: string): Promise<SimpleTree | File>
+
+  abstract getLinks(): Links
+
   abstract async createEmptyTree(): Promise<SimpleTree>
   abstract async createTreeFromCID(cid: CID): Promise<SimpleTree>
   abstract createFile(content: FileContent): File
   abstract async createFileFromCID(cid: CID): Promise<File>
-  // abstract async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
-  // abstract updateLink(info: Link): SimpleTree
-  // abstract findLink(name: string): Link | null 
-  // abstract findLinkCID(name: string): CID | null 
-  // abstract rmLink(name: string): SimpleTree 
-  // abstract copyWithLinks(links: Links): SimpleTree
-
 }
 
 export default BaseTree

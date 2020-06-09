@@ -24,6 +24,8 @@ export class PublicFile implements File {
 
 }
 
+// CONSTRUCTORS
+
 export const create = (content: FileContent, version: SemVer): PublicFile => {
   return new PublicFile(content, { 
     ...header.empty(),

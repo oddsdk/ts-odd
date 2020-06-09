@@ -1,5 +1,5 @@
 import header from '../header'
-import { Tree, File, SemVer, Header, NodeInfo } from '../types'
+import { Links, Tree, File, SemVer, Header, NodeInfo } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../basetree'
@@ -14,13 +14,13 @@ export class PublicTree extends BaseTree implements Tree {
   protected header: Header
 
   constructor(header: Header) {
-    super(header.version, link.fromNodeMap(header.cache))
+    super(header.version)
     this.header = header
   }
 
-  // static instanceOf(obj: any): obj is PublicTree {
-  //   return obj.getDirectChild !== undefined
-  // }
+  static instanceOf(obj: any): obj is PublicTree {
+    return obj.header !== undefined
+  }
 
   async createEmptyTree(): Promise<PublicTree> {
     return constructors.empty(semver.latest) // TODO: don't hardcode version
@@ -42,7 +42,7 @@ export class PublicTree extends BaseTree implements Tree {
     return normalizer.putTree(this.header, null)
   }
 
-  async updateDirectChild(child: Tree | File, name: string): Promise<Tree> {
+  async updateDirectChild(child: Tree | File, name: string): Promise<this> {
     const cid = await child.put()
     return this.updateHeader(name, {
       ...child.getHeader(),
@@ -51,12 +51,16 @@ export class PublicTree extends BaseTree implements Tree {
     })
   }
 
-  async removeDirectChild(name: string): Promise<Tree> {
+  async removeDirectChild(name: string): Promise<this> {
     return this.updateHeader(name, null)
   }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
-    return normalizer.getDirectChild(this, name)
+    const childHeader = this.findLink(name)
+    if(childHeader === null) return null
+    return childHeader.isFile
+          ? PublicFileConstructors.fromCID(childHeader.cid)
+          : constructors.fromHeader(childHeader)
   }
 
   async getOrCreateDirectChild(name: string): Promise<Tree | File> {
@@ -64,7 +68,7 @@ export class PublicTree extends BaseTree implements Tree {
     return child ? child : this.createEmptyTree()
   }
 
-  async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree> {
+  async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<this> {
     const { cache } = this.header
     if(isJust(childInfo)){
       childInfo.name = name
@@ -72,21 +76,23 @@ export class PublicTree extends BaseTree implements Tree {
     const updatedCache = updateOrRemoveKeyFromObj(cache, name, childInfo)
     const sizeDiff = (childInfo?.size || 0) - (cache[name]?.size || 0)
 
-    return this.copyWithHeader({
+    this.header = {
       ...this.header,
       cache: updatedCache,
       size: this.header.size + sizeDiff,
-    }) 
+    }
+    return this
   }
 
   updateLink(info: NodeInfo): Tree {
-    return this.copyWithHeader({
+    this.header = {
       ...this.header,
       cache: {
         ...this.header.cache,
         [info.name = '']: info
       }
-    })
+    }
+    return this
   }
 
   findLink(name: string): NodeInfo | null {
@@ -98,14 +104,15 @@ export class PublicTree extends BaseTree implements Tree {
   }
 
   rmLink(name: string): Tree {
-    return this.copyWithHeader({
+    this.header = {
       ...this.header,
       cache: removeKeyFromObj(this.header.cache, name)
-    })
+    }
+    return this
   }
 
-  copyWithHeader(header: Header): Tree {
-    return new PublicTree(header)
+  getLinks(): Links {
+    return link.fromNodeMap(this.header.cache)
   }
 
   getHeader(): Header {
@@ -113,6 +120,8 @@ export class PublicTree extends BaseTree implements Tree {
   }
 
 }
+
+// CONSTRUCTORS
 
 export const empty = async (version: SemVer, _key?: string): Promise<PublicTree> => {
   return new PublicTree({
