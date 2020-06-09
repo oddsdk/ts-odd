@@ -20,9 +20,3 @@ export const mapObjAsync = async <T, S>(obj: {[k: string]: T}, fn: (t: T, k?: st
   )
   return newObj
 }
-
-export default {
-  rmKey,
-  mapObj,
-  mapObjAsync
-}

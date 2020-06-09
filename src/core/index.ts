@@ -3,7 +3,9 @@ import { CryptoSystem } from 'keystore-idb/types'
 import utils from 'keystore-idb/utils'
 
 import { base64 } from '../common'
-import { getKeystore } from '../keystore'
+
+import * as api from './api'
+import * as keystore from '../keystore'
 
 
 const EDW_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
@@ -11,14 +13,31 @@ const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
 
 
 /**
- * Params for `ucan`
+ * Get the DID from the main Fission API.
  */
-type ucanParams = {
-  audience: string
-  issuer: string
-  lifetimeInSeconds?: number
-  proof?: string
-  scope?: string
+export async function apiDid() { return await api.did() }
+
+/**
+ * Get the endpoint from the main Fission API.
+ */
+export function apiEndpoint() { return `https://${api.HOST}` }
+
+/**
+ * Create a DID to authenticate with.
+ */
+export const did = async (): Promise<string> => {
+  const ks = await keystore.get()
+
+  // Public-write key
+  const pwB64 = await ks.publicWriteKey()
+  const pwBuf = utils.base64ToArrBuf(pwB64)
+
+  // Prefix public-write key
+  const prefix = magicBytes(ks.cfg.type) || new ArrayBuffer(0)
+  const prefixedBuf = utils.joinBufs(prefix, pwBuf)
+
+  // Encode prefixed
+  return 'did:key:z' + base58.encode(new Uint8Array(prefixedBuf))
 }
 
 /**
@@ -39,7 +58,7 @@ type ucanParams = {
  * `nbf`, Not Before, unix timestamp of when the jwt becomes valid.
  * `prf`, Proof, an optional nested token with equal or greater privileges.
  * `ptc`, Potency, which rights come with the token.
- * `scp`, Scope, the path of the things that can be changed.
+ * `rsc`, Resource, the path of the things that can be changed.
  *
  */
 export const ucan = async ({
@@ -47,9 +66,15 @@ export const ucan = async ({
   issuer,
   lifetimeInSeconds = 30,
   proof,
-  scope = "/"
-}: ucanParams) => {
-  const ks = await getKeystore()
+  resource = "/"
+}: {
+  audience: string
+  issuer: string
+  lifetimeInSeconds?: number
+  proof?: string
+  resource?: string
+}): Promise<string> => {
+  const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
 
   // Parts
@@ -66,7 +91,7 @@ export const ucan = async ({
     nbf: currentTimeInSeconds - 60,
     prf: proof,
     ptc: "APPEND",
-    scp: scope,
+    scp: resource, // TODO: scp -> rsc
   }
 
   // Encode parts in JSON & Base64Url
@@ -83,26 +108,9 @@ export const ucan = async ({
          encodedSignature
 }
 
-/**
- * Create a DID key to authenticate with.
- */
-export const didKey = async () => {
-  const ks = await getKeystore()
-
-  // Public-write key
-  const pwB64 = await ks.publicWriteKey()
-  const pwBuf = utils.base64ToArrBuf(pwB64)
-
-  // Prefix public-write key
-  const prefix = magicBytes(ks.cfg.type) || new ArrayBuffer(0)
-  const prefixedBuf = utils.joinBufs(prefix, pwBuf)
-
-  // Encode prefixed
-  return 'did:key:z' + base58.encode(new Uint8Array(prefixedBuf))
-}
 
 
-// 🧙
+// ㊙️
 
 
 /**

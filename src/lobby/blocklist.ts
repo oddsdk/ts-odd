@@ -1,11 +1,16 @@
 /**
- * Blacklist for usernames.
+ * Blocklist for usernames.
  *
  * Keep in sync with the Fission API.
  * https://github.com/fission-suite/fission/blob/master/library/Fission/User/Username/Validation.hs
  */
-export const USERNAME_BLACKLIST =
+export const USERNAME_BLOCKLIST =
   [ "fission"
+  , "ipfs"
+  , "ipns"
+  , "did"
+  , "id"
+  , "identity"
   , ".htaccess"
   , "htaccess"
   , ".htpasswd"

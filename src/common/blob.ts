@@ -14,7 +14,3 @@ export const toBuffer = async (blob: Blob): Promise<Buffer> => {
     reader.readAsArrayBuffer(blob)
   })
 }
-
-export default {
-  toBuffer
-}

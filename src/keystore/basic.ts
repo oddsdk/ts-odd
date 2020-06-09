@@ -1,13 +1,9 @@
-import { getKeystore } from './config'
-import keystore from 'keystore-idb'
 import aes from 'keystore-idb/aes'
+import * as keystore from './config'
 
-export const clear = (): Promise<void> => {
-  return keystore.clear()
-}
 
 export const getKeyByName = async (keyName: string): Promise<string> => {
-  const ks = await getKeystore()
+  const ks = await keystore.get()
   return ks.exportSymmKey(keyName)
 }
 
@@ -26,12 +22,4 @@ export const decrypt = async (encrypted: Uint8Array, keyStr: string): Promise<Ui
 export const genKeyStr = async (): Promise<string> => {
   const key = await aes.makeKey()
   return aes.exportKey(key)
-}
-
-export default {
-  clear,
-  getKeyByName,
-  encrypt,
-  decrypt,
-  genKeyStr,
 }

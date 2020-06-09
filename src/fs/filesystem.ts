@@ -1,12 +1,14 @@
 import PublicTree from './public'
 import PrivateTree from './private'
+
 import { Tree, File, Links, SyncHook, FileSystemOptions } from './types'
 import { CID, FileContent } from '../ipfs'
+import { dataRoot } from '../data-root'
+
+import * as keystore from '../keystore'
 import pathUtil from './path'
 import link from './link'
 import semver from './semver'
-import keystore from '../keystore'
-import user from '../user'
 
 
 type ConstructorParams = {
@@ -80,7 +82,7 @@ export class FileSystem {
   }
 
   static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const cid = await user.fileRoot(username)
+    const cid = await dataRoot(username)
     return FileSystem.fromCID(cid, opts)
   }
 
