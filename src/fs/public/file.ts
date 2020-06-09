@@ -4,7 +4,7 @@ import normalizer from '../normalizer'
 import header from '../header'
 
 
-class PublicFile implements File {
+export class PublicFile implements File {
 
   content: FileContent
   protected header: Header
@@ -12,23 +12,6 @@ class PublicFile implements File {
   constructor(content: FileContent, header: Header) {
     this.content = content
     this.header = header
-  }
-
-  static create(content: FileContent, version: SemVer): PublicFile {
-    return new PublicFile(content, { 
-      ...header.empty(),
-      isFile: true,
-      version 
-    })
-  }
-
-  static async fromCID(cid: CID, _key?: string): Promise<PublicFile> {
-    const header = await normalizer.getHeader(cid, null)
-    const content = await normalizer.getFile(cid, null)
-    return new PublicFile(content, {
-      ...header,
-      isFile: true
-    })
   }
 
   put(): Promise<CID> {
@@ -41,5 +24,23 @@ class PublicFile implements File {
 
 }
 
+export const create = (content: FileContent, version: SemVer): PublicFile => {
+  return new PublicFile(content, { 
+    ...header.empty(),
+    isFile: true,
+    version 
+  })
+}
+
+export const fromCID = async (cid: CID, _key?: string): Promise<PublicFile> => {
+  const header = await normalizer.getHeader(cid, null)
+  const content = await normalizer.getFile(cid, null)
+  return new PublicFile(content, {
+    ...header,
+    isFile: true
+  })
+}
+
+export const constructors = { create, fromCID }
 
 export default PublicFile

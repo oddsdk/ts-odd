@@ -4,39 +4,37 @@ import { SemVer, Header } from '../types'
 import normalizer from '../normalizer'
 import header from '../header'
 
+export class PrivateFile extends PublicFile {
 
-class PrivateFile extends PublicFile {
+  parentKey: string
 
-  constructor(content: FileContent, header: Header) {
+  constructor(content: FileContent, header: Header, parentKey: string) {
     super(content, header)
+    this.parentKey = parentKey
   }
 
-  static create(content: FileContent, version: SemVer): PrivateFile {
-    return new PrivateFile(content, { 
-      ...header.empty(),
-      version,
-      isFile: true
-    })
-  }
-
-  static async fromCID(cid: CID, parentKey?: string): Promise<PublicFile> {
-    if(parentKey === undefined){
-      throw new Error("This is a private file. Use PrivateFile.fromCIDWithKey")
-    }
-    const content = await normalizer.getFile(cid, parentKey)
-    const header = await normalizer.getHeader(cid, parentKey)
-    return new PrivateFile(content, header)
-  }
-
-  put(): Promise<CID> {
-    throw new Error("This is a private file. Use PrivateFile.putEncrypted")
-  }
-
-  async putEncrypted(key: string): Promise<CID> {
-    return normalizer.putFile(this.content, this.header, key)
+  async put(): Promise<CID> {
+    return normalizer.putFile(this.content, this.header, this.parentKey)
   }
 
 }
 
+export const create = (content: FileContent, version: SemVer, parentKey: string): PrivateFile => {
+  return new PrivateFile(content, { 
+      ...header.empty(),
+      version,
+      isFile: true
+    },
+    parentKey
+  )
+}
+
+export const fromCID = async (cid: CID, parentKey: string): Promise<PrivateFile> => {
+  const content = await normalizer.getFile(cid, parentKey)
+  const header = await normalizer.getHeader(cid, parentKey)
+  return new PrivateFile(content, header, parentKey)
+}
+
+export const constructors = { create, fromCID }
 
 export default PrivateFile

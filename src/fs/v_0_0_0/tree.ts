@@ -1,8 +1,8 @@
 import basic from '../normalizer/basic'
 import { Link, Links, SimpleTree, File } from '../types'
 import check from '../types/check'
-import { CID } from '../../ipfs'
-import PublicFile from '../public/file'
+import { CID, FileContent } from '../../ipfs'
+import { constructors as PublicFileConstructors } from '../public/file'
 import BaseTree from '../basetree'
 import { removeKeyFromObj } from '../../common'
 import link from '../link'
@@ -10,21 +10,24 @@ import semver from '../semver'
 
 class PublicTreeBare extends BaseTree implements SimpleTree {
 
-  protected constructor(links: Links) {
-    const staticMethods = {
-      tree: PublicTreeBare,
-      file: PublicFile
-    }
-    super(staticMethods, semver.v0, links)
+  constructor(links: Links) {
+    super(semver.v0, links)
   }
 
-  static async empty(): Promise<PublicTreeBare> {
-    return new PublicTreeBare({})
+  async createEmptyTree(): Promise<PublicTreeBare> {
+    return constructors.empty()
   }
 
-  static async fromCID(cid: CID): Promise<PublicTreeBare> {
-    const links = await basic.getLinks(cid, null)
-    return new PublicTreeBare(links) 
+  async createTreeFromCID(cid: CID): Promise<PublicTreeBare> {
+    return constructors.fromCID(cid)
+  }
+
+  createFile(content: FileContent): File {
+    return PublicFileConstructors.create(content, semver.v0)
+  }
+
+  async createFileFromCID(cid: CID): Promise<File> {
+    return PublicFileConstructors.fromCID(cid)
   }
 
   async put(): Promise<CID> {
@@ -47,13 +50,13 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
     const link = this.findLink(name)
     if(link === null) return null
     return link.isFile
-          ? this.static.file.fromCID(link.cid)
-          : this.static.tree.fromCID(link.cid)
+          ? this.createFileFromCID(link.cid)
+          : this.createTreeFromCID(link.cid)
   }
 
   async getOrCreateDirectChild(name: string): Promise<SimpleTree | File> {
     const child = await this.getDirectChild(name)
-    return child ? child : this.static.tree.empty(this.version)
+    return child ? child : this.createEmptyTree()
   }
 
   updateLink(link: Link): SimpleTree {
@@ -80,5 +83,17 @@ class PublicTreeBare extends BaseTree implements SimpleTree {
     return new PublicTreeBare(links)
   }
 }
+
+export const empty = async (): Promise<PublicTreeBare> => {
+  return new PublicTreeBare({})
+}
+
+export const fromCID = async (cid: CID): Promise<PublicTreeBare> => {
+  const links = await basic.getLinks(cid, null)
+  return new PublicTreeBare(links) 
+}
+
+export const constructors = { empty, fromCID }
+
 
 export default PublicTreeBare

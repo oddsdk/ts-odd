@@ -1,23 +1,16 @@
 import operations from './operations'
 import pathUtil from './path'
-import { Link, Links, SimpleTree, Tree, TreeStatic, FileStatic, File, SemVer, NodeInfo } from './types'
+import { Link, Links, SimpleTree, Tree, StaticMethods, TreeStatic, FileStatic, File, SemVer, NodeInfo } from './types'
 import check from './types/check'
 import { CID, FileContent } from '../ipfs'
 import { Maybe } from '../common'
 
-type StaticMethods = {
-  tree: TreeStatic
-  file: FileStatic
-}
-
 abstract class BaseTree implements SimpleTree {
 
-  static: StaticMethods
   version: SemVer
   links: Links
 
-  constructor(staticMethods: StaticMethods, version: SemVer, links: Links) {
-    this.static = staticMethods
+  constructor(version: SemVer, links: Links) {
     this.version = version
     this.links = links
   }
@@ -37,7 +30,7 @@ abstract class BaseTree implements SimpleTree {
     if (exists) {
       throw new Error(`Path already exists: ${path}`)
     }
-    const toAdd = await this.static.tree.empty(this.version)
+    const toAdd = await this.createEmptyTree()
     return this.addChild(path, toAdd)
   }
 
@@ -52,7 +45,7 @@ abstract class BaseTree implements SimpleTree {
   }
 
   async add(path: string, content: FileContent): Promise<SimpleTree> {
-    const file = this.static.file.create(content, this.version)
+    const file = this.createFile(content)
     return this.addChild(path, file)
   }
 
@@ -88,12 +81,16 @@ abstract class BaseTree implements SimpleTree {
   abstract async removeDirectChild(name: string): Promise<SimpleTree>
   abstract async getDirectChild(name: string): Promise<SimpleTree | File | null>
   abstract async getOrCreateDirectChild(name: string): Promise<SimpleTree | File>
+  abstract async createEmptyTree(): Promise<SimpleTree>
+  abstract async createTreeFromCID(cid: CID): Promise<SimpleTree>
+  abstract createFile(content: FileContent): File
+  abstract async createFileFromCID(cid: CID): Promise<File>
   // abstract async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
-  abstract updateLink(info: Link): SimpleTree
-  abstract findLink(name: string): Link | null 
-  abstract findLinkCID(name: string): CID | null 
-  abstract rmLink(name: string): SimpleTree 
-  abstract copyWithLinks(links: Links): SimpleTree
+  // abstract updateLink(info: Link): SimpleTree
+  // abstract findLink(name: string): Link | null 
+  // abstract findLinkCID(name: string): CID | null 
+  // abstract rmLink(name: string): SimpleTree 
+  // abstract copyWithLinks(links: Links): SimpleTree
 
 }
 

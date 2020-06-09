@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { NonEmptyPath, SimpleTree, Tree, File } from './types'
+import { NonEmptyPath, SimpleTree, Tree, File, SemVer } from './types'
 import { isFile } from './types/check'
 import pathUtil from './path'
 

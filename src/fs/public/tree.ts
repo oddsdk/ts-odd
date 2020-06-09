@@ -1,110 +1,41 @@
-import operations from '../operations'
-import pathUtil from '../path'
 import header from '../header'
-import { Links, Tree, TreeStatic, FileStatic, File, SemVer, Header, NodeInfo } from '../types'
+import { Tree, File, SemVer, Header, NodeInfo } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
-import PublicFile from './file'
+import BaseTree from '../basetree'
+import { constructors as PublicFileConstructors } from './file'
 import normalizer from '../normalizer'
 import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj, isJust } from '../../common'
 import link from '../link'
+import semver from '../semver'
 
-class PublicTree implements Tree {
+export class PublicTree extends BaseTree implements Tree {
 
   protected header: Header
 
-  static: {
-    tree: TreeStatic
-    file: FileStatic
-  }
-
-  protected constructor(header: Header) {
+  constructor(header: Header) {
+    super(header.version, link.fromNodeMap(header.cache))
     this.header = header
-    this.static = {
-      tree: PublicTree,
-      file: PublicFile
-    }
   }
 
-  static instanceOf(obj: any): obj is PublicTree {
-    return obj.getDirectChild !== undefined
+  // static instanceOf(obj: any): obj is PublicTree {
+  //   return obj.getDirectChild !== undefined
+  // }
+
+  async createEmptyTree(): Promise<PublicTree> {
+    return constructors.empty(semver.latest) // TODO: don't hardcode version
   }
 
-  static async empty(version: SemVer, _key?: string): Promise<PublicTree> {
-    return new PublicTree({
-      ...header.empty(),
-      version,
-    })
+  async createTreeFromCID(cid: CID): Promise<PublicTree> {
+    return constructors.fromCID(cid)
   }
 
-  static async fromCID(cid: CID, _key?: string): Promise<PublicTree> {
-    const header = await normalizer.getHeader(cid, null)
-    return new PublicTree(header) 
+  createFile(content: FileContent): File {
+    return PublicFileConstructors.create(content, semver.latest) // TODO: don't hardcode version
   }
 
-  static async fromHeader(header: Header): Promise<PublicTree> {
-    return new PublicTree(header) 
-  }
-
-  async ls(path: string): Promise<Links> {
-    const dir = await this.get(path)
-    if (dir === null) {
-      throw new Error("Path does not exist")
-    } else if (check.isFile(dir)) {
-      throw new Error('Can not `ls` a file')
-    }
-    return link.fromNodeMap(dir.getHeader().cache)
-  }
-
-  async mkdir(path: string): Promise<Tree> {
-    const exists = await this.pathExists(path)
-    if (exists) {
-      throw new Error(`Path already exists: ${path}`)
-    }
-    const toAdd = await this.static.tree.empty(this.header.version)
-    return this.addChild(path, toAdd)
-  }
-
-  async cat(path: string): Promise<FileContent> {
-    const file = await this.get(path)
-    if (file === null) {
-      throw new Error("Path does not exist")
-    } else if (!check.isFile(file)) {
-      throw new Error('Can not `cat` a directory')
-    }
-    return file.content
-  }
-
-  async add(path: string, content: FileContent): Promise<Tree> {
-    const file = this.static.file.create(content, this.header.version)
-    return this.addChild(path, file)
-  }
-
-  async rm(path: string): Promise<Tree> {
-    const parts = pathUtil.splitNonEmpty(path)
-    if (parts === null) {
-      throw new Error("Path does not exist")
-    }
-    return operations.rmNested(this, parts)
-  }
-
-  async pathExists(path: string): Promise<boolean> {
-    const node = await this.get(path)
-    return node !== null
-  }
-
-  async get(path: string): Promise<Tree | File | null> {
-    const parts = pathUtil.splitNonEmpty(path)
-    return parts ? operations.getRecurse(this, parts) : this
-  }
-
-  async addChild(path: string, toAdd: Tree | File): Promise<Tree> {
-    const parts = pathUtil.splitNonEmpty(path)
-    if (parts === null) {
-      throw new Error("Path not specified")
-    }
-    const result = parts ? await operations.addRecurse(this, parts, toAdd) : this
-    return result
+  async createFileFromCID(cid: CID): Promise<File> {
+    return PublicFileConstructors.fromCID(cid)
   }
 
   async put(): Promise<CID> {
@@ -130,7 +61,7 @@ class PublicTree implements Tree {
 
   async getOrCreateDirectChild(name: string): Promise<Tree | File> {
     const child = await this.getDirectChild(name)
-    return child ? child : this.static.tree.empty(this.header.version)
+    return child ? child : this.createEmptyTree()
   }
 
   async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree> {
@@ -182,5 +113,24 @@ class PublicTree implements Tree {
   }
 
 }
+
+export const empty = async (version: SemVer, _key?: string): Promise<PublicTree> => {
+  return new PublicTree({
+    ...header.empty(),
+    version,
+  })
+}
+
+export const fromCID = async (cid: CID, _key?: string): Promise<PublicTree> => {
+  const header = await normalizer.getHeader(cid, null)
+  return new PublicTree(header) 
+}
+
+export const fromHeader = async (header: Header): Promise<PublicTree> => {
+  return new PublicTree(header) 
+}
+
+export const constructors = { empty, fromCID, fromHeader }
+
 
 export default PublicTree
