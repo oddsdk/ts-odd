@@ -5,14 +5,14 @@ import pathUtil from './path'
 
 
 export const addRecurse = async (
-  tree: Tree,
+  tree: SimpleTree,
   path: NonEmptyPath,
-  child: Tree | File
-): Promise<Tree> => {
+  child: SimpleTree | File
+): Promise<SimpleTree> => {
   const name = path[0]
   const nextPath = pathUtil.nextNonEmpty(path)
 
-  let toAdd: Tree | File
+  let toAdd: SimpleTree | File
 
   if (nextPath === null) {
     toAdd = child

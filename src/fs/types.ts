@@ -95,9 +95,9 @@ export type PrivateTreeData = TreeData & {
 }
 
 export interface TreeStatic {
-  empty: (version: SemVer, key?: string) => Promise<Tree>
-  fromCID: (cid: CID, key?: string) => Promise<Tree>
-  fromHeader: (header: Header) => Promise<Tree>
+  empty: (version: SemVer, key?: string) => Promise<SimpleTree>
+  fromCID: (cid: CID, key?: string) => Promise<SimpleTree>
+  // fromHeader: (header: Header) => Promise<SimpleTree>
 }
 
 export interface Tree extends SimpleTree {
@@ -142,27 +142,26 @@ export interface SimpleTree {
   links: Links
 
   ls(path: string): Promise<Links>
-  mkdir(path: string): Promise<Tree>
+  mkdir(path: string): Promise<SimpleTree>
   cat(path: string): Promise<FileContent>
-  add(path: string, content: FileContent): Promise<Tree>
+  add(path: string, content: FileContent): Promise<SimpleTree>
   rm(path: string): Promise<SimpleTree>
   get(path: string): Promise<SimpleTree | File | null>
   pathExists(path: string): Promise<boolean>
-  addChild(path: string, toAdd: Tree | File): Promise<Tree>
+  addChild(path: string, toAdd: SimpleTree | File): Promise<SimpleTree>
 
   put(): Promise<CID>
-  updateDirectChild(child: Tree | File, name: string): Promise<Tree>
-  removeDirectChild(name: string): Promise<Tree>
-  getDirectChild(name: string): Promise<Tree | File | null>
-  getOrCreateDirectChild(name: string): Promise<Tree | File>
+  updateDirectChild(child: SimpleTree | File, name: string): Promise<SimpleTree>
+  removeDirectChild(name: string): Promise<SimpleTree>
+  getDirectChild(name: string): Promise<SimpleTree | File | null>
+  getOrCreateDirectChild(name: string): Promise<SimpleTree | File>
 
-  // data(): TreeData
+  // data(): SimpleTreeData
+  // updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<SimpleTree>
 
-  updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
-
-  updateLink(link: NodeInfo): Tree
-  findLink(name: string): NodeInfo | null
+  updateLink(link: Link): SimpleTree
+  findLink(name: string): Link | null
   findLinkCID(name: string): CID | null
-  rmLink(name: string): Tree
-  copyWithLinks(links: Links): Tree
+  rmLink(name: string): SimpleTree
+  copyWithLinks(links: Links): SimpleTree
 }
