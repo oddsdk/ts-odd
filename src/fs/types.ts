@@ -157,7 +157,7 @@ export interface SimpleTree {
   pathExists(path: string): Promise<boolean>
   addChild(path: string, toAdd: SimpleTree | SimpleFile): Promise<this>
 
-  addRecurse (path: NonEmptyPath, child: SimpleTree | SimpleFile): Promise<this>
+  addRecurse (path: NonEmptyPath, child: SimpleTree | FileContent): Promise<this>
 
 
   put(): Promise<CID>

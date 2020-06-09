@@ -41,11 +41,10 @@ abstract class BaseTree implements SimpleTree {
   }
 
   async add(path: string, content: FileContent): Promise<this> {
-    const file = this.createFile(content)
-    return this.addChild(path, file)
+    return this.addChild(path, content)
   }
 
-  async addChild(path: string, toAdd: SimpleTree | SimpleFile): Promise<this> {
+  async addChild(path: string, toAdd: SimpleTree | FileContent): Promise<this> {
     const parts = pathUtil.splitNonEmpty(path)
     if (parts === null) {
       throw new Error("Path not specified")
@@ -54,11 +53,11 @@ abstract class BaseTree implements SimpleTree {
     return result
   }
 
-  async addRecurse(path: NonEmptyPath, child: SimpleTree | SimpleFile): Promise<this> {
+  async addRecurse(path: NonEmptyPath, child: SimpleTree | FileContent): Promise<this> {
     const name = path[0]
     const nextPath = pathUtil.nextNonEmpty(path)
 
-    let toAdd: SimpleTree | SimpleFile
+    let toAdd: SimpleTree | FileContent
 
     if (nextPath === null) {
       toAdd = child
@@ -72,7 +71,9 @@ abstract class BaseTree implements SimpleTree {
       toAdd = await nextTree.addRecurse(nextPath, child)
     }
 
-    return this.updateDirectChild(toAdd, name)
+    const toAddNode = check.isSimpleTree(toAdd) ? toAdd : this.createFile(child)
+
+    return this.updateDirectChild(toAddNode, name)
   }
 
   async rm(path: string): Promise<this> {

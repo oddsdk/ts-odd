@@ -21,7 +21,7 @@ export class PrivateTree extends PublicTree {
   }
 
   static instanceOf(obj: any): obj is PrivateTree {
-    return obj.owenKey !== undefined
+    return PublicTree.instanceOf(obj) && (obj as any).ownKey !== undefined
   }
 
   async createEmptyTree(key?: string): Promise<PrivateTree> {
@@ -33,6 +33,7 @@ export class PrivateTree extends PublicTree {
   }
 
   createFile(content: FileContent): File {
+    console.log('creatting file: ', this)
     return PrivateFileConstructors.create(content, semver.latest, this.ownKey) // TODO: don't hardcode version
   }
 
@@ -52,12 +53,13 @@ export class PrivateTree extends PublicTree {
           : constructors.fromHeader(childHeader, this.ownKey)
   }
 
-
   copyWithHeader(header: Header): Tree {
     return new PrivateTree(header, this.parentKey, this.ownKey)
   }
 
 }
+
+// CONSTRUCTORS
 
 export const empty = async (version: SemVer, parentKey: string, ownKey?: string): Promise<PrivateTree> => {
   const keyStr = ownKey ? ownKey : await keystore.genKeyStr()
@@ -70,8 +72,6 @@ export const empty = async (version: SemVer, parentKey: string, ownKey?: string)
   keyStr
   )
 }
-
-// CONSTRUCTORS
 
 export const fromCID = async (cid: CID, parentKey: string): Promise<PrivateTree> => {
   const header = await normalizer.getHeader(cid, parentKey)

@@ -3,8 +3,12 @@ import { CID } from '../../ipfs'
 import { SimpleTree, SimpleFile, Link, Links, TreeData, PrivateTreeData, Header, NodeMap, SemVer, NodeInfo } from '../types'
 
 
-export const isSimpleFile = (obj: SimpleTree | SimpleFile): obj is SimpleFile => {
-  return (obj as any).content !== undefined 
+export const isSimpleFile = (obj: any): obj is SimpleFile => {
+  return isObject(obj) && obj.content !== undefined 
+}
+
+export const isSimpleTree = (obj: any): obj is SimpleTree => {
+  return isObject(obj) && obj.ls !== undefined 
 }
 
 export const isLink = (link: any): link is Link => {
@@ -63,6 +67,7 @@ export const isSemVer = (obj: any): obj is SemVer => {
 
 export default {
   isSimpleFile,
+  isSimpleTree,
   isLink,
   isLinks,
   isTreeData,
