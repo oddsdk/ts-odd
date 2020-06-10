@@ -20,7 +20,7 @@ export interface SimpleFile {
 }
 
 export interface File extends SimpleFile {
-  getHeader(): Header
+  getHeader(): HeaderV1
 }
 
 // LINKS
@@ -55,13 +55,17 @@ export type Metadata = {
   size: number
 }
 
-export type Header = Metadata & {
+export type HeaderV1 = {
+  name: string
+  isFile: boolean
+  mtime: number
+  size: number
   version: SemVer
   key: Maybe<string>
   cache: NodeMap
 }
 
-export type NodeInfo = Header & {
+export type NodeInfo = HeaderV1 & {
   cid: CID
 }
 
@@ -113,7 +117,7 @@ export interface SimpleTree {
 }
 
 export interface Tree extends SimpleTree {
-  getHeader(): Header
+  getHeader(): HeaderV1
   updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
 
   createEmptyTree(): Promise<SimpleTree>

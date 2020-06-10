@@ -1,6 +1,6 @@
 import { isString, isObject, isNum } from '../../common'
 import { CID } from '../../ipfs'
-import { SimpleTree, SimpleFile, Link, Links, Header, NodeMap, SemVer, NodeInfo } from '../types'
+import { SimpleTree, SimpleFile, Link, Links, HeaderV1, NodeMap, SemVer, NodeInfo } from '../types'
 
 
 export const isSimpleFile = (obj: any): obj is SimpleFile => {
@@ -21,7 +21,7 @@ export const isLinks = (obj: any): obj is Links => {
       && Object.values(obj).every(isLink)
 }
 
-export const isHeader = (obj: any): obj is Header => {
+export const isHeaderV1 = (obj: any): obj is HeaderV1 => {
   return isObject(obj) 
       && isSemVer(obj.version)
       && (isString(obj.key) || obj.key === null)
@@ -31,7 +31,7 @@ export const isHeader = (obj: any): obj is Header => {
 export const isNodeInfo = (obj: any): obj is NodeInfo => {
   return isObject(obj) 
       && isCID(obj.cid) 
-      && isHeader(obj)
+      && isHeaderV1(obj)
 }
 
 export const isNodeMap = (obj: any): obj is NodeMap => {
@@ -60,7 +60,7 @@ export default {
   isSimpleTree,
   isLink,
   isLinks,
-  isHeader,
+  isHeaderV1,
   isNodeMap,
   isCIDList,
   isSemVer

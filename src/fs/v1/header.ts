@@ -1,4 +1,4 @@
-import { SemVer, NodeMap, UnstructuredHeader } from '../types'
+import {  UnstructuredHeader, HeaderV1 } from '../types'
 import semver from '../semver'
 import { isString, isBool, isNum } from '../../common/type-checks'
 import { isSemVer, isNodeMap } from '../types/check'
@@ -7,16 +7,6 @@ import { CID } from '../../ipfs'
 import header, { checkValue } from '../network/header'
 
 export const values = ['name', 'version', 'key', 'cache', 'isFile', 'mtime', 'size']
-
-export interface HeaderV1 {
-  name: string
-  isFile: boolean
-  mtime: number
-  size: number
-  version: SemVer
-  key: Maybe<string>
-  cache: NodeMap
-}
 
 export const empty = (): HeaderV1 => ({
   name: '',

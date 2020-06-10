@@ -1,7 +1,7 @@
-import headerUtil from '../network/header'
+import header from '../network/header'
 import basic from '../network/basic'
-import header from './header'
-import { Links, Tree, File, SemVer, Header, NodeInfo } from '../types'
+import headerv1 from './header'
+import { Links, Tree, File, SemVer, HeaderV1, NodeInfo } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
@@ -12,9 +12,9 @@ import semver from '../semver'
 
 export class PublicTree extends BaseTree implements Tree {
 
-  protected header: Header
+  protected header: HeaderV1
 
-  constructor(header: Header) {
+  constructor(header: HeaderV1) {
     super(header.version)
     this.header = header
   }
@@ -50,7 +50,7 @@ export class PublicTree extends BaseTree implements Tree {
     const size = Object.values(this.header.cache || {})
                 .reduce((acc, cur) => acc + cur.size, 0)
 
-    return headerUtil.put(indexCID, {
+    return header.put(indexCID, {
       ...this.header,
       size,
       mtime: Date.now()
@@ -130,7 +130,7 @@ export class PublicTree extends BaseTree implements Tree {
     return link.fromNodeMap(this.header.cache)
   }
 
-  getHeader(): Header {
+  getHeader(): HeaderV1 {
     return this.header
   }
 
@@ -140,17 +140,17 @@ export class PublicTree extends BaseTree implements Tree {
 
 export const empty = async (version: SemVer, _key?: string): Promise<PublicTree> => {
   return new PublicTree({
-    ...header.empty(),
+    ...headerv1.empty(),
     version,
   })
 }
 
 export const fromCID = async (cid: CID): Promise<PublicTree> => {
-  const info = await header.getHeaderAndIndex(cid, null)
+  const info = await headerv1.getHeaderAndIndex(cid, null)
   return new PublicTree(info.header) 
 }
 
-export const fromHeader = async (header: Header): Promise<PublicTree> => {
+export const fromHeader = async (header: HeaderV1): Promise<PublicTree> => {
   return new PublicTree(header) 
 }
 

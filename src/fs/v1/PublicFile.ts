@@ -1,17 +1,17 @@
-import { File, SemVer, Header } from '../types'
+import { File, SemVer, HeaderV1 } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
-import header from'./header'
-import headerUtil from'../network/header'
+import headerv1 from'./header'
+import header from'../network/header'
 import basic from '../network/basic'
 import { Maybe } from '../../common'
 
 
 export class PublicFile extends BaseFile implements File {
 
-  protected header: Header
+  protected header: HeaderV1
 
-  constructor(content: FileContent, header: Header) {
+  constructor(content: FileContent, header: HeaderV1) {
     super(content)
     this.header = header
   }
@@ -22,14 +22,14 @@ export class PublicFile extends BaseFile implements File {
 
   protected async putWithKey(key: Maybe<string>) {
     const { cid, size } = await basic.putFile(this.content, key)
-    return headerUtil.put(cid, {
+    return header.put(cid, {
       ...this.header,
       size,
       mtime: Date.now()
     }, key)
   }
 
-  getHeader(): Header {
+  getHeader(): HeaderV1 {
     return this.header
   }
 
@@ -39,14 +39,14 @@ export class PublicFile extends BaseFile implements File {
 
 export const create = (content: FileContent, version: SemVer): PublicFile => {
   return new PublicFile(content, { 
-    ...header.empty(),
+    ...headerv1.empty(),
     isFile: true,
     version 
   })
 }
 
 export const fromCID = async (cid: CID): Promise<PublicFile> => {
-  const info = await header.getHeaderAndIndex(cid, null)
+  const info = await headerv1.getHeaderAndIndex(cid, null)
   const content = await basic.getFile(info.index, null)
   return new PublicFile(content, info.header)
 }

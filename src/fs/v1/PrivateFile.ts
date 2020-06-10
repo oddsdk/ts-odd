@@ -1,6 +1,6 @@
 import PublicFile from './PublicFile'
 import { CID, FileContent } from '../../ipfs'
-import { SemVer, Header } from '../types'
+import { SemVer, HeaderV1 } from '../types'
 import basic from '../network/basic'
 import header from './header'
 
@@ -8,7 +8,7 @@ export class PrivateFile extends PublicFile {
 
   parentKey: string
 
-  constructor(content: FileContent, header: Header, parentKey: string) {
+  constructor(content: FileContent, header: HeaderV1, parentKey: string) {
     super(content, header)
     this.parentKey = parentKey
   }

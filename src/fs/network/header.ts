@@ -1,16 +1,12 @@
-import _, { isString } from 'lodash'
+import _ from 'lodash'
 
-import { Links, Header, SemVer, UnstructuredHeader } from '../types'
+import { Links, HeaderV1, SemVer, UnstructuredHeader } from '../types'
 import { isSemVer } from '../types/check'
+import { isString } from '../../common/type-checks'
 
 import { isValue, Maybe } from '../../common'
 import ipfs, { CID } from '../../ipfs'
-
-// Filesystem
-
 import link from '../link'
-
-// Normalizer
 
 import basic from './basic'
 
@@ -62,7 +58,7 @@ export const getVersion = async (cid: CID, key: Maybe<string>): Promise<SemVer> 
  * ```
  */
 
-export const put = async (index: CID, header: Header, key: Maybe<string>): Promise<CID> => {
+export const put = async (index: CID, header: HeaderV1, key: Maybe<string>): Promise<CID> => {
   const noUndefined = _.pickBy(header, isValue)
   const linksArr = await Promise.all(
     _.map(noUndefined, async (val, name) => {

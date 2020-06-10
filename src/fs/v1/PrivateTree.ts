@@ -1,4 +1,4 @@
-import { Tree, File, SemVer, Header } from '../types'
+import { Tree, File, SemVer, HeaderV1 } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree  from './PublicTree'
@@ -12,7 +12,7 @@ export class PrivateTree extends PublicTree {
   private parentKey: string
   private ownKey: string
 
-  constructor(header: Header, parentKey: string, ownKey: string) {
+  constructor(header: HeaderV1, parentKey: string, ownKey: string) {
     super(header)
 
     this.parentKey = parentKey
@@ -51,7 +51,7 @@ export class PrivateTree extends PublicTree {
           : constructors.fromHeader(childHeader, this.ownKey)
   }
 
-  copyWithHeader(header: Header): Tree {
+  copyWithHeader(header: HeaderV1): Tree {
     return new PrivateTree(header, this.parentKey, this.ownKey)
   }
 
@@ -80,7 +80,7 @@ export const fromCID = async (cid: CID, parentKey: string): Promise<PrivateTree>
   return new PrivateTree(info.header, parentKey, info.header.key)
 }
 
-export const fromHeader = async (header: Header, parentKey: string): Promise<PrivateTree> => {
+export const fromHeader = async (header: HeaderV1, parentKey: string): Promise<PrivateTree> => {
   if(header.key === null){
     throw new Error("This is not a private node: no key")
   }
