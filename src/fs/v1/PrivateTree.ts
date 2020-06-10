@@ -1,9 +1,9 @@
 import { Tree, File, SemVer, Header } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import keystore from '../../keystore'
-import PublicTree  from '../public/tree'
-import { constructors as PrivateFileConstructors } from './file'
-import header from '../public/header'
+import PublicTree  from './PublicTree'
+import { constructors as PrivateFileConstructors } from './PrivateFile'
+import header from './header'
 import semver from '../semver'
 
 

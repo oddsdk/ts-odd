@@ -1,8 +1,8 @@
-import PublicFile from '../public/file'
+import PublicFile from './PublicFile'
 import { CID, FileContent } from '../../ipfs'
 import { SemVer, Header } from '../types'
-import basic from '../normalizer/basic'
-import header from '../public/header'
+import basic from '../network/basic'
+import header from './header'
 
 export class PrivateFile extends PublicFile {
 

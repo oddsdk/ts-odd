@@ -1,27 +1,18 @@
 import _, { isString } from 'lodash'
 
-import { BasicLinks, Links, Header, Metadata, SemVer, NodeMap } from '../types'
-import { isSemVer, isNodeMap } from '../types/check'
+import { Links, Header, SemVer, UnstructuredHeader } from '../types'
+import { isSemVer } from '../types/check'
 
-import { mapObjAsync, isValue, Maybe, isBool, isNum } from '../../common'
+import { isValue, Maybe } from '../../common'
 import ipfs, { CID } from '../../ipfs'
-import { HeaderValue } from '../header'
 
 // Filesystem
 
 import link from '../link'
-import semver from '../semver'
 
 // Normalizer
 
 import basic from './basic'
-
-import {
-  isDecodingError,
-  DecodingError,
-  LinkDoesNotExistError,
-  ContentTypeMismatchError
-} from './errors'
 
 
 export const getValue = async (
@@ -46,6 +37,12 @@ export const getValueFromLinks = async (
   if (!linkCID) return null
 
   return ipfs.encoded.catAndDecode(linkCID, key)
+}
+
+
+export const getVersion = async (cid: CID, key: Maybe<string>): Promise<SemVer> => {
+  const version = await getValue(cid, 'version', key)
+  return checkValue(version, isSemVer)
 }
 
 /**
@@ -83,26 +80,6 @@ export const put = async (index: CID, header: Header, key: Maybe<string>): Promi
   return basic.putLinks(links, key)
 }
 
-export const getVersion = async (cid: CID, key: Maybe<string>): Promise<SemVer> => {
-  const version = await getValue(cid, 'version', key)
-  return checkValue(version, isSemVer)
-}
-
-export const interpolateMetadata = async (
-  links: BasicLinks,
-  getMetadata: (cid: CID) => Promise<Metadata>
-): Promise<Links> => {
-  return mapObjAsync(links, async (link) => {
-    const { isFile = false, mtime } = await getMetadata(link.cid)
-    return {
-      ...link,
-      isFile,
-      mtime
-    }
-  })
-}
-
-export type UnstructuredHeader = { [name: string]: unknown }
 type HeaderAndIndex = {
   index: string
   header: UnstructuredHeader
@@ -156,6 +133,5 @@ export default {
   getValueFromLinks,
   put,
   getVersion,
-  interpolateMetadata,
   getHeaderAndIndex,
 }

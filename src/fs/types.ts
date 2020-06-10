@@ -72,6 +72,8 @@ export type NodeInfo = Header & {
 
 export type NodeMap = { [name: string]: NodeInfo }
 
+export type UnstructuredHeader = { [name: string]: unknown }
+
 
 // MISC
 // ----

@@ -1,6 +1,6 @@
 import PublicTreeBare, { constructors as PublicTreeBareConstructors } from './bare/tree'
-import PublicTree, { constructors as PublicTreeConstructors } from './public/tree'
-import PrivateTree, { constructors as PrivateTreeConstructors } from './private/tree'
+import PublicTree, { constructors as PublicTreeConstructors } from './v1/PublicTree'
+import PrivateTree, { constructors as PrivateTreeConstructors } from './v1/PrivateTree'
 import { SimpleTree, Tree, SimpleFile, Links, SyncHook, FileSystemOptions } from './types'
 import { CID, FileContent } from '../ipfs'
 import pathUtil from './path'

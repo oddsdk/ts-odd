@@ -1,4 +1,4 @@
-import basic from '../normalizer/basic'
+import basic from '../network/basic'
 import { Link, Links, SimpleTree, SimpleFile } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'

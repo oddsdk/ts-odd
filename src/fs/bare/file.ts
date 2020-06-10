@@ -1,5 +1,5 @@
 import { CID, FileContent } from '../../ipfs'
-import basic from '../normalizer/basic'
+import basic from '../network/basic'
 import BaseFile from '../base/file'
 
 
@@ -29,4 +29,3 @@ export default {
   create,
   fromCID
 }
-

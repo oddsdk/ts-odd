@@ -2,8 +2,8 @@ import { File, SemVer, Header } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
 import header from'./header'
-import headerUtil from'../normalizer/header'
-import basic from '../normalizer/basic'
+import headerUtil from'../network/header'
+import basic from '../network/basic'
 import { Maybe } from '../../common'
 
 

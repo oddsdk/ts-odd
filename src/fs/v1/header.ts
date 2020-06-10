@@ -1,20 +1,10 @@
-import { SemVer, NodeMap } from '../types'
+import { SemVer, NodeMap, UnstructuredHeader } from '../types'
 import semver from '../semver'
 import { isString, isBool, isNum } from '../../common/type-checks'
 import { isSemVer, isNodeMap } from '../types/check'
 import { Maybe } from '../../common'
 import { CID } from '../../ipfs'
-import header, { checkValue, UnstructuredHeader } from '../normalizer/header'
-
-
-export const Index = { name: 'index', check: isString }
-export const Name = { name: 'name', check: isString }
-export const Version = { name: 'name', check: isSemVer } 
-export const Key = { name: 'key', check: isString } 
-export const Cache = { name: 'cache', check: isNodeMap }
-export const IsFile = { name: 'isFile', check: isBool }
-export const Mtime = { name: 'mtime', check: isNum }
-export const Size = { name: 'size', check: isNum }
+import header, { checkValue } from '../network/header'
 
 export const values = ['name', 'version', 'key', 'cache', 'isFile', 'mtime', 'size']
 
