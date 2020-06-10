@@ -21,7 +21,7 @@ export class PublicFile extends BaseFile implements File {
   }
 
   protected async putWithKey(key: Maybe<string>) {
-    const { cid, size } = await basic.putFile(this.content, key)
+    const { cid, size } = await basic.putFile(this.content, this.header.key)
     return header.put(cid, {
       ...this.header,
       size,

@@ -45,7 +45,7 @@ export class PublicTree extends BaseTree implements Tree {
   
   protected async putWithKey(key: Maybe<string>): Promise<CID> {
     const links = link.fromNodeMap(this.header.fileIndex)
-    const indexCID = await basic.putLinks(links, key)
+    const indexCID = await basic.putLinks(links, this.header.key)
 
     const size = Object.values(this.header.fileIndex || {})
                 .reduce((acc, cur) => acc + cur.size, 0)

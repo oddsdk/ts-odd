@@ -33,7 +33,7 @@ export const create = (content: FileContent, version: SemVer, parentKey: string)
 
 export const fromCID = async (cid: CID, parentKey: string): Promise<PrivateFile> => {
   const info = await header.getHeaderAndIndex(cid, parentKey)
-  const content = await basic.getFile(info.index, parentKey)
+  const content = await basic.getFile(info.index, info.header.key)
   return new PrivateFile(content, info.header, parentKey)
 }
 
