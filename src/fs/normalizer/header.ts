@@ -1,10 +1,11 @@
-import _ from 'lodash'
+import _, { isString } from 'lodash'
 
-import { BasicLinks, Links, Header, Metadata, SemVer } from '../types'
-import { isSemVer } from '../types/check'
+import { BasicLinks, Links, Header, Metadata, SemVer, NodeMap } from '../types'
+import { isSemVer, isNodeMap } from '../types/check'
 
-import { mapObjAsync, isValue, Maybe } from '../../common'
+import { mapObjAsync, isValue, Maybe, isBool, isNum } from '../../common'
 import ipfs, { CID } from '../../ipfs'
+import { HeaderValue } from '../header'
 
 // Filesystem
 
@@ -23,31 +24,28 @@ import {
 } from './errors'
 
 
-export const getValue = async <T>(
+export const getValue = async (
   linksOrCID: Links | CID,
   name: string,
-  checkFn: (obj: any) => obj is T,
   key: Maybe<string>
-): Promise<T | DecodingError> => {
-  if (typeof linksOrCID === "string") {
+): Promise<unknown> => {
+  if (isString(linksOrCID)) {
     const links = await basic.getLinks(linksOrCID, key)
-    return getValueFromLinks(links, name, checkFn, key)
+    return getValueFromLinks(links, name, key)
   }
 
-  return getValueFromLinks(linksOrCID, name, checkFn, key)
+  return getValueFromLinks(linksOrCID, name, key)
 }
 
-export const getValueFromLinks = async <T>(
+export const getValueFromLinks = async (
   links: Links,
   name: string,
-  checkFn: (obj: any) => obj is T,
   key: Maybe<string>
-): Promise<T | DecodingError> => {
+): Promise<unknown> => {
   const linkCID = links[name]?.cid
-  if (!linkCID) return new LinkDoesNotExistError(name)
+  if (!linkCID) return null
 
-  const value = await ipfs.encoded.catAndDecode(linkCID, key)
-  return checkFn(value) ? value : new ContentTypeMismatchError(linkCID)
+  return ipfs.encoded.catAndDecode(linkCID, key)
 }
 
 /**
@@ -86,9 +84,8 @@ export const put = async (index: CID, header: Header, key: Maybe<string>): Promi
 }
 
 export const getVersion = async (cid: CID, key: Maybe<string>): Promise<SemVer> => {
-  const version = await getValue(cid, 'version', isSemVer, key)
-  if (isDecodingError(version)) return semver.v0
-  return version
+  const version = await getValue(cid, 'version', key)
+  return checkValue(version, isSemVer)
 }
 
 export const interpolateMetadata = async (
@@ -105,6 +102,54 @@ export const interpolateMetadata = async (
   })
 }
 
+export type UnstructuredHeader = { [name: string]: unknown }
+type HeaderAndIndex = {
+  index: string
+  header: UnstructuredHeader
+}
+
+export const getHeaderAndIndex = async (
+    cid: CID,
+    parentKey: Maybe<string>,
+    valuesToGet: string[]
+  ): Promise<HeaderAndIndex> => {
+    const links = await basic.getLinks(cid, parentKey)
+    const index = links['index']?.cid
+    const header = await getHeader(links, parentKey, valuesToGet)
+    if(!isString(index)) {
+      throw new Error(`Could not find index for node at: ${cid}`)
+    }
+
+    return { index, header }
+}
+
+export const getHeader = async (
+    links: Links,
+    parentKey: Maybe<string>,
+    valuesToGet: string[]
+  ): Promise<UnstructuredHeader> => {
+  let values = [] as unknown []
+  for(let i=0; i<valuesToGet.length; i++) {
+    values.push(await getValue(links, valuesToGet[i], parentKey))
+
+  }
+  return valuesToGet.reduce((acc, cur, i) => {
+    const value = values[i]
+    acc[cur] = value
+    return acc
+  }, {} as UnstructuredHeader)
+}
+
+export const checkValue = <T>(val: any, checkFn: (val: any) => val is T, canBeNull = false): T => {
+  if(!isValue(val)){
+    if(canBeNull) return val
+    throw new Error('Could not find necessary header value')
+  }
+  if(checkFn(val)){
+    return val
+  }
+  throw new Error('Improper header value')
+}
 
 export default {
   getValue,
@@ -112,4 +157,5 @@ export default {
   put,
   getVersion,
   interpolateMetadata,
+  getHeaderAndIndex,
 }

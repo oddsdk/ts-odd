@@ -1,8 +1,10 @@
 import { File, SemVer, Header } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
-import normalizer from '../normalizer'
-import header from '../header'
+import header from'./header'
+import headerUtil from'../normalizer/header'
+import basic from '../normalizer/basic'
+import { Maybe } from '../../common'
 
 
 export class PublicFile extends BaseFile implements File {
@@ -14,8 +16,17 @@ export class PublicFile extends BaseFile implements File {
     this.header = header
   }
 
-  put(): Promise<CID> {
-    return normalizer.putFile(this.content, this.header, null)
+  async put(): Promise<CID> {
+    return this.putWithKey(null)
+  }
+
+  protected async putWithKey(key: Maybe<string>) {
+    const { cid, size } = await basic.putFile(this.content, key)
+    return headerUtil.put(cid, {
+      ...this.header,
+      size,
+      mtime: Date.now()
+    }, key)
   }
 
   getHeader(): Header {
@@ -34,13 +45,10 @@ export const create = (content: FileContent, version: SemVer): PublicFile => {
   })
 }
 
-export const fromCID = async (cid: CID, _key?: string): Promise<PublicFile> => {
-  const header = await normalizer.getHeader(cid, null)
-  const content = await normalizer.getFile(cid, null)
-  return new PublicFile(content, {
-    ...header,
-    isFile: true
-  })
+export const fromCID = async (cid: CID): Promise<PublicFile> => {
+  const info = await header.getHeaderAndIndex(cid, null)
+  const content = await basic.getFile(info.index, null)
+  return new PublicFile(content, info.header)
 }
 
 export const constructors = { create, fromCID }

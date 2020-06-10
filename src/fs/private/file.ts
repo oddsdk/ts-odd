@@ -1,9 +1,8 @@
 import PublicFile from '../public/file'
 import { CID, FileContent } from '../../ipfs'
 import { SemVer, Header } from '../types'
-import normalizer from '../normalizer'
-import v1Operations from '../normalizer/versions/v1_0_0'
-import header from '../header'
+import basic from '../normalizer/basic'
+import header from '../public/header'
 
 export class PrivateFile extends PublicFile {
 
@@ -15,8 +14,7 @@ export class PrivateFile extends PublicFile {
   }
 
   async put(): Promise<CID> {
-    console.log("PUT WITH: ", this.parentKey)
-    return v1Operations.putFile(this.content, this.header, this.parentKey)
+    return this.putWithKey(this.parentKey)
   }
 
 }
@@ -34,12 +32,9 @@ export const create = (content: FileContent, version: SemVer, parentKey: string)
 }
 
 export const fromCID = async (cid: CID, parentKey: string): Promise<PrivateFile> => {
-  console.log("FROM CID")
-  console.log("RETRIEVED WITH: ", parentKey)
-  const content = await v1Operations.getFile(cid, parentKey)
-  console.log("CONTENT: ", content)
-  const header = await normalizer.getHeader(cid, parentKey)
-  return new PrivateFile(content, header, parentKey)
+  const info = await header.getHeaderAndIndex(cid, parentKey)
+  const content = await basic.getFile(info.index, parentKey)
+  return new PrivateFile(content, info.header, parentKey)
 }
 
 export const constructors = { create, fromCID }

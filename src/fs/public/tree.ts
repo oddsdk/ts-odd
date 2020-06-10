@@ -1,10 +1,11 @@
-import header from '../header'
+import headerUtil from '../normalizer/header'
+import basic from '../normalizer/basic'
+import header from './header'
 import { Links, Tree, File, SemVer, Header, NodeInfo } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
 import { constructors as PublicFileConstructors } from './file'
-import normalizer from '../normalizer'
 import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj, isJust } from '../../common'
 import link from '../link'
 import semver from '../semver'
@@ -39,7 +40,21 @@ export class PublicTree extends BaseTree implements Tree {
   }
 
   async put(): Promise<CID> {
-    return normalizer.putTree(this.header, null)
+    return this.putWithKey(null)
+  }
+  
+  protected async putWithKey(key: Maybe<string>): Promise<CID> {
+    const links = link.fromNodeMap(this.header.cache)
+    const indexCID = await basic.putLinks(links, key)
+
+    const size = Object.values(this.header.cache || {})
+                .reduce((acc, cur) => acc + cur.size, 0)
+
+    return headerUtil.put(indexCID, {
+      ...this.header,
+      size,
+      mtime: Date.now()
+    }, key)
   }
 
   async updateDirectChild(child: Tree | File, name: string): Promise<this> {
@@ -130,9 +145,9 @@ export const empty = async (version: SemVer, _key?: string): Promise<PublicTree>
   })
 }
 
-export const fromCID = async (cid: CID, _key?: string): Promise<PublicTree> => {
-  const header = await normalizer.getHeader(cid, null)
-  return new PublicTree(header) 
+export const fromCID = async (cid: CID): Promise<PublicTree> => {
+  const info = await header.getHeaderAndIndex(cid, null)
+  return new PublicTree(info.header) 
 }
 
 export const fromHeader = async (header: Header): Promise<PublicTree> => {

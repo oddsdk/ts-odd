@@ -3,8 +3,7 @@ import { CID, FileContent } from '../../ipfs'
 import keystore from '../../keystore'
 import PublicTree  from '../public/tree'
 import { constructors as PrivateFileConstructors } from './file'
-import normalizer from '../normalizer'
-import header from '../header'
+import header from '../public/header'
 import semver from '../semver'
 
 
@@ -33,7 +32,6 @@ export class PrivateTree extends PublicTree {
   }
 
   createFile(content: FileContent): File {
-    console.log('creatting file: ', this)
     return PrivateFileConstructors.create(content, semver.latest, this.ownKey) // TODO: don't hardcode version
   }
 
@@ -42,7 +40,7 @@ export class PrivateTree extends PublicTree {
   }
 
   async put(): Promise<CID> {
-    return normalizer.putTree(this.header, this.parentKey)
+    return this.putWithKey(this.parentKey)
   }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
@@ -74,12 +72,12 @@ export const empty = async (version: SemVer, parentKey: string, ownKey?: string)
 }
 
 export const fromCID = async (cid: CID, parentKey: string): Promise<PrivateTree> => {
-  const header = await normalizer.getHeader(cid, parentKey)
-  if(header.key === null){
+  const info = await header.getHeaderAndIndex(cid, null)
+  if(info.header.key === null){
     throw new Error("This is not a private node: no key")
   }
  
-  return new PrivateTree(header, parentKey, header.key)
+  return new PrivateTree(info.header, parentKey, info.header.key)
 }
 
 export const fromHeader = async (header: Header, parentKey: string): Promise<PrivateTree> => {
