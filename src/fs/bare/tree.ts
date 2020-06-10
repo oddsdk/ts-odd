@@ -34,8 +34,7 @@ class BareTree extends BaseTree {
   }
 
   async put(): Promise<CID> {
-    const data = { links: this.links }
-    return basic.putTree(data, null)
+    return basic.putLinks(this.links, null)
   }
 
   async updateDirectChild(child: SimpleTree | SimpleFile, name: string): Promise<this> {

@@ -52,11 +52,6 @@ export const parseAndCheck = (decoded: UnstructuredHeader): HeaderV1 => {
   }
 }
 
-export type HeaderValue = {
-  name: string
-  check: <T>(obj: any) => obj is T
-}
-
 export default {
   empty,
   getHeaderAndIndex,
