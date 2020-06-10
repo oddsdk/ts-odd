@@ -6,13 +6,13 @@ import { Maybe } from '../../common'
 import { CID } from '../../ipfs'
 import header, { checkValue } from '../network/header'
 
-export const values = ['name', 'version', 'key', 'cache', 'isFile', 'mtime', 'size']
+export const values = ['name', 'version', 'key', 'fileIndex', 'isFile', 'mtime', 'size']
 
 export const empty = (): HeaderV1 => ({
   name: '',
   version: semver.latest,
   key: null,
-  cache: {},
+  fileIndex: {},
   isFile: false,
   mtime: Date.now(),
   size: 0
@@ -35,7 +35,7 @@ export const parseAndCheck = (decoded: UnstructuredHeader): HeaderV1 => {
     name: checkValue(decoded.name, isString),
     version: checkValue(decoded.version, isSemVer),
     key: checkValue(decoded.key, isString, true),
-    cache: checkValue(decoded.cache, isNodeMap),
+    fileIndex: checkValue(decoded.fileIndex, isNodeMap),
     isFile: checkValue(decoded.isFile, isBool),
     mtime: checkValue(decoded.mtime, isNum),
     size: checkValue(decoded.size, isNum),

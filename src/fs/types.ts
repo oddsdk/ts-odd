@@ -62,7 +62,7 @@ export type HeaderV1 = {
   size: number
   version: SemVer
   key: Maybe<string>
-  cache: NodeMap
+  fileIndex: NodeMap
 }
 
 export type NodeInfo = HeaderV1 & {

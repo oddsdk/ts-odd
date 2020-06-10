@@ -29,8 +29,8 @@ export const fromNodeMap = (nodes: NodeMap): Links => {
 }
 
 export const fromTree = (tree: Tree, cid: CID): NodeInfo => {
-  const { name, size, isFile, mtime, version, key, cache } = tree.getHeader()
-  return { cid, name, size, isFile, mtime, version, key, cache }
+  const { name, size, isFile, mtime, version, key, fileIndex } = tree.getHeader()
+  return { cid, name, size, isFile, mtime, version, key, fileIndex }
 }
 
 export const make = (name: string, cid: string, isFile: boolean, size?: number): Link => {

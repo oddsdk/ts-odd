@@ -44,10 +44,10 @@ export class PublicTree extends BaseTree implements Tree {
   }
   
   protected async putWithKey(key: Maybe<string>): Promise<CID> {
-    const links = link.fromNodeMap(this.header.cache)
+    const links = link.fromNodeMap(this.header.fileIndex)
     const indexCID = await basic.putLinks(links, key)
 
-    const size = Object.values(this.header.cache || {})
+    const size = Object.values(this.header.fileIndex || {})
                 .reduce((acc, cur) => acc + cur.size, 0)
 
     return header.put(indexCID, {
@@ -84,16 +84,16 @@ export class PublicTree extends BaseTree implements Tree {
   }
 
   async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<this> {
-    const { cache } = this.header
+    const { fileIndex } = this.header
     if(isJust(childInfo)){
       childInfo.name = name
     }
-    const updatedCache = updateOrRemoveKeyFromObj(cache, name, childInfo)
-    const sizeDiff = (childInfo?.size || 0) - (cache[name]?.size || 0)
+    const updatedFileIndex = updateOrRemoveKeyFromObj(fileIndex, name, childInfo)
+    const sizeDiff = (childInfo?.size || 0) - (fileIndex[name]?.size || 0)
 
     this.header = {
       ...this.header,
-      cache: updatedCache,
+      fileIndex: updatedFileIndex,
       size: this.header.size + sizeDiff,
     }
     return this
@@ -102,8 +102,8 @@ export class PublicTree extends BaseTree implements Tree {
   updateLink(info: NodeInfo): Tree {
     this.header = {
       ...this.header,
-      cache: {
-        ...this.header.cache,
+      fileIndex: {
+        ...this.header.fileIndex,
         [info.name = '']: info
       }
     }
@@ -111,7 +111,7 @@ export class PublicTree extends BaseTree implements Tree {
   }
 
   findLink(name: string): NodeInfo | null {
-    return this.header.cache[name] || null
+    return this.header.fileIndex[name] || null
   }
 
   findLinkCID(name: string): CID | null {
@@ -121,13 +121,13 @@ export class PublicTree extends BaseTree implements Tree {
   rmLink(name: string): Tree {
     this.header = {
       ...this.header,
-      cache: removeKeyFromObj(this.header.cache, name)
+      fileIndex: removeKeyFromObj(this.header.fileIndex, name)
     }
     return this
   }
 
   getLinks(): Links {
-    return link.fromNodeMap(this.header.cache)
+    return link.fromNodeMap(this.header.fileIndex)
   }
 
   getHeader(): HeaderV1 {

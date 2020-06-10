@@ -25,7 +25,7 @@ export const isHeaderV1 = (obj: any): obj is HeaderV1 => {
   return isObject(obj) 
       && isSemVer(obj.version)
       && (isString(obj.key) || obj.key === null)
-      && isNodeMap(obj.cache)
+      && isNodeMap(obj.fileIndex)
 }
 
 export const isNodeInfo = (obj: any): obj is NodeInfo => {
