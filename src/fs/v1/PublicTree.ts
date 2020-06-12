@@ -1,11 +1,11 @@
 import header from '../network/header'
 import basic from '../network/basic'
 import headerv1 from './header'
-import { Links, Tree, File, SemVer, HeaderV1, NodeInfo, PutResult } from '../types'
+import { Links, Tree, File, HeaderV1, NodeInfo, PutResult, HeaderStaticMethods } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
-import { constructors as PublicFileConstructors } from './PublicFile'
+import PublicFile from './PublicFile'
 import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj, isJust } from '../../common'
 import link from '../link'
 import semver from '../semver'
@@ -13,34 +13,59 @@ import semver from '../semver'
 export class PublicTree extends BaseTree implements Tree {
 
   protected header: HeaderV1
+  protected parentKey: Maybe<string>
+  protected ownKey: Maybe<string> = null
 
-  constructor(header: HeaderV1) {
+  protected static: HeaderStaticMethods
+
+  constructor(header: HeaderV1, parentKey: Maybe<string>) {
     super(header.version)
+    this.parentKey = parentKey
     this.header = header
+    this.static = {
+      tree: PublicTree,
+      file: PublicFile
+    }
+  }
+
+  static async empty (parentKey: Maybe<string>): Promise<Tree> {
+    return new PublicTree({
+      ...headerv1.empty(),
+      version: semver.v1,
+    }, parentKey)
+}
+
+  static async fromCID (cid: CID, parentKey: Maybe<string>): Promise<Tree> {
+    const info = await headerv1.getHeaderAndIndex(cid, null)
+    return new PublicTree(info.header, parentKey)
+  }
+
+  static fromHeader (header: HeaderV1, parentKey: Maybe<string>): Tree {
+    return new PublicTree(header, parentKey) 
   }
 
   static instanceOf(obj: any): obj is PublicTree {
     return obj.header !== undefined
   }
 
-  async createEmptyTree(): Promise<PublicTree> {
-    return constructors.empty()
+  async emptyChildTree(): Promise<Tree> {
+    return this.static.tree.empty(this.ownKey)
   }
 
-  async createTreeFromCID(cid: CID): Promise<PublicTree> {
-    return constructors.fromCID(cid)
+  async childTreeFromCID(cid: CID): Promise<Tree> {
+    return this.static.tree.fromCID(cid, this.ownKey)
   }
 
-  createTreeFromHeader(header: HeaderV1): PublicTree {
-    return constructors.fromHeader(header)
+  childTreeFromHeader(header: HeaderV1): Tree {
+    return this.static.tree.fromHeader(header, this.ownKey)
   }
 
-  async createFile(content: FileContent): Promise<File> {
-    return PublicFileConstructors.create(content) 
+  async createChildFile(content: FileContent): Promise<File> {
+    return this.static.file.create(content, this.ownKey)
   }
 
-  async createFileFromCID(cid: CID): Promise<File> {
-    return PublicFileConstructors.fromCID(cid)
+  async childFileFromCID(cid: CID): Promise<File> {
+    return this.static.file.fromCID(cid, this.ownKey)
   }
 
   async put(): Promise<CID> {
@@ -49,7 +74,7 @@ export class PublicTree extends BaseTree implements Tree {
   }
   
   async putWithPins(): Promise<PutResult> {
-    return this.putWithKey(null)
+    return this.putWithKey(this.parentKey)
   }
  
   protected async putWithKey(key: Maybe<string>): Promise<PutResult> {
@@ -87,13 +112,13 @@ export class PublicTree extends BaseTree implements Tree {
     const childHeader = this.findLink(name)
     if(childHeader === null) return null
     return childHeader.isFile
-          ? this.createFileFromCID(childHeader.cid)
-          : this.createTreeFromHeader(childHeader)
+          ? this.childFileFromCID(childHeader.cid)
+          : this.childTreeFromHeader(childHeader)
   }
 
   async getOrCreateDirectChild(name: string): Promise<Tree | File> {
     const child = await this.getDirectChild(name)
-    return child ? child : this.createEmptyTree()
+    return child ? child : this.emptyChildTree()
   }
 
   async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<this> {
@@ -153,26 +178,6 @@ export class PublicTree extends BaseTree implements Tree {
   }
 
 }
-
-// CONSTRUCTORS
-
-export const empty = async (): Promise<PublicTree> => {
-  return new PublicTree({
-    ...headerv1.empty(),
-    version: semver.v1,
-  })
-}
-
-export const fromCID = async (cid: CID): Promise<PublicTree> => {
-  const info = await headerv1.getHeaderAndIndex(cid, null)
-  return new PublicTree(info.header) 
-}
-
-export const fromHeader = (header: HeaderV1): PublicTree => {
-  return new PublicTree(header) 
-}
-
-export const constructors = { empty, fromCID, fromHeader }
 
 
 export default PublicTree

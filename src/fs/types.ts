@@ -94,6 +94,33 @@ export type PutResult = {
   pins: CID[]
 }
 
+// STATIC METHODS
+// ----
+
+export interface TreeStatic {
+  empty (parentKey: Maybe<string>): Promise<Tree>
+  fromCID (cid: CID, parentKey: Maybe<string>): Promise<Tree>
+}
+
+export interface FileStatic {
+  create(content: FileContent, parentKey: Maybe<string>): Promise<File>
+  fromCID(cid: CID, parentKey: Maybe<string>): Promise<File>
+}
+
+export interface StaticMethods {
+  tree: TreeStatic
+  file: FileStatic
+}
+
+export interface HeaderTreeStatic extends TreeStatic {
+  fromHeader (header: HeaderV1, parentKey: Maybe<string>): Tree
+}
+
+export interface HeaderStaticMethods {
+  tree: HeaderTreeStatic
+  file: FileStatic
+}
+
 // TREE
 // ----
 
@@ -116,10 +143,10 @@ export interface SimpleTree {
   getDirectChild(name: string): Promise<SimpleTree | SimpleFile | null>
   getOrCreateDirectChild(name: string): Promise<SimpleTree | SimpleFile>
 
-  createEmptyTree(): Promise<SimpleTree>
-  createTreeFromCID(cid: CID): Promise<SimpleTree>
-  createFile(content: FileContent): Promise<SimpleFile>
-  createFileFromCID(cid: CID): Promise<SimpleFile>
+  emptyChildTree(): Promise<SimpleTree>
+  childTreeFromCID(cid: CID): Promise<SimpleTree>
+  createChildFile(content: FileContent): Promise<SimpleFile>
+  childFileFromCID(cid: CID): Promise<SimpleFile>
 
   getLinks(): Links
 }
@@ -128,7 +155,7 @@ export interface Tree extends SimpleTree {
   getHeader(): HeaderV1
   updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
 
-  createTreeFromHeader(heaer: HeaderV1): SimpleTree
+  childTreeFromHeader(heaer: HeaderV1): SimpleTree
 
   putWithPins(): Promise<PutResult>
 }

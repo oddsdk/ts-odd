@@ -1,6 +1,6 @@
-import PublicTreeBare, { constructors as PublicTreeBareConstructors } from './bare/tree'
-import PublicTree, { constructors as PublicTreeConstructors } from './v1/PublicTree'
-import PrivateTree, { constructors as PrivateTreeConstructors } from './v1/PrivateTree'
+import PublicTreeBare from './bare/tree'
+import PublicTree from './v1/PublicTree'
+import PrivateTree from './v1/PrivateTree'
 import { SimpleTree, Tree, SimpleFile, Links, SyncHook, FileSystemOptions } from './types'
 import { CID, FileContent } from '../ipfs'
 import { dataRoot } from '../data-root'
@@ -13,18 +13,18 @@ import { asyncWaterfall } from '../common/util'
 
 type ConstructorParams = {
   root: SimpleTree
-  publicTree: PublicTree
+  publicTree: Tree
   prettyTree: PublicTreeBare
-  privateTree: PrivateTree
+  privateTree: Tree
 }
 
 
 export class FileSystem {
 
   root: SimpleTree
-  publicTree: PublicTree
+  publicTree: Tree
   prettyTree: PublicTreeBare
-  privateTree: PrivateTree
+  privateTree: Tree
   syncHooks: Array<SyncHook>
 
   constructor({ root, publicTree, prettyTree, privateTree }: ConstructorParams) {
@@ -38,12 +38,12 @@ export class FileSystem {
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root', version = semver.latest } = opts
 
-    const root = await PublicTreeBareConstructors.empty()
-    const publicTree = await PublicTreeConstructors.empty()
-    const prettyTree = await PublicTreeBareConstructors.empty()
+    const root = await PublicTreeBare.empty()
+    const publicTree = await PublicTree.empty(null)
+    const prettyTree = await PublicTreeBare.empty()
 
     const key = await keystore.getKeyByName(keyName)
-    const privateTree = await PrivateTreeConstructors.empty(key)
+    const privateTree = await PrivateTree.empty(key)
 
     return new FileSystem({
       root,
@@ -56,19 +56,19 @@ export class FileSystem {
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const { keyName = 'filesystem-root' } = opts
 
-    const root = await PublicTreeBareConstructors.fromCID(cid)
+    const root = await PublicTreeBare.fromCID(cid)
     const publicCID = root.findLinkCID('public')
     const publicTree = publicCID !== null 
-                        ? await PublicTreeConstructors.fromCID(publicCID)
+                        ? await PublicTree.fromCID(publicCID, null)
                         : null
 
     const prettyTree = (await root.getDirectChild('pretty')) as PublicTreeBare ||
-                        await PublicTreeBareConstructors.empty()
+                        await PublicTreeBare.empty()
 
     const privateCID = root.findLinkCID('private')
     const key = await keystore.getKeyByName(keyName)
     const privateTree = privateCID !== null 
-                          ? await PrivateTreeConstructors.fromCID(privateCID, key) 
+                          ? await PrivateTree.fromCID(privateCID, key) 
                           : null
 
     if (publicTree === null || privateTree === null) return null
@@ -92,12 +92,12 @@ export class FileSystem {
   static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root', version = semver.latest } = opts
 
-    const root = await PublicTreeBareConstructors.empty()
-    const publicTree = await PublicTreeConstructors.fromCID(cid)
-    const prettyTree = await PublicTreeBareConstructors.fromCID(cid)
+    const root = await PublicTreeBare.empty()
+    const publicTree = await PublicTree.fromCID(cid, null)
+    const prettyTree = await PublicTreeBare.fromCID(cid)
 
     const key = await keystore.getKeyByName(keyName)
-    const privateTree = await PrivateTreeConstructors.empty(key)
+    const privateTree = await PrivateTree.empty(key)
 
     return new FileSystem({
       root,

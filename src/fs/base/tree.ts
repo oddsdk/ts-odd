@@ -1,5 +1,5 @@
 import pathUtil from '../path'
-import { Links, SimpleTree, SimpleFile, SemVer, NonEmptyPath } from '../types'
+import { Links, SimpleTree, SimpleFile, SemVer, NonEmptyPath, StaticMethods } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 
@@ -26,7 +26,7 @@ abstract class BaseTree implements SimpleTree {
     if (exists) {
       throw new Error(`Path already exists: ${path}`)
     }
-    const toAdd = await this.createEmptyTree()
+    const toAdd = await this.emptyChildTree()
     return this.addChild(path, toAdd)
   }
 
@@ -71,7 +71,7 @@ abstract class BaseTree implements SimpleTree {
       toAdd = await nextTree.addRecurse(nextPath, child)
     }
 
-    const toAddNode = check.isSimpleTree(toAdd) ? toAdd : await this.createFile(child)
+    const toAddNode = check.isSimpleTree(toAdd) ? toAdd : await this.createChildFile(child)
 
     return this.updateDirectChild(toAddNode, name)
   }
@@ -128,10 +128,10 @@ abstract class BaseTree implements SimpleTree {
 
   abstract getLinks(): Links
 
-  abstract async createEmptyTree(): Promise<SimpleTree>
-  abstract async createTreeFromCID(cid: CID): Promise<SimpleTree>
-  abstract async createFile(content: FileContent): Promise<SimpleFile>
-  abstract async createFileFromCID(cid: CID): Promise<SimpleFile>
+  abstract async emptyChildTree(): Promise<SimpleTree>
+  abstract async childTreeFromCID(cid: CID): Promise<SimpleTree>
+  abstract async createChildFile(content: FileContent): Promise<SimpleFile>
+  abstract async childFileFromCID(cid: CID): Promise<SimpleFile>
 }
 
 export default BaseTree

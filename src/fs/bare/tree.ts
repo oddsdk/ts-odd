@@ -2,7 +2,7 @@ import basic from '../network/basic'
 import { Link, Links, SimpleTree, SimpleFile } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
-import { constructors as BareFileConstructors } from '../bare/file'
+import BareFile from '../bare/file'
 import BaseTree from '../base/tree'
 import { removeKeyFromObj } from '../../common'
 import link from '../link'
@@ -17,20 +17,29 @@ class BareTree extends BaseTree {
     this.links = links
   }
 
-  async createEmptyTree(): Promise<BareTree> {
-    return constructors.empty()
+  static async empty(): Promise<BareTree> {
+    return new BareTree({})
   }
 
-  async createTreeFromCID(cid: CID): Promise<BareTree> {
-    return constructors.fromCID(cid)
+  static async fromCID(cid: CID): Promise<BareTree> {
+    const links = await basic.getLinks(cid, null)
+    return new BareTree(links) 
   }
 
-  async createFile(content: FileContent): Promise<SimpleFile> {
-    return BareFileConstructors.create(content)
+  async emptyChildTree(): Promise<BareTree> {
+    return BareTree.empty()
   }
 
-  async createFileFromCID(cid: CID): Promise<SimpleFile> {
-    return BareFileConstructors.fromCID(cid)
+  async childTreeFromCID(cid: CID): Promise<BareTree> {
+    return BareTree.fromCID(cid)
+  }
+
+  async createChildFile(content: FileContent): Promise<SimpleFile> {
+    return BareFile.create(content)
+  }
+
+  async childFileFromCID(cid: CID): Promise<SimpleFile> {
+    return BareFile.fromCID(cid)
   }
 
   async put(): Promise<CID> {
@@ -52,13 +61,13 @@ class BareTree extends BaseTree {
     const link = this.findLink(name)
     if(link === null) return null
     return link.isFile
-          ? this.createFileFromCID(link.cid)
-          : this.createTreeFromCID(link.cid)
+          ? this.childFileFromCID(link.cid)
+          : this.childTreeFromCID(link.cid)
   }
 
   async getOrCreateDirectChild(name: string): Promise<SimpleTree | SimpleFile> {
     const child = await this.getDirectChild(name)
-    return child ? child : this.createEmptyTree()
+    return child ? child : this.emptyChildTree()
   }
 
   updateLink(link: Link): this {
@@ -83,19 +92,5 @@ class BareTree extends BaseTree {
     return this.links
   }
 }
-
-// CONSTRUCTORS
-
-export const empty = async (): Promise<BareTree> => {
-  return new BareTree({})
-}
-
-export const fromCID = async (cid: CID): Promise<BareTree> => {
-  const links = await basic.getLinks(cid, null)
-  return new BareTree(links) 
-}
-
-export const constructors = { empty, fromCID }
-
 
 export default BareTree

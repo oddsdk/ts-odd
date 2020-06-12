@@ -11,10 +11,26 @@ import semver from '../semver'
 export class PublicFile extends BaseFile implements File {
 
   protected header: HeaderV1
+  protected parentKey: Maybe<string>
 
-  constructor(content: FileContent, header: HeaderV1) {
+  constructor(content: FileContent, header: HeaderV1, parentKey: Maybe<string>) {
     super(content)
     this.header = header
+    this.parentKey = parentKey
+  }
+
+  static async create(content: FileContent, parentKey: Maybe<string>): Promise<File> {
+    return new PublicFile(content, { 
+      ...headerv1.empty(),
+      isFile: true,
+      version: semver.v1
+    }, parentKey)
+  }
+
+  static async fromCID(cid: CID, parentKey: Maybe<string>): Promise<File> {
+    const info = await headerv1.getHeaderAndIndex(cid, null)
+    const content = await basic.getFile(info.index, null)
+    return new PublicFile(content, info.header, parentKey)
   }
 
   async put(): Promise<CID> {
@@ -40,23 +56,5 @@ export class PublicFile extends BaseFile implements File {
   }
 
 }
-
-// CONSTRUCTORS
-
-export const create = (content: FileContent): PublicFile => {
-  return new PublicFile(content, { 
-    ...headerv1.empty(),
-    isFile: true,
-    version: semver.v1
-  })
-}
-
-export const fromCID = async (cid: CID): Promise<PublicFile> => {
-  const info = await headerv1.getHeaderAndIndex(cid, null)
-  const content = await basic.getFile(info.index, null)
-  return new PublicFile(content, info.header)
-}
-
-export const constructors = { create, fromCID }
 
 export default PublicFile
