@@ -1,11 +1,9 @@
-import _ from 'lodash'
-
 import { Links, HeaderV1, SemVer, UnstructuredHeader, PinMap, PutResult } from '../types'
 import { isSemVer } from '../types/check'
-import { isString } from '../../common/type-checks'
+import { isString, isDefined } from '../../common/type-checks'
 
 import { isValue, Maybe } from '../../common'
-import ipfs, { CID } from '../../ipfs'
+import ipfs, { CID, FileContent } from '../../ipfs'
 import link from '../link'
 
 import basic from './basic'
@@ -73,10 +71,11 @@ export const put = async (
     header: HeaderV1,
     key: Maybe<string>
   ): Promise<PutResult> => {
-  const noUndefined = _.pickBy(header, isValue)
+  const noUndefined = Object.entries(header)
+    .filter( ([_, v]) => isDefined(v))
   const linksArr = await Promise.all(
-    _.map(noUndefined, async (val, name) => {
-      const { cid, size } = await ipfs.encoded.add(val, key)
+    noUndefined.map(async([name, val]) => {
+      const { cid, size } = await ipfs.encoded.add(val as FileContent, key)
       return { name, cid, isFile: true, size }
     })
   )
