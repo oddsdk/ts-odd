@@ -9,9 +9,3 @@ export function urlEncode(b: string): string {
 export function makeUrlSafe(a: string): string {
   return a.replace(/\//g, "_").replace(/\+/g, "-").replace(/=+$/, "")
 }
-
-export default {
-  urlDecode,
-  urlEncode,
-  makeUrlSafe
-}

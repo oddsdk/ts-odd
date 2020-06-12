@@ -1,13 +1,15 @@
-import link from '../link'
-import operations from '../operations'
+import * as keystore from '../../keystore'
+
 import { PrivateTreeData, Tree, Links, File, PrivateTreeStatic, PrivateFileStatic, SemVer } from '../types'
 import { CID } from '../../ipfs'
-import keystore from '../../keystore'
+import { rmKey } from '../../common'
+
+import link from '../link'
+import operations from '../operations'
 import PublicTree from '../public/tree'
 import PrivateFile from './file'
 import normalizer from '../normalizer'
 import semver from '../semver'
-import { rmKey } from '../../common'
 
 
 type PinMap = {

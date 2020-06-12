@@ -2,8 +2,8 @@ import cbor from 'borc'
 
 import { isBlob, isJust } from '../common/type-checks'
 import { Maybe } from '../common/types'
-import blob from '../common/blob'
-import keystore from '../keystore'
+import * as blob from '../common/blob'
+import * as keystore from '../keystore'
 
 // IPFS
 

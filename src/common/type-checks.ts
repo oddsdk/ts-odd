@@ -1,5 +1,6 @@
 import { Maybe } from './types'
 
+
 export const isDefined = <T>(val: T | undefined): val is T => {
   return val !== undefined
 }
@@ -27,19 +28,6 @@ export const isObject = (obj: any): obj is object => {
 }
 
 export const isBlob = (obj: any): obj is Blob => {
-  if (typeof Blob === 'undefined') {
-    return false
-  }
+  if (typeof Blob === 'undefined') return false
   return obj instanceof Blob || obj.constructor.name === 'Blob'
-}
-
-export default {
-  isDefined,
-  notNull,
-  isJust, 
-  isBool,
-  isNum,
-  isString,
-  isObject,
-  isBlob,
 }

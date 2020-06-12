@@ -290,10 +290,10 @@ await ipfs.setIpfs(ipfsInstance)
 import keystore from 'fission-sdk/keystore'
 
 // get the keystore instance that the Fission SDK is using
-const ks = await keystore.getKeystore()
+const ks = await keystore.get()
 
 // OR set the keystore to an instance that you already have
-await keystore.setKeystore(keystoreInstance)
+await keystore.set(keystoreInstance)
 ```
 
 # Development

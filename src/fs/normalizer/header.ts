@@ -1,11 +1,8 @@
-import _ from 'lodash'
-import map from 'lodash/map'
-
 import { BasicLinks, Links, Header, Metadata, SemVer } from '../types'
 import { isSemVer } from '../types/check'
 
 import { isString, mapObjAsync, isDefined, Maybe } from '../../common'
-import ipfs, { CID } from '../../ipfs'
+import ipfs, { CID, FileContent } from '../../ipfs'
 
 // Filesystem
 
@@ -76,10 +73,15 @@ export const getChildKey = async (cid: CID, key: string): Promise<string> => {
  * ```
  */
 export const put = async (index: CID, header: Header, key: Maybe<string>): Promise<CID> => {
-  const noUndefined = _.pickBy(header, isDefined)
+  const noUndefined = Array.from(
+    Object.entries(header)
+  ).filter(
+    ([_, v]) => isDefined(v)
+  )
+
   const linksArr = await Promise.all(
-    _.map(noUndefined, async (val, name) => {
-      const cid = await ipfs.encoded.add(val, key)
+    noUndefined.map(async ([name, val]) => {
+      const cid = await ipfs.encoded.add(val as FileContent, key)
       return { name, cid, isFile: true }
     })
   )
