@@ -1,7 +1,8 @@
 import dagPB from 'ipld-dag-pb'
 
-import { DAGLink, UnixFSFile } from '../ipfs'
-import { BasicLink, Link, Links } from './types'
+import { DAGLink, UnixFSFile, CID } from '../ipfs'
+import { Tree, BasicLink, Link, Links, NodeMap, NodeInfo } from './types'
+import { mapObj } from '../common/util'
 
 
 export const toDAGLink = (link: BasicLink): DAGLink => {
@@ -18,6 +19,13 @@ export const fromFSFile = (fsObj: UnixFSFile): Link => {
     mtime,
     isFile: type !== "dir"
   }
+}
+
+export const fromNodeMap = (nodes: NodeMap): Links => {
+  return mapObj(nodes, val => {
+    const { name = '', cid, size, mtime, isFile } = val
+    return { name, cid, size, mtime, isFile }
+  })
 }
 
 export const make = (name: string, cid: string, isFile: boolean, size?: number): Link => {
@@ -41,6 +49,7 @@ export const arrToMap = (arr: Link[]): Links => {
 export default {
   toDAGLink,
   fromFSFile,
+  fromNodeMap,
   make,
   arrToMap
 }
