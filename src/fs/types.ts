@@ -14,12 +14,12 @@ export type FileSystemOptions = {
 // FILES
 // -----
 
-export interface SimpleFile {
+export interface File {
   content: FileContent
   put(): Promise<CID>
 }
 
-export interface File extends SimpleFile {
+export interface HeaderFile extends File {
   getHeader(): HeaderV1
   putWithPins(): Promise<PutResult>
 }
@@ -98,13 +98,14 @@ export type PutResult = {
 // ----
 
 export interface TreeStatic {
-  empty (parentKey: Maybe<string>): Promise<Tree>
-  fromCID (cid: CID, parentKey: Maybe<string>): Promise<Tree>
+  empty (parentKey: Maybe<string>): Promise<HeaderTree>
+  fromCID (cid: CID, parentKey: Maybe<string>): Promise<HeaderTree>
+  fromHeader (header: HeaderV1, parentKey: Maybe<string>): HeaderTree
 }
 
 export interface FileStatic {
-  create(content: FileContent, parentKey: Maybe<string>): Promise<File>
-  fromCID(cid: CID, parentKey: Maybe<string>): Promise<File>
+  create(content: FileContent, parentKey: Maybe<string>): Promise<HeaderFile>
+  fromCID(cid: CID, parentKey: Maybe<string>): Promise<HeaderFile>
 }
 
 export interface StaticMethods {
@@ -112,50 +113,41 @@ export interface StaticMethods {
   file: FileStatic
 }
 
-export interface HeaderTreeStatic extends TreeStatic {
-  fromHeader (header: HeaderV1, parentKey: Maybe<string>): Tree
-}
-
-export interface HeaderStaticMethods {
-  tree: HeaderTreeStatic
-  file: FileStatic
-}
-
 // TREE
 // ----
 
-export interface SimpleTree {
+export interface Tree {
   version: SemVer
 
   ls(path: string): Promise<Links>
   mkdir(path: string): Promise<this>
   cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<this>
-  rm(path: string): Promise<SimpleTree>
-  get(path: string): Promise<SimpleTree | SimpleFile | null>
+  rm(path: string): Promise<Tree>
+  get(path: string): Promise<Tree | File | null>
   pathExists(path: string): Promise<boolean>
-  addChild(path: string, toAdd: SimpleTree | SimpleFile): Promise<this>
-  addRecurse (path: NonEmptyPath, child: SimpleTree | FileContent): Promise<this>
+  addChild(path: string, toAdd: Tree | File): Promise<this>
+  addRecurse (path: NonEmptyPath, child: Tree | FileContent): Promise<this>
 
   put(): Promise<CID>
-  updateDirectChild (child: SimpleTree | SimpleFile, name: string): Promise<this>
+  updateDirectChild (child: Tree | File, name: string): Promise<this>
   removeDirectChild(name: string): Promise<this>
-  getDirectChild(name: string): Promise<SimpleTree | SimpleFile | null>
-  getOrCreateDirectChild(name: string): Promise<SimpleTree | SimpleFile>
+  getDirectChild(name: string): Promise<Tree | File | null>
+  getOrCreateDirectChild(name: string): Promise<Tree | File>
 
-  emptyChildTree(): Promise<SimpleTree>
-  childTreeFromCID(cid: CID): Promise<SimpleTree>
-  createChildFile(content: FileContent): Promise<SimpleFile>
-  childFileFromCID(cid: CID): Promise<SimpleFile>
+  emptyChildTree(): Promise<Tree>
+  childTreeFromCID(cid: CID): Promise<Tree>
+  createChildFile(content: FileContent): Promise<File>
+  childFileFromCID(cid: CID): Promise<File>
 
   getLinks(): Links
 }
 
-export interface Tree extends SimpleTree {
+export interface HeaderTree extends Tree {
   getHeader(): HeaderV1
-  updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<Tree>
+  updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<HeaderTree>
 
-  childTreeFromHeader(heaer: HeaderV1): SimpleTree
+  childTreeFromHeader(heaer: HeaderV1): HeaderTree
 
   putWithPins(): Promise<PutResult>
 }

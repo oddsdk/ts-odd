@@ -1,8 +1,8 @@
-import { SimpleFile } from '../types'
+import { File } from '../types'
 import { CID, FileContent } from '../../ipfs'
 
 
-export abstract class BaseFile implements SimpleFile {
+export abstract class BaseFile implements File {
 
   content: FileContent
 

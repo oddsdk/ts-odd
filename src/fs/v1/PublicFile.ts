@@ -1,4 +1,4 @@
-import { File, HeaderV1, PutResult } from '../types'
+import { HeaderV1, PutResult, HeaderFile } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
 import headerv1 from'./header'
@@ -8,7 +8,7 @@ import { Maybe } from '../../common'
 import semver from '../semver'
 
 
-export class PublicFile extends BaseFile implements File {
+export class PublicFile extends BaseFile implements HeaderFile {
 
   protected header: HeaderV1
   protected parentKey: Maybe<string>
@@ -19,7 +19,7 @@ export class PublicFile extends BaseFile implements File {
     this.parentKey = parentKey
   }
 
-  static async create(content: FileContent, parentKey: Maybe<string>): Promise<File> {
+  static async create(content: FileContent, parentKey: Maybe<string>): Promise<HeaderFile> {
     return new PublicFile(content, { 
       ...headerv1.empty(),
       isFile: true,
@@ -27,7 +27,7 @@ export class PublicFile extends BaseFile implements File {
     }, parentKey)
   }
 
-  static async fromCID(cid: CID, parentKey: Maybe<string>): Promise<File> {
+  static async fromCID(cid: CID, parentKey: Maybe<string>): Promise<HeaderFile> {
     const info = await headerv1.getHeaderAndIndex(cid, null)
     const content = await basic.getFile(info.index, null)
     return new PublicFile(content, info.header, parentKey)

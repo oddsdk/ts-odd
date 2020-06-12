@@ -1,4 +1,4 @@
-import { HeaderV1, Tree } from '../types'
+import { HeaderV1, HeaderTree } from '../types'
 import { CID } from '../../ipfs'
 import * as keystore from '../../keystore'
 import PublicTree  from './PublicTree'
@@ -22,7 +22,7 @@ export class PrivateTree extends PublicTree {
     }
   }
 
-  static async empty (parentKey: string, ownKey?: string): Promise<Tree> {
+  static async empty (parentKey: string, ownKey?: string): Promise<HeaderTree> {
     const keyStr = ownKey ? ownKey : await keystore.genKeyStr()
     return new PrivateTree({
         ...header.empty(),
@@ -34,14 +34,14 @@ export class PrivateTree extends PublicTree {
     )
   }
 
-  static async fromCID (cid: CID, parentKey: string): Promise<Tree> {
+  static async fromCID (cid: CID, parentKey: string): Promise<HeaderTree> {
     const info = await header.getHeaderAndIndex(cid, parentKey)
     return info.header.key === null
       ? super.fromCID(cid, parentKey)
       : new PrivateTree(info.header, parentKey, info.header.key)
   }
 
-  static fromHeader (header: HeaderV1, parentKey: string): Tree {
+  static fromHeader (header: HeaderV1, parentKey: string): HeaderTree {
     return header.key === null
       ? super.fromHeader(header, parentKey)
       : new PrivateTree(header, parentKey, header.key)

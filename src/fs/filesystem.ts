@@ -1,7 +1,7 @@
 import PublicTreeBare from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
-import { SimpleTree, Tree, SimpleFile, Links, SyncHook, FileSystemOptions } from './types'
+import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree } from './types'
 import { CID, FileContent } from '../ipfs'
 import { dataRoot } from '../data-root'
 
@@ -12,19 +12,19 @@ import { asyncWaterfall } from '../common/util'
 
 
 type ConstructorParams = {
-  root: SimpleTree
-  publicTree: Tree
+  root: Tree
+  publicTree: HeaderTree
   prettyTree: PublicTreeBare
-  privateTree: Tree
+  privateTree: HeaderTree
 }
 
 
 export class FileSystem {
 
-  root: SimpleTree
-  publicTree: Tree
+  root: Tree
+  publicTree: HeaderTree
   prettyTree: PublicTreeBare
-  privateTree: Tree
+  privateTree: HeaderTree
   syncHooks: Array<SyncHook>
 
   constructor({ root, publicTree, prettyTree, privateTree }: ConstructorParams) {
@@ -140,7 +140,7 @@ export class FileSystem {
     return this.sync()
   }
 
-  async get(path: string): Promise<SimpleTree | SimpleFile | null> {
+  async get(path: string): Promise<Tree | File | null> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.get(relPath)
     })
@@ -159,9 +159,9 @@ export class FileSystem {
 
   async sync(): Promise<CID> {
     this.root = await asyncWaterfall(this.root, [
-      (t: SimpleTree) => t.addChild('public', this.publicTree),
-      (t: SimpleTree) => t.addChild('pretty', this.prettyTree),
-      (t: SimpleTree) => t.addChild('private', this.privateTree)
+      (t: Tree) => t.addChild('public', this.publicTree),
+      (t: Tree) => t.addChild('pretty', this.prettyTree),
+      (t: Tree) => t.addChild('private', this.privateTree)
     ])
 
     const cid = await this.root.put()
@@ -186,7 +186,7 @@ export class FileSystem {
   async runOnTree<a>(
     path: string,
     updateTree: boolean, // ie. do a mutation
-    fn: (tree: SimpleTree, relPath: string) => Promise<a>
+    fn: (tree: Tree, relPath: string) => Promise<a>
   ): Promise<a> {
     const parts = pathUtil.splitParts(path)
     const head = parts[0]

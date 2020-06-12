@@ -1,5 +1,5 @@
 import basic from '../network/basic'
-import { Link, Links, SimpleTree, SimpleFile } from '../types'
+import { Link, Links, Tree, File } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BareFile from '../bare/file'
@@ -34,11 +34,11 @@ class BareTree extends BaseTree {
     return BareTree.fromCID(cid)
   }
 
-  async createChildFile(content: FileContent): Promise<SimpleFile> {
+  async createChildFile(content: FileContent): Promise<File> {
     return BareFile.create(content)
   }
 
-  async childFileFromCID(cid: CID): Promise<SimpleFile> {
+  async childFileFromCID(cid: CID): Promise<File> {
     return BareFile.fromCID(cid)
   }
 
@@ -46,9 +46,9 @@ class BareTree extends BaseTree {
     return basic.putLinks(this.links, null)
   }
 
-  async updateDirectChild(child: SimpleTree | SimpleFile, name: string): Promise<this> {
+  async updateDirectChild(child: Tree | File, name: string): Promise<this> {
     const cid = await child.put()
-    const childLink = link.make(name, cid, check.isSimpleFile(child))
+    const childLink = link.make(name, cid, check.isFile(child))
     
     return this.updateLink(childLink)
   }
@@ -57,7 +57,7 @@ class BareTree extends BaseTree {
     return this.rmLink(name)
   }
 
-  async getDirectChild(name: string): Promise<SimpleTree | SimpleFile | null> {
+  async getDirectChild(name: string): Promise<Tree | File | null> {
     const link = this.findLink(name)
     if(link === null) return null
     return link.isFile
@@ -65,7 +65,7 @@ class BareTree extends BaseTree {
           : this.childTreeFromCID(link.cid)
   }
 
-  async getOrCreateDirectChild(name: string): Promise<SimpleTree | SimpleFile> {
+  async getOrCreateDirectChild(name: string): Promise<Tree | File> {
     const child = await this.getDirectChild(name)
     return child ? child : this.emptyChildTree()
   }

@@ -1,7 +1,7 @@
 import header from '../network/header'
 import basic from '../network/basic'
 import headerv1 from './header'
-import { Links, Tree, File, HeaderV1, NodeInfo, PutResult, HeaderStaticMethods } from '../types'
+import { Links, Tree, HeaderV1, NodeInfo, PutResult, StaticMethods, HeaderTree, HeaderFile } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
@@ -10,13 +10,13 @@ import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj, isJust } from '../..
 import link from '../link'
 import semver from '../semver'
 
-export class PublicTree extends BaseTree implements Tree {
+export class PublicTree extends BaseTree implements HeaderTree {
 
   protected header: HeaderV1
   protected parentKey: Maybe<string>
   protected ownKey: Maybe<string> = null
 
-  protected static: HeaderStaticMethods
+  protected static: StaticMethods
 
   constructor(header: HeaderV1, parentKey: Maybe<string>) {
     super(header.version)
@@ -28,19 +28,19 @@ export class PublicTree extends BaseTree implements Tree {
     }
   }
 
-  static async empty (parentKey: Maybe<string>): Promise<Tree> {
+  static async empty (parentKey: Maybe<string>): Promise<HeaderTree> {
     return new PublicTree({
       ...headerv1.empty(),
       version: semver.v1,
     }, parentKey)
 }
 
-  static async fromCID (cid: CID, parentKey: Maybe<string>): Promise<Tree> {
+  static async fromCID (cid: CID, parentKey: Maybe<string>): Promise<HeaderTree> {
     const info = await headerv1.getHeaderAndIndex(cid, null)
     return new PublicTree(info.header, parentKey)
   }
 
-  static fromHeader (header: HeaderV1, parentKey: Maybe<string>): Tree {
+  static fromHeader (header: HeaderV1, parentKey: Maybe<string>): HeaderTree {
     return new PublicTree(header, parentKey) 
   }
 
@@ -48,23 +48,23 @@ export class PublicTree extends BaseTree implements Tree {
     return obj.header !== undefined
   }
 
-  async emptyChildTree(): Promise<Tree> {
+  async emptyChildTree(): Promise<HeaderTree> {
     return this.static.tree.empty(this.ownKey)
   }
 
-  async childTreeFromCID(cid: CID): Promise<Tree> {
+  async childTreeFromCID(cid: CID): Promise<HeaderTree> {
     return this.static.tree.fromCID(cid, this.ownKey)
   }
 
-  childTreeFromHeader(header: HeaderV1): Tree {
+  childTreeFromHeader(header: HeaderV1): HeaderTree {
     return this.static.tree.fromHeader(header, this.ownKey)
   }
 
-  async createChildFile(content: FileContent): Promise<File> {
+  async createChildFile(content: FileContent): Promise<HeaderFile> {
     return this.static.file.create(content, this.ownKey)
   }
 
-  async childFileFromCID(cid: CID): Promise<File> {
+  async childFileFromCID(cid: CID): Promise<HeaderFile> {
     return this.static.file.fromCID(cid, this.ownKey)
   }
 
@@ -91,14 +91,14 @@ export class PublicTree extends BaseTree implements Tree {
     }, key)
   }
 
-  async updateDirectChild(child: Tree | File, name: string): Promise<this> {
+  async updateDirectChild(child: HeaderTree | HeaderFile, name: string): Promise<this> {
     const { cid, pins } = await child.putWithPins()
     return this
             .updatePins(name, pins)
             .updateHeader(name, {
               ...child.getHeader(),
               cid,
-              isFile: check.isSimpleFile(child)
+              isFile: check.isFile(child)
             })
   }
 
@@ -108,7 +108,7 @@ export class PublicTree extends BaseTree implements Tree {
             .updateHeader(name, null)
   }
 
-  async getDirectChild(name: string): Promise<Tree | File | null> {
+  async getDirectChild(name: string): Promise<HeaderTree | HeaderFile | null> {
     const childHeader = this.findLink(name)
     if(childHeader === null) return null
     return childHeader.isFile
@@ -116,7 +116,7 @@ export class PublicTree extends BaseTree implements Tree {
           : this.childTreeFromHeader(childHeader)
   }
 
-  async getOrCreateDirectChild(name: string): Promise<Tree | File> {
+  async getOrCreateDirectChild(name: string): Promise<HeaderTree | HeaderFile> {
     const child = await this.getDirectChild(name)
     return child ? child : this.emptyChildTree()
   }
