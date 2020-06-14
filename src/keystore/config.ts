@@ -1,11 +1,12 @@
 import keystore from 'keystore-idb'
-import { KeyStore, CryptoSystem } from 'keystore-idb/types'
+
+import { CryptoSystem } from 'keystore-idb/types'
+import { RSAKeyStore } from 'keystore-idb/rsa'
+import rsakeystore from 'keystore-idb/rsa/keystore'
 
 const KEYSTORE_CFG = { type: CryptoSystem.RSA }
 
-
-let ks: KeyStore | null = null
-
+let ks: RSAKeyStore | null = null
 
 export const clear = async (): Promise<void> => {
   if (ks) {
@@ -14,13 +15,12 @@ export const clear = async (): Promise<void> => {
   }
 }
 
-
-export const set = async (userKeystore: KeyStore): Promise<void> => {
+export const set = async (userKeystore: RSAKeyStore): Promise<void> => {
   ks = userKeystore
 }
 
-export const get = async (): Promise<KeyStore> => {
+export const get = async (): Promise<RSAKeyStore> => {
   if (ks) return ks
-  ks = await keystore.init(KEYSTORE_CFG)
+  ks = (await rsakeystore.init(KEYSTORE_CFG)) as RSAKeyStore
   return ks
 }

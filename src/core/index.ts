@@ -1,32 +1,14 @@
-import * as base58 from 'base58-universal/main.js'
 import { CryptoSystem } from 'keystore-idb/types'
-import utils from 'keystore-idb/utils'
 
 import * as keystore from '../keystore'
 import { base64 } from '../common'
 
+export * as did from './did'
+export * as share from './share'
+
 
 // const EDW_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
 const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
-
-
-/**
- * Create a DID to authenticate with.
- */
-export const did = async (): Promise<string> => {
-  const ks = await keystore.get()
-
-  // Public-write key
-  const pwB64 = await ks.publicWriteKey()
-  const pwBuf = utils.base64ToArrBuf(pwB64)
-
-  // Prefix public-write key
-  const prefix = magicBytes(ks.cfg.type) || new ArrayBuffer(0)
-  const prefixedBuf = utils.joinBufs(prefix, pwBuf)
-
-  // Encode prefixed
-  return 'did:key:z' + base58.encode(new Uint8Array(prefixedBuf))
-}
 
 /**
  * Create a UCAN, User Controlled Authorization Networks, JWT.
@@ -122,17 +104,6 @@ export function ucanRootIssuer(ucan: string, level = 0): string {
 function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
   switch (cryptoSystem) {
     case CryptoSystem.RSA: return 'RS256';
-    default: return null
-  }
-}
-
-
-/**
- * Magic bytes
- */
-function magicBytes(cryptoSystem: CryptoSystem): ArrayBuffer | null {
-  switch (cryptoSystem) {
-    case CryptoSystem.RSA: return RSA_DID_PREFIX;
     default: return null
   }
 }

@@ -10,12 +10,12 @@ export class BareFile extends BaseFile {
   }
 
   static async fromCID(cid: CID): Promise<BareFile> {
-    const content = await basic.getFile(cid, null)
+    const content = await basic.getFile(cid)
     return new BareFile(content)
   }
 
   async put(): Promise<CID> {
-    const { cid } = await  basic.putFile(this.content, null)
+    const { cid } = await  basic.putFile(this.content)
     return cid
   }
 }

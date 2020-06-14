@@ -1,6 +1,6 @@
 import PublicFile from './PublicFile'
 import { CID, FileContent } from '../../ipfs'
-import { HeaderV1, PutResult, File, HeaderFile } from '../types'
+import { HeaderV1, PutResult, HeaderFile } from '../types'
 import * as keystore from '../../keystore'
 import basic from '../network/basic'
 import header from './header'
@@ -29,7 +29,7 @@ export class PrivateFile extends PublicFile {
 
   static async fromCID(cid: CID, parentKey: string): Promise<HeaderFile>{
     const info = await header.getHeaderAndIndex(cid, parentKey)
-    const content = await basic.getFile(info.index, info.header.key)
+    const content = await basic.getEncodedFile(info.index, info.header.key)
     return new PrivateFile(content, info.header, parentKey)
   }
 

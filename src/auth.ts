@@ -1,7 +1,6 @@
 import localforage from 'localforage'
 
 import * as core from './core'
-import { CID } from './ipfs'
 import { UCAN_STORAGE_KEY, USERNAME_STORAGE_KEY } from './common'
 
 
@@ -95,7 +94,7 @@ export async function isAuthenticated(options: {
  * @param lobby Specify a custom lobby.
  */
 export async function redirectToLobby(returnTo?: string, lobby?: string): Promise<void> {
-  const did = await core.did()
+  const did = await core.did.own()
   const origin = lobby || "https://auth.fission.codes"
   const redirectTo = returnTo || window.location.href
 

@@ -29,7 +29,7 @@ export class PublicFile extends BaseFile implements HeaderFile {
 
   static async fromCID(cid: CID, parentKey: Maybe<string>): Promise<HeaderFile> {
     const info = await headerv1.getHeaderAndIndex(cid, null)
-    const content = await basic.getFile(info.index, null)
+    const content = await basic.getEncodedFile(info.index, null)
     return new PublicFile(content, info.header, parentKey)
   }
 
@@ -43,7 +43,7 @@ export class PublicFile extends BaseFile implements HeaderFile {
   }
 
   protected async putWithKey(key: Maybe<string>) {
-    const { cid, size } = await basic.putFile(this.content, this.header.key)
+    const { cid, size } = await basic.putFileEncoded(this.content, null)
     return header.put(cid, {
       ...this.header,
       size,

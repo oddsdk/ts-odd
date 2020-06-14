@@ -5,8 +5,12 @@ import { Maybe } from '../../common'
 import link from '../link'
 
 
-export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
-  return key ? ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent> : ipfs.catBuf(cid)
+export const getFile = async (cid: CID): Promise<FileContent> => {
+  return ipfs.catBuf(cid)
+}
+
+export const getEncodedFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
+  return ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent>
 }
 
 export const getLinks = async (cid: CID, key: Maybe<string>): Promise<Links> => {
@@ -34,14 +38,20 @@ export const putLinks = async (links: BasicLinks, key: Maybe<string>): Promise<C
   }
 }
 
-export const putFile = async (content: FileContent, key: Maybe<string>): Promise<AddResult> => {
-  return key ? ipfs.encoded.add(content, key) : ipfs.add(content)
+export const putFile = async (content: FileContent): Promise<AddResult> => {
+  return ipfs.add(content)
+}
+
+export const putFileEncoded = async (content: FileContent, key: Maybe<string>): Promise<AddResult> => {
+  return ipfs.encoded.add(content, key)
 }
 
 export default {
   getFile,
+  getEncodedFile,
   getLinks,
   getLinkCID,
   putLinks,
   putFile,
+  putFileEncoded,
 }

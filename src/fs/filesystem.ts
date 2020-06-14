@@ -2,13 +2,14 @@ import BareTree from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
 import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree, PinMap } from './types'
+import { isString } from '../common/type-checks'
 import { CID, FileContent } from '../ipfs'
 import { dataRoot } from '../data-root'
 
 import * as keystore from '../keystore'
 import * as pathUtil from './path'
 import { pinMapToLinks } from './pins'
-import * as did from '../core/did'
+import * as core from '../core'
 
 
 type ConstructorParams = {
@@ -17,6 +18,8 @@ type ConstructorParams = {
   prettyTree: BareTree
   privateTree: HeaderTree
   pinsTree: BareTree
+  keyTree: HeaderTree
+  key: string
   rootDID: string
 }
 
@@ -28,15 +31,19 @@ export class FileSystem {
   prettyTree: BareTree
   privateTree: HeaderTree
   pinsTree: BareTree
+  keyTree: HeaderTree
+  key: string
   rootDID: string
   syncHooks: Array<SyncHook>
 
-  constructor({ root, publicTree, prettyTree, privateTree, pinsTree, rootDID }: ConstructorParams) {
+  constructor({ root, publicTree, prettyTree, privateTree, pinsTree, keyTree, key, rootDID }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
     this.pinsTree = pinsTree
+    this.keyTree = keyTree
+    this.key = key
     this.rootDID = rootDID
     this.syncHooks = []
   }
@@ -52,23 +59,34 @@ export class FileSystem {
     const key = await keystore.getKeyByName(keyName)
     const privateTree = await PrivateTree.empty(key)
 
+    const keyTree = await PublicTree.empty(null)
+
     await root.addChild('public', publicTree)
     await root.addChild('pretty', prettyTree)
     await root.addChild('private', privateTree)
     await root.addChild('pins', pinsTree)
+    await root.addChild('keys', keyTree)
 
-    return new FileSystem({
+    const fs = new FileSystem({
       root,
       publicTree,
       prettyTree,
       privateTree,
       pinsTree,
+      keyTree,
+      key,
       rootDID
     })
+
+    // share filesystem wiht self
+    // const did = await core.did.own() 
+    // await fs.shareWith(did, )
+
+    return fs
   }
 
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { keyName = 'filesystem-root', rootDID = '' } = opts
+    const { rootDID = '' } = opts
 
     const root = await BareTree.fromCID(cid)
     const publicCID = root.findLinkCID('public')
@@ -81,10 +99,22 @@ export class FileSystem {
     const pinsTree = (await root.getDirectChild('pins')) as BareTree ||
       await BareTree.empty()
 
+    const keyCID = root.findLinkCID('keys')
+    if(keyCID === null) return null
+    const keyTree = await PublicTree.fromCID(keyCID, null) 
+
+    // find root FS key by checking the /keys folder to see if current DID has access
+    const did = await core.did.own()
+    const ks = await keystore.get()
+    const encryptedKey = await keyTree.cat(did)
+    if(!isString(encryptedKey)) {
+      throw new Error("Filesystem not shared with current user")
+    }
+    const key = await ks.decrypt(encryptedKey)
+
     const privateCID = root.findLinkCID('private')
-    const key = await keystore.getKeyByName(keyName)
-    const privateTree = privateCID !== null
-      ? await PrivateTree.fromCID(privateCID, key)
+    const privateTree = privateCID !== null 
+      ? await PrivateTree.fromCID(privateCID, key) 
       : null
 
     if (publicTree === null || privateTree === null) return null
@@ -95,13 +125,15 @@ export class FileSystem {
       prettyTree,
       privateTree,
       pinsTree,
+      keyTree,
+      key,
       rootDID
     })
   }
 
   static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const cid = await dataRoot(username)
-    opts.rootDID = await did.rootDIDForUser(username)
+    opts.rootDID = await core.did.root(username)
     return FileSystem.fromCID(cid, opts)
   }
 
@@ -151,8 +183,28 @@ export class FileSystem {
     await this.root.addChild('pins', this.pinsTree)
   }
 
+  async shareWith(username: string, path: string): Promise<CID> {
+    if(!path.startsWith('private')) throw new Error('Can only share private folders.')
+    const dids = await core.share.getDeviceKeys(username)
+    const ks = await keystore.get()
+    await Promise.all(
+      dids.map(async (did) => {
+        const pubkey = core.did.didToPubKey(did)
+        const encryptedRootKey = await ks.encrypt(this.key, pubkey)
+        await this.keyTree.add(did, encryptedRootKey)
+      })
+    )
+
+    await this.root.addChild('keys', this.keyTree)
+    return this.sync()
+  }
+
+  async put(): Promise<CID> {
+    return this.root.put()
+  }
+
   async sync(): Promise<CID> {
-    const cid = await this.root.put()
+    const cid = await this.put()
 
     this.syncHooks.forEach(hook => {
       hook(cid)
@@ -210,6 +262,9 @@ export class FileSystem {
 
     } else if (head === 'pretty') {
       result = await fn(this.prettyTree, relPath)
+
+    } else if (head === 'keys') {
+      throw new Error("The keys path is read only. Add keys using with `shareWith`")
 
     } else {
       throw new Error("Not a valid FileSystem path")
