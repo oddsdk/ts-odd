@@ -1,4 +1,5 @@
 import * as core from '../core'
+import { api } from '../common'
 import { dataRoot } from '../data-root'
 
 import { USERNAME_BLOCKLIST } from './blocklist'
@@ -14,18 +15,16 @@ export const createAccount = async (
   },
   options: {
     apiEndpoint?: string
-    apiDid?: string
   } = {}
-): Promise<void> => {
-  const apiDid = options.apiDid || await core.apiDid()
-  const apiEndpoint = options.apiEndpoint || core.apiEndpoint()
+): Promise<{ success: boolean }> => {
+  const apiEndpoint = options.apiEndpoint || api.defaultEndpoint()
 
   const jwt = await core.ucan({
-    audience: apiDid,
+    audience: await api.did(apiEndpoint),
     issuer: await core.did(),
   })
 
-  await fetch(`${apiEndpoint}/user`, {
+  const response = await fetch(`${apiEndpoint}/user`, {
     method: 'PUT',
     headers: {
       'authorization': `Bearer ${jwt}`,
@@ -33,13 +32,20 @@ export const createAccount = async (
     },
     body: JSON.stringify(userProps)
   })
+
+  return {
+    success: response.status < 300
+  }
 }
 
 /**
  * Check if a username is available.
  */
-export const isUsernameAvailable = async (username: string): Promise<boolean> => {
-  return dataRoot(username).then(_ => false).catch(_ => true)
+export const isUsernameAvailable = (
+  username: string,
+  dataRootDomain?: string
+): Promise<boolean> => {
+  return dataRoot(username, dataRootDomain).then(_ => false).catch(_ => true)
 }
 
 /**
@@ -63,6 +69,8 @@ export const makeRootUcan = async (
   audience: string,
   lifetimeInSeconds: number = 60 * 60 * 24 * 30
 ): Promise<string> => {
+  if (!audience) throw new Error("`makeRootUcan` needs an `audience` as the first parameter")
+
   return await core.ucan({
     audience: audience,
     issuer: await core.did(),
