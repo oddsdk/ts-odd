@@ -96,6 +96,21 @@ export const ucan = async ({
          encodedSignature
 }
 
+/**
+ * Given a UCAN, lookup the root issuer.
+ *
+ * Throws when given an improperly formatted UCAN.
+ * This could be a nested UCAN (ie. proof).
+ *
+ * @param ucan A UCAN.
+ * @returns The root issuer.
+ */
+export function ucanRootIssuer(ucan: string, level: number = 0): string {
+  const payload = ucanPayload(ucan, level)
+  if (payload.prf) return ucanRootIssuer(payload.prf, level + 1)
+  return payload.iss
+}
+
 
 
 // ㊙️
@@ -119,5 +134,19 @@ function magicBytes(cryptoSystem: CryptoSystem): ArrayBuffer | null {
   switch (cryptoSystem) {
     case CryptoSystem.RSA: return RSA_DID_PREFIX;
     default: return null
+  }
+}
+
+
+/**
+ * Extract the payload of a UCAN.
+ *
+ * Throws when given an improperly formatted UCAN.
+ */
+function ucanPayload(ucan: string, level: number): { iss: string, prf: string | null } {
+  try {
+    return JSON.parse(base64.urlDecode(ucan.split(".")[1]))
+  } catch (_) {
+    throw new Error(`Invalid UCAN (${level} level${level === 1 ? "" : "s"} deep): \`${ucan}\``)
   }
 }
