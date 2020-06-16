@@ -6,7 +6,7 @@ import * as keystore from '../keystore'
 import { base64 } from '../common'
 
 
-const EDW_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
+// const EDW_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
 const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
 
 
@@ -105,7 +105,7 @@ export const ucan = async ({
  * @param ucan A UCAN.
  * @returns The root issuer.
  */
-export function ucanRootIssuer(ucan: string, level: number = 0): string {
+export function ucanRootIssuer(ucan: string, level = 0): string {
   const payload = ucanPayload(ucan, level)
   if (payload.prf) return ucanRootIssuer(payload.prf, level + 1)
   return payload.iss
@@ -143,7 +143,7 @@ function magicBytes(cryptoSystem: CryptoSystem): ArrayBuffer | null {
  *
  * Throws when given an improperly formatted UCAN.
  */
-function ucanPayload(ucan: string, level: number): { iss: string, prf: string | null } {
+function ucanPayload(ucan: string, level: number): { iss: string; prf: string | null } {
   try {
     return JSON.parse(base64.urlDecode(ucan.split(".")[1]))
   } catch (_) {

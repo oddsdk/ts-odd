@@ -19,7 +19,7 @@ export const add = async (content: FileContent, key: Maybe<string>): Promise<Add
   return basic.add(toAdd)
 }
 
-export const catAndDecode = async (cid: CID, key: Maybe<string>): Promise<any> => {
+export const catAndDecode = async (cid: CID, key: Maybe<string>): Promise<unknown> => {
   const buf = await basic.catBuf(cid)
   const toDecode = isJust(key) ? await keystore.decrypt(buf, key) : buf
   return cbor.decode(toDecode)

@@ -45,7 +45,7 @@ export const isUsernameAvailable = (
   username: string,
   dataRootDomain?: string
 ): Promise<boolean> => {
-  return dataRoot(username, dataRootDomain).then(_ => false).catch(_ => true)
+  return dataRoot(username, dataRootDomain).then(() => false).catch(() => true)
 }
 
 /**

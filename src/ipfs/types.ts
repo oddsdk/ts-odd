@@ -1,5 +1,5 @@
 export type IPFS = {
-  add(data: FileContent, options?: any): AsyncIterable<UnixFSFile>
+  add(data: FileContent, options?: unknown): AsyncIterable<UnixFSFile>
   cat(cid: CID): AsyncIterable<FileContentRaw>
   ls(cid: CID): AsyncIterable<UnixFSFile>
   dag: DagAPI
@@ -39,16 +39,16 @@ export type RawDAGLink = {
 }
 
 export interface DagAPI {
-  put(dagNode: any, options: any): Promise<CIDObj>
-  get(cid: string | CID, path?: string, options?: any): Promise<RawDAGNode>
-  tree(cid: string | CID, path?: string, options?: any): Promise<any>
+  put(dagNode: unknown, options: unknown): Promise<CIDObj>
+  get(cid: string | CID, path?: string, options?: unknown): Promise<RawDAGNode>
+  tree(cid: string | CID, path?: string, options?: unknown): Promise<unknown>
 }
 
 export interface ObjectAPI {
   stat(cid: CID): Promise<ObjStat>
-  put(dagNode: any, options: any): Promise<CIDObj>
-  get(cid: CID, path?: string, options?: any): Promise<RawDAGNode>
-  tree(cid: CID, path?: string, options?: any): Promise<any>
+  put(dagNode: unknown, options: unknown): Promise<CIDObj>
+  get(cid: CID, path?: string, options?: unknown): Promise<RawDAGNode>
+  tree(cid: CID, path?: string, options?: unknown): Promise<unknown>
 }
 
 export type CID = string
@@ -72,7 +72,7 @@ export type UnixFSFile = {
   path: string
   size: number
   mode?: FileMode
-  mtime?: number 
+  mtime?: number
   name?: string
   type?: string
 }

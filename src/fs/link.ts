@@ -1,7 +1,7 @@
 import dagPB from 'ipld-dag-pb'
 
-import { DAGLink, UnixFSFile, CID } from '../ipfs'
-import { Tree, BasicLink, Link, Links, NodeMap, NodeInfo } from './types'
+import { DAGLink, UnixFSFile } from '../ipfs'
+import { BasicLink, Link, Links, NodeMap } from './types'
 import { mapObj } from '../common/util'
 
 

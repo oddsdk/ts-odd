@@ -6,17 +6,17 @@ import link from '../link'
 
 
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
-  return key ? ipfs.encoded.catAndDecode(cid, key) : ipfs.catBuf(cid)
+  return key ? ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent> : ipfs.catBuf(cid)
 }
 
 export const getLinks = async (cid: CID, key: Maybe<string>): Promise<Links> => {
-  if(key === null){
+  if (key === null){
     const raw = await ipfs.ls(cid)
     return link.arrToMap(
       raw.map(link.fromFSFile)
     )
   }
-  return ipfs.encoded.catAndDecode(cid, key)
+  return ipfs.encoded.catAndDecode(cid, key) as Promise<Links>
 }
 
 export const getLinkCID = async (cid: CID, name: string, key: Maybe<string>): Promise<CID | null> => {
