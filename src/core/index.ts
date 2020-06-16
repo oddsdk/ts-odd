@@ -2,25 +2,13 @@ import * as base58 from 'base58-universal/main.js'
 import { CryptoSystem } from 'keystore-idb/types'
 import utils from 'keystore-idb/utils'
 
+import * as keystore from '../keystore'
 import { base64 } from '../common'
 
-import * as api from './api'
-import * as keystore from '../keystore'
 
-
-const EDW_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
+// const EDW_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
 const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
 
-
-/**
- * Get the DID from the main Fission API.
- */
-export async function apiDid() { return await api.did() }
-
-/**
- * Get the endpoint from the main Fission API.
- */
-export function apiEndpoint() { return `https://${api.HOST}` }
 
 /**
  * Create a DID to authenticate with.
@@ -58,7 +46,7 @@ export const did = async (): Promise<string> => {
  * `nbf`, Not Before, unix timestamp of when the jwt becomes valid.
  * `prf`, Proof, an optional nested token with equal or greater privileges.
  * `ptc`, Potency, which rights come with the token.
- * `rsc`, Resource, the path of the things that can be changed.
+ * `rsc`, Resource, the involved resource.
  *
  */
 export const ucan = async ({
@@ -66,13 +54,13 @@ export const ucan = async ({
   issuer,
   lifetimeInSeconds = 30,
   proof,
-  resource = "/"
+  resource = "*"
 }: {
   audience: string
   issuer: string
   lifetimeInSeconds?: number
   proof?: string
-  resource?: string
+  resource?: "*" | { [_: string]: string }
 }): Promise<string> => {
   const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
@@ -91,7 +79,7 @@ export const ucan = async ({
     nbf: currentTimeInSeconds - 60,
     prf: proof,
     ptc: "APPEND",
-    scp: resource, // TODO: scp -> rsc
+    rsc: resource,
   }
 
   // Encode parts in JSON & Base64Url
@@ -106,6 +94,21 @@ export const ucan = async ({
   return encodedHeader + '.' +
          encodedPayload + '.' +
          encodedSignature
+}
+
+/**
+ * Given a UCAN, lookup the root issuer.
+ *
+ * Throws when given an improperly formatted UCAN.
+ * This could be a nested UCAN (ie. proof).
+ *
+ * @param ucan A UCAN.
+ * @returns The root issuer.
+ */
+export function ucanRootIssuer(ucan: string, level = 0): string {
+  const payload = ucanPayload(ucan, level)
+  if (payload.prf) return ucanRootIssuer(payload.prf, level + 1)
+  return payload.iss
 }
 
 
@@ -131,5 +134,19 @@ function magicBytes(cryptoSystem: CryptoSystem): ArrayBuffer | null {
   switch (cryptoSystem) {
     case CryptoSystem.RSA: return RSA_DID_PREFIX;
     default: return null
+  }
+}
+
+
+/**
+ * Extract the payload of a UCAN.
+ *
+ * Throws when given an improperly formatted UCAN.
+ */
+function ucanPayload(ucan: string, level: number): { iss: string; prf: string | null } {
+  try {
+    return JSON.parse(base64.urlDecode(ucan.split(".")[1]))
+  } catch (_) {
+    throw new Error(`Invalid UCAN (${level} level${level === 1 ? "" : "s"} deep): \`${ucan}\``)
   }
 }

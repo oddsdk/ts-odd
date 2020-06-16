@@ -3,7 +3,8 @@ import { IPFS } from './types'
 
 const PEER_WSS = "/dns4/node.fission.systems/tcp/4003/wss/ipfs/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw"
 const IPFS_CFG = { browserPeers: [ PEER_WSS ] }
-let ipfs: IPFS | null = null 
+
+let ipfs: IPFS | null = null
 
 // TODO: There is funky type stuff going on here with `any`s
 // This is because we need to redo the types for js-ipfs.
@@ -13,11 +14,9 @@ export const setIpfs = (userIpfs: unknown): void => {
   ipfs = userIpfs as IPFS
 }
 
-export const getIpfs = async (): Promise<IPFS> => {
-  if (ipfs) {
-    return ipfs
-  }
-  ipfs = (await getIpfsWithCfg(IPFS_CFG)) as unknown as IPFS
+export const getIpfs = async (options = {}): Promise<IPFS> => {
+  if (ipfs) return ipfs
+  ipfs = (await getIpfsWithCfg({ ...IPFS_CFG, ...options })) as unknown as IPFS
   return ipfs
 }
 

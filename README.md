@@ -279,7 +279,7 @@ You can use one instance for your whole application by doing the following:
 import ipfs from 'fission-sdk/ipfs'
 
 // get the ipfs instance that the Fission SDK is using
-const ipfs = await ipfs.getIpfs()
+const ipfsInstance = await ipfs.getIpfs()
 
 // OR set the ipfs to an instance that you already have
 await ipfs.setIpfs(ipfsInstance)
@@ -290,7 +290,7 @@ await ipfs.setIpfs(ipfsInstance)
 import keystore from 'fission-sdk/keystore'
 
 // get the keystore instance that the Fission SDK is using
-const ks = await keystore.get()
+const keystoreInstance = await keystore.get()
 
 // OR set the keystore to an instance that you already have
 await keystore.set(keystoreInstance)

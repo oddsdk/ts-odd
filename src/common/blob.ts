@@ -1,6 +1,6 @@
 export const toBuffer = async (blob: Blob): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
-    const fail = () => reject(new Error("Failed to read file"))
+    const fail: (() => void) = () => reject(new Error("Failed to read file"))
     const reader = new FileReader()
     reader.addEventListener('load', (e) => {
       const arrbuf = e?.target?.result || null

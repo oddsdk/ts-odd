@@ -7,7 +7,6 @@ import { dataRoot } from '../data-root'
 
 import * as keystore from '../keystore'
 import pathUtil from './path'
-import semver from './semver'
 import { asyncWaterfall } from '../common/util'
 
 
@@ -36,7 +35,7 @@ export class FileSystem {
   }
 
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', version = semver.latest } = opts
+    const { keyName = 'filesystem-root' } = opts
 
     const root = await PublicTreeBare.empty()
     const publicTree = await PublicTree.empty(null)
@@ -58,7 +57,7 @@ export class FileSystem {
 
     const root = await PublicTreeBare.fromCID(cid)
     const publicCID = root.findLinkCID('public')
-    const publicTree = publicCID !== null 
+    const publicTree = publicCID !== null
                         ? await PublicTree.fromCID(publicCID, null)
                         : null
 
@@ -67,8 +66,8 @@ export class FileSystem {
 
     const privateCID = root.findLinkCID('private')
     const key = await keystore.getKeyByName(keyName)
-    const privateTree = privateCID !== null 
-                          ? await PrivateTree.fromCID(privateCID, key) 
+    const privateTree = privateCID !== null
+                          ? await PrivateTree.fromCID(privateCID, key)
                           : null
 
     if (publicTree === null || privateTree === null) return null
@@ -90,7 +89,7 @@ export class FileSystem {
    * Upgrade public IPFS folder to FileSystem
    */
   static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', version = semver.latest } = opts
+    const { keyName = 'filesystem-root' } = opts
 
     const root = await PublicTreeBare.empty()
     const publicTree = await PublicTree.fromCID(cid, null)
@@ -159,9 +158,9 @@ export class FileSystem {
 
   async sync(): Promise<CID> {
     this.root = await asyncWaterfall(this.root, [
-      (t: Tree) => t.addChild('public', this.publicTree),
-      (t: Tree) => t.addChild('pretty', this.prettyTree),
-      (t: Tree) => t.addChild('private', this.privateTree)
+      (t: Tree): Promise<Tree> => t.addChild('public', this.publicTree),
+      (t: Tree): Promise<Tree> => t.addChild('pretty', this.prettyTree),
+      (t: Tree): Promise<Tree> => t.addChild('private', this.privateTree)
     ])
 
     const cid = await this.root.put()

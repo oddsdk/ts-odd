@@ -4,11 +4,11 @@ import { getIpfs } from '../ipfs'
 /**
  * Lookup a DNS TXT record.
  *
- * @param host The domain to get the TXT record from.
+ * @param domain The domain to get the TXT record from.
  * @returns Contents of the TXT record.
  */
-export function lookupTxtRecord(host: string): Promise<string> {
-  return fetch(`https://cloudflare-dns.com/dns-query?name=${host}&type=TXT`, {
+export function lookupTxtRecord(domain: string): Promise<string> {
+  return fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=TXT`, {
     headers: {
       "accept": "application/dns-json"
     }
@@ -22,25 +22,22 @@ export function lookupTxtRecord(host: string): Promise<string> {
 /**
  * Lookup a DNSLink.
  *
- * @param host The domain to get the DNSLink from.
+ * @param domain The domain to get the DNSLink from.
  * @returns Contents of the DNSLink with the "ipfs/" prefix removed.
  */
-export async function lookupDnsLink(host: string): Promise<string> {
+export async function lookupDnsLink(domain: string): Promise<string> {
   const ipfs = await getIpfs()
 
   let t
 
   try {
-    t = await ipfs.dns(host)
+    t = await ipfs.dns(domain)
   } catch (_) {
-    let prefixedHost
-
-    prefixedHost = host.match(/^https?:\/\//) ? host : `https://${host}`
-    prefixedHost = prefixedHost.includes("_dnslink.")
-      ? prefixedHost
-      : prefixedHost.replace("://", "://_dnslink.")
-
-    t = await lookupTxtRecord(prefixedHost)
+    t = await lookupTxtRecord(
+      domain.startsWith("_dnslink.")
+      ? domain
+      : `_dnslink.${domain}`
+    )
   }
 
   return t.replace(/^\/ipfs\//, "")

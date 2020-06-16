@@ -1,14 +1,14 @@
 import { Maybe } from "./types"
 
-export const removeKeyFromObj = <T> ( 
+export const removeKeyFromObj = <T> (
     obj: {[key: string]: T},
     key: string
   ): {[key: string]: T} => {
-  const { [key]: omit, ...rest } = obj
+  const { [key]: omit, ...rest } = obj // eslint-disable-line
   return rest
 }
 
-export const updateOrRemoveKeyFromObj = <T> ( 
+export const updateOrRemoveKeyFromObj = <T> (
     obj: {[key: string]: T},
     key: string,
     val: Maybe<T>
