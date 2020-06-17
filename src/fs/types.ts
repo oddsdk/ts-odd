@@ -91,7 +91,7 @@ export type SemVer = {
 
 export type PutResult = {
   cid: CID
-  pins: CID[]
+  pins: PinMap
 }
 
 // STATIC METHODS

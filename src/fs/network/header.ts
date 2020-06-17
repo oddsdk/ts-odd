@@ -56,16 +56,6 @@ export const getVersion = async (cid: CID, key: Maybe<string>): Promise<SemVer> 
  * ```
  */
 
-// const pinMapToList = (pins: PinMap): CID[] => {
-//   return Object.entries(pins).reduce((acc, cur) => {
-//     const children = cur[1]
-//     return [
-//       ...acc,
-//       ...children
-//     ]
-//   }, [] as CID[])
-// }
-
 export const put = async (
     index: CID,
     header: HeaderV1,
@@ -87,12 +77,21 @@ export const put = async (
   })
   const links = link.arrToMap(linksArr)
   const cid = await basic.putLinks(links, key)
-  const pinsForHeader = linksArr.map(l => l.cid)
-  const pins = [
+
+  const pinsForHeader = linksArr.reduce((acc, cur) => ({
+    ...acc,
+    [`${cur.name}`]: cur.cid
+  }), {} as PinMap)
+
+  const pins = {
     ...pinsForHeader,
-    // ...pinMapToList(header.pins),
-    cid
-  ]
+    index: {
+      ...header.pins,
+      '': pinsForHeader.index
+    },
+    '': cid
+  }
+
   return { cid, pins }
 }
 

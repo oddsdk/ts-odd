@@ -1,7 +1,7 @@
 import header from '../network/header'
 import basic from '../network/basic'
 import headerv1 from './header'
-import { Links, Tree, HeaderV1, NodeInfo, PutResult, StaticMethods, HeaderTree, HeaderFile } from '../types'
+import { Links, Tree, HeaderV1, NodeInfo, PutResult, StaticMethods, HeaderTree, HeaderFile, PinMap } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
@@ -137,7 +137,7 @@ export class PublicTree extends BaseTree implements HeaderTree {
     return this
   }
 
-  updatePins(name: string, pins: Maybe<CID[]>): this {
+  updatePins(name: string, pins: Maybe<PinMap>): this {
     this.header.pins = updateOrRemoveKeyFromObj(this.header.pins, name, pins)
     return this
   }

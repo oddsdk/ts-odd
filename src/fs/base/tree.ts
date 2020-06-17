@@ -1,4 +1,4 @@
-import pathUtil from '../path'
+import * as pathUtil from '../path'
 import { Links, Tree, File, SemVer, NonEmptyPath } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
