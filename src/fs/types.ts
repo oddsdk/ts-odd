@@ -67,7 +67,7 @@ export type HeaderV1 = {
   pins: PinMap
 }
 
-export type PinMap = { [cid: string]: CID[] }
+export type PinMap = { [name: string]: PinMap | CID }
 
 export type NodeInfo = HeaderV1 & {
   cid: CID
