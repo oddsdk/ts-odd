@@ -8,6 +8,13 @@ export const join = (parts: string[]): string => {
   return parts.join('/')
 }
 
+export const joinNoSuffix = (parts: string[]): string => {
+  const joined = join(parts)
+  return joined[joined.length -1] === '/' 
+          ? joined.slice(0, joined.length -1)
+          : joined
+}
+
 type HeadParts = {
   head: string | null
   nextPath: string | null
@@ -37,13 +44,4 @@ export const nextNonEmpty = (parts: NonEmptyPath): NonEmptyPath | null => {
     return null
   }
   return next as NonEmptyPath
-}
-
-
-export default {
-  splitParts,
-  join,
-  takeHead,
-  splitNonEmpty,
-  nextNonEmpty
 }
