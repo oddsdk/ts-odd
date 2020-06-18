@@ -8,6 +8,7 @@ import { dataRoot } from '../data-root'
 import * as keystore from '../keystore'
 import * as pathUtil from './path'
 import { pinMapToLinks } from './pins'
+import * as did from '../core/did'
 
 
 type ConstructorParams = {
@@ -16,6 +17,7 @@ type ConstructorParams = {
   prettyTree: BareTree
   privateTree: HeaderTree
   pinTree: BareTree
+  rootDID: string
 }
 
 
@@ -26,19 +28,21 @@ export class FileSystem {
   prettyTree: BareTree
   privateTree: HeaderTree
   pinTree: BareTree
+  rootDID: string
   syncHooks: Array<SyncHook>
 
-  constructor({ root, publicTree, prettyTree, privateTree, pinTree }: ConstructorParams) {
+  constructor({ root, publicTree, prettyTree, privateTree, pinTree, rootDID }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
     this.pinTree = pinTree
+    this.rootDID = rootDID
     this.syncHooks = []
   }
 
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root' } = opts
+    const { keyName = 'filesystem-root', rootDID = '' } = opts
 
     const root = await BareTree.empty()
     const publicTree = await PublicTree.empty(null)
@@ -53,29 +57,30 @@ export class FileSystem {
       publicTree,
       prettyTree,
       privateTree,
-      pinTree
+      pinTree,
+      rootDID
     })
   }
 
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { keyName = 'filesystem-root' } = opts
+    const { keyName = 'filesystem-root', rootDID = '' } = opts
 
     const root = await BareTree.fromCID(cid)
     const publicCID = root.findLinkCID('public')
     const publicTree = publicCID !== null
-                        ? await PublicTree.fromCID(publicCID, null)
-                        : null
+      ? await PublicTree.fromCID(publicCID, null)
+      : null
 
     const prettyTree = (await root.getDirectChild('pretty')) as BareTree ||
-                        await BareTree.empty()
-    const pinTree = (await root.getDirectChild('pins')) as BareTree || 
-                     await BareTree.empty()
+      await BareTree.empty()
+    const pinTree = (await root.getDirectChild('pins')) as BareTree ||
+      await BareTree.empty()
 
     const privateCID = root.findLinkCID('private')
     const key = await keystore.getKeyByName(keyName)
     const privateTree = privateCID !== null
-                          ? await PrivateTree.fromCID(privateCID, key)
-                          : null
+      ? await PrivateTree.fromCID(privateCID, key)
+      : null
 
     if (publicTree === null || privateTree === null) return null
 
@@ -84,12 +89,14 @@ export class FileSystem {
       publicTree,
       prettyTree,
       privateTree,
-      pinTree
+      pinTree,
+      rootDID
     })
   }
 
   static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const cid = await dataRoot(username)
+    opts.rootDID = await did.rootDIDForUser(username)
     return FileSystem.fromCID(cid, opts)
   }
 
@@ -133,8 +140,8 @@ export class FileSystem {
   }
 
   async updatePinTree(pins: PinMap): Promise<void> {
-    const pinLinks = await pinMapToLinks('private', pins) // @@TODO: add salt
-    console.log('pinLinks: ', pinLinks)
+    // we pass `this.rootDID` as a salt
+    const pinLinks = await pinMapToLinks('private', pins, this.rootDID)
     this.pinTree = BareTree.fromLinks(pinLinks)
     await this.root.addChild('pins', this.pinTree)
   }
