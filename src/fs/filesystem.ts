@@ -16,7 +16,7 @@ type ConstructorParams = {
   publicTree: HeaderTree
   prettyTree: BareTree
   privateTree: HeaderTree
-  pinTree: BareTree
+  pinsTree: BareTree
   rootDID: string
 }
 
@@ -27,16 +27,16 @@ export class FileSystem {
   publicTree: HeaderTree
   prettyTree: BareTree
   privateTree: HeaderTree
-  pinTree: BareTree
+  pinsTree: BareTree
   rootDID: string
   syncHooks: Array<SyncHook>
 
-  constructor({ root, publicTree, prettyTree, privateTree, pinTree, rootDID }: ConstructorParams) {
+  constructor({ root, publicTree, prettyTree, privateTree, pinsTree, rootDID }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
-    this.pinTree = pinTree
+    this.pinsTree = pinsTree
     this.rootDID = rootDID
     this.syncHooks = []
   }
@@ -47,17 +47,22 @@ export class FileSystem {
     const root = await BareTree.empty()
     const publicTree = await PublicTree.empty(null)
     const prettyTree = await BareTree.empty()
-    const pinTree = await BareTree.empty()
+    const pinsTree = await BareTree.empty()
 
     const key = await keystore.getKeyByName(keyName)
     const privateTree = await PrivateTree.empty(key)
+
+    await root.addChild('public', publicTree)
+    await root.addChild('pretty', prettyTree)
+    await root.addChild('private', privateTree)
+    await root.addChild('pins', pinsTree)
 
     return new FileSystem({
       root,
       publicTree,
       prettyTree,
       privateTree,
-      pinTree,
+      pinsTree,
       rootDID
     })
   }
@@ -73,7 +78,7 @@ export class FileSystem {
 
     const prettyTree = (await root.getDirectChild('pretty')) as BareTree ||
       await BareTree.empty()
-    const pinTree = (await root.getDirectChild('pins')) as BareTree ||
+    const pinsTree = (await root.getDirectChild('pins')) as BareTree ||
       await BareTree.empty()
 
     const privateCID = root.findLinkCID('private')
@@ -89,7 +94,7 @@ export class FileSystem {
       publicTree,
       prettyTree,
       privateTree,
-      pinTree,
+      pinsTree,
       rootDID
     })
   }
@@ -142,8 +147,8 @@ export class FileSystem {
   async updatePinTree(pins: PinMap): Promise<void> {
     // we pass `this.rootDID` as a salt
     const pinLinks = await pinMapToLinks('private', pins, this.rootDID)
-    this.pinTree = BareTree.fromLinks(pinLinks)
-    await this.root.addChild('pins', this.pinTree)
+    this.pinsTree = BareTree.fromLinks(pinLinks)
+    await this.root.addChild('pins', this.pinsTree)
   }
 
   async sync(): Promise<CID> {
