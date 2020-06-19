@@ -4,19 +4,29 @@ import { getIpfs } from '../ipfs'
 /**
  * Lookup a DNS TXT record.
  *
+ * If there are multiple records, they will be joined together.
+ *
  * @param domain The domain to get the TXT record from.
  * @returns Contents of the TXT record.
  */
-export function lookupTxtRecord(domain: string): Promise<string> {
+export function lookupTxtRecord(domain: string): Promise<string | null> {
   return fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=TXT`, {
     headers: {
       "accept": "application/dns-json"
     }
   })
   .then(r => r.json())
-  .then(r => r.Answer[0].data)
-  // remove double-quotes from beginning and end of the resulting string (if present)
-  .then(r => r && r.replace(/^"+|"+$/g, ""))
+  .then(r => {
+    if (r.Answer) {
+      // Join all answers.
+      // Also remove double-quotes from beginning and end of the resulting string (if present)
+      return r.Answer.map((a: { data: string }) => {
+        return a.data && a.data.replace(/^"+|"+$/g, "")
+      }).join("")
+    } else {
+      return null
+    }
+  })
 }
 
 /**
@@ -40,5 +50,5 @@ export async function lookupDnsLink(domain: string): Promise<string> {
     )
   }
 
-  return t.replace(/^\/ipfs\//, "")
+  return (t || "").replace(/^\/ipfs\//, "")
 }

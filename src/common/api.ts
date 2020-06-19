@@ -1,9 +1,13 @@
 import * as dns from '../dns'
 
 
-const didCache = {
-  did: '',
-  host: '',
+const didCache: {
+  did: string | null
+  host: string | null
+  lastFetched: number
+} = {
+  did: null,
+  host: null,
   lastFetched: 0,
 }
 
@@ -29,7 +33,7 @@ export function defaultEndpoint(): string {
  * @param
  */
 export async function did(apiEndpoint: string = DEFAULT_HOST): Promise<string> {
-  const host = apiEndpoint.replace(/^https?:\/\//, "").replace(/\/$/, "")
+  const host = apiEndpoint.replace(/^https?:\/\//, '').replace(/\/$/, '')
   const now = Date.now() // in milliseconds
 
   if (
@@ -41,5 +45,6 @@ export async function did(apiEndpoint: string = DEFAULT_HOST): Promise<string> {
     didCache.lastFetched = now
   }
 
+  if (!didCache.did) throw new Error("Couldn't get the Fission API DID")
   return didCache.did
 }
