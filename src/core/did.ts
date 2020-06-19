@@ -14,7 +14,7 @@ const BASE58_DID_PREFIX = 'did:key:z'
 /**
  * Create a DID to authenticate with.
  */
-export const own = async (): Promise<string> => {
+export const local = async (): Promise<string> => {
   const ks = await keystore.get()
 
   // Public-write key
@@ -32,6 +32,17 @@ export const root = async (
   try {
     const maybeDID = await dns.lookupTxtRecord(`_did.${username}.${domain}`)
     if(maybeDID !== null) return maybeDID
+  } catch (_err) { }
+  throw new Error("Could not locate user DID in dns")
+}
+
+export const rootShareKeys = async (
+  username: string,
+  domain = 'fission.name'
+): Promise<string[]> => {
+  try {
+    const maybeDIDs = await dns.lookupTxtRecord(`_share.${username}.${domain}`)
+    if(maybeDIDs !== null) return maybeDIDs.split(',')
   } catch (_err) { }
   throw new Error("Could not locate user DID in dns")
 }

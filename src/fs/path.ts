@@ -45,3 +45,10 @@ export const nextNonEmpty = (parts: NonEmptyPath): NonEmptyPath | null => {
   }
   return next as NonEmptyPath
 }
+
+export const indexPath = (path: string): string => {
+  const parts = splitParts(path)
+  const joined =  parts.join('/index/')
+  // cut off trailing slash
+  return joined.slice(0, joined.length - 2)
+}

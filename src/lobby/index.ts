@@ -21,7 +21,7 @@ export const createAccount = async (
 
   const jwt = await core.ucan({
     audience: await api.did(apiEndpoint),
-    issuer: await core.did.own(),
+    issuer: await core.did.local(),
   })
 
   const response = await fetch(`${apiEndpoint}/user`, {
@@ -73,7 +73,7 @@ export const makeRootUcan = async (
 
   return await core.ucan({
     audience: audience,
-    issuer: await core.did.own(),
+    issuer: await core.did.local(),
     lifetimeInSeconds,
   })
 }

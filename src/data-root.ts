@@ -38,7 +38,7 @@ export const updateDataRoot = async (
 
   const jwt = await core.ucan({
     audience: await api.did(apiEndpoint),
-    issuer: await core.did.own(),
+    issuer: await core.did.local(),
     proof: await localforage.getItem(UCAN_STORAGE_KEY)
   })
 

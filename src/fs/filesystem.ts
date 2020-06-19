@@ -1,7 +1,7 @@
 import BareTree from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
-import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree, PinMap } from './types'
+import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree, PinMap, HeaderFile } from './types'
 import { isString } from '../common/type-checks'
 import { CID, FileContent } from '../ipfs'
 import { dataRoot } from '../data-root'
@@ -10,6 +10,8 @@ import * as keystore from '../keystore'
 import * as pathUtil from './path'
 import { pinMapToLinks } from './pins'
 import * as core from '../core'
+import { sha256Str } from '../common/crypto'
+import * as check from './types/check'
 
 
 type ConstructorParams = {
@@ -18,7 +20,7 @@ type ConstructorParams = {
   prettyTree: BareTree
   privateTree: HeaderTree
   pinsTree: BareTree
-  keyTree: HeaderTree
+  sharedByMe: HeaderTree
   key: string
   rootDID: string
 }
@@ -31,18 +33,18 @@ export class FileSystem {
   prettyTree: BareTree
   privateTree: HeaderTree
   pinsTree: BareTree
-  keyTree: HeaderTree
+  sharedByMe: HeaderTree
   key: string
   rootDID: string
   syncHooks: Array<SyncHook>
 
-  constructor({ root, publicTree, prettyTree, privateTree, pinsTree, keyTree, key, rootDID }: ConstructorParams) {
+  constructor({ root, publicTree, prettyTree, privateTree, pinsTree, sharedByMe, key, rootDID }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
     this.pinsTree = pinsTree
-    this.keyTree = keyTree
+    this.sharedByMe = sharedByMe
     this.key = key
     this.rootDID = rootDID
     this.syncHooks = []
@@ -59,13 +61,13 @@ export class FileSystem {
     const key = await keystore.getKeyByName(keyName)
     const privateTree = await PrivateTree.empty(key)
 
-    const keyTree = await PublicTree.empty(null)
+    const sharedByMe = await PublicTree.empty(null)
 
     await root.addChild('public', publicTree)
     await root.addChild('pretty', prettyTree)
     await root.addChild('private', privateTree)
     await root.addChild('pins', pinsTree)
-    await root.addChild('keys', keyTree)
+    await root.addChild('keys', sharedByMe)
 
     const fs = new FileSystem({
       root,
@@ -73,13 +75,13 @@ export class FileSystem {
       prettyTree,
       privateTree,
       pinsTree,
-      keyTree,
+      sharedByMe,
       key,
       rootDID
     })
 
     // share filesystem wiht self
-    // const did = await core.did.own() 
+    // const did = await core.did.local() 
     // await fs.shareWith(did, )
 
     return fs
@@ -101,12 +103,12 @@ export class FileSystem {
 
     const keyCID = root.findLinkCID('keys')
     if(keyCID === null) return null
-    const keyTree = await PublicTree.fromCID(keyCID, null) 
+    const sharedByMe = await PublicTree.fromCID(keyCID, null) 
 
     // find root FS key by checking the /keys folder to see if current DID has access
-    const did = await core.did.own()
+    const did = await core.did.local()
     const ks = await keystore.get()
-    const encryptedKey = await keyTree.cat(did)
+    const encryptedKey = await sharedByMe.cat(did)
     if(!isString(encryptedKey)) {
       throw new Error("Filesystem not shared with current user")
     }
@@ -125,7 +127,7 @@ export class FileSystem {
       prettyTree,
       privateTree,
       pinsTree,
-      keyTree,
+      sharedByMe,
       key,
       rootDID
     })
@@ -184,18 +186,23 @@ export class FileSystem {
   }
 
   async shareWith(username: string, path: string): Promise<CID> {
-    if(!path.startsWith('private')) throw new Error('Can only share private folders.')
-    const dids = await core.share.getDeviceKeys(username)
+    const name = await sha256Str(pathUtil.indexPath(path) + this.rootDID)
+    const toShare = (await this.get(path)) as HeaderTree | Tree | HeaderFile | null
+    if(toShare === null) throw new Error('You tried to share a file that does not exist')
+    const toShareKey = check.hasHeader(toShare) ? toShare.getHeader().key : null
+    if(!toShareKey) throw new Error('You tried to share a public file')
+
+    const dids = await core.did.rootShareKeys(username)
     const ks = await keystore.get()
     await Promise.all(
       dids.map(async (did) => {
         const pubkey = core.did.didToPubKey(did)
         const encryptedRootKey = await ks.encrypt(this.key, pubkey)
-        await this.keyTree.add(did, encryptedRootKey)
+        await this.sharedByMe.add(`${did}/${name}`, encryptedRootKey)
       })
     )
 
-    await this.root.addChild('keys', this.keyTree)
+    await this.root.addChild('keys', this.sharedByMe)
     return this.sync()
   }
 

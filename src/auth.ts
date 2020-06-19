@@ -94,7 +94,7 @@ export async function isAuthenticated(options: {
  * @param lobby Specify a custom lobby.
  */
 export async function redirectToLobby(returnTo?: string, lobby?: string): Promise<void> {
-  const did = await core.did.own()
+  const did = await core.did.local()
   const origin = lobby || "https://auth.fission.codes"
   const redirectTo = returnTo || window.location.href
 

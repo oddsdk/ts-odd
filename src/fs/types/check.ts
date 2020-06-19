@@ -1,7 +1,10 @@
 import { isString, isObject, isNum } from '../../common'
 import { CID } from '../../ipfs'
-import { Tree, File, Link, Links, HeaderV1, NodeMap, SemVer, NodeInfo, PinMap } from '../types'
+import { Tree, File, Link, Links, HeaderV1, NodeMap, SemVer, NodeInfo, PinMap, HeaderFile, HeaderTree } from '../types'
 
+export const hasHeader = (obj: any): obj is HeaderFile | HeaderTree => {
+  return isObject(obj) && obj.getHeader !== undefined
+}
 
 export const isFile = (obj: any): obj is File => {
   return isObject(obj) && obj.content !== undefined 
