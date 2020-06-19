@@ -39,6 +39,7 @@ export const getVersion = async (cid: CID, key: Maybe<string>): Promise<SemVer> 
   return checkValue(version, isSemVer)
 }
 
+
 /**
  * Stores a DAG structure, optionally encrypted, on IPFS.
  * With the following format:
@@ -69,13 +70,15 @@ const pinMapToList = (pins: PinMap): CID[] => {
 export const put = async (
     index: CID,
     header: HeaderV1,
-    key: Maybe<string>
+    parentKey: Maybe<string>
   ): Promise<PutResult> => {
   const noUndefined = Object.entries(header)
     .filter( ([_, v]) => isDefined(v))
   const linksArr = await Promise.all(
     noUndefined.map(async([name, val]) => {
-      const { cid, size } = await ipfs.encoded.add(val as FileContent, key)
+      // encrypt key with parentKey and everything else with the node's key
+      const keyToUse = name === 'key' ? parentKey : header.key
+      const { cid, size } = await ipfs.encoded.add(val as FileContent, keyToUse)
       return { name, cid, isFile: true, size }
     })
   )
@@ -86,7 +89,7 @@ export const put = async (
     size: header.size
   })
   const links = link.arrToMap(linksArr)
-  const cid = await basic.putLinks(links, key)
+  const cid = await basic.putLinks(links, parentKey)
   const pinsForHeader = linksArr.map(l => l.cid)
   const pins = [
     ...pinsForHeader,
@@ -107,8 +110,10 @@ export const getHeaderAndIndex = async (
     valuesToGet: string[]
   ): Promise<HeaderAndIndex> => {
     const links = await basic.getLinks(cid, parentKey)
+    const maybeKey = await getValue(links, 'key', parentKey)
+    const key = checkValue(maybeKey, isString, true)
     const index = links['index']?.cid
-    const header = await getHeader(links, parentKey, valuesToGet)
+    const header = await getHeader(links, key, valuesToGet)
     if(!isString(index)) {
       throw new Error(`Could not find index for node at: ${cid}`)
     }
@@ -118,19 +123,20 @@ export const getHeaderAndIndex = async (
 
 export const getHeader = async (
     links: Links,
-    parentKey: Maybe<string>,
+    ownKey: Maybe<string>,
     valuesToGet: string[]
   ): Promise<UnstructuredHeader> => {
   let values = [] as unknown []
   for(let i=0; i<valuesToGet.length; i++) {
-    values.push(await getValue(links, valuesToGet[i], parentKey))
-
+    values.push(await getValue(links, valuesToGet[i], ownKey))
   }
-  return valuesToGet.reduce((acc, cur, i) => {
+  const header = valuesToGet.reduce((acc, cur, i) => {
     const value = values[i]
     acc[cur] = value
     return acc
   }, {} as UnstructuredHeader)
+  header.key = ownKey
+  return header
 }
 
 export const checkValue = <T>(val: any, checkFn: (val: any) => val is T, canBeNull = false): T => {

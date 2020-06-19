@@ -6,7 +6,7 @@ import { Maybe } from '../../common'
 import { CID } from '../../ipfs'
 import header, { checkValue } from '../network/header'
 
-export const values = ['name', 'isFile', 'mtime', 'size', 'version', 'key', 'fileIndex', 'pins']
+export const values = ['name', 'isFile', 'mtime', 'size', 'version', 'fileIndex', 'pins']
 
 export const empty = (): HeaderV1 => ({
   name: '',
