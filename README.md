@@ -102,7 +102,7 @@ Example:
 ```ts
 import FileSystem from 'fission-sdk/fs'
 const cid = "QmWKst5WVNTPfMsSFCQEJYBJLEsUZfghqrKXJBVU4EuA76"
-const wnfs = await FileSystem.empty(cid)
+const wnfs = await FileSystem.fromCID(cid)
 ```
 
 ---
