@@ -57,23 +57,3 @@ export const isUsernameValid = (username: string): boolean => {
          !!username.match(/[a-zA-Z1-9-]+/) &&
          !USERNAME_BLOCKLIST.includes(username)
 }
-
-/**
- * Make a root UCAN.
- * That's a UCAN with no proof and you are the issuer.
- *
- * @param audience The audience of the UCAN.
- * @param lifetimeInSeconds Default lifetime is a month.
- */
-export const makeRootUcan = async (
-  audience: string,
-  lifetimeInSeconds: number = 60 * 60 * 24 * 30
-): Promise<string> => {
-  if (!audience) throw new Error("`makeRootUcan` needs an `audience` as the first parameter")
-
-  return await core.ucan({
-    audience: audience,
-    issuer: await core.did(),
-    lifetimeInSeconds,
-  })
-}
