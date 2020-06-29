@@ -20,6 +20,7 @@ export const set = async (userKeystore: KeyStore): Promise<void> => {
   ks = userKeystore
 }
 
+// This looks a lot like a constructor
 export const get = async (): Promise<KeyStore> => {
   if (ks) return ks
   ks = await keystore.init(KEYSTORE_CFG)
