@@ -4,6 +4,7 @@ import { KeyStore, CryptoSystem } from 'keystore-idb/types'
 const KEYSTORE_CFG = { type: CryptoSystem.RSA }
 
 
+// Is the keystore a singleton?
 let ks: KeyStore | null = null
 
 

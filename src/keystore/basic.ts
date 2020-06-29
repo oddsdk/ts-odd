@@ -1,3 +1,5 @@
+// Consider breaking down by theme (e.g. crypto, I/O, &c)
+
 import aes from 'keystore-idb/aes'
 import * as keystore from './config'
 
