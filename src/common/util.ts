@@ -57,5 +57,7 @@ export const asyncWaterfall = async <T>(val: T, operations: ((val: T) => Promise
   }
   return acc
 
-  // hmmm why not run this in parallel? Promise.all(operations)
+  // hmmm why not run this in parallel? Promise.all(operations.map(acc))
+  // Oooooh it's accumulating. Interesting. _Do_ these have a dependency between them?
+  // This function could be a bottleneck, but unsure
 }
