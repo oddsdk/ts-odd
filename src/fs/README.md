@@ -23,6 +23,9 @@ These inherit from `PublicTree` / `PublicFile`, but each node has a `parentKey` 
 
 ### Inheritance structure
 As additional versions of the FS are added, the inheritance structure will look like:
+
+<!-- Hmmmm yeah. Thinkking this though more, I'm pretty sure that we can clean this up by using [stateless functions + inheritance the other way + TS interfaces] rather than mixins. Will dig in a second here -->
+
 ```
 publicV1.0.0 -> privateV1.0.0
        |                 
