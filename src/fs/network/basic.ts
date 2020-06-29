@@ -1,3 +1,5 @@
+// Hmm, not sure if this file belongs in fs
+//
 import ipfs, { CID, FileContent, AddResult } from '../../ipfs'
 
 import { Links, BasicLinks } from '../types'

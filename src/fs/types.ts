@@ -2,6 +2,8 @@ import { FileContent, CID } from '../ipfs'
 import { Maybe } from '../common/types'
 
 
+// NOTE: could be broken into separate files, unless these are recursively defined
+
 // FILESYSTEM
 // -----
 

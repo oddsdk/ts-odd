@@ -17,8 +17,9 @@ class BareTree extends BaseTree {
     this.links = links
   }
 
+  // why is this async? consistent interface? if so, maybe be explicit what we're implementing
   static async empty(): Promise<BareTree> {
-    return new BareTree({})
+    return new BareTree({}) // Why not just part of the constructor as a defautl value?
   }
 
   static async fromCID(cid: CID): Promise<BareTree> {

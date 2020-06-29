@@ -16,7 +16,9 @@ abstract class BaseTree implements Tree {
     if (dir === null) {
       throw new Error("Path does not exist")
     } else if (check.isFile(dir)) {
-      throw new Error('Can not `ls` a file')
+      throw new Error('Can not `ls` a file') // Note: tell the to use cat
+                                             // Though, FYI, POSIX will just give you an array with the one file.
+                                             // Especially since it's wildcardable
     }
     return dir.getLinks()
   }
@@ -84,6 +86,8 @@ abstract class BaseTree implements Tree {
     return this.rmNested(parts)
   }
 
+  // Essentially `rm -r`, cool cool.
+  // Random idea: I wonder if passing "recursive: true" as an option would be idioamtic
   async rmNested(path: NonEmptyPath): Promise<this> {
     const filename = path[path.length - 1]
     const parentPath = path.slice(0, path.length - 1)

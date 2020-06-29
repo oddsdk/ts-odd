@@ -27,7 +27,7 @@ const toString = (version: SemVer): string => {
   return `${major}.${minor}.${patch}`
 }
 
-const v0 = encode(0, 0, 0)
+const v0 = encode(0, 0, 0) // Hmm I wonder if we can do comparisons `version < Major(1)`
 const v1 = encode(1, 0, 0)
 const latest = encode(1, 0, 0)
 

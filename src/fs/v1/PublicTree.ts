@@ -48,6 +48,7 @@ export class PublicTree extends BaseTree implements HeaderTree {
     return obj.header !== undefined
   }
 
+  // Why?
   async emptyChildTree(): Promise<HeaderTree> {
     return this.static.tree.empty(this.ownKey)
   }
