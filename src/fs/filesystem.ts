@@ -10,6 +10,7 @@ import pathUtil from './path'
 import { asyncWaterfall } from '../common/util'
 
 
+// This is by far my favourite way of handling TS params
 type ConstructorParams = {
   root: Tree
   publicTree: HeaderTree
@@ -21,8 +22,8 @@ type ConstructorParams = {
 export class FileSystem {
 
   root: Tree
-  publicTree: HeaderTree
-  prettyTree: PublicTreeBare
+  publicTree: HeaderTree // Header? UPDATE: Oooh, a tree with headers. Gotcha.
+  prettyTree: PublicTreeBare // Bare sounds like it's an empty binary tree -- this is not!
   privateTree: HeaderTree
   syncHooks: Array<SyncHook>
 

@@ -10,6 +10,7 @@ export const toDAGLink = (link: BasicLink): DAGLink => {
   return new dagPB.DAGLink(name, size, cid)
 }
 
+// Consistent naming would be helpful -- fromUnixFSFile
 export const fromFSFile = (fsObj: UnixFSFile): Link => {
   const { name = '', cid, size, mtime, type } = fsObj
   return {
@@ -21,6 +22,7 @@ export const fromFSFile = (fsObj: UnixFSFile): Link => {
   }
 }
 
+// NodeMeta?
 export const fromNodeMap = (nodes: NodeMap): Links => {
   return mapObj(nodes, val => {
     const { name = '', cid, size, mtime, isFile } = val
@@ -28,6 +30,7 @@ export const fromNodeMap = (nodes: NodeMap): Links => {
   })
 }
 
+// Why not `new Link(...)`?
 export const make = (name: string, cid: string, isFile: boolean, size?: number): Link => {
   return {
     name,
@@ -38,6 +41,7 @@ export const make = (name: string, cid: string, isFile: boolean, size?: number):
   }
 }
 
+// Link.join([...])?
 export const arrToMap = (arr: Link[]): Links => {
   return arr.reduce((acc, cur) => {
     acc[cur.name] = cur
