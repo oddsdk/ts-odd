@@ -15,7 +15,7 @@ import { CID } from './ipfs'
  */
 export async function dataRoot(
   username: string,
-  domain: string = "fission.name"
+  domain: string = "fission.name" // Yeah same point here about teh Fission object. Might be good to globally configure these details. May be thinking too far down the line for right now, though
 ): Promise<CID> {
   try {
     return await dns.lookupDnsLink(username + "." + domain)
@@ -31,7 +31,7 @@ export async function dataRoot(
  * @param options Use custom API endpoint and DID.
  */
 export const updateDataRoot = async (
-  cid: CID | string,
+  cid: CID | string, // Doesn't CID ~ string? This is the same as writing string | string or CID | CID. Which raises the quetsion, _should_ CID ~ string?
   options: { apiEndpoint?: string } = {}
 ): Promise<void> => {
   const apiEndpoint = options.apiEndpoint || api.defaultEndpoint()
