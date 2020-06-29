@@ -1,3 +1,7 @@
+// Suggestion -- index could perhaps be reexports only
+// I almost skipped this file thinking that's what it was
+// I realize that this is a common pattern, but it may be cleaner. Thoughts?
+
 import * as core from '../core'
 import { api } from '../common'
 import { dataRoot } from '../data-root'

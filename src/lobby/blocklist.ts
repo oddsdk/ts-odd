@@ -1,4 +1,4 @@
-// "Lobby"? I'm not following the metamor/convention. Halp!
+// "Lobby"? I'm not following the metaphor/convention. Halp!
 
 
 /**
@@ -7,6 +7,12 @@
  * Keep in sync with the Fission API.
  * https://github.com/fission-suite/fission/blob/master/library/Fission/User/Username/Validation.hs
  */
+
+
+// Hmmm ya I remember talking about this before.
+// We also have this list on the server, where it's actually longer
+// Probs needs to be updated. I'm fine with maintaining this by hand.
+// How often does it get changed really?
 export const USERNAME_BLOCKLIST =
   [ "fission"
   , "ipfs"
