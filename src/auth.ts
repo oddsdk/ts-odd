@@ -41,6 +41,7 @@ export async function isAuthenticated(options: {
   const ucan = url.searchParams.get("ucan")
 
   if (ucan) {
+    // Wait, why is this here? Mixing responsabilities?
     const newUser = url.searchParams.get("newUser") === "t"
     const username = url.searchParams.get("username") || ""
 
@@ -56,7 +57,7 @@ export async function isAuthenticated(options: {
 
     return {
       throughLobby: true,
-      authenticated: true,
+      authenticated: true, // Can't we infer that we're authenticated if we have a user? Could be brittle
       newUser,
       username
     }
@@ -68,7 +69,7 @@ export async function isAuthenticated(options: {
     }})()
 
     return {
-      throughLobby: true,
+      throughLobby: true, // Why so much session state in this function? Nothing clearly broken, but it's a code smell. Will swing back.
       authenticated: false,
       cancelled: c
     }
@@ -96,7 +97,8 @@ export async function isAuthenticated(options: {
  */
 export async function redirectToLobby(returnTo?: string, lobby?: string): Promise<void> {
   const did = await core.did()
-  const origin = lobby || "https://auth.fission.codes"
+  const origin = lobby || "https://auth.fission.codes" // These peppered throughout may be an early sign that initializing a Fission object
+                                                       // could give us flexibility via dependency injection.
   const redirectTo = returnTo || window.location.href
 
   window.location.href = origin +
