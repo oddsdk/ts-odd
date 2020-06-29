@@ -50,6 +50,7 @@ export const arrContains = <T>(arr: T[], val: T): boolean => {
 }
 
 export const asyncWaterfall = async <T>(val: T, operations: ((val: T) => Promise<T>)[]): Promise<T> => {
+  // Why not reduce?
   let acc = val
   for(let i=0; i<operations.length; i++){
     acc = await operations[i](acc)
