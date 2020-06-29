@@ -56,4 +56,6 @@ export const asyncWaterfall = async <T>(val: T, operations: ((val: T) => Promise
     acc = await operations[i](acc)
   }
   return acc
+
+  // hmmm why not run this in parallel? Promise.all(operations)
 }

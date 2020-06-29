@@ -81,6 +81,7 @@ export class FileSystem {
     })
   }
 
+  // Nice
   static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const cid = await dataRoot(username)
     return FileSystem.fromCID(cid, opts)
@@ -107,6 +108,7 @@ export class FileSystem {
     })
   }
 
+  // Not sure if this is in an interface (will look), but it should! Docs, dependencies, &c.
   async ls(path: string): Promise<Links> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.ls(relPath)
@@ -117,7 +119,7 @@ export class FileSystem {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.mkdir(relPath)
     })
-    return this.sync()
+    return this.sync() // Not a huge fan of the term "sync". Had to think about it a few moments to realize that it wasn't "synchronous"
   }
 
   async add(path: string, content: FileContent): Promise<CID> {
@@ -150,6 +152,7 @@ export class FileSystem {
     const privateResult = await this.privateTree.putWithPins()
     const publicResult = await this.publicTree.putWithPins()
     const rootCID = await this.sync()
+    // Minor / inconsequential -- Can be rephrased with destructuring
     return [
       ...privateResult.pins,
       ...publicResult.pins,
@@ -158,6 +161,7 @@ export class FileSystem {
   }
 
   async sync(): Promise<CID> {
+    // waterfall? Why not in parallel?
     this.root = await asyncWaterfall(this.root, [
       (t: Tree): Promise<Tree> => t.addChild('public', this.publicTree),
       (t: Tree): Promise<Tree> => t.addChild('pretty', this.prettyTree),
@@ -173,6 +177,7 @@ export class FileSystem {
     return cid
   }
 
+  // Legit don't know what this means: synchronize vs synchronous
   addSyncHook(hook: SyncHook): Array<SyncHook> {
     this.syncHooks = [...this.syncHooks, hook]
     return this.syncHooks
@@ -192,6 +197,7 @@ export class FileSystem {
     const head = parts[0]
     const relPath = pathUtil.join(parts.slice(1))
 
+    // Why `a` not FileSystem? TS has subtyping. I easily could be missing something.
     let result: a
     let resultPretty: a
 
@@ -212,6 +218,7 @@ export class FileSystem {
         this.privateTree = result
       }
 
+      // NOTE TO SELF: pretty ~ reduction ~ view pattern
     } else if (head === 'pretty' && updateTree) {
       throw new Error("The pretty path is read only")
 
