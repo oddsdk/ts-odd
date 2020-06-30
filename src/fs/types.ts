@@ -118,6 +118,7 @@ export interface StaticMethods {
 // TREE
 // ----
 
+// Break into parts
 export interface Tree {
   version: SemVer
 
