@@ -160,6 +160,7 @@ export class FileSystem {
     ]
   }
 
+  // Maybe rename to pushRemote or other familiar metaphor
   async sync(): Promise<CID> {
     // waterfall? Why not in parallel?
     this.root = await asyncWaterfall(this.root, [

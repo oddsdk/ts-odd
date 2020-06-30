@@ -19,6 +19,8 @@ export class PublicTree extends BaseTree implements HeaderTree {
   protected ownKey: Maybe<string> = null // what is this?
     // UPDATE: this is a placeholder for a nonexistant encryption key
 
+  // Fine with this, and will be a pattern that we use for a few things,
+    // but also why not just inherited?
   protected static: StaticMethods
 
   constructor(header: HeaderV1, parentKey: Maybe<string>) {
