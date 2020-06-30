@@ -13,8 +13,10 @@ import semver from '../semver'
 export class PublicTree extends BaseTree implements HeaderTree {
 
   protected header: HeaderV1
-  protected parentKey: Maybe<string>
-  protected ownKey: Maybe<string> = null
+  protected parentKey: Maybe<string> // Oooooh this will likely make life harder
+                                     // Suddenly you have a dependency on the entire tree
+
+  protected ownKey: Maybe<string> = null // what is this?
 
   protected static: StaticMethods
 
