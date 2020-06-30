@@ -6,7 +6,7 @@ import BaseFile from '../base/file'
 export class BareFile extends BaseFile {
 
   static create(content: FileContent): BareFile {
-    return new BareFile(content) // why not `super`?
+    return new BareFile(content) // why not the constructor?
   }
 
   static async fromCID(cid: CID): Promise<BareFile> {

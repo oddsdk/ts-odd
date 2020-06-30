@@ -17,6 +17,7 @@ export class PublicTree extends BaseTree implements HeaderTree {
                                      // Suddenly you have a dependency on the entire tree
 
   protected ownKey: Maybe<string> = null // what is this?
+    // UPDATE: this is a placeholder for a nonexistant encryption key
 
   protected static: StaticMethods
 

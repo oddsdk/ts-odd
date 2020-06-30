@@ -6,6 +6,7 @@ import { Maybe } from '../../common'
 import { CID } from '../../ipfs'
 import header, { checkValue } from '../network/header'
 
+// Why not use the TS Keys?
 export const values = ['name', 'isFile', 'mtime', 'size', 'version', 'key', 'fileIndex', 'pins']
 
 export const empty = (): HeaderV1 => ({
@@ -25,9 +26,9 @@ type Result = {
 }
 
 export const getHeaderAndIndex = async (cid: CID, parentKey: Maybe<string>): Promise<Result> => {
-  const result = await header.getHeaderAndIndex(cid, parentKey, values)
+  const result = await header.getHeaderAndIndex(cid, parentKey, values) // ??
   const unstructured = result.header
-  const headerVal = parseAndCheck(unstructured)
+  const headerVal = parseAndCheck(unstructured) // `And` is a smell
   return { index: result.index, header: headerVal }
 }
 
