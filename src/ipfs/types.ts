@@ -7,6 +7,7 @@ export type IPFS = {
   dns(domain: string): Promise<CID>
 }
 
+// Serializatin only
 export type DAGNode = {
   Links: DAGLink[]
   size: number
@@ -16,6 +17,7 @@ export type DAGNode = {
   toJSON: () => object
 }
 
+// Serialziation only
 export type DAGLink = {
   Name: string
   Hash: string
@@ -62,21 +64,27 @@ export type CIDObj = {
   version: number
 }
 
+// Why have Content and ContentRaw separate?
 export type FileContent = object | Blob | string | number | boolean
 export type FileContentRaw = Buffer
 
+// Why?
 export type FileMode = number
 
+// Is this an IPFS type, or ours?
+// ANSWER: it's the built-in one
 export type UnixFSFile = {
   cid: CIDObj
   path: string
   size: number
-  mode?: FileMode
-  mtime?: number
-  name?: string
-  type?: string
+  mode?: FileMode // UCAN
+  mtime?: number  // I'm divided on this one, because distributed systems and clock drift
+                  // We may stamp each generation instead?
+  name?: string   // Handle with structural links
+  type?: string   // Ya, probably a good idea. Extension if nothing else
 }
 
+// cool cool
 export type ObjStat = {
   Hash: string
   NumLinks: number
@@ -86,6 +94,7 @@ export type ObjStat = {
   CumulativeSize: number
 }
 
+// What is "Add Result"? Could use better naming
 export type AddResult = {
   cid: CID
   size: number

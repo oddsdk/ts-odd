@@ -171,6 +171,7 @@ export class FileSystem {
 
     const cid = await this.root.put()
 
+    // What are we using these hooks for?
     this.syncHooks.forEach(hook => {
       hook(cid)
     })
@@ -179,6 +180,7 @@ export class FileSystem {
   }
 
   // Legit don't know what this means: synchronize vs synchronous
+  // I don't see us actually using the sync hooks anywhere?
   addSyncHook(hook: SyncHook): Array<SyncHook> {
     this.syncHooks = [...this.syncHooks, hook]
     return this.syncHooks

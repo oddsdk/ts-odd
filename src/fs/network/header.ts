@@ -133,6 +133,7 @@ export const getHeader = async (
   }, {} as UnstructuredHeader)
 }
 
+// looks like a parser. Design pattern suggestion: "parse, don't validate"
 export const checkValue = <T>(val: any, checkFn: (val: any) => val is T, canBeNull = false): T => {
   if(!isValue(val)){
     if(canBeNull) return val
