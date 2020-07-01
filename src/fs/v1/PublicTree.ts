@@ -33,6 +33,7 @@ export class PublicTree extends BaseTree implements HeaderTree {
     }
   }
 
+  // Wait wait... why async?
   static async empty (parentKey: Maybe<string>): Promise<HeaderTree> {
     return new PublicTree({
       ...headerv1.empty(),
