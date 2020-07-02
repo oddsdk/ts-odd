@@ -37,7 +37,7 @@ export const updateDataRoot = async (
 ): Promise<void> => {
   const apiEndpoint = options.apiEndpoint || api.defaultEndpoint()
 
-  const jwt = await ucan.compose({
+  const jwt = await ucan.build({
     audience: await api.did(apiEndpoint),
     issuer: await did.local(),
     proof: await localforage.getItem(UCAN_STORAGE_KEY)

@@ -20,7 +20,7 @@ export const createAccount = async (
 ): Promise<{ success: boolean }> => {
   const apiEndpoint = options.apiEndpoint || api.defaultEndpoint()
 
-  const jwt = await ucan.compose({
+  const jwt = await ucan.build({
     audience: await api.did(apiEndpoint),
     issuer: await did.local(),
   })

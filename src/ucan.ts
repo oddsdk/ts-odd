@@ -25,7 +25,7 @@ import { base64 } from './common'
  * `rsc`, Resource, the involved resource.
  *
  */
-export const compose = async ({
+export const build = async ({
   audience,
   issuer,
   lifetimeInSeconds = 30,
