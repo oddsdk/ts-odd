@@ -1,32 +1,8 @@
-import * as base58 from 'base58-universal/main.js'
 import { CryptoSystem } from 'keystore-idb/types'
-import utils from 'keystore-idb/utils'
 
-import * as keystore from '../keystore'
-import { base64 } from '../common'
+import * as keystore from './keystore'
+import { base64 } from './common'
 
-
-// const EDW_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
-const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
-
-
-/**
- * Create a DID to authenticate with.
- */
-export const did = async (): Promise<string> => {
-  const ks = await keystore.get()
-
-  // Public-write key
-  const pwB64 = await ks.publicWriteKey()
-  const pwBuf = utils.base64ToArrBuf(pwB64)
-
-  // Prefix public-write key
-  const prefix = magicBytes(ks.cfg.type) || new ArrayBuffer(0)
-  const prefixedBuf = utils.joinBufs(prefix, pwBuf)
-
-  // Encode prefixed
-  return 'did:key:z' + base58.encode(new Uint8Array(prefixedBuf))
-}
 
 /**
  * Create a UCAN, User Controlled Authorization Networks, JWT.
@@ -49,7 +25,7 @@ export const did = async (): Promise<string> => {
  * `rsc`, Resource, the involved resource.
  *
  */
-export const ucan = async ({
+export const compose = async ({
   audience,
   issuer,
   lifetimeInSeconds = 30,
@@ -105,10 +81,10 @@ export const ucan = async ({
  * @param ucan A UCAN.
  * @returns The root issuer.
  */
-export function ucanRootIssuer(ucan: string, level = 0): string {
-  const payload = ucanPayload(ucan, level)
-  if (payload.prf) return ucanRootIssuer(payload.prf, level + 1)
-  return payload.iss
+export function rootIssuer(ucan: string, level = 0): string {
+  const p = payload(ucan, level)
+  if (p.prf) return rootIssuer(p.prf, level + 1)
+  return p.iss
 }
 
 
@@ -128,22 +104,11 @@ function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
 
 
 /**
- * Magic bytes
- */
-function magicBytes(cryptoSystem: CryptoSystem): ArrayBuffer | null {
-  switch (cryptoSystem) {
-    case CryptoSystem.RSA: return RSA_DID_PREFIX;
-    default: return null
-  }
-}
-
-
-/**
  * Extract the payload of a UCAN.
  *
  * Throws when given an improperly formatted UCAN.
  */
-function ucanPayload(ucan: string, level: number): { iss: string; prf: string | null } {
+function payload(ucan: string, level: number): { iss: string; prf: string | null } {
   try {
     return JSON.parse(base64.urlDecode(ucan.split(".")[1]))
   } catch (_) {

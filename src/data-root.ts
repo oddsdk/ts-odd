@@ -1,7 +1,8 @@
 import localforage from 'localforage'
 
-import * as core from './core'
+import * as did from './did'
 import * as dns from './dns'
+import * as ucan from './ucan'
 import { api, UCAN_STORAGE_KEY } from './common'
 import { CID } from './ipfs'
 
@@ -36,9 +37,9 @@ export const updateDataRoot = async (
 ): Promise<void> => {
   const apiEndpoint = options.apiEndpoint || api.defaultEndpoint()
 
-  const jwt = await core.ucan({
+  const jwt = await ucan.compose({
     audience: await api.did(apiEndpoint),
-    issuer: await core.did(),
+    issuer: await did.local(),
     proof: await localforage.getItem(UCAN_STORAGE_KEY)
   })
 

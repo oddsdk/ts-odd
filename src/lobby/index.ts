@@ -1,4 +1,5 @@
-import * as core from '../core'
+import * as did from '../did'
+import * as ucan from '../ucan'
 import { api } from '../common'
 import { dataRoot } from '../data-root'
 
@@ -19,9 +20,9 @@ export const createAccount = async (
 ): Promise<{ success: boolean }> => {
   const apiEndpoint = options.apiEndpoint || api.defaultEndpoint()
 
-  const jwt = await core.ucan({
+  const jwt = await ucan.compose({
     audience: await api.did(apiEndpoint),
-    issuer: await core.did(),
+    issuer: await did.local(),
   })
 
   const response = await fetch(`${apiEndpoint}/user`, {
