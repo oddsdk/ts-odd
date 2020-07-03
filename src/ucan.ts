@@ -45,7 +45,7 @@ export const build = async ({
   const header = {
     alg: jwtAlgorithm(ks.cfg.type) || 'UnknownAlgorithm',
     typ: 'JWT',
-    uav: '0.1.0',
+    uav: '1.0.0',
   }
 
   const payload = {

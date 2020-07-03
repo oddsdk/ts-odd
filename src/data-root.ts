@@ -17,7 +17,7 @@ import { CID } from './ipfs'
 export async function dataRoot(
   username: string,
   domain: string = "fission.name"
-): Promise<CID> {
+): Promise<CID | null> {
   try {
     return await dns.lookupDnsLink(username + "." + domain)
   } catch(err) {

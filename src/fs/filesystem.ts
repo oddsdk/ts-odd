@@ -82,7 +82,7 @@ export class FileSystem {
 
   static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const cid = await dataRoot(username)
-    return FileSystem.fromCID(cid, opts)
+    return cid ? FileSystem.fromCID(cid, opts) : null
   }
 
   /**
