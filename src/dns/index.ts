@@ -20,11 +20,25 @@ export function lookupTxtRecord(domain: string): Promise<string | null> {
     if (r.Answer) {
       // Join all answers.
       // Also remove double-quotes from beginning and end of the resulting string (if present)
-      return r.Answer.map((a: { data: string }) => {
-        return a.data && a.data.replace(/^"+|"+$/g, "")
-      }).join("")
+      const answers: Array<string> = r.Answer.map((a: { data: string }) => {
+        return (a.data || "").replace(/^"+|"+$/g, "")
+      })
+
+      // Sort by prefix, if prefix is present
+      if (answers[0][3] === ";") {
+        return answers
+          .sort((a, b) => a.slice(0, 4).localeCompare(b.slice(0, 4)))
+          .map(a => a.slice(4))
+          .join("")
+
+      } else {
+        return answers.join("")
+
+      }
+
     } else {
       return null
+
     }
   })
 }
@@ -33,7 +47,7 @@ export function lookupTxtRecord(domain: string): Promise<string | null> {
  * Lookup a DNSLink.
  *
  * @param domain The domain to get the DNSLink from.
- * @returns Contents of the DNSLink with the "ipfs/" prefix removed.
+ * @returns Contents of the DNSLink with the "ipfs/" and "ipns/" prefixes removed.
  */
 export async function lookupDnsLink(domain: string): Promise<string | null> {
   const ipfs = await getIpfs()
@@ -51,6 +65,6 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
   }
 
   return t
-    ? t.replace(/^\/ipfs\//, "")
+    ? t.replace(/^dnslink=/, "").replace(/^\/ip(f|n)s\//, "").split("/")[0]
     : null
 }
