@@ -64,7 +64,7 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
     )
   }
 
-  return t
-    ? t.replace(/^dnslink=/, "").replace(/^\/ip(f|n)s\//, "").split("/")[0]
+  return t && !t.includes("/ipns/")
+    ? t.replace(/^dnslink=/, "").replace(/^\/ipfs\//, "")
     : null
 }
