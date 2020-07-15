@@ -152,7 +152,7 @@ export class FileSystem {
       throw new Error(`Path does not exist: ${from}`)
     } 
     const toParts = pathUtil.splitParts(to)
-    const destPath = pathUtil.join(toParts.slice(0, toParts.length - 2)) // remove file/dir name
+    const destPath = pathUtil.join(toParts.slice(0, toParts.length - 1)) // remove file/dir name
     const destination = await this.get(destPath)
     if (check.isFile(destination)) {
       throw new Error(`Can not \`mv\` to a file: ${destPath}`)
