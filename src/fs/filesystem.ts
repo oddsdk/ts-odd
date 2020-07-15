@@ -157,7 +157,8 @@ export class FileSystem {
     if (check.isFile(destination)) {
       throw new Error(`Can not \`mv\` to a file: ${destPath}`)
     }
-    return this.addChild(to, node)
+    await this.addChild(to, node)
+    return this.rm(from)
   }
 
   async addChild(path: string, toAdd: Tree | FileContent): Promise<CID> {
