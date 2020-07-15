@@ -126,7 +126,7 @@ export interface Tree {
   rm(path: string): Promise<Tree>
   get(path: string): Promise<Tree | File | null>
   pathExists(path: string): Promise<boolean>
-  addChild(path: string, toAdd: Tree | File): Promise<this>
+  addChild(path: string, toAdd: Tree | FileContent): Promise<this>
   addRecurse (path: NonEmptyPath, child: Tree | FileContent): Promise<this>
 
   put(): Promise<CID>

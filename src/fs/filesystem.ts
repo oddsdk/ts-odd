@@ -2,6 +2,7 @@ import PublicTreeBare from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
 import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree } from './types'
+import check from './types/check'
 import { CID, FileContent } from '../ipfs'
 import { dataRoot } from '../data-root'
 
@@ -143,6 +144,28 @@ export class FileSystem {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.get(relPath)
     })
+  }
+
+  async mv(from: string, to: string): Promise<CID> {
+    const node = await this.get(from)
+    if (node === null) {
+      throw new Error(`Path does not exist: ${from}`)
+    } 
+    const toParts = pathUtil.splitParts(to)
+    const destPath = pathUtil.join(toParts.slice(0, toParts.length - 1)) // remove file/dir name
+    const destination = await this.get(destPath)
+    if (check.isFile(destination)) {
+      throw new Error(`Can not \`mv\` to a file: ${destPath}`)
+    }
+    await this.addChild(to, node)
+    return this.rm(from)
+  }
+
+  async addChild(path: string, toAdd: Tree | FileContent): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.addChild(relPath, toAdd)
+    })
+    return this.sync()
   }
 
   async pinList(): Promise<CID[]> {
