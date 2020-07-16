@@ -49,7 +49,7 @@ export function lookupTxtRecord(domain: string): Promise<string | null> {
  * Lookup a DNSLink.
  *
  * @param domain The domain to get the DNSLink from.
- * @returns Contents of the DNSLink with the "ipfs/" and "ipns/" prefixes removed.
+ * @returns Contents of the DNSLink with the "ipfs/" prefix removed.
  */
 export async function lookupDnsLink(domain: string): Promise<string | null> {
   const ipfs = await getIpfs()
