@@ -1,5 +1,5 @@
 export type IPFS = {
-  add(data: FileContent, options?: unknown): AsyncIterable<UnixFSFile>
+  add(data: FileContent, options?: unknown): UnixFSFile
   cat(cid: CID): AsyncIterable<FileContentRaw>
   ls(cid: CID): AsyncIterable<UnixFSFile>
   dag: DagAPI
