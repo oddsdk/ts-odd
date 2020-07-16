@@ -5,6 +5,8 @@ import { getIpfs } from '../ipfs'
  * Lookup a DNS TXT record.
  *
  * If there are multiple records, they will be joined together.
+ * Records are sorted by a decimal prefix before they are joined together.
+ * Prefixes have a format of `001;` → `999;`
  *
  * @param domain The domain to get the TXT record from.
  * @returns Contents of the TXT record.
@@ -18,13 +20,13 @@ export function lookupTxtRecord(domain: string): Promise<string | null> {
   .then(r => r.json())
   .then(r => {
     if (r.Answer) {
-      // Join all answers.
-      // Also remove double-quotes from beginning and end of the resulting string (if present)
+      // Remove double-quotes from beginning and end of the resulting string (if present)
       const answers: Array<string> = r.Answer.map((a: { data: string }) => {
         return (a.data || "").replace(/^"+|"+$/g, "")
       })
 
-      // Sort by prefix, if prefix is present
+      // Sort by prefix, if prefix is present,
+      // and then add the answers together as one string.
       if (answers[0][3] === ";") {
         return answers
           .sort((a, b) => a.slice(0, 4).localeCompare(b.slice(0, 4)))
