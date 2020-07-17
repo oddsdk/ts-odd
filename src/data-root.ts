@@ -19,7 +19,7 @@ export async function dataRoot(
   domain: string = "fission.name"
 ): Promise<CID | null> {
   try {
-    return await dns.lookupDnsLink(username + "." + domain)
+    return await dns.lookupDnsLink(username + ".files." + domain)
   } catch(err) {
     throw new Error("Could not locate user root in dns")
   }

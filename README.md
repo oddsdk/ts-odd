@@ -19,13 +19,62 @@ Get started making fission-enabled apps with the Fission SDK!
 ## What you'll find here
 
 The Fission SDK offers tools for:
-- managing a user's web native **file system**
-- managing a user's **private keys**
-- **authenticating & authorizing** user actions
+- authenticating through a Fission **authentication lobby**  
+  (a lobby is where you can make a Fission account or link an account)
+- managing your web native **file system**
+- setting your **data root**  
+  (a data root is a pointer to a version of your file system)
+- tools for building DIDs and UCANs.
+
+```js
+// ES6
+import sdk from 'fission-sdk'
+
+// Browser/UMD build
+self.fissionSdk
+```
 
 You'll also find some helper functions for interacting with some of the building blocks:
 - [js-ipfs](https://github.com/ipfs/js-ipfs) for distributed file storage
 - [keystore-idb](https://github.com/fission-suite/keystore-idb) for key management, encryption & digital signatures
+
+
+
+# Authentication
+
+[auth.fission.codes](https://auth.fission.codes) is our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser.
+
+```js
+const auth = await sdk.isAuthenticated()
+
+if (auth.cancelled) {
+  // User was redirected to lobby,
+  // but cancelled the authorisation.
+
+} else if (auth.newUser) {
+  // This authenticated user is new to Fission.
+
+} else if (auth.authenticated) {
+  // Authenticated 🍿
+  //
+  // additional data:
+  // auth.throughLobby  -  If the user authenticated through the lobby, or just came back.
+  // auth.username      -  User's username
+
+} else {
+  // Not authenticated 🙅‍♀️
+  sdk.redirectToLobby()
+
+}
+```
+
+`redirectToLobby` takes two optional parameters, first one being the most important, the url that the lobby should redirect back to (the default is `location.href`).
+
+
+## Other functions
+
+- `await sdk.deauthenticate()`
+- `await sdk.authenticatedUsername()`
 
 
 
@@ -43,6 +92,7 @@ WNFS exposes a familiar POSIX-style interface:
 - `cat`: retrieve a file
 - `ls`: list a directory
 - `mkdir`: create a directory
+- `mv`: move a file or directory
 - `rm`: remove a file or directory
 
 
@@ -216,6 +266,23 @@ const updatedCID = await wnfs.mkdir("public/some/directory/path")
 
 ---
 
+**mv**
+
+Move a directory or file from one path to another
+
+Params:
+- pathA: `string` **required**
+- pathB: `string` **required**
+
+Returns: `CID` the updated _root_ CID for the file system
+
+Example:
+```ts
+const updatedCID = await wnfs.mv("public/doc.md", "private/Documents/notes.md")
+```
+
+---
+
 **pinList**
 
 Retrieves an array of all CIDs that need to be pinned in order to backup the FS.
@@ -262,9 +329,33 @@ const rootCID = await wnfs.sync()
 
 
 
-# Users & Key
+# Data Root
 
-## 🚧 Under Construction 🚧
+_⚠ This part will be removed later, and will be done automatically by the SDK._
+
+When you update your file system (more on the file system later), it only updates it locally, so you need to tell the Fission API it's changed. This is done through "updating" the data root.
+
+```js
+const syncHook = debounce(
+  cid => sdk.updateDataRoot(cid),
+  5000
+)
+
+fs = await sdk.fs.fromCID(cid)
+if (fs) fs.addSyncHook(syncHook)
+```
+
+
+
+# Customisation
+
+Customisation can be done using the `setup` module.
+Run these before anything else you do with the SDK.
+
+```js
+// js-ipfs options
+sdk.setup.ipfs({ init: { repo: "my-ipfs-repo" } })
+```
 
 
 
@@ -295,6 +386,8 @@ const keystoreInstance = await keystore.get()
 // OR set the keystore to an instance that you already have
 await keystore.set(keystoreInstance)
 ```
+
+
 
 # Development
 

@@ -1,23 +1,18 @@
 import dagPB from 'ipld-dag-pb'
-import { getIpfs } from './config'
+import { get as getIpfs } from './config'
 import { CID, FileContent, DAGNode, UnixFSFile, DAGLink, AddResult } from './types'
 import util from './util'
 import { DAG_NODE_DATA } from './constants'
 
 export const add = async (content: FileContent): Promise<AddResult> => {
   const ipfs = await getIpfs()
-  const chunks = []
-  let size = 0
-  for await (const chunk of ipfs.add(content)) {
-    chunks.push(chunk)
-    size += chunk.size
-  }
-  // return cid of last object (root)
-  const cid = chunks[chunks.length - 1].cid.toString()
+  const result = await ipfs.add(content)
+
   return {
-    cid,
-    size
+    cid: result.cid.toString(),
+    size: result.size
   }
+
 }
 
 export const catRaw = async (cid: CID): Promise<Buffer[]> => {
