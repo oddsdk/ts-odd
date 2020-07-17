@@ -2,7 +2,10 @@ import getIpfsWithCfg from 'get-ipfs'
 import { IPFS } from './types'
 
 const PEER_WSS = "/dns4/node.fission.systems/tcp/4003/wss/ipfs/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw"
-const IPFS_CFG = { browserPeers: [ PEER_WSS ] }
+const IPFS_CFG = {
+  browserPeers: [ PEER_WSS ],
+  jsIpfs: "https://unpkg.com/ipfs@0.48.0/dist/index.min.js"
+}
 
 let ipfs: IPFS | null = null
 
