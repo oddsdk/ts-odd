@@ -92,6 +92,7 @@ WNFS exposes a familiar POSIX-style interface:
 - `cat`: retrieve a file
 - `ls`: list a directory
 - `mkdir`: create a directory
+- `mv`: move a file or directory
 - `rm`: remove a file or directory
 
 
