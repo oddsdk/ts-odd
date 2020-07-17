@@ -347,6 +347,18 @@ if (fs) fs.addSyncHook(syncHook)
 
 
 
+# Customisation
+
+Customisation can be done using the `setup` module.
+Run these before anything else you do with the SDK.
+
+```js
+// js-ipfs options
+sdk.setup.ipfs({ init: { repo: "my-ipfs-repo" } })
+```
+
+
+
 # Building Blocks
 
 **Warning: Here be 🐉! Only use lower level utilities if you know what you're doing.**

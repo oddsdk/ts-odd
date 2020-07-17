@@ -6,6 +6,7 @@ import * as dns from './dns'
 import * as ipfs from './ipfs'
 import * as keystore from './keystore'
 import * as lobby from './lobby'
+import * as setup from './setup'
 import * as ucan from './ucan'
 
 import fs from './fs'
@@ -19,6 +20,7 @@ export default {
   fs,
   did,
   lobby,
+  setup,
   ucan,
 
   // Basement

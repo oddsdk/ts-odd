@@ -2629,11 +2629,6 @@ get-caller-file@^2.0.1:
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-2.0.5.tgz#4f94412a82db32f36e3b0b9741f8a97feb031f7e"
   integrity sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==
 
-get-ipfs@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/get-ipfs/-/get-ipfs-1.2.0.tgz#a078b288566fb9d28488423311861f4e9f1becb3"
-  integrity sha512-owHCiRbiwkp2x/Q1rSddo7Jv5t1p6oEEptEf++R8mCUY7xqFVjCVgOSpkLITXuLNaJuMM3aTuVPYGGWjSPqxkg==
-
 get-own-enumerable-property-symbols@^3.0.0:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/get-own-enumerable-property-symbols/-/get-own-enumerable-property-symbols-3.0.2.tgz#b5fde77f22cbe35f390b4e089922c50bce6ef664"
@@ -3902,6 +3897,11 @@ listr@^0.14.3:
     listr-verbose-renderer "^0.5.0"
     p-map "^2.0.0"
     rxjs "^6.3.3"
+
+load-script2@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/load-script2/-/load-script2-2.0.5.tgz#e947147915484bd8f5e60b95846885e1482d8aa5"
+  integrity sha512-us9ph1JbJukMCIj4Wz9yjGSsBZ3CAlvFYu2JnQ+5RFoepx0DOT0NV9EAxCRoefCtgumjPkD4+555uz4fenUfxg==
 
 localforage@^1.7.3:
   version "1.7.3"

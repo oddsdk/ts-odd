@@ -1,4 +1,4 @@
-import { getIpfs } from '../ipfs'
+import { get as getIpfs } from '../ipfs'
 
 
 /**

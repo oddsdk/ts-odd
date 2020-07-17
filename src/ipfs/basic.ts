@@ -1,5 +1,5 @@
 import dagPB from 'ipld-dag-pb'
-import { getIpfs } from './config'
+import { get as getIpfs } from './config'
 import { CID, FileContent, DAGNode, UnixFSFile, DAGLink, AddResult } from './types'
 import util from './util'
 import { DAG_NODE_DATA } from './constants'
