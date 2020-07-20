@@ -28,21 +28,37 @@ export class FileSystem {
   publicTree: HeaderTree
   prettyTree: PublicTreeBare
   privateTree: HeaderTree
+
   syncHooks: Array<SyncHook>
+  syncWhenOnline: CID | null
+
 
   constructor({ root, publicTree, prettyTree, privateTree }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
+
     this.syncHooks = []
+    this.syncWhenOnline = null
 
     // Update the user's data root when making changes
     auth.authenticatedUsername().then(username => {
-      const syncHook = throttle(5000, updateDataRoot)
-      this.syncHooks = [ syncHook ]
+      const syncHook = throttle(5000, cid => {
+        if (window.navigator.onLine) return updateDataRoot(cid)
+        this.syncWhenOnline = cid
+      })
+      this.syncHooks.push(syncHook)
     })
+
+    // Sync when coming back online
+    window.addEventListener('online', () => this.whenOnline())
   }
+
+
+
+  // INITIALISATION
+  // --------------
 
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root' } = opts
@@ -116,6 +132,20 @@ export class FileSystem {
     })
   }
 
+
+
+  // DEACTIVATE
+  // ----------
+
+  deactivate(): void {
+    window.removeEventListener('online', this.whenOnline)
+  }
+
+
+
+  // POSIX INTERFACE
+  // ---------------
+
   async ls(path: string): Promise<Links> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.ls(relPath)
@@ -170,11 +200,23 @@ export class FileSystem {
     return this.rm(from)
   }
 
+
+
+  // OTHER
+  // -----
+
   async addChild(path: string, toAdd: Tree | FileContent): Promise<CID> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.addChild(relPath, toAdd)
     })
     return this.sync()
+  }
+
+  whenOnline() {
+    if (!this.syncWhenOnline) return
+    const cid = this.syncWhenOnline
+    this.syncWhenOnline = null
+    this.syncHooks.forEach(hook => hook(cid))
   }
 
   async pinList(): Promise<CID[]> {
@@ -197,9 +239,7 @@ export class FileSystem {
 
     const cid = await this.root.put()
 
-    this.syncHooks.forEach(hook => {
-      hook(cid)
-    })
+    this.syncHooks.forEach(hook => hook(cid))
 
     return cid
   }
