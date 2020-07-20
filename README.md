@@ -329,7 +329,7 @@ const rootCID = await wnfs.sync()
 
 # Customisation
 
-Customisation can be done using the `setup` module.
+Customisation can be done using the `setup` module.  
 Run these before anything else you do with the SDK.
 
 ```js
