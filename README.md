@@ -329,24 +329,6 @@ const rootCID = await wnfs.sync()
 
 
 
-# Data Root
-
-_⚠ This part will be removed later, and will be done automatically by the SDK._
-
-When you update your file system (more on the file system later), it only updates it locally, so you need to tell the Fission API it's changed. This is done through "updating" the data root.
-
-```js
-const syncHook = debounce(
-  cid => sdk.updateDataRoot(cid),
-  5000
-)
-
-fs = await sdk.fs.fromCID(cid)
-if (fs) fs.addSyncHook(syncHook)
-```
-
-
-
 # Customisation
 
 Customisation can be done using the `setup` module.

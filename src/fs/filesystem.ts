@@ -1,14 +1,17 @@
+import { throttle } from 'throttle-debounce';
+
 import PublicTreeBare from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
 import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree } from './types'
 import check from './types/check'
-import { CID, FileContent } from '../ipfs'
-import { dataRoot } from '../data-root'
-
-import * as keystore from '../keystore'
 import pathUtil from './path'
+
+import * as auth from '../auth'
+import * as keystore from '../keystore'
+import { CID, FileContent } from '../ipfs'
 import { asyncWaterfall } from '../common/util'
+import { dataRoot, updateDataRoot } from '../data-root'
 
 
 type ConstructorParams = {
@@ -33,6 +36,12 @@ export class FileSystem {
     this.prettyTree = prettyTree
     this.privateTree = privateTree
     this.syncHooks = []
+
+    // Update the user's data root when making changes
+    auth.authenticatedUsername().then(username => {
+      const syncHook = throttle(5000, updateDataRoot)
+      this.syncHooks = [ syncHook ]
+    })
   }
 
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
@@ -150,7 +159,7 @@ export class FileSystem {
     const node = await this.get(from)
     if (node === null) {
       throw new Error(`Path does not exist: ${from}`)
-    } 
+    }
     const toParts = pathUtil.splitParts(to)
     const destPath = pathUtil.join(toParts.slice(0, toParts.length - 1)) // remove file/dir name
     const destination = await this.get(destPath)
@@ -193,16 +202,6 @@ export class FileSystem {
     })
 
     return cid
-  }
-
-  addSyncHook(hook: SyncHook): Array<SyncHook> {
-    this.syncHooks = [...this.syncHooks, hook]
-    return this.syncHooks
-  }
-
-  removeSyncHook(hook: SyncHook): Array<SyncHook> {
-    this.syncHooks = this.syncHooks.filter(h => h !== hook)
-    return this.syncHooks
   }
 
   async runOnTree<a>(
