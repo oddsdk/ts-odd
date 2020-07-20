@@ -1,7 +1,7 @@
 import loadScript from 'load-script2'
 
-import setup from '../setup/internal'
 import { IPFS } from './types'
+import { setup } from '../setup/internal'
 
 
 type IpfsWindow = {

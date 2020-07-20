@@ -1,4 +1,34 @@
-import internalSetup from './setup/internal'
+import { Endpoints, setup as internalSetup } from './setup/internal'
+
+
+type SomeEndpoints = {
+  api?: string,
+  lobby?: string,
+  user?: string
+}
+
+
+type UnknownObject =
+  { [key: string]: unknown }
+
+
+/**
+ * Override endpoints.
+ *
+ * You can override each of these,
+ * no need to provide them all here.
+ *
+ * `api` Location of the Fission API
+ *       (default `https://runfission.com`)
+ * `lobby` Location of the authentication lobby.
+ *         (default `https://auth.fission.codes`)
+ * `user`  User's domain to use, will be prefixed by username.
+ *         (default `fission.name`)
+ */
+export function endpoints(e: SomeEndpoints): Endpoints {
+  internalSetup.endpoints = { ...internalSetup.endpoints, ...e }
+  return { ...internalSetup.endpoints }
+}
 
 
 /**
@@ -15,6 +45,7 @@ import internalSetup from './setup/internal'
  * defaultOptions.config.Bootstrap
  * ```
  */
-export function ipfs(s: { [key: string]: unknown }): void {
-  internalSetup.ipfs = s
+export function ipfs(s: UnknownObject): UnknownObject {
+  internalSetup.ipfs = { ...s }
+  return { ...internalSetup.ipfs }
 }

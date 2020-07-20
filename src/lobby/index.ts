@@ -2,6 +2,7 @@ import * as did from '../did'
 import * as ucan from '../ucan'
 import { api } from '../common'
 import { dataRoot } from '../data-root'
+import { setup } from '../setup/internal'
 
 import { USERNAME_BLOCKLIST } from './blocklist'
 
@@ -13,15 +14,12 @@ export const createAccount = async (
   userProps: {
     email: string
     username: string
-  },
-  options: {
-    apiEndpoint?: string
-  } = {}
+  }
 ): Promise<{ success: boolean }> => {
-  const apiEndpoint = options.apiEndpoint || api.defaultEndpoint()
+  const apiEndpoint = setup.endpoints.api
 
   const jwt = await ucan.build({
-    audience: await api.did(apiEndpoint),
+    audience: await api.did(),
     issuer: await did.local(),
   })
 
@@ -43,10 +41,9 @@ export const createAccount = async (
  * Check if a username is available.
  */
 export const isUsernameAvailable = (
-  username: string,
-  dataRootDomain?: string
+  username: string
 ): Promise<boolean> => {
-  return dataRoot(username, dataRootDomain)
+  return dataRoot(username)
     .then(a => a === null)
     .catch(() => true)
 }

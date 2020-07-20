@@ -68,7 +68,7 @@ if (auth.cancelled) {
 }
 ```
 
-`redirectToLobby` takes two optional parameters, first one being the most important, the url that the lobby should redirect back to (the default is `location.href`).
+`redirectToLobby` takes an optional parameter, the url that the lobby should redirect back to (the default is `location.href`).
 
 
 ## Other functions
@@ -353,6 +353,13 @@ Customisation can be done using the `setup` module.
 Run these before anything else you do with the SDK.
 
 ```js
+// custom api, lobby, and/or user domain
+sdk.setup.endpoints({
+  api: "https://my.fission.api",
+  lobby: "https://my.fission.lobby",
+  user: "my.domain"
+})
+
 // js-ipfs options
 sdk.setup.ipfs({ init: { repo: "my-ipfs-repo" } })
 ```
