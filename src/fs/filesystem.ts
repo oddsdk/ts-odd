@@ -7,7 +7,6 @@ import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree } from './ty
 import check from './types/check'
 import pathUtil from './path'
 
-import * as auth from '../auth'
 import * as keystore from '../keystore'
 import { CID, FileContent } from '../ipfs'
 import { asyncWaterfall } from '../common/util'
@@ -43,13 +42,12 @@ export class FileSystem {
     this.syncWhenOnline = null
 
     // Update the user's data root when making changes
-    auth.authenticatedUsername().then(username => {
-      const syncHook = throttle(5000, cid => {
-        if (window.navigator.onLine) return updateDataRoot(cid)
-        this.syncWhenOnline = cid
-      })
-      this.syncHooks.push(syncHook)
+    const syncHook = throttle(5000, cid => {
+      if (window.navigator.onLine) return updateDataRoot(cid)
+      this.syncWhenOnline = cid
     })
+
+    this.syncHooks.push(syncHook)
 
     // Sync when coming back online
     window.addEventListener('online', () => this.whenOnline())
