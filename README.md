@@ -22,8 +22,6 @@ The Fission SDK offers tools for:
 - authenticating through a Fission **authentication lobby**  
   (a lobby is where you can make a Fission account or link an account)
 - managing your web native **file system**
-- setting your **data root**  
-  (a data root is a pointer to a version of your file system)
 - tools for building DIDs and UCANs.
 
 ```js
@@ -336,6 +334,7 @@ Run these before anything else you do with the SDK.
 
 ```js
 // custom api, lobby, and/or user domain
+// (no need to specify each one)
 sdk.setup.endpoints({
   api: "https://my.fission.api",
   lobby: "https://my.fission.lobby",
@@ -343,6 +342,7 @@ sdk.setup.endpoints({
 })
 
 // js-ipfs options
+// (see docs in src for more info)
 sdk.setup.ipfs({ init: { repo: "my-ipfs-repo" } })
 ```
 
