@@ -210,7 +210,7 @@ export class FileSystem {
     return this.sync()
   }
 
-  whenOnline() {
+  whenOnline(): void {
     if (!this.syncWhenOnline) return
     const cid = this.syncWhenOnline
     this.syncWhenOnline = null

@@ -5,7 +5,7 @@ import { setup } from '../setup/internal'
 
 
 type IpfsWindow = {
-  Ipfs?: { create: (options: any) => IPFS }
+  Ipfs?: { create: (options: unknown) => IPFS }
 }
 
 

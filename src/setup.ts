@@ -2,8 +2,8 @@ import { Endpoints, setup as internalSetup } from './setup/internal'
 
 
 type SomeEndpoints = {
-  api?: string,
-  lobby?: string,
+  api?: string
+  lobby?: string
   user?: string
 }
 

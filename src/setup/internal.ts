@@ -1,6 +1,6 @@
 export type Endpoints = {
-  api: string,
-  lobby: string,
+  api: string
+  lobby: string
   user: string
 }
 
