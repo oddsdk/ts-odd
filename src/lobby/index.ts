@@ -1,7 +1,7 @@
+import * as dataRoot from '../data-root'
 import * as did from '../did'
 import * as ucan from '../ucan'
 import { api } from '../common'
-import { dataRoot } from '../data-root'
 import { setup } from '../setup/internal'
 
 import { USERNAME_BLOCKLIST } from './blocklist'
@@ -43,7 +43,7 @@ export const createAccount = async (
 export const isUsernameAvailable = (
   username: string
 ): Promise<boolean> => {
-  return dataRoot(username)
+  return dataRoot.lookup(username)
     .then(a => a === null)
     .catch(() => true)
 }

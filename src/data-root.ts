@@ -13,7 +13,7 @@ import { setup } from './setup/internal'
  *
  * @param username The username of the user that we want to get the data root of.
  */
-export async function dataRoot(
+export async function lookup(
   username: string
 ): Promise<CID | null> {
   try {
@@ -28,7 +28,7 @@ export async function dataRoot(
  *
  * @param cid The CID of the data root.
  */
-export const updateDataRoot = async (
+export const update = async (
   cid: CID | string
 ): Promise<void> => {
   const apiEndpoint = setup.endpoints.api

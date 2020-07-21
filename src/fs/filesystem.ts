@@ -7,10 +7,10 @@ import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree } from './ty
 import check from './types/check'
 import pathUtil from './path'
 
+import * as dataRoot from '../data-root'
 import * as keystore from '../keystore'
 import { CID, FileContent } from '../ipfs'
 import { asyncWaterfall } from '../common/util'
-import { dataRoot, updateDataRoot } from '../data-root'
 
 
 type ConstructorParams = {
@@ -43,7 +43,7 @@ export class FileSystem {
 
     // Update the user's data root when making changes
     const syncHook = throttle(5000, cid => {
-      if (window.navigator.onLine) return updateDataRoot(cid)
+      if (window.navigator.onLine) return dataRoot.update(cid)
       this.syncWhenOnline = cid
     })
 
@@ -105,7 +105,7 @@ export class FileSystem {
   }
 
   static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const cid = await dataRoot(username)
+    const cid = await dataRoot.lookup(username)
     return cid ? FileSystem.fromCID(cid, opts) : null
   }
 
