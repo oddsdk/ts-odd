@@ -3,15 +3,14 @@ import { throttle } from 'throttle-debounce'
 import BareTree from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
-import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree, PinMap } from './types'
-import check from './types/check'
+import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree } from './types'
+import * as check from './types/check'
 import * as pathUtil from './path'
 
 import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
 import * as keystore from '../keystore'
 import { CID, FileContent } from '../ipfs'
-import { pinMapToLinks } from './pins'
 
 
 // TYPES
@@ -128,7 +127,7 @@ export class FileSystem {
     const { keyName = 'filesystem-root', rootDid = '' } = opts
 
     const root = await BareTree.fromCID(cid)
-    const publicCID = root.findLinkCID('public')
+    const publicCID = root.links['public']?.cid || null
     const publicTree = publicCID !== null
       ? await PublicTree.fromCID(publicCID, null)
       : null
@@ -138,7 +137,7 @@ export class FileSystem {
     const pinsTree = (await root.getDirectChild('pins')) as BareTree ||
       await BareTree.empty()
 
-    const privateCID = root.findLinkCID('private')
+    const privateCID = root.links['private']?.cid || null
     const key = await keystore.getKeyByName(keyName)
     const privateTree = privateCID !== null
       ? await PrivateTree.fromCID(privateCID, key)
@@ -246,20 +245,6 @@ export class FileSystem {
   }
 
 
-
-  // OTHER
-  // -----
-
-  /**
-   * Retrieves all pins needed for private filesystem and adds them to the 'pin tree'
-   */
-  async updatePinTree(pins: PinMap): Promise<void> {
-    // we pass `this.rootDid` as a salt
-    const pinLinks = await pinMapToLinks('private', pins, this.rootDid)
-    this.pinsTree = BareTree.fromLinks(pinLinks)
-    await this.root.addChild('pins', this.pinsTree)
-  }
-
   /**
    * Ensures the latest version of the file system is added to IPFS and returns the root CID.
    */
@@ -314,8 +299,7 @@ export class FileSystem {
 
       if (updateTree && PrivateTree.instanceOf(result)) {
         this.privateTree = result
-        const { pins } = await this.privateTree.putWithPins()
-        await this.updatePinTree(pins)
+        await this.privateTree.put()
         await this.root.addChild('private', this.privateTree)
       }
 

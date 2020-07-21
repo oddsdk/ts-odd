@@ -1,21 +1,18 @@
-import basic from '../network/basic'
-import { Link, Links, Tree, File } from '../types'
-import check from '../types/check'
-import { CID, FileContent } from '../../ipfs'
+import * as protocol from '../protocol'
+import { Links, Tree, File } from '../types'
+import * as check from '../types/check'
+import { AddResult, CID, FileContent } from '../../ipfs'
 import BareFile from '../bare/file'
 import BaseTree from '../base/tree'
-import { removeKeyFromObj } from '../../common'
-import link from '../link'
-import semver from '../semver'
+import * as link from '../link'
+import * as semver from '../semver'
+import * as pathUtil from '../path'
 
 
 class BareTree extends BaseTree {
 
-  links: Links
-
   constructor(links: Links) {
-    super(semver.v0)
-    this.links = links
+    super(links, semver.v0)
   }
 
   static async empty(): Promise<BareTree> {
@@ -23,8 +20,8 @@ class BareTree extends BaseTree {
   }
 
   static async fromCID(cid: CID): Promise<BareTree> {
-    const links = await basic.getLinks(cid, null)
-    return new BareTree(links)
+    const links = await protocol.getLinks(cid, null)
+    return new BareTree(links) 
   }
 
   static fromLinks(links: Links): BareTree {
@@ -35,39 +32,32 @@ class BareTree extends BaseTree {
     return BareTree.empty()
   }
 
-  async childTreeFromCID(cid: CID): Promise<BareTree> {
-    return BareTree.fromCID(cid)
-  }
-
   async createChildFile(content: FileContent): Promise<File> {
     return BareFile.create(content)
   }
 
-  async childFileFromCID(cid: CID): Promise<File> {
-    return BareFile.fromCID(cid)
-  }
-
-  async put(): Promise<CID> {
-    return basic.putLinks(this.links, null)
+  async putDetailed(): Promise<AddResult> {
+    return protocol.putLinks(this.links, null)
   }
 
   async updateDirectChild(child: Tree | File, name: string): Promise<this> {
-    const cid = await child.put()
-    const childLink = link.make(name, cid, check.isFile(child))
-
-    return this.updateLink(childLink)
+    const { cid, size } = await child.putDetailed()
+    const childLink = link.make(name, cid, check.isFile(child), size)
+    this.links[childLink.name] = childLink
+    return this
   }
 
   async removeDirectChild(name: string): Promise<this> {
-    return this.rmLink(name)
+    delete this.links[name]
+    return this
   }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
-    const link = this.findLink(name)
+    const link = this.links[name] || null
     if(link === null) return null
     return link.isFile
-          ? this.childFileFromCID(link.cid)
-          : this.childTreeFromCID(link.cid)
+          ? BareFile.fromCID(link.cid)
+          : BareTree.fromCID(link.cid)
   }
 
   async getOrCreateDirectChild(name: string): Promise<Tree | File> {
@@ -75,22 +65,18 @@ class BareTree extends BaseTree {
     return child ? child : this.emptyChildTree()
   }
 
-  updateLink(link: Link): this {
-    this.links[link.name] = link
-    return this
-  }
+  async get(path: string): Promise<Tree | File | null> {
+    const { head, nextPath } = pathUtil.takeHead(path)
+    if(head === null) return this
+    const nextTree = await this.getDirectChild(head)
 
-  findLink(name: string): Link | null {
-    return this.links[name] || null
-  }
+    if (nextPath === null) {
+      return nextTree
+    } else if (nextTree === null || check.isFile(nextTree)) {
+      return null
+    }
 
-  findLinkCID(name: string): CID | null {
-    return this.findLink(name)?.cid || null
-  }
-
-  rmLink(name: string): this {
-    this.links = removeKeyFromObj(this.links, name)
-    return this
+    return nextTree.get(nextPath)
   }
 
   getLinks(): Links {

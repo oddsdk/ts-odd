@@ -1,10 +1,10 @@
 import PublicFile from './PublicFile'
 import { CID, FileContent } from '../../ipfs'
-import { HeaderV1, PutResult, File, HeaderFile } from '../types'
+import { HeaderV1, HeaderFile, PutDetails } from '../types'
 import * as keystore from '../../keystore'
-import basic from '../network/basic'
-import header from './header'
-import semver from '../semver'
+import * as protocol from '../protocol'
+import * as header from './header'
+import * as semver from '../semver'
 
 export class PrivateFile extends PublicFile {
 
@@ -28,12 +28,16 @@ export class PrivateFile extends PublicFile {
   }
 
   static async fromCID(cid: CID, parentKey: string): Promise<HeaderFile>{
-    const info = await header.getHeaderAndIndex(cid, parentKey)
-    const content = await basic.getFile(info.index, info.header.key)
-    return new PrivateFile(content, info.header, parentKey)
+    const info = await header.getHeaderAndUserland(cid, parentKey)
+    return PrivateFile.fromHeaderAndUserland(info.header, info.userland, parentKey)
   }
 
-  async putWithPins(): Promise<PutResult> {
+  static async fromHeaderAndUserland(header: HeaderV1, userland: CID, parentKey: string): Promise<HeaderFile> {
+    const content = await protocol.getFile(userland, header.key)
+    return new PublicFile(content, header, parentKey)
+  }
+
+  async putDetailed(): Promise<PutDetails> {
     return this.putWithKey(this.parentKey)
   }
 

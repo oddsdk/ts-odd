@@ -3,16 +3,23 @@
 /** @internal */
 import * as pathUtil from '../path'
 import { Links, Tree, File, SemVer, NonEmptyPath } from '../types'
-import check from '../types/check'
-import { CID, FileContent } from '../../ipfs'
+import * as check from '../types/check'
+import { AddResult, CID, FileContent } from '../../ipfs'
 
 
 abstract class BaseTree implements Tree {
 
   version: SemVer
+  links: Links
 
-  constructor(version: SemVer) {
+  constructor(links: Links, version: SemVer) {
+    this.links = links
     this.version = version
+  }
+
+  async put(): Promise<CID> {
+    const { cid } = await this.putDetailed()
+    return cid
   }
 
   async ls(path: string): Promise<Links> {
@@ -108,22 +115,9 @@ abstract class BaseTree implements Tree {
     return node !== null
   }
 
-  async get(path: string): Promise<Tree | File | null> {
-    const { head, nextPath } = pathUtil.takeHead(path)
-    if(head === null) return this
-    const nextTree = await this.getDirectChild(head)
+  abstract async get(path: string): Promise<Tree | File | null>
 
-    if (nextPath === null) {
-      return nextTree
-    } else if (nextTree === null || check.isFile(nextTree)) {
-      return null
-    }
-
-    return nextTree.get(nextPath)
-  }
-
-
-  abstract async put(): Promise<CID>
+  abstract async putDetailed(): Promise<AddResult>
   abstract async updateDirectChild (child: Tree | File, name: string): Promise<this>
   abstract async removeDirectChild(name: string): Promise<this>
   abstract async getDirectChild(name: string): Promise<Tree | File | null>
@@ -132,9 +126,7 @@ abstract class BaseTree implements Tree {
   abstract getLinks(): Links
 
   abstract async emptyChildTree(): Promise<Tree>
-  abstract async childTreeFromCID(cid: CID): Promise<Tree>
   abstract async createChildFile(content: FileContent): Promise<File>
-  abstract async childFileFromCID(cid: CID): Promise<File>
 }
 
 
