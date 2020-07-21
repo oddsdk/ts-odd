@@ -213,20 +213,20 @@ export class FileSystem {
     return this.sync()
   }
 
-  async mv(from: string, to: string): Promise<CID> {
-    const node = await this.get(from)
-    if (node === null) {
-      throw new Error(`Path does not exist: ${from}`)
-    }
-    const toParts = pathUtil.splitParts(to)
-    const destPath = pathUtil.join(toParts.slice(0, toParts.length - 1)) // remove file/dir name
-    const destination = await this.get(destPath)
-    if (check.isFile(destination)) {
-      throw new Error(`Can not \`mv\` to a file: ${destPath}`)
-    }
-    await this.addChild(to, node)
-    return this.rm(from)
-  }
+  // async mv(from: string, to: string): Promise<CID> {
+  //   const node = await this.get(from)
+  //   if (node === null) {
+  //     throw new Error(`Path does not exist: ${from}`)
+  //   }
+  //   const toParts = pathUtil.splitParts(to)
+  //   const destPath = pathUtil.join(toParts.slice(0, toParts.length - 1)) // remove file/dir name
+  //   const destination = await this.get(destPath)
+  //   if (check.isFile(destination)) {
+  //     throw new Error(`Can not \`mv\` to a file: ${destPath}`)
+  //   }
+  //   await this.addChild(to, node)
+  //   return this.rm(from)
+  // }
 
   async read(path: string): Promise<FileContent | null> {
     return this.cat(path)

@@ -24,12 +24,12 @@ class BareTree extends BaseTree {
     return new BareTree(links) 
   }
 
-  static fromLinks(links: Links): BareTree {
-    return new BareTree(links) 
-  }
-
   async emptyChildTree(): Promise<BareTree> {
     return BareTree.empty()
+  }
+
+  static fromLinks(links: Links): BareTree {
+    return new BareTree(links) 
   }
 
   async createChildFile(content: FileContent): Promise<File> {
