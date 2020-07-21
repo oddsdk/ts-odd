@@ -1,7 +1,8 @@
+import * as dataRoot from '../data-root'
 import * as did from '../did'
 import * as ucan from '../ucan'
 import { api } from '../common'
-import { dataRoot } from '../data-root'
+import { setup } from '../setup/internal'
 
 import { USERNAME_BLOCKLIST } from './blocklist'
 
@@ -9,19 +10,16 @@ import { USERNAME_BLOCKLIST } from './blocklist'
 /**
  * Create a user account.
  */
-export const createAccount = async (
+export async function createAccount(
   userProps: {
     email: string
     username: string
-  },
-  options: {
-    apiEndpoint?: string
-  } = {}
-): Promise<{ success: boolean }> => {
-  const apiEndpoint = options.apiEndpoint || api.defaultEndpoint()
+  }
+): Promise<{ success: boolean }> {
+  const apiEndpoint = setup.endpoints.api
 
   const jwt = await ucan.build({
-    audience: await api.did(apiEndpoint),
+    audience: await api.did(),
     issuer: await did.local(),
   })
 
@@ -42,11 +40,10 @@ export const createAccount = async (
 /**
  * Check if a username is available.
  */
-export const isUsernameAvailable = (
-  username: string,
-  dataRootDomain?: string
-): Promise<boolean> => {
-  return dataRoot(username, dataRootDomain)
+export function isUsernameAvailable(
+  username: string
+): Promise<boolean> {
+  return dataRoot.lookup(username)
     .then(a => a === null)
     .catch(() => true)
 }
@@ -54,7 +51,7 @@ export const isUsernameAvailable = (
 /**
  * Check if a username is valid.
  */
-export const isUsernameValid = (username: string): boolean => {
+export function isUsernameValid(username: string): boolean {
   return !username.startsWith("-") &&
          !username.endsWith("-") &&
          !!username.match(/[a-zA-Z1-9-]+/) &&

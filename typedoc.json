@@ -1,0 +1,18 @@
+{
+  "exclude": [
+    "src/common/**/*.ts",
+    "src/fs/!(filesystem.ts)",
+    "src/ipfs/!(config.ts)",
+    "src/keystore/!(config.ts)"
+  ],
+  "excludeExternals": true,
+  "excludeNotExported": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "inputFiles": [ "./src/index.ts" ],
+  "mode": "modules",
+  "name": "Fission SDK",
+  "out": "docs",
+  "readme": "none",
+  "stripInternal": true
+}

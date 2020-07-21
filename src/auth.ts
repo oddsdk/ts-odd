@@ -3,6 +3,7 @@ import localforage from 'localforage'
 import * as did from './did'
 import { CID } from './ipfs'
 import { UCAN_STORAGE_KEY, USERNAME_STORAGE_KEY } from './common'
+import { setup } from './setup/internal'
 
 
 /**
@@ -92,14 +93,12 @@ export async function isAuthenticated(options: {
  *
  * @param returnTo Specify the URL you want users to return to.
  *                 Uses the current url by default.
- * @param lobby Specify a custom lobby.
  */
-export async function redirectToLobby(returnTo?: string, lobby?: string): Promise<void> {
+export async function redirectToLobby(returnTo?: string): Promise<void> {
   const localDid = await did.local()
-  const origin = lobby || "https://auth.fission.codes"
   const redirectTo = returnTo || window.location.href
 
-  window.location.href = origin +
+  window.location.href = setup.endpoints.lobby +
     `?did=${encodeURIComponent(localDid)}` +
     `&redirectTo=${encodeURIComponent(redirectTo)}`
 }

@@ -8,6 +8,7 @@ import { removeKeyFromObj } from '../../common'
 import link from '../link'
 import semver from '../semver'
 
+
 class BareTree extends BaseTree {
 
   links: Links
@@ -23,7 +24,7 @@ class BareTree extends BaseTree {
 
   static async fromCID(cid: CID): Promise<BareTree> {
     const links = await basic.getLinks(cid, null)
-    return new BareTree(links) 
+    return new BareTree(links)
   }
 
   async emptyChildTree(): Promise<BareTree> {
@@ -49,7 +50,7 @@ class BareTree extends BaseTree {
   async updateDirectChild(child: Tree | File, name: string): Promise<this> {
     const cid = await child.put()
     const childLink = link.make(name, cid, check.isFile(child))
-    
+
     return this.updateLink(childLink)
   }
 
@@ -92,5 +93,6 @@ class BareTree extends BaseTree {
     return this.links
   }
 }
+
 
 export default BareTree

@@ -8,6 +8,7 @@ import utils from 'keystore-idb/utils'
 import * as dns from './dns'
 import * as keystore from './keystore'
 import { arrbufs } from './common'
+import { setup } from './setup/internal'
 
 
 const ECC_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
@@ -31,12 +32,13 @@ export async function local(): Promise<string> {
 
 /**
  * Gets the root DID for a user.
- * Stored at `_did.${username}.${domain}`
+ * Stored at `_did.${username}.${endpoints.user}`
  */
 export async function root(
-  username: string,
-  domain = 'fission.name'
+  username: string
 ): Promise<string> {
+  const domain = setup.endpoints.user
+
   try {
     const maybeDid = await dns.lookupTxtRecord(`_did.${username}.${domain}`)
     if (maybeDid !== null) return maybeDid

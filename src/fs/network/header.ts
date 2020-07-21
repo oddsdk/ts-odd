@@ -1,3 +1,6 @@
+/** @internal */
+
+/** @internal */
 import { Links, HeaderV1, SemVer, UnstructuredHeader, PinMap, PutResult } from '../types'
 import { isSemVer } from '../types/check'
 import { isString, isDefined } from '../../common/type-checks'
@@ -79,8 +82,8 @@ export const put = async (
       return { name, cid, isFile: true, size }
     })
   )
-  linksArr.push({ 
-    name: 'index', 
+  linksArr.push({
+    name: 'index',
     cid: index,
     isFile: false,
     size: header.size

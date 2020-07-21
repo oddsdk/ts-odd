@@ -14,9 +14,9 @@ import fs from './fs'
 
 export default {
   ...auth,
-  ...dataRoot,
 
   // Modularised
+  dataRoot,
   fs,
   did,
   lobby,

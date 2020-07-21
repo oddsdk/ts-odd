@@ -22,8 +22,6 @@ The Fission SDK offers tools for:
 - authenticating through a Fission **authentication lobby**  
   (a lobby is where you can make a Fission account or link an account)
 - managing your web native **file system**
-- setting your **data root**  
-  (a data root is a pointer to a version of your file system)
 - tools for building DIDs and UCANs.
 
 ```js
@@ -34,9 +32,7 @@ import sdk from 'fission-sdk'
 self.fissionSdk
 ```
 
-You'll also find some helper functions for interacting with some of the building blocks:
-- [js-ipfs](https://github.com/ipfs/js-ipfs) for distributed file storage
-- [keystore-idb](https://github.com/fission-suite/keystore-idb) for key management, encryption & digital signatures
+See [`docs/`](docs/) for more detailed documentation based on the source code.
 
 
 
@@ -68,7 +64,7 @@ if (auth.cancelled) {
 }
 ```
 
-`redirectToLobby` takes two optional parameters, first one being the most important, the url that the lobby should redirect back to (the default is `location.href`).
+`redirectToLobby` takes an optional parameter, the url that the lobby should redirect back to (the default is `location.href`).
 
 
 ## Other functions
@@ -285,7 +281,7 @@ const updatedCID = await wnfs.mv("public/doc.md", "private/Documents/notes.md")
 
 **pinList**
 
-Retrieves an array of all CIDs that need to be pinned in order to backup the FS.
+Retrieves an array of all CIDs that need to be pinned in order to backup the FS
 
 Params: _none_
 
@@ -329,31 +325,22 @@ const rootCID = await wnfs.sync()
 
 
 
-# Data Root
-
-_⚠ This part will be removed later, and will be done automatically by the SDK._
-
-When you update your file system (more on the file system later), it only updates it locally, so you need to tell the Fission API it's changed. This is done through "updating" the data root.
-
-```js
-const syncHook = debounce(
-  cid => sdk.updateDataRoot(cid),
-  5000
-)
-
-fs = await sdk.fs.fromCID(cid)
-if (fs) fs.addSyncHook(syncHook)
-```
-
-
-
 # Customisation
 
-Customisation can be done using the `setup` module.
+Customisation can be done using the `setup` module.  
 Run these before anything else you do with the SDK.
 
 ```js
+// custom api, lobby, and/or user domain
+// (no need to specify each one)
+sdk.setup.endpoints({
+  api: "https://my.fission.api",
+  lobby: "https://my.fission.lobby",
+  user: "my.domain"
+})
+
 // js-ipfs options
+// (see docs in src for more info)
 sdk.setup.ipfs({ init: { repo: "my-ipfs-repo" } })
 ```
 
@@ -406,6 +393,9 @@ yarn test
 
 # test w/ reloading
 yarn test:watch
+
+# generate docs
+yarn docs
 
 # publish (run this script instead of npm publish!)
 ./publish.sh

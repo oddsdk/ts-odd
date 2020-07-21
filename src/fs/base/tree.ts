@@ -1,7 +1,11 @@
+/** @internal */
+
+/** @internal */
 import pathUtil from '../path'
 import { Links, Tree, File, SemVer, NonEmptyPath } from '../types'
 import check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
+
 
 abstract class BaseTree implements Tree {
 
@@ -119,7 +123,6 @@ abstract class BaseTree implements Tree {
   }
 
 
-
   abstract async put(): Promise<CID>
   abstract async updateDirectChild (child: Tree | File, name: string): Promise<this>
   abstract async removeDirectChild(name: string): Promise<this>
@@ -133,5 +136,6 @@ abstract class BaseTree implements Tree {
   abstract async createChildFile(content: FileContent): Promise<File>
   abstract async childFileFromCID(cid: CID): Promise<File>
 }
+
 
 export default BaseTree

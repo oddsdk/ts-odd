@@ -1,13 +1,15 @@
+import { throttle } from 'throttle-debounce';
+
 import PublicTreeBare from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
 import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree } from './types'
 import check from './types/check'
-import { CID, FileContent } from '../ipfs'
-import { dataRoot } from '../data-root'
-
-import * as keystore from '../keystore'
 import pathUtil from './path'
+
+import * as dataRoot from '../data-root'
+import * as keystore from '../keystore'
+import { CID, FileContent } from '../ipfs'
 import { asyncWaterfall } from '../common/util'
 
 
@@ -25,15 +27,36 @@ export class FileSystem {
   publicTree: HeaderTree
   prettyTree: PublicTreeBare
   privateTree: HeaderTree
+
   syncHooks: Array<SyncHook>
+  syncWhenOnline: CID | null
+
 
   constructor({ root, publicTree, prettyTree, privateTree }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
+
     this.syncHooks = []
+    this.syncWhenOnline = null
+
+    // Update the user's data root when making changes
+    const syncHook = throttle(5000, cid => {
+      if (window.navigator.onLine) return dataRoot.update(cid)
+      this.syncWhenOnline = cid
+    })
+
+    this.syncHooks.push(syncHook)
+
+    // Sync when coming back online
+    window.addEventListener('online', () => this.whenOnline())
   }
+
+
+
+  // INITIALISATION
+  // --------------
 
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root' } = opts
@@ -82,7 +105,7 @@ export class FileSystem {
   }
 
   static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const cid = await dataRoot(username)
+    const cid = await dataRoot.lookup(username)
     return cid ? FileSystem.fromCID(cid, opts) : null
   }
 
@@ -106,6 +129,20 @@ export class FileSystem {
       privateTree,
     })
   }
+
+
+
+  // DEACTIVATE
+  // ----------
+
+  deactivate(): void {
+    window.removeEventListener('online', this.whenOnline)
+  }
+
+
+
+  // POSIX INTERFACE
+  // ---------------
 
   async ls(path: string): Promise<Links> {
     return this.runOnTree(path, false, (tree, relPath) => {
@@ -150,7 +187,7 @@ export class FileSystem {
     const node = await this.get(from)
     if (node === null) {
       throw new Error(`Path does not exist: ${from}`)
-    } 
+    }
     const toParts = pathUtil.splitParts(to)
     const destPath = pathUtil.join(toParts.slice(0, toParts.length - 1)) // remove file/dir name
     const destination = await this.get(destPath)
@@ -161,13 +198,14 @@ export class FileSystem {
     return this.rm(from)
   }
 
-  async addChild(path: string, toAdd: Tree | FileContent): Promise<CID> {
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.addChild(relPath, toAdd)
-    })
-    return this.sync()
-  }
 
+
+  // OTHER
+  // -----
+
+  /**
+   * Retrieves an array of all CIDs that need to be pinned in order to backup the FS.
+   */
   async pinList(): Promise<CID[]> {
     const privateResult = await this.privateTree.putWithPins()
     const publicResult = await this.publicTree.putWithPins()
@@ -179,6 +217,9 @@ export class FileSystem {
     ]
   }
 
+  /**
+   * Ensures the latest version of the file system is added to IPFS and returns the root CID.
+   */
   async sync(): Promise<CID> {
     this.root = await asyncWaterfall(this.root, [
       (t: Tree): Promise<Tree> => t.addChild('public', this.publicTree),
@@ -188,23 +229,25 @@ export class FileSystem {
 
     const cid = await this.root.put()
 
-    this.syncHooks.forEach(hook => {
-      hook(cid)
-    })
+    this.syncHooks.forEach(hook => hook(cid))
 
     return cid
   }
 
-  addSyncHook(hook: SyncHook): Array<SyncHook> {
-    this.syncHooks = [...this.syncHooks, hook]
-    return this.syncHooks
+
+
+  // INTERNAL
+  // --------
+
+  /** @internal */
+  async addChild(path: string, toAdd: Tree | FileContent): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.addChild(relPath, toAdd)
+    })
+    return this.sync()
   }
 
-  removeSyncHook(hook: SyncHook): Array<SyncHook> {
-    this.syncHooks = this.syncHooks.filter(h => h !== hook)
-    return this.syncHooks
-  }
-
+  /** @internal */
   async runOnTree<a>(
     path: string,
     updateTree: boolean, // ie. do a mutation
@@ -246,6 +289,14 @@ export class FileSystem {
     }
 
     return result
+  }
+
+  /** @internal */
+  whenOnline(): void {
+    if (!this.syncWhenOnline) return
+    const cid = this.syncWhenOnline
+    this.syncWhenOnline = null
+    this.syncHooks.forEach(hook => hook(cid))
   }
 }
 

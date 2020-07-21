@@ -5,23 +5,21 @@ import * as dns from './dns'
 import * as ucan from './ucan'
 import { api, UCAN_STORAGE_KEY } from './common'
 import { CID } from './ipfs'
-
+import { setup } from './setup/internal'
 
 
 /**
  * Get the CID of a user's data root.
  *
  * @param username The username of the user that we want to get the data root of.
- * @param domain Override the default users domain.
  */
-export async function dataRoot(
-  username: string,
-  domain: string = "fission.name"
+export async function lookup(
+  username: string
 ): Promise<CID | null> {
   try {
-    return await dns.lookupDnsLink(username + ".files." + domain)
+    return await dns.lookupDnsLink(username + '.files.' + setup.endpoints.user)
   } catch(err) {
-    throw new Error("Could not locate user root in dns")
+    throw new Error('Could not locate user root in dns')
   }
 }
 
@@ -29,16 +27,14 @@ export async function dataRoot(
  * Update a user's data root.
  *
  * @param cid The CID of the data root.
- * @param options Use custom API endpoint and DID.
  */
-export const updateDataRoot = async (
-  cid: CID | string,
-  options: { apiEndpoint?: string } = {}
-): Promise<void> => {
-  const apiEndpoint = options.apiEndpoint || api.defaultEndpoint()
+export async function update(
+  cid: CID | string
+): Promise<void> {
+  const apiEndpoint = setup.endpoints.api
 
   const jwt = await ucan.build({
-    audience: await api.did(apiEndpoint),
+    audience: await api.did(),
     issuer: await did.local(),
     proof: await localforage.getItem(UCAN_STORAGE_KEY)
   })

@@ -1,4 +1,5 @@
 import * as dns from '../dns'
+import { setup } from '../setup/internal'
 
 
 const didCache: {
@@ -13,27 +14,11 @@ const didCache: {
 
 
 /**
- * Default Fission host.
- */
-const DEFAULT_HOST = 'runfission.com'
-
-
-/**
- * Default Fission endpoint.
- */
-export function defaultEndpoint(): string {
-  return `https://${DEFAULT_HOST}`
-}
-
-
-/**
  * Lookup the DID of a Fission API.
  * This function caches the DID for 3 hours.
- *
- * @param
  */
-export async function did(apiEndpoint: string = DEFAULT_HOST): Promise<string> {
-  const host = apiEndpoint.replace(/^https?:\/\//, '').replace(/\/$/, '')
+export async function did(): Promise<string> {
+  const host = setup.endpoints.api.replace(/^https?:\/\//, '').replace(/\/$/, '')
   const now = Date.now() // in milliseconds
 
   if (

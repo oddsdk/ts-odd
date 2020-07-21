@@ -1,18 +1,21 @@
+/** @internal */
+
+/** @internal */
 import { isString, isObject, isNum } from '../../common'
 import { CID } from '../../ipfs'
 import { Tree, File, Link, Links, HeaderV1, NodeMap, SemVer, NodeInfo, PinMap } from '../types'
 
 
 export const isFile = (obj: any): obj is File => {
-  return isObject(obj) && obj.content !== undefined 
+  return isObject(obj) && obj.content !== undefined
 }
 
 export const isTree = (obj: any): obj is Tree => {
-  return isObject(obj) && obj.ls !== undefined 
+  return isObject(obj) && obj.ls !== undefined
 }
 
 export const isLink = (link: any): link is Link => {
-  return typeof link?.name === 'string' 
+  return typeof link?.name === 'string'
       && typeof link?.cid === 'string'
 }
 
@@ -27,7 +30,7 @@ export const isPinMap = (obj: any): obj is PinMap => {
 }
 
 export const isHeaderV1 = (obj: any): obj is HeaderV1 => {
-  return isObject(obj) 
+  return isObject(obj)
       && isSemVer(obj.version)
       && (isString(obj.key) || obj.key === null)
       && isNodeMap(obj.fileIndex)
@@ -35,13 +38,13 @@ export const isHeaderV1 = (obj: any): obj is HeaderV1 => {
 }
 
 export const isNodeInfo = (obj: any): obj is NodeInfo => {
-  return isObject(obj) 
-      && isCID(obj.cid) 
+  return isObject(obj)
+      && isCID(obj.cid)
       && isHeaderV1(obj)
 }
 
 export const isNodeMap = (obj: any): obj is NodeMap => {
-  return isObject(obj) 
+  return isObject(obj)
       && Object.values(obj).every(isNodeInfo)
 }
 
@@ -56,7 +59,7 @@ export const isCIDList = (obj: any): obj is CID[] => {
 
 export const isSemVer = (obj: any): obj is SemVer => {
   if (!isObject(obj)) return false
-  const { major, minor, patch } = obj 
+  const { major, minor, patch } = obj
   return isNum(major) && isNum(minor) && isNum(patch)
 }
 
