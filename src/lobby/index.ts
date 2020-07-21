@@ -10,12 +10,12 @@ import { USERNAME_BLOCKLIST } from './blocklist'
 /**
  * Create a user account.
  */
-export const createAccount = async (
+export async function createAccount(
   userProps: {
     email: string
     username: string
   }
-): Promise<{ success: boolean }> => {
+): Promise<{ success: boolean }> {
   const apiEndpoint = setup.endpoints.api
 
   const jwt = await ucan.build({
@@ -40,9 +40,9 @@ export const createAccount = async (
 /**
  * Check if a username is available.
  */
-export const isUsernameAvailable = (
+export function isUsernameAvailable(
   username: string
-): Promise<boolean> => {
+): Promise<boolean> {
   return dataRoot.lookup(username)
     .then(a => a === null)
     .catch(() => true)
@@ -51,7 +51,7 @@ export const isUsernameAvailable = (
 /**
  * Check if a username is valid.
  */
-export const isUsernameValid = (username: string): boolean => {
+export function isUsernameValid(username: string): boolean {
   return !username.startsWith("-") &&
          !username.endsWith("-") &&
          !!username.match(/[a-zA-Z1-9-]+/) &&

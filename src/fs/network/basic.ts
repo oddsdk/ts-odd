@@ -1,3 +1,6 @@
+/** @internal */
+
+/** @internal */
 import ipfs, { CID, FileContent, AddResult } from '../../ipfs'
 
 import { Links, BasicLinks } from '../types'

@@ -203,20 +203,9 @@ export class FileSystem {
   // OTHER
   // -----
 
-  async addChild(path: string, toAdd: Tree | FileContent): Promise<CID> {
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.addChild(relPath, toAdd)
-    })
-    return this.sync()
-  }
-
-  whenOnline(): void {
-    if (!this.syncWhenOnline) return
-    const cid = this.syncWhenOnline
-    this.syncWhenOnline = null
-    this.syncHooks.forEach(hook => hook(cid))
-  }
-
+  /**
+   * Retrieves an array of all CIDs that need to be pinned in order to backup the FS.
+   */
   async pinList(): Promise<CID[]> {
     const privateResult = await this.privateTree.putWithPins()
     const publicResult = await this.publicTree.putWithPins()
@@ -228,6 +217,9 @@ export class FileSystem {
     ]
   }
 
+  /**
+   * Ensures the latest version of the file system is added to IPFS and returns the root CID.
+   */
   async sync(): Promise<CID> {
     this.root = await asyncWaterfall(this.root, [
       (t: Tree): Promise<Tree> => t.addChild('public', this.publicTree),
@@ -242,6 +234,20 @@ export class FileSystem {
     return cid
   }
 
+
+
+  // INTERNAL
+  // --------
+
+  /** @internal */
+  async addChild(path: string, toAdd: Tree | FileContent): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.addChild(relPath, toAdd)
+    })
+    return this.sync()
+  }
+
+  /** @internal */
   async runOnTree<a>(
     path: string,
     updateTree: boolean, // ie. do a mutation
@@ -283,6 +289,14 @@ export class FileSystem {
     }
 
     return result
+  }
+
+  /** @internal */
+  whenOnline(): void {
+    if (!this.syncWhenOnline) return
+    const cid = this.syncWhenOnline
+    this.syncWhenOnline = null
+    this.syncHooks.forEach(hook => hook(cid))
   }
 }
 

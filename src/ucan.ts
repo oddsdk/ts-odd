@@ -8,13 +8,13 @@ import { base64 } from './common'
  * Create a UCAN, User Controlled Authorization Networks, JWT.
  * This JWT can be used for authorization.
  *
- * ## Header
+ * ### Header
  *
  * `alg`, Algorithm, the type of signature.
  * `typ`, Type, the type of this data structure, JWT.
  * `uav`, UCAN version.
  *
- * ## Body
+ * ### Body
  *
  * `aud`, Audience, the ID of who it's intended for.
  * `exp`, Expiry, unix timestamp of when the jwt is no longer valid.
@@ -25,7 +25,7 @@ import { base64 } from './common'
  * `rsc`, Resource, the involved resource.
  *
  */
-export const build = async ({
+export async function build({
   audience,
   issuer,
   lifetimeInSeconds = 30,
@@ -37,7 +37,7 @@ export const build = async ({
   lifetimeInSeconds?: number
   proof?: string
   resource?: "*" | { [_: string]: string }
-}): Promise<string> => {
+}): Promise<string> {
   const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
 

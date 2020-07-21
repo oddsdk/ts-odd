@@ -5,6 +5,9 @@ export type Endpoints = {
 }
 
 
+/**
+ * @internal
+ */
 export const setup = {
   endpoints: {
     api: "https://runfission.com",

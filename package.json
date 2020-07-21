@@ -17,6 +17,7 @@
     "node": ">=10.0.0"
   },
   "scripts": {
+    "docs": "typedoc",
     "lint": "yarn eslint src/**/*.ts test/**/*.ts",
     "prebuild": "rimraf dist",
     "build": "tsc && rollup -c rollup.config.ts",
@@ -91,7 +92,10 @@
     "travis-deploy-once": "^5.0.11",
     "ts-jest": "^25.2.1",
     "ts-node": "^8.6.2",
-    "typescript": "^3.8.2"
+    "typedoc": "^0.17.8",
+    "typedoc-plugin-markdown": "^2.3.1",
+    "typescript": "^3.8.2",
+    "typescript-documentation": "^2.0.0"
   },
   "dependencies": {
     "base58-universal": "^1.0.0",

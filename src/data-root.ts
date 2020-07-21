@@ -28,9 +28,9 @@ export async function lookup(
  *
  * @param cid The CID of the data root.
  */
-export const update = async (
+export async function update(
   cid: CID | string
-): Promise<void> => {
+): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
   const jwt = await ucan.build({

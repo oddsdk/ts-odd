@@ -1,3 +1,6 @@
+/** @internal */
+
+/** @internal */
 import { BaseError } from 'make-error'
 import { CID } from '../../ipfs'
 

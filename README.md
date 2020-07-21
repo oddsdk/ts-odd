@@ -32,9 +32,7 @@ import sdk from 'fission-sdk'
 self.fissionSdk
 ```
 
-You'll also find some helper functions for interacting with some of the building blocks:
-- [js-ipfs](https://github.com/ipfs/js-ipfs) for distributed file storage
-- [keystore-idb](https://github.com/fission-suite/keystore-idb) for key management, encryption & digital signatures
+See [`docs/`](docs/) for more detailed documentation based on the source code.
 
 
 
@@ -283,7 +281,7 @@ const updatedCID = await wnfs.mv("public/doc.md", "private/Documents/notes.md")
 
 **pinList**
 
-Retrieves an array of all CIDs that need to be pinned in order to backup the FS.
+Retrieves an array of all CIDs that need to be pinned in order to backup the FS
 
 Params: _none_
 
@@ -395,6 +393,9 @@ yarn test
 
 # test w/ reloading
 yarn test:watch
+
+# generate docs
+yarn docs
 
 # publish (run this script instead of npm publish!)
 ./publish.sh
