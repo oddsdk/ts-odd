@@ -2,7 +2,7 @@ import { SemVer } from './types'
 import { Maybe } from '../common'
 
 
-const encode = (major: number, minor: number, patch: number): SemVer => {
+export const encode = (major: number, minor: number, patch: number): SemVer => {
   return {
     major,
     minor,
@@ -10,7 +10,7 @@ const encode = (major: number, minor: number, patch: number): SemVer => {
   }
 }
 
-const fromString = (str: string): Maybe<SemVer> => {
+export const fromString = (str: string): Maybe<SemVer> => {
   const parts = str.split('.').map(x => parseInt(x)) // dont shorten this because parseInt has a second param
   if (parts.length !== 3 || parts.some(p => typeof p !== 'number')) {
     return null
@@ -22,21 +22,11 @@ const fromString = (str: string): Maybe<SemVer> => {
   }
 }
 
-const toString = (version: SemVer): string => {
+export const toString = (version: SemVer): string => {
   const { major, minor, patch } = version
   return `${major}.${minor}.${patch}`
 }
 
-const v0 = encode(0, 0, 0)
-const v1 = encode(1, 0, 0)
-const latest = encode(1, 0, 0)
-
-
-export default {
-  encode,
-  fromString,
-  toString,
-  v0,
-  v1,
-  latest,
-}
+export const v0 = encode(0, 0, 0)
+export const v1 = encode(1, 0, 0)
+export const latest = encode(1, 0, 0)

@@ -1,9 +1,9 @@
 /** @internal */
 
 /** @internal */
-import { isString, isObject, isNum } from '../../common'
+import { isString, isObject, isNum, isBool } from '../../common'
 import { CID } from '../../ipfs'
-import { Tree, File, Link, Links, HeaderV1, NodeMap, SemVer, NodeInfo, PinMap } from '../types'
+import { Tree, File, Link, Links, HeaderV1, SemVer, Skeleton, Children } from '../types'
 
 
 export const isFile = (obj: any): obj is File => {
@@ -24,28 +24,36 @@ export const isLinks = (obj: any): obj is Links => {
       && Object.values(obj).every(isLink)
 }
 
-export const isPinMap = (obj: any): obj is PinMap => {
-  return isObject(obj)
-      && Object.values(obj).every(v => isCID(v) || isPinMap(v))
+export const isMetadata = (obj: any): obj is HeaderV1 => {
+  return isObject(obj) 
+      && isString(obj.name)
+      && isBool(obj.isFile)
+      && isNum(obj.mtime)
+      && isNum(obj.ctime)
+      && isSemVer(obj.version)
 }
 
 export const isHeaderV1 = (obj: any): obj is HeaderV1 => {
   return isObject(obj)
       && isSemVer(obj.version)
       && (isString(obj.key) || obj.key === null)
-      && isNodeMap(obj.fileIndex)
-      && isPinMap(obj.pins)
+      && isSkeleton(obj.skeleton)
 }
 
-export const isNodeInfo = (obj: any): obj is NodeInfo => {
-  return isObject(obj)
-      && isCID(obj.cid)
-      && isHeaderV1(obj)
+export const isSkeleton = (obj: any): obj is Skeleton => {
+  return isObject(obj) 
+      && Object.values(obj).every(val => (
+        isObject(val)
+        && isCID(val.cid)
+        && isCID(val.userland)
+        && isCID(val.metadata)
+        && isSkeleton(val.children)
+      ))
 }
 
-export const isNodeMap = (obj: any): obj is NodeMap => {
-  return isObject(obj)
-      && Object.values(obj).every(isNodeInfo)
+export const isChildren = (obj: any): obj is Children => {
+  return isObject(obj) 
+      && Object.values(obj).every(isMetadata)
 }
 
 export const isCID = (obj: any): obj is CID => {
@@ -61,16 +69,4 @@ export const isSemVer = (obj: any): obj is SemVer => {
   if (!isObject(obj)) return false
   const { major, minor, patch } = obj
   return isNum(major) && isNum(minor) && isNum(patch)
-}
-
-
-export default {
-  isFile,
-  isTree,
-  isLink,
-  isLinks,
-  isHeaderV1,
-  isNodeMap,
-  isCIDList,
-  isSemVer
 }

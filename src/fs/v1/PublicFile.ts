@@ -1,17 +1,17 @@
-import { HeaderV1, PutResult, HeaderFile } from '../types'
+import { HeaderV1, HeaderFile, PutDetails } from '../types'
 import { CID, FileContent } from '../../ipfs'
-import BaseFile from '../base/file'
-import headerv1 from'./header'
-import header from'../network/header'
-import basic from '../network/basic'
 import { Maybe } from '../../common'
-import semver from '../semver'
+import BaseFile from '../base/file'
+import * as header from'./header'
+import * as protocol from '../protocol'
+import * as link from '../link'
+import * as semver from '../semver'
 
 
 export class PublicFile extends BaseFile implements HeaderFile {
 
   protected header: HeaderV1
-  protected parentKey: Maybe<string>
+  parentKey: Maybe<string>
 
   constructor(content: FileContent, header: HeaderV1, parentKey: Maybe<string>) {
     super(content)
@@ -21,30 +21,30 @@ export class PublicFile extends BaseFile implements HeaderFile {
 
   static async create(content: FileContent, parentKey: Maybe<string>): Promise<HeaderFile> {
     return new PublicFile(content, { 
-      ...headerv1.empty(),
+      ...header.empty(),
       isFile: true,
       version: semver.v1
     }, parentKey)
   }
 
   static async fromCID(cid: CID, parentKey: Maybe<string>): Promise<HeaderFile> {
-    const info = await headerv1.getHeaderAndIndex(cid, null)
-    const content = await basic.getFile(info.index, null)
-    return new PublicFile(content, info.header, parentKey)
+    const info = await header.getHeaderAndUserland(cid, null)
+    return PublicFile.fromHeaderAndUserland(info.header, info.userland, parentKey)
   }
 
-  async put(): Promise<CID> {
-    const { cid } = await this.putWithPins()
-    return cid
+  static async fromHeaderAndUserland(header: HeaderV1, userland: CID, parentKey: Maybe<string>): Promise<HeaderFile> {
+    const content = await protocol.getFile(userland, header.key)
+    return new PublicFile(content, header, parentKey)
   }
 
-  async putWithPins(): Promise<PutResult> {
+  async putDetailed(): Promise<PutDetails> {
     return this.putWithKey(null)
   }
 
-  protected async putWithKey(key: Maybe<string>) {
-    const { cid, size } = await basic.putFile(this.content, this.header.key)
-    return header.put(cid, {
+  protected async putWithKey(key: Maybe<string>): Promise<PutDetails> {
+    const { cid, size } = await protocol.putFile(this.content, this.header.key)
+    const userlandCID = link.make('userland', cid, true, size)
+    return header.put(userlandCID, {
       ...this.header,
       size,
       mtime: Date.now()
