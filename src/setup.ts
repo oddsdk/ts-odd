@@ -1,13 +1,6 @@
 import { Endpoints, setup as internalSetup } from './setup/internal'
 
 
-type SomeEndpoints = {
-  api?: string
-  lobby?: string
-  user?: string
-}
-
-
 type UnknownObject =
   { [key: string]: unknown }
 
@@ -25,7 +18,7 @@ type UnknownObject =
  * `user`  User's domain to use, will be prefixed by username.
  *         (default `fission.name`)
  */
-export function endpoints(e: SomeEndpoints): Endpoints {
+export function endpoints(e: Partial<Endpoints>): Endpoints {
   internalSetup.endpoints = { ...internalSetup.endpoints, ...e }
   return { ...internalSetup.endpoints }
 }
