@@ -2,7 +2,7 @@
 
 /** @internal */
 import { File } from '../types'
-import { CID, FileContent } from '../../ipfs'
+import { AddResult, CID, FileContent } from '../../ipfs'
 
 
 export abstract class BaseFile implements File {
@@ -13,7 +13,12 @@ export abstract class BaseFile implements File {
     this.content = content
   }
 
-  abstract async put(): Promise<CID>
+  async put(): Promise<CID> {
+    const { cid } = await this.putDetailed()
+    return cid
+  }
+
+  abstract async putDetailed(): Promise<AddResult>
 }
 
 

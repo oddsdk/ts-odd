@@ -3,9 +3,9 @@
 /** @internal */
 import ipfs, { CID, FileContent, AddResult } from '../../ipfs'
 
-import { Links, BasicLinks } from '../types'
+import { Links } from '../types'
 import { Maybe } from '../../common'
-import link from '../link'
+import * as link from '../link'
 
 
 export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
@@ -27,10 +27,13 @@ export const getLinkCID = async (cid: CID, name: string, key: Maybe<string>): Pr
   return links[name]?.cid || null
 }
 
-export const putLinks = async (links: BasicLinks, key: Maybe<string>): Promise<CID> => {
+export const putLinks = async (links: Links, key: Maybe<string>): Promise<AddResult> => {
   if (key) {
-    const { cid } = await ipfs.encoded.add(links, key)
-    return cid
+    const { cid, size } = await ipfs.encoded.add(links, key)
+
+    const totalSize = Object.values(links)
+                .reduce((acc, cur) => acc + cur.size, 0) + size
+    return { cid, size: totalSize }
   } else {
     const dagLinks = Object.values(links).map(link.toDAGLink)
     return ipfs.dagPutLinks(dagLinks)
@@ -39,12 +42,4 @@ export const putLinks = async (links: BasicLinks, key: Maybe<string>): Promise<C
 
 export const putFile = async (content: FileContent, key: Maybe<string>): Promise<AddResult> => {
   return key ? ipfs.encoded.add(content, key) : ipfs.add(content)
-}
-
-export default {
-  getFile,
-  getLinks,
-  getLinkCID,
-  putLinks,
-  putFile,
 }

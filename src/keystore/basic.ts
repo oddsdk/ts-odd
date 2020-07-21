@@ -1,5 +1,7 @@
 import aes from 'keystore-idb/aes'
+import { strToArrBuf } from 'keystore-idb/utils'
 import * as keystore from './config'
+import * as hex from '../common/hex'
 
 
 export const getKeyByName = async (keyName: string): Promise<string> => {
@@ -22,4 +24,14 @@ export const decrypt = async (encrypted: Uint8Array, keyStr: string): Promise<Ui
 export const genKeyStr = async (): Promise<string> => {
   const key = await aes.makeKey()
   return aes.exportKey(key)
+}
+
+export const sha256Str = async(str: string): Promise<string> => {
+  const buf = strToArrBuf(str, 8)
+  const hash = await sha256(buf)
+  return hex.fromBuffer(hash)
+}
+
+export const sha256 = async (buf: ArrayBuffer): Promise<ArrayBuffer> => {
+  return crypto.subtle.digest('SHA-256', buf)
 }
