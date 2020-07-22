@@ -253,7 +253,7 @@ export class FileSystem {
   }
 
   async write(path: string, content: FileContent): Promise<CID> {
-    await this.rm(path)
+    if (await this.exists(path)) await this.rm(path)
     return await this.add(path, content)
   }
 
