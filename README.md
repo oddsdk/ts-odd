@@ -104,6 +104,7 @@ if (fs.exists(appPath)) {
 WNFS exposes a familiar POSIX-style interface:
 - `add`: add a file
 - `cat`: retrieve a file
+- `exists`: check if a file or directory exists
 - `ls`: list a directory
 - `mkdir`: create a directory
 - `mv`: move a file or directory
