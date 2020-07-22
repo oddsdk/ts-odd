@@ -241,11 +241,20 @@ export class FileSystem {
     return this.rm(from)
   }
 
+  async read(path: string): Promise<FileContent | null> {
+    return this.cat(path)
+  }
+
   async rm(path: string): Promise<CID> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.rm(relPath)
     })
     return this.sync()
+  }
+
+  async write(path: string, content: FileContent): Promise<CID> {
+    await this.rm(path)
+    return await this.add(path, content)
   }
 
 

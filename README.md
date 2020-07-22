@@ -88,7 +88,7 @@ Each file system has a public tree and a private tree. All information (links, d
 // After authenticating …
 const fs = session.fs
 
-// List all
+// List the user's private files that belong to this app
 const appPath = fs.appPath.private("myApp")
 
 if (fs.exists(appPath)) {
@@ -108,7 +108,9 @@ WNFS exposes a familiar POSIX-style interface:
 - `ls`: list a directory
 - `mkdir`: create a directory
 - `mv`: move a file or directory
+- `read`: alias for `cat`
 - `rm`: remove a file or directory
+- `write`: write to a file
 
 
 ## API
@@ -251,11 +253,30 @@ Example:
 const updatedCID = await wnfs.rm("private/some/path/to/a/file")
 ```
 
+---
+
+**write**
+
+Write to a file at a given path.
+Overwrites existing content.
+
+Params:
+- path: `string` **required**
+- content: `FileContent` (`object | string | Blob | Buffer`) **required**
+
+Returns: `CID` the updated _root_ CID for the file system
+
+Example:
+```ts
+const content = "hello world"
+const updatedCID = await wnfs.write("public/some/path/to/a/file", content)
+```
+
 
 ## Web Worker
 
 Can I use my file system in a web worker?  
-Yes, only requires a slightly different setup.
+Yes, this only requires a slightly different setup.
 
 ```ts
 // UI thread
