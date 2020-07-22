@@ -18,8 +18,8 @@ import { pinMapToLinks } from './pins'
 
 
 type AppPath = {
-  public: (appName: string) => string
-  private: (appName: string) => string
+  public: (appUuid: string, suffix?: string) => string
+  private: (appUuid: string, suffix?: string) => string
 }
 
 
@@ -62,8 +62,12 @@ export class FileSystem {
     this.syncWhenOnline = null
 
     this.appPath = {
-      public(appName) { return `public/Apps/${encodeURIComponent(appName)}` },
-      private(appName) { return `private/Apps/${encodeURIComponent(appName)}` }
+      public(appUuid: string, suffix?: string): string {
+        return appPath("public", appUuid, suffix)
+      },
+      private(appUuid: string, suffix?: string): string {
+        return appPath("private", appUuid, suffix)
+      }
     }
 
     // Update the user's data root when making changes
@@ -356,3 +360,15 @@ export class FileSystem {
 
 
 export default FileSystem
+
+
+// ㊙️
+
+
+function appPath(head: string, appUuid: string, suffix?: string): string {
+  return (
+    head + '/Apps/' +
+    encodeURIComponent(appUuid) +
+    (suffix ? '/' + suffix : '')
+  )
+}
