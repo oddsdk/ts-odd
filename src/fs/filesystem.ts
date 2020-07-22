@@ -168,19 +168,6 @@ export class FileSystem {
   // POSIX INTERFACE
   // ---------------
 
-  async ls(path: string): Promise<Links> {
-    return this.runOnTree(path, false, (tree, relPath) => {
-      return tree.ls(relPath)
-    })
-  }
-
-  async mkdir(path: string): Promise<CID> {
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.mkdir(relPath)
-    })
-    return this.sync()
-  }
-
   async add(path: string, content: FileContent): Promise<CID> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.add(relPath, content)
@@ -194,17 +181,29 @@ export class FileSystem {
     })
   }
 
-  async rm(path: string): Promise<CID> {
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.rm(relPath)
+  async exists(path: string): Promise<boolean> {
+    return this.runOnTree(path, false, (tree, relPath) => {
+      return tree.pathExists(relPath)
     })
-    return this.sync()
   }
 
   async get(path: string): Promise<Tree | File | null> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.get(relPath)
     })
+  }
+
+  async ls(path: string): Promise<Links> {
+    return this.runOnTree(path, false, (tree, relPath) => {
+      return tree.ls(relPath)
+    })
+  }
+
+  async mkdir(path: string): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.mkdir(relPath)
+    })
+    return this.sync()
   }
 
   async mv(from: string, to: string): Promise<CID> {
@@ -220,6 +219,13 @@ export class FileSystem {
     }
     await this.addChild(to, node)
     return this.rm(from)
+  }
+
+  async rm(path: string): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.rm(relPath)
+    })
+    return this.sync()
   }
 
 

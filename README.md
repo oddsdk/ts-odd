@@ -87,7 +87,15 @@ Each file system has a public tree and a private tree. All information (links, d
 ```ts
 // After authenticating …
 const fs = session.fs
-await fs.ls( fs.appPath("myApp") )
+
+// List all
+const appPath = fs.appPath("myApp")
+
+if (fs.exists(appPath)) {
+  await fs.ls(appPath)
+} else {
+  await fs.mkdir(appPath)
+}
 ```
 
 
@@ -139,6 +147,22 @@ Returns: `FileContent` (`object | string | Blob | Buffer`)
 Example:
 ```ts
 const content = await wnfs.cat("public/some/path/to/a/file")
+```
+
+---
+
+**exists**
+
+Checks if there is anything located at a given path
+
+Params:
+- path: `string` **required**
+
+Returns: `boolean`
+
+Example:
+```ts
+const bool = await wnfs.exists("private/path/to/file")
 ```
 
 ---
