@@ -9,19 +9,22 @@ import * as lobby from './lobby'
 import * as setup from './setup'
 import * as ucan from './ucan'
 
-import fs from './fs'
+import * as fsFunctions from './filesystem'
+import fsClass from './fs'
 
 
 export default {
   ...auth,
+  ...fsFunctions,
 
   // Modularised
   dataRoot,
-  fs,
   did,
   lobby,
   setup,
   ucan,
+
+  fs: fsClass,
 
   // Basement
   dns,
