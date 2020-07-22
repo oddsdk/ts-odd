@@ -14,6 +14,15 @@ import { asyncWaterfall } from '../common/util'
 import { pinMapToLinks } from './pins'
 
 
+// TYPES
+
+
+type AppPath = {
+  public: (appName: string) => string
+  private: (appName: string) => string
+}
+
+
 type ConstructorParams = {
   root: Tree
   publicTree: HeaderTree
@@ -24,6 +33,10 @@ type ConstructorParams = {
 }
 
 
+
+// CLASS
+
+
 export class FileSystem {
 
   root: Tree
@@ -32,6 +45,8 @@ export class FileSystem {
   privateTree: HeaderTree
   pinsTree: BareTree
   rootDid: string
+
+  appPath: AppPath
   syncHooks: Array<SyncHook>
   syncWhenOnline: CID | null
 
@@ -45,6 +60,11 @@ export class FileSystem {
     this.rootDid = rootDid
     this.syncHooks = []
     this.syncWhenOnline = null
+
+    this.appPath = {
+      public(appName) { return `public/Apps/${encodeURIComponent(appName)}` },
+      private(appName) { return `private/Apps/${encodeURIComponent(appName)}` }
+    }
 
     // Update the user's data root when making changes
     const syncHook = throttle(5000, cid => {

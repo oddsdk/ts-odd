@@ -89,7 +89,7 @@ Each file system has a public tree and a private tree. All information (links, d
 const fs = session.fs
 
 // List all
-const appPath = fs.appPath("myApp")
+const appPath = fs.appPath.private("myApp")
 
 if (fs.exists(appPath)) {
   await fs.ls(appPath)
