@@ -37,13 +37,9 @@ export async function loadFileSystem(username?: string): Promise<FileSystem> {
 
 
 async function addSampleData(fs: FileSystem): Promise<void> {
-  await fs.runOnTree("private", true, async tree => {
-    await tree.mkdir("Apps")
-    await tree.mkdir("Audio")
-    await tree.mkdir("Documents")
-    await tree.mkdir("Photos")
-    await tree.mkdir("Video")
-  })
-
-  await fs.sync()
+  await fs.mkdir("private/Apps")
+  await fs.mkdir("private/Audio")
+  await fs.mkdir("private/Documents")
+  await fs.mkdir("private/Photos")
+  await fs.mkdir("private/Video")
 }
