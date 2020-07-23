@@ -18,8 +18,8 @@ import { pinMapToLinks } from './pins'
 
 
 type AppPath = {
-  public: (appUuid: string, suffix?: string) => string
-  private: (appUuid: string, suffix?: string) => string
+  public: (appUuid: string, suffix?: string | Array<string>) => string
+  private: (appUuid: string, suffix?: string | Array<string>) => string
 }
 
 
@@ -62,10 +62,10 @@ export class FileSystem {
     this.syncWhenOnline = null
 
     this.appPath = {
-      public(appUuid: string, suffix?: string): string {
+      public(appUuid: string, suffix?: string | Array<string>): string {
         return appPath("public", appUuid, suffix)
       },
-      private(appUuid: string, suffix?: string): string {
+      private(appUuid: string, suffix?: string | Array<string>): string {
         return appPath("private", appUuid, suffix)
       }
     }
@@ -365,10 +365,10 @@ export default FileSystem
 // ㊙️
 
 
-function appPath(head: string, appUuid: string, suffix?: string): string {
+function appPath(head: string, appUuid: string, suffix?: string | Array<string>): string {
   return (
     head + '/Apps/' +
     encodeURIComponent(appUuid) +
-    (suffix ? '/' + suffix : '')
+    (suffix ? '/' + (typeof suffix == 'object' ? suffix.join('/') : suffix) : '')
   )
 }
