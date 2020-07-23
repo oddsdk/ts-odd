@@ -1,6 +1,8 @@
+import localforage from 'localforage'
+
 import FileSystem from './fs'
 import * as dataRoot from './data-root'
-import { authenticatedUsername } from './common'
+import { FS_CID, FS_TIMESTAMP , authenticatedUsername } from './common'
 
 
 /**
@@ -11,13 +13,23 @@ import { authenticatedUsername } from './common'
  *                 by default. Throws an error if there's no authenticated user.
  */
 export async function loadFileSystem(username?: string): Promise<FileSystem> {
-  let fs
+  let cid, fs
 
   // Determine username
   username = username || (await authenticatedUsername() || undefined)
   if (!username) throw new Error("User hasn't authenticated yet")
 
-  const cid = await dataRoot.lookup(username)
+  const lastLocalChange = await localforage.getItem(FS_TIMESTAMP) as number || 0
+  const currentTime = Date.now()
+
+  // If our last file-system change was over 15 minutes ago
+  if (currentTime - lastLocalChange > 30 * 60 * 1000) {
+    cid = await dataRoot.lookup(username)
+
+  // Otherwise load the cached file-system if possible
+  } else {
+    cid = await localforage.getItem(FS_CID) as string || await dataRoot.lookup(username)
+  }
 
   // If a file system exists, load it and return it
   fs = cid ? await FileSystem.fromCID(cid) : null

@@ -10,6 +10,8 @@ export * from './type-checks'
 export * from './util'
 export { api, arrbufs, base64, blob }
 
+export const FS_CID = "fission_sdk.fs_cid"
+export const FS_TIMESTAMP = "fission_sdk.fs_timestamp"
 export const UCAN_STORAGE_KEY = "fission_sdk.auth_ucan"
 export const USERNAME_STORAGE_KEY = "fission_sdk.auth_username"
 

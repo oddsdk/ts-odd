@@ -1,3 +1,4 @@
+import localforage from 'localforage'
 import { throttle } from 'throttle-debounce'
 
 import BareTree from './bare/tree'
@@ -10,6 +11,7 @@ import * as pathUtil from './path'
 import * as dataRoot from '../data-root'
 import * as keystore from '../keystore'
 import { CID, FileContent } from '../ipfs'
+import { FS_CID, FS_TIMESTAMP } from '../common'
 import { asyncWaterfall } from '../common/util'
 import { pinMapToLinks } from './pins'
 
@@ -71,7 +73,10 @@ export class FileSystem {
     }
 
     // Update the user's data root when making changes
-    const syncHook = throttle(5000, cid => {
+    const syncHook = throttle(5000, async cid => {
+      await localforage.setItem(FS_TIMESTAMP, Date.now())
+      await localforage.setItem(FS_CID, cid.toString())
+
       if (window.navigator.onLine) return dataRoot.update(cid)
       this.syncWhenOnline = cid
     })
