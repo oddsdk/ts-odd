@@ -193,14 +193,24 @@ Returns a list of links at a given directory path
 Params:
 - path: `string` **required**
 
-Returns: `Links[]` list of links
+Returns: `{ [name: string]: Link }` Object with the file name as the key and its `Link` as the value.
 
 Example:
 ```ts
-// public
-const links = await wnfs.ls("public/some/directory/path")
-// private
-const links = await wnfs.ls("private/some/directory/path")
+linksObject = await wnfs.ls("public/some/directory/path") // public
+linksObject = await wnfs.ls("private/some/directory/path") // private
+
+// convert to list
+links = Object.entries(linksObject)
+
+// working with links
+data = await Promise.all(links.map(([name, _]) => {
+  return fs.cat(`private/some/directory/path/${name}`)
+}))
+
+
+
+
 ```
 
 ---
