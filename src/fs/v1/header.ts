@@ -10,18 +10,28 @@ import * as link from '../link'
 
 import * as protocol from '../protocol'
 
-
-export const empty = (): HeaderV1 => ({
+export const emptyMetadata = (): Metadata => ({
   name: '',
   isFile: false,
   mtime: Date.now(),
   ctime: Date.now(),
-  size: 0,
-  version: semver.latest,
-  key: null,
-  skeleton: {},
-  children: {}
+  version: semver.latest
 })
+
+export const empty = (): HeaderV1 => {
+  const { name, isFile, mtime, ctime, version } = emptyMetadata()
+  return {
+    name,
+    isFile,
+    mtime,
+    ctime,
+    version,
+    size: 0,
+    key: null,
+    skeleton: {},
+    children: {}
+  }
+}
 
 export const put = async (
     userland: Link,

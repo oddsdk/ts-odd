@@ -1,5 +1,5 @@
 import * as protocol from '../protocol'
-import { Links, Tree, File } from '../types'
+import { Links, Tree, File, Link, SyncHookDetailed } from '../types'
 import * as check from '../types/check'
 import { AddResult, CID, FileContent } from '../../ipfs'
 import BareFile from '../bare/file'
@@ -7,9 +7,12 @@ import BaseTree from '../base/tree'
 import * as link from '../link'
 import * as semver from '../semver'
 import * as pathUtil from '../path'
+import { Maybe } from '../../common'
 
 
 class BareTree extends BaseTree {
+
+  onUpdate: Maybe<SyncHookDetailed> = null
 
   constructor(links: Links) {
     super(links, semver.v0)
@@ -37,7 +40,11 @@ class BareTree extends BaseTree {
   }
 
   async putDetailed(): Promise<AddResult> {
-    return protocol.putLinks(this.links, null)
+    const details = await protocol.putLinks(this.links, null)
+    if(this.onUpdate !== null){
+      this.onUpdate(details)
+    }
+    return details
   }
 
   async updateDirectChild(child: Tree | File, name: string): Promise<this> {
@@ -77,6 +84,11 @@ class BareTree extends BaseTree {
     }
 
     return nextTree.get(nextPath)
+  }
+
+  updateLink(link: Link): Tree {
+    this.links[link.name] = link
+    return this
   }
 
   getLinks(): Links {

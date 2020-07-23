@@ -2,12 +2,12 @@
 
 /** @internal */
 import * as pathUtil from '../path'
-import { Links, Tree, File, SemVer, NonEmptyPath } from '../types'
+import { Links, Tree, File, SemVer, NonEmptyPath, UnixTree } from '../types'
 import * as check from '../types/check'
 import { AddResult, CID, FileContent } from '../../ipfs'
 
 
-abstract class BaseTree implements Tree {
+abstract class BaseTree implements Tree, UnixTree {
 
   version: SemVer
   links: Links
@@ -33,12 +33,14 @@ abstract class BaseTree implements Tree {
   }
 
   async mkdir(path: string): Promise<this> {
-    const exists = await this.pathExists(path)
+    const exists = await this.exists(path)
     if (exists) {
       throw new Error(`Path already exists: ${path}`)
     }
     const toAdd = await this.emptyChildTree()
-    return this.addChild(path, toAdd)
+    await this.addChild(path, toAdd)
+    await this.putDetailed()
+    return this
   }
 
   async cat(path: string): Promise<FileContent> {
@@ -52,7 +54,9 @@ abstract class BaseTree implements Tree {
   }
 
   async add(path: string, content: FileContent): Promise<this> {
-    return this.addChild(path, content)
+    await this.addChild(path, content)
+    await this.putDetailed()
+    return this
   }
 
   async addChild(path: string, toAdd: Tree | FileContent): Promise<this> {
@@ -92,7 +96,9 @@ abstract class BaseTree implements Tree {
     if (parts === null) {
       throw new Error("Path does not exist")
     }
-    return this.rmNested(parts)
+    await this.rmNested(parts)
+    await this.put()
+    return this
   }
 
   async rmNested(path: NonEmptyPath): Promise<this> {
@@ -110,7 +116,7 @@ abstract class BaseTree implements Tree {
             : updated as this
   }
 
-  async pathExists(path: string): Promise<boolean> {
+  async exists(path: string): Promise<boolean> {
     const node = await this.get(path)
     return node !== null
   }

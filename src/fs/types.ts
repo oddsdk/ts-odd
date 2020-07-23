@@ -11,6 +11,12 @@ export type FileSystemOptions = {
   rootDid?: string
 }
 
+export enum Branch {
+  Public = 'public',
+  Pretty = 'pretty',
+  Private = 'private'
+}
+
 
 // FILES
 // -----
@@ -99,7 +105,8 @@ export type PutDetails = {
 }
 
 export type NonEmptyPath = [string, ...string[]]
-export type SyncHook = (cid: CID) => unknown
+export type SyncHook = (result: CID) => unknown
+export type SyncHookDetailed = (result: AddResult) => unknown
 
 export type SemVer = {
   major: number
@@ -130,6 +137,16 @@ export interface StaticMethods {
 // TREE
 // ----
 
+export interface UnixTree {
+  ls(path: string): Promise<Links>
+  mkdir(path: string): Promise<this>
+  cat(path: string): Promise<FileContent>
+  add(path: string, content: FileContent): Promise<this>
+  rm(path: string): Promise<this>
+  // get(path: string): Promise<this | FileContent | null>
+  exists(path: string): Promise<boolean>
+}
+
 export interface Tree {
   version: SemVer
 
@@ -139,7 +156,7 @@ export interface Tree {
   add(path: string, content: FileContent): Promise<this>
   rm(path: string): Promise<Tree>
   get(path: string): Promise<Tree | File | null>
-  pathExists(path: string): Promise<boolean>
+  exists(path: string): Promise<boolean>
   addChild(path: string, toAdd: Tree | FileContent): Promise<this>
   addRecurse (path: NonEmptyPath, child: Tree | FileContent): Promise<this>
 

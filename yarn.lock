@@ -1972,6 +1972,11 @@ cssstyle@^2.0.0:
   dependencies:
     cssom "~0.3.6"
 
+cuint@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/cuint/-/cuint-0.2.2.tgz#408086d409550c2631155619e9fa7bcadc3b991b"
+  integrity sha1-QICG1AlVDCYxFVYZ6fp7ytw7mRs=
+
 cycle@1.0.x:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/cycle/-/cycle-1.0.3.tgz#21e80b2be8580f98b468f379430662b046c34ad2"
@@ -2555,6 +2560,19 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
+fission-bloom-filters@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/fission-bloom-filters/-/fission-bloom-filters-1.4.0.tgz#1aa9a7fdc455dc4ab7723b246c94005db8252b7d"
+  integrity sha512-7wif9/Uj7IKqTUQhk/KlWVh9fRin65UQSz2BCx+7myG67sgS2ETpyu8iV/yNou7M2KcrZhZd94vn4a54L6T70Q==
+  dependencies:
+    is-buffer "^2.0.4"
+    lodash "^4.17.15"
+    lodash.eq "^4.0.0"
+    lodash.indexof "^4.0.5"
+    reflect-metadata "^0.1.13"
+    seedrandom "^3.0.5"
+    xxhashjs "^0.2.2"
+
 flat-cache@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/flat-cache/-/flat-cache-2.0.1.tgz#5d296d6f04bda44a4630a301413bdbc2ec085ec0"
@@ -3033,6 +3051,11 @@ is-buffer@^1.1.5:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/is-buffer/-/is-buffer-1.1.6.tgz#efaa2ea9daa0d7ab2ea13a97b2b8ad51fefbe8be"
   integrity sha512-NcdALwpXkTm5Zvvbk7owOUSvVvBKDgKP5/ewfXEznmQFfs4ZRmanOeKBTjRVjka3QFoN6XJ+9F3USqfHqTaU5w==
+
+is-buffer@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/is-buffer/-/is-buffer-2.0.4.tgz#3e572f23c8411a5cfd9557c849e3665e0b290623"
+  integrity sha512-Kq1rokWXOPXWuaMAqZiJW4XxsmD9zGx9q4aePabbn3qCRGedtH7Cm+zV8WETitMfu1wdh+Rvd6w5egwSngUX2A==
 
 is-ci@^1.0.10:
   version "1.2.1"
@@ -3976,6 +3999,16 @@ locate-path@^5.0.0:
   dependencies:
     p-locate "^4.1.0"
 
+lodash.eq@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/lodash.eq/-/lodash.eq-4.0.0.tgz#a39f06779e72f9c0d1f310c90cd292c1661d5035"
+  integrity sha1-o58Gd55y+cDR8xDJDNKSwWYdUDU=
+
+lodash.indexof@^4.0.5:
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/lodash.indexof/-/lodash.indexof-4.0.5.tgz#53714adc2cddd6ed87638f893aa9b6c24e31ef3c"
+  integrity sha1-U3FK3Czd1u2HY4+JOqm2wk4x7zw=
+
 lodash.memoize@4.x:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/lodash.memoize/-/lodash.memoize-4.1.2.tgz#bcc6c49a42a2840ed997f323eada5ecd182e0bfe"
@@ -4833,6 +4866,11 @@ rechoir@^0.6.2:
   dependencies:
     resolve "^1.1.6"
 
+reflect-metadata@^0.1.13:
+  version "0.1.13"
+  resolved "https://registry.yarnpkg.com/reflect-metadata/-/reflect-metadata-0.1.13.tgz#67ae3ca57c972a2aa1642b10fe363fe32d49dc08"
+  integrity sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==
+
 regenerate-unicode-properties@^8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/regenerate-unicode-properties/-/regenerate-unicode-properties-8.1.0.tgz#ef51e0f0ea4ad424b77bf7cb41f3e015c70a3f0e"
@@ -5245,6 +5283,11 @@ saxes@^3.1.9:
   integrity sha512-Ydydq3zC+WYDJK1+gRxRapLIED9PWeSuuS41wqyoRmzvhhh9nc+QQrVMKJYzJFULazeGhzSV0QleN2wD3boh2g==
   dependencies:
     xmlchars "^2.1.1"
+
+seedrandom@^3.0.5:
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-3.0.5.tgz#54edc85c95222525b0c7a6f6b3543d8e0b3aa0a7"
+  integrity sha512-8OwmbklUNzwezjGInmZ+2clQmExQPvomqjL7LFqOYqtmuxRgQYqOD3mHaU+MvZn5FLUeVxVfQjwLZW/n/JFuqg==
 
 semver-compare@^1.0.0:
   version "1.0.0"
@@ -6265,6 +6308,13 @@ xmlchars@^2.1.1:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/xmlchars/-/xmlchars-2.2.0.tgz#060fe1bcb7f9c76fe2a17db86a9bc3ab894210cb"
   integrity sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==
+
+xxhashjs@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/xxhashjs/-/xxhashjs-0.2.2.tgz#8a6251567621a1c46a5ae204da0249c7f8caa9d8"
+  integrity sha512-AkTuIuVTET12tpsVIQo+ZU6f/qDmKuRUcjaqR+OIvm+aCBsZ95i7UVY5WJ9TMsSaZ0DA2WxoZ4acu0sPH+OKAw==
+  dependencies:
+    cuint "^0.2.2"
 
 "y18n@^3.2.1 || ^4.0.0", y18n@^4.0.0:
   version "4.0.0"

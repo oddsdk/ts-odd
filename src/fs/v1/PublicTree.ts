@@ -1,6 +1,6 @@
 import * as protocol from '../protocol'
 import * as header from './header'
-import { Links, HeaderV1, StaticMethods, HeaderTree, HeaderFile, PutDetails } from '../types'
+import { Links, HeaderV1, StaticMethods, HeaderTree, HeaderFile, PutDetails, SyncHookDetailed } from '../types'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
@@ -16,6 +16,7 @@ export class PublicTree extends BaseTree implements HeaderTree {
   protected header: HeaderV1
   parentKey: Maybe<string> // @@TODO: this is no good to have this non-protected, but we're refactoring the private side now any
   protected ownKey: Maybe<string> = null
+  onUpdate: Maybe<SyncHookDetailed> = null
 
   protected static: StaticMethods
 
@@ -29,19 +30,19 @@ export class PublicTree extends BaseTree implements HeaderTree {
     }
   }
 
-  static async empty (parentKey: Maybe<string>): Promise<HeaderTree> {
+  static async empty (parentKey: Maybe<string>): Promise<PublicTree> {
     return new PublicTree({}, {
       ...header.empty(),
       version: semver.v1,
     }, parentKey)
   }
 
-  static async fromCID (cid: CID, parentKey: Maybe<string>): Promise<HeaderTree> {
+  static async fromCID (cid: CID, parentKey: Maybe<string>): Promise<PublicTree> {
     const info = await header.getHeaderAndUserland(cid, null)
     return PublicTree.fromHeaderAndUserland(info.header, info.userland, parentKey)
   }
 
-  static async fromHeaderAndUserland(header: HeaderV1, userland: CID, parentKey: Maybe<string>): Promise<HeaderTree> {
+  static async fromHeaderAndUserland(header: HeaderV1, userland: CID, parentKey: Maybe<string>): Promise<PublicTree> {
     const links = await protocol.getLinks(userland, header.key)
     return new PublicTree(links, header, parentKey)
   }
@@ -65,10 +66,14 @@ export class PublicTree extends BaseTree implements HeaderTree {
   protected async putWithKey(key: Maybe<string>): Promise<PutDetails> {
     const { cid, size } = await protocol.putLinks(this.links, this.header.key)
     const userlandLink = link.make('userland', cid, true, size)
-    return header.put(userlandLink, {
+    const details = await header.put(userlandLink, {
       ...this.header,
       mtime: Date.now()
     }, key)
+    if(this.onUpdate !== null){
+      this.onUpdate(details)
+    }
+    return details
   }
 
   async updateDirectChild(child: HeaderTree | HeaderFile, name: string): Promise<this> {

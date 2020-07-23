@@ -1,6 +1,6 @@
 {
   "name": "fission-sdk",
-  "version": "0.13.0-alpha-5",
+  "version": "0.16.0-alpha",
   "description": "Fission Typescript SDK",
   "keywords": [],
   "main": "index.cjs.js",
@@ -100,6 +100,7 @@
   "dependencies": {
     "base58-universal": "^1.0.0",
     "borc": "^2.1.1",
+    "fission-bloom-filters": "^1.4.0",
     "ipld-dag-pb": "^0.18.2",
     "keystore-idb": "^0.13.0",
     "load-script2": "^2.0.5",
