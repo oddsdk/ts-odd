@@ -74,7 +74,7 @@ export class FileSystem {
 
     // Add the root CID of the file system to the CID log
     // (reverse list, newest cid first)
-    const logCid = throttle(500, cidLog.add)
+    const logCid = cidLog.add
 
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(5000, cid => {
