@@ -1,8 +1,9 @@
 import localforage from 'localforage'
 
 import FileSystem from './fs'
+import * as cidLog from './common/cid-log'
 import * as dataRoot from './data-root'
-import { FS_CID, FS_TIMESTAMP , authenticatedUsername } from './common'
+import { authenticatedUsername } from './common'
 
 
 /**
@@ -15,20 +16,32 @@ import { FS_CID, FS_TIMESTAMP , authenticatedUsername } from './common'
 export async function loadFileSystem(username?: string): Promise<FileSystem> {
   let cid, fs
 
-  // Determine username
+  // Look for username
   username = username || (await authenticatedUsername() || undefined)
   if (!username) throw new Error("User hasn't authenticated yet")
 
-  const lastLocalChange = await localforage.getItem(FS_TIMESTAMP) as number || 0
-  const currentTime = Date.now()
+  // Determine the correct CID of the file system to load
+  const dataCid = await dataRoot.lookup(username)
+  const [ logIdx, logLength ] = dataCid ? await cidLog.index(dataCid) : [ -1, 0 ]
 
-  // If our last file-system change was over 15 minutes ago
-  if (currentTime - lastLocalChange > 30 * 60 * 1000) {
-    cid = await dataRoot.lookup(username)
+  if (!dataCid) {
+    // No DNS CID yet
+    cid = await cidLog.newest()
 
-  // Otherwise load the cached file-system if possible
+  } else if (logIdx === 0) {
+    // DNS is up to date
+    if (logLength > 1) await cidLog.override(dataCid)
+    cid = dataCid
+
+  } else if (logIdx > 0) {
+    // DNS is outdated
+    cidLog.removeOlderCids(logIdx)
+    cid = await cidLog.newest()
+
   } else {
-    cid = await localforage.getItem(FS_CID) as string || await dataRoot.lookup(username)
+    // DNS is newer
+    cid = dataCid
+
   }
 
   // If a file system exists, load it and return it

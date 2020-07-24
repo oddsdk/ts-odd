@@ -8,10 +8,10 @@ import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree, PinMap } fr
 import check from './types/check'
 import * as pathUtil from './path'
 
+import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
 import * as keystore from '../keystore'
 import { CID, FileContent } from '../ipfs'
-import { FS_CID, FS_TIMESTAMP } from '../common'
 import { asyncWaterfall } from '../common/util'
 import { pinMapToLinks } from './pins'
 
@@ -72,16 +72,18 @@ export class FileSystem {
       }
     }
 
-    // Update the user's data root when making changes
-    const syncHook = throttle(5000, async cid => {
-      await localforage.setItem(FS_TIMESTAMP, Date.now())
-      await localforage.setItem(FS_CID, cid.toString())
+    // Add the root CID of the file system to the CID log
+    // (reverse list, newest cid first)
+    const logCid = throttle(500, cidLog.add)
 
+    // Update the user's data root when making changes
+    const updateDataRootWhenOnline = throttle(5000, cid => {
       if (window.navigator.onLine) return dataRoot.update(cid)
       this.syncWhenOnline = cid
     })
 
-    this.syncHooks.push(syncHook)
+    this.syncHooks.push(logCid)
+    this.syncHooks.push(updateDataRootWhenOnline)
 
     // Sync when coming back online
     window.addEventListener('online', () => this.whenOnline())
