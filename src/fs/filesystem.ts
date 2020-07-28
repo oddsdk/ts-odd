@@ -158,27 +158,6 @@ export class FileSystem {
     })
   }
 
-  /**
-   * Upgrade public IPFS folder to FileSystem
-   */
-  static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root' } = opts
-
-    const root = await PublicTreeBare.empty()
-    const publicTree = await PublicTree.fromCID(cid, null)
-    const prettyTree = await PublicTreeBare.fromCID(cid)
-
-    const key = await keystore.getKeyByName(keyName)
-    const privateTree = await PrivateTree.empty(key)
-
-    return new FileSystem({
-      root,
-      publicTree,
-      prettyTree,
-      privateTree,
-    })
-  }
-
 
 
   // DEACTIVATE
