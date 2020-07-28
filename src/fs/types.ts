@@ -8,6 +8,7 @@ import { Maybe } from '../common/types'
 export type FileSystemOptions = {
   version?: SemVer
   keyName?: string
+  rootDid?: string
 }
 
 
@@ -67,7 +68,7 @@ export type HeaderV1 = {
   pins: PinMap
 }
 
-export type PinMap = { [cid: string]: CID[] }
+export type PinMap = { [name: string]: PinMap | CID }
 
 export type NodeInfo = HeaderV1 & {
   cid: CID
@@ -91,16 +92,16 @@ export type SemVer = {
 
 export type PutResult = {
   cid: CID
-  pins: CID[]
+  pins: PinMap
 }
 
 // STATIC METHODS
 // ----
 
 export interface TreeStatic {
-  empty (parentKey: Maybe<string>): Promise<HeaderTree>
-  fromCID (cid: CID, parentKey: Maybe<string>): Promise<HeaderTree>
-  fromHeader (header: HeaderV1, parentKey: Maybe<string>): HeaderTree
+  empty(parentKey: Maybe<string>): Promise<HeaderTree>
+  fromCID(cid: CID, parentKey: Maybe<string>): Promise<HeaderTree>
+  fromHeader(header: HeaderV1, parentKey: Maybe<string>): HeaderTree
 }
 
 export interface FileStatic {
@@ -130,7 +131,7 @@ export interface Tree {
   addRecurse (path: NonEmptyPath, child: Tree | FileContent): Promise<this>
 
   put(): Promise<CID>
-  updateDirectChild (child: Tree | File, name: string): Promise<this>
+  updateDirectChild(child: Tree | File, name: string): Promise<this>
   removeDirectChild(name: string): Promise<this>
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string): Promise<Tree | File>

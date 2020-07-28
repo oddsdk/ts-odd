@@ -1,23 +1,26 @@
-import { throttle } from 'throttle-debounce';
+import { throttle } from 'throttle-debounce'
 
-import PublicTreeBare from './bare/tree'
+import BareTree from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
-import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree } from './types'
+import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree, PinMap } from './types'
 import check from './types/check'
-import pathUtil from './path'
+import * as pathUtil from './path'
 
 import * as dataRoot from '../data-root'
 import * as keystore from '../keystore'
 import { CID, FileContent } from '../ipfs'
 import { asyncWaterfall } from '../common/util'
+import { pinMapToLinks } from './pins'
 
 
 type ConstructorParams = {
   root: Tree
   publicTree: HeaderTree
-  prettyTree: PublicTreeBare
+  prettyTree: BareTree
   privateTree: HeaderTree
+  pinsTree: BareTree
+  rootDid: string
 }
 
 
@@ -25,19 +28,21 @@ export class FileSystem {
 
   root: Tree
   publicTree: HeaderTree
-  prettyTree: PublicTreeBare
+  prettyTree: BareTree
   privateTree: HeaderTree
-
+  pinsTree: BareTree
+  rootDid: string
   syncHooks: Array<SyncHook>
   syncWhenOnline: CID | null
 
 
-  constructor({ root, publicTree, prettyTree, privateTree }: ConstructorParams) {
+  constructor({ root, publicTree, prettyTree, privateTree, pinsTree, rootDid }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
-
+    this.pinsTree = pinsTree
+    this.rootDid = rootDid
     this.syncHooks = []
     this.syncWhenOnline = null
 
@@ -59,40 +64,50 @@ export class FileSystem {
   // --------------
 
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root' } = opts
+    const { keyName = 'filesystem-root', rootDid = '' } = opts
 
-    const root = await PublicTreeBare.empty()
+    const root = await BareTree.empty()
     const publicTree = await PublicTree.empty(null)
-    const prettyTree = await PublicTreeBare.empty()
+    const prettyTree = await BareTree.empty()
+    const pinsTree = await BareTree.empty()
 
     const key = await keystore.getKeyByName(keyName)
     const privateTree = await PrivateTree.empty(key)
+
+    await root.addChild('public', publicTree)
+    await root.addChild('pretty', prettyTree)
+    await root.addChild('private', privateTree)
+    await root.addChild('pins', pinsTree)
 
     return new FileSystem({
       root,
       publicTree,
       prettyTree,
       privateTree,
+      pinsTree,
+      rootDid
     })
   }
 
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { keyName = 'filesystem-root' } = opts
+    const { keyName = 'filesystem-root', rootDid = '' } = opts
 
-    const root = await PublicTreeBare.fromCID(cid)
+    const root = await BareTree.fromCID(cid)
     const publicCID = root.findLinkCID('public')
     const publicTree = publicCID !== null
-                        ? await PublicTree.fromCID(publicCID, null)
-                        : null
+      ? await PublicTree.fromCID(publicCID, null)
+      : null
 
-    const prettyTree = (await root.getDirectChild('pretty')) as PublicTreeBare ||
-                        await PublicTreeBare.empty()
+    const prettyTree = (await root.getDirectChild('pretty')) as BareTree ||
+      await BareTree.empty()
+    const pinsTree = (await root.getDirectChild('pins')) as BareTree ||
+      await BareTree.empty()
 
     const privateCID = root.findLinkCID('private')
     const key = await keystore.getKeyByName(keyName)
     const privateTree = privateCID !== null
-                          ? await PrivateTree.fromCID(privateCID, key)
-                          : null
+      ? await PrivateTree.fromCID(privateCID, key)
+      : null
 
     if (publicTree === null || privateTree === null) return null
 
@@ -101,6 +116,8 @@ export class FileSystem {
       publicTree,
       prettyTree,
       privateTree,
+      pinsTree,
+      rootDid
     })
   }
 
@@ -108,28 +125,6 @@ export class FileSystem {
     const cid = await dataRoot.lookup(username)
     return cid ? FileSystem.fromCID(cid, opts) : null
   }
-
-  /**
-   * Upgrade public IPFS folder to FileSystem
-   */
-  static async upgradePublicCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root' } = opts
-
-    const root = await PublicTreeBare.empty()
-    const publicTree = await PublicTree.fromCID(cid, null)
-    const prettyTree = await PublicTreeBare.fromCID(cid)
-
-    const key = await keystore.getKeyByName(keyName)
-    const privateTree = await PrivateTree.empty(key)
-
-    return new FileSystem({
-      root,
-      publicTree,
-      prettyTree,
-      privateTree,
-    })
-  }
-
 
 
   // DEACTIVATE
@@ -204,29 +199,19 @@ export class FileSystem {
   // -----
 
   /**
-   * Retrieves an array of all CIDs that need to be pinned in order to backup the FS.
+   * Retrieves all pins needed for private filesystem and adds them to the 'pin tree'
    */
-  async pinList(): Promise<CID[]> {
-    const privateResult = await this.privateTree.putWithPins()
-    const publicResult = await this.publicTree.putWithPins()
-    const rootCID = await this.sync()
-    return [
-      ...privateResult.pins,
-      ...publicResult.pins,
-      rootCID
-    ]
+  async updatePinTree(pins: PinMap): Promise<void> {
+    // we pass `this.rootDid` as a salt
+    const pinLinks = await pinMapToLinks('private', pins, this.rootDid)
+    this.pinsTree = BareTree.fromLinks(pinLinks)
+    await this.root.addChild('pins', this.pinsTree)
   }
 
   /**
    * Ensures the latest version of the file system is added to IPFS and returns the root CID.
    */
   async sync(): Promise<CID> {
-    this.root = await asyncWaterfall(this.root, [
-      (t: Tree): Promise<Tree> => t.addChild('public', this.publicTree),
-      (t: Tree): Promise<Tree> => t.addChild('pretty', this.prettyTree),
-      (t: Tree): Promise<Tree> => t.addChild('private', this.privateTree)
-    ])
-
     const cid = await this.root.put()
 
     this.syncHooks.forEach(hook => hook(cid))
@@ -267,7 +252,9 @@ export class FileSystem {
         resultPretty = await fn(this.prettyTree, relPath)
 
         this.publicTree = result
-        this.prettyTree = resultPretty as unknown as PublicTreeBare
+        this.prettyTree = resultPretty as unknown as BareTree
+        await this.root.addChild('public', this.publicTree)
+        await this.root.addChild('pretty', this.prettyTree)
       }
 
     } else if (head === 'private') {
@@ -275,6 +262,9 @@ export class FileSystem {
 
       if (updateTree && PrivateTree.instanceOf(result)) {
         this.privateTree = result
+        const { pins } = await this.privateTree.putWithPins()
+        await this.updatePinTree(pins)
+        await this.root.addChild('private', this.privateTree)
       }
 
     } else if (head === 'pretty' && updateTree) {
