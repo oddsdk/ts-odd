@@ -26,7 +26,7 @@ export const isLinks = (obj: any): obj is Links => {
 
 export const isPinMap = (obj: any): obj is PinMap => {
   return isObject(obj)
-      && Object.values(obj).every(isCIDList)
+      && Object.values(obj).every(v => isCID(v) || isPinMap(v))
 }
 
 export const isHeaderV1 = (obj: any): obj is HeaderV1 => {
