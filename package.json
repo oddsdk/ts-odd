@@ -1,6 +1,6 @@
 {
   "name": "fission-sdk",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Fission Typescript SDK",
   "keywords": [],
   "main": "index.cjs.js",
