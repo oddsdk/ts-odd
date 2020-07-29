@@ -21,7 +21,7 @@ Get started making fission-enabled apps with the Fission SDK!
 The Fission SDK offers tools for:
 - authenticating through a Fission **authentication lobby**  
   (a lobby is where you can make a Fission account or link an account)
-- managing your web native **file system**
+- managing your web native **file system**  
   (this is where a user's data lives)
 - tools for building DIDs and UCANs.
 
@@ -38,8 +38,6 @@ See [`docs/`](docs/) for more detailed documentation based on the source code.
 
 
 # Getting Started
-
-[auth.fission.codes](https://auth.fission.codes) is our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser.
 
 ```ts
 const { scenario, state } = await sdk.initialise()
@@ -64,7 +62,7 @@ if (scenario.authCancelled) {
 }
 ```
 
-`redirectToLobby` takes an optional parameter, the url that the lobby should redirect back to (the default is `location.href`).
+`redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes an optional parameter, the url that the lobby should redirect back to (the default is `location.href`).
 
 
 ## Other functions
