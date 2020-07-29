@@ -37,32 +37,28 @@ See [`docs/`](docs/) for more detailed documentation based on the source code.
 
 
 
-# Authentication
+# Getting Started
 
 [auth.fission.codes](https://auth.fission.codes) is our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser.
 
 ```ts
-const auth = await sdk.isAuthenticated()
+const { scenario, state } = await sdk.initialise()
 
-if (auth.cancelled) {
+if (scenario.authCancelled) {
   // User was redirected to lobby,
   // but cancelled the authorisation.
 
-} else if (auth.newUser) {
-  // This authenticated user is new to Fission.
-
-} else if (auth.authenticated) {
-  // Authenticated 🍿
-  //
-  // ☞ Additional data:
-  // auth.throughLobby      -  If the user authenticated through the lobby, or just came back.
-  // auth.session.username  -  The user's username.
+} else if (scenario.authSucceeded || scenario.continuum) {
+  // State:
+  // state.authenticated    -  Will always be `true` in these scenarios
+  // state.newUser          -  If the user is new to Fission
+  // state.throughLobby     -  If the user authenticated through the lobby, or just came back.
+  // state.username         -  The user's username.
   //
   // ☞ We can now interact with our file system (more on that later)
-  auth.session.fs
+  state.fs
 
-} else {
-  // Not authenticated 🙅‍♀️
+} else if (scenario.notAuthenticated) {
   sdk.redirectToLobby()
 
 }
@@ -86,7 +82,7 @@ Each file system has a public tree and a private tree. All information (links, d
 
 ```ts
 // After authenticating …
-const fs = session.fs
+const fs = state.fs
 
 // List the user's private files that belong to this app
 const appPath = fs.appPath.private("myApp")

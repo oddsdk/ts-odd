@@ -66,6 +66,7 @@ export type AuthCancelled = {
 
 export type Continuum = {
   authenticated: true
+  newUser: false,
   throughLobby: false
   username: string
 
@@ -211,6 +212,7 @@ function scenarioContinuum(
     scenario: { continuum: true },
     state: {
       authenticated: true,
+      newUser: false,
       throughLobby: false,
       fs,
       username
