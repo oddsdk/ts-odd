@@ -1,4 +1,3 @@
-import localforage from 'localforage'
 import { throttle } from 'throttle-debounce'
 
 import BareTree from './bare/tree'
@@ -12,7 +11,6 @@ import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
 import * as keystore from '../keystore'
 import { CID, FileContent } from '../ipfs'
-import { asyncWaterfall } from '../common/util'
 import { pinMapToLinks } from './pins'
 
 
