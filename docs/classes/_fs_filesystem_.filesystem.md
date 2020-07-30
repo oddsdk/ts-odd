@@ -14,10 +14,13 @@
 
 ### Properties
 
+* [appPath](_fs_filesystem_.filesystem.md#apppath)
+* [pinsTree](_fs_filesystem_.filesystem.md#pinstree)
 * [prettyTree](_fs_filesystem_.filesystem.md#prettytree)
 * [privateTree](_fs_filesystem_.filesystem.md#privatetree)
 * [publicTree](_fs_filesystem_.filesystem.md#publictree)
 * [root](_fs_filesystem_.filesystem.md#root)
+* [rootDid](_fs_filesystem_.filesystem.md#rootdid)
 * [syncHooks](_fs_filesystem_.filesystem.md#synchooks)
 * [syncWhenOnline](_fs_filesystem_.filesystem.md#syncwhenonline)
 
@@ -26,17 +29,18 @@
 * [add](_fs_filesystem_.filesystem.md#add)
 * [cat](_fs_filesystem_.filesystem.md#cat)
 * [deactivate](_fs_filesystem_.filesystem.md#deactivate)
+* [exists](_fs_filesystem_.filesystem.md#exists)
 * [get](_fs_filesystem_.filesystem.md#get)
 * [ls](_fs_filesystem_.filesystem.md#ls)
 * [mkdir](_fs_filesystem_.filesystem.md#mkdir)
 * [mv](_fs_filesystem_.filesystem.md#mv)
-* [pinList](_fs_filesystem_.filesystem.md#pinlist)
+* [read](_fs_filesystem_.filesystem.md#read)
 * [rm](_fs_filesystem_.filesystem.md#rm)
 * [sync](_fs_filesystem_.filesystem.md#sync)
+* [updatePinTree](_fs_filesystem_.filesystem.md#updatepintree)
+* [write](_fs_filesystem_.filesystem.md#write)
 * [empty](_fs_filesystem_.filesystem.md#static-empty)
-* [forUser](_fs_filesystem_.filesystem.md#static-foruser)
 * [fromCID](_fs_filesystem_.filesystem.md#static-fromcid)
-* [upgradePublicCID](_fs_filesystem_.filesystem.md#static-upgradepubliccid)
 
 ## Constructors
 
@@ -44,7 +48,7 @@
 
 \+ **new FileSystem**(`__namedParameters`: object): *[FileSystem](_fs_filesystem_.filesystem.md)*
 
-*Defined in [src/fs/filesystem.ts:32](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L32)*
+*Defined in [src/fs/filesystem.ts:51](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L51)*
 
 **Parameters:**
 
@@ -52,20 +56,38 @@
 
 Name | Type |
 ------ | ------ |
+`pinsTree` | BareTree‹› |
 `prettyTree` | BareTree‹› |
 `privateTree` | HeaderTree‹› |
 `publicTree` | HeaderTree‹› |
 `root` | Tree‹› |
+`rootDid` | string |
 
 **Returns:** *[FileSystem](_fs_filesystem_.filesystem.md)*
 
 ## Properties
 
+###  appPath
+
+• **appPath**: *AppPath*
+
+*Defined in [src/fs/filesystem.ts:49](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L49)*
+
+___
+
+###  pinsTree
+
+• **pinsTree**: *BareTree*
+
+*Defined in [src/fs/filesystem.ts:46](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L46)*
+
+___
+
 ###  prettyTree
 
-• **prettyTree**: *PublicTreeBare*
+• **prettyTree**: *BareTree*
 
-*Defined in [src/fs/filesystem.ts:28](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L28)*
+*Defined in [src/fs/filesystem.ts:44](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L44)*
 
 ___
 
@@ -73,7 +95,7 @@ ___
 
 • **privateTree**: *HeaderTree*
 
-*Defined in [src/fs/filesystem.ts:29](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L29)*
+*Defined in [src/fs/filesystem.ts:45](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L45)*
 
 ___
 
@@ -81,7 +103,7 @@ ___
 
 • **publicTree**: *HeaderTree*
 
-*Defined in [src/fs/filesystem.ts:27](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L27)*
+*Defined in [src/fs/filesystem.ts:43](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L43)*
 
 ___
 
@@ -89,7 +111,15 @@ ___
 
 • **root**: *Tree*
 
-*Defined in [src/fs/filesystem.ts:26](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L26)*
+*Defined in [src/fs/filesystem.ts:42](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L42)*
+
+___
+
+###  rootDid
+
+• **rootDid**: *string*
+
+*Defined in [src/fs/filesystem.ts:47](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L47)*
 
 ___
 
@@ -97,7 +127,7 @@ ___
 
 • **syncHooks**: *Array‹SyncHook›*
 
-*Defined in [src/fs/filesystem.ts:31](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L31)*
+*Defined in [src/fs/filesystem.ts:50](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L50)*
 
 ___
 
@@ -105,7 +135,7 @@ ___
 
 • **syncWhenOnline**: *CID | null*
 
-*Defined in [src/fs/filesystem.ts:32](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L32)*
+*Defined in [src/fs/filesystem.ts:51](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L51)*
 
 ## Methods
 
@@ -113,7 +143,7 @@ ___
 
 ▸ **add**(`path`: string, `content`: FileContent): *Promise‹CID›*
 
-*Defined in [src/fs/filesystem.ts:160](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L160)*
+*Defined in [src/fs/filesystem.ts:179](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L179)*
 
 **Parameters:**
 
@@ -130,7 +160,7 @@ ___
 
 ▸ **cat**(`path`: string): *Promise‹FileContent | null›*
 
-*Defined in [src/fs/filesystem.ts:167](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L167)*
+*Defined in [src/fs/filesystem.ts:186](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L186)*
 
 **Parameters:**
 
@@ -146,9 +176,30 @@ ___
 
 ▸ **deactivate**(): *void*
 
-*Defined in [src/fs/filesystem.ts:138](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L138)*
+*Defined in [src/fs/filesystem.ts:170](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L170)*
+
+Deactivate a file system.
+
+Use this when a user signs out.
+The only function of this is to stop listing to online/offline events.
 
 **Returns:** *void*
+
+___
+
+###  exists
+
+▸ **exists**(`path`: string): *Promise‹boolean›*
+
+*Defined in [src/fs/filesystem.ts:192](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L192)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`path` | string |
+
+**Returns:** *Promise‹boolean›*
 
 ___
 
@@ -156,7 +207,7 @@ ___
 
 ▸ **get**(`path`: string): *Promise‹Tree | File | null›*
 
-*Defined in [src/fs/filesystem.ts:180](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L180)*
+*Defined in [src/fs/filesystem.ts:198](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L198)*
 
 **Parameters:**
 
@@ -172,7 +223,7 @@ ___
 
 ▸ **ls**(`path`: string): *Promise‹Links›*
 
-*Defined in [src/fs/filesystem.ts:147](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L147)*
+*Defined in [src/fs/filesystem.ts:204](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L204)*
 
 **Parameters:**
 
@@ -188,7 +239,7 @@ ___
 
 ▸ **mkdir**(`path`: string): *Promise‹CID›*
 
-*Defined in [src/fs/filesystem.ts:153](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L153)*
+*Defined in [src/fs/filesystem.ts:210](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L210)*
 
 **Parameters:**
 
@@ -204,7 +255,7 @@ ___
 
 ▸ **mv**(`from`: string, `to`: string): *Promise‹CID›*
 
-*Defined in [src/fs/filesystem.ts:186](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L186)*
+*Defined in [src/fs/filesystem.ts:217](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L217)*
 
 **Parameters:**
 
@@ -217,15 +268,19 @@ Name | Type |
 
 ___
 
-###  pinList
+###  read
 
-▸ **pinList**(): *Promise‹CID[]›*
+▸ **read**(`path`: string): *Promise‹FileContent | null›*
 
-*Defined in [src/fs/filesystem.ts:209](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L209)*
+*Defined in [src/fs/filesystem.ts:232](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L232)*
 
-Retrieves an array of all CIDs that need to be pinned in order to backup the FS.
+**Parameters:**
 
-**Returns:** *Promise‹CID[]›*
+Name | Type |
+------ | ------ |
+`path` | string |
+
+**Returns:** *Promise‹FileContent | null›*
 
 ___
 
@@ -233,7 +288,7 @@ ___
 
 ▸ **rm**(`path`: string): *Promise‹CID›*
 
-*Defined in [src/fs/filesystem.ts:173](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L173)*
+*Defined in [src/fs/filesystem.ts:236](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L236)*
 
 **Parameters:**
 
@@ -249,9 +304,44 @@ ___
 
 ▸ **sync**(): *Promise‹CID›*
 
-*Defined in [src/fs/filesystem.ts:223](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L223)*
+*Defined in [src/fs/filesystem.ts:266](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L266)*
 
 Ensures the latest version of the file system is added to IPFS and returns the root CID.
+
+**Returns:** *Promise‹CID›*
+
+___
+
+###  updatePinTree
+
+▸ **updatePinTree**(`pins`: PinMap): *Promise‹void›*
+
+*Defined in [src/fs/filesystem.ts:256](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L256)*
+
+Retrieves all pins needed for private filesystem and adds them to the 'pin tree'
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`pins` | PinMap |
+
+**Returns:** *Promise‹void›*
+
+___
+
+###  write
+
+▸ **write**(`path`: string, `content`: FileContent): *Promise‹CID›*
+
+*Defined in [src/fs/filesystem.ts:243](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L243)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`path` | string |
+`content` | FileContent |
 
 **Returns:** *Promise‹CID›*
 
@@ -261,7 +351,9 @@ ___
 
 ▸ **empty**(`opts`: FileSystemOptions): *Promise‹[FileSystem](_fs_filesystem_.filesystem.md)›*
 
-*Defined in [src/fs/filesystem.ts:61](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L61)*
+*Defined in [src/fs/filesystem.ts:98](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L98)*
+
+Creates a file system with an empty public tree & an empty private tree at the root.
 
 **Parameters:**
 
@@ -270,23 +362,6 @@ Name | Type | Default |
 `opts` | FileSystemOptions | {} |
 
 **Returns:** *Promise‹[FileSystem](_fs_filesystem_.filesystem.md)›*
-
-___
-
-### `Static` forUser
-
-▸ **forUser**(`username`: string, `opts`: FileSystemOptions): *Promise‹[FileSystem](_fs_filesystem_.filesystem.md) | null›*
-
-*Defined in [src/fs/filesystem.ts:107](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L107)*
-
-**Parameters:**
-
-Name | Type | Default |
------- | ------ | ------ |
-`username` | string | - |
-`opts` | FileSystemOptions | {} |
-
-**Returns:** *Promise‹[FileSystem](_fs_filesystem_.filesystem.md) | null›*
 
 ___
 
@@ -294,7 +369,9 @@ ___
 
 ▸ **fromCID**(`cid`: CID, `opts`: FileSystemOptions): *Promise‹[FileSystem](_fs_filesystem_.filesystem.md) | null›*
 
-*Defined in [src/fs/filesystem.ts:79](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L79)*
+*Defined in [src/fs/filesystem.ts:127](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/filesystem.ts#L127)*
+
+Loads an existing file system from a CID.
 
 **Parameters:**
 
@@ -304,22 +381,3 @@ Name | Type | Default |
 `opts` | FileSystemOptions | {} |
 
 **Returns:** *Promise‹[FileSystem](_fs_filesystem_.filesystem.md) | null›*
-
-___
-
-### `Static` upgradePublicCID
-
-▸ **upgradePublicCID**(`cid`: CID, `opts`: FileSystemOptions): *Promise‹[FileSystem](_fs_filesystem_.filesystem.md)›*
-
-*Defined in [src/fs/filesystem.ts:115](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/filesystem.ts#L115)*
-
-Upgrade public IPFS folder to FileSystem
-
-**Parameters:**
-
-Name | Type | Default |
------- | ------ | ------ |
-`cid` | CID | - |
-`opts` | FileSystemOptions | {} |
-
-**Returns:** *Promise‹[FileSystem](_fs_filesystem_.filesystem.md)›*

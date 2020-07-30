@@ -20,7 +20,7 @@
 
 • **values**: *string[]* = ['name', 'isFile', 'mtime', 'size', 'version', 'key', 'fileIndex', 'pins']
 
-*Defined in [src/fs/v1/header.ts:9](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/header.ts#L9)*
+*Defined in [src/fs/v1/header.ts:9](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/header.ts#L9)*
 
 ## Functions
 
@@ -28,7 +28,7 @@
 
 ▸ **empty**(): *HeaderV1*
 
-*Defined in [src/fs/v1/header.ts:11](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/header.ts#L11)*
+*Defined in [src/fs/v1/header.ts:11](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/header.ts#L11)*
 
 **Returns:** *HeaderV1*
 
@@ -38,7 +38,7 @@ ___
 
 ▸ **getHeaderAndIndex**(`cid`: CID, `parentKey`: Maybe‹string›): *Promise‹Result›*
 
-*Defined in [src/fs/v1/header.ts:27](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/header.ts#L27)*
+*Defined in [src/fs/v1/header.ts:27](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/header.ts#L27)*
 
 **Parameters:**
 
@@ -55,7 +55,7 @@ ___
 
 ▸ **parseAndCheck**(`decoded`: UnstructuredHeader): *HeaderV1*
 
-*Defined in [src/fs/v1/header.ts:34](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/header.ts#L34)*
+*Defined in [src/fs/v1/header.ts:34](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/header.ts#L34)*
 
 **Parameters:**
 

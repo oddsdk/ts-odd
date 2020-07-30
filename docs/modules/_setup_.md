@@ -15,7 +15,7 @@
 
 ▸ **endpoints**(`e`: Partial‹[Endpoints](_setup_internal_.md#endpoints)›): *[Endpoints](_setup_internal_.md#endpoints)*
 
-*Defined in [src/setup.ts:21](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/setup.ts#L21)*
+*Defined in [src/setup.ts:21](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/setup.ts#L21)*
 
 Override endpoints.
 
@@ -43,7 +43,7 @@ ___
 
 ▸ **ipfs**(`s`: UnknownObject): *UnknownObject*
 
-*Defined in [src/setup.ts:41](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/setup.ts#L41)*
+*Defined in [src/setup.ts:41](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/setup.ts#L41)*
 
 Override the IPFS config.
 

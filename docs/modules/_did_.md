@@ -18,7 +18,7 @@
 
 ▸ **didToPublicKey**(`did`: string): *object*
 
-*Defined in [src/did.ts:75](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/did.ts#L75)*
+*Defined in [src/did.ts:75](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/did.ts#L75)*
 
 Convert a DID (did:key) to a base64 public key.
 
@@ -40,7 +40,7 @@ ___
 
 ▸ **local**(): *Promise‹string›*
 
-*Defined in [src/did.ts:26](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/did.ts#L26)*
+*Defined in [src/did.ts:26](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/did.ts#L26)*
 
 Create a DID to authenticate with.
 
@@ -52,7 +52,7 @@ ___
 
 ▸ **publicKeyToDid**(`publicKey`: string, `type`: CryptoSystem): *string*
 
-*Defined in [src/did.ts:58](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/did.ts#L58)*
+*Defined in [src/did.ts:58](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/did.ts#L58)*
 
 Convert a base64 public key to a DID (did:key).
 
@@ -71,7 +71,7 @@ ___
 
 ▸ **root**(`username`: string): *Promise‹string›*
 
-*Defined in [src/did.ts:37](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/did.ts#L37)*
+*Defined in [src/did.ts:37](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/did.ts#L37)*
 
 Gets the root DID for a user.
 Stored at `_did.${username}.${endpoints.user}`
@@ -90,7 +90,7 @@ ___
 
 ▸ **verifySignedData**(`__namedParameters`: object): *Promise‹boolean›*
 
-*Defined in [src/did.ts:101](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/did.ts#L101)*
+*Defined in [src/did.ts:101](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/did.ts#L101)*
 
 Verify the signature of some data (string, ArrayBuffer or Uint8Array), given a DID.
 
