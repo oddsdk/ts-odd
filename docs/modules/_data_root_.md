@@ -15,7 +15,7 @@
 
 ▸ **lookup**(`username`: string): *Promise‹CID | null›*
 
-*Defined in [src/data-root.ts:16](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/data-root.ts#L16)*
+*Defined in [src/data-root.ts:16](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/data-root.ts#L16)*
 
 Get the CID of a user's data root.
 
@@ -33,7 +33,7 @@ ___
 
 ▸ **update**(`cid`: CID | string): *Promise‹void›*
 
-*Defined in [src/data-root.ts:31](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/data-root.ts#L31)*
+*Defined in [src/data-root.ts:31](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/data-root.ts#L31)*
 
 Update a user's data root.
 

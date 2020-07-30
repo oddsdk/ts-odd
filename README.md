@@ -21,10 +21,11 @@ Get started making fission-enabled apps with the Fission SDK!
 The Fission SDK offers tools for:
 - authenticating through a Fission **authentication lobby**  
   (a lobby is where you can make a Fission account or link an account)
-- managing your web native **file system**
+- managing your web native **file system**  
+  (this is where a user's data lives)
 - tools for building DIDs and UCANs.
 
-```js
+```ts
 // ES6
 import sdk from 'fission-sdk'
 
@@ -36,35 +37,32 @@ See [`docs/`](docs/) for more detailed documentation based on the source code.
 
 
 
-# Authentication
+# Getting Started
 
-[auth.fission.codes](https://auth.fission.codes) is our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser.
+```ts
+const { scenario, state } = await sdk.initialise()
 
-```js
-const auth = await sdk.isAuthenticated()
-
-if (auth.cancelled) {
+if (scenario.authCancelled) {
   // User was redirected to lobby,
   // but cancelled the authorisation.
 
-} else if (auth.newUser) {
-  // This authenticated user is new to Fission.
-
-} else if (auth.authenticated) {
-  // Authenticated 🍿
+} else if (scenario.authSucceeded || scenario.continuum) {
+  // State:
+  // state.authenticated    -  Will always be `true` in these scenarios
+  // state.newUser          -  If the user is new to Fission
+  // state.throughLobby     -  If the user authenticated through the lobby, or just came back.
+  // state.username         -  The user's username.
   //
-  // additional data:
-  // auth.throughLobby  -  If the user authenticated through the lobby, or just came back.
-  // auth.username      -  User's username
+  // ☞ We can now interact with our file system (more on that later)
+  state.fs
 
-} else {
-  // Not authenticated 🙅‍♀️
+} else if (scenario.notAuthenticated) {
   sdk.redirectToLobby()
 
 }
 ```
 
-`redirectToLobby` takes an optional parameter, the url that the lobby should redirect back to (the default is `location.href`).
+`redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes an optional parameter, the url that the lobby should redirect back to (the default is `location.href`).
 
 
 ## Other functions
@@ -80,100 +78,40 @@ The Web Native File System (WNFS) is built on top of IPFS. It's structured and f
 
 Each file system has a public tree and a private tree. All information (links, data, metadata, etc) in the private tree is encrypted. Decryption keys are stored in such a manner that access to a given folder grants access to all of its subfolders.
 
+```ts
+// After authenticating …
+const fs = state.fs
+
+// List the user's private files that belong to this app
+const appPath = fs.appPath.private("myApp")
+
+if (fs.exists(appPath)) {
+  await fs.ls(appPath)
+} else {
+  await fs.mkdir(appPath)
+}
+```
+
 
 ## Basics
 
 WNFS exposes a familiar POSIX-style interface:
 - `add`: add a file
 - `cat`: retrieve a file
+- `exists`: check if a file or directory exists
 - `ls`: list a directory
 - `mkdir`: create a directory
 - `mv`: move a file or directory
+- `read`: alias for `cat`
 - `rm`: remove a file or directory
-
-
-## Versions
-
-Since the file system may evolve over time, a "version" is associated with each node in the file system (tracked with semver).
-
-Currently two versions exist:
-- `1.0.0`: file tree with metadata. Nodes in the file tree are structured as 2 layers where one layer contains "header" information (metadata, cache, etc), and the second layer contains data or links. **This is the default version, use this unless you have a good reason not to**.
-- `0.0.0`: bare file tree. The public tree consists of [ipfs dag-pg](https://github.com/ipld/js-ipld-dag-pb) nodes. The private tree is encrypted links with no associated metadata. These should really only be used for vanity links to be rendered by a gateway.
+- `write`: write to a file
 
 
 ## API
 
-### Config
-
-Each instantiation method takes an optional config. Below is the default config and descriptions of each value.
-
-```ts
-const defaultConfig = {
-  keyName: 'filesystem-root', // the name of the key for the filesystem root as stored in IndexedDB
-  version: '1.0.0' // the version of the filesystem as discussed above
-}
-```
----
-
-### Instantiation
-
-**empty**
-
-Creates a file system with an empty public tree & an empty private tree at the root
-
-Params:
-- cfg: `FileSystemConfig` _optional_
-
-Returns: `FileSystem` instance
-
-Example:
-```ts
-import FileSystem from 'fission-sdk/fs'
-const wnfs = await FileSystem.empty()
-```
-
----
-
-**fromCID**
-
-Loads an existing file system from a CID
-
-Params:
-- cid: `CID` (`string`) **required**
-- cfg: `FileSystemConfig` _optional_
-
-Returns: `FileSystem` instance
-
-Example:
-```ts
-import FileSystem from 'fission-sdk/fs'
-const cid = "QmWKst5WVNTPfMsSFCQEJYBJLEsUZfghqrKXJBVU4EuA76"
-const wnfs = await FileSystem.fromCID(cid)
-```
-
----
-
-**forUser**
-
-Loads an existing file system from a username
-
-Params:
-- username: `string` **required**
-- cfg: `FileSystemConfig` _optional_
-
-Returns: `FileSystem` instance
-
-Example:
-```ts
-import FileSystem from 'fission-sdk/fs'
-const wnfs = await FileSystem.forUser("boris")
-```
-
----
-
 ### Methods
 
-Methods for interacting with the filesystem all use **absolute** paths. We're planning on adding a [stateful session](https://github.com/fission-suite/ts-sdk/issues/24) but for now, filesystem state will need to be tracked in your application.
+Methods for interacting with the filesystem all use **absolute** paths.
 
 **add**
 
@@ -210,6 +148,22 @@ const content = await wnfs.cat("public/some/path/to/a/file")
 
 ---
 
+**exists**
+
+Checks if there is anything located at a given path
+
+Params:
+- path: `string` **required**
+
+Returns: `boolean`
+
+Example:
+```ts
+const bool = await wnfs.exists("private/path/to/file")
+```
+
+---
+
 **get**
 
 Retrieves the node at the given path, either a `File` or `Tree` object
@@ -233,14 +187,24 @@ Returns a list of links at a given directory path
 Params:
 - path: `string` **required**
 
-Returns: `Links[]` list of links
+Returns: `{ [name: string]: Link }` Object with the file name as the key and its `Link` as the value.
 
 Example:
 ```ts
-// public
-const links = await wnfs.ls("public/some/directory/path")
-// private
-const links = await wnfs.ls("private/some/directory/path")
+linksObject = await wnfs.ls("public/some/directory/path") // public
+linksObject = await wnfs.ls("private/some/directory/path") // private
+
+// convert to list
+links = Object.entries(linksObject)
+
+// working with links
+data = await Promise.all(links.map(([name, _]) => {
+  return fs.cat(`private/some/directory/path/${name}`)
+}))
+
+
+
+
 ```
 
 ---
@@ -279,21 +243,6 @@ const updatedCID = await wnfs.mv("public/doc.md", "private/Documents/notes.md")
 
 ---
 
-**pinList**
-
-Retrieves an array of all CIDs that need to be pinned in order to backup the FS
-
-Params: _none_
-
-Returns: `CID[]`
-
-Example:
-```ts
-const allCIDs = await wnfs.pinList()
-```
-
----
-
 **rm**
 
 Removes a file or directory at a given path
@@ -310,18 +259,46 @@ const updatedCID = await wnfs.rm("private/some/path/to/a/file")
 
 ---
 
-**sync**
+**write**
 
-Ensures the latest version of the file system is added to IPFS and returns the root CID
+Write to a file at a given path.
+Overwrites existing content.
 
-Params: _none_
+Params:
+- path: `string` **required**
+- content: `FileContent` (`object | string | Blob | Buffer`) **required**
 
 Returns: `CID` the updated _root_ CID for the file system
 
 Example:
 ```ts
-const rootCID = await wnfs.sync()
+const content = "hello world"
+const updatedCID = await wnfs.write("public/some/path/to/a/file", content)
 ```
+
+
+## Web Worker
+
+Can I use my file system in a web worker?  
+Yes, this only requires a slightly different setup.
+
+```ts
+// UI thread
+// `session.fs` will now be `null`
+sdk.isAuthenticated({ loadFileSystem: false })
+
+// Web Worker
+const fs = await sdk.loadFileSystem()
+```
+
+
+## Versions
+
+Since the file system may evolve over time, a "version" is associated with each node in the file system (tracked with semver).
+
+Currently two versions exist:
+- `1.0.0`: file tree with metadata. Nodes in the file tree are structured as 2 layers where one layer contains "header" information (metadata, cache, etc), and the second layer contains data or links. **This is the default version, use this unless you have a good reason not to**.
+- `0.0.0`: bare file tree. The public tree consists of [ipfs dag-pg](https://github.com/ipld/js-ipld-dag-pb) nodes. The private tree is encrypted links with no associated metadata. These should really only be used for vanity links to be rendered by a gateway.
 
 
 

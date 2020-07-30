@@ -10,6 +10,7 @@
 * ["data-root"](modules/_data_root_.md)
 * ["did"](modules/_did_.md)
 * ["dns/index"](modules/_dns_index_.md)
+* ["filesystem"](modules/_filesystem_.md)
 * ["fs/bare/file"](modules/_fs_bare_file_.md)
 * ["fs/bare/tree"](modules/_fs_bare_tree_.md)
 * ["fs/filesystem"](modules/_fs_filesystem_.md)

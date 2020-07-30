@@ -69,7 +69,7 @@
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:19](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L19)*
+*Defined in [src/fs/v1/PublicTree.ts:19](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L19)*
 
 **Parameters:**
 
@@ -88,7 +88,7 @@ Name | Type |
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[version](_fs_v1_publictree_.publictree.md#version)*
 
-*Defined in [src/fs/base/tree.ts:12](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L12)*
+*Defined in [src/fs/base/tree.ts:12](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L12)*
 
 ## Methods
 
@@ -98,7 +98,7 @@ Name | Type |
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[add](_fs_v1_publictree_.publictree.md#add)*
 
-*Defined in [src/fs/base/tree.ts:47](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L47)*
+*Defined in [src/fs/base/tree.ts:47](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L47)*
 
 **Parameters:**
 
@@ -117,7 +117,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[addChild](_fs_v1_publictree_.publictree.md#addchild)*
 
-*Defined in [src/fs/base/tree.ts:51](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L51)*
+*Defined in [src/fs/base/tree.ts:51](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L51)*
 
 **Parameters:**
 
@@ -136,7 +136,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[addRecurse](_fs_v1_publictree_.publictree.md#addrecurse)*
 
-*Defined in [src/fs/base/tree.ts:60](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L60)*
+*Defined in [src/fs/base/tree.ts:60](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L60)*
 
 **Parameters:**
 
@@ -155,7 +155,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[cat](_fs_v1_publictree_.publictree.md#cat)*
 
-*Defined in [src/fs/base/tree.ts:37](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L37)*
+*Defined in [src/fs/base/tree.ts:37](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L37)*
 
 **Parameters:**
 
@@ -173,7 +173,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:67](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L67)*
+*Defined in [src/fs/v1/PublicTree.ts:67](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L67)*
 
 **Parameters:**
 
@@ -191,7 +191,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:55](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L55)*
+*Defined in [src/fs/v1/PublicTree.ts:55](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L55)*
 
 **Parameters:**
 
@@ -207,7 +207,7 @@ ___
 
 ▸ **childTreeFromHeader**(`header`: HeaderV1): *HeaderTree*
 
-*Defined in [src/fs/v1/PublicTree.ts:59](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L59)*
+*Defined in [src/fs/v1/PublicTree.ts:59](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L59)*
 
 **Parameters:**
 
@@ -225,7 +225,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:63](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L63)*
+*Defined in [src/fs/v1/PublicTree.ts:63](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L63)*
 
 **Parameters:**
 
@@ -243,7 +243,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:51](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L51)*
+*Defined in [src/fs/v1/PublicTree.ts:51](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L51)*
 
 **Returns:** *Promise‹HeaderTree›*
 
@@ -253,7 +253,7 @@ ___
 
 ▸ **findLink**(`name`: string): *NodeInfo | null*
 
-*Defined in [src/fs/v1/PublicTree.ts:156](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L156)*
+*Defined in [src/fs/v1/PublicTree.ts:156](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L156)*
 
 **Parameters:**
 
@@ -269,7 +269,7 @@ ___
 
 ▸ **findLinkCID**(`name`: string): *CID | null*
 
-*Defined in [src/fs/v1/PublicTree.ts:160](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L160)*
+*Defined in [src/fs/v1/PublicTree.ts:160](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L160)*
 
 **Parameters:**
 
@@ -287,7 +287,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[get](_fs_v1_publictree_.publictree.md#get)*
 
-*Defined in [src/fs/base/tree.ts:111](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L111)*
+*Defined in [src/fs/base/tree.ts:111](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L111)*
 
 **Parameters:**
 
@@ -305,7 +305,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:111](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L111)*
+*Defined in [src/fs/v1/PublicTree.ts:111](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L111)*
 
 **Parameters:**
 
@@ -321,7 +321,7 @@ ___
 
 ▸ **getHeader**(): *HeaderV1*
 
-*Defined in [src/fs/v1/PublicTree.ts:176](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L176)*
+*Defined in [src/fs/v1/PublicTree.ts:176](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L176)*
 
 **Returns:** *HeaderV1*
 
@@ -333,7 +333,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:172](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L172)*
+*Defined in [src/fs/v1/PublicTree.ts:172](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L172)*
 
 **Returns:** *Links*
 
@@ -345,7 +345,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:119](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L119)*
+*Defined in [src/fs/v1/PublicTree.ts:119](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L119)*
 
 **Parameters:**
 
@@ -363,7 +363,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[ls](_fs_v1_publictree_.publictree.md#ls)*
 
-*Defined in [src/fs/base/tree.ts:18](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L18)*
+*Defined in [src/fs/base/tree.ts:18](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L18)*
 
 **Parameters:**
 
@@ -381,7 +381,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[mkdir](_fs_v1_publictree_.publictree.md#mkdir)*
 
-*Defined in [src/fs/base/tree.ts:28](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L28)*
+*Defined in [src/fs/base/tree.ts:28](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L28)*
 
 **Parameters:**
 
@@ -399,7 +399,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[pathExists](_fs_v1_publictree_.publictree.md#pathexists)*
 
-*Defined in [src/fs/base/tree.ts:106](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L106)*
+*Defined in [src/fs/base/tree.ts:106](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L106)*
 
 **Parameters:**
 
@@ -417,7 +417,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:71](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L71)*
+*Defined in [src/fs/v1/PublicTree.ts:71](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L71)*
 
 **Returns:** *Promise‹CID›*
 
@@ -427,7 +427,7 @@ ___
 
 ▸ **putWithPins**(): *Promise‹PutResult›*
 
-*Defined in [src/fs/v1/PublicTree.ts:76](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L76)*
+*Defined in [src/fs/v1/PublicTree.ts:76](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L76)*
 
 **Returns:** *Promise‹PutResult›*
 
@@ -439,7 +439,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:105](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L105)*
+*Defined in [src/fs/v1/PublicTree.ts:105](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L105)*
 
 **Parameters:**
 
@@ -457,7 +457,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[rm](_fs_v1_publictree_.publictree.md#rm)*
 
-*Defined in [src/fs/base/tree.ts:83](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L83)*
+*Defined in [src/fs/base/tree.ts:83](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L83)*
 
 **Parameters:**
 
@@ -473,7 +473,7 @@ ___
 
 ▸ **rmLink**(`name`: string): *Tree*
 
-*Defined in [src/fs/v1/PublicTree.ts:164](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L164)*
+*Defined in [src/fs/v1/PublicTree.ts:164](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L164)*
 
 **Parameters:**
 
@@ -491,7 +491,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[rmNested](_fs_v1_publictree_.publictree.md#rmnested)*
 
-*Defined in [src/fs/base/tree.ts:91](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/tree.ts#L91)*
+*Defined in [src/fs/base/tree.ts:91](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/tree.ts#L91)*
 
 **Parameters:**
 
@@ -509,7 +509,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:94](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L94)*
+*Defined in [src/fs/v1/PublicTree.ts:94](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L94)*
 
 **Parameters:**
 
@@ -526,7 +526,7 @@ ___
 
 ▸ **updateHeader**(`name`: string, `childInfo`: Maybe‹NodeInfo›): *Promise‹this›*
 
-*Defined in [src/fs/v1/PublicTree.ts:124](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L124)*
+*Defined in [src/fs/v1/PublicTree.ts:124](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L124)*
 
 **Parameters:**
 
@@ -543,7 +543,7 @@ ___
 
 ▸ **updateLink**(`info`: NodeInfo): *Tree*
 
-*Defined in [src/fs/v1/PublicTree.ts:145](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L145)*
+*Defined in [src/fs/v1/PublicTree.ts:145](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L145)*
 
 **Parameters:**
 
@@ -557,16 +557,16 @@ ___
 
 ###  updatePins
 
-▸ **updatePins**(`name`: string, `pins`: Maybe‹CID[]›): *this*
+▸ **updatePins**(`name`: string, `pins`: Maybe‹PinMap›): *this*
 
-*Defined in [src/fs/v1/PublicTree.ts:140](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L140)*
+*Defined in [src/fs/v1/PublicTree.ts:140](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L140)*
 
 **Parameters:**
 
 Name | Type |
 ------ | ------ |
 `name` | string |
-`pins` | Maybe‹CID[]› |
+`pins` | Maybe‹PinMap› |
 
 **Returns:** *this*
 
@@ -576,7 +576,7 @@ ___
 
 ▸ **empty**(`parentKey`: Maybe‹string›): *Promise‹HeaderTree›*
 
-*Defined in [src/fs/v1/PublicTree.ts:31](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L31)*
+*Defined in [src/fs/v1/PublicTree.ts:31](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L31)*
 
 **Parameters:**
 
@@ -592,7 +592,7 @@ ___
 
 ▸ **fromCID**(`cid`: CID, `parentKey`: Maybe‹string›): *Promise‹HeaderTree›*
 
-*Defined in [src/fs/v1/PublicTree.ts:38](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L38)*
+*Defined in [src/fs/v1/PublicTree.ts:38](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L38)*
 
 **Parameters:**
 
@@ -609,7 +609,7 @@ ___
 
 ▸ **fromHeader**(`header`: HeaderV1, `parentKey`: Maybe‹string›): *HeaderTree*
 
-*Defined in [src/fs/v1/PublicTree.ts:43](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L43)*
+*Defined in [src/fs/v1/PublicTree.ts:43](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L43)*
 
 **Parameters:**
 
@@ -626,7 +626,7 @@ ___
 
 ▸ **instanceOf**(`obj`: any): *obj is PublicTree*
 
-*Defined in [src/fs/v1/PublicTree.ts:47](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicTree.ts#L47)*
+*Defined in [src/fs/v1/PublicTree.ts:47](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicTree.ts#L47)*
 
 **Parameters:**
 

@@ -563,7 +563,7 @@
   , "zlib"
   ]
 
-*Defined in [src/lobby/blocklist.ts:7](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/lobby/blocklist.ts#L7)*
+*Defined in [src/lobby/blocklist.ts:7](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/lobby/blocklist.ts#L7)*
 
 Blocklist for usernames.
 

@@ -7,11 +7,20 @@ import { File, Tree, Links, SyncHook, FileSystemOptions, HeaderTree, PinMap } fr
 import check from './types/check'
 import * as pathUtil from './path'
 
+import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
 import * as keystore from '../keystore'
 import { CID, FileContent } from '../ipfs'
-import { asyncWaterfall } from '../common/util'
 import { pinMapToLinks } from './pins'
+
+
+// TYPES
+
+
+type AppPath = {
+  public: (appUuid: string, suffix?: string | Array<string>) => string
+  private: (appUuid: string, suffix?: string | Array<string>) => string
+}
 
 
 type ConstructorParams = {
@@ -24,6 +33,10 @@ type ConstructorParams = {
 }
 
 
+
+// CLASS
+
+
 export class FileSystem {
 
   root: Tree
@@ -32,6 +45,8 @@ export class FileSystem {
   privateTree: HeaderTree
   pinsTree: BareTree
   rootDid: string
+
+  appPath: AppPath
   syncHooks: Array<SyncHook>
   syncWhenOnline: CID | null
 
@@ -46,13 +61,27 @@ export class FileSystem {
     this.syncHooks = []
     this.syncWhenOnline = null
 
+    this.appPath = {
+      public(appUuid: string, suffix?: string | Array<string>): string {
+        return appPath("public", appUuid, suffix)
+      },
+      private(appUuid: string, suffix?: string | Array<string>): string {
+        return appPath("private", appUuid, suffix)
+      }
+    }
+
+    // Add the root CID of the file system to the CID log
+    // (reverse list, newest cid first)
+    const logCid = cidLog.add
+
     // Update the user's data root when making changes
-    const syncHook = throttle(5000, cid => {
+    const updateDataRootWhenOnline = throttle(5000, cid => {
       if (window.navigator.onLine) return dataRoot.update(cid)
       this.syncWhenOnline = cid
     })
 
-    this.syncHooks.push(syncHook)
+    this.syncHooks.push(logCid)
+    this.syncHooks.push(updateDataRootWhenOnline)
 
     // Sync when coming back online
     window.addEventListener('online', () => this.whenOnline())
@@ -63,6 +92,9 @@ export class FileSystem {
   // INITIALISATION
   // --------------
 
+  /**
+   * Creates a file system with an empty public tree & an empty private tree at the root.
+   */
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root', rootDid = '' } = opts
 
@@ -89,6 +121,9 @@ export class FileSystem {
     })
   }
 
+  /**
+   * Loads an existing file system from a CID.
+   */
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const { keyName = 'filesystem-root', rootDid = '' } = opts
 
@@ -121,15 +156,17 @@ export class FileSystem {
     })
   }
 
-  static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const cid = await dataRoot.lookup(username)
-    return cid ? FileSystem.fromCID(cid, opts) : null
-  }
 
 
   // DEACTIVATE
   // ----------
 
+  /**
+   * Deactivate a file system.
+   *
+   * Use this when a user signs out.
+   * The only function of this is to stop listing to online/offline events.
+   */
   deactivate(): void {
     window.removeEventListener('online', this.whenOnline)
   }
@@ -138,19 +175,6 @@ export class FileSystem {
 
   // POSIX INTERFACE
   // ---------------
-
-  async ls(path: string): Promise<Links> {
-    return this.runOnTree(path, false, (tree, relPath) => {
-      return tree.ls(relPath)
-    })
-  }
-
-  async mkdir(path: string): Promise<CID> {
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.mkdir(relPath)
-    })
-    return this.sync()
-  }
 
   async add(path: string, content: FileContent): Promise<CID> {
     await this.runOnTree(path, true, (tree, relPath) => {
@@ -165,17 +189,29 @@ export class FileSystem {
     })
   }
 
-  async rm(path: string): Promise<CID> {
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.rm(relPath)
+  async exists(path: string): Promise<boolean> {
+    return this.runOnTree(path, false, (tree, relPath) => {
+      return tree.pathExists(relPath)
     })
-    return this.sync()
   }
 
   async get(path: string): Promise<Tree | File | null> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.get(relPath)
     })
+  }
+
+  async ls(path: string): Promise<Links> {
+    return this.runOnTree(path, false, (tree, relPath) => {
+      return tree.ls(relPath)
+    })
+  }
+
+  async mkdir(path: string): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.mkdir(relPath)
+    })
+    return this.sync()
   }
 
   async mv(from: string, to: string): Promise<CID> {
@@ -191,6 +227,22 @@ export class FileSystem {
     }
     await this.addChild(to, node)
     return this.rm(from)
+  }
+
+  async read(path: string): Promise<FileContent | null> {
+    return this.cat(path)
+  }
+
+  async rm(path: string): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.rm(relPath)
+    })
+    return this.sync()
+  }
+
+  async write(path: string, content: FileContent): Promise<CID> {
+    if (await this.exists(path)) await this.rm(path)
+    return await this.add(path, content)
   }
 
 
@@ -292,3 +344,15 @@ export class FileSystem {
 
 
 export default FileSystem
+
+
+// ㊙️
+
+
+function appPath(head: string, appUuid: string, suffix?: string | Array<string>): string {
+  return (
+    head + '/Apps/' +
+    encodeURIComponent(appUuid) +
+    (suffix ? '/' + (typeof suffix == 'object' ? suffix.join('/') : suffix) : '')
+  )
+}

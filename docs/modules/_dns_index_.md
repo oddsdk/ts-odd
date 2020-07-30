@@ -15,7 +15,7 @@
 
 ▸ **lookupDnsLink**(`domain`: string): *Promise‹string | null›*
 
-*Defined in [src/dns/index.ts:54](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/dns/index.ts#L54)*
+*Defined in [src/dns/index.ts:54](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/dns/index.ts#L54)*
 
 Lookup a DNSLink.
 
@@ -35,7 +35,7 @@ ___
 
 ▸ **lookupTxtRecord**(`domain`: string): *Promise‹string | null›*
 
-*Defined in [src/dns/index.ts:14](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/dns/index.ts#L14)*
+*Defined in [src/dns/index.ts:14](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/dns/index.ts#L14)*
 
 Lookup a DNS TXT record.
 

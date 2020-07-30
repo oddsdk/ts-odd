@@ -40,7 +40,7 @@
 
 *Overrides [PublicFile](_fs_v1_publicfile_.publicfile.md).[constructor](_fs_v1_publicfile_.publicfile.md#constructor)*
 
-*Defined in [src/fs/v1/PrivateFile.ts:11](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PrivateFile.ts#L11)*
+*Defined in [src/fs/v1/PrivateFile.ts:11](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PrivateFile.ts#L11)*
 
 **Parameters:**
 
@@ -60,7 +60,7 @@ Name | Type |
 
 *Inherited from void*
 
-*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/base/file.ts#L10)*
+*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/file.ts#L10)*
 
 ___
 
@@ -70,7 +70,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateFile.ts:11](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PrivateFile.ts#L11)*
+*Defined in [src/fs/v1/PrivateFile.ts:11](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PrivateFile.ts#L11)*
 
 ## Methods
 
@@ -80,7 +80,7 @@ ___
 
 *Inherited from [PublicFile](_fs_v1_publicfile_.publicfile.md).[getHeader](_fs_v1_publicfile_.publicfile.md#getheader)*
 
-*Defined in [src/fs/v1/PublicFile.ts:54](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicFile.ts#L54)*
+*Defined in [src/fs/v1/PublicFile.ts:54](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicFile.ts#L54)*
 
 **Returns:** *HeaderV1*
 
@@ -94,7 +94,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicFile.ts:36](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PublicFile.ts#L36)*
+*Defined in [src/fs/v1/PublicFile.ts:36](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicFile.ts#L36)*
 
 **Returns:** *Promise‹CID›*
 
@@ -106,7 +106,7 @@ ___
 
 *Overrides [PublicFile](_fs_v1_publicfile_.publicfile.md).[putWithPins](_fs_v1_publicfile_.publicfile.md#putwithpins)*
 
-*Defined in [src/fs/v1/PrivateFile.ts:36](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PrivateFile.ts#L36)*
+*Defined in [src/fs/v1/PrivateFile.ts:36](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PrivateFile.ts#L36)*
 
 **Returns:** *Promise‹PutResult›*
 
@@ -118,7 +118,7 @@ ___
 
 *Overrides [PublicFile](_fs_v1_publicfile_.publicfile.md).[create](_fs_v1_publicfile_.publicfile.md#static-create)*
 
-*Defined in [src/fs/v1/PrivateFile.ts:18](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PrivateFile.ts#L18)*
+*Defined in [src/fs/v1/PrivateFile.ts:18](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PrivateFile.ts#L18)*
 
 **Parameters:**
 
@@ -138,7 +138,7 @@ ___
 
 *Overrides [PublicFile](_fs_v1_publicfile_.publicfile.md).[fromCID](_fs_v1_publicfile_.publicfile.md#static-fromcid)*
 
-*Defined in [src/fs/v1/PrivateFile.ts:30](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/fs/v1/PrivateFile.ts#L30)*
+*Defined in [src/fs/v1/PrivateFile.ts:30](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PrivateFile.ts#L30)*
 
 **Parameters:**
 

@@ -8,7 +8,6 @@
 
 * [authenticatedUsername](_auth_.md#authenticatedusername)
 * [deauthenticate](_auth_.md#deauthenticate)
-* [isAuthenticated](_auth_.md#isauthenticated)
 * [redirectToLobby](_auth_.md#redirecttolobby)
 
 ## Functions
@@ -17,7 +16,7 @@
 
 ▸ **authenticatedUsername**(): *Promise‹string | null›*
 
-*Defined in [src/auth.ts:12](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/auth.ts#L12)*
+*Defined in [src/auth.ts:15](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/auth.ts#L15)*
 
 Retrieve the authenticated username.
 
@@ -29,7 +28,7 @@ ___
 
 ▸ **deauthenticate**(): *Promise‹void›*
 
-*Defined in [src/auth.ts:21](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/auth.ts#L21)*
+*Defined in [src/auth.ts:24](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/auth.ts#L24)*
 
 Deauthenticate.
 
@@ -39,33 +38,11 @@ Removes the stored UCAN we got from a lobby.
 
 ___
 
-###  isAuthenticated
-
-▸ **isAuthenticated**(`options`: object): *Promise‹object | object | object›*
-
-*Defined in [src/auth.ts:31](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/auth.ts#L31)*
-
-Check if we're authenticated and process any lobby query-parameters present in the URL.
-
-NOTE: Only works on the main thread, as it uses `window.location`.
-
-**Parameters:**
-
-▪ **options**: *object*
-
-Name | Type |
------- | ------ |
-`autoRemoveUrlParams?` | undefined &#124; false &#124; true |
-
-**Returns:** *Promise‹object | object | object›*
-
-___
-
 ###  redirectToLobby
 
 ▸ **redirectToLobby**(`returnTo?`: undefined | string): *Promise‹void›*
 
-*Defined in [src/auth.ts:97](https://github.com/fission-suite/ts-sdk/blob/c2e76a7/src/auth.ts#L97)*
+*Defined in [src/auth.ts:37](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/auth.ts#L37)*
 
 Redirects to a lobby.
 
