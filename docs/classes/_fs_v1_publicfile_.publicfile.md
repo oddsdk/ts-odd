@@ -41,7 +41,7 @@
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicFile.ts:14](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicFile.ts#L14)*
+*Defined in [src/fs/v1/PublicFile.ts:14](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L14)*
 
 **Parameters:**
 
@@ -61,7 +61,7 @@ Name | Type |
 
 *Inherited from void*
 
-*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/base/file.ts#L10)*
+*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/base/file.ts#L10)*
 
 ## Methods
 
@@ -69,7 +69,7 @@ Name | Type |
 
 ▸ **getHeader**(): *HeaderV1*
 
-*Defined in [src/fs/v1/PublicFile.ts:54](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicFile.ts#L54)*
+*Defined in [src/fs/v1/PublicFile.ts:54](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L54)*
 
 **Returns:** *HeaderV1*
 
@@ -81,7 +81,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicFile.ts:36](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicFile.ts#L36)*
+*Defined in [src/fs/v1/PublicFile.ts:36](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L36)*
 
 **Returns:** *Promise‹CID›*
 
@@ -91,7 +91,7 @@ ___
 
 ▸ **putWithPins**(): *Promise‹PutResult›*
 
-*Defined in [src/fs/v1/PublicFile.ts:41](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicFile.ts#L41)*
+*Defined in [src/fs/v1/PublicFile.ts:41](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L41)*
 
 **Returns:** *Promise‹PutResult›*
 
@@ -101,7 +101,7 @@ ___
 
 ▸ **create**(`content`: FileContent, `parentKey`: Maybe‹string›): *Promise‹HeaderFile›*
 
-*Defined in [src/fs/v1/PublicFile.ts:22](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicFile.ts#L22)*
+*Defined in [src/fs/v1/PublicFile.ts:22](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L22)*
 
 **Parameters:**
 
@@ -118,7 +118,7 @@ ___
 
 ▸ **fromCID**(`cid`: CID, `parentKey`: Maybe‹string›): *Promise‹HeaderFile›*
 
-*Defined in [src/fs/v1/PublicFile.ts:30](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/fs/v1/PublicFile.ts#L30)*
+*Defined in [src/fs/v1/PublicFile.ts:30](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L30)*
 
 **Parameters:**
 

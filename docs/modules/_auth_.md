@@ -16,7 +16,7 @@
 
 ▸ **authenticatedUsername**(): *Promise‹string | null›*
 
-*Defined in [src/auth.ts:15](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/auth.ts#L15)*
+*Defined in [src/auth.ts:15](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/auth.ts#L15)*
 
 Retrieve the authenticated username.
 
@@ -28,7 +28,7 @@ ___
 
 ▸ **deauthenticate**(): *Promise‹void›*
 
-*Defined in [src/auth.ts:24](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/auth.ts#L24)*
+*Defined in [src/auth.ts:24](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/auth.ts#L24)*
 
 Deauthenticate.
 
@@ -42,7 +42,7 @@ ___
 
 ▸ **redirectToLobby**(`returnTo?`: undefined | string): *Promise‹void›*
 
-*Defined in [src/auth.ts:37](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/auth.ts#L37)*
+*Defined in [src/auth.ts:37](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/auth.ts#L37)*
 
 Redirects to a lobby.
 

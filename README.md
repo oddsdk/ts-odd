@@ -27,7 +27,7 @@ The Fission SDK offers tools for:
 
 ```ts
 // ES6
-import sdk from 'fission-sdk'
+import * as sdk from 'fission-sdk'
 
 // Browser/UMD build
 self.fissionSdk

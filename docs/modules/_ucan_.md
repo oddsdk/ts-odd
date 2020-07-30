@@ -15,7 +15,7 @@
 
 ▸ **build**(`__namedParameters`: object): *Promise‹string›*
 
-*Defined in [src/ucan.ts:28](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/ucan.ts#L28)*
+*Defined in [src/ucan.ts:28](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/ucan.ts#L28)*
 
 Create a UCAN, User Controlled Authorization Networks, JWT.
 This JWT can be used for authorization.
@@ -56,7 +56,7 @@ ___
 
 ▸ **rootIssuer**(`ucan`: string, `level`: number): *string*
 
-*Defined in [src/ucan.ts:84](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/ucan.ts#L84)*
+*Defined in [src/ucan.ts:84](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/ucan.ts#L84)*
 
 Given a UCAN, lookup the root issuer.
 

@@ -14,7 +14,7 @@
 
 ▸ **loadFileSystem**(`username?`: undefined | string): *Promise‹[FileSystem](../classes/_fs_filesystem_.filesystem.md)›*
 
-*Defined in [src/filesystem.ts:16](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/filesystem.ts#L16)*
+*Defined in [src/filesystem.ts:16](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/filesystem.ts#L16)*
 
 Load a user's file system.
 

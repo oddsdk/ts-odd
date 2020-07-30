@@ -1,5 +1,18 @@
 # Changelog
 
+### v0.14.1
+
+Removed the default import from the index file. Now you use the SDK as follows, browser stays the same.
+
+```js
+import * as sdk from 'fission-sdk'
+import { initialise } from 'fission-sdk'
+
+sdk.initialise()
+initialise()
+```
+
+
 ### v0.14.0
 
 - Renamed `isAuthenticated` to `initialise`

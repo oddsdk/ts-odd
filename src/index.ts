@@ -5,17 +5,6 @@ import { loadFileSystem } from './filesystem'
 import FileSystem from './fs'
 
 import * as auth from './auth'
-import * as dataRoot from './data-root'
-
-import * as did from './did'
-import * as dns from './dns'
-import * as ipfs from './ipfs'
-import * as keystore from './keystore'
-import * as lobby from './lobby'
-import * as setup from './setup'
-import * as ucan from './ucan'
-
-import * as fsFunctions from './filesystem'
 import fsClass from './fs'
 
 
@@ -85,7 +74,7 @@ export type Continuum = {
  * See `loadFileSystem` if you want to load the user's file system yourself.
  * NOTE: Only works on the main/ui thread, as it uses `window.location`.
  */
-async function initialise(
+export async function initialise(
   options: {
     autoRemoveUrlParams?: boolean
     loadFileSystem?: boolean
@@ -148,26 +137,20 @@ async function initialise(
 // EXPORT
 
 
-export default {
-  initialise,
+export * from './auth'
+export * from './filesystem'
 
-  ...auth,
-  ...fsFunctions,
+export const fs = fsClass
 
-  // Modularised
-  dataRoot,
-  did,
-  lobby,
-  setup,
-  ucan,
+export * as dataRoot from './data-root'
+export * as did from './did'
+export * as lobby from './lobby'
+export * as setup from './setup'
+export * as ucan from './ucan'
 
-  fs: fsClass,
-
-  // Basement
-  dns,
-  ipfs,
-  keystore,
-}
+export * as dns from './dns'
+export * as ipfs from './ipfs'
+export * as keystore from './keystore'
 
 
 

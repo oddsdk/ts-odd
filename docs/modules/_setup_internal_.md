@@ -14,7 +14,7 @@
 
 Ƭ **Endpoints**: *object*
 
-*Defined in [src/setup/internal.ts:1](https://github.com/fission-suite/ts-sdk/blob/ef36578/src/setup/internal.ts#L1)*
+*Defined in [src/setup/internal.ts:1](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/setup/internal.ts#L1)*
 
 #### Type declaration:
 
