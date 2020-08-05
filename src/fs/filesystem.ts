@@ -75,7 +75,7 @@ export class FileSystem {
     const logCid = cidLog.add
 
     // Update the user's data root when making changes
-    const updateDataRootWhenOnline = throttle(5000, cid => {
+    const updateDataRootWhenOnline = throttle(3000, cid => {
       if (window.navigator.onLine) return dataRoot.update(cid)
       this.syncWhenOnline = cid
     })

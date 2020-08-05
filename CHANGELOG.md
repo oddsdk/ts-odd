@@ -1,5 +1,12 @@
 # Changelog
 
+### v0.14.2
+
+- Improved DNSLink lookup error handling
+- Reduced time-to-save for the file system to 3 seconds instead of 5
+- Removed unnecessary `console.log` calls
+- Updated default `js-ipfs` to `v0.48.1` (was `v0.48.0`)
+
 ### v0.14.1
 
 Removed the default import from the index file. Now you use the SDK as follows, browser stays the same.

@@ -24,9 +24,6 @@ export async function loadFileSystem(username?: string): Promise<FileSystem> {
   const dataCid = await dataRoot.lookup(username)
   const [ logIdx, logLength ] = dataCid ? await cidLog.index(dataCid) : [ -1, 0 ]
 
-  console.log("dataCid", dataCid)
-  console.log("log", await cidLog.get())
-
   if (!dataCid) {
     // No DNS CID yet
     cid = await cidLog.newest()

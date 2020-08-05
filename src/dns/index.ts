@@ -58,12 +58,18 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
 
   try {
     t = await ipfs.dns(domain)
-  } catch (_) {
-    t = await lookupTxtRecord(
-      domain.startsWith("_dnslink.")
-      ? domain
-      : `_dnslink.${domain}`
-    )
+  } catch (err) {
+    if (err.name === "HTTPError") {
+      t = await lookupTxtRecord(
+        domain.startsWith("_dnslink.")
+        ? domain
+        : `_dnslink.${domain}`
+      )
+
+    } else {
+      throw(err)
+
+    }
   }
 
   return t && !t.includes("/ipns/")
