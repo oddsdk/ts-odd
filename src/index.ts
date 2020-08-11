@@ -15,7 +15,7 @@ export type Scenario = {
   notAuthenticated?: true,
   authSucceeded?: true,
   authCancelled?: true,
-  continuum?: true,
+  continuation?: true,
 }
 
 export type FulfilledScenario = {
@@ -32,7 +32,7 @@ export type State
   = NotAuthenticated
   | AuthSucceeded
   | AuthCancelled
-  | Continuum
+  | Continuation
 
 export type NotAuthenticated = {
   authenticated: false
@@ -53,7 +53,7 @@ export type AuthCancelled = {
   throughLobby: true
 }
 
-export type Continuum = {
+export type Continuation = {
   authenticated: true
   newUser: false,
   throughLobby: false
@@ -128,7 +128,7 @@ export async function initialise(
 
   // File Systems
   return authedUsername
-    ? scenarioContinuum(authedUsername, await maybeLoadFs(authedUsername))
+    ? scenarioContinuation(authedUsername, await maybeLoadFs(authedUsername))
     : scenarioNotAuthenticated()
 }
 
@@ -187,12 +187,12 @@ function scenarioAuthCancelled(
   }
 }
 
-function scenarioContinuum(
+function scenarioContinuation(
   username: string,
   fs: FileSystem | undefined
 ): FulfilledScenario {
   return {
-    scenario: { continuum: true },
+    scenario: { continuation: true },
     state: {
       authenticated: true,
       newUser: false,

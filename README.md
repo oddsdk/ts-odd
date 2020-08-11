@@ -46,7 +46,7 @@ if (scenario.authCancelled) {
   // User was redirected to lobby,
   // but cancelled the authorisation.
 
-} else if (scenario.authSucceeded || scenario.continuum) {
+} else if (scenario.authSucceeded || scenario.continuation) {
   // State:
   // state.authenticated    -  Will always be `true` in these scenarios
   // state.newUser          -  If the user is new to Fission

@@ -1,11 +1,22 @@
 # Changelog
 
+### v0.16
+
+- Renamed `scenario.continuum` to `scenario.continuation`
+
+
+### v0.15
+
+TODO
+
+
 ### v0.14.2
 
 - Improved DNSLink lookup error handling
 - Reduced time-to-save for the file system to 3 seconds instead of 5
 - Removed unnecessary `console.log` calls
 - Updated default `js-ipfs` to `v0.48.1` (was `v0.48.0`)
+
 
 ### v0.14.1
 
