@@ -1,24 +1,31 @@
 import localforage from 'localforage'
 
-import { UCAN_STORAGE_KEY, USERNAME_STORAGE_KEY } from './common'
-import { loadFileSystem } from './filesystem'
-import FileSystem from './fs'
-
 import * as auth from './auth'
+import * as common from './common'
+import * as keystore from './keystore'
+import * as ucan from './ucan/internal'
+
+import { READ_KEY_FROM_LOBBY_NAME, USERNAME_STORAGE_KEY } from './common'
+import { AppInfo, FileSystemPrerequisites, Prerequisites } from './ucan/prerequisites'
+import { loadFileSystem } from './filesystem'
+
+import FileSystem from './fs'
 import fsClass from './fs'
+
 
 
 // SCENARIO
 
 
 export type Scenario = {
-  notAuthenticated?: true,
+  notAuthorised?: true,
   authSucceeded?: true,
   authCancelled?: true,
-  continuum?: true,
+  continuation?: true,
 }
 
 export type FulfilledScenario = {
+  prerequisites: Prerequisites,
   scenario: Scenario,
   state: State
 }
@@ -29,12 +36,12 @@ export type FulfilledScenario = {
 
 
 export type State
-  = NotAuthenticated
+  = NotAuthorised
   | AuthSucceeded
   | AuthCancelled
-  | Continuum
+  | Continuation
 
-export type NotAuthenticated = {
+export type NotAuthorised = {
   authenticated: false
 }
 
@@ -53,7 +60,7 @@ export type AuthCancelled = {
   throughLobby: true
 }
 
-export type Continuum = {
+export type Continuation = {
   authenticated: true
   newUser: false,
   throughLobby: false
@@ -76,39 +83,57 @@ export type Continuum = {
  */
 export async function initialise(
   options: {
+    // Prerequisites
+    app?: AppInfo,
+    fs?: FileSystemPrerequisites,
+
+    // Options
     autoRemoveUrlParams?: boolean
     loadFileSystem?: boolean
   }
 ): Promise<FulfilledScenario> {
   options = options || {}
 
+  const { app, fs, autoRemoveUrlParams } = options
+  const prerequisites = { app, fs }
+
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
       ? undefined
-      : await loadFileSystem(username)
+      : await loadFileSystem(prerequisites, username)
   }
 
-  const { autoRemoveUrlParams } = options
   const url = new URL(window.location.href)
-
   const cancellation = url.searchParams.get("cancelled")
-  const ucan = url.searchParams.get("ucan")
+  const ucans = url.searchParams.get("ucans")
 
-  if (ucan) {
+  // Add UCANs to the storage
+  await ucan.store(ucans ? ucans.split(",") : [])
+
+  // Determine scenario
+  if (ucans) {
     const newUser = url.searchParams.get("newUser") === "t"
+    const readKey = url.searchParams.get("readKey") || ""
     const username = url.searchParams.get("username") || ""
 
-    await localforage.setItem(UCAN_STORAGE_KEY, ucan)
+    const ks = await keystore.get()
+    await ks.importSymmKey(readKey, READ_KEY_FROM_LOBBY_NAME)
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
     if (autoRemoveUrlParams || autoRemoveUrlParams === undefined) {
       url.searchParams.delete("newUser")
-      url.searchParams.delete("ucan")
+      url.searchParams.delete("readKey")
+      url.searchParams.delete("ucans")
       url.searchParams.delete("username")
       history.replaceState(null, document.title, url.toString())
     }
 
+    if (ucan.validatePrerequisites(prerequisites, username) === false) {
+      return scenarioNotAuthorised(prerequisites)
+    }
+
     return scenarioAuthSucceeded(
+      prerequisites,
       newUser,
       username,
       await maybeLoadFs(username)
@@ -120,17 +145,25 @@ export async function initialise(
       default: return "Unknown reason"
     }})()
 
-    return scenarioAuthCancelled(c)
+    return scenarioAuthCancelled(prerequisites, c)
 
   }
 
-  const authedUsername = await auth.authenticatedUsername()
+  const authedUsername = await common.authenticatedUsername()
 
-  // File Systems
-  return authedUsername
-    ? scenarioContinuum(authedUsername, await maybeLoadFs(authedUsername))
-    : scenarioNotAuthenticated()
+  return (
+    authedUsername &&
+    ucan.validatePrerequisites(prerequisites, authedUsername)
+  )
+  ? scenarioContinuation(prerequisites, authedUsername, await maybeLoadFs(authedUsername))
+  : scenarioNotAuthorised(prerequisites)
 }
+
+
+/**
+ * Alias for `initialise`.
+ */
+export { initialise as initialize }
 
 
 
@@ -142,8 +175,10 @@ export * from './filesystem'
 
 export const fs = fsClass
 
+export * as apps from './apps'
 export * as dataRoot from './data-root'
 export * as did from './did'
+export * as errors from './errors'
 export * as lobby from './lobby'
 export * as setup from './setup'
 export * as ucan from './ucan'
@@ -152,18 +187,19 @@ export * as dns from './dns'
 export * as ipfs from './ipfs'
 export * as keystore from './keystore'
 
-export * as apps from './apps'
 
 
 // ㊙️
 
 
 function scenarioAuthSucceeded(
+  prerequisites: Prerequisites,
   newUser: boolean,
   username: string,
   fs: FileSystem | undefined
 ): FulfilledScenario {
   return {
+    prerequisites,
     scenario: { authSucceeded: true },
     state: {
       authenticated: true,
@@ -176,9 +212,11 @@ function scenarioAuthSucceeded(
 }
 
 function scenarioAuthCancelled(
+  prerequisites: Prerequisites,
   cancellationReason: string
 ): FulfilledScenario {
   return {
+    prerequisites,
     scenario: { authCancelled: true },
     state: {
       authenticated: false,
@@ -188,12 +226,14 @@ function scenarioAuthCancelled(
   }
 }
 
-function scenarioContinuum(
+function scenarioContinuation(
+  prerequisites: Prerequisites,
   username: string,
   fs: FileSystem | undefined
 ): FulfilledScenario {
   return {
-    scenario: { continuum: true },
+    prerequisites,
+    scenario: { continuation: true },
     state: {
       authenticated: true,
       newUser: false,
@@ -204,9 +244,12 @@ function scenarioContinuum(
   }
 }
 
-function scenarioNotAuthenticated(): FulfilledScenario {
+function scenarioNotAuthorised(
+  prerequisites: Prerequisites
+): FulfilledScenario {
   return {
-    scenario: { notAuthenticated: true },
+    prerequisites,
+    scenario: { notAuthorised: true },
     state: { authenticated: false }
   }
 }

@@ -7,7 +7,7 @@
 ### Functions
 
 * [authenticatedUsername](_auth_.md#authenticatedusername)
-* [deauthenticate](_auth_.md#deauthenticate)
+* [leave](_auth_.md#leave)
 * [redirectToLobby](_auth_.md#redirecttolobby)
 
 ## Functions
@@ -16,7 +16,7 @@
 
 ▸ **authenticatedUsername**(): *Promise‹string | null›*
 
-*Defined in [src/auth.ts:15](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/auth.ts#L15)*
+*Defined in [src/auth.ts:17](https://github.com/fission-suite/webnative/blob/33d72ef/src/auth.ts#L17)*
 
 Retrieve the authenticated username.
 
@@ -24,15 +24,15 @@ Retrieve the authenticated username.
 
 ___
 
-###  deauthenticate
+###  leave
 
-▸ **deauthenticate**(): *Promise‹void›*
+▸ **leave**(): *Promise‹void›*
 
-*Defined in [src/auth.ts:24](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/auth.ts#L24)*
+*Defined in [src/auth.ts:26](https://github.com/fission-suite/webnative/blob/33d72ef/src/auth.ts#L26)*
 
-Deauthenticate.
+Leave.
 
-Removes the stored UCAN we got from a lobby.
+Removes any trace of the user and redirects to the lobby.
 
 **Returns:** *Promise‹void›*
 
@@ -40,9 +40,9 @@ ___
 
 ###  redirectToLobby
 
-▸ **redirectToLobby**(`returnTo?`: undefined | string): *Promise‹void›*
+▸ **redirectToLobby**(`prerequisites`: [Prerequisites](_ucan_prerequisites_.md#prerequisites), `returnTo?`: undefined | string): *Promise‹void›*
 
-*Defined in [src/auth.ts:37](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/auth.ts#L37)*
+*Defined in [src/auth.ts:42](https://github.com/fission-suite/webnative/blob/33d72ef/src/auth.ts#L42)*
 
 Redirects to a lobby.
 
@@ -52,6 +52,7 @@ NOTE: Only works on the main thread, as it uses `window.location`.
 
 Name | Type | Description |
 ------ | ------ | ------ |
+`prerequisites` | [Prerequisites](_ucan_prerequisites_.md#prerequisites) | The prerequisites from `initialise` |
 `returnTo?` | undefined &#124; string | Specify the URL you want users to return to.                 Uses the current url by default.  |
 
 **Returns:** *Promise‹void›*

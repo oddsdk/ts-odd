@@ -9,7 +9,7 @@ type IpfsWindow = {
 }
 
 
-export const JS_IPFS = 'https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.48.1/index.min.js'
+export const JS_IPFS = 'https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.49.1/index.min.js'
 export const PEER_WSS = '/dns4/node.fission.systems/tcp/4003/wss/ipfs/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw'
 export const DELEGATE_ADDR = '/dns4/ipfs.runfission.com/tcp/443/https'
 

@@ -2,7 +2,9 @@ import localforage from 'localforage'
 
 import * as common from './common'
 import * as did from './did'
-import { UCAN_STORAGE_KEY, USERNAME_STORAGE_KEY } from './common'
+import * as ucan from './ucan/internal'
+import { UCANS_STORAGE_KEY, USERNAME_STORAGE_KEY } from './common'
+import { Prerequisites } from './ucan/prerequisites'
 import { setup } from './setup/internal'
 
 
@@ -17,13 +19,15 @@ export async function authenticatedUsername(): Promise<string | null> {
 }
 
 /**
- * Deauthenticate.
+ * Leave.
  *
- * Removes the stored UCAN we got from a lobby.
+ * Removes any trace of the user and redirects to the lobby.
  */
-export async function deauthenticate(): Promise<void> {
-  await localforage.removeItem(UCAN_STORAGE_KEY)
-  return await localforage.removeItem(USERNAME_STORAGE_KEY)
+export async function leave(): Promise<void> {
+  await localforage.removeItem(USERNAME_STORAGE_KEY)
+  await ucan.clearStorage()
+
+  window.location.href = setup.endpoints.lobby
 }
 
 /**
@@ -31,14 +35,33 @@ export async function deauthenticate(): Promise<void> {
  *
  * NOTE: Only works on the main thread, as it uses `window.location`.
  *
+ * @param prerequisites The prerequisites from `initialise`
  * @param returnTo Specify the URL you want users to return to.
  *                 Uses the current url by default.
  */
-export async function redirectToLobby(returnTo?: string): Promise<void> {
-  const localDid = await did.local()
+export async function redirectToLobby(
+  prerequisites: Prerequisites,
+  returnTo?: string
+): Promise<void> {
+  const { app, fs } = prerequisites
+  const exchangeDid = await did.exchange()
+  const writeDid = await did.write()
   const redirectTo = returnTo || window.location.href
 
-  window.location.href = setup.endpoints.lobby +
-    `?did=${encodeURIComponent(localDid)}` +
-    `&redirectTo=${encodeURIComponent(redirectTo)}`
+  // Compile params
+  const params = [
+    [ "didExchange", exchangeDid ],
+    [ "didWrite", writeDid ],
+    [ "redirectTo", redirectTo ]
+  ].concat(
+    app                     ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
+    fs && fs.privatePaths   ? fs.privatePaths.map(path => [ "privatePath", path ]) : [],
+    fs && fs.publicPaths    ? fs.publicPaths.map(path => [ "publicPath", path ]) : [],
+  )
+
+  // And, go!
+  window.location.href = setup.endpoints.lobby + "?" +
+    params
+      .map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v))
+      .join("&")
 }

@@ -21,17 +21,17 @@ const BASE58_DID_PREFIX: string = 'did:key:z'
 
 
 /**
- * Create a DID to authenticate with.
+ * Create a DID based on the exchange key-pair.
  */
-export async function local(): Promise<string> {
+export async function exchange(): Promise<string> {
   const ks = await keystore.get()
-  const pubKeyB64 = await ks.publicWriteKey()
+  const pubKeyB64 = await ks.publicReadKey()
 
   return publicKeyToDid(pubKeyB64, ks.cfg.type)
 }
 
 /**
- * Gets the root DID for a user.
+ * Get the root write-key DID for a user.
  * Stored at `_did.${username}.${endpoints.user}`
  */
 export async function root(
@@ -45,6 +45,21 @@ export async function root(
   } catch (_err) {}
 
   throw new Error("Could not locate user DID in DNS.")
+}
+
+/**
+ * Alias `write` to `ucan`
+ */
+export { write as ucan }
+
+/**
+ * Create a DID based on the write key-pair.
+ */
+export async function write(): Promise<string> {
+  const ks = await keystore.get()
+  const pubKeyB64 = await ks.publicWriteKey()
+
+  return publicKeyToDid(pubKeyB64, ks.cfg.type)
 }
 
 

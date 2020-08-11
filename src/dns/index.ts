@@ -57,22 +57,33 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
   let t
 
   try {
-    t = await ipfs.dns(domain)
+    t = ipfs.dns
+      ? await ipfs.dns(domain)
+      : await lookupDnsLinkWithCloudflare(domain)
+
   } catch (err) {
     if (err.name === "HTTPError") {
-      t = await lookupTxtRecord(
-        domain.startsWith("_dnslink.")
-        ? domain
-        : `_dnslink.${domain}`
-      )
-
+      t = await lookupDnsLinkWithCloudflare(domain)
     } else {
       throw(err)
-
     }
+
   }
 
   return t && !t.includes("/ipns/")
     ? t.replace(/^dnslink=/, "").replace(/^\/ipfs\//, "")
     : null
+}
+
+
+
+// ㊙️
+
+
+function lookupDnsLinkWithCloudflare(domain: string): Promise<string | null> {
+  return lookupTxtRecord(
+    domain.startsWith("_dnslink.")
+    ? domain
+    : `_dnslink.${domain}`
+  )
 }

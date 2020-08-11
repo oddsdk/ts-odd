@@ -6,11 +6,14 @@
 
 ### References
 
+* [apps](_index_.md#apps)
 * [authenticatedUsername](_index_.md#authenticatedusername)
 * [dataRoot](_index_.md#dataroot)
-* [deauthenticate](_index_.md#deauthenticate)
 * [did](_index_.md#did)
 * [dns](_index_.md#dns)
+* [errors](_index_.md#errors)
+* [initialize](_index_.md#initialize)
+* [leave](_index_.md#leave)
 * [loadFileSystem](_index_.md#loadfilesystem)
 * [lobby](_index_.md#lobby)
 * [redirectToLobby](_index_.md#redirecttolobby)
@@ -21,9 +24,9 @@
 
 * [AuthCancelled](_index_.md#authcancelled)
 * [AuthSucceeded](_index_.md#authsucceeded)
-* [Continuum](_index_.md#continuum)
+* [Continuation](_index_.md#continuation)
 * [FulfilledScenario](_index_.md#fulfilledscenario)
-* [NotAuthenticated](_index_.md#notauthenticated)
+* [NotAuthorised](_index_.md#notauthorised)
 * [Scenario](_index_.md#scenario)
 * [State](_index_.md#state)
 
@@ -37,6 +40,12 @@
 
 ## References
 
+###  apps
+
+• **apps**:
+
+___
+
 ###  authenticatedUsername
 
 • **authenticatedUsername**:
@@ -49,12 +58,6 @@ ___
 
 ___
 
-###  deauthenticate
-
-• **deauthenticate**:
-
-___
-
 ###  did
 
 • **did**:
@@ -64,6 +67,24 @@ ___
 ###  dns
 
 • **dns**:
+
+___
+
+###  errors
+
+• **errors**:
+
+___
+
+###  initialize
+
+• **initialize**:
+
+___
+
+###  leave
+
+• **leave**:
 
 ___
 
@@ -101,7 +122,7 @@ ___
 
 Ƭ **AuthCancelled**: *object*
 
-*Defined in [src/index.ts:50](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/index.ts#L50)*
+*Defined in [src/index.ts:57](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L57)*
 
 #### Type declaration:
 
@@ -117,7 +138,7 @@ ___
 
 Ƭ **AuthSucceeded**: *object*
 
-*Defined in [src/index.ts:41](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/index.ts#L41)*
+*Defined in [src/index.ts:48](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L48)*
 
 #### Type declaration:
 
@@ -133,11 +154,11 @@ ___
 
 ___
 
-###  Continuum
+###  Continuation
 
-Ƭ **Continuum**: *object*
+Ƭ **Continuation**: *object*
 
-*Defined in [src/index.ts:56](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/index.ts#L56)*
+*Defined in [src/index.ts:63](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L63)*
 
 #### Type declaration:
 
@@ -157,9 +178,11 @@ ___
 
 Ƭ **FulfilledScenario**: *object*
 
-*Defined in [src/index.ts:21](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/index.ts#L21)*
+*Defined in [src/index.ts:27](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L27)*
 
 #### Type declaration:
+
+* **prerequisites**: *[Prerequisites](_ucan_prerequisites_.md#prerequisites)*
 
 * **scenario**: *[Scenario](_index_.md#scenario)*
 
@@ -167,11 +190,11 @@ ___
 
 ___
 
-###  NotAuthenticated
+###  NotAuthorised
 
-Ƭ **NotAuthenticated**: *object*
+Ƭ **NotAuthorised**: *object*
 
-*Defined in [src/index.ts:37](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/index.ts#L37)*
+*Defined in [src/index.ts:44](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L44)*
 
 #### Type declaration:
 
@@ -183,7 +206,7 @@ ___
 
 Ƭ **Scenario**: *object*
 
-*Defined in [src/index.ts:14](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/index.ts#L14)*
+*Defined in [src/index.ts:20](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L20)*
 
 #### Type declaration:
 
@@ -191,17 +214,17 @@ ___
 
 * **authSucceeded**? : *undefined | true*
 
-* **continuum**? : *undefined | true*
+* **continuation**? : *undefined | true*
 
-* **notAuthenticated**? : *undefined | true*
+* **notAuthorised**? : *undefined | true*
 
 ___
 
 ###  State
 
-Ƭ **State**: *[NotAuthenticated](_index_.md#notauthenticated) | [AuthSucceeded](_index_.md#authsucceeded) | [AuthCancelled](_index_.md#authcancelled) | [Continuum](_index_.md#continuum)*
+Ƭ **State**: *[NotAuthorised](_index_.md#notauthorised) | [AuthSucceeded](_index_.md#authsucceeded) | [AuthCancelled](_index_.md#authcancelled) | [Continuation](_index_.md#continuation)*
 
-*Defined in [src/index.ts:31](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/index.ts#L31)*
+*Defined in [src/index.ts:38](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L38)*
 
 ## Variables
 
@@ -209,7 +232,7 @@ ___
 
 • **fs**: *[FileSystem](../classes/_fs_filesystem_.filesystem.md)* = fsClass
 
-*Defined in [src/index.ts:143](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/index.ts#L143)*
+*Defined in [src/index.ts:176](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L176)*
 
 ## Functions
 
@@ -217,7 +240,7 @@ ___
 
 ▸ **initialise**(`options`: object): *Promise‹[FulfilledScenario](_index_.md#fulfilledscenario)›*
 
-*Defined in [src/index.ts:77](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/index.ts#L77)*
+*Defined in [src/index.ts:84](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L84)*
 
 Check if we're authenticated, process any lobby query-parameters present in the URL,
 and initiate the user's file system if authenticated (can be disabled).
@@ -231,7 +254,9 @@ NOTE: Only works on the main/ui thread, as it uses `window.location`.
 
 Name | Type |
 ------ | ------ |
+`app?` | [AppInfo](_ucan_prerequisites_.md#appinfo) |
 `autoRemoveUrlParams?` | undefined &#124; false &#124; true |
+`fs?` | [FileSystemPrerequisites](_ucan_prerequisites_.md#filesystemprerequisites) |
 `loadFileSystem?` | undefined &#124; false &#124; true |
 
 **Returns:** *Promise‹[FulfilledScenario](_index_.md#fulfilledscenario)›*

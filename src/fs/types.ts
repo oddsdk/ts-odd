@@ -20,6 +20,7 @@ export type BaseLinks = { [name: string]: BaseLink }
 export type Links = { [name: string]: Link }
 
 
+
 // MISC
 // ----
 
@@ -31,7 +32,7 @@ export type PutDetails = {
 }
 
 export type NonEmptyPath = [string, ...string[]]
-export type SyncHook = (result: CID) => unknown
+export type SyncHook = (result: CID, proof: string) => unknown
 export type SyncHookDetailed = (result: AddResult) => unknown
 
 

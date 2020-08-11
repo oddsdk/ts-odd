@@ -8,12 +8,10 @@
 
   ↳ **PublicFile**
 
-  ↳ [PrivateFile](_fs_v1_privatefile_.privatefile.md)
-
 ## Implements
 
 * File
-* HeaderFile
+* File
 
 ## Index
 
@@ -24,32 +22,34 @@
 ### Properties
 
 * [content](_fs_v1_publicfile_.publicfile.md#content)
+* [info](_fs_v1_publicfile_.publicfile.md#info)
 
 ### Methods
 
-* [getHeader](_fs_v1_publicfile_.publicfile.md#getheader)
 * [put](_fs_v1_publicfile_.publicfile.md#put)
-* [putWithPins](_fs_v1_publicfile_.publicfile.md#putwithpins)
+* [putDetailed](_fs_v1_publicfile_.publicfile.md#putdetailed)
 * [create](_fs_v1_publicfile_.publicfile.md#static-create)
 * [fromCID](_fs_v1_publicfile_.publicfile.md#static-fromcid)
+* [fromInfo](_fs_v1_publicfile_.publicfile.md#static-frominfo)
 
 ## Constructors
 
 ###  constructor
 
-\+ **new PublicFile**(`content`: FileContent, `header`: HeaderV1, `parentKey`: Maybe‹string›): *[PublicFile](_fs_v1_publicfile_.publicfile.md)*
+\+ **new PublicFile**(`__namedParameters`: object): *[PublicFile](_fs_v1_publicfile_.publicfile.md)*
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicFile.ts:14](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L14)*
+*Defined in [src/fs/v1/PublicFile.ts:16](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicFile.ts#L16)*
 
 **Parameters:**
 
+▪ **__namedParameters**: *object*
+
 Name | Type |
 ------ | ------ |
-`content` | FileContent |
-`header` | HeaderV1 |
-`parentKey` | Maybe‹string› |
+`content` | string &#124; number &#124; false &#124; true &#124; object &#124; Buffer‹› &#124; Blob |
+`info` | object |
 
 **Returns:** *[PublicFile](_fs_v1_publicfile_.publicfile.md)*
 
@@ -61,70 +61,84 @@ Name | Type |
 
 *Inherited from void*
 
-*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/base/file.ts#L10)*
-
-## Methods
-
-###  getHeader
-
-▸ **getHeader**(): *HeaderV1*
-
-*Defined in [src/fs/v1/PublicFile.ts:54](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L54)*
-
-**Returns:** *HeaderV1*
+*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/file.ts#L10)*
 
 ___
+
+###  info
+
+• **info**: *[FileHeader](../modules/_fs_protocol_public_types_.md#fileheader)*
+
+*Defined in [src/fs/v1/PublicFile.ts:16](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicFile.ts#L16)*
+
+## Methods
 
 ###  put
 
 ▸ **put**(): *Promise‹CID›*
 
-*Overrides void*
+*Inherited from void*
 
-*Defined in [src/fs/v1/PublicFile.ts:36](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L36)*
+*Defined in [src/fs/base/file.ts:16](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/file.ts#L16)*
 
 **Returns:** *Promise‹CID›*
 
 ___
 
-###  putWithPins
+###  putDetailed
 
-▸ **putWithPins**(): *Promise‹PutResult›*
+▸ **putDetailed**(): *Promise‹PutDetails›*
 
-*Defined in [src/fs/v1/PublicFile.ts:41](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L41)*
+*Overrides void*
 
-**Returns:** *Promise‹PutResult›*
+*Defined in [src/fs/v1/PublicFile.ts:41](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicFile.ts#L41)*
+
+**Returns:** *Promise‹PutDetails›*
 
 ___
 
 ### `Static` create
 
-▸ **create**(`content`: FileContent, `parentKey`: Maybe‹string›): *Promise‹HeaderFile›*
+▸ **create**(`content`: FileContent): *Promise‹[PublicFile](_fs_v1_publicfile_.publicfile.md)›*
 
-*Defined in [src/fs/v1/PublicFile.ts:22](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L22)*
+*Defined in [src/fs/v1/PublicFile.ts:23](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicFile.ts#L23)*
 
 **Parameters:**
 
 Name | Type |
 ------ | ------ |
 `content` | FileContent |
-`parentKey` | Maybe‹string› |
 
-**Returns:** *Promise‹HeaderFile›*
+**Returns:** *Promise‹[PublicFile](_fs_v1_publicfile_.publicfile.md)›*
 
 ___
 
 ### `Static` fromCID
 
-▸ **fromCID**(`cid`: CID, `parentKey`: Maybe‹string›): *Promise‹HeaderFile›*
+▸ **fromCID**(`cid`: CID): *Promise‹[PublicFile](_fs_v1_publicfile_.publicfile.md)›*
 
-*Defined in [src/fs/v1/PublicFile.ts:30](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/fs/v1/PublicFile.ts#L30)*
+*Defined in [src/fs/v1/PublicFile.ts:30](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicFile.ts#L30)*
 
 **Parameters:**
 
 Name | Type |
 ------ | ------ |
 `cid` | CID |
-`parentKey` | Maybe‹string› |
 
-**Returns:** *Promise‹HeaderFile›*
+**Returns:** *Promise‹[PublicFile](_fs_v1_publicfile_.publicfile.md)›*
+
+___
+
+### `Static` fromInfo
+
+▸ **fromInfo**(`info`: [FileInfo](../modules/_fs_protocol_public_types_.md#fileinfo)): *Promise‹[PublicFile](_fs_v1_publicfile_.publicfile.md)›*
+
+*Defined in [src/fs/v1/PublicFile.ts:35](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicFile.ts#L35)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`info` | [FileInfo](../modules/_fs_protocol_public_types_.md#fileinfo) |
+
+**Returns:** *Promise‹[PublicFile](_fs_v1_publicfile_.publicfile.md)›*

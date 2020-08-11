@@ -12,9 +12,9 @@
 
 ###  loadFileSystem
 
-▸ **loadFileSystem**(`username?`: undefined | string): *Promise‹[FileSystem](../classes/_fs_filesystem_.filesystem.md)›*
+▸ **loadFileSystem**(`prerequisites`: [Prerequisites](_ucan_prerequisites_.md#prerequisites), `username?`: undefined | string): *Promise‹[FileSystem](../classes/_fs_filesystem_.filesystem.md)›*
 
-*Defined in [src/filesystem.ts:16](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/filesystem.ts#L16)*
+*Defined in [src/filesystem.ts:20](https://github.com/fission-suite/webnative/blob/33d72ef/src/filesystem.ts#L20)*
 
 Load a user's file system.
 
@@ -22,6 +22,7 @@ Load a user's file system.
 
 Name | Type | Description |
 ------ | ------ | ------ |
+`prerequisites` | [Prerequisites](_ucan_prerequisites_.md#prerequisites) | The prerequisites from initialise. |
 `username?` | undefined &#124; string | Optional, username of the user to load the file system from.                 Will try to load the file system of the authenticated user                 by default. Throws an error if there's no authenticated user.  |
 
 **Returns:** *Promise‹[FileSystem](../classes/_fs_filesystem_.filesystem.md)›*

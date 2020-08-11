@@ -28,10 +28,10 @@ The Fission webnative SDK offers tools for:
 
 ```ts
 // ES6
-import * as sdk from 'webnative'
+import * as wn from 'webnative'
 
 // Browser/UMD build
-self.webnative
+const wn = self.webnative
 ```
 
 See [`docs/`](docs/) for more detailed documentation based on the source code.
@@ -41,13 +41,26 @@ See [`docs/`](docs/) for more detailed documentation based on the source code.
 # Authentication
 
 ```ts
-const { scenario, state } = await sdk.initialise()
+const { prerequisites, scenario, state } = await wn.initialise({
+  // Will ask the user permission to store
+  // your apps data in `private/Apps/Nullsoft/Winamp`
+  app: {
+    name: "Winamp",
+    creator: "Nullsoft"
+  },
+
+  // Ask the user permission for additional filesystem paths
+  fs: {
+    privatePaths: [ "Music" ],
+    publicPaths: [ "Mixtapes" ]
+  }
+})
 
 if (scenario.authCancelled) {
   // User was redirected to lobby,
   // but cancelled the authorisation.
 
-} else if (scenario.authSucceeded || scenario.continuum) {
+} else if (scenario.authSucceeded || scenario.continuation) {
   // State:
   // state.authenticated    -  Will always be `true` in these scenarios
   // state.newUser          -  If the user is new to Fission
@@ -57,13 +70,14 @@ if (scenario.authCancelled) {
   // ☞ We can now interact with our file system (more on that later)
   state.fs
 
-} else if (scenario.notAuthenticated) {
-  sdk.redirectToLobby()
+} else if (scenario.notAuthorised) {
+  wn.redirectToLobby(prerequisites)
 
 }
 ```
 
-`redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes an optional parameter, the url that the lobby should redirect back to (the default is `location.href`).
+`redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes a second, optional, parameter, the url that the lobby should redirect back to (the default is `location.href`).
+
 
 
 # Web Native File System
@@ -75,17 +89,24 @@ Each file system has a public tree and a private tree, much like your MacOS, Win
 All information (links, data, metadata, etc) in the private tree is encrypted. Decryption keys are stored in such a manner that access to a given folder grants access to all of its subfolders.
 
 ```ts
-// After authenticating …
+// After initialising …
 const fs = state.fs
+const appPath = fs.appPath()
 
 // List the user's private files that belong to this app
-const appPath = fs.appPath.private("myApp")
-
 if (await fs.exists(appPath)) {
   await fs.ls(appPath)
+
+// The user is new to the app, lets create the app-data directory.
 } else {
   await fs.mkdir(appPath)
+  await fs.publicise()
+
 }
+
+// Create a sub directory
+await fs.mkdir(fs.appPath([ "Sub Directory" ]))
+await fs.publicise()
 ```
 
 
@@ -100,7 +121,13 @@ WNFS exposes a familiar POSIX-style interface:
 - `mv`: move a file or directory
 - `read`: alias for `cat`
 - `rm`: remove a file or directory
-- `write`: write to a file
+- `write`: alias for `add`
+
+
+## Publicise
+
+The `publicise` function synchronises your file system with the Fission API and IPFS. We don't do this automatically because if you add a large set of data, you only want to do this after everything is added. Otherwise it would be too slow and we would have too many network requests to the API.
+
 
 
 # Development

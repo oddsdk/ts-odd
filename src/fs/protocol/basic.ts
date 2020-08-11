@@ -17,7 +17,7 @@ export const getEncryptedFile = async (cid: CID, key: string): Promise<FileConte
 }
 
 export const putFile = async (content: FileContent): Promise<AddResult> => {
-  return  ipfs.add(content)
+  return ipfs.add(content)
 }
 
 export const putEncryptedFile = async (content: FileContent, key: string): Promise<AddResult> => {

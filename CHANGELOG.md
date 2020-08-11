@@ -1,8 +1,57 @@
 # Changelog
 
+
+### v0.17
+
+###### Changes
+
+- `initialise` now accepts two additional options, named "prerequisites":
+   ```javascript
+   const { prerequisites, scenario, state } = await wn.initialise({
+     // Will ask the user permission to store
+     // your apps data in `private/Apps/Nullsoft/Winamp`
+     app: {
+       name: "Winamp",
+       creator: "Nullsoft"
+     },
+
+     // Ask the user permission for additional filesystem paths
+     fs: {
+       privatePaths: [ "Music" ],
+       publicPaths: [ "Mixtapes" ]
+     }
+   })
+   ```
+- Those prerequisites are passed to the `wn.redirectToLobby` function.  
+  (So the auth lobby has the correct parameters to determine the permissions to ask the user)
+- Adds the ability to use multiple apps with one file system (closes #73)
+- The SDK now handles multiple UCANs
+- Works offline (fixes #82)
+- Added `initialize` (american spelling) as an alias for `initialise`
+- Adds ability to set the potency `ptc` of a UCAN
+- Uses the Fission gateway as a [delegate node](https://github.com/ipfs/js-ipfs/blob/2b24f590041a0df9da87b75ae2344232fe22fe3a/docs/CONFIG.md#delegates)
+
+###### Breaking changes
+
+- File system actions (ie. POSIX interface methods) throw an error when they are missing the necessary permissions (read UCAN)
+- Does no longer automatically call the `fs.publicise()` method. You have to call this yourself from now on.
+- Changed the `fs.appPath` function (see README)
+- Renamed `scenario.isAuthenticated` to `scenario.isAuthorised`
+- Renamed `scenario.continuum` to `scenario.continuation`
+- The first parameter to `redirectToLobby` has now become the second parameter.
+- Replaced `deauthenticate` with `leave`, which now redirects to the auth lobby automatically, so you can "sign out" there as well.
+
+
+### v0.16.x
+
+- Fixed issue with private trees
+- Improved connectivity
+- Switched from AES-128 read keys to AES-256
+
+
 ### v0.16
 
-- Big rewrite of filesystem 
+- Big rewrite of filesystem
   - private side derives names using bloomfilters and stores nodes in an MMPT
   - reorganize header info on public side and store metadata/skeleton as cbor data
 - Improved `fs.write` method, is an alias for `add` now (because `add` overwrites by default)
@@ -11,7 +60,7 @@
 
 ### v0.15
 
-- skipped because of a botched npm publish
+- Skipped because of a botched npm publish
 
 
 ### v0.14.3
@@ -25,6 +74,7 @@
 - Reduced time-to-save for the file system to 3 seconds instead of 5
 - Removed unnecessary `console.log` calls
 - Updated default `js-ipfs` to `v0.48.1` (was `v0.48.0`)
+
 
 ### v0.14.1
 

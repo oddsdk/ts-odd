@@ -6,16 +6,39 @@
 
 ### Functions
 
+* [debug](_setup_.md#debug)
 * [endpoints](_setup_.md#endpoints)
 * [ipfs](_setup_.md#ipfs)
 
 ## Functions
 
+###  debug
+
+▸ **debug**(`__namedParameters`: object): *boolean*
+
+*Defined in [src/setup.ts:13](https://github.com/fission-suite/webnative/blob/33d72ef/src/setup.ts#L13)*
+
+Toggle debug mode.
+
+Only adds a few `console.log`s at this moment.
+
+**Parameters:**
+
+▪ **__namedParameters**: *object*
+
+Name | Type |
+------ | ------ |
+`enabled` | boolean |
+
+**Returns:** *boolean*
+
+___
+
 ###  endpoints
 
 ▸ **endpoints**(`e`: Partial‹[Endpoints](_setup_internal_.md#endpoints)›): *[Endpoints](_setup_internal_.md#endpoints)*
 
-*Defined in [src/setup.ts:21](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/setup.ts#L21)*
+*Defined in [src/setup.ts:32](https://github.com/fission-suite/webnative/blob/33d72ef/src/setup.ts#L32)*
 
 Override endpoints.
 
@@ -43,7 +66,7 @@ ___
 
 ▸ **ipfs**(`s`: UnknownObject): *UnknownObject*
 
-*Defined in [src/setup.ts:41](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/setup.ts#L41)*
+*Defined in [src/setup.ts:52](https://github.com/fission-suite/webnative/blob/33d72ef/src/setup.ts#L52)*
 
 Override the IPFS config.
 
@@ -53,7 +76,7 @@ and then passed to `Ipfs.create()`
 If you wish to override the `config.Bootstrap` list,
 you can get the default value as follows:
 ```js
-import { PEER_WSS, defaultOptions } from 'fission-sdk/ipfs'
+import { PEER_WSS, defaultOptions } from 'webnative/ipfs'
 // `PEER_WSS` is the default `Bootstrap` node
 defaultOptions.config.Bootstrap
 ```
