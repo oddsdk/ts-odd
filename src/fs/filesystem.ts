@@ -178,7 +178,6 @@ export class FileSystem {
 
   async updateRootLink(branch: Branch, update: AddResult): Promise<void> {
     this.root.updateLink(link.make(branch, update.cid, false, update.size))
-    await this.sync()
   }
 
 
