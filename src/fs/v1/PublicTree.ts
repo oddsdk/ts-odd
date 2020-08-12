@@ -40,7 +40,7 @@ export class PublicTree extends BaseTree implements HeaderTree {
   }
 
   static async fromHeaderAndUserland(header: HeaderV1, userland: CID): Promise<PublicTree> {
-    const links = await protocol.getLinks(userland, null)
+    const links = await protocol.getLinks(userland)
     return new PublicTree(links, header)
   }
 
@@ -57,7 +57,7 @@ export class PublicTree extends BaseTree implements HeaderTree {
   }
 
   async putDetailed(): Promise<PutDetails> {
-    const { cid, size } = await protocol.putLinks(this.links, null)
+    const { cid, size } = await protocol.putLinks(this.links)
     const userlandLink = link.make('userland', cid, true, size)
     const details = await header.put(userlandLink, {
       ...this.header,

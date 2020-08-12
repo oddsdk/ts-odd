@@ -24,12 +24,12 @@ export default class MMPT {
   }
 
   static async fromCID(cid: CID): Promise<MMPT> {
-    const links = await basic.getLinks(cid, null)
+    const links = await basic.getLinks(cid)
     return new MMPT(links)
   }
 
   async put(): Promise<AddResult> {
-    return basic.putLinks(this.links, null)
+    return basic.putLinks(this.links)
   }
 
   async add(name: string, value: CID): Promise<this> {

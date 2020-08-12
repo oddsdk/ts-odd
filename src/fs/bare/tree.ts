@@ -23,7 +23,7 @@ class BareTree extends BaseTree {
   }
 
   static async fromCID(cid: CID): Promise<BareTree> {
-    const links = await protocol.getLinks(cid, null)
+    const links = await protocol.getLinks(cid)
     return new BareTree(links) 
   }
 
@@ -40,7 +40,7 @@ class BareTree extends BaseTree {
   }
 
   async putDetailed(): Promise<AddResult> {
-    const details = await protocol.putLinks(this.links, null)
+    const details = await protocol.putLinks(this.links)
     if(this.onUpdate !== null){
       this.onUpdate(details)
     }

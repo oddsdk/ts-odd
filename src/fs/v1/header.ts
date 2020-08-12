@@ -43,7 +43,7 @@ export const put = async (
     putAndMakeLink('children', serialized.children, null),
   ])
   const links = { metadata, skeleton, children, userland } as Links
-  const { cid, size } = await protocol.putLinks(links, null)
+  const { cid, size } = await protocol.putLinks(links)
   return { cid, userland: userland.cid, metadata: metadata.cid, size }
 }
 
@@ -74,11 +74,11 @@ type Result = {
 }
 
 export const getHeaderAndUserland = async (cid: CID): Promise<Result> => {
-  const links = await protocol.getLinks(cid, null)
+  const links = await protocol.getLinks(cid)
   const [metadata, skeleton, children, size] = await Promise.all([
-    protocol.getAndCheckValue(links, 'metadata', null, check.isMetadata),
-    protocol.getAndCheckValue(links, 'skeleton', null, check.isSkeleton),
-    protocol.getAndCheckValue(links, 'children', null, check.isChildren),
+    protocol.getAndCheckValue(links, 'metadata', check.isMetadata),
+    protocol.getAndCheckValue(links, 'skeleton', check.isSkeleton),
+    protocol.getAndCheckValue(links, 'children', check.isChildren),
     ipfs.size(cid),
   ])
 

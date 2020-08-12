@@ -216,6 +216,13 @@ export class FileSystem {
     })
   }
 
+  async rm(path: string): Promise<CID> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.rm(relPath)
+    })
+    return this.sync()
+  }
+
   // async get(path: string): Promise<Tree | File | null> {
   //   return this.runOnTree(path, false, (tree, relPath) => {
   //     return tree.get(relPath)
@@ -241,16 +248,8 @@ export class FileSystem {
     return this.cat(path)
   }
 
-  async rm(path: string): Promise<CID> {
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.rm(relPath)
-    })
-    return this.sync()
-  }
-
   async write(path: string, content: FileContent): Promise<CID> {
-    if (await this.exists(path)) await this.rm(path)
-    return await this.add(path, content)
+    return this.add(path, content)
   }
 
 
