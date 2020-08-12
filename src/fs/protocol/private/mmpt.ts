@@ -2,7 +2,6 @@ import { AddResult, CID } from "../../../ipfs"
 import * as basic from '../basic'
 import * as link from '../../link'
 import { Links } from '../../types'
-import Mutex from '../../../common/mutex'
 
 const nibbles = { "0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true, "7": true,
                   "8": true, "9": true, "a": true, "b": true, "c": true, "d": true, "e": true, "f": true,
@@ -12,11 +11,9 @@ const isNibble = (str: string): boolean => nibbles[str] === true
 export default class MMPT {
 
   links: Links
-  mutex : Mutex
 
   constructor(links: Links) {
     this.links = links
-    this.mutex = new Mutex()
   }
   
   static create(): MMPT {
@@ -59,14 +56,12 @@ export default class MMPT {
     }
     
     // if one other child with first char of name, then put both into a child tree
-    await this.mutex.lock()
     const tree = MMPT.create()
     await tree.add(name.slice(1), value)
     await tree.add(nextName.slice(1), this.links[nextName].cid)
     const { cid, size } = await tree.put()
     this.links[name[0]] = link.make(name[0], cid, false, size)
     delete this.links[nextName]
-    await this.mutex.unlock()
     return this
   }
 
