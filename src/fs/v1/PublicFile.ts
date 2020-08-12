@@ -11,44 +11,38 @@ import * as semver from '../semver'
 export class PublicFile extends BaseFile implements HeaderFile {
 
   protected header: HeaderV1
-  parentKey: Maybe<string>
 
-  constructor(content: FileContent, header: HeaderV1, parentKey: Maybe<string>) {
+  constructor(content: FileContent, header: HeaderV1) {
     super(content)
     this.header = header
-    this.parentKey = parentKey
   }
 
-  static async create(content: FileContent, parentKey: Maybe<string>): Promise<HeaderFile> {
+  static async create(content: FileContent): Promise<HeaderFile> {
     return new PublicFile(content, { 
       ...header.empty(),
       isFile: true,
       version: semver.v1
-    }, parentKey)
+    })
   }
 
-  static async fromCID(cid: CID, parentKey: Maybe<string>): Promise<HeaderFile> {
-    const info = await header.getHeaderAndUserland(cid, null)
-    return PublicFile.fromHeaderAndUserland(info.header, info.userland, parentKey)
+  static async fromCID(cid: CID): Promise<HeaderFile> {
+    const info = await header.getHeaderAndUserland(cid)
+    return PublicFile.fromHeaderAndUserland(info.header, info.userland)
   }
 
-  static async fromHeaderAndUserland(header: HeaderV1, userland: CID, parentKey: Maybe<string>): Promise<HeaderFile> {
-    const content = await protocol.getFile(userland, header.key)
-    return new PublicFile(content, header, parentKey)
+  static async fromHeaderAndUserland(header: HeaderV1, userland: CID): Promise<HeaderFile> {
+    const content = await protocol.getFile(userland, null)
+    return new PublicFile(content, header)
   }
 
   async putDetailed(): Promise<PutDetails> {
-    return this.putWithKey(null)
-  }
-
-  protected async putWithKey(key: Maybe<string>): Promise<PutDetails> {
-    const { cid, size } = await protocol.putFile(this.content, this.header.key)
+    const { cid, size } = await protocol.putFile(this.content, null)
     const userlandCID = link.make('userland', cid, true, size)
     return header.put(userlandCID, {
       ...this.header,
       size,
       mtime: Date.now()
-    }, key)
+    })
   }
 
   getHeader(): HeaderV1 {

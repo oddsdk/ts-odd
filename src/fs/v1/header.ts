@@ -27,7 +27,6 @@ export const empty = (): HeaderV1 => {
     ctime,
     version,
     size: 0,
-    key: null,
     skeleton: {},
     children: {}
   }
@@ -36,18 +35,15 @@ export const empty = (): HeaderV1 => {
 export const put = async (
     userland: Link,
     header: HeaderV1,
-    parentKey: Maybe<string>
   ): Promise<PutDetails> => {
   const serialized = serializeForProtocol(userland.cid, header)
-  const [metadata, skeleton, children, key] = await Promise.all([
-    putAndMakeLink('metadata', serialized.metadata, parentKey),
-    putAndMakeLink('skeleton', serialized.skeleton, parentKey),
-    putAndMakeLink('children', serialized.children, parentKey),
-    serialized.key !== null ? putAndMakeLink('key', serialized.key, parentKey) : null,
+  const [metadata, skeleton, children] = await Promise.all([
+    putAndMakeLink('metadata', serialized.metadata, null),
+    putAndMakeLink('skeleton', serialized.skeleton, null),
+    putAndMakeLink('children', serialized.children, null),
   ])
   const links = { metadata, skeleton, children, userland } as Links
-  if(key !== null) links.key = key
-  const { cid, size } = await protocol.putLinks(links, parentKey)
+  const { cid, size } = await protocol.putLinks(links, null)
   return { cid, userland: userland.cid, metadata: metadata.cid, size }
 }
 
@@ -57,14 +53,13 @@ export const putAndMakeLink = async (name: string, val: FileContent, key: Maybe<
 }
 
 export const serializeForProtocol = (userland: CID, header: HeaderV1): IpfsSerialized => {
-  const { name, isFile, mtime, ctime, version, skeleton, children, key } = header
+  const { name, isFile, mtime, ctime, version, skeleton, children } = header
   const metadata = { name, isFile, mtime, ctime, version }
   return {
     metadata,
     skeleton,
     children,
     userland,
-    key
   }
 }
 
@@ -78,13 +73,12 @@ type Result = {
   header: HeaderV1
 }
 
-export const getHeaderAndUserland = async (cid: CID, parentKey: Maybe<string>): Promise<Result> => {
-  const links = await protocol.getLinks(cid, parentKey)
-  const [metadata, skeleton, children, key, size] = await Promise.all([
-    protocol.getAndCheckValue(links, 'metadata', parentKey, check.isMetadata),
-    protocol.getAndCheckValue(links, 'skeleton', parentKey, check.isSkeleton),
-    protocol.getAndCheckValue(links, 'children', parentKey, check.isChildren),
-    protocol.getAndCheckValue(links, 'key', parentKey, isString, true),
+export const getHeaderAndUserland = async (cid: CID): Promise<Result> => {
+  const links = await protocol.getLinks(cid, null)
+  const [metadata, skeleton, children, size] = await Promise.all([
+    protocol.getAndCheckValue(links, 'metadata', null, check.isMetadata),
+    protocol.getAndCheckValue(links, 'skeleton', null, check.isSkeleton),
+    protocol.getAndCheckValue(links, 'children', null, check.isChildren),
     ipfs.size(cid),
   ])
 
@@ -94,6 +88,6 @@ export const getHeaderAndUserland = async (cid: CID, parentKey: Maybe<string>): 
   const { name, isFile, mtime, ctime, version } = metadata
   return {
     userland,
-    header: { name, isFile, mtime, ctime, size, version, key, skeleton, children }
+    header: { name, isFile, mtime, ctime, size, version, skeleton, children }
   }
 }

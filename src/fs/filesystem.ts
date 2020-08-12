@@ -91,7 +91,7 @@ export class FileSystem {
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { keyName = 'filesystem-root', rootDid = '' } = opts
 
-    const publicTree = await PublicTree.empty(null)
+    const publicTree = await PublicTree.empty()
     const prettyTree = await BareTree.empty()
 
     const key = await keystore.getKeyByName(keyName)
@@ -127,7 +127,7 @@ export class FileSystem {
     const root = await BareTree.fromCID(cid)
     const publicCID = root.links['public']?.cid || null
     const publicTree = publicCID !== null
-      ? await PublicTree.fromCID(publicCID, null)
+      ? await PublicTree.fromCID(publicCID)
       : null
 
     const prettyTree = (await root.getDirectChild('pretty')) as BareTree ||

@@ -28,7 +28,6 @@ export interface File {
 }
 
 export interface HeaderFile extends File {
-  parentKey: Maybe<string>
   getHeader(): HeaderV1
   putDetailed(): Promise<PutDetails>
 }
@@ -71,7 +70,6 @@ export type HeaderV1 = {
   ctime: number
   version: SemVer
   size: number
-  key: Maybe<string>
   skeleton: Skeleton
   children: Children
 }
@@ -81,7 +79,6 @@ export type SkeletonInfo = {
   userland: CID
   metadata: CID
   children: Skeleton
-  key: Maybe<string>
 }
 
 export type Skeleton = { [name: string]: SkeletonInfo }
@@ -91,7 +88,6 @@ export type IpfsSerialized = {
   skeleton: Skeleton
   children: Children
   userland: CID
-  key: Maybe<string>
 }
 
 // MISC
@@ -118,15 +114,15 @@ export type SemVer = {
 // ----
 
 export interface TreeStatic {
-  empty (parentKey: Maybe<string>): Promise<HeaderTree>
-  fromCID (cid: CID, parentKey: Maybe<string>): Promise<HeaderTree>
-  fromHeaderAndUserland(header: HeaderV1, userland: CID, parentKey: Maybe<string>): Promise<HeaderTree>
+  empty (): Promise<HeaderTree>
+  fromCID (cid: CID): Promise<HeaderTree>
+  fromHeaderAndUserland(header: HeaderV1, userland: CID): Promise<HeaderTree>
 }
 
 export interface FileStatic {
-  create(content: FileContent, parentKey: Maybe<string>): Promise<HeaderFile>
-  fromCID(cid: CID, parentKey: Maybe<string>): Promise<HeaderFile>
-  fromHeaderAndUserland(header: HeaderV1, userland: CID, parentKey: Maybe<string>): Promise<HeaderFile>
+  create(content: FileContent): Promise<HeaderFile>
+  fromCID(cid: CID): Promise<HeaderFile>
+  fromHeaderAndUserland(header: HeaderV1, userland: CID): Promise<HeaderFile>
 }
 
 export interface StaticMethods {
@@ -174,7 +170,6 @@ export interface Tree {
 }
 
 export interface HeaderTree extends Tree {
-  parentKey: Maybe<string>
   getHeader(): HeaderV1
   putDetailed(): Promise<PutDetails>
 }

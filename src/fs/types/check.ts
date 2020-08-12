@@ -36,7 +36,6 @@ export const isMetadata = (obj: any): obj is HeaderV1 => {
 export const isHeaderV1 = (obj: any): obj is HeaderV1 => {
   return isObject(obj)
       && isSemVer(obj.version)
-      && (isString(obj.key) || obj.key === null)
       && isSkeleton(obj.skeleton)
 }
 
