@@ -7,6 +7,7 @@ import { Links, SyncHook, FileSystemOptions, Branch, UnixTree } from './types'
 
 import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
+import * as debug from '../common/debug'
 import * as keystore from '../keystore'
 import { AddResult, CID, FileContent } from '../ipfs'
 import * as pathUtil from './path'
@@ -68,10 +69,11 @@ export class FileSystem {
     const logCid = cidLog.add
 
     // Update the user's data root when making changes
-    const updateDataRootWhenOnline = throttle(3000, cid => {
+    const updateDataRootWhenOnline = throttle(3000, false, cid => {
+      debug.log("🚀 Updating your DNSLink:", cid)
       if (window.navigator.onLine) return dataRoot.update(cid)
       this.syncWhenOnline = cid
-    })
+    }, false)
 
     this.syncHooks.push(logCid)
     this.syncHooks.push(updateDataRootWhenOnline)
@@ -114,7 +116,7 @@ export class FileSystem {
     publicTree.onUpdate = result => fs.updateRootLink(Branch.Public, result)
     prettyTree.onUpdate = result => fs.updateRootLink(Branch.Pretty, result)
     privateTree.onUpdate = result => fs.updateRootLink(Branch.Private, result)
-    
+
     return fs
   }
 

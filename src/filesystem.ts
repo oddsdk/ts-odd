@@ -2,6 +2,7 @@ import localforage from 'localforage'
 
 import FileSystem from './fs'
 import * as cidLog from './common/cid-log'
+import * as debug from './common/debug'
 import * as dataRoot from './data-root'
 import { authenticatedUsername } from './common'
 
@@ -27,20 +28,25 @@ export async function loadFileSystem(username?: string): Promise<FileSystem> {
   if (!dataCid) {
     // No DNS CID yet
     cid = await cidLog.newest()
+    debug.log("📓 No DNSLink, using local CID:", cid)
 
   } else if (logIdx === 0) {
     // DNS is up to date
     if (logLength > 1) await cidLog.override(dataCid)
     cid = dataCid
+    debug.log("📓 DNSLink is up to date:", cid)
 
   } else if (logIdx > 0) {
     // DNS is outdated
     await cidLog.removeOlderCids(logIdx)
     cid = await cidLog.newest()
+    const idxLog = logIdx === 1 ? "1 newer local entry" : logIdx + " newer local entries"
+    debug.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid)
 
   } else {
     // DNS is newer
     cid = dataCid
+    debug.log("📓 DNSLink is newer:", cid)
 
   }
 

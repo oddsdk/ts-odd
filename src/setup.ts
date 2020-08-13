@@ -6,6 +6,17 @@ type UnknownObject =
 
 
 /**
+ * Toggle debug mode.
+ *
+ * Only adds a few `console.log`s at this moment.
+ */
+export function debug({ enabled }: { enabled: boolean }): boolean {
+  internalSetup.debug = enabled
+  return internalSetup.debug
+}
+
+
+/**
  * Override endpoints.
  *
  * You can override each of these,
