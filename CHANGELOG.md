@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.16
+
+- Improved `fs.write` method, is an alias for `add` now (because `add` overwrites by default)
+- Improved file system loading and saving
+
+
 ### v0.14.2
 
 - Improved DNSLink lookup error handling
