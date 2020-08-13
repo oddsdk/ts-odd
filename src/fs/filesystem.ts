@@ -68,10 +68,11 @@ export class FileSystem {
     const logCid = cidLog.add
 
     // Update the user's data root when making changes
-    const updateDataRootWhenOnline = throttle(3000, cid => {
+    const updateDataRootWhenOnline = throttle(3000, false, cid => {
+      console.log("🚀 Updating your DNSLink:", cid)
       if (window.navigator.onLine) return dataRoot.update(cid)
       this.syncWhenOnline = cid
-    })
+    }, false)
 
     this.syncHooks.push(logCid)
     this.syncHooks.push(updateDataRootWhenOnline)
@@ -114,7 +115,7 @@ export class FileSystem {
     publicTree.onUpdate = result => fs.updateRootLink(Branch.Public, result)
     prettyTree.onUpdate = result => fs.updateRootLink(Branch.Pretty, result)
     privateTree.onUpdate = result => fs.updateRootLink(Branch.Private, result)
-    
+
     return fs
   }
 
