@@ -7,6 +7,7 @@ import { Links, SyncHook, FileSystemOptions, Branch, UnixTree } from './types'
 
 import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
+import * as debug from '../common/debug'
 import * as keystore from '../keystore'
 import { AddResult, CID, FileContent } from '../ipfs'
 import * as pathUtil from './path'
@@ -69,7 +70,7 @@ export class FileSystem {
 
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(3000, false, cid => {
-      console.log("🚀 Updating your DNSLink:", cid)
+      debug.log("🚀 Updating your DNSLink:", cid)
       if (window.navigator.onLine) return dataRoot.update(cid)
       this.syncWhenOnline = cid
     }, false)

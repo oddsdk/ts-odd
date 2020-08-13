@@ -9,6 +9,8 @@ export type Endpoints = {
  * @internal
  */
 export const setup = {
+  debug: false,
+
   endpoints: {
     api: "https://runfission.com",
     lobby: "https://auth.fission.codes",
