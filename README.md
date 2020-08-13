@@ -280,7 +280,7 @@ Yes, this only requires a slightly different setup.
 ```ts
 // UI thread
 // `session.fs` will now be `null`
-sdk.isAuthenticated({ loadFileSystem: false })
+sdk.initialise({ loadFileSystem: false })
 
 // Web Worker
 const fs = await sdk.loadFileSystem()
