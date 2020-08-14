@@ -1,6 +1,6 @@
 import * as protocol from '../protocol'
 import * as header from './header'
-import { Links, HeaderV1, StaticMethods, HeaderTree, HeaderFile, PutDetails, SyncHookDetailed } from '../types'
+import { Links, HeaderV1, StaticMethods, HeaderTree, HeaderFile, PutDetails, SyncHookDetailed, Metadata, Skeleton, Children, IpfsSerialized } from '../types'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
@@ -13,14 +13,20 @@ import * as pathUtil from '../path'
 
 export class PublicTree extends BaseTree implements HeaderTree {
 
-  protected header: HeaderV1
+  // protected header: HeaderV1
+  metadata: Metadata
+  skeleton: Skeleton
+  children: Children
+
   onUpdate: Maybe<SyncHookDetailed> = null
 
   protected static: StaticMethods
 
-  constructor(links: Links, header: HeaderV1) {
-    super(links, header.version)
-    this.header = header
+  constructor(links: Links, skeleton: Skeleton, children: Children, metadata: Metadata) {
+    super(links, metadata.version)
+    this.metadata = metadata
+    this.skeleton = skeleton
+    this.children = children
     this.static = {
       tree: PublicTree,
       file: PublicFile
@@ -28,8 +34,8 @@ export class PublicTree extends BaseTree implements HeaderTree {
   }
 
   static async empty (): Promise<PublicTree> {
-    return new PublicTree({}, {
-      ...header.empty(),
+    return new PublicTree({}, {}, {}, {
+      ...header.emptyMetadata(),
       version: semver.v1,
     })
   }
@@ -68,7 +74,6 @@ export class PublicTree extends BaseTree implements HeaderTree {
     }
     return details
   }
- 
 
   async updateDirectChild(child: HeaderTree | HeaderFile, name: string): Promise<this> {
     const { cid, metadata, userland, size } = await child.putDetailed()

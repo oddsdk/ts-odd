@@ -1,6 +1,5 @@
 import { HeaderV1, HeaderFile, PutDetails } from '../types'
 import { CID, FileContent } from '../../ipfs'
-import { Maybe } from '../../common'
 import BaseFile from '../base/file'
 import * as header from'./header'
 import * as protocol from '../protocol'

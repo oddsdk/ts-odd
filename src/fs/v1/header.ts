@@ -38,17 +38,17 @@ export const put = async (
   ): Promise<PutDetails> => {
   const serialized = serializeForProtocol(userland.cid, header)
   const [metadata, skeleton, children] = await Promise.all([
-    putAndMakeLink('metadata', serialized.metadata, null),
-    putAndMakeLink('skeleton', serialized.skeleton, null),
-    putAndMakeLink('children', serialized.children, null),
+    putAndMakeLink('metadata', serialized.metadata),
+    putAndMakeLink('skeleton', serialized.skeleton),
+    putAndMakeLink('children', serialized.children),
   ])
   const links = { metadata, skeleton, children, userland } as Links
   const { cid, size } = await protocol.putLinks(links)
   return { cid, userland: userland.cid, metadata: metadata.cid, size }
 }
 
-export const putAndMakeLink = async (name: string, val: FileContent, key: Maybe<string>) => {
-  const { cid, size } = await ipfs.encoded.add(val, key)
+export const putAndMakeLink = async (name: string, val: FileContent) => {
+  const { cid, size } = await ipfs.encoded.add(val, null)
   return link.make(name, cid, true, size)
 }
 
