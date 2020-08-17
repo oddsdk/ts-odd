@@ -3,7 +3,7 @@
 /** @internal */
 import { isString, isObject, isNum, isBool } from '../../common'
 import { CID } from '../../ipfs'
-import { Tree, File, Link, Links, HeaderV1, SemVer, Skeleton, Children } from '../types'
+import { Tree, File, Link, Links, SemVer, Skeleton, ChildrenMetadata, Metadata, TreeInfo, FileInfo } from '../types'
 
 
 export const isFile = (obj: any): obj is File => {
@@ -24,19 +24,13 @@ export const isLinks = (obj: any): obj is Links => {
       && Object.values(obj).every(isLink)
 }
 
-export const isMetadata = (obj: any): obj is HeaderV1 => {
+export const isMetadata = (obj: any): obj is Metadata => {
   return isObject(obj) 
       && isString(obj.name)
       && isBool(obj.isFile)
       && isNum(obj.mtime)
       && isNum(obj.ctime)
       && isSemVer(obj.version)
-}
-
-export const isHeaderV1 = (obj: any): obj is HeaderV1 => {
-  return isObject(obj)
-      && isSemVer(obj.version)
-      && isSkeleton(obj.skeleton)
 }
 
 export const isSkeleton = (obj: any): obj is Skeleton => {
@@ -50,9 +44,25 @@ export const isSkeleton = (obj: any): obj is Skeleton => {
       ))
 }
 
-export const isChildren = (obj: any): obj is Children => {
+export const isChildrenMetadata = (obj: any): obj is ChildrenMetadata => {
   return isObject(obj) 
       && Object.values(obj).every(isMetadata)
+}
+
+export const isTreeInfo = (obj: any): obj is TreeInfo => {
+  return isObject(obj)
+    && isCID(obj.userland)
+    && isSkeleton(obj.skeleton)
+    && isChildrenMetadata(obj.children)
+    && isMetadata(obj.metadata)
+    && obj.metadata.isFile === false
+}
+
+export const isFileInfo = (obj: any): obj is FileInfo => {
+  return isObject(obj)
+    && isCID(obj.userland)
+    && isMetadata(obj.metadata)
+    && obj.metadata.isFile === true
 }
 
 export const isCID = (obj: any): obj is CID => {

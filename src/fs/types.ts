@@ -60,18 +60,7 @@ export type Metadata = {
   version: SemVer
 }
 
-export type Children = { [name: string]: Metadata }
-
-export type HeaderV1 = {
-  name: string
-  isFile: boolean
-  mtime: number
-  ctime: number
-  version: SemVer
-  size: number
-  skeleton: Skeleton
-  children: Children
-}
+export type ChildrenMetadata = { [name: string]: Metadata }
 
 export type SkeletonInfo = {
   cid: CID
@@ -82,10 +71,15 @@ export type SkeletonInfo = {
 
 export type Skeleton = { [name: string]: SkeletonInfo }
 
-export type IpfsSerialized = {
+export type TreeInfo = {
   metadata: Metadata
   skeleton: Skeleton
-  children: Children
+  children: ChildrenMetadata
+  userland: CID
+}
+
+export type FileInfo = {
+  metadata: Metadata
   userland: CID
 }
 
@@ -109,26 +103,6 @@ export type SemVer = {
   patch: number
 }
 
-// STATIC METHODS
-// ----
-
-export interface TreeStatic {
-  empty (): Promise<HeaderTree>
-  fromCID (cid: CID): Promise<HeaderTree>
-  fromHeaderAndUserland(header: HeaderV1, userland: CID): Promise<HeaderTree>
-}
-
-export interface FileStatic {
-  create(content: FileContent): Promise<HeaderFile>
-  fromCID(cid: CID): Promise<HeaderFile>
-  fromHeaderAndUserland(header: HeaderV1, userland: CID): Promise<HeaderFile>
-}
-
-export interface StaticMethods {
-  tree: TreeStatic
-  file: FileStatic
-}
-
 // TREE
 // ----
 
@@ -138,7 +112,6 @@ export interface UnixTree {
   cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<this>
   rm(path: string): Promise<this>
-  // get(path: string): Promise<this | FileContent | null>
   exists(path: string): Promise<boolean>
 }
 

@@ -1,6 +1,6 @@
 import * as protocol from '../protocol'
 import * as header from './header'
-import { Links, HeaderTree, HeaderFile, PutDetails, SyncHookDetailed, Metadata, Skeleton, Children, IpfsSerialized } from '../types'
+import { Links, HeaderTree, HeaderFile, PutDetails, SyncHookDetailed, Metadata, Skeleton, ChildrenMetadata, UnixTree, TreeInfo } from '../types'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
@@ -11,15 +11,15 @@ import * as semver from '../semver'
 import * as skeleton from '../skeleton'
 import * as pathUtil from '../path'
 
-export class PublicTree extends BaseTree implements HeaderTree {
+export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
 
   metadata: Metadata
   skeleton: Skeleton
-  children: Children
+  children: ChildrenMetadata
 
   onUpdate: Maybe<SyncHookDetailed> = null
 
-  constructor(links: Links, skeleton: Skeleton, children: Children, metadata: Metadata) {
+  constructor(links: Links, skeleton: Skeleton, children: ChildrenMetadata, metadata: Metadata) {
     super(links, metadata.version)
     this.metadata = metadata
     this.skeleton = skeleton
@@ -34,11 +34,14 @@ export class PublicTree extends BaseTree implements HeaderTree {
   }
 
   static async fromCID (cid: CID): Promise<PublicTree> {
-    const info = await header.getSerialized(cid)
-    return PublicTree.fromSerialized(info)
+    const info = await header.get(cid)
+    if(!check.isTreeInfo(info)) {
+      throw new Error(`Could not parse a valid public tree at: ${cid}`)
+    }
+    return PublicTree.fromInfo(info)
   }
 
-  static async fromSerialized(info: IpfsSerialized): Promise<PublicTree> {
+  static async fromInfo(info: TreeInfo): Promise<PublicTree> {
     const { userland, metadata, skeleton, children } = info
     const links = await protocol.getLinks(userland)
     return new PublicTree(links, skeleton, children, metadata)
@@ -57,15 +60,9 @@ export class PublicTree extends BaseTree implements HeaderTree {
   }
 
   async putDetailed(): Promise<PutDetails> {
-    const { cid, size } = await protocol.putLinks(this.links)
-    const userlandLink = link.make('userland', cid, true, size)
-    const details = await header.put(userlandLink, {
-      metadata: {
-        ...this.metadata,
-        mtime: Date.now()
-      },
-      skeleton: this.skeleton,
-      children: this.children,
+    const details = await header.putTree(this.links, this.skeleton, this.children, {
+      ...this.metadata,
+      mtime: Date.now()
     })
     if(this.onUpdate !== null){
       this.onUpdate(details)
@@ -109,10 +106,10 @@ export class PublicTree extends BaseTree implements HeaderTree {
     const skeletonInfo = skeleton.getPath(this.skeleton, parts)
     if(skeletonInfo === null) return null
 
-    const info = await header.getSerialized(skeletonInfo.cid)
-    return info.metadata.isFile 
-      ? PublicFile.fromSerialized(info)
-      : PublicTree.fromSerialized(info)
+    const info = await header.get(skeletonInfo.cid)
+    return check.isFileInfo(info) 
+      ? PublicFile.fromInfo(info)
+      : PublicTree.fromInfo(info)
   }
 
   getLinks(): Links {
