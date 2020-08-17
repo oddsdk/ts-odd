@@ -105,7 +105,7 @@ export default class PrivateTree implements UnixTree {
     } else if (!check.isPrivateFile(file)) {
       throw new Error('Can not `cat` a directory')
     }
-    return protocol.getFile(file.content, file.key)
+    return protocol.getPrivateFile(file.content, file.key)
   }
 
   async exists(path: string): Promise<boolean> {
@@ -119,7 +119,7 @@ export default class PrivateTree implements UnixTree {
       throw new Error("Can not change a directory to a file")
     }
     const ownKey = file === null ? await keystore.genKeyStr() : file.key
-    const { cid } = await protocol.putFile(content, ownKey)
+    const { cid } = await protocol.putPrivateFile(content, ownKey)
     return this.addWithFn(path, async (parent, name, key) => {
       if(file !== null) {
         return protocol.priv.updateFile(file as PrivateFile, cid)
@@ -130,7 +130,7 @@ export default class PrivateTree implements UnixTree {
   }
 
   async addNode(node: DecryptedNode, key: string): Promise<NamedAddResult> {
-    const { cid, size } = await protocol.putFile(node, key)
+    const { cid, size } = await protocol.putPrivateFile(node, key)
     const filter = await namefilter.addRevision(node.bareNameFilter, key, node.revision)
     const name = await namefilter.toPrivateName(filter)
     await this.mmpt.add(name, cid)

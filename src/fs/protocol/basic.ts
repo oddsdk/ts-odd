@@ -4,16 +4,23 @@
 import ipfs, { CID, FileContent, AddResult } from '../../ipfs'
 
 import { Links } from '../types'
-import { Maybe } from '../../common'
 import * as link from '../link'
 
 
-export const getFile = async (cid: CID, key: Maybe<string>): Promise<FileContent> => {
-  return key ? ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent> : ipfs.catBuf(cid)
+export const getFile = async (cid: CID): Promise<FileContent> => {
+  return ipfs.catBuf(cid)
 }
 
-export const putFile = async (content: FileContent, key: Maybe<string>): Promise<AddResult> => {
-  return key ? ipfs.encoded.add(content, key) : ipfs.add(content)
+export const getPrivateFile = async (cid: CID, key: string): Promise<FileContent> => {
+  return ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent>
+}
+
+export const putFile = async (content: FileContent): Promise<AddResult> => {
+  return  ipfs.add(content)
+}
+
+export const putPrivateFile = async (content: FileContent, key: string): Promise<AddResult> => {
+  return ipfs.encoded.add(content, key)
 }
 
 export const getLinks = async (cid: CID): Promise<Links> => {

@@ -1,5 +1,4 @@
 import { FileContent, CID, AddResult } from '../ipfs'
-import { Maybe } from '../common/types'
 
 
 // FILESYSTEM
@@ -28,7 +27,7 @@ export interface File {
 }
 
 export interface HeaderFile extends File {
-  getHeader(): HeaderV1
+  metadata: Metadata
   putDetailed(): Promise<PutDetails>
 }
 
@@ -170,7 +169,9 @@ export interface Tree {
 }
 
 export interface HeaderTree extends Tree {
-  getHeader(): HeaderV1
+  skeleton: Skeleton
+  metadata: Metadata
+
   putDetailed(): Promise<PutDetails>
 }
 

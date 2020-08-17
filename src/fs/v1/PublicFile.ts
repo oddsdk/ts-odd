@@ -1,51 +1,49 @@
-import { HeaderV1, HeaderFile, PutDetails } from '../types'
+import {  HeaderFile, PutDetails, Metadata, IpfsSerialized } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
 import * as header from'./header'
 import * as protocol from '../protocol'
-import * as link from '../link'
 import * as semver from '../semver'
+import * as link from '../link'
 
 
 export class PublicFile extends BaseFile implements HeaderFile {
 
-  protected header: HeaderV1
+  metadata: Metadata
 
-  constructor(content: FileContent, header: HeaderV1) {
+  constructor(content: FileContent, metadata: Metadata) {
     super(content)
-    this.header = header
+    this.metadata = metadata
   }
 
   static async create(content: FileContent): Promise<HeaderFile> {
     return new PublicFile(content, { 
-      ...header.empty(),
+      ...header.emptyMetadata(),
       isFile: true,
       version: semver.v1
     })
   }
 
   static async fromCID(cid: CID): Promise<HeaderFile> {
-    const info = await header.getHeaderAndUserland(cid)
-    return PublicFile.fromHeaderAndUserland(info.header, info.userland)
+    const info = await header.getSerialized(cid)
+    return PublicFile.fromSerialized(info)
   }
 
-  static async fromHeaderAndUserland(header: HeaderV1, userland: CID): Promise<HeaderFile> {
-    const content = await protocol.getFile(userland, null)
-    return new PublicFile(content, header)
+  static async fromSerialized(info: IpfsSerialized): Promise<HeaderFile> {
+    const { userland, metadata } = info
+    const content = await protocol.getFile(userland)
+    return new PublicFile(content, metadata)
   }
 
   async putDetailed(): Promise<PutDetails> {
-    const { cid, size } = await protocol.putFile(this.content, null)
-    const userlandCID = link.make('userland', cid, true, size)
-    return header.put(userlandCID, {
-      ...this.header,
-      size,
-      mtime: Date.now()
+    const { cid, size } = await protocol.putFile(this.content)
+    const userlandLink = link.make('userland', cid, true, size)
+    return header.put(userlandLink, {
+      metadata: {
+        ...this.metadata,
+        mtime: Date.now()
+      }
     })
-  }
-
-  getHeader(): HeaderV1 {
-    return this.header
   }
 
 }
