@@ -10,7 +10,7 @@ export class BareFile extends BaseFile {
   }
 
   static async fromCID(cid: CID): Promise<BareFile> {
-    const content = await protocol.getFile(cid)
+    const content = await protocol.basic.getFile(cid)
     return new BareFile(content)
   }
 
@@ -20,7 +20,7 @@ export class BareFile extends BaseFile {
   }
 
   async putDetailed(): Promise<AddResult> {
-    return protocol.putFile(this.content)
+    return protocol.basic.putFile(this.content)
   }
 }
 

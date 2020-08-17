@@ -1,11 +1,11 @@
-import * as protocol from '../protocol'
-import * as header from './header'
 import { Links, HeaderTree, HeaderFile, PutDetails, SyncHookDetailed, Metadata, Skeleton, ChildrenMetadata, UnixTree, TreeInfo } from '../types'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
 import PublicFile from './PublicFile'
 import { Maybe } from '../../common'
+import * as protocol from '../protocol'
+import * as metadata from '../metadata'
 import * as link from '../link'
 import * as semver from '../semver'
 import * as skeleton from '../skeleton'
@@ -28,13 +28,13 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
 
   static async empty (): Promise<PublicTree> {
     return new PublicTree({}, {}, {}, {
-      ...header.emptyMetadata(),
+      ...metadata.empty(),
       version: semver.v1,
     })
   }
 
   static async fromCID (cid: CID): Promise<PublicTree> {
-    const info = await header.get(cid)
+    const info = await protocol.pub.get(cid)
     if(!check.isTreeInfo(info)) {
       throw new Error(`Could not parse a valid public tree at: ${cid}`)
     }
@@ -43,7 +43,7 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
 
   static async fromInfo(info: TreeInfo): Promise<PublicTree> {
     const { userland, metadata, skeleton, children } = info
-    const links = await protocol.getLinks(userland)
+    const links = await protocol.basic.getLinks(userland)
     return new PublicTree(links, skeleton, children, metadata)
   }
 
@@ -60,7 +60,7 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
   }
 
   async putDetailed(): Promise<PutDetails> {
-    const details = await header.putTree(this.links, this.skeleton, this.children, {
+    const details = await protocol.pub.putTree(this.links, this.skeleton, this.children, {
       ...this.metadata,
       mtime: Date.now()
     })
@@ -106,7 +106,7 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
     const skeletonInfo = skeleton.getPath(this.skeleton, parts)
     if(skeletonInfo === null) return null
 
-    const info = await header.get(skeletonInfo.cid)
+    const info = await protocol.pub.get(skeletonInfo.cid)
     return check.isFileInfo(info) 
       ? PublicFile.fromInfo(info)
       : PublicTree.fromInfo(info)

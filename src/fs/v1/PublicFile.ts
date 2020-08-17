@@ -1,7 +1,7 @@
 import {  HeaderFile, PutDetails, Metadata, FileInfo } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
-import * as header from'./header'
+import * as metadata from '../metadata'
 import * as protocol from '../protocol'
 import * as semver from '../semver'
 
@@ -17,25 +17,25 @@ export class PublicFile extends BaseFile implements HeaderFile {
 
   static async create(content: FileContent): Promise<HeaderFile> {
     return new PublicFile(content, { 
-      ...header.emptyMetadata(),
+      ...metadata.empty(),
       isFile: true,
       version: semver.v1
     })
   }
 
   static async fromCID(cid: CID): Promise<HeaderFile> {
-    const info = await header.get(cid)
+    const info = await protocol.pub.get(cid)
     return PublicFile.fromInfo(info)
   }
 
   static async fromInfo(info: FileInfo): Promise<HeaderFile> {
     const { userland, metadata } = info
-    const content = await protocol.getFile(userland)
+    const content = await protocol.basic.getFile(userland)
     return new PublicFile(content, metadata)
   }
 
   async putDetailed(): Promise<PutDetails> {
-    return header.putFile(this.content, {
+    return protocol.pub.putFile(this.content, {
       ...this.metadata,
       mtime: Date.now()
     })

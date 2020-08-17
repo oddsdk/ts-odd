@@ -11,7 +11,7 @@ export const getFile = async (cid: CID): Promise<FileContent> => {
   return ipfs.catBuf(cid)
 }
 
-export const getPrivateFile = async (cid: CID, key: string): Promise<FileContent> => {
+export const getEncryptedFile = async (cid: CID, key: string): Promise<FileContent> => {
   return ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent>
 }
 
@@ -19,7 +19,7 @@ export const putFile = async (content: FileContent): Promise<AddResult> => {
   return  ipfs.add(content)
 }
 
-export const putPrivateFile = async (content: FileContent, key: string): Promise<AddResult> => {
+export const putEncryptedFile = async (content: FileContent, key: string): Promise<AddResult> => {
   return ipfs.encoded.add(content, key)
 }
 
