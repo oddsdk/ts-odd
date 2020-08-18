@@ -12,15 +12,21 @@ export type SkeletonInfo = {
 
 export type Skeleton = { [name: string]: SkeletonInfo }
 
-export type TreeInfo = {
+export type LocalTreeInfo = {
   metadata: Metadata
   skeleton: Skeleton
   children: ChildrenMetadata
+}
+
+export type TreeInfo = LocalTreeInfo & {
   userland: CID
 }
 
-export type FileInfo = {
+export type LocalFileInfo = {
   metadata: Metadata
+}
+
+export type FileInfo = LocalFileInfo & {
   userland: CID
 }
 

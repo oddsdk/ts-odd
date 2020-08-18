@@ -1,27 +1,34 @@
 import {  PutDetails, File } from '../types'
-import { FileInfo } from '../protocol/public/types'
-import { Metadata } from '../metadata'
+import { FileInfo, LocalFileInfo } from '../protocol/public/types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
 import * as metadata from '../metadata'
 import * as protocol from '../protocol'
-import * as semver from '../semver'
 
+
+type ConstructorParams = {
+  content: FileContent, 
+  info: LocalFileInfo
+}
 
 export class PublicFile extends BaseFile implements File {
 
-  metadata: Metadata
+  info: LocalFileInfo
 
-  constructor(content: FileContent, metadata: Metadata) {
+  constructor({ content, info }: ConstructorParams) {
     super(content)
-    this.metadata = metadata
+    this.info = info
   }
 
   static async create(content: FileContent): Promise<PublicFile> {
-    return new PublicFile(content, { 
-      ...metadata.empty(),
-      isFile: true,
-      version: semver.v1
+    return new PublicFile({
+      content, 
+      info: {
+        metadata: { 
+          ...metadata.empty(),
+          isFile: true,
+        }
+      }
     })
   }
 
@@ -33,12 +40,12 @@ export class PublicFile extends BaseFile implements File {
   static async fromInfo(info: FileInfo): Promise<PublicFile> {
     const { userland, metadata } = info
     const content = await protocol.basic.getFile(userland)
-    return new PublicFile(content, metadata)
+    return new PublicFile({ content, info: { metadata } })
   }
 
   async putDetailed(): Promise<PutDetails> {
     return protocol.pub.putFile(this.content, {
-      ...this.metadata,
+      ...this.info.metadata,
       mtime: Date.now()
     })
   }

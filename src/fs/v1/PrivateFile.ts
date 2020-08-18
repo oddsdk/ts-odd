@@ -11,8 +11,8 @@ import { isObject } from '../../common/type-checks'
 import BaseFile from '../base/file'
 
 type ConstructorParams = {
-  mmpt: MMPT,
-  content: FileContent, 
+  mmpt: MMPT
+  content: FileContent
   info: PrivateFileInfo
 }
 
