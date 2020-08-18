@@ -1,13 +1,9 @@
 # Changelog
 
-### v0.16
+### v0.17
 
 - Renamed `scenario.continuum` to `scenario.continuation`
-
-
-### v0.15
-
-TODO
+- Renamed `scenario.notAuthenticated` to `scenario.notAuthorised`
 
 
 ### v0.14.2

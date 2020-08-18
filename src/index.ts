@@ -1,18 +1,22 @@
 import localforage from 'localforage'
 
-import { UCAN_STORAGE_KEY, USERNAME_STORAGE_KEY } from './common'
+import { USERNAME_STORAGE_KEY } from './common'
 import { loadFileSystem } from './filesystem'
 import FileSystem from './fs'
 
 import * as auth from './auth'
+import * as ucan from './ucan'
+import * as ucan from './ucan/internal'
+import { AppInfo, FileSystemPrerequisites } from './ucan/prerequisites'
 import fsClass from './fs'
+
 
 
 // SCENARIO
 
 
 export type Scenario = {
-  notAuthenticated?: true,
+  notAuthorised?: true,
   authSucceeded?: true,
   authCancelled?: true,
   continuation?: true,
@@ -29,12 +33,12 @@ export type FulfilledScenario = {
 
 
 export type State
-  = NotAuthenticated
+  = NotAuthorised
   | AuthSucceeded
   | AuthCancelled
   | Continuation
 
-export type NotAuthenticated = {
+export type NotAuthorised = {
   authenticated: false
 }
 
@@ -76,6 +80,11 @@ export type Continuation = {
  */
 export async function initialise(
   options: {
+    // Prerequisites
+    app?: AppInfo,
+    fs?: FileSystemPermissions,
+
+    // Options
     autoRemoveUrlParams?: boolean
     loadFileSystem?: boolean
   }
@@ -88,22 +97,30 @@ export async function initialise(
       : await loadFileSystem(username)
   }
 
-  const { autoRemoveUrlParams } = options
+  const { app, fs, autoRemoveUrlParams } = options
   const url = new URL(window.location.href)
 
   const cancellation = url.searchParams.get("cancelled")
-  const ucan = url.searchParams.get("ucan")
+  const ucans = url.searchParams.get("ucans")
 
-  if (ucan) {
+  // Add UCANs to the storage
+  await ucan.store(ucans.split(","))
+
+  // Check if UCANs conform to the given prerequisites
+  if (ucan.validatePrerequisites({ app, fs }) === false) {
+    return scenarioNotAuthorised()
+  }
+
+  // Determine scenario
+  if (ucans) {
     const newUser = url.searchParams.get("newUser") === "t"
     const username = url.searchParams.get("username") || ""
 
-    await localforage.setItem(UCAN_STORAGE_KEY, ucan)
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
     if (autoRemoveUrlParams || autoRemoveUrlParams === undefined) {
       url.searchParams.delete("newUser")
-      url.searchParams.delete("ucan")
+      url.searchParams.delete("ucans")
       url.searchParams.delete("username")
       history.replaceState(null, document.title, url.toString())
     }
@@ -126,11 +143,16 @@ export async function initialise(
 
   const authedUsername = await auth.authenticatedUsername()
 
-  // File Systems
   return authedUsername
     ? scenarioContinuation(authedUsername, await maybeLoadFs(authedUsername))
-    : scenarioNotAuthenticated()
+    : scenarioNotAuthorised()
 }
+
+
+/**
+ * Alias for `initialise`.
+ */
+export { initialise as initialize }
 
 
 
@@ -203,9 +225,9 @@ function scenarioContinuation(
   }
 }
 
-function scenarioNotAuthenticated(): FulfilledScenario {
+function scenarioNotAuthorised(): FulfilledScenario {
   return {
-    scenario: { notAuthenticated: true },
+    scenario: { notAuthorised: true },
     state: { authenticated: false }
   }
 }

@@ -40,7 +40,20 @@ See [`docs/`](docs/) for more detailed documentation based on the source code.
 # Getting Started
 
 ```ts
-const { scenario, state } = await sdk.initialise()
+const { prerequisites, scenario, state } = await sdk.initialise({
+  // Will ask the user permission to store
+  // your apps data in `private/Apps/`
+  app: {
+    name: "Winamp",
+    creator: "Nullsoft"
+  },
+
+  // Ask the user permission for additional filesystem paths
+  fs: {
+    privatePaths: [ "Music" ],
+    publicPaths: [ "Mixtapes" ]
+  }
+})
 
 if (scenario.authCancelled) {
   // User was redirected to lobby,
@@ -56,19 +69,23 @@ if (scenario.authCancelled) {
   // ☞ We can now interact with our file system (more on that later)
   state.fs
 
-} else if (scenario.notAuthenticated) {
-  sdk.redirectToLobby()
+} else if (scenario.notAuthorised) {
+  sdk.redirectToLobby(prerequisites)
 
 }
 ```
 
-`redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes an optional parameter, the url that the lobby should redirect back to (the default is `location.href`).
+`redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes a second, optional, parameter, the url that the lobby should redirect back to (the default is `location.href`).
 
 
 ## Other functions
 
 - `await sdk.deauthenticate()`
-- `await sdk.authenticatedUsername()`
+
+
+## Authorisation
+
+The auth lobby is responsible for authorisation as well, it'll give us multiple UCANs (or tokens if you will) based on the values we gave to `sdk.initialise`. Important to note here is that if one of those tokens, that we got from a previous session, is expired, the scenario will be `notAuthorised`.
 
 
 

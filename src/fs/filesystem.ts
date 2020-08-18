@@ -61,22 +61,15 @@ export class FileSystem {
     this.syncHooks = []
     this.syncWhenOnline = null
 
-    this.appPath = {
-      public(appUuid: string, suffix?: string | Array<string>): string {
-        return appPath("public", appUuid, suffix)
-      },
-      private(appUuid: string, suffix?: string | Array<string>): string {
-        return appPath("private", appUuid, suffix)
-      }
-    }
-
     // Add the root CID of the file system to the CID log
     // (reverse list, newest cid first)
     const logCid = cidLog.add
 
     // Update the user's data root when making changes
-    const updateDataRootWhenOnline = throttle(3000, cid => {
-      if (window.navigator.onLine) return dataRoot.update(cid)
+    const updateDataRootWhenOnline = throttle(3000, (cid, proof) => {
+      if (window.navigator.onLine) {
+        return dataRoot.update(cid, proof)
+      }
       this.syncWhenOnline = cid
     })
 
@@ -103,6 +96,7 @@ export class FileSystem {
     const prettyTree = await BareTree.empty()
     const pinsTree = await BareTree.empty()
 
+    // TODO
     const key = await keystore.getKeyByName(keyName)
     const privateTree = await PrivateTree.empty(key)
 
@@ -266,7 +260,7 @@ export class FileSystem {
   async sync(): Promise<CID> {
     const cid = await this.root.put()
 
-    this.syncHooks.forEach(hook => hook(cid))
+    this.syncHooks.forEach(hook => hook(cid, proof))
 
     return cid
   }
@@ -344,15 +338,3 @@ export class FileSystem {
 
 
 export default FileSystem
-
-
-// ㊙️
-
-
-function appPath(head: string, appUuid: string, suffix?: string | Array<string>): string {
-  return (
-    head + '/Apps/' +
-    encodeURIComponent(appUuid) +
-    (suffix ? '/' + (typeof suffix == 'object' ? suffix.join('/') : suffix) : '')
-  )
-}

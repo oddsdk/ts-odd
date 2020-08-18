@@ -3,7 +3,7 @@ import localforage from 'localforage'
 import * as did from './did'
 import * as dns from './dns'
 import * as ucan from './ucan'
-import { api, UCAN_STORAGE_KEY } from './common'
+import { api } from './common'
 import { CID } from './ipfs'
 import { setup } from './setup/internal'
 
@@ -27,18 +27,22 @@ export async function lookup(
  * Update a user's data root.
  *
  * @param cid The CID of the data root.
+ * @param proof The proof to use in the UCAN sent to the API.
  */
 export async function update(
-  cid: CID | string
+  cid: CID | string,
+  proof: string
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
+  // Construct UCAN for the API call
   const jwt = await ucan.build({
     audience: await api.did(),
     issuer: await did.local(),
-    proof: await localforage.getItem(UCAN_STORAGE_KEY)
+    proof
   })
 
+  // Make API call
   await fetch(`${apiEndpoint}/user/data/${cid}`, {
     method: 'PATCH',
     headers: {

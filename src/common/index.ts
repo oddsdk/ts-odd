@@ -10,7 +10,7 @@ export * from './type-checks'
 export * from './util'
 export { api, arrbufs, base64, blob }
 
-export const UCAN_STORAGE_KEY = "fission_sdk.auth_ucan"
+export const UCANS_STORAGE_KEY = "fission_sdk.auth_ucans"
 export const USERNAME_STORAGE_KEY = "fission_sdk.auth_username"
 
 
