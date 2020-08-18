@@ -34,9 +34,7 @@ const plugins = [
   babel({ exclude: 'node_modules/**' }),
 
   // Most packages in node_modules are legacy CommonJS, so let's convert them to ES
-  commonjs({
-    namedExports: {'bloomfilter': ["BloomFilter"]}
-  }),
+  commonjs(),
 
   inject({
     Buffer: ['buffer/', 'Buffer']
