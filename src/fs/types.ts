@@ -53,7 +53,6 @@ export type Links = { [name: string]: Link }
 // -----
 
 export type Metadata = {
-  name: string
   isFile: boolean
   mtime: number
   ctime: number

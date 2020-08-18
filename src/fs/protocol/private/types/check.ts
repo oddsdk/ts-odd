@@ -1,12 +1,12 @@
 import { isNum, isObject, isString } from '../../../../common'
 import * as check  from '../../../types/check'
-import { PrivateFile, PrivateDirectory, PrivateLink, PrivateChildren, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from '../types'
+import { PrivateFileInfo, PrivateTreeInfo, PrivateLink, PrivateChildren, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from '../types'
 
 export const isDecryptedNode = (obj: any): obj is DecryptedNode => {
-  return isPrivateDirectory(obj) || isPrivateFile(obj)
+  return isPrivateTreeInfo(obj) || isPrivateFileInfo(obj)
 }
 
-export const isPrivateFile = (obj: any): obj is PrivateFile => {
+export const isPrivateFileInfo = (obj: any): obj is PrivateFileInfo => {
   return isObject(obj)
     && check.isMetadata(obj.metadata)
     && obj.metadata.isFile
@@ -14,7 +14,7 @@ export const isPrivateFile = (obj: any): obj is PrivateFile => {
     && check.isCID(obj.content)
 }
 
-export const isPrivateDirectory = (obj: any): obj is PrivateDirectory => {
+export const isPrivateTreeInfo = (obj: any): obj is PrivateTreeInfo => {
   return isObject(obj)
     && check.isMetadata(obj.metadata)
     && obj.metadata.isFile === false

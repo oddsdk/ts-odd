@@ -26,7 +26,6 @@ export const isLinks = (obj: any): obj is Links => {
 
 export const isMetadata = (obj: any): obj is Metadata => {
   return isObject(obj) 
-      && isString(obj.name)
       && isBool(obj.isFile)
       && isNum(obj.mtime)
       && isNum(obj.ctime)

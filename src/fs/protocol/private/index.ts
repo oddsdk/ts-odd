@@ -1,7 +1,7 @@
 import { Maybe, removeKeyFromObj } from "../../../common"
 import ipfs, { CID } from "../../../ipfs"
 import MMPT from "./mmpt"
-import { BareNameFilter, DecryptedNode, PrivateDirectory, PrivateFile, Revision } from './types'
+import { BareNameFilter, DecryptedNode, PrivateDirectory, PrivateFile, PrivateName, Revision } from './types'
 import * as check from './types/check'
 import * as namefilter from './namefilter'
 import { Metadata } from "../../types"
@@ -71,6 +71,20 @@ export const updateFile = async(file: PrivateFile, content: CID) => {
     revision: file.revision + 1,
     content
   }
+}
+
+export const getByName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
+  const cid = await mmpt.get(name)
+  if(cid === null) return null
+  return getByCID(mmpt, cid, key)
+}
+
+export const getByCID = async (mmpt: MMPT, cid: CID, key: string): Promise<DecryptedNode> => {
+  const node = await readNode(cid, key)
+  const latest = await findLatestRevision(mmpt, node.bareNameFilter, key, node.revision)
+  return latest?.cid
+    ? readNode(latest?.cid, key)
+    : node
 }
 
 export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: string, lastKnownRevision: number): Promise<Maybe<Revision>> => {

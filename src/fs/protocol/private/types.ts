@@ -1,14 +1,14 @@
 import { Link, Metadata } from "../../types"
 import { AddResult, CID } from "../../../ipfs"
 
-export type DecryptedNode = PrivateFile | PrivateDirectory
+export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo
 
-export type PrivateFile = {
+export type PrivateFileInfo = {
+  content: CID
   metadata: Metadata
   bareNameFilter: BareNameFilter
   revision: number
   key: AESKey
-  content: CID
 }
 
 // a hashed name filter
@@ -31,7 +31,7 @@ export type PrivateLink = Link & {
 
 export type PrivateChildren = { [name: string]: PrivateLink }
 
-export type PrivateDirectory = {
+export type PrivateTreeInfo = {
   metadata: Metadata
   bareNameFilter: BareNameFilter
   revision: number

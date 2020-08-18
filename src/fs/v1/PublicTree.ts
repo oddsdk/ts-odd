@@ -27,10 +27,7 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
   }
 
   static async empty (): Promise<PublicTree> {
-    return new PublicTree({}, {}, {}, {
-      ...metadata.empty(),
-      version: semver.v1,
-    })
+    return new PublicTree({}, {}, {}, metadata.empty())
   }
 
   static async fromCID (cid: CID): Promise<PublicTree> {
