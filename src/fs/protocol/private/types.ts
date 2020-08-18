@@ -52,8 +52,9 @@ export type LockedSubtree = {
   key: AESKey
 }
 
-export type NamedAddResult = AddResult & {
+export type PrivateAddResult = AddResult & {
   name: PrivateName
+  key: AESKey
 }
 
 export type Revision = {

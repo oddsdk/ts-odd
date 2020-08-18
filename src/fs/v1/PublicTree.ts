@@ -1,4 +1,4 @@
-import { Links, HeaderTree, HeaderFile, PutDetails, SyncHookDetailed, Metadata, Skeleton, ChildrenMetadata, UnixTree, TreeInfo } from '../types'
+import { Links, PutDetails, SyncHookDetailed, Metadata, Skeleton, ChildrenMetadata, UnixTree, TreeInfo, Tree } from '../types'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
@@ -7,12 +7,12 @@ import { Maybe } from '../../common'
 import * as protocol from '../protocol'
 import * as metadata from '../metadata'
 import * as link from '../link'
-import * as semver from '../semver'
 import * as skeleton from '../skeleton'
 import * as pathUtil from '../path'
 
-export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
+export class PublicTree extends BaseTree implements Tree, UnixTree {
 
+  links: Links
   metadata: Metadata
   skeleton: Skeleton
   children: ChildrenMetadata
@@ -20,7 +20,8 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
   onUpdate: Maybe<SyncHookDetailed> = null
 
   constructor(links: Links, skeleton: Skeleton, children: ChildrenMetadata, metadata: Metadata) {
-    super(links, metadata.version)
+    super(metadata.version)
+    this.links = links
     this.metadata = metadata
     this.skeleton = skeleton
     this.children = children
@@ -48,11 +49,11 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
     return obj.header !== undefined
   }
 
-  async emptyChildTree(): Promise<HeaderTree> {
+  async emptyChildTree(): Promise<PublicTree> {
     return PublicTree.empty()
   }
 
-  async createChildFile(content: FileContent): Promise<HeaderFile> {
+  async createChildFile(content: FileContent): Promise<PublicFile> {
     return PublicFile.create(content)
   }
 
@@ -67,7 +68,7 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
     return details
   }
 
-  async updateDirectChild(child: HeaderTree | HeaderFile, name: string): Promise<this> {
+  async updateDirectChild(child: PublicTree | PublicFile, name: string): Promise<this> {
     const { cid, metadata, userland, size } = await child.putDetailed()
     this.links[name] = link.make(name, cid, check.isFile(child), size)
     this.skeleton[name] = { cid, metadata, userland, children: check.isFile(child) ? {} : child.skeleton }
@@ -82,7 +83,7 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
     return this
   }
 
-  async getDirectChild(name: string): Promise<HeaderTree | HeaderFile | null> {
+  async getDirectChild(name: string): Promise<PublicTree | PublicFile | null> {
     const childCID = this.skeleton[name]?.cid || null
     const childInfo = this.children[name] || null
     if(childCID === null || childInfo === null) return null
@@ -91,12 +92,12 @@ export class PublicTree extends BaseTree implements HeaderTree, UnixTree {
           : PublicTree.fromCID(childCID)
   }
 
-  async getOrCreateDirectChild(name: string): Promise<HeaderTree | HeaderFile> {
+  async getOrCreateDirectChild(name: string): Promise<PublicTree | PublicFile> {
     const child = await this.getDirectChild(name)
     return child ? child : this.emptyChildTree()
   }
 
-  async get(path: string): Promise<HeaderTree | HeaderFile | null> {
+  async get(path: string): Promise<PublicTree | PublicFile | null> {
     const parts = pathUtil.splitNonEmpty(path)
     if(parts === null) return this
 

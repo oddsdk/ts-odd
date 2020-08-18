@@ -10,10 +10,8 @@ import { AddResult, CID, FileContent } from '../../ipfs'
 abstract class BaseTree implements Tree, UnixTree {
 
   version: SemVer
-  links: Links
 
-  constructor(links: Links, version: SemVer) {
-    this.links = links
+  constructor(version: SemVer) {
     this.version = version
   }
 

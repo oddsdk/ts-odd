@@ -1,71 +1,87 @@
-import {  PutDetails, Metadata } from '../types'
+import {  PutDetails, Metadata, File } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import * as check from '../protocol/private/types/check'
 import * as metadata from '../metadata'
 import * as protocol from '../protocol'
-import { AESKey, BareNameFilter, PrivateFileInfo } from '../protocol/private/types'
+import * as namefilter from '../protocol/private/namefilter'
+import MMPT from '../protocol/private/mmpt'
+import { AESKey, BareNameFilter, PrivateAddResult, PrivateFileInfo } from '../protocol/private/types'
+import { isObject, isString } from '../../common/type-checks'
+import BaseFile from '../base/file'
 
 type ConstructorParams = {
+  mmpt: MMPT,
   content: FileContent, 
-  metadata: Metadata,
-  bareNameFilter: BareNameFilter,
-  revision: number,
-  key: AESKey
+  info: PrivateFileInfo
 }
 
-export class PrivateFile {
+export class PrivateFile extends BaseFile implements File {
 
-  content: FileContent
+  mmpt: MMPT
+  info: PrivateFileInfo
 
-  metadata: Metadata
-  bareNameFilter: BareNameFilter
-  revision: number
-  key: AESKey
-
-
-  constructor({ content, metadata, bareNameFilter, revision, key }: ConstructorParams) {
-    this.content = content
-    this.metadata = metadata
-    this.bareNameFilter = bareNameFilter
-    this.revision = revision
-    this.key = key
+  constructor({ mmpt, content, info }: ConstructorParams) {
+    super(content)
+    this.mmpt = mmpt
+    this.info = info
   }
 
-  static async create(content: FileContent, bareNameFilter: BareNameFilter,  key: AESKey): Promise<PrivateFile> {
+  static instanceOf(obj: any): obj is PrivateFile {
+    return isObject(obj)
+      && obj.content !== undefined
+      && obj.mmpt !== undefined
+  }
+
+  static async create(mmpt: MMPT, content: FileContent, parentNameFilter: BareNameFilter,  key: AESKey): Promise<PrivateFile> {
+    const bareNameFilter = await namefilter.addToBare(parentNameFilter, key)
+    const contentInfo = await protocol.basic.putEncryptedFile(content, key)
     return new PrivateFile({ 
+      mmpt,
       content,
-      bareNameFilter,
-      key,
-      revision: 1,
-      metadata: {
-        ...metadata.empty(),
-        isFile: true,
+      info: {
+        bareNameFilter,
+        key,
+        revision: 1,
+        metadata: {
+          ...metadata.empty(),
+          isFile: true,
+        },
+        content: contentInfo.cid
       }
     })
   }
 
-  static async fromCID(cid: CID, key: AESKey): Promise<PrivateFile> {
-    const info = await protocol.priv.readNode(cid, key)
+  static async fromCID(mmpt: MMPT, cid: CID, key: AESKey): Promise<PrivateFile> {
+    const info = await protocol.priv.getByCID(mmpt, cid, key)
     if(!check.isPrivateFileInfo(info)) {
-      throw new Error(`Could not parse a valid private file at: ${cid}`)
+      throw new Error(`Could not parse a valid private tree at: ${cid}`)
     }
-    return PrivateFile.fromInfo(info)
+    const content = await protocol.basic.getEncryptedFile(info.content, info.key)
+    return new PrivateFile({ mmpt, info, content })
   }
 
-  static async fromInfo(info: PrivateFileInfo): Promise<PrivateFile> {
+  async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
+    this.info.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.info.key)
+    return this
+  }
+
+  static async fromInfo(mmpt: MMPT, info: PrivateFileInfo): Promise<PrivateFile> {
     const content = await protocol.basic.getEncryptedFile(info.content, info.key)
     return new PrivateFile({
-      ...info,
+      mmpt,
+      info,
       content,
     })
   }
 
-  // @@TODO: use private method
-  async putDetailed(): Promise<PutDetails> {
-    return protocol.pub.putFile(this.content, {
-      ...this.metadata,
-      mtime: Date.now()
-    })
+  async putDetailed(): Promise<PrivateAddResult> {
+    return protocol.priv.addNode(this.mmpt, {
+      ...this.info, 
+      metadata: {
+        ...this.info.metadata,
+        mtime: Date.now()
+      }
+    }, this.info.key)
   }
 
 }

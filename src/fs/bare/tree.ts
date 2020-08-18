@@ -12,10 +12,12 @@ import { Maybe } from '../../common'
 
 class BareTree extends BaseTree {
 
+  links: Links
   onUpdate: Maybe<SyncHookDetailed> = null
 
   constructor(links: Links) {
-    super(links, semver.v0)
+    super(semver.v0)
+    this.links = links
   }
 
   static async empty(): Promise<BareTree> {
@@ -87,7 +89,10 @@ class BareTree extends BaseTree {
   }
 
   updateLink(link: Link): Tree {
-    this.links[link.name] = link
+    this.links = {
+      ...this.links,
+      [link.name]: link
+    }
     return this
   }
 

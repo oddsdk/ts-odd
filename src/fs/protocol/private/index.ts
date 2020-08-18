@@ -1,14 +1,14 @@
-import { Maybe, removeKeyFromObj } from "../../../common"
+import { Maybe } from "../../../common"
 import ipfs, { CID } from "../../../ipfs"
 import MMPT from "./mmpt"
-import { BareNameFilter, DecryptedNode, PrivateDirectory, PrivateFile, PrivateName, Revision } from './types'
+import { BareNameFilter, DecryptedNode, PrivateAddResult, PrivateName, Revision } from './types'
 import * as check from './types/check'
 import * as namefilter from './namefilter'
 import { Metadata } from "../../types"
 import * as semver from '../../semver'
+import * as basic from '../basic'
 
 export const emptyMetadata = (): Metadata => ({
-  name: '',
   isFile: false,
   mtime: Date.now(),
   ctime: Date.now(),
@@ -23,55 +23,26 @@ export const readNode = async (cid: CID, key: string): Promise<DecryptedNode> =>
   return content
 }
 
-export const createPrivateFile = async (parentNameFilter: BareNameFilter, name: string, key: string, ownKey: string, content: CID): Promise<PrivateFile> => {
-  const bareNameFilter = await namefilter.addToBare(parentNameFilter, key)
-  return {
-    metadata: {
-      ...emptyMetadata(),
-      name,
-      isFile: true
-    },
-    bareNameFilter,
-    revision: 0,
-    key: ownKey,
-    content,
-  }
-}
+// export const removeChildFromDir = (dir: PrivateDirectory, toRemove: string): PrivateDirectory => {
+//   return {
+//     ...dir,
+//     revision: dir.revision + 1,
+//     children: removeKeyFromObj(dir.children, toRemove),
+//     skeleton: removeKeyFromObj(dir.skeleton, toRemove),
+//   }
+// }
 
-export const createPrivateDir = async (parentNameFilter: BareNameFilter, name: string, key: string): Promise<PrivateDirectory> => {
-  const bareNameFilter = await namefilter.addToBare(parentNameFilter, key)
-  return {
-    metadata: {
-      ...emptyMetadata(),
-      name
-    },
-    bareNameFilter,
-    revision: 0,
-    children: {},
-    skeleton: {},
-  }
-}
-
-export const removeChildFromDir = (dir: PrivateDirectory, toRemove: string): PrivateDirectory => {
-  return {
-    ...dir,
-    revision: dir.revision + 1,
-    children: removeKeyFromObj(dir.children, toRemove),
-    skeleton: removeKeyFromObj(dir.skeleton, toRemove),
-  }
-}
-
-export const updateFile = async(file: PrivateFile, content: CID) => {
-  return {
-    ...file,
-    metadata: {
-      ...file.metadata,
-      mtime: Date.now()
-    },
-    revision: file.revision + 1,
-    content
-  }
-}
+// export const updateFile = async(file: PrivateFile, content: CID) => {
+//   return {
+//     ...file,
+//     metadata: {
+//       ...file.metadata,
+//       mtime: Date.now()
+//     },
+//     revision: file.revision + 1,
+//     content
+//   }
+// }
 
 export const getByName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
   const cid = await mmpt.get(name)
@@ -121,4 +92,13 @@ export const getRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: str
   const name = await namefilter.toPrivateName(filter)
   const cid = await mmpt.get(name)
   return cid ? { cid, name } : null
+}
+
+
+export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Promise<PrivateAddResult> => {
+  const { cid, size } = await basic.putEncryptedFile(node, key)
+  const filter = await namefilter.addRevision(node.bareNameFilter, key, node.revision)
+  const name = await namefilter.toPrivateName(filter)
+  await mmpt.add(name, cid)
+  return { cid, name, key, size }
 }

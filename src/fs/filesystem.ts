@@ -3,6 +3,7 @@ import { throttle } from 'throttle-debounce'
 import BareTree from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
+import MMPT from './protocol/private/mmpt'
 import { Links, SyncHook, FileSystemOptions, Branch, UnixTree } from './types'
 
 import * as cidLog from '../common/cid-log'
@@ -25,6 +26,7 @@ type ConstructorParams = {
   publicTree: PublicTree
   prettyTree: BareTree
   privateTree: PrivateTree
+  mmpt: MMPT
   rootDid: string
 }
 
@@ -39,6 +41,7 @@ export class FileSystem {
   publicTree: PublicTree
   prettyTree: BareTree
   privateTree: PrivateTree
+  mmpt: MMPT
   rootDid: string
 
   appPath: AppPath
@@ -46,11 +49,12 @@ export class FileSystem {
   syncWhenOnline: CID | null
 
 
-  constructor({ root, publicTree, prettyTree, privateTree, rootDid }: ConstructorParams) {
+  constructor({ root, publicTree, prettyTree, privateTree, mmpt, rootDid }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
+    this.mmpt = mmpt
     this.rootDid = rootDid
     this.syncHooks = []
     this.syncWhenOnline = null
@@ -96,26 +100,34 @@ export class FileSystem {
     const publicTree = await PublicTree.empty()
     const prettyTree = await BareTree.empty()
 
+    const mmpt = MMPT.create()
     const key = await keystore.getKeyByName(keyName)
-    const privateTree = await PrivateTree.create(key)
+    const privateTree = await PrivateTree.create(mmpt, key, null)
 
     const root = await BareTree.empty()
 
-    await root.addChild('public', publicTree)
-    await root.addChild('pretty', prettyTree)
-    await root.addChild('private', privateTree)
+    // await root.addChild('public', publicTree)
+    // await root.addChild('pretty', prettyTree)
+    // await root.addChild('private', privateTree)
 
     const fs = new FileSystem({
       root,
       publicTree,
       prettyTree,
       privateTree,
+      mmpt, 
       rootDid
     })
 
     publicTree.onUpdate = result => fs.updateRootLink(Branch.Public, result)
     prettyTree.onUpdate = result => fs.updateRootLink(Branch.Pretty, result)
     privateTree.onUpdate = result => fs.updateRootLink(Branch.Private, result)
+
+    await publicTree.put()
+    await prettyTree.put()
+    await privateTree.put()
+
+
 
     return fs
   }
@@ -136,10 +148,13 @@ export class FileSystem {
                         await BareTree.empty()
 
     const privateCID = root.links['private']?.cid || null
+    if(privateCID === null) return null
+    const mmpt = await MMPT.fromCID(privateCID)
     const key = await keystore.getKeyByName(keyName)
-    const privateTree = privateCID !== null
-      ? await PrivateTree.fromCID(privateCID, key)
-      : null
+    const privateTree = await PrivateTree.fromBaseKey(mmpt, key)
+      // const privateTree = privateCID !== null
+      // ? await PrivateTree.fromCID(privateCID, key)
+      // : null
 
     if (publicTree === null || privateTree === null) return null
 
@@ -148,6 +163,7 @@ export class FileSystem {
       publicTree,
       prettyTree,
       privateTree,
+      mmpt,
       rootDid
     })
 
@@ -307,8 +323,6 @@ export class FileSystem {
 
       if (updateTree && PrivateTree.instanceOf(result)) {
         this.privateTree = result
-        await this.privateTree.put()
-        await this.root.addChild('private', this.privateTree)
       }
 
     } else if (head === 'pretty' && updateTree) {
