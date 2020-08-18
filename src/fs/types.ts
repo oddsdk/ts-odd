@@ -2,17 +2,9 @@ import { FileContent, CID, AddResult } from '../ipfs'
 import { SemVer } from './semver'
 
 
-// FILES
-// -----
-
-export interface File {
-  content: FileContent
-  put(): Promise<CID>
-  putDetailed(): Promise<AddResult>
-}
-
 // LINKS
 // -----
+
 export type Link = {
   name: string
   cid: CID
@@ -22,6 +14,7 @@ export type Link = {
 }
 
 export type Links = { [name: string]: Link }
+
 
 // MISC
 // ----
@@ -37,6 +30,17 @@ export type NonEmptyPath = [string, ...string[]]
 export type SyncHook = (result: CID) => unknown
 export type SyncHookDetailed = (result: AddResult) => unknown
 
+
+// FILE
+// -----
+
+export interface File {
+  content: FileContent
+  put(): Promise<CID>
+  putDetailed(): Promise<AddResult>
+}
+
+
 // TREE
 // ----
 
@@ -49,16 +53,10 @@ export interface UnixTree {
   exists(path: string): Promise<boolean>
 }
 
-export interface Tree {
+export interface Tree extends UnixTree {
   version: SemVer
 
-  ls(path: string): Promise<Links>
-  mkdir(path: string): Promise<this>
-  cat(path: string): Promise<FileContent>
-  add(path: string, content: FileContent): Promise<this>
-  rm(path: string): Promise<Tree>
   get(path: string): Promise<Tree | File | null>
-  exists(path: string): Promise<boolean>
   addChild(path: string, toAdd: Tree | FileContent): Promise<this>
   addRecurse (path: NonEmptyPath, child: Tree | FileContent): Promise<this>
 
