@@ -1,19 +1,19 @@
 import { Maybe } from "../../../common"
 import ipfs, { CID } from "../../../ipfs"
 import MMPT from "./mmpt"
-import { BareNameFilter, DecryptedNode, PrivateAddResult, PrivateName, Revision } from './types'
+import { DecryptedNode, PrivateAddResult } from './types'
 import * as check from './types/check'
 import * as namefilter from './namefilter'
-import { Metadata } from "../../types"
-import * as semver from '../../semver'
+import { BareNameFilter, PrivateName } from './namefilter'
 import * as basic from '../basic'
 
-export const emptyMetadata = (): Metadata => ({
-  isFile: false,
-  mtime: Date.now(),
-  ctime: Date.now(),
-  version: semver.latest
-})
+export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Promise<PrivateAddResult> => {
+  const { cid, size } = await basic.putEncryptedFile(node, key)
+  const filter = await namefilter.addRevision(node.bareNameFilter, key, node.revision)
+  const name = await namefilter.toPrivateName(filter)
+  await mmpt.add(name, cid)
+  return { cid, name, key, size }
+}
 
 export const readNode = async (cid: CID, key: string): Promise<DecryptedNode> => {
   const content = await ipfs.encoded.catAndDecode(cid, key)
@@ -22,27 +22,6 @@ export const readNode = async (cid: CID, key: string): Promise<DecryptedNode> =>
   }
   return content
 }
-
-// export const removeChildFromDir = (dir: PrivateDirectory, toRemove: string): PrivateDirectory => {
-//   return {
-//     ...dir,
-//     revision: dir.revision + 1,
-//     children: removeKeyFromObj(dir.children, toRemove),
-//     skeleton: removeKeyFromObj(dir.skeleton, toRemove),
-//   }
-// }
-
-// export const updateFile = async(file: PrivateFile, content: CID) => {
-//   return {
-//     ...file,
-//     metadata: {
-//       ...file.metadata,
-//       mtime: Date.now()
-//     },
-//     revision: file.revision + 1,
-//     content
-//   }
-// }
 
 export const getByName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
   const cid = await mmpt.get(name)
@@ -56,6 +35,11 @@ export const getByCID = async (mmpt: MMPT, cid: CID, key: string): Promise<Decry
   return latest?.cid
     ? readNode(latest?.cid, key)
     : node
+}
+
+type Revision = {
+  cid: CID
+  name: PrivateName
 }
 
 export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: string, lastKnownRevision: number): Promise<Maybe<Revision>> => {
@@ -92,13 +76,4 @@ export const getRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: str
   const name = await namefilter.toPrivateName(filter)
   const cid = await mmpt.get(name)
   return cid ? { cid, name } : null
-}
-
-
-export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Promise<PrivateAddResult> => {
-  const { cid, size } = await basic.putEncryptedFile(node, key)
-  const filter = await namefilter.addRevision(node.bareNameFilter, key, node.revision)
-  const name = await namefilter.toPrivateName(filter)
-  await mmpt.add(name, cid)
-  return { cid, name, key, size }
 }

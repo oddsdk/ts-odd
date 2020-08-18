@@ -1,11 +1,32 @@
 import { BloomFilter } from 'fission-bloom-filters'
 import * as hex from '../../../common/hex'
 import { sha256, sha256Str } from '../../../keystore'
-import { BareNameFilter, PrivateName, RevisionNameFilter, SaturatedNameFilter } from './types'
+
+// CONSTANTS
 
 const FILTER_SIZE = 1024
 const HASH_COUNT = 16
 const SATURATION_THRESHOLD = 320
+
+
+
+// TYPES
+
+// a hashed name filter
+export type PrivateName = string
+
+// a name filter with just path elements in it, no revision number
+export type BareNameFilter = string
+
+// a name filter with path elements & revision number in it
+export type RevisionNameFilter = string
+
+// a name filter with path elements & revision number in it, saturated to ~320 bits
+export type SaturatedNameFilter = string
+
+
+
+// FUNCTIONS  
 
 // create bare name filter with a single key
 export const createBare = async (key: string): Promise<BareNameFilter> => {

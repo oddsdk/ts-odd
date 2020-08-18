@@ -1,4 +1,6 @@
-import {  PutDetails, Metadata, FileInfo, File } from '../types'
+import {  PutDetails, File } from '../types'
+import { FileInfo } from '../protocol/public/types'
+import { Metadata } from '../metadata'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
 import * as metadata from '../metadata'

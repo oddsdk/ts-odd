@@ -1,15 +1,17 @@
 /** @internal */
 
 /** @internal */
-import { Links, PutDetails, Metadata, TreeInfo, FileInfo, Skeleton, ChildrenMetadata } from '../types'
-import { isString } from '../../common/type-checks'
-import * as check from '../types/check'
+import { Links, PutDetails } from '../../types'
+import { TreeInfo, FileInfo, Skeleton, ChildrenMetadata } from './types'
+import { Metadata } from '../../metadata'
+import { isString } from '../../../common/type-checks'
+import * as check from '../../types/check'
 
-import { isValue } from '../../common'
-import ipfs, { CID, FileContent } from '../../ipfs'
-import * as link from '../link'
+import { isValue } from '../../../common'
+import ipfs, { CID, FileContent } from '../../../ipfs'
+import * as link from '../../link'
 
-import * as basic from './basic'
+import * as basic from '../basic'
 
 export const putTree = async (
     links: Links,

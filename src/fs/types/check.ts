@@ -3,7 +3,10 @@
 /** @internal */
 import { isString, isObject, isNum, isBool } from '../../common'
 import { CID } from '../../ipfs'
-import { Tree, File, Link, Links, SemVer, Skeleton, ChildrenMetadata, Metadata, TreeInfo, FileInfo } from '../types'
+import { Tree, File, Link, Links } from '../types'
+import { Skeleton, ChildrenMetadata, TreeInfo, FileInfo } from '../protocol/public/types'
+import { SemVer } from '../semver'
+import { Metadata } from '../metadata'
 
 
 export const isFile = (obj: any): obj is File => {

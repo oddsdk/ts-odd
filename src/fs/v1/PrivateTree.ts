@@ -1,31 +1,29 @@
-import { AddResult, CID, FileContent } from '../../ipfs'
+import { CID, FileContent } from '../../ipfs'
 import MMPT from '../protocol/private/mmpt'
 import PrivateFile from './PrivateFile'
-import { DecryptedNode, PrivateName, BareNameFilter, PrivateSkeletonInfo, PrivateTreeInfo, AESKey, PrivateChildren, Revision, PrivateFileInfo, PrivateSkeleton, PrivateAddResult } from '../protocol/private/types'
-import * as keystore from '../../keystore'
+import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult } from '../protocol/private/types'
 import * as protocol from '../protocol'
 import * as check from '../protocol/private/types/check'
 import * as pathUtil from '../path'
 import * as metadata from '../metadata'
 import * as semver from '../semver'
 import * as namefilter from '../protocol/private/namefilter'
+import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
 import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common'
-import { File, Links, Metadata, NonEmptyPath, PutDetails, SyncHookDetailed, Tree, UnixTree } from '../types'
+import { Links, SyncHookDetailed, Tree, UnixTree } from '../types'
 import BaseTree from '../base/tree'
 import { genKeyStr } from '../../keystore'
 
-type CreateChildFn = (parent: PrivateTreeInfo, name: string, key: string) => DecryptedNode | Promise<DecryptedNode>
-
 type ConstructorParams = {
   mmpt: MMPT
-  key: AESKey
+  key: string
   info: PrivateTreeInfo
 }
 
 export default class PrivateTree extends BaseTree implements Tree, UnixTree {
 
   mmpt: MMPT
-  key: AESKey
+  key: string
   info: PrivateTreeInfo
 
   onUpdate: Maybe<SyncHookDetailed> = null
@@ -37,14 +35,13 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
     this.info = info
   }
 
-  // @@TODO: make this more robust
   static instanceOf(obj: any): obj is PrivateTree {
     return isObject(obj) 
       && obj.mmpt !== undefined 
       && check.isPrivateTreeInfo(obj.info)
   }
 
-  static async create(mmpt: MMPT, key: AESKey, parentNameFilter: Maybe<BareNameFilter>): Promise<PrivateTree> {
+  static async create(mmpt: MMPT, key: string, parentNameFilter: Maybe<BareNameFilter>): Promise<PrivateTree> {
     const bareNameFilter = parentNameFilter 
       ? await namefilter.addToBare(parentNameFilter, key)
       : await namefilter.createBare(key)
@@ -73,6 +70,10 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
     const bareNameFilter = await namefilter.createBare(key)
     const revisionFilter = await namefilter.addRevision(bareNameFilter, key, 1)
     const name = await namefilter.toPrivateName(revisionFilter)
+    return PrivateTree.fromName(mmpt, name, key)
+  }
+
+  static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
     const info = await protocol.priv.getByName(mmpt, name, key)
     if(!check.isPrivateTreeInfo(info)) {
       throw new Error(`Could not parse a valid private tree using the given key`)
@@ -80,7 +81,7 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
     return new PrivateTree({ mmpt, info, key })
   }
 
-  static async fromInfo(mmpt: MMPT, key: AESKey, info: PrivateTreeInfo): Promise<PrivateTree> {
+  static async fromInfo(mmpt: MMPT, key: string, info: PrivateTreeInfo): Promise<PrivateTree> {
     return new PrivateTree({ mmpt, key, info })
   }
 
@@ -93,7 +94,6 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
     const key = await genKeyStr()
     return PrivateFile.create(this.mmpt, content, this.info.bareNameFilter, key)
   }
-
 
   async putDetailed(): Promise<PrivateAddResult> {
     const result = await protocol.priv.addNode(this.mmpt, {
@@ -119,6 +119,16 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
     return this
   }
 
+  removeDirectChild(name: string): this {
+    this.info = {
+      ...this.info,
+      revision: this.info.revision + 1,
+      children: removeKeyFromObj(this.info.children, name),
+      skeleton: removeKeyFromObj(this.info.skeleton, name)
+    }
+    return this
+  }
+
   async getDirectChild(name: string): Promise<PrivateTree | PrivateFile | null>{
     const child = this.info.children[name]
     if(child === undefined) return null
@@ -132,8 +142,10 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
     return child ? child : this.emptyChildTree()
   }
 
-
-
+  async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
+    this.info.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.key)
+    return this
+  }
 
   getLinks(): Links {
     return mapObj(this.info.children, (link) => {
@@ -141,24 +153,6 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
       return { ...rest }
     })
   }
-
-  async removeDirectChild(name: string): Promise<this> {
-    this.info = {
-      ...this.info,
-      revision: this.info.revision + 1,
-      children: removeKeyFromObj(this.info.children, name),
-      skeleton: removeKeyFromObj(this.info.skeleton, name)
-    }
-    return this
-  }
-
-  async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
-    this.info.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.key)
-    return this
-  }
-
-
-
 
   async get(path: string): Promise<PrivateTree | PrivateFile | null> {
     const parts = pathUtil.splitParts(path)

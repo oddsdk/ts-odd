@@ -1,20 +1,5 @@
 import { FileContent, CID, AddResult } from '../ipfs'
-
-
-// FILESYSTEM
-// -----
-
-export type FileSystemOptions = {
-  version?: SemVer
-  keyName?: string
-  rootDid?: string
-}
-
-export enum Branch {
-  Public = 'public',
-  Pretty = 'pretty',
-  Private = 'private'
-}
+import { SemVer } from './semver'
 
 
 // FILES
@@ -26,18 +11,8 @@ export interface File {
   putDetailed(): Promise<AddResult>
 }
 
-export interface HeaderFile extends File {
-  metadata: Metadata
-  putDetailed(): Promise<PutDetails>
-}
-
 // LINKS
 // -----
-
-export type AddLinkOpts = {
-  shouldOverwrite?: boolean
-}
-
 export type Link = {
   name: string
   cid: CID
@@ -47,40 +22,6 @@ export type Link = {
 }
 
 export type Links = { [name: string]: Link }
-
-
-// HEADER
-// -----
-
-export type Metadata = {
-  isFile: boolean
-  mtime: number
-  ctime: number
-  version: SemVer
-}
-
-export type ChildrenMetadata = { [name: string]: Metadata }
-
-export type SkeletonInfo = {
-  cid: CID
-  userland: CID
-  metadata: CID
-  children: Skeleton
-}
-
-export type Skeleton = { [name: string]: SkeletonInfo }
-
-export type TreeInfo = {
-  metadata: Metadata
-  skeleton: Skeleton
-  children: ChildrenMetadata
-  userland: CID
-}
-
-export type FileInfo = {
-  metadata: Metadata
-  userland: CID
-}
 
 // MISC
 // ----
@@ -95,12 +36,6 @@ export type PutDetails = {
 export type NonEmptyPath = [string, ...string[]]
 export type SyncHook = (result: CID) => unknown
 export type SyncHookDetailed = (result: AddResult) => unknown
-
-export type SemVer = {
-  major: number
-  minor: number
-  patch: number
-}
 
 // TREE
 // ----
@@ -130,7 +65,7 @@ export interface Tree {
   put(): Promise<CID>
   putDetailed(): Promise<AddResult>
   updateDirectChild (child: Tree | File, name: string): Promise<this>
-  removeDirectChild(name: string): Promise<this>
+  removeDirectChild(name: string): this
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string): Promise<Tree | File>
 
@@ -139,11 +74,3 @@ export interface Tree {
 
   getLinks(): Links
 }
-
-export interface HeaderTree extends Tree {
-  skeleton: Skeleton
-  metadata: Metadata
-
-  putDetailed(): Promise<PutDetails>
-}
-

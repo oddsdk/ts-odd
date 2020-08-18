@@ -4,7 +4,8 @@ import BareTree from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
 import MMPT from './protocol/private/mmpt'
-import { Links, SyncHook, FileSystemOptions, Branch, UnixTree } from './types'
+import { Links, SyncHook, UnixTree } from './types'
+import { SemVer } from './semver'
 
 import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
@@ -15,11 +16,12 @@ import * as pathUtil from './path'
 import * as link from './link'
 
 
+// TYPES
+
 type AppPath = {
   public: (appUuid: string, suffix?: string | Array<string>) => string
   private: (appUuid: string, suffix?: string | Array<string>) => string
 }
-
 
 type ConstructorParams = {
   root: BareTree
@@ -28,6 +30,18 @@ type ConstructorParams = {
   privateTree: PrivateTree
   mmpt: MMPT
   rootDid: string
+}
+
+type FileSystemOptions = {
+  version?: SemVer
+  keyName?: string
+  rootDid?: string
+}
+
+enum Branch {
+  Public = 'public',
+  Pretty = 'pretty',
+  Private = 'private'
 }
 
 

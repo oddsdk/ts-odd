@@ -56,7 +56,7 @@ class BareTree extends BaseTree {
     return this
   }
 
-  async removeDirectChild(name: string): Promise<this> {
+  removeDirectChild(name: string): this {
     delete this.links[name]
     return this
   }

@@ -1,7 +1,15 @@
-import { SemVer } from './types'
 import { Maybe } from '../common'
 
 
+// TYPES
+export type SemVer = {
+  major: number
+  minor: number
+  patch: number
+}
+
+
+// FUNCTIONS
 export const encode = (major: number, minor: number, patch: number): SemVer => {
   return {
     major,
@@ -27,6 +35,8 @@ export const toString = (version: SemVer): string => {
   return `${major}.${minor}.${patch}`
 }
 
+
+// VERSIONS
 export const v0 = encode(0, 0, 0)
 export const v1 = encode(1, 0, 0)
 export const latest = encode(1, 0, 0)

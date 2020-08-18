@@ -1,12 +1,13 @@
-import {  PutDetails, Metadata, File } from '../types'
+import { File } from '../types'
 import { CID, FileContent } from '../../ipfs'
 import * as check from '../protocol/private/types/check'
 import * as metadata from '../metadata'
 import * as protocol from '../protocol'
 import * as namefilter from '../protocol/private/namefilter'
+import { BareNameFilter } from '../protocol/private/namefilter'
 import MMPT from '../protocol/private/mmpt'
-import { AESKey, BareNameFilter, PrivateAddResult, PrivateFileInfo } from '../protocol/private/types'
-import { isObject, isString } from '../../common/type-checks'
+import { PrivateAddResult, PrivateFileInfo } from '../protocol/private/types'
+import { isObject } from '../../common/type-checks'
 import BaseFile from '../base/file'
 
 type ConstructorParams = {
@@ -30,9 +31,10 @@ export class PrivateFile extends BaseFile implements File {
     return isObject(obj)
       && obj.content !== undefined
       && obj.mmpt !== undefined
+      && check.isPrivateFileInfo(obj.info)
   }
 
-  static async create(mmpt: MMPT, content: FileContent, parentNameFilter: BareNameFilter,  key: AESKey): Promise<PrivateFile> {
+  static async create(mmpt: MMPT, content: FileContent, parentNameFilter: BareNameFilter,  key: string): Promise<PrivateFile> {
     const bareNameFilter = await namefilter.addToBare(parentNameFilter, key)
     const contentInfo = await protocol.basic.putEncryptedFile(content, key)
     return new PrivateFile({ 
@@ -51,7 +53,7 @@ export class PrivateFile extends BaseFile implements File {
     })
   }
 
-  static async fromCID(mmpt: MMPT, cid: CID, key: AESKey): Promise<PrivateFile> {
+  static async fromCID(mmpt: MMPT, cid: CID, key: string): Promise<PrivateFile> {
     const info = await protocol.priv.getByCID(mmpt, cid, key)
     if(!check.isPrivateFileInfo(info)) {
       throw new Error(`Could not parse a valid private tree at: ${cid}`)

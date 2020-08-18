@@ -1,5 +1,6 @@
-import { NonEmptyPath, Skeleton, SkeletonInfo } from "./types"
-import * as pathUtil from './path'
+import { Skeleton, SkeletonInfo } from "./types"
+import { NonEmptyPath } from '../../types'
+import * as pathUtil from '../../path'
 
 export const getPath = (skeleton: Skeleton, path: NonEmptyPath): SkeletonInfo | null => {
   const head = path[0]

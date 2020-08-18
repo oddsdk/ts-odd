@@ -2,7 +2,8 @@
 
 /** @internal */
 import * as pathUtil from '../path'
-import { Links, Tree, File, SemVer, NonEmptyPath, UnixTree } from '../types'
+import { Links, Tree, File, NonEmptyPath, UnixTree } from '../types'
+import { SemVer } from '../semver'
 import * as check from '../types/check'
 import { AddResult, CID, FileContent } from '../../ipfs'
 
@@ -123,7 +124,7 @@ abstract class BaseTree implements Tree, UnixTree {
 
   abstract async putDetailed(): Promise<AddResult>
   abstract async updateDirectChild (child: Tree | File, name: string): Promise<this>
-  abstract async removeDirectChild(name: string): Promise<this>
+  abstract removeDirectChild(name: string): this
   abstract async getDirectChild(name: string): Promise<Tree | File | null>
   abstract async getOrCreateDirectChild(name: string): Promise<Tree | File>
 

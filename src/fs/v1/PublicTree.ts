@@ -1,13 +1,15 @@
-import { Links, PutDetails, SyncHookDetailed, Metadata, Skeleton, ChildrenMetadata, UnixTree, TreeInfo, Tree } from '../types'
+import { Links, PutDetails, SyncHookDetailed, UnixTree, Tree } from '../types'
+import { Skeleton, ChildrenMetadata, TreeInfo } from '../protocol/public/types'
+import { Metadata } from '../metadata'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
 import PublicFile from './PublicFile'
 import { Maybe } from '../../common'
 import * as protocol from '../protocol'
+import * as skeleton from '../protocol/public/skeleton'
 import * as metadata from '../metadata'
 import * as link from '../link'
-import * as skeleton from '../skeleton'
 import * as pathUtil from '../path'
 
 export class PublicTree extends BaseTree implements Tree, UnixTree {
@@ -76,7 +78,7 @@ export class PublicTree extends BaseTree implements Tree, UnixTree {
     return this
   }
 
-  async removeDirectChild(name: string): Promise<this> {
+  removeDirectChild(name: string): this {
     delete this.links[name]
     delete this.skeleton[name]
     delete this.children[name]

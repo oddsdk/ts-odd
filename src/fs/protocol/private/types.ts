@@ -1,5 +1,7 @@
-import { Link, Metadata } from "../../types"
+import { Link } from "../../types"
+import  { Metadata } from '../../metadata'
 import { AddResult, CID } from "../../../ipfs"
+import { BareNameFilter, PrivateName } from './namefilter'
 
 export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo
 
@@ -8,25 +10,11 @@ export type PrivateFileInfo = {
   metadata: Metadata
   bareNameFilter: BareNameFilter
   revision: number
-  key: AESKey
+  key: string
 }
 
-// a hashed name filter
-export type PrivateName = string
-
-// a name filter with just path elements in it, no revision number
-export type BareNameFilter = string
-
-// a name filter with path elements & revision number in it
-export type RevisionNameFilter = string
-
-// a name filter with path elements & revision number in it, saturated to ~320 bits
-export type SaturatedNameFilter = string
-
-export type AESKey = string
-
 export type PrivateLink = Link & { 
-  key: AESKey
+  key: string
 }
 
 export type PrivateChildren = { [name: string]: PrivateLink }
@@ -43,21 +31,11 @@ export type PrivateSkeleton = { [name: string]: PrivateSkeletonInfo}
 
 export type PrivateSkeletonInfo = {
   cid: CID
-  key: AESKey
+  key: string
   children: PrivateSkeleton
-}
-
-export type LockedSubtree = {
-  name: PrivateName
-  key: AESKey
 }
 
 export type PrivateAddResult = AddResult & {
   name: PrivateName
-  key: AESKey
-}
-
-export type Revision = {
-  cid: CID
-  name: PrivateName
+  key: string
 }
