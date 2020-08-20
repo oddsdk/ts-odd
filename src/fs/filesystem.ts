@@ -120,10 +120,6 @@ export class FileSystem {
 
     const root = await BareTree.empty()
 
-    // await root.addChild('public', publicTree)
-    // await root.addChild('pretty', prettyTree)
-    // await root.addChild('private', privateTree)
-
     const fs = new FileSystem({
       root,
       publicTree,
@@ -141,8 +137,6 @@ export class FileSystem {
     await prettyTree.put()
     await privateTree.put()
 
-
-
     return fs
   }
 
@@ -153,24 +147,23 @@ export class FileSystem {
     const { keyName = 'filesystem-root', rootDid = '' } = opts
 
     const root = await BareTree.fromCID(cid)
+
     const publicCID = root.links['public']?.cid || null
-    const publicTree = publicCID !== null
-      ? await PublicTree.fromCID(publicCID)
-      : null
+    const publicTree = publicCID === null
+      ? await PublicTree.empty()
+      : await PublicTree.fromCID(publicCID)
 
     const prettyTree = (await root.getDirectChild('pretty')) as BareTree ||
                         await BareTree.empty()
 
     const privateCID = root.links['private']?.cid || null
-    if(privateCID === null) return null
-    const mmpt = await MMPT.fromCID(privateCID)
+
+    const mmpt = privateCID === null
+      ? await MMPT.create()
+      : await MMPT.fromCID(privateCID)
+
     const key = await keystore.getKeyByName(keyName)
     const privateTree = await PrivateTree.fromBaseKey(mmpt, key)
-      // const privateTree = privateCID !== null
-      // ? await PrivateTree.fromCID(privateCID, key)
-      // : null
-
-    if (publicTree === null || privateTree === null) return null
 
     const fs = new FileSystem({
       root,
@@ -187,12 +180,6 @@ export class FileSystem {
 
     return fs
   }
-
-  static async forUser(username: string, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const cid = await dataRoot.lookup(username)
-    return cid ? FileSystem.fromCID(cid, opts) : null
-  }
-
 
   // DEACTIVATE
   // ----------

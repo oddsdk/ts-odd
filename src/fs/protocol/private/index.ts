@@ -44,10 +44,10 @@ type Revision = {
 
 export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: string, lastKnownRevision: number): Promise<Maybe<Revision>> => {
   let lowerBound = lastKnownRevision, upperBound = null
-  let i = 1
+  let i = 0
   let lastRevision: Maybe<Revision> = null
   while(upperBound === null){
-    const toCheck = lastKnownRevision + Math.pow(i, 2)
+    const toCheck = lastKnownRevision + Math.pow(2, i)
     const thisRevision = await getRevision(mmpt, bareName, key, toCheck)
     if(thisRevision !== null){
       lastRevision = thisRevision

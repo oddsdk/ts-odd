@@ -125,7 +125,7 @@ const bufEquals = (buf1: ArrayBuffer, buf2: ArrayBuffer): boolean => {
 // counts the number of 1s in a uint32
 // from: https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
 const bitCount32 = (num: number): number => {
-  num = num - ((num >> 1) & 0x55555555)
-  num = (num & 0x33333333) + ((num >> 2) & 0x33333333)
-  return ((num + (num >> 4) & 0xF0F0F0F) * 0x1010101) >> 24
+  const a = num - ((num >> 1) & 0x55555555)
+  const b = (a & 0x33333333) + ((a >> 2) & 0x33333333)
+  return ((b + (b >> 4) & 0xF0F0F0F) * 0x1010101) >> 24
 }
