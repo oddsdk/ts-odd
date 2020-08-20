@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.14.3
+- Added apps API `apps.create`, `apps.index`, `apps.deleteByURL`
+
 ### v0.14.2
 
 - Improved DNSLink lookup error handling

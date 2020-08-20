@@ -152,6 +152,7 @@ export * as dns from './dns'
 export * as ipfs from './ipfs'
 export * as keystore from './keystore'
 
+export * as apps from './apps'
 
 
 // ㊙️
