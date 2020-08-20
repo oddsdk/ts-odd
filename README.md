@@ -86,7 +86,7 @@ const fs = state.fs
 // List the user's private files that belong to this app
 const appPath = fs.appPath.private("myApp")
 
-if (fs.exists(appPath)) {
+if (await fs.exists(appPath)) {
   await fs.ls(appPath)
 } else {
   await fs.mkdir(appPath)
