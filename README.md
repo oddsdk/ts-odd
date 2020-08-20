@@ -202,10 +202,6 @@ links = Object.entries(linksObject)
 data = await Promise.all(links.map(([name, _]) => {
   return fs.cat(`private/some/directory/path/${name}`)
 }))
-
-
-
-
 ```
 
 ---
@@ -286,67 +282,11 @@ Yes, this only requires a slightly different setup.
 ```ts
 // UI thread
 // `session.fs` will now be `null`
-sdk.isAuthenticated({ loadFileSystem: false })
+sdk.initialise({ loadFileSystem: false })
 
 // Web Worker
 const fs = await sdk.loadFileSystem()
 ```
-
-# Apps API
-The sdk also exposes methods to interact with the apps associated with the user. This API must be prefixed with `apps`
-- `apps.index`: A list of all of your apps and their associated domain names
-- `apps.create`: Creates a new app, assigns an initial subdomain, and sets an asset placeholder
-- `apps.deleteByURL`: Destroy app by any associated URL
-
-## API
-
-**apps.index**
-
-A list of all of your apps and their associated domain names
-
-Params:
-
-Returns: `{ RandomKey : [ subdomain ] }` a map of subdomains
-
-Example:
-```ts
-const index = await sdk.apps.index()
-// { `SqlBackendKey {unSqlBackendKey = 216} `: ['your-fission-deployment.fission.app'] }
-```
-
----
-**apps.create**
-
-Creates a new app, assigns an initial subdomain, and sets an asset placeholder
-
-Params:
-- subdomain: `string` **optional**
-
-Returns: `subdomain` the newly created subdomain
-
-Example:
-```ts
-const newApp = await sdk.apps.create()
-// 'your-fission-deployment.fission.app'
-```
-
----
-**apps.deleteByURL**
-
-Destroy app by any associated URL
-
-Params:
-- url: `string` **required**
-
-Returns:
-
-Example:
-```ts
-const deletedApp = await sdk.apps.deleteByURL('your-fission-deployment.fission.app')
-// 
-```
-
----
 
 
 ## Versions
@@ -376,6 +316,66 @@ sdk.setup.endpoints({
 // js-ipfs options
 // (see docs in src for more info)
 sdk.setup.ipfs({ init: { repo: "my-ipfs-repo" } })
+```
+
+
+
+# Apps API
+
+The sdk also exposes methods to interact with the apps associated with the user. This API must be prefixed with `apps`
+- `apps.index`: A list of all of your apps and their associated domain names
+- `apps.create`: Creates a new app, assigns an initial subdomain, and sets an asset placeholder
+- `apps.deleteByURL`: Destroy app by any associated URL
+
+
+## API
+
+**apps.index**
+
+A list of all of your apps and their associated domain names
+
+Params:
+
+Returns: `{ RandomKey : [ subdomain ] }` a map of subdomains
+
+Example:
+```ts
+const index = await sdk.apps.index()
+// { `SqlBackendKey {unSqlBackendKey = 216} `: ['your-fission-deployment.fission.app'] }
+```
+
+---
+
+**apps.create**
+
+Creates a new app, assigns an initial subdomain, and sets an asset placeholder
+
+Params:
+- subdomain: `string` **optional**
+
+Returns: `subdomain` the newly created subdomain
+
+Example:
+```ts
+const newApp = await sdk.apps.create()
+// 'your-fission-deployment.fission.app'
+```
+
+---
+
+**apps.deleteByURL**
+
+Destroy app by any associated URL
+
+Params:
+- url: `string` **required**
+
+Returns:
+
+Example:
+```ts
+const deletedApp = await sdk.apps.deleteByURL('your-fission-deployment.fission.app')
+//
 ```
 
 
