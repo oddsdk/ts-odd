@@ -287,15 +287,6 @@ export class FileSystem implements UnixTree {
   // --------
 
   /** @internal */
-  // async addChild(path: string, toAdd: Tree | FileContent): Promise<CID> {
-  //   await this.runOnTree(path, true, (tree, relPath) => {
-  //     return tree.addChild(relPath, toAdd)
-  //   })
-  //   return this.sync()
-  // }
-  
-
-  /** @internal */
   async runOnTree<a>(
     path: string,
     isMutation: boolean,
