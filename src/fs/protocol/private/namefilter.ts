@@ -1,5 +1,6 @@
 import { BloomFilter } from 'fission-bloom-filters'
 import * as hex from '../../../common/hex'
+import { Opaque } from '../../../common/types'
 import { sha256, sha256Str } from '../../../keystore'
 
 // CONSTANTS
@@ -14,16 +15,16 @@ const SATURATION_THRESHOLD = 320
 // TYPES
 
 // a hashed name filter
-export type PrivateName = string
+export type PrivateName = Opaque<"PrivateName", string>
 
 // a name filter with just path elements in it, no revision number
-export type BareNameFilter = string
+export type BareNameFilter = Opaque<"BareNameFilter", string>
 
 // a name filter with path elements & revision number in it
-export type RevisionNameFilter = string
+export type RevisionNameFilter = Opaque<"RevisionNameFilter", string>
 
 // a name filter with path elements & revision number in it, saturated to ~320 bits
-export type SaturatedNameFilter = string
+export type SaturatedNameFilter = Opaque<"SaturatedNameFilter", string>
 
 
 
@@ -31,7 +32,7 @@ export type SaturatedNameFilter = string
 
 // create bare name filter with a single key
 export const createBare = async (key: string): Promise<BareNameFilter> => {
-  const empty = "0".repeat(FILTER_SIZE/4)
+  const empty = "0".repeat(FILTER_SIZE/4) as BareNameFilter
   return addToBare(empty, key)
 }
 
@@ -40,12 +41,12 @@ export const addToBare = async (bareFilter: BareNameFilter, toAdd: string): Prom
   const filter = fromHex(bareFilter)
   const hash = await sha256Str(toAdd)
   filter.add(hash)
-  return toHex(filter)
+  return (await toHex(filter)) as BareNameFilter
 }
 
 // add the revision number to the name filter, salted with the AES key for the node
 export const addRevision = async (bareFilter: BareNameFilter, key: string, revision: number): Promise<RevisionNameFilter> => {
-  return addToBare(bareFilter, revision + key)
+  return (await addToBare(bareFilter, revision + key)) as string as RevisionNameFilter
 }
 
 // saturate the filter to 320 bits and hash it with sha256 to give the pirvate name that a node will be stored in the MMPT with
@@ -57,13 +58,13 @@ export const toPrivateName = async (revisionFilter: RevisionNameFilter): Promise
 // hash a filter with sha256
 export const toHash = async (filter: BloomFilter): Promise<PrivateName> => {
   const hash = await sha256(filter.toBuffer())
-  return hex.fromBuffer(hash)
+  return (hex.fromBuffer(hash)) as PrivateName
 }
 
 // saturate a filter (string) to 320 bits
 export const saturate = async (filter: RevisionNameFilter, threshold = SATURATION_THRESHOLD): Promise<SaturatedNameFilter> => {
   const saturated = await saturateFilter(fromHex(filter), threshold)
-  return toHex(saturated)
+  return (await toHex(saturated)) as SaturatedNameFilter
 }
 
 // saturate a filter to 320 bits

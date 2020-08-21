@@ -10,7 +10,7 @@ import * as semver from '../semver'
 import * as namefilter from '../protocol/private/namefilter'
 import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
 import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common'
-import { Links, SyncHookDetailed, Tree, UnixTree } from '../types'
+import { Links, SyncHookDetailed } from '../types'
 import BaseTree from '../base/tree'
 import { genKeyStr } from '../../keystore'
 

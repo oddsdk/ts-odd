@@ -42,20 +42,14 @@ export const isSkeleton = (obj: any): obj is Skeleton => {
         && isCID(val.cid)
         && isCID(val.userland)
         && isCID(val.metadata)
-        && isSkeleton(val.children)
+        && isSkeleton(val.subSkeleton)
       ))
-}
-
-export const isChildrenMetadata = (obj: any): obj is ChildrenMetadata => {
-  return isObject(obj) 
-      && Object.values(obj).every(isMetadata)
 }
 
 export const isTreeInfo = (obj: any): obj is TreeInfo => {
   return isObject(obj)
     && isCID(obj.userland)
     && isSkeleton(obj.skeleton)
-    && isChildrenMetadata(obj.children)
     && isMetadata(obj.metadata)
     && obj.metadata.isFile === false
 }
