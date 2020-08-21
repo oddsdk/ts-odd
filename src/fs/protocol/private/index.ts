@@ -43,6 +43,7 @@ type Revision = {
 }
 
 export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: string, lastKnownRevision: number): Promise<Maybe<Revision>> => {
+  // exponential search forward
   let lowerBound = lastKnownRevision, upperBound = null
   let i = 0
   let lastRevision: Maybe<Revision> = null
@@ -58,6 +59,7 @@ export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, k
     i++
   }
 
+  // binary search back
   while(lowerBound < (upperBound - 1)) {
     const midpoint = Math.floor((upperBound + lowerBound) / 2)
     const thisRevision = await getRevision(mmpt, bareName, key, midpoint)

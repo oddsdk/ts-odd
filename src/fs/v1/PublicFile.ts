@@ -23,12 +23,7 @@ export class PublicFile extends BaseFile implements File {
   static async create(content: FileContent): Promise<PublicFile> {
     return new PublicFile({
       content, 
-      info: {
-        metadata: { 
-          ...metadata.empty(),
-          isFile: true,
-        }
-      }
+      info: { metadata:  metadata.empty(true) }
     })
   }
 
@@ -44,10 +39,10 @@ export class PublicFile extends BaseFile implements File {
   }
 
   async putDetailed(): Promise<PutDetails> {
-    return protocol.pub.putFile(this.content, {
-      ...this.info.metadata,
-      mtime: Date.now()
-    })
+    return protocol.pub.putFile(
+      this.content, 
+      metadata.updateMtime(this.info.metadata)
+    )
   }
 
 }

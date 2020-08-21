@@ -49,7 +49,7 @@ export default class PrivateTree extends BaseTree {
       mmpt,
       key,
       info: {
-        metadata: metadata.empty(),
+        metadata: metadata.empty(false),
         bareNameFilter,
         revision: 1,
         links: {},
@@ -98,10 +98,7 @@ export default class PrivateTree extends BaseTree {
   async putDetailed(): Promise<PrivateAddResult> {
     const result = await protocol.priv.addNode(this.mmpt, {
       ...this.info, 
-      metadata: {
-        ...this.info.metadata,
-        mtime: Date.now()
-      }
+      metadata: metadata.updateMtime(this.info.metadata)
     }, this.key)
     if(this.onUpdate !== null){
       const syncResult = await this.mmpt.put()

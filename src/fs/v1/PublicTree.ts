@@ -33,7 +33,7 @@ export class PublicTree extends BaseTree {
     return new PublicTree({
       links: {},
       info: {
-        metadata: metadata.empty(),
+        metadata: metadata.empty(false),
         skeleton: {},
       }
     })
@@ -66,10 +66,11 @@ export class PublicTree extends BaseTree {
   }
 
   async putDetailed(): Promise<PutDetails> {
-    const details = await protocol.pub.putTree(this.links, this.info.skeleton, {
-      ...this.info.metadata,
-      mtime: Date.now()
-    })
+    const details = await protocol.pub.putTree(
+      this.links, 
+      this.info.skeleton,
+      metadata.updateMtime(this.info.metadata)
+    )
     if(this.onUpdate !== null){
       this.onUpdate(details)
     }

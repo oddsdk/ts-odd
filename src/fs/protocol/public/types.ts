@@ -1,8 +1,6 @@
 import { Metadata } from '../../metadata'
 import { CID } from '../../../ipfs'
 
-export type ChildrenMetadata = { [name: string]: Metadata }
-
 export type SkeletonInfo = {
   cid: CID
   userland: CID

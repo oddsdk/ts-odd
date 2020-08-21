@@ -4,9 +4,9 @@
 import { isString, isObject, isNum, isBool } from '../../common'
 import { CID } from '../../ipfs'
 import { Tree, File, Link, Links } from '../types'
-import { Skeleton, ChildrenMetadata, TreeInfo, FileInfo } from '../protocol/public/types'
+import { Skeleton, TreeInfo, FileInfo } from '../protocol/public/types'
 import { SemVer } from '../semver'
-import { Metadata } from '../metadata'
+import { Metadata, UnixMeta } from '../metadata'
 
 
 export const isFile = (obj: any): obj is File => {
@@ -27,11 +27,19 @@ export const isLinks = (obj: any): obj is Links => {
       && Object.values(obj).every(isLink)
 }
 
-export const isMetadata = (obj: any): obj is Metadata => {
+export const isUnixMeta = (obj: any): obj is UnixMeta => {
   return isObject(obj) 
-      && isBool(obj.isFile)
       && isNum(obj.mtime)
       && isNum(obj.ctime)
+      && isNum(obj.mode)
+      && isString(obj._type)
+
+}
+
+export const isMetadata = (obj: any): obj is Metadata => {
+  return isObject(obj) 
+      && isUnixMeta(obj.unixMeta)
+      && isBool(obj.isFile)
       && isSemVer(obj.version)
 }
 

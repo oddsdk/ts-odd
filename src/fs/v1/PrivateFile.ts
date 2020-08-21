@@ -44,10 +44,7 @@ export class PrivateFile extends BaseFile implements File {
         bareNameFilter,
         key,
         revision: 1,
-        metadata: {
-          ...metadata.empty(),
-          isFile: true,
-        },
+        metadata: metadata.empty(true),
         content: contentInfo.cid
       }
     })
@@ -79,10 +76,7 @@ export class PrivateFile extends BaseFile implements File {
   async putDetailed(): Promise<PrivateAddResult> {
     return protocol.priv.addNode(this.mmpt, {
       ...this.info, 
-      metadata: {
-        ...this.info.metadata,
-        mtime: Date.now()
-      }
+      metadata: metadata.updateMtime(this.info.metadata)
     }, this.info.key)
   }
 
