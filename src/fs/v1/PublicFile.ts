@@ -1,5 +1,5 @@
 import {  PutDetails, File } from '../types'
-import { FileInfo, LocalFileInfo } from '../protocol/public/types'
+import { FileInfo, FileHeader } from '../protocol/public/types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
 import * as metadata from '../metadata'
@@ -8,12 +8,12 @@ import * as protocol from '../protocol'
 
 type ConstructorParams = {
   content: FileContent, 
-  info: LocalFileInfo
+  info: FileHeader
 }
 
 export class PublicFile extends BaseFile implements File {
 
-  info: LocalFileInfo
+  info: FileHeader
 
   constructor({ content, info }: ConstructorParams) {
     super(content)

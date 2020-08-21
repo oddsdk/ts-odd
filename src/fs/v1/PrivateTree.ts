@@ -20,7 +20,7 @@ type ConstructorParams = {
   info: PrivateTreeInfo
 }
 
-export default class PrivateTree extends BaseTree implements Tree, UnixTree {
+export default class PrivateTree extends BaseTree {
 
   mmpt: MMPT
   key: string
@@ -52,7 +52,7 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
         metadata: metadata.empty(),
         bareNameFilter,
         revision: 1,
-        children: {},
+        links: {},
         skeleton: {},
       }
     })
@@ -113,7 +113,7 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
   async updateDirectChild (child: PrivateTree | PrivateFile, name: string): Promise<this> {
     await child.updateParentNameFilter(this.info.bareNameFilter)
     const { cid, size, key } = await child.putDetailed()
-    this.info.children[name] = { name, key, cid, size, isFile: PrivateFile.instanceOf(child) }
+    this.info.links[name] = { name, key, cid, size, isFile: PrivateFile.instanceOf(child) }
     this.info.skeleton[name] = { cid, key, children: PrivateTree.instanceOf(child) ? child.info.skeleton : {} }
     this.info.revision = this.info.revision + 1
     return this
@@ -123,14 +123,14 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
     this.info = {
       ...this.info,
       revision: this.info.revision + 1,
-      children: removeKeyFromObj(this.info.children, name),
+      links: removeKeyFromObj(this.info.links, name),
       skeleton: removeKeyFromObj(this.info.skeleton, name)
     }
     return this
   }
 
   async getDirectChild(name: string): Promise<PrivateTree | PrivateFile | null>{
-    const child = this.info.children[name]
+    const child = this.info.links[name]
     if(child === undefined) return null
     return child.isFile
       ? PrivateFile.fromCID(this.mmpt, child.cid, child.key)
@@ -148,7 +148,7 @@ export default class PrivateTree extends BaseTree implements Tree, UnixTree {
   }
 
   getLinks(): Links {
-    return mapObj(this.info.children, (link) => {
+    return mapObj(this.info.links, (link) => {
       const { key, ...rest } = link
       return { ...rest }
     })

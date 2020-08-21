@@ -8,6 +8,12 @@ const nibbles = { "0": true, "1": true, "2": true, "3": true, "4": true, "5": tr
                 } as {[key: string]: boolean}
 const isNibble = (str: string): boolean => nibbles[str] === true
 
+
+/**
+ * Modified Merkle Patricia Tree
+ * The tree has a node weight of 16
+ * It stores items with hexidecimal keys and creates a new layer when a given layer has two keys that start with the same nibble
+ */
 export default class MMPT {
 
   links: Links

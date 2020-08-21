@@ -9,6 +9,7 @@ const HASH_COUNT = 16
 const SATURATION_THRESHOLD = 320
 
 
+// @@TODO: fake newtypes
 
 // TYPES
 

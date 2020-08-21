@@ -1,6 +1,5 @@
 import { Links, PutDetails, SyncHookDetailed, UnixTree, Tree } from '../types'
-import { Skeleton, ChildrenMetadata, TreeInfo, LocalTreeInfo } from '../protocol/public/types'
-import { Metadata } from '../metadata'
+import { TreeInfo, TreeHeader } from '../protocol/public/types'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
@@ -14,13 +13,13 @@ import * as pathUtil from '../path'
 
 type ConstructorParams = {
   links: Links
-  info: LocalTreeInfo
+  info: TreeHeader
 }
 
-export class PublicTree extends BaseTree implements Tree, UnixTree {
+export class PublicTree extends BaseTree {
 
   links: Links
-  info: LocalTreeInfo
+  info: TreeHeader
 
   onUpdate: Maybe<SyncHookDetailed> = null
 
@@ -36,7 +35,6 @@ export class PublicTree extends BaseTree implements Tree, UnixTree {
       info: {
         metadata: metadata.empty(),
         skeleton: {},
-        children: {}
       }
     })
   }
@@ -50,9 +48,9 @@ export class PublicTree extends BaseTree implements Tree, UnixTree {
   }
 
   static async fromInfo(info: TreeInfo): Promise<PublicTree> {
-    const { userland, metadata, skeleton, children } = info
+    const { userland, metadata, skeleton } = info
     const links = await protocol.basic.getLinks(userland)
-    return new PublicTree({ links, info: { metadata, skeleton, children } })
+    return new PublicTree({ links, info: { metadata, skeleton } })
   }
 
   static instanceOf(obj: any): obj is PublicTree {
@@ -68,7 +66,7 @@ export class PublicTree extends BaseTree implements Tree, UnixTree {
   }
 
   async putDetailed(): Promise<PutDetails> {
-    const details = await protocol.pub.putTree(this.links, this.info.skeleton, this.info.children, {
+    const details = await protocol.pub.putTree(this.links, this.info.skeleton, {
       ...this.info.metadata,
       mtime: Date.now()
     })
@@ -81,25 +79,28 @@ export class PublicTree extends BaseTree implements Tree, UnixTree {
   async updateDirectChild(child: PublicTree | PublicFile, name: string): Promise<this> {
     const { cid, metadata, userland, size } = await child.putDetailed()
     this.links[name] = link.make(name, cid, check.isFile(child), size)
-    this.info.skeleton[name] = { cid, metadata, userland, children: check.isFile(child) ? {} : child.info.skeleton }
-    this.info.children[name] = child.info.metadata
+    this.info.skeleton[name] = { 
+      cid, 
+      metadata, 
+      userland, 
+      subSkeleton: check.isFile(child) ? {} : child.info.skeleton,
+      isFile: check.isFile(child)
+    }
     return this
   }
 
   removeDirectChild(name: string): this {
     delete this.links[name]
     delete this.info.skeleton[name]
-    delete this.info.children[name]
     return this
   }
 
   async getDirectChild(name: string): Promise<PublicTree | PublicFile | null> {
-    const childCID = this.info.skeleton[name]?.cid || null
-    const childInfo = this.info.children[name] || null
-    if(childCID === null || childInfo === null) return null
+    const childInfo = this.info.skeleton[name] || null
+    if(childInfo === null) return null
     return childInfo.isFile
-          ? PublicFile.fromCID(childCID)
-          : PublicTree.fromCID(childCID)
+          ? PublicFile.fromCID(childInfo.cid)
+          : PublicTree.fromCID(childInfo.cid)
   }
 
   async getOrCreateDirectChild(name: string): Promise<PublicTree | PublicFile> {
@@ -127,8 +128,7 @@ export class PublicTree extends BaseTree implements Tree, UnixTree {
         ...acc,
         [cur.name]: {
           ...cur,
-          mtime: this.info.children[cur.name]?.mtime,
-          isFile: this.info.children[cur.name]?.isFile,
+          isFile: this.info.skeleton[cur.name]?.isFile,
         }
       }
     }, {} as Links)

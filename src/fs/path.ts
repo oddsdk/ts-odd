@@ -45,3 +45,7 @@ export const nextNonEmpty = (parts: NonEmptyPath): NonEmptyPath | null => {
   }
   return next as NonEmptyPath
 }
+
+export const sameParent = (a: string, b: string): boolean => {
+  return splitParts(a)[0] === splitParts(b)[0]
+}

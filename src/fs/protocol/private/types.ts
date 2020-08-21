@@ -17,13 +17,13 @@ export type PrivateLink = Link & {
   key: string
 }
 
-export type PrivateChildren = { [name: string]: PrivateLink }
+export type PrivateLinks = { [name: string]: PrivateLink }
 
 export type PrivateTreeInfo = {
   metadata: Metadata
   bareNameFilter: BareNameFilter
   revision: number
-  children: PrivateChildren
+  links: PrivateLinks 
   skeleton: PrivateSkeleton
 }
 

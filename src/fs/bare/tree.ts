@@ -1,5 +1,5 @@
 import * as protocol from '../protocol'
-import { Links, Tree, File, Link, SyncHookDetailed } from '../types'
+import { Links, Tree, File, Link, SyncHookDetailed, UnixTree } from '../types'
 import * as check from '../types/check'
 import { AddResult, CID, FileContent } from '../../ipfs'
 import BareFile from '../bare/file'
@@ -10,7 +10,7 @@ import * as pathUtil from '../path'
 import { Maybe } from '../../common'
 
 
-class BareTree extends BaseTree {
+class BareTree extends BaseTree implements UnixTree {
 
   links: Links
   onUpdate: Maybe<SyncHookDetailed> = null

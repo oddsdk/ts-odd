@@ -2,7 +2,7 @@
 
 /** @internal */
 import { Links, PutDetails } from '../../types'
-import { TreeInfo, FileInfo, Skeleton, ChildrenMetadata } from './types'
+import { TreeInfo, FileInfo, Skeleton } from './types'
 import { Metadata } from '../../metadata'
 import { isString } from '../../../common/type-checks'
 import * as check from '../../types/check'
@@ -16,17 +16,15 @@ import * as basic from '../basic'
 export const putTree = async (
     links: Links,
     skeletonVal: Skeleton,
-    childrenVal: ChildrenMetadata,
     metadataVal: Metadata
   ): Promise<PutDetails> => {
   const userlandInfo = await basic.putLinks(links)
   const userland = link.make('userland', userlandInfo.cid, true, userlandInfo.size)
-  const [metadata, skeleton, children] = await Promise.all([
+  const [metadata, skeleton] = await Promise.all([
     putAndMakeLink('metadata', metadataVal),
     putAndMakeLink('skeleton', skeletonVal),
-    putAndMakeLink('children', childrenVal),
   ])
-  const internalLinks = { metadata, skeleton, children, userland } as Links
+  const internalLinks = { metadata, skeleton, userland } as Links
   const { cid, size } = await basic.putLinks(internalLinks)
   return { cid, userland: userland.cid, metadata: metadata.cid, size }
 }
@@ -51,19 +49,14 @@ export const putAndMakeLink = async (name: string, val: FileContent) => {
 export const get = async (cid: CID): Promise<TreeInfo | FileInfo> => {
   const links = await basic.getLinks(cid)
   const metadata = await getAndCheckValue(links, 'metadata', check.isMetadata)
-  let skeleton, children
-  if(!metadata.isFile){
-    [skeleton, children] = await Promise.all([
-      getAndCheckValue(links, 'skeleton', check.isSkeleton),
-      getAndCheckValue(links, 'children', check.isChildrenMetadata),
-      ipfs.size(cid),
-    ])
-  }
+  const skeleton = metadata.isFile 
+    ? undefined
+    : await getAndCheckValue(links, 'skeleton', check.isSkeleton)
 
   const userland = links['userland']?.cid || null
   if(!check.isCID(userland)) throw new Error("Could not find userland")
 
-  return { userland, metadata, skeleton, children }
+  return { userland, metadata, skeleton }
 }
 
 export const getValue = async (

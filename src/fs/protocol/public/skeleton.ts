@@ -9,6 +9,6 @@ export const getPath = (skeleton: Skeleton, path: NonEmptyPath): SkeletonInfo | 
   if(child === null || nextPath === null) {
     return child
   }else {
-    return getPath(child.children, nextPath)
+    return getPath(child.subSkeleton, nextPath)
   }
 }

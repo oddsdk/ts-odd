@@ -1,6 +1,6 @@
 import { isNum, isObject, isString } from '../../../../common'
 import * as check  from '../../../types/check'
-import { PrivateFileInfo, PrivateTreeInfo, PrivateLink, PrivateChildren, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from '../types'
+import { PrivateFileInfo, PrivateTreeInfo, PrivateLink, PrivateLinks, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from '../types'
 
 export const isDecryptedNode = (obj: any): obj is DecryptedNode => {
   return isPrivateTreeInfo(obj) || isPrivateFileInfo(obj)
@@ -19,7 +19,7 @@ export const isPrivateTreeInfo = (obj: any): obj is PrivateTreeInfo => {
     && check.isMetadata(obj.metadata)
     && obj.metadata.isFile === false
     && isNum(obj.revision)
-    && isPrivateChildren(obj.children)
+    && isPrivateLinks(obj.links)
     && isPrivateSkeleton(obj.skeleton)
 }
 
@@ -29,7 +29,7 @@ export const isPrivateLink = (obj: any): obj is PrivateLink => {
     && check.isLink(obj)
 }
 
-export const isPrivateChildren = (obj: any): obj is PrivateChildren => {
+export const isPrivateLinks = (obj: any): obj is PrivateLinks => {
   return isObject(obj)
     && Object.values(obj).every(isPrivateLink)
 }

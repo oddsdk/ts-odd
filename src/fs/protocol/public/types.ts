@@ -7,26 +7,26 @@ export type SkeletonInfo = {
   cid: CID
   userland: CID
   metadata: CID
-  children: Skeleton
+  subSkeleton: Skeleton
+  isFile: boolean
 }
 
 export type Skeleton = { [name: string]: SkeletonInfo }
 
-export type LocalTreeInfo = {
+export type TreeHeader = {
   metadata: Metadata
   skeleton: Skeleton
-  children: ChildrenMetadata
 }
 
-export type TreeInfo = LocalTreeInfo & {
+export type TreeInfo = TreeHeader & {
   userland: CID
 }
 
-export type LocalFileInfo = {
+export type FileHeader = {
   metadata: Metadata
 }
 
-export type FileInfo = LocalFileInfo & {
+export type FileInfo = FileHeader & {
   userland: CID
 }
 

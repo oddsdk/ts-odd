@@ -50,13 +50,14 @@ export interface UnixTree {
   cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<this>
   rm(path: string): Promise<this>
+  mv(from: string, to: string): Promise<this>
+  get(path: string): Promise<Tree | File | null>
   exists(path: string): Promise<boolean>
 }
 
 export interface Tree extends UnixTree {
   version: SemVer
 
-  get(path: string): Promise<Tree | File | null>
   addChild(path: string, toAdd: Tree | FileContent): Promise<this>
   addRecurse (path: NonEmptyPath, child: Tree | FileContent): Promise<this>
 

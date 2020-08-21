@@ -4,7 +4,7 @@ import BareTree from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
 import MMPT from './protocol/private/mmpt'
-import { Links, SyncHook, UnixTree } from './types'
+import { Links, SyncHook, UnixTree, Tree, File } from './types'
 import { SemVer } from './semver'
 
 import * as cidLog from '../common/cid-log'
@@ -49,7 +49,7 @@ enum Branch {
 // CLASS
 
 
-export class FileSystem {
+export class FileSystem implements UnixTree {
 
   root: BareTree
   publicTree: PublicTree
@@ -203,11 +203,11 @@ export class FileSystem {
   // POSIX INTERFACE
   // ---------------
 
-  async mkdir(path: string): Promise<CID> {
+  async mkdir(path: string): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.mkdir(relPath)
     })
-    return this.sync()
+    return this
   }
 
   async ls(path: string): Promise<Links> {
@@ -216,14 +216,14 @@ export class FileSystem {
     })
   }
 
-  async add(path: string, content: FileContent): Promise<CID> {
+  async add(path: string, content: FileContent): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.add(relPath, content)
     })
-    return this.sync()
+    return this
   }
 
-  async cat(path: string): Promise<FileContent | null> {
+  async cat(path: string): Promise<FileContent> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.cat(relPath)
     })
@@ -235,39 +235,37 @@ export class FileSystem {
     })
   }
 
-  async rm(path: string): Promise<CID> {
+  async rm(path: string): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.rm(relPath)
     })
-    return this.sync()
+    return this
   }
 
-  // async get(path: string): Promise<Tree | File | null> {
-  //   return this.runOnTree(path, false, (tree, relPath) => {
-  //     return tree.get(relPath)
-  //   })
-  // }
+  async get(path: string): Promise<Tree | File | null> {
+    return this.runOnTree(path, false, (tree, relPath) => {
+      return tree.get(relPath)
+    })
+  }
 
-  // async mv(from: string, to: string): Promise<CID> {
-  //   const node = await this.get(from)
-  //   if (node === null) {
-  //     throw new Error(`Path does not exist: ${from}`)
-  //   }
-  //   const toParts = pathUtil.splitParts(to)
-  //   const destPath = pathUtil.join(toParts.slice(0, toParts.length - 1)) // remove file/dir name
-  //   const destination = await this.get(destPath)
-  //   if (check.isFile(destination)) {
-  //     throw new Error(`Can not \`mv\` to a file: ${destPath}`)
-  //   }
-  //   await this.addChild(to, node)
-  //   return this.rm(from)
-  // }
+  // This is only implemented on the same tree for now and will error otherwise
+  async mv(from: string, to: string): Promise<this> {
+    const sameTree = pathUtil.sameParent(from, to)
+    if(!sameTree) {
+      throw new Error("`mv` is only supported on the same tree for now")
+    }
+    await this.runOnTree(from, true, (tree, relPath) => {
+      const { nextPath } = pathUtil.takeHead(to)
+      return tree.mv(relPath, nextPath || '')
+    })
+    return this
+  }
 
   async read(path: string): Promise<FileContent | null> {
     return this.cat(path)
   }
 
-  async write(path: string, content: FileContent): Promise<CID> {
+  async write(path: string, content: FileContent): Promise<this> {
     return this.add(path, content)
   }
 
@@ -275,7 +273,7 @@ export class FileSystem {
   /**
    * Ensures the latest version of the file system is added to IPFS and returns the root CID.
    */
-  async sync(): Promise<CID> {
+  async publicize(): Promise<CID> {
     const cid = await this.root.put()
 
     this.syncHooks.forEach(hook => hook(cid))
@@ -295,11 +293,12 @@ export class FileSystem {
   //   })
   //   return this.sync()
   // }
+  
 
   /** @internal */
   async runOnTree<a>(
     path: string,
-    updateTree: boolean, // ie. do a mutation
+    isMutation: boolean,
     fn: (tree: UnixTree, relPath: string) => Promise<a>
   ): Promise<a> {
     const parts = pathUtil.splitParts(path)
@@ -312,7 +311,7 @@ export class FileSystem {
     if (head === 'public') {
       result = await fn(this.publicTree, relPath)
 
-      if (updateTree && PublicTree.instanceOf(result)) {
+      if (isMutation && PublicTree.instanceOf(result)) {
         resultPretty = await fn(this.prettyTree, relPath)
 
         this.publicTree = result
@@ -322,11 +321,11 @@ export class FileSystem {
     } else if (head === 'private') {
       result = await fn(this.privateTree, relPath)
 
-      if (updateTree && PrivateTree.instanceOf(result)) {
+      if (isMutation && PrivateTree.instanceOf(result)) {
         this.privateTree = result
       }
 
-    } else if (head === 'pretty' && updateTree) {
+    } else if (head === 'pretty' && isMutation) {
       throw new Error("The pretty path is read only")
 
     } else if (head === 'pretty') {
