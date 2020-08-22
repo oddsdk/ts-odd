@@ -43,5 +43,5 @@ export const isPrivateSkeletonInfo = (obj: any): obj is PrivateSkeletonInfo => {
   return isObject(obj)
     && check.isCID(obj.cid)
     && isString(obj.key)
-    && isPrivateSkeleton(obj.children)
+    && isPrivateSkeleton(obj.subSkeleton)
 }

@@ -111,7 +111,7 @@ export default class PrivateTree extends BaseTree {
     await child.updateParentNameFilter(this.info.bareNameFilter)
     const { cid, size, key } = await child.putDetailed()
     this.info.links[name] = { name, key, cid, size, isFile: PrivateFile.instanceOf(child) }
-    this.info.skeleton[name] = { cid, key, children: PrivateTree.instanceOf(child) ? child.info.skeleton : {} }
+    this.info.skeleton[name] = { cid, key, subSkeleton: PrivateTree.instanceOf(child) ? child.info.skeleton : {} }
     this.info.revision = this.info.revision + 1
     return this
   }
@@ -173,7 +173,7 @@ export default class PrivateTree extends BaseTree {
     if(head === undefined) {
       return protocol.priv.getByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
     }
-    const nextChild = nodeInfo.children[head]
+    const nextChild = nodeInfo.subSkeleton[head]
     if(nextChild !== undefined) {
       return this.getRecurse(nextChild, rest)
     }

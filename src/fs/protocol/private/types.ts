@@ -32,7 +32,7 @@ export type PrivateSkeleton = { [name: string]: PrivateSkeletonInfo}
 export type PrivateSkeletonInfo = {
   cid: CID
   key: string
-  children: PrivateSkeleton
+  subSkeleton: PrivateSkeleton
 }
 
 export type PrivateAddResult = AddResult & {
