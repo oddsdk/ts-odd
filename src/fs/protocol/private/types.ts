@@ -1,4 +1,4 @@
-import { Link } from "../../types"
+import { BaseLink } from "../../types"
 import  { Metadata } from '../../metadata'
 import { AddResult, CID } from "../../../ipfs"
 import { BareNameFilter, PrivateName } from './namefilter'
@@ -13,8 +13,9 @@ export type PrivateFileInfo = {
   key: string
 }
 
-export type PrivateLink = Link & { 
+export type PrivateLink = BaseLink & { 
   key: string
+  pointer: PrivateName
 }
 
 export type PrivateLinks = { [name: string]: PrivateLink }

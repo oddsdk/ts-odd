@@ -24,9 +24,9 @@ export const isPrivateTreeInfo = (obj: any): obj is PrivateTreeInfo => {
 }
 
 export const isPrivateLink = (obj: any): obj is PrivateLink => {
-  return isObject(obj)
-    && isString(obj.key)
-    && check.isLink(obj)
+  return check.isBaseLink(obj)
+    && isString((obj as any).key)
+    && isString((obj as any).pointer)
 }
 
 export const isPrivateLinks = (obj: any): obj is PrivateLinks => {

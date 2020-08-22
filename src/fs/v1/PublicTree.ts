@@ -1,4 +1,4 @@
-import { Links, PutDetails, SyncHookDetailed, UnixTree, Tree } from '../types'
+import { Links, PutDetails, SyncHookDetailed } from '../types'
 import { TreeInfo, TreeHeader } from '../protocol/public/types'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'

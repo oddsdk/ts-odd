@@ -1,10 +1,10 @@
 import { File } from '../types'
-import { CID, FileContent } from '../../ipfs'
+import { FileContent } from '../../ipfs'
 import * as check from '../protocol/private/types/check'
 import * as metadata from '../metadata'
 import * as protocol from '../protocol'
 import * as namefilter from '../protocol/private/namefilter'
-import { BareNameFilter } from '../protocol/private/namefilter'
+import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
 import MMPT from '../protocol/private/mmpt'
 import { PrivateAddResult, PrivateFileInfo } from '../protocol/private/types'
 import { isObject } from '../../common/type-checks'
@@ -16,6 +16,7 @@ type ConstructorParams = {
   info: PrivateFileInfo
 }
 
+// @@TODO: add `update` method for bumping revision
 export class PrivateFile extends BaseFile implements File {
 
   mmpt: MMPT
@@ -50,18 +51,13 @@ export class PrivateFile extends BaseFile implements File {
     })
   }
 
-  static async fromCID(mmpt: MMPT, cid: CID, key: string): Promise<PrivateFile> {
-    const info = await protocol.priv.getByCID(mmpt, cid, key)
+  static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
+    const info = await protocol.priv.getByName(mmpt, name, key)
     if(!check.isPrivateFileInfo(info)) {
-      throw new Error(`Could not parse a valid private tree at: ${cid}`)
+      throw new Error(`Could not parse a valid private tree using the given key`)
     }
     const content = await protocol.basic.getEncryptedFile(info.content, info.key)
     return new PrivateFile({ mmpt, info, content })
-  }
-
-  async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
-    this.info.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.info.key)
-    return this
   }
 
   static async fromInfo(mmpt: MMPT, info: PrivateFileInfo): Promise<PrivateFile> {
@@ -71,6 +67,17 @@ export class PrivateFile extends BaseFile implements File {
       info,
       content,
     })
+  }
+
+  async getName(): Promise<PrivateName> {
+    const { bareNameFilter, key, revision } = this.info
+    const revisionFilter = await namefilter.addRevision(bareNameFilter, key, revision)
+    return namefilter.toPrivateName(revisionFilter)
+  }
+
+  async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
+    this.info.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.info.key)
+    return this
   }
 
   async putDetailed(): Promise<PrivateAddResult> {

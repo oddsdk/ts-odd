@@ -2,7 +2,7 @@
 
 /** @internal */
 import * as pathUtil from '../path'
-import { Links, Tree, File, NonEmptyPath, UnixTree } from '../types'
+import { Tree, File, NonEmptyPath, UnixTree, BaseLinks } from '../types'
 import { SemVer } from '../semver'
 import * as check from '../types/check'
 import { AddResult, CID, FileContent } from '../../ipfs'
@@ -21,7 +21,7 @@ abstract class BaseTree implements Tree, UnixTree {
     return cid
   }
 
-  async ls(path: string): Promise<Links> {
+  async ls(path: string): Promise<BaseLinks> {
     const dir = await this.get(path)
     if (dir === null) {
       throw new Error("Path does not exist")
@@ -143,7 +143,7 @@ abstract class BaseTree implements Tree, UnixTree {
   abstract async getDirectChild(name: string): Promise<Tree | File | null>
   abstract async getOrCreateDirectChild(name: string): Promise<Tree | File>
 
-  abstract getLinks(): Links
+  abstract getLinks(): BaseLinks
 
   abstract async emptyChildTree(): Promise<Tree>
   abstract async createChildFile(content: FileContent): Promise<File>

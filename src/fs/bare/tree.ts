@@ -1,5 +1,5 @@
 import * as protocol from '../protocol'
-import { Links, Tree, File, Link, SyncHookDetailed, UnixTree } from '../types'
+import { Links, Tree, File, Link, SyncHookDetailed, UnixTree, BaseLinks } from '../types'
 import * as check from '../types/check'
 import { AddResult, CID, FileContent } from '../../ipfs'
 import BareFile from '../bare/file'
@@ -96,7 +96,7 @@ class BareTree extends BaseTree implements UnixTree {
     return this
   }
 
-  getLinks(): Links {
+  getLinks(): BaseLinks {
     return this.links
   }
 }

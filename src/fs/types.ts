@@ -5,14 +5,18 @@ import { SemVer } from './semver'
 // LINKS
 // -----
 
-export type Link = {
+export type BaseLink = {
   name: string
-  cid: CID
   size: number
   mtime?: number
   isFile: boolean
 }
 
+export type Link = BaseLink & {
+  cid: CID
+}
+
+export type BaseLinks = { [name: string]: BaseLink }
 export type Links = { [name: string]: Link }
 
 
@@ -45,7 +49,7 @@ export interface File {
 // ----
 
 export interface UnixTree {
-  ls(path: string): Promise<Links>
+  ls(path: string): Promise<BaseLinks>
   mkdir(path: string): Promise<this>
   cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<this>
@@ -71,5 +75,5 @@ export interface Tree extends UnixTree {
   emptyChildTree(): Promise<Tree>
   createChildFile(content: FileContent): Promise<File>
 
-  getLinks(): Links
+  getLinks(): BaseLinks
 }
