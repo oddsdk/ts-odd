@@ -25,8 +25,7 @@
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
     "test:prod": "npm run lint && npm run test -- --no-cache",
-    "precommit": "lint-staged",
-    "travis-deploy-once": "travis-deploy-once"
+    "precommit": "lint-staged"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
@@ -89,7 +88,6 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-sourcemaps": "^0.5.0",
     "rollup-plugin-typescript2": "^0.26.0",
-    "travis-deploy-once": "^5.0.11",
     "ts-jest": "^25.2.1",
     "ts-node": "^8.6.2",
     "typedoc": "^0.17.8",
