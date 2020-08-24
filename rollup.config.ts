@@ -10,7 +10,7 @@ import typescript from 'rollup-plugin-typescript2'
 const pkg = require('./package.json')
 
 const input = 'src/index.ts'
-const name = 'fissionSdk'
+const name = 'webnative'
 
 // For importing modules with `this` at the top level:
 // https://github.com/WebReflection/hyperHTML/issues/304#issuecomment-443950244
