@@ -1,4 +1,5 @@
 import aes from 'keystore-idb/aes'
+import { SymmKeyLength } from 'keystore-idb/types'
 import { strToArrBuf } from 'keystore-idb/utils'
 import * as keystore from './config'
 import * as hex from '../common/hex'
@@ -22,7 +23,7 @@ export const decrypt = async (encrypted: Uint8Array, keyStr: string): Promise<Ui
 }
 
 export const genKeyStr = async (): Promise<string> => {
-  const key = await aes.makeKey()
+  const key = await aes.makeKey({ length: SymmKeyLength.B256 })
   return aes.exportKey(key)
 }
 
