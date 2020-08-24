@@ -44,7 +44,7 @@ export function endpoints(e: Partial<Endpoints>): Endpoints {
  * If you wish to override the `config.Bootstrap` list,
  * you can get the default value as follows:
  * ```js
- * import { PEER_WSS, defaultOptions } from 'fission-sdk/ipfs'
+ * import { PEER_WSS, defaultOptions } from 'webnative/ipfs'
  * // `PEER_WSS` is the default `Bootstrap` node
  * defaultOptions.config.Bootstrap
  * ```

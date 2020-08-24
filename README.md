@@ -1,12 +1,9 @@
-![](https://github.com/fission-suite/ts-sdk/raw/master/assets/logo.png?sanitize=true)
-
-
 # Fission SDK
 
-[![NPM](https://img.shields.io/npm/v/fission-sdk)](https://www.npmjs.com/package/fission-sdk)
-[![Build Status](https://travis-ci.org/fission-suite/ts-sdk.svg?branch=master)](https://travis-ci.org/fission-suite/ts-sdk)
+[![NPM](https://img.shields.io/npm/v/webnative)](https://www.npmjs.com/package/webnative)
+[![Build Status](https://travis-ci.org/fission-suite/webnative.svg?branch=master)](https://travis-ci.org/fission-suite/webnative)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/fission-suite/blob/master/LICENSE)
-[![Maintainability](https://api.codeclimate.com/v1/badges/524fbe384bb6c312fa11/maintainability)](https://codeclimate.com/github/fission-suite/ts-sdk/maintainability)
+[![Maintainability](https://api.codeclimate.com/v1/badges/524fbe384bb6c312fa11/maintainability)](https://codeclimate.com/github/fission-suite/webnative/maintainability)
 [![Built by FISSION](https://img.shields.io/badge/⌘-Built_by_FISSION-purple.svg)](https://fission.codes)
 [![Discord](https://img.shields.io/discord/478735028319158273.svg)](https://discord.gg/zAQBDEq)
 [![Discourse](https://img.shields.io/discourse/https/talk.fission.codes/topics)](https://talk.fission.codes)
@@ -28,10 +25,10 @@ The Fission SDK offers tools for:
 
 ```ts
 // ES6
-import * as sdk from 'fission-sdk'
+import * as sdk from 'webnative'
 
 // Browser/UMD build
-self.fissionSdk
+self.webnative
 ```
 
 See [`docs/`](docs/) for more detailed documentation based on the source code.
@@ -387,7 +384,7 @@ This library is built on top of [js-ipfs](https://github.com/ipfs/js-ipfs) and [
 
 You can use one instance for your whole application by doing the following:
 ```ts
-import ipfs from 'fission-sdk/ipfs'
+import ipfs from 'webnative/ipfs'
 
 // get the ipfs instance that the Fission SDK is using
 const ipfsInstance = await ipfs.get()
@@ -398,7 +395,7 @@ await ipfs.set(ipfsInstance)
 ```
 
 ```ts
-import keystore from 'fission-sdk/keystore'
+import keystore from 'webnative/keystore'
 
 // get the keystore instance that the Fission SDK is using
 const keystoreInstance = await keystore.get()
