@@ -1,43 +1,92 @@
-import PublicFile from './PublicFile'
-import { CID, FileContent } from '../../ipfs'
-import { HeaderV1, PutResult, File, HeaderFile } from '../types'
-import * as keystore from '../../keystore'
-import basic from '../network/basic'
-import header from './header'
-import semver from '../semver'
+import { File } from '../types'
+import { FileContent } from '../../ipfs'
+import * as check from '../protocol/private/types/check'
+import * as metadata from '../metadata'
+import * as protocol from '../protocol'
+import * as namefilter from '../protocol/private/namefilter'
+import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
+import MMPT from '../protocol/private/mmpt'
+import { PrivateAddResult, PrivateFileInfo } from '../protocol/private/types'
+import { isObject } from '../../common/type-checks'
+import BaseFile from '../base/file'
 
-export class PrivateFile extends PublicFile {
+type ConstructorParams = {
+  mmpt: MMPT
+  content: FileContent
+  info: PrivateFileInfo
+}
 
-  parentKey: string
+// @@TODO: add `update` method for bumping revision
+export class PrivateFile extends BaseFile implements File {
 
-  constructor(content: FileContent, header: HeaderV1, parentKey: string) {
-    super(content, header, parentKey)
-    this.parentKey = parentKey
+  mmpt: MMPT
+  info: PrivateFileInfo
+
+  constructor({ mmpt, content, info }: ConstructorParams) {
+    super(content)
+    this.mmpt = mmpt
+    this.info = info
   }
 
-  static async create(content: FileContent, parentKey: string, ownKey?: string): Promise<HeaderFile>{
-    const keyStr = ownKey ? ownKey : await keystore.genKeyStr()
-    return new PrivateFile(content, { 
-        ...header.empty(),
-        key: keyStr,
-        version: semver.v1,
-        isFile: true
-      },
-      parentKey
-    )
+  static instanceOf(obj: any): obj is PrivateFile {
+    return isObject(obj)
+      && obj.content !== undefined
+      && obj.mmpt !== undefined
+      && check.isPrivateFileInfo(obj.info)
   }
 
-  static async fromCID(cid: CID, parentKey: string): Promise<HeaderFile>{
-    const info = await header.getHeaderAndIndex(cid, parentKey)
-    const content = await basic.getFile(info.index, info.header.key)
-    return new PrivateFile(content, info.header, parentKey)
+  static async create(mmpt: MMPT, content: FileContent, parentNameFilter: BareNameFilter,  key: string): Promise<PrivateFile> {
+    const bareNameFilter = await namefilter.addToBare(parentNameFilter, key)
+    const contentInfo = await protocol.basic.putEncryptedFile(content, key)
+    return new PrivateFile({ 
+      mmpt,
+      content,
+      info: {
+        bareNameFilter,
+        key,
+        revision: 1,
+        metadata: metadata.empty(true),
+        content: contentInfo.cid
+      }
+    })
   }
 
-  async putWithPins(): Promise<PutResult> {
-    return this.putWithKey(this.parentKey)
+  static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
+    const info = await protocol.priv.getByName(mmpt, name, key)
+    if(!check.isPrivateFileInfo(info)) {
+      throw new Error(`Could not parse a valid private tree using the given key`)
+    }
+    const content = await protocol.basic.getEncryptedFile(info.content, info.key)
+    return new PrivateFile({ mmpt, info, content })
+  }
+
+  static async fromInfo(mmpt: MMPT, info: PrivateFileInfo): Promise<PrivateFile> {
+    const content = await protocol.basic.getEncryptedFile(info.content, info.key)
+    return new PrivateFile({
+      mmpt,
+      info,
+      content,
+    })
+  }
+
+  async getName(): Promise<PrivateName> {
+    const { bareNameFilter, key, revision } = this.info
+    const revisionFilter = await namefilter.addRevision(bareNameFilter, key, revision)
+    return namefilter.toPrivateName(revisionFilter)
+  }
+
+  async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
+    this.info.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.info.key)
+    return this
+  }
+
+  async putDetailed(): Promise<PrivateAddResult> {
+    return protocol.priv.addNode(this.mmpt, {
+      ...this.info, 
+      metadata: metadata.updateMtime(this.info.metadata)
+    }, this.info.key)
   }
 
 }
-
 
 export default PrivateFile

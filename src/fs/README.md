@@ -16,10 +16,10 @@ These are abstract classes that implement methods that are common to all trees a
 These are isomorphic to IPFS DAG objects, but contain a wrapper so that they share a common interface with our custom Tree nodes. These are all public, and implement the `Tree` interface.
 
 ### PublicTree / PublicFile
-This is v1.0.0 of the Fission FileSystem. It uses a 2-layer approach where each directory actually points to a "header" directory which incldues all of the metadata and FFS features for folders & files as well as an `index` link that points to the actual tree or file. Each directory contains a `fileIndex` (like a cache) of the directory structure beneath it. This allows you to make one trip to the network and derive the entire skeleton of a file system
+This is v1.0.0 of the Fission FileSystem. It uses a 2-layer approach where each directory actually points to a "header" directory which incldues all of the metadata and FFS features for folders & files as well as an `userland` link that points to the actual tree or file. Each directory contains a `skeleton` of the directory structure beneath it. This allows you to make one trip to the network and derive the entire skeleton of a file system
 
 ### PrivateTree / PrivateFile
-These inherit from `PublicTree` / `PublicFile`, but each node has a `parentKey` and an `ownKey`. where the folder itself is encrypted with the `parentKey` and the `index` & it's decendents are encrypted with `ownKey`
+These inherit from `PublicTree` / `PublicFile`, but each node has a `parentKey` and an `ownKey`. where the folder itself is encrypted with the `parentKey` and `userland` & it's decendents are encrypted with `ownKey`
 
 ### Inheritance structure
 As additional versions of the FS are added, the inheritance structure will look like:

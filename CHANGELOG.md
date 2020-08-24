@@ -1,7 +1,23 @@
 # Changelog
 
+### v0.16
+
+- Big rewrite of filesystem 
+  - private side derives names using bloomfilters and stores nodes in an MMPT
+  - reorganize header info on public side and store metadata/skeleton as cbor data
+- Improved `fs.write` method, is an alias for `add` now (because `add` overwrites by default)
+- Improved file system loading and saving
+
+
+### v0.15
+
+- skipped because of a botched npm publish
+
+
 ### v0.14.3
+
 - Added apps API `apps.create`, `apps.index`, `apps.deleteByURL`
+
 
 ### v0.14.2
 

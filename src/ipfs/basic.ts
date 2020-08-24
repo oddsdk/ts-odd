@@ -49,17 +49,25 @@ export const dagGet = async (cid: CID): Promise<DAGNode> => {
   return util.rawToDAGNode(raw)
 }
 
-export const dagPut = async (node: DAGNode): Promise<CID> => {
+export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   const ipfs = await getIpfs()
   // using this format so that we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
-  const cid = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
-  return cid.toString()
+  const cidObj = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
+  const cid = cidObj.toString()
+  const nodeSize = await size(cid)
+  return { cid, size: nodeSize }
 }
 
-export const dagPutLinks = async (links: DAGLink[]): Promise<CID> => {
+export const dagPutLinks = async (links: DAGLink[]): Promise<AddResult> => {
   const node = new dagPB.DAGNode(DAG_NODE_DATA, links)
   return dagPut(node)
 }
+
+export const size = async (cid: CID): Promise<number> => {
+  const ipfs = await getIpfs()
+  const stat = await ipfs.object.stat(cid)
+  return stat.CumulativeSize
+} 
 
 export default {
   add,
@@ -70,4 +78,5 @@ export default {
   dagGet,
   dagPut,
   dagPutLinks,
+  size,
 }

@@ -1,9 +1,12 @@
 /** @internal */
 
 /** @internal */
-import { isString, isObject, isNum } from '../../common'
+import { isString, isObject, isNum, isBool } from '../../common'
 import { CID } from '../../ipfs'
-import { Tree, File, Link, Links, HeaderV1, NodeMap, SemVer, NodeInfo, PinMap } from '../types'
+import { Tree, File, Link, Links, BaseLink } from '../types'
+import { Skeleton, TreeInfo, FileInfo } from '../protocol/public/types'
+import { SemVer } from '../semver'
+import { Metadata, UnixMeta } from '../metadata'
 
 
 export const isFile = (obj: any): obj is File => {
@@ -14,9 +17,16 @@ export const isTree = (obj: any): obj is Tree => {
   return isObject(obj) && obj.ls !== undefined
 }
 
-export const isLink = (link: any): link is Link => {
-  return typeof link?.name === 'string'
-      && typeof link?.cid === 'string'
+export const isBaseLink = (obj: any): obj is BaseLink => {
+  return isObject(obj)
+    && isString(obj.name)
+    && isNum(obj.size)
+    && isBool(obj.isFile)
+}
+
+export const isLink = (obj: any): obj is Link => {
+  return isBaseLink(obj)
+    && isCID((obj as any).cid)
 }
 
 export const isLinks = (obj: any): obj is Links => {
@@ -24,28 +34,45 @@ export const isLinks = (obj: any): obj is Links => {
       && Object.values(obj).every(isLink)
 }
 
-export const isPinMap = (obj: any): obj is PinMap => {
-  return isObject(obj)
-      && Object.values(obj).every(v => isCID(v) || isPinMap(v))
+export const isUnixMeta = (obj: any): obj is UnixMeta => {
+  return isObject(obj) 
+      && isNum(obj.mtime)
+      && isNum(obj.ctime)
+      && isNum(obj.mode)
+      && isString(obj._type)
 }
 
-export const isHeaderV1 = (obj: any): obj is HeaderV1 => {
-  return isObject(obj)
+export const isMetadata = (obj: any): obj is Metadata => {
+  return isObject(obj) 
+      && isUnixMeta(obj.unixMeta)
+      && isBool(obj.isFile)
       && isSemVer(obj.version)
-      && (isString(obj.key) || obj.key === null)
-      && isNodeMap(obj.fileIndex)
-      && isPinMap(obj.pins)
 }
 
-export const isNodeInfo = (obj: any): obj is NodeInfo => {
-  return isObject(obj)
-      && isCID(obj.cid)
-      && isHeaderV1(obj)
+export const isSkeleton = (obj: any): obj is Skeleton => {
+  return isObject(obj) 
+      && Object.values(obj).every(val => (
+        isObject(val)
+        && isCID(val.cid)
+        && isCID(val.userland)
+        && isCID(val.metadata)
+        && isSkeleton(val.subSkeleton)
+      ))
 }
 
-export const isNodeMap = (obj: any): obj is NodeMap => {
+export const isTreeInfo = (obj: any): obj is TreeInfo => {
   return isObject(obj)
-      && Object.values(obj).every(isNodeInfo)
+    && isCID(obj.userland)
+    && isSkeleton(obj.skeleton)
+    && isMetadata(obj.metadata)
+    && obj.metadata.isFile === false
+}
+
+export const isFileInfo = (obj: any): obj is FileInfo => {
+  return isObject(obj)
+    && isCID(obj.userland)
+    && isMetadata(obj.metadata)
+    && obj.metadata.isFile === true
 }
 
 export const isCID = (obj: any): obj is CID => {
@@ -61,16 +88,4 @@ export const isSemVer = (obj: any): obj is SemVer => {
   if (!isObject(obj)) return false
   const { major, minor, patch } = obj
   return isNum(major) && isNum(minor) && isNum(patch)
-}
-
-
-export default {
-  isFile,
-  isTree,
-  isLink,
-  isLinks,
-  isHeaderV1,
-  isNodeMap,
-  isCIDList,
-  isSemVer
 }

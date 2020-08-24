@@ -1,11 +1,10 @@
 import dagPB from 'ipld-dag-pb'
 
 import { DAGLink, UnixFSFile } from '../ipfs'
-import { BasicLink, Link, Links, NodeMap } from './types'
-import { mapObj } from '../common/util'
+import { Link, Links } from './types'
 
 
-export const toDAGLink = (link: BasicLink): DAGLink => {
+export const toDAGLink = (link: Link): DAGLink => {
   const { name, cid, size } = link
   return new dagPB.DAGLink(name, size, cid)
 }
@@ -21,14 +20,7 @@ export const fromFSFile = (fsObj: UnixFSFile): Link => {
   }
 }
 
-export const fromNodeMap = (nodes: NodeMap): Links => {
-  return mapObj(nodes, val => {
-    const { name = '', cid, size, mtime, isFile } = val
-    return { name, cid, size, mtime, isFile }
-  })
-}
-
-export const make = (name: string, cid: string, isFile: boolean, size?: number): Link => {
+export const make = (name: string, cid: string, isFile: boolean, size: number): Link => {
   return {
     name,
     cid,
@@ -43,13 +35,4 @@ export const arrToMap = (arr: Link[]): Links => {
     acc[cur.name] = cur
     return acc
   }, {} as Links)
-}
-
-
-export default {
-  toDAGLink,
-  fromFSFile,
-  fromNodeMap,
-  make,
-  arrToMap
 }

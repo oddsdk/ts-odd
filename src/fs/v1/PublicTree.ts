@@ -1,182 +1,139 @@
-import header from '../network/header'
-import basic from '../network/basic'
-import headerv1 from './header'
-import { Links, Tree, HeaderV1, NodeInfo, PutResult, StaticMethods, HeaderTree, HeaderFile, PinMap } from '../types'
-import check from '../types/check'
+import { Links, PutDetails, SyncHookDetailed } from '../types'
+import { TreeInfo, TreeHeader } from '../protocol/public/types'
+import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
 import PublicFile from './PublicFile'
-import { removeKeyFromObj, Maybe, updateOrRemoveKeyFromObj, isJust } from '../../common'
-import link from '../link'
-import semver from '../semver'
+import { Maybe } from '../../common'
+import * as protocol from '../protocol'
+import * as skeleton from '../protocol/public/skeleton'
+import * as metadata from '../metadata'
+import * as link from '../link'
+import * as pathUtil from '../path'
 
-export class PublicTree extends BaseTree implements HeaderTree {
-
-  protected header: HeaderV1
-  protected parentKey: Maybe<string>
-  protected ownKey: Maybe<string> = null
-
-  protected static: StaticMethods
-
-  constructor(header: HeaderV1, parentKey: Maybe<string>) {
-    super(header.version)
-    this.parentKey = parentKey
-    this.header = header
-    this.static = {
-      tree: PublicTree,
-      file: PublicFile
-    }
-  }
-
-  static async empty (parentKey: Maybe<string>): Promise<HeaderTree> {
-    return new PublicTree({
-      ...headerv1.empty(),
-      version: semver.v1,
-    }, parentKey)
+type ConstructorParams = {
+  links: Links
+  info: TreeHeader
 }
 
-  static async fromCID (cid: CID, parentKey: Maybe<string>): Promise<HeaderTree> {
-    const info = await headerv1.getHeaderAndIndex(cid, null)
-    return new PublicTree(info.header, parentKey)
+export class PublicTree extends BaseTree {
+
+  links: Links
+  info: TreeHeader
+
+  onUpdate: Maybe<SyncHookDetailed> = null
+
+  constructor({ links, info }: ConstructorParams) {
+    super(info.metadata.version)
+    this.links = links
+    this.info = info
   }
 
-  static fromHeader (header: HeaderV1, parentKey: Maybe<string>): HeaderTree {
-    return new PublicTree(header, parentKey) 
+  static async empty (): Promise<PublicTree> {
+    return new PublicTree({
+      links: {},
+      info: {
+        metadata: metadata.empty(false),
+        skeleton: {},
+      }
+    })
+  }
+
+  static async fromCID (cid: CID): Promise<PublicTree> {
+    const info = await protocol.pub.get(cid)
+    if(!check.isTreeInfo(info)) {
+      throw new Error(`Could not parse a valid public tree at: ${cid}`)
+    }
+    return PublicTree.fromInfo(info)
+  }
+
+  static async fromInfo(info: TreeInfo): Promise<PublicTree> {
+    const { userland, metadata, skeleton } = info
+    const links = await protocol.basic.getLinks(userland)
+    return new PublicTree({ links, info: { metadata, skeleton } })
   }
 
   static instanceOf(obj: any): obj is PublicTree {
     return obj.header !== undefined
   }
 
-  async emptyChildTree(): Promise<HeaderTree> {
-    return this.static.tree.empty(this.ownKey)
+  async emptyChildTree(): Promise<PublicTree> {
+    return PublicTree.empty()
   }
 
-  async childTreeFromCID(cid: CID): Promise<HeaderTree> {
-    return this.static.tree.fromCID(cid, this.ownKey)
+  async createChildFile(content: FileContent): Promise<PublicFile> {
+    return PublicFile.create(content)
   }
 
-  childTreeFromHeader(header: HeaderV1): HeaderTree {
-    return this.static.tree.fromHeader(header, this.ownKey)
+  async putDetailed(): Promise<PutDetails> {
+    const details = await protocol.pub.putTree(
+      this.links, 
+      this.info.skeleton,
+      metadata.updateMtime(this.info.metadata)
+    )
+    if(this.onUpdate !== null){
+      this.onUpdate(details)
+    }
+    return details
   }
 
-  async createChildFile(content: FileContent): Promise<HeaderFile> {
-    return this.static.file.create(content, this.ownKey)
-  }
-
-  async childFileFromCID(cid: CID): Promise<HeaderFile> {
-    return this.static.file.fromCID(cid, this.ownKey)
-  }
-
-  async put(): Promise<CID> {
-    const { cid } = await this.putWithPins()
-    return cid
-  }
-  
-  async putWithPins(): Promise<PutResult> {
-    return this.putWithKey(this.parentKey)
-  }
- 
-  protected async putWithKey(key: Maybe<string>): Promise<PutResult> {
-    const links = link.fromNodeMap(this.header.fileIndex)
-    const indexCID = await basic.putLinks(links, this.header.key)
-
-    const size = Object.values(this.header.fileIndex || {})
-                .reduce((acc, cur) => acc + cur.size, 0)
-
-    return header.put(indexCID, {
-      ...this.header,
-      size,
-      mtime: Date.now()
-    }, key)
-  }
-
-  async updateDirectChild(child: HeaderTree | HeaderFile, name: string): Promise<this> {
-    const { cid, pins } = await child.putWithPins()
+  async updateDirectChild(child: PublicTree | PublicFile, name: string): Promise<this> {
+    const { cid, metadata, userland, size } = await child.putDetailed()
+    this.links[name] = link.make(name, cid, check.isFile(child), size)
+    this.info.skeleton[name] = { 
+      cid, 
+      metadata, 
+      userland, 
+      subSkeleton: check.isFile(child) ? {} : child.info.skeleton,
+      isFile: check.isFile(child)
+    }
     return this
-            .updatePins(name, pins)
-            .updateHeader(name, {
-              ...child.getHeader(),
-              cid,
-              isFile: check.isFile(child)
-            })
   }
 
-  async removeDirectChild(name: string): Promise<this> {
+  removeDirectChild(name: string): this {
+    delete this.links[name]
+    delete this.info.skeleton[name]
     return this
-            .updatePins(name, null)
-            .updateHeader(name, null)
   }
 
-  async getDirectChild(name: string): Promise<HeaderTree | HeaderFile | null> {
-    const childHeader = this.findLink(name)
-    if(childHeader === null) return null
-    return childHeader.isFile
-          ? this.childFileFromCID(childHeader.cid)
-          : this.childTreeFromHeader(childHeader)
+  async getDirectChild(name: string): Promise<PublicTree | PublicFile | null> {
+    const childInfo = this.info.skeleton[name] || null
+    if(childInfo === null) return null
+    return childInfo.isFile
+          ? PublicFile.fromCID(childInfo.cid)
+          : PublicTree.fromCID(childInfo.cid)
   }
 
-  async getOrCreateDirectChild(name: string): Promise<HeaderTree | HeaderFile> {
+  async getOrCreateDirectChild(name: string): Promise<PublicTree | PublicFile> {
     const child = await this.getDirectChild(name)
     return child ? child : this.emptyChildTree()
   }
 
-  async updateHeader(name: string, childInfo: Maybe<NodeInfo>): Promise<this> {
-    const { fileIndex } = this.header
-    if(isJust(childInfo)){
-      childInfo.name = name
-    }
-    const updatedFileIndex = updateOrRemoveKeyFromObj(fileIndex, name, childInfo)
-    const sizeDiff = (childInfo?.size || 0) - (fileIndex[name]?.size || 0)
+  async get(path: string): Promise<PublicTree | PublicFile | null> {
+    const parts = pathUtil.splitNonEmpty(path)
+    if(parts === null) return this
 
-    this.header = {
-      ...this.header,
-      fileIndex: updatedFileIndex,
-      size: this.header.size + sizeDiff,
-    }
-    return this
-  }
+    const skeletonInfo = skeleton.getPath(this.info.skeleton, parts)
+    if(skeletonInfo === null) return null
 
-  updatePins(name: string, pins: Maybe<PinMap>): this {
-    this.header.pins = updateOrRemoveKeyFromObj(this.header.pins, name, pins)
-    return this
-  }
-
-  updateLink(info: NodeInfo): Tree {
-    this.header = {
-      ...this.header,
-      fileIndex: {
-        ...this.header.fileIndex,
-        [info.name = '']: info
-      }
-    }
-    return this
-  }
-
-  findLink(name: string): NodeInfo | null {
-    return this.header.fileIndex[name] || null
-  }
-
-  findLinkCID(name: string): CID | null {
-    return this.findLink(name)?.cid || null
-  }
-
-  rmLink(name: string): Tree {
-    this.header = {
-      ...this.header,
-      fileIndex: removeKeyFromObj(this.header.fileIndex, name)
-    }
-    return this
+    const info = await protocol.pub.get(skeletonInfo.cid)
+    return check.isFileInfo(info) 
+      ? PublicFile.fromInfo(info)
+      : PublicTree.fromInfo(info)
   }
 
   getLinks(): Links {
-    return link.fromNodeMap(this.header.fileIndex)
+    // add missing metadata into links
+    return Object.values(this.links).reduce((acc, cur) => {
+      return {
+        ...acc,
+        [cur.name]: {
+          ...cur,
+          isFile: this.info.skeleton[cur.name]?.isFile,
+        }
+      }
+    }, {} as Links)
   }
-
-  getHeader(): HeaderV1 {
-    return this.header
-  }
-
 }
 
 

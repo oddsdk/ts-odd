@@ -1,5 +1,5 @@
-import { CID, FileContent } from '../../ipfs'
-import basic from '../network/basic'
+import { AddResult, CID, FileContent } from '../../ipfs'
+import * as protocol from '../protocol'
 import BaseFile from '../base/file'
 
 
@@ -10,13 +10,17 @@ export class BareFile extends BaseFile {
   }
 
   static async fromCID(cid: CID): Promise<BareFile> {
-    const content = await basic.getFile(cid, null)
+    const content = await protocol.basic.getFile(cid)
     return new BareFile(content)
   }
 
   async put(): Promise<CID> {
-    const { cid } = await  basic.putFile(this.content, null)
+    const { cid } = await this.putDetailed()
     return cid
+  }
+
+  async putDetailed(): Promise<AddResult> {
+    return protocol.basic.putFile(this.content)
   }
 }
 

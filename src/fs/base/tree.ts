@@ -2,12 +2,13 @@
 
 /** @internal */
 import * as pathUtil from '../path'
-import { Links, Tree, File, SemVer, NonEmptyPath } from '../types'
-import check from '../types/check'
-import { CID, FileContent } from '../../ipfs'
+import { Tree, File, NonEmptyPath, UnixTree, BaseLinks } from '../types'
+import { SemVer } from '../semver'
+import * as check from '../types/check'
+import { AddResult, CID, FileContent } from '../../ipfs'
 
 
-abstract class BaseTree implements Tree {
+abstract class BaseTree implements Tree, UnixTree {
 
   version: SemVer
 
@@ -15,7 +16,12 @@ abstract class BaseTree implements Tree {
     this.version = version
   }
 
-  async ls(path: string): Promise<Links> {
+  async put(): Promise<CID> {
+    const { cid } = await this.putDetailed()
+    return cid
+  }
+
+  async ls(path: string): Promise<BaseLinks> {
     const dir = await this.get(path)
     if (dir === null) {
       throw new Error("Path does not exist")
@@ -26,12 +32,14 @@ abstract class BaseTree implements Tree {
   }
 
   async mkdir(path: string): Promise<this> {
-    const exists = await this.pathExists(path)
+    const exists = await this.exists(path)
     if (exists) {
       throw new Error(`Path already exists: ${path}`)
     }
     const toAdd = await this.emptyChildTree()
-    return this.addChild(path, toAdd)
+    await this.addChild(path, toAdd)
+    await this.putDetailed()
+    return this
   }
 
   async cat(path: string): Promise<FileContent> {
@@ -45,7 +53,9 @@ abstract class BaseTree implements Tree {
   }
 
   async add(path: string, content: FileContent): Promise<this> {
-    return this.addChild(path, content)
+    await this.addChild(path, content)
+    await this.putDetailed()
+    return this
   }
 
   async addChild(path: string, toAdd: Tree | FileContent): Promise<this> {
@@ -85,7 +95,9 @@ abstract class BaseTree implements Tree {
     if (parts === null) {
       throw new Error("Path does not exist")
     }
-    return this.rmNested(parts)
+    await this.rmNested(parts)
+    await this.put()
+    return this
   }
 
   async rmNested(path: NonEmptyPath): Promise<this> {
@@ -103,38 +115,38 @@ abstract class BaseTree implements Tree {
             : updated as this
   }
 
-  async pathExists(path: string): Promise<boolean> {
+  async mv(from: string, to: string): Promise<this> {
+    const node = await this.get(from)
+    if (node === null) {
+      throw new Error(`Path does not exist: ${from}`)
+    }
+    const toParts = pathUtil.splitParts(to)
+    const destPath = pathUtil.join(toParts.slice(0, toParts.length - 1)) // remove file/dir name
+    const destination = await this.get(destPath)
+    if (check.isFile(destination)) {
+      throw new Error(`Can not \`mv\` to a file: ${destPath}`)
+    }
+    await this.addChild(to, node)
+    return this.rm(from)
+  }
+
+  async exists(path: string): Promise<boolean> {
     const node = await this.get(path)
     return node !== null
   }
 
-  async get(path: string): Promise<Tree | File | null> {
-    const { head, nextPath } = pathUtil.takeHead(path)
-    if(head === null) return this
-    const nextTree = await this.getDirectChild(head)
+  abstract async get(path: string): Promise<Tree | File | null>
 
-    if (nextPath === null) {
-      return nextTree
-    } else if (nextTree === null || check.isFile(nextTree)) {
-      return null
-    }
-
-    return nextTree.get(nextPath)
-  }
-
-
-  abstract async put(): Promise<CID>
+  abstract async putDetailed(): Promise<AddResult>
   abstract async updateDirectChild (child: Tree | File, name: string): Promise<this>
-  abstract async removeDirectChild(name: string): Promise<this>
+  abstract removeDirectChild(name: string): this
   abstract async getDirectChild(name: string): Promise<Tree | File | null>
   abstract async getOrCreateDirectChild(name: string): Promise<Tree | File>
 
-  abstract getLinks(): Links
+  abstract getLinks(): BaseLinks
 
   abstract async emptyChildTree(): Promise<Tree>
-  abstract async childTreeFromCID(cid: CID): Promise<Tree>
   abstract async createChildFile(content: FileContent): Promise<File>
-  abstract async childFileFromCID(cid: CID): Promise<File>
 }
 
 

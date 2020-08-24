@@ -1,58 +1,48 @@
-import { HeaderV1, PutResult, HeaderFile } from '../types'
+import {  PutDetails, File } from '../types'
+import { FileInfo, FileHeader } from '../protocol/public/types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
-import headerv1 from'./header'
-import header from'../network/header'
-import basic from '../network/basic'
-import { Maybe } from '../../common'
-import semver from '../semver'
+import * as metadata from '../metadata'
+import * as protocol from '../protocol'
 
 
-export class PublicFile extends BaseFile implements HeaderFile {
+type ConstructorParams = {
+  content: FileContent, 
+  info: FileHeader
+}
 
-  protected header: HeaderV1
-  protected parentKey: Maybe<string>
+export class PublicFile extends BaseFile implements File {
 
-  constructor(content: FileContent, header: HeaderV1, parentKey: Maybe<string>) {
+  info: FileHeader
+
+  constructor({ content, info }: ConstructorParams) {
     super(content)
-    this.header = header
-    this.parentKey = parentKey
+    this.info = info
   }
 
-  static async create(content: FileContent, parentKey: Maybe<string>): Promise<HeaderFile> {
-    return new PublicFile(content, { 
-      ...headerv1.empty(),
-      isFile: true,
-      version: semver.v1
-    }, parentKey)
+  static async create(content: FileContent): Promise<PublicFile> {
+    return new PublicFile({
+      content, 
+      info: { metadata:  metadata.empty(true) }
+    })
   }
 
-  static async fromCID(cid: CID, parentKey: Maybe<string>): Promise<HeaderFile> {
-    const info = await headerv1.getHeaderAndIndex(cid, null)
-    const content = await basic.getFile(info.index, null)
-    return new PublicFile(content, info.header, parentKey)
+  static async fromCID(cid: CID): Promise<PublicFile> {
+    const info = await protocol.pub.get(cid)
+    return PublicFile.fromInfo(info)
   }
 
-  async put(): Promise<CID> {
-    const { cid } = await this.putWithPins()
-    return cid
+  static async fromInfo(info: FileInfo): Promise<PublicFile> {
+    const { userland, metadata } = info
+    const content = await protocol.basic.getFile(userland)
+    return new PublicFile({ content, info: { metadata } })
   }
 
-  async putWithPins(): Promise<PutResult> {
-    return this.putWithKey(null)
-  }
-
-  protected async putWithKey(key: Maybe<string>) {
-    const { cid, size } = await basic.putFile(this.content, this.header.key)
-    return header.put(cid, {
-      ...this.header,
-      size,
-      mtime: Date.now()
-    }, key)
-  }
-
-  getHeader(): HeaderV1 {
-    return this.header
+  async putDetailed(): Promise<PutDetails> {
+    return protocol.pub.putFile(
+      this.content, 
+      metadata.updateMtime(this.info.metadata)
+    )
   }
 
 }
