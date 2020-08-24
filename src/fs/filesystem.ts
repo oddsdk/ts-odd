@@ -157,13 +157,16 @@ export class FileSystem implements UnixTree {
                         await BareTree.empty()
 
     const privateCID = root.links['private']?.cid || null
-
-    const mmpt = privateCID === null
-      ? await MMPT.create()
-      : await MMPT.fromCID(privateCID)
-
     const key = await keystore.getKeyByName(keyName)
-    const privateTree = await PrivateTree.fromBaseKey(mmpt, key)
+
+    let mmpt, privateTree
+    if(privateCID === null){
+      mmpt = await MMPT.create()
+      privateTree = await PrivateTree.create(mmpt, key, null)
+    }else{
+      mmpt = await MMPT.fromCID(privateCID)
+      privateTree = await PrivateTree.fromBaseKey(mmpt, key)
+    }
 
     const fs = new FileSystem({
       root,
