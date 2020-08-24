@@ -1,8 +1,8 @@
 {
   "name": "webnative",
   "version": "0.16.0",
-  "description": "Fission Typescript SDK",
-  "keywords": [],
+  "description": "Fission Webnative Typescript SDK",
+  "keywords": ["WebCrypto", "auth", "IPFS", "files"],
   "main": "index.cjs.js",
   "module": "index.es5.js",
   "browser": "index.umd.js",
@@ -10,7 +10,7 @@
   "author": "Daniel Holmgren <daniel@fission.codes>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fission-suite/ts-sdk"
+    "url": "https://github.com/fission-suite/webnative"
   },
   "license": "Apache-2.0",
   "engines": {
