@@ -4,7 +4,7 @@ import BareTree from './bare/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
 import MMPT from './protocol/private/mmpt'
-import { Links, SyncHook, UnixTree, Tree, File, BaseLinks } from './types'
+import { SyncHook, UnixTree, Tree, File, BaseLinks } from './types'
 import { SemVer } from './semver'
 
 import * as cidLog from '../common/cid-log'

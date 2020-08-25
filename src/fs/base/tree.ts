@@ -85,7 +85,7 @@ abstract class BaseTree implements Tree, UnixTree {
       toAdd = await nextTree.addRecurse(nextPath, child)
     }
 
-    const toAddNode = check.isTree(toAdd) ? toAdd : await this.createChildFile(child)
+    const toAddNode = check.isTree(toAdd) ? toAdd : await this.createChildFile(child as FileContent)
 
     return this.updateDirectChild(toAddNode, name)
   }
@@ -126,7 +126,11 @@ abstract class BaseTree implements Tree, UnixTree {
     if (check.isFile(destination)) {
       throw new Error(`Can not \`mv\` to a file: ${destPath}`)
     }
-    await this.addChild(to, node)
+
+    check.isTree(node)
+      ? await this.addChild(to, node)
+      : await this.addChild(to, node.content)
+
     return this.rm(from)
   }
 

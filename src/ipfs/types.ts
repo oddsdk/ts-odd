@@ -14,7 +14,7 @@ export type DAGNode = {
   toDAGLink: (opt?: { name?: string }) => Promise<DAGLink>
   addLink: (link: DAGLink) => void
   rmLink: (name: string) => void
-  toJSON: () => object
+  toJSON: () => Record<string, unknown>
 }
 
 export type DAGLink = {
@@ -63,7 +63,7 @@ export type CIDObj = {
   version: number
 }
 
-export type FileContent = object | Blob | string | number | boolean
+export type FileContent = Record<string, unknown> | Buffer | Blob | string | number | boolean
 export type FileContentRaw = Buffer
 
 export type FileMode = number
