@@ -279,6 +279,7 @@ export class FileSystem implements UnixTree {
   async publicize(): Promise<CID> {
     const cid = await this.root.put()
 
+    debug.log(`Publicized: ${cid}`)
     this.syncHooks.forEach(hook => hook(cid))
 
     return cid
