@@ -7,7 +7,7 @@ import { DAG_NODE_DATA } from './constants'
 
 export const add = async (content: FileContent): Promise<AddResult> => {
   const ipfs = await getIpfs()
-  const result = await ipfs.add(content)
+  const result = await ipfs.add(content, { cidVersion: 1 })
 
   return {
     cid: result.cid.toString(),
@@ -51,9 +51,10 @@ export const dagGet = async (cid: CID): Promise<DAGNode> => {
 
 export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   const ipfs = await getIpfs()
-  // using this format so that we get v0 CIDs. ipfs gateway seems to have issues w/ v1 CIDs
+  // using this format because Gateway doesn't like `dag-cbor` nodes. 
+  // I think this is because UnixFS requires `dag-pb` & the gateway requires UnixFS for directory traversal
   const cidObj = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
-  const cid = cidObj.toString()
+  const cid = cidObj.toV1().toString()
   const nodeSize = await size(cid)
   return { cid, size: nodeSize }
 }
