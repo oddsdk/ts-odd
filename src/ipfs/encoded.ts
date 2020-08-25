@@ -8,7 +8,7 @@ import * as keystore from '../keystore'
 // IPFS
 
 import { CID, FileContent, AddResult } from './types'
-import basic from './basic'
+import * as basic from './basic'
 
 
 export const add = async (content: FileContent, key: Maybe<string>): Promise<AddResult> => {
@@ -23,9 +23,4 @@ export const catAndDecode = async (cid: CID, key: Maybe<string>): Promise<unknow
   const buf = await basic.catBuf(cid)
   const toDecode = isJust(key) ? await keystore.decrypt(buf, key) : buf
   return cbor.decode(toDecode)
-}
-
-export default {
-  add,
-  catAndDecode,
 }

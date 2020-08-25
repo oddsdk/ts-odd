@@ -8,7 +8,8 @@ import { isString } from '../../../common/type-checks'
 import * as check from '../../types/check'
 
 import { isValue } from '../../../common'
-import ipfs, { CID, FileContent } from '../../../ipfs'
+import * as ipfs from '../../../ipfs'
+import { CID, FileContent } from '../../../ipfs'
 import * as link from '../../link'
 
 import * as basic from '../basic'

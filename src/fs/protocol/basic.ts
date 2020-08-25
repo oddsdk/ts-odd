@@ -1,7 +1,8 @@
 /** @internal */
 
 /** @internal */
-import ipfs, { CID, FileContent, AddResult } from '../../ipfs'
+import * as ipfs from '../../ipfs'
+import { CID, FileContent, AddResult } from '../../ipfs'
 
 import { Links } from '../types'
 import * as link from '../link'

@@ -4,6 +4,7 @@ export type IPFS = {
   ls(cid: CID): AsyncIterable<UnixFSFile>
   dag: DagAPI
   object: ObjectAPI
+  swarm: SwarmAPI
   dns(domain: string): Promise<CID>
 }
 
@@ -89,4 +90,8 @@ export type ObjStat = {
 export type AddResult = {
   cid: CID
   size: number
+}
+
+export type SwarmAPI = {
+  connect: (address: string) => Promise<unknown>
 }
