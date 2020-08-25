@@ -2876,10 +2876,10 @@ jsprim@^1.2.2:
     json-schema "0.2.3"
     verror "1.10.0"
 
-keystore-idb@^0.13.0:
-  version "0.13.0"
-  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.13.0.tgz#8c852b7e69cf4cf9a864f502ca10f2c193a217f9"
-  integrity sha512-dGE1Hca3Z8TV8hL0CXuVMYt5L5ZvCTFWy4cR3a885xRT9JeDExpFaI1m2KBqPn/zkrFvIyg7Q6x26U7fRH7MAA==
+keystore-idb@^0.13.4:
+  version "0.13.4"
+  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.13.4.tgz#b2736ee183ce2767f93b59f61bbc7ad5fd20d6e2"
+  integrity sha512-jXYiTCebOUgz5qOwh9v3BoppUed3kNF9Xn55CZz3kmAKA3Ic0phB+Vx00yxnzlx6hQC0nce6txAi37TI046bZg==
   dependencies:
     localforage "^1.7.3"
 
