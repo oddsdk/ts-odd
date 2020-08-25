@@ -18,7 +18,10 @@ let ipfs: IPFS | null = null
 
 export const defaultOptions = {
   config: {
-    Bootstrap: [ PEER_WSS ]
+    Addresses: {
+      Delegates: [ PEER_WSS ]
+    },
+   Bootstrap: [ PEER_WSS ]
   }
 }
 
