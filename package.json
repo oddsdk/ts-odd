@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.16.3",
+  "version": "0.16.4",
   "description": "Fission Typescript SDK",
   "keywords": [],
   "main": "index.cjs.js",
