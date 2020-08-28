@@ -1,5 +1,5 @@
 import dagPB from 'ipld-dag-pb'
-import { get as getIpfs } from './config'
+import { get as getIpfs, PEER_WSS } from './config'
 import { CID, FileContent, DAGNode, UnixFSFile, DAGLink, AddResult } from './types'
 import util from './util'
 import { DAG_NODE_DATA } from './constants'
@@ -12,7 +12,6 @@ export const add = async (content: FileContent): Promise<AddResult> => {
     cid: result.cid.toString(),
     size: result.size
   }
-
 }
 
 export const catRaw = async (cid: CID): Promise<Buffer[]> => {
@@ -69,14 +68,7 @@ export const size = async (cid: CID): Promise<number> => {
   return stat.CumulativeSize
 } 
 
-export default {
-  add,
-  catRaw,
-  catBuf,
-  cat,
-  ls,
-  dagGet,
-  dagPut,
-  dagPutLinks,
-  size,
+export const reconnect = async (): Promise<void> => {
+  const ipfs = await getIpfs()
+  await ipfs.swarm.connect(PEER_WSS)
 }

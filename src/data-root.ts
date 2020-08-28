@@ -3,6 +3,7 @@ import localforage from 'localforage'
 import * as did from './did'
 import * as dns from './dns'
 import * as ucan from './ucan'
+import * as ipfs from './ipfs'
 import { api, UCAN_STORAGE_KEY } from './common'
 import { CID } from './ipfs'
 import { setup } from './setup/internal'
@@ -39,10 +40,13 @@ export async function update(
     proof: await localforage.getItem(UCAN_STORAGE_KEY)
   })
 
-  await fetch(`${apiEndpoint}/user/data/${cid}`, {
-    method: 'PATCH',
-    headers: {
-      'authorization': `Bearer ${jwt}`
-    }
-  })
+  await Promise.all([
+    ipfs.reconnect(),
+    fetch(`${apiEndpoint}/user/data/${cid}`, {
+      method: 'PATCH',
+      headers: {
+        'authorization': `Bearer ${jwt}`
+      }
+    })
+  ])
 }

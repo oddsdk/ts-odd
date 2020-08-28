@@ -4,6 +4,7 @@ export type IPFS = {
   ls(cid: CID): AsyncIterable<UnixFSFile>
   dag: DagAPI
   object: ObjectAPI
+  swarm: SwarmAPI
   dns(domain: string): Promise<CID>
 }
 
@@ -13,7 +14,7 @@ export type DAGNode = {
   toDAGLink: (opt?: { name?: string }) => Promise<DAGLink>
   addLink: (link: DAGLink) => void
   rmLink: (name: string) => void
-  toJSON: () => object
+  toJSON: () => Record<string, unknown>
 }
 
 export type DAGLink = {
@@ -62,7 +63,7 @@ export type CIDObj = {
   version: number
 }
 
-export type FileContent = object | Blob | string | number | boolean
+export type FileContent = Record<string, unknown> | Buffer | Blob | string | number | boolean
 export type FileContentRaw = Buffer
 
 export type FileMode = number
@@ -89,4 +90,8 @@ export type ObjStat = {
 export type AddResult = {
   cid: CID
   size: number
+}
+
+export type SwarmAPI = {
+  connect: (address: string) => Promise<unknown>
 }
