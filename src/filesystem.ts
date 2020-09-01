@@ -4,17 +4,23 @@ import FileSystem from './fs'
 import * as cidLog from './common/cid-log'
 import * as debug from './common/debug'
 import * as dataRoot from './data-root'
-import { authenticatedUsername } from './common'
+import { READ_KEY_FROM_LOBBY_NAME, authenticatedUsername } from './common'
+import { Prerequisites } from './ucan/prerequisites'
+import { Ucan } from './ucan'
 
 
 /**
  * Load a user's file system.
  *
+ * @param prerequisites The prerequisites from initialise.
  * @param username Optional, username of the user to load the file system from.
  *                 Will try to load the file system of the authenticated user
  *                 by default. Throws an error if there's no authenticated user.
  */
-export async function loadFileSystem(username?: string): Promise<FileSystem> {
+export async function loadFileSystem(
+  prerequisites: Prerequisites,
+  username?: string
+): Promise<FileSystem> {
   let cid, fs
 
   // Look for username
@@ -22,13 +28,18 @@ export async function loadFileSystem(username?: string): Promise<FileSystem> {
   if (!username) throw new Error("User hasn't authenticated yet")
 
   // Determine the correct CID of the file system to load
-  const dataCid = await dataRoot.lookup(username)
+  const dataCid = navigator.onLine ? await dataRoot.lookup(username) : null
   const [ logIdx, logLength ] = dataCid ? await cidLog.index(dataCid) : [ -1, 0 ]
 
-  if (!dataCid) {
+  if (!navigator.onLine) {
+    // Offline, use local CID
+    cid = await cidLog.newest()
+
+  } else if (!dataCid) {
     // No DNS CID yet
     cid = await cidLog.newest()
-    debug.log("📓 No DNSLink, using local CID:", cid)
+    if (cid) debug.log("📓 No DNSLink, using local CID:", cid)
+    else debug.log("📓 Creating a new file system")
 
   } else if (logIdx === 0) {
     // DNS is up to date
@@ -50,11 +61,12 @@ export async function loadFileSystem(username?: string): Promise<FileSystem> {
   }
 
   // If a file system exists, load it and return it
-  fs = cid ? await FileSystem.fromCID(cid) : null
+  const keyName = READ_KEY_FROM_LOBBY_NAME
+  fs = cid ? await FileSystem.fromCID(cid, { keyName, prerequisites }) : null
   if (fs) return fs
 
   // Otherwise make a new one
-  fs = await FileSystem.empty()
+  fs = await FileSystem.empty({ keyName, prerequisites })
   await addSampleData(fs)
 
   // Fin
@@ -72,4 +84,5 @@ async function addSampleData(fs: FileSystem): Promise<void> {
   await fs.mkdir("private/Documents")
   await fs.mkdir("private/Photos")
   await fs.mkdir("private/Video")
+  await fs.publicise()
 }

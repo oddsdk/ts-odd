@@ -20,7 +20,7 @@ export async function createAccount(
 
   const jwt = await ucan.build({
     audience: await api.did(),
-    issuer: await did.local(),
+    issuer: await did.ucan(),
   })
 
   const response = await fetch(`${apiEndpoint}/user`, {

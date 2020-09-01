@@ -1,27 +1,32 @@
 import { throttle } from 'throttle-debounce'
 
-import BareTree from './bare/tree'
-import PublicTree from './v1/PublicTree'
-import PrivateTree from './v1/PrivateTree'
-import MMPT from './protocol/private/mmpt'
 import { SyncHook, UnixTree, Tree, File, BaseLinks } from './types'
 import { SemVer } from './semver'
+import BareTree from './bare/tree'
+import MMPT from './protocol/private/mmpt'
+import PublicTree from './v1/PublicTree'
+import PrivateTree from './v1/PrivateTree'
 
 import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
 import * as debug from '../common/debug'
 import * as keystore from '../keystore'
-import { AddResult, CID, FileContent } from '../ipfs'
-import * as pathUtil from './path'
 import * as link from './link'
+import * as pathUtil from './path'
+import * as ucan from '../ucan'
+import * as ucanInternal from '../ucan/internal'
+
+import { AddResult, CID, FileContent } from '../ipfs'
+import { NoPermissionError } from '../errors'
+import { Prerequisites } from '../ucan/prerequisites'
+import { Ucan } from '../ucan'
 
 
 // TYPES
 
-type AppPath = {
-  public: (appUuid: string, suffix?: string | Array<string>) => string
-  private: (appUuid: string, suffix?: string | Array<string>) => string
-}
+
+type AppPath =
+  (path?: string | Array<string>) => string
 
 type ConstructorParams = {
   root: BareTree
@@ -30,11 +35,14 @@ type ConstructorParams = {
   privateTree: PrivateTree
   mmpt: MMPT
   rootDid: string
+
+  prerequisites?: Prerequisites
 }
 
 type FileSystemOptions = {
   version?: SemVer
   keyName?: string
+  prerequisites?: Prerequisites
   rootDid?: string
 }
 
@@ -58,39 +66,45 @@ export class FileSystem implements UnixTree {
   mmpt: MMPT
   rootDid: string
 
-  appPath: AppPath
+  appPath: AppPath | undefined
+  proofs: { [_: string]: Ucan }
   syncHooks: Array<SyncHook>
-  syncWhenOnline: CID | null
+  syncWhenOnline: Array<[CID, string]>
 
 
-  constructor({ root, publicTree, prettyTree, privateTree, mmpt, rootDid }: ConstructorParams) {
+  constructor({ root, publicTree, prerequisites, prettyTree, privateTree, mmpt, rootDid }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
     this.mmpt = mmpt
     this.rootDid = rootDid
-    this.syncHooks = []
-    this.syncWhenOnline = null
 
-    this.appPath = {
-      public(appUuid: string, suffix?: string | Array<string>): string {
-        return appPath("public", appUuid, suffix)
-      },
-      private(appUuid: string, suffix?: string | Array<string>): string {
-        return appPath("private", appUuid, suffix)
-      }
+    this.proofs = {}
+    this.syncHooks = []
+    this.syncWhenOnline = []
+
+    if (
+      prerequisites &&
+      prerequisites.app &&
+      prerequisites.app.creator &&
+      prerequisites.app.name
+    ) {
+      this.appPath = appPath(prerequisites)
     }
 
     // Add the root CID of the file system to the CID log
     // (reverse list, newest cid first)
-    const logCid = cidLog.add
+    const logCid = (cid: CID) => {
+      cidLog.add(cid)
+      debug.log("📓 Adding to the CID ledger:", cid)
+    }
 
     // Update the user's data root when making changes
-    const updateDataRootWhenOnline = throttle(3000, false, cid => {
+    const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
       debug.log("🚀 Updating your DNSLink:", cid)
-      if (window.navigator.onLine) return dataRoot.update(cid)
-      this.syncWhenOnline = cid
+      if (window.navigator.onLine) return dataRoot.update(cid, proof)
+      this.syncWhenOnline.push([ cid, proof ])
     }, false)
 
     this.syncHooks.push(logCid)
@@ -101,7 +115,6 @@ export class FileSystem implements UnixTree {
   }
 
 
-
   // INITIALISATION
   // --------------
 
@@ -109,7 +122,7 @@ export class FileSystem implements UnixTree {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', rootDid = '' } = opts
+    const { keyName = 'filesystem-root', rootDid = '', prerequisites } = opts
 
     const publicTree = await PublicTree.empty()
     const prettyTree = await BareTree.empty()
@@ -123,9 +136,10 @@ export class FileSystem implements UnixTree {
     const fs = new FileSystem({
       root,
       publicTree,
+      prerequisites,
       prettyTree,
       privateTree,
-      mmpt, 
+      mmpt,
       rootDid
     })
 
@@ -144,7 +158,7 @@ export class FileSystem implements UnixTree {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { keyName = 'filesystem-root', rootDid = '' } = opts
+    const { keyName = 'filesystem-root', rootDid = '', prerequisites } = opts
 
     const root = await BareTree.fromCID(cid)
 
@@ -171,6 +185,7 @@ export class FileSystem implements UnixTree {
     const fs = new FileSystem({
       root,
       publicTree,
+      prerequisites,
       prettyTree,
       privateTree,
       mmpt,
@@ -184,6 +199,7 @@ export class FileSystem implements UnixTree {
     return fs
   }
 
+
   // DEACTIVATE
   // ----------
 
@@ -195,11 +211,6 @@ export class FileSystem implements UnixTree {
    */
   deactivate(): void {
     window.removeEventListener('online', this.whenOnline)
-  }
-
-
-  async updateRootLink(branch: Branch, update: AddResult): Promise<void> {
-    this.root.updateLink(link.make(branch, update.cid, false, update.size))
   }
 
 
@@ -254,7 +265,7 @@ export class FileSystem implements UnixTree {
   // This is only implemented on the same tree for now and will error otherwise
   async mv(from: string, to: string): Promise<this> {
     const sameTree = pathUtil.sameParent(from, to)
-    if(!sameTree) {
+    if (!sameTree) {
       throw new Error("`mv` is only supported on the same tree for now")
     }
     await this.runOnTree(from, true, (tree, relPath) => {
@@ -273,16 +284,32 @@ export class FileSystem implements UnixTree {
   }
 
 
+  // PUBLICIZE
+  // ---------
+
   /**
-   * Ensures the latest version of the file system is added to IPFS and returns the root CID.
+   * Ensures the latest version of the file system is added to IPFS,
+   * updates your data root, and returns the root CID.
    */
-  async publicize(): Promise<CID> {
+  async publicise(): Promise<CID> {
+    const proofs = Array.from(Object.entries(this.proofs))
+    this.proofs = {}
+
     const cid = await this.root.put()
 
-    debug.log(`Publicized: ${cid}`)
-    this.syncHooks.forEach(hook => hook(cid))
+    proofs.forEach(([_, proof]) => {
+      const encodedProof = ucan.encode(proof)
+      this.syncHooks.forEach(hook => hook(cid, encodedProof))
+    })
 
     return cid
+  }
+
+  /**
+   * Alias for `publicise`.
+   */
+  publicize(): Promise<CID> {
+    return this.publicise()
   }
 
 
@@ -299,6 +326,13 @@ export class FileSystem implements UnixTree {
     const parts = pathUtil.splitParts(path)
     const head = parts[0]
     const relPath = pathUtil.join(parts.slice(1))
+
+    const proof = await ucanInternal.lookupFilesystemUcan(path)
+    if (!proof || ucan.isExpired(proof)) {
+      throw new NoPermissionError("I don't have the necessary permissions to make these changes to the file system")
+    }
+
+    this.proofs[proof.signature] = proof
 
     let result: a
     let resultPretty: a
@@ -335,11 +369,18 @@ export class FileSystem implements UnixTree {
   }
 
   /** @internal */
+  async updateRootLink(branch: Branch, update: AddResult): Promise<void> {
+    this.root.updateLink(link.make(branch, update.cid, false, update.size))
+  }
+
+  /** @internal */
   whenOnline(): void {
-    if (!this.syncWhenOnline) return
-    const cid = this.syncWhenOnline
-    this.syncWhenOnline = null
-    this.syncHooks.forEach(hook => hook(cid))
+    const toSync = [...this.syncWhenOnline]
+    this.syncWhenOnline = []
+
+    toSync.forEach(([cid, proof]) => {
+      this.syncHooks.forEach(hook => hook(cid, proof))
+    })
   }
 }
 
@@ -347,13 +388,15 @@ export class FileSystem implements UnixTree {
 export default FileSystem
 
 
+
 // ㊙️
 
 
-function appPath(head: string, appUuid: string, suffix?: string | Array<string>): string {
-  return (
-    head + '/Apps/' +
-    encodeURIComponent(appUuid) +
-    (suffix ? '/' + (typeof suffix == 'object' ? suffix.join('/') : suffix) : '')
+function appPath(prerequisites: Prerequisites): ((path?: string | Array<string>) => string) {
+  return (path?: string | Array<string>): string => (
+    'private/Apps/'
+      + (prerequisites.app ? prerequisites.app.creator + '/' : '')
+      + (prerequisites.app ? prerequisites.app.name : '')
+      + (path ? '/' + (typeof path == 'object' ? path.join('/') : path) : '')
   )
 }

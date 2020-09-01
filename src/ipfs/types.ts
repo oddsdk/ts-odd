@@ -2,10 +2,11 @@ export type IPFS = {
   add(data: FileContent, options?: unknown): UnixFSFile
   cat(cid: CID): AsyncIterable<FileContentRaw>
   ls(cid: CID): AsyncIterable<UnixFSFile>
+  dns(domain: string): Promise<CID>
   dag: DagAPI
+  files: FilesAPI
   object: ObjectAPI
   swarm: SwarmAPI
-  dns(domain: string): Promise<CID>
 }
 
 export type DAGNode = {
@@ -42,11 +43,16 @@ export type RawDAGLink = {
 export interface DagAPI {
   put(dagNode: unknown, options: unknown): Promise<CIDObj>
   get(cid: string | CID, path?: string, options?: unknown): Promise<RawDAGNode>
-  tree(cid: string | CID, path?: string, options?: unknown): Promise<unknown>
+  resolve(cid: string | CID | CIDObj): Promise<{ cid: CIDObj }>
+  tree(cid: string | CID, path?: string, options?: unknown): Promise<Array<string>>
+}
+
+export interface FilesAPI {
+  stat: (cid: CID | CIDObj) => Promise<{ CumulativeSize: number }>
 }
 
 export interface ObjectAPI {
-  stat(cid: CID): Promise<ObjStat>
+  stat(cid: CID | CIDObj): Promise<ObjStat>
   put(dagNode: unknown, options: unknown): Promise<CIDObj>
   get(cid: CID, path?: string, options?: unknown): Promise<RawDAGNode>
   tree(cid: CID, path?: string, options?: unknown): Promise<unknown>

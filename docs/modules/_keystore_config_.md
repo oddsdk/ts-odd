@@ -16,7 +16,7 @@
 
 ▸ **clear**(): *Promise‹void›*
 
-*Defined in [src/keystore/config.ts:10](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/keystore/config.ts#L10)*
+*Defined in [src/keystore/config.ts:10](https://github.com/fission-suite/webnative/blob/33d72ef/src/keystore/config.ts#L10)*
 
 **Returns:** *Promise‹void›*
 
@@ -26,7 +26,7 @@ ___
 
 ▸ **get**(): *Promise‹KeyStore›*
 
-*Defined in [src/keystore/config.ts:22](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/keystore/config.ts#L22)*
+*Defined in [src/keystore/config.ts:21](https://github.com/fission-suite/webnative/blob/33d72ef/src/keystore/config.ts#L21)*
 
 **Returns:** *Promise‹KeyStore›*
 
@@ -36,7 +36,7 @@ ___
 
 ▸ **set**(`userKeystore`: KeyStore): *Promise‹void›*
 
-*Defined in [src/keystore/config.ts:18](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/keystore/config.ts#L18)*
+*Defined in [src/keystore/config.ts:17](https://github.com/fission-suite/webnative/blob/33d72ef/src/keystore/config.ts#L17)*
 
 **Parameters:**
 

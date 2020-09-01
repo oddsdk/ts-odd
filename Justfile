@@ -1,8 +1,10 @@
 @build-and-clean:
   yarn build
+  yarn docs
   cp ./package.json dist/
   cp ./README.md dist/
   cp ./LICENSE dist/
+  cp -r ./docs dist/
 
 @publish:
   just publish-latest

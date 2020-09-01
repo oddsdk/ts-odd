@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.16.4",
+  "version": "0.17.0",
   "description": "Fission Typescript SDK",
   "keywords": [],
   "main": "index.cjs.js",
@@ -104,6 +104,7 @@
     "load-script2": "^2.0.5",
     "localforage": "^1.7.3",
     "make-error": "^1.3.6",
-    "throttle-debounce": "^2.2.1"
+    "throttle-debounce": "^2.2.1",
+    "yarn": "^1.22.4"
   }
 }

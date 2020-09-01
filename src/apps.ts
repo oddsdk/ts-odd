@@ -3,7 +3,7 @@ import localforage from 'localforage'
 import * as did from './did'
 import * as dns from './dns'
 import * as ucan from './ucan'
-import { api, UCAN_STORAGE_KEY, Maybe, isDefined } from './common'
+import { api, Maybe, isDefined } from './common'
 import { CID } from './ipfs'
 import { setup } from './setup/internal'
 
@@ -14,15 +14,15 @@ export type App = {
 
 /**
  * Get A list of all of your apps and their associated domain names
- *
  */
 export async function index(): Promise<Array<App>> {
   const apiEndpoint = setup.endpoints.api
 
   const jwt = await ucan.build({
     audience: await api.did(),
-    issuer: await did.local(),
-    proof: await localforage.getItem(UCAN_STORAGE_KEY)
+    issuer: await did.ucan(),
+    proof: undefined, // TODO: Waiting on API changes
+    potency: null
   })
 
   const response = await fetch(`${apiEndpoint}/app`, {
@@ -31,6 +31,7 @@ export async function index(): Promise<Array<App>> {
       'authorization': `Bearer ${jwt}`
     }
   })
+
   const data = await response.json();
   return data
 }
@@ -47,12 +48,13 @@ export async function create(
 
   const jwt = await ucan.build({
     audience: await api.did(),
-    issuer: await did.local(),
-    proof: await localforage.getItem(UCAN_STORAGE_KEY)
+    issuer: await did.ucan(),
+    proof: undefined, // TODO: Waiting on API changes
+    potency: null
   })
 
   const url = isDefined(subdomain) ? `${apiEndpoint}/app?${subdomain}` : `${apiEndpoint}/app`
-  
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -75,8 +77,9 @@ export async function deleteByURL(
 
   const jwt = await ucan.build({
     audience: await api.did(),
-    issuer: await did.local(),
-    proof: await localforage.getItem(UCAN_STORAGE_KEY)
+    issuer: await did.ucan(),
+    proof: undefined, // TODO: Waiting on API changes
+    potency: null
   })
 
   await fetch(`${apiEndpoint}/app/associated/${url}`, {

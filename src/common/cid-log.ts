@@ -1,14 +1,20 @@
 import localforage from 'localforage'
+import { setup } from '../setup/internal'
 
 
-const FS_CID_LOG = "fission_sdk.fs_cid_log"
+const FS_CID_LOG_PREFIX = "webnative.wnfs_cid_log"
+
+
+function key() {
+  return FS_CID_LOG_PREFIX + "-" + setup.endpoints.lobby
+}
 
 
 // QUERYING
 
 
 export async function get(): Promise<Array<string>> {
-  return (await localforage.getItem(FS_CID_LOG)) || []
+  return (await localforage.getItem(key())) || []
 }
 
 export async function index(cid: string): Promise<[number, number]> {
@@ -28,5 +34,5 @@ export async function newest(): Promise<string> {
 export async function add(cid: string): Promise<void> {
   const log = await get()
   const newLog = [ cid, ...log ].slice(0, 1000)
-  await localforage.setItem(FS_CID_LOG, newLog)
+  await localforage.setItem(key(), newLog)
 }

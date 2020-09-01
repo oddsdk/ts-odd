@@ -4,6 +4,7 @@ import { CID, FileContent, DAGNode, UnixFSFile, DAGLink, AddResult } from './typ
 import util from './util'
 import { DAG_NODE_DATA } from './constants'
 
+
 export const add = async (content: FileContent): Promise<AddResult> => {
   const ipfs = await getIpfs()
   const result = await ipfs.add(content)
@@ -66,7 +67,7 @@ export const size = async (cid: CID): Promise<number> => {
   const ipfs = await getIpfs()
   const stat = await ipfs.object.stat(cid)
   return stat.CumulativeSize
-} 
+}
 
 export const reconnect = async (): Promise<void> => {
   const ipfs = await getIpfs()

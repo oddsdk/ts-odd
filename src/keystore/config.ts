@@ -14,7 +14,6 @@ export const clear = async (): Promise<void> => {
   }
 }
 
-
 export const set = async (userKeystore: KeyStore): Promise<void> => {
   ks = userKeystore
 }

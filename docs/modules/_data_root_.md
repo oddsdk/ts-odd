@@ -15,7 +15,7 @@
 
 ▸ **lookup**(`username`: string): *Promise‹CID | null›*
 
-*Defined in [src/data-root.ts:16](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/data-root.ts#L16)*
+*Defined in [src/data-root.ts:17](https://github.com/fission-suite/webnative/blob/33d72ef/src/data-root.ts#L17)*
 
 Get the CID of a user's data root.
 
@@ -31,9 +31,9 @@ ___
 
 ###  update
 
-▸ **update**(`cid`: CID | string): *Promise‹void›*
+▸ **update**(`cid`: CID | string, `proof`: string): *Promise‹void›*
 
-*Defined in [src/data-root.ts:31](https://github.com/fission-suite/ts-sdk/blob/f59fd0a/src/data-root.ts#L31)*
+*Defined in [src/data-root.ts:34](https://github.com/fission-suite/webnative/blob/33d72ef/src/data-root.ts#L34)*
 
 Update a user's data root.
 
@@ -41,6 +41,7 @@ Update a user's data root.
 
 Name | Type | Description |
 ------ | ------ | ------ |
-`cid` | CID &#124; string | The CID of the data root.  |
+`cid` | CID &#124; string | The CID of the data root. |
+`proof` | string | The proof to use in the UCAN sent to the API.  |
 
 **Returns:** *Promise‹void›*
