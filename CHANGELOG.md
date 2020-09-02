@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.17.1
+
+- Upgrade to CIDv1
+
 
 ### v0.17
 
