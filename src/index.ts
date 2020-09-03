@@ -1,12 +1,11 @@
 import localforage from 'localforage'
 
-import * as auth from './auth'
 import * as common from './common'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 
 import { READ_KEY_FROM_LOBBY_NAME, USERNAME_STORAGE_KEY } from './common'
-import { AppInfo, FileSystemPrerequisites, Prerequisites } from './ucan/prerequisites'
+import { AppInfo, FileSystemPrerequisites } from './ucan/prerequisites'
 import { loadFileSystem } from './filesystem'
 
 import FileSystem from './fs'
@@ -17,23 +16,15 @@ import fsClass from './fs'
 // SCENARIO
 
 
-export type Scenario = {
-  notAuthorised?: true,
-  authSucceeded?: true,
-  authCancelled?: true,
-  continuation?: true,
+export enum Scenario {
+  NotAuthorised = "NOT_AUTHORISED",
+  AuthSucceeded = "AUTH_SUCCEEDED",
+  AuthCancelled = "AUTH_CANCELLED",
+  Continuation = "CONTINUATION"
 }
-
-export type FulfilledScenario = {
-  prerequisites: Prerequisites,
-  scenario: Scenario,
-  state: State
-}
-
 
 
 // STATE
-
 
 export type State
   = NotAuthorised
@@ -42,10 +33,12 @@ export type State
   | Continuation
 
 export type NotAuthorised = {
+  scenario: Scenario.NotAuthorised
   authenticated: false
 }
 
 export type AuthSucceeded = {
+  scenario: Scenario.AuthSucceeded
   authenticated: true
   newUser: boolean
   throughLobby: true
@@ -55,12 +48,14 @@ export type AuthSucceeded = {
 }
 
 export type AuthCancelled = {
+  scenario: Scenario.AuthCancelled
   authenticated: false
   cancellationReason: string
   throughLobby: true
 }
 
 export type Continuation = {
+  scenario: Scenario.Continuation
   authenticated: true
   newUser: false,
   throughLobby: false
@@ -91,10 +86,10 @@ export async function initialise(
     autoRemoveUrlParams?: boolean
     loadFileSystem?: boolean
   }
-): Promise<FulfilledScenario> {
+): Promise<State> {
   options = options || {}
 
-  const { app, fs, autoRemoveUrlParams } = options
+  const { app, fs, autoRemoveUrlParams = true } = options
   const prerequisites = { app, fs }
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
@@ -120,7 +115,7 @@ export async function initialise(
     await ks.importSymmKey(readKey, READ_KEY_FROM_LOBBY_NAME)
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
-    if (autoRemoveUrlParams || autoRemoveUrlParams === undefined) {
+    if (autoRemoveUrlParams) {
       url.searchParams.delete("newUser")
       url.searchParams.delete("readKey")
       url.searchParams.delete("ucans")
@@ -129,11 +124,10 @@ export async function initialise(
     }
 
     if (ucan.validatePrerequisites(prerequisites, username) === false) {
-      return scenarioNotAuthorised(prerequisites)
+      return scenarioNotAuthorised()
     }
 
     return scenarioAuthSucceeded(
-      prerequisites,
       newUser,
       username,
       await maybeLoadFs(username)
@@ -145,7 +139,7 @@ export async function initialise(
       default: return "Unknown reason"
     }})()
 
-    return scenarioAuthCancelled(prerequisites, c)
+    return scenarioAuthCancelled(c)
 
   }
 
@@ -155,8 +149,8 @@ export async function initialise(
     authedUsername &&
     ucan.validatePrerequisites(prerequisites, authedUsername)
   )
-  ? scenarioContinuation(prerequisites, authedUsername, await maybeLoadFs(authedUsername))
-  : scenarioNotAuthorised(prerequisites)
+  ? scenarioContinuation( authedUsername, await maybeLoadFs(authedUsername))
+  : scenarioNotAuthorised()
 }
 
 
@@ -193,63 +187,48 @@ export * as keystore from './keystore'
 
 
 function scenarioAuthSucceeded(
-  prerequisites: Prerequisites,
   newUser: boolean,
   username: string,
   fs: FileSystem | undefined
-): FulfilledScenario {
+): AuthSucceeded {
   return {
-    prerequisites,
-    scenario: { authSucceeded: true },
-    state: {
-      authenticated: true,
-      throughLobby: true,
-      fs,
-      newUser,
-      username
-    }
+    scenario: Scenario.AuthSucceeded,
+    authenticated: true,
+    throughLobby: true,
+    fs,
+    newUser,
+    username
   }
 }
 
 function scenarioAuthCancelled(
-  prerequisites: Prerequisites,
   cancellationReason: string
-): FulfilledScenario {
+): AuthCancelled {
   return {
-    prerequisites,
-    scenario: { authCancelled: true },
-    state: {
-      authenticated: false,
-      throughLobby: true,
-      cancellationReason
-    }
+    scenario: Scenario.AuthCancelled,
+    authenticated: false,
+    throughLobby: true,
+    cancellationReason
   }
 }
 
 function scenarioContinuation(
-  prerequisites: Prerequisites,
   username: string,
   fs: FileSystem | undefined
-): FulfilledScenario {
+): Continuation {
   return {
-    prerequisites,
-    scenario: { continuation: true },
-    state: {
-      authenticated: true,
-      newUser: false,
-      throughLobby: false,
-      fs,
-      username
-    }
+    scenario: Scenario.Continuation,
+    authenticated: true,
+    newUser: false,
+    throughLobby: false,
+    fs,
+    username
   }
 }
 
-function scenarioNotAuthorised(
-  prerequisites: Prerequisites
-): FulfilledScenario {
+function scenarioNotAuthorised(): NotAuthorised {
   return {
-    prerequisites,
-    scenario: { notAuthorised: true },
-    state: { authenticated: false }
+    scenario: Scenario.NotAuthorised,
+    authenticated: false 
   }
 }
