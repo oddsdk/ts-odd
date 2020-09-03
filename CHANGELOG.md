@@ -1,8 +1,18 @@
 # Changelog
 
+### v0.17.3
+
+Upgrade to js-ipfs v0.50
+
+
+### v0.17.2
+
+Connect to signaling server to find your other devices more easily.
+
+
 ### v0.17.1
 
-- Upgrade to CIDv1
+Upgrade to CIDv1.
 
 
 ### v0.17
