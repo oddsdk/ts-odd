@@ -16,7 +16,7 @@
 
 ▸ **authenticatedUsername**(): *Promise‹string | null›*
 
-*Defined in [src/auth.ts:17](https://github.com/fission-suite/webnative/blob/33d72ef/src/auth.ts#L17)*
+*Defined in [src/auth.ts:17](https://github.com/fission-suite/webnative/blob/935d7b8/src/auth.ts#L17)*
 
 Retrieve the authenticated username.
 
@@ -28,7 +28,7 @@ ___
 
 ▸ **leave**(): *Promise‹void›*
 
-*Defined in [src/auth.ts:26](https://github.com/fission-suite/webnative/blob/33d72ef/src/auth.ts#L26)*
+*Defined in [src/auth.ts:26](https://github.com/fission-suite/webnative/blob/935d7b8/src/auth.ts#L26)*
 
 Leave.
 
@@ -42,7 +42,7 @@ ___
 
 ▸ **redirectToLobby**(`prerequisites`: [Prerequisites](_ucan_prerequisites_.md#prerequisites), `returnTo?`: undefined | string): *Promise‹void›*
 
-*Defined in [src/auth.ts:42](https://github.com/fission-suite/webnative/blob/33d72ef/src/auth.ts#L42)*
+*Defined in [src/auth.ts:42](https://github.com/fission-suite/webnative/blob/935d7b8/src/auth.ts#L42)*
 
 Redirects to a lobby.
 

@@ -14,7 +14,7 @@
 
 ▸ **loadFileSystem**(`prerequisites`: [Prerequisites](_ucan_prerequisites_.md#prerequisites), `username?`: undefined | string): *Promise‹[FileSystem](../classes/_fs_filesystem_.filesystem.md)›*
 
-*Defined in [src/filesystem.ts:20](https://github.com/fission-suite/webnative/blob/33d72ef/src/filesystem.ts#L20)*
+*Defined in [src/filesystem.ts:20](https://github.com/fission-suite/webnative/blob/935d7b8/src/filesystem.ts#L20)*
 
 Load a user's file system.
 

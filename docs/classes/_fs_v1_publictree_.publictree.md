@@ -61,7 +61,7 @@
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:24](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L24)*
+*Defined in [src/fs/v1/PublicTree.ts:24](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L24)*
 
 **Parameters:**
 
@@ -80,7 +80,7 @@ Name | Type |
 
 • **info**: *[TreeHeader](../modules/_fs_protocol_public_types_.md#treeheader)*
 
-*Defined in [src/fs/v1/PublicTree.ts:22](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L22)*
+*Defined in [src/fs/v1/PublicTree.ts:22](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L22)*
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 • **links**: *Links*
 
-*Defined in [src/fs/v1/PublicTree.ts:21](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L21)*
+*Defined in [src/fs/v1/PublicTree.ts:21](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L21)*
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 • **onUpdate**: *Maybe‹SyncHookDetailed›* = null
 
-*Defined in [src/fs/v1/PublicTree.ts:24](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L24)*
+*Defined in [src/fs/v1/PublicTree.ts:24](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L24)*
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[version](_fs_v1_publictree_.publictree.md#version)*
 
-*Defined in [src/fs/base/tree.ts:13](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L13)*
+*Defined in [src/fs/base/tree.ts:13](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L13)*
 
 ## Methods
 
@@ -116,7 +116,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[add](_fs_v1_publictree_.publictree.md#add)*
 
-*Defined in [src/fs/base/tree.ts:55](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L55)*
+*Defined in [src/fs/base/tree.ts:55](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L55)*
 
 **Parameters:**
 
@@ -135,7 +135,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[addChild](_fs_v1_publictree_.publictree.md#addchild)*
 
-*Defined in [src/fs/base/tree.ts:61](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L61)*
+*Defined in [src/fs/base/tree.ts:61](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L61)*
 
 **Parameters:**
 
@@ -154,7 +154,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[addRecurse](_fs_v1_publictree_.publictree.md#addrecurse)*
 
-*Defined in [src/fs/base/tree.ts:70](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L70)*
+*Defined in [src/fs/base/tree.ts:70](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L70)*
 
 **Parameters:**
 
@@ -173,7 +173,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[cat](_fs_v1_publictree_.publictree.md#cat)*
 
-*Defined in [src/fs/base/tree.ts:45](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L45)*
+*Defined in [src/fs/base/tree.ts:45](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L45)*
 
 **Parameters:**
 
@@ -191,7 +191,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:64](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L64)*
+*Defined in [src/fs/v1/PublicTree.ts:64](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L64)*
 
 **Parameters:**
 
@@ -209,7 +209,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:60](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L60)*
+*Defined in [src/fs/v1/PublicTree.ts:60](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L60)*
 
 **Returns:** *Promise‹[PublicTree](_fs_v1_publictree_.publictree.md)›*
 
@@ -221,7 +221,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[exists](_fs_v1_publictree_.publictree.md#exists)*
 
-*Defined in [src/fs/base/tree.ts:137](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L137)*
+*Defined in [src/fs/base/tree.ts:137](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L137)*
 
 **Parameters:**
 
@@ -239,7 +239,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:112](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L112)*
+*Defined in [src/fs/v1/PublicTree.ts:112](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L112)*
 
 **Parameters:**
 
@@ -257,7 +257,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:99](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L99)*
+*Defined in [src/fs/v1/PublicTree.ts:99](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L99)*
 
 **Parameters:**
 
@@ -275,7 +275,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:125](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L125)*
+*Defined in [src/fs/v1/PublicTree.ts:125](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L125)*
 
 **Returns:** *Links*
 
@@ -287,7 +287,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:107](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L107)*
+*Defined in [src/fs/v1/PublicTree.ts:107](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L107)*
 
 **Parameters:**
 
@@ -305,7 +305,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[ls](_fs_v1_publictree_.publictree.md#ls)*
 
-*Defined in [src/fs/base/tree.ts:24](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L24)*
+*Defined in [src/fs/base/tree.ts:24](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L24)*
 
 **Parameters:**
 
@@ -323,7 +323,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[mkdir](_fs_v1_publictree_.publictree.md#mkdir)*
 
-*Defined in [src/fs/base/tree.ts:34](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L34)*
+*Defined in [src/fs/base/tree.ts:34](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L34)*
 
 **Parameters:**
 
@@ -341,7 +341,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[mv](_fs_v1_publictree_.publictree.md#mv)*
 
-*Defined in [src/fs/base/tree.ts:118](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L118)*
+*Defined in [src/fs/base/tree.ts:118](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L118)*
 
 **Parameters:**
 
@@ -360,7 +360,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[put](_fs_v1_publictree_.publictree.md#put)*
 
-*Defined in [src/fs/base/tree.ts:19](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L19)*
+*Defined in [src/fs/base/tree.ts:19](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L19)*
 
 **Returns:** *Promise‹CID›*
 
@@ -372,7 +372,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:68](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L68)*
+*Defined in [src/fs/v1/PublicTree.ts:68](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L68)*
 
 **Returns:** *Promise‹PutDetails›*
 
@@ -384,7 +384,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:93](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L93)*
+*Defined in [src/fs/v1/PublicTree.ts:93](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L93)*
 
 **Parameters:**
 
@@ -402,7 +402,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[rm](_fs_v1_publictree_.publictree.md#rm)*
 
-*Defined in [src/fs/base/tree.ts:93](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L93)*
+*Defined in [src/fs/base/tree.ts:93](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L93)*
 
 **Parameters:**
 
@@ -420,7 +420,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[rmNested](_fs_v1_publictree_.publictree.md#rmnested)*
 
-*Defined in [src/fs/base/tree.ts:103](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/base/tree.ts#L103)*
+*Defined in [src/fs/base/tree.ts:103](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/tree.ts#L103)*
 
 **Parameters:**
 
@@ -438,7 +438,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicTree.ts:80](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L80)*
+*Defined in [src/fs/v1/PublicTree.ts:80](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L80)*
 
 **Parameters:**
 
@@ -455,7 +455,7 @@ ___
 
 ▸ **empty**(): *Promise‹[PublicTree](_fs_v1_publictree_.publictree.md)›*
 
-*Defined in [src/fs/v1/PublicTree.ts:32](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L32)*
+*Defined in [src/fs/v1/PublicTree.ts:32](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L32)*
 
 **Returns:** *Promise‹[PublicTree](_fs_v1_publictree_.publictree.md)›*
 
@@ -465,7 +465,7 @@ ___
 
 ▸ **fromCID**(`cid`: CID): *Promise‹[PublicTree](_fs_v1_publictree_.publictree.md)›*
 
-*Defined in [src/fs/v1/PublicTree.ts:42](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L42)*
+*Defined in [src/fs/v1/PublicTree.ts:42](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L42)*
 
 **Parameters:**
 
@@ -481,7 +481,7 @@ ___
 
 ▸ **fromInfo**(`info`: [TreeInfo](../modules/_fs_protocol_public_types_.md#treeinfo)): *Promise‹[PublicTree](_fs_v1_publictree_.publictree.md)›*
 
-*Defined in [src/fs/v1/PublicTree.ts:50](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L50)*
+*Defined in [src/fs/v1/PublicTree.ts:50](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L50)*
 
 **Parameters:**
 
@@ -497,7 +497,7 @@ ___
 
 ▸ **instanceOf**(`obj`: any): *obj is PublicTree*
 
-*Defined in [src/fs/v1/PublicTree.ts:56](https://github.com/fission-suite/webnative/blob/33d72ef/src/fs/v1/PublicTree.ts#L56)*
+*Defined in [src/fs/v1/PublicTree.ts:56](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PublicTree.ts#L56)*
 
 **Parameters:**
 

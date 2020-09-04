@@ -28,7 +28,7 @@
 
 Ƭ **Resource**: *"*" | Record‹string, string›*
 
-*Defined in [src/ucan.ts:10](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan.ts#L10)*
+*Defined in [src/ucan.ts:10](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan.ts#L10)*
 
 ___
 
@@ -36,7 +36,7 @@ ___
 
 Ƭ **Ucan**: *object*
 
-*Defined in [src/ucan.ts:13](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan.ts#L13)*
+*Defined in [src/ucan.ts:13](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan.ts#L13)*
 
 #### Type declaration:
 
@@ -72,7 +72,7 @@ ___
 
 • **WNFS_PREFIX**: *"floofs"* = "floofs"
 
-*Defined in [src/ucan.ts:38](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan.ts#L38)*
+*Defined in [src/ucan.ts:38](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan.ts#L38)*
 
 ## Functions
 
@@ -80,7 +80,7 @@ ___
 
 ▸ **build**(`__namedParameters`: object): *Promise‹string›*
 
-*Defined in [src/ucan.ts:66](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan.ts#L66)*
+*Defined in [src/ucan.ts:66](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan.ts#L66)*
 
 Create a UCAN, User Controlled Authorization Networks, JWT.
 This JWT can be used for authorization.
@@ -122,7 +122,7 @@ ___
 
 ▸ **compileDictionary**(`ucans`: Array‹string›): *Record‹string, [Ucan](_ucan_.md#ucan)›*
 
-*Defined in [src/ucan.ts:119](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan.ts#L119)*
+*Defined in [src/ucan.ts:119](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan.ts#L119)*
 
 Given a list of UCANs, generate a dictionary.
 The key will be in the form of `${resourceKey}:${resourceValue}`
@@ -141,7 +141,7 @@ ___
 
 ▸ **decode**(`ucan`: string): *[Ucan](_ucan_.md#ucan)*
 
-*Defined in [src/ucan.ts:145](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan.ts#L145)*
+*Defined in [src/ucan.ts:145](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan.ts#L145)*
 
 Try to decode a UCAN.
 Will throw if it fails.
@@ -160,7 +160,7 @@ ___
 
 ▸ **encode**(`ucan`: [Ucan](_ucan_.md#ucan)): *string*
 
-*Defined in [src/ucan.ts:162](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan.ts#L162)*
+*Defined in [src/ucan.ts:162](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan.ts#L162)*
 
 Encode a UCAN.
 
@@ -178,7 +178,7 @@ ___
 
 ▸ **isExpired**(`ucan`: [Ucan](_ucan_.md#ucan)): *boolean*
 
-*Defined in [src/ucan.ts:176](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan.ts#L176)*
+*Defined in [src/ucan.ts:176](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan.ts#L176)*
 
 Check if a UCAN is expired.
 
@@ -196,7 +196,7 @@ ___
 
 ▸ **rootIssuer**(`ucan`: string, `level`: number): *string*
 
-*Defined in [src/ucan.ts:189](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan.ts#L189)*
+*Defined in [src/ucan.ts:189](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan.ts#L189)*
 
 Given a UCAN, lookup the root issuer.
 
