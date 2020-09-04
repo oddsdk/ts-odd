@@ -122,7 +122,7 @@ ___
 
 Ƭ **AuthCancelled**: *object*
 
-*Defined in [src/index.ts:57](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L57)*
+*Defined in [src/index.ts:57](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L57)*
 
 #### Type declaration:
 
@@ -138,7 +138,7 @@ ___
 
 Ƭ **AuthSucceeded**: *object*
 
-*Defined in [src/index.ts:48](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L48)*
+*Defined in [src/index.ts:48](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L48)*
 
 #### Type declaration:
 
@@ -158,7 +158,7 @@ ___
 
 Ƭ **Continuation**: *object*
 
-*Defined in [src/index.ts:63](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L63)*
+*Defined in [src/index.ts:63](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L63)*
 
 #### Type declaration:
 
@@ -178,7 +178,7 @@ ___
 
 Ƭ **FulfilledScenario**: *object*
 
-*Defined in [src/index.ts:27](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L27)*
+*Defined in [src/index.ts:27](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L27)*
 
 #### Type declaration:
 
@@ -194,7 +194,7 @@ ___
 
 Ƭ **NotAuthorised**: *object*
 
-*Defined in [src/index.ts:44](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L44)*
+*Defined in [src/index.ts:44](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L44)*
 
 #### Type declaration:
 
@@ -206,7 +206,7 @@ ___
 
 Ƭ **Scenario**: *object*
 
-*Defined in [src/index.ts:20](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L20)*
+*Defined in [src/index.ts:20](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L20)*
 
 #### Type declaration:
 
@@ -224,7 +224,7 @@ ___
 
 Ƭ **State**: *[NotAuthorised](_index_.md#notauthorised) | [AuthSucceeded](_index_.md#authsucceeded) | [AuthCancelled](_index_.md#authcancelled) | [Continuation](_index_.md#continuation)*
 
-*Defined in [src/index.ts:38](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L38)*
+*Defined in [src/index.ts:38](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L38)*
 
 ## Variables
 
@@ -232,7 +232,7 @@ ___
 
 • **fs**: *[FileSystem](../classes/_fs_filesystem_.filesystem.md)* = fsClass
 
-*Defined in [src/index.ts:176](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L176)*
+*Defined in [src/index.ts:176](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L176)*
 
 ## Functions
 
@@ -240,7 +240,7 @@ ___
 
 ▸ **initialise**(`options`: object): *Promise‹[FulfilledScenario](_index_.md#fulfilledscenario)›*
 
-*Defined in [src/index.ts:84](https://github.com/fission-suite/webnative/blob/33d72ef/src/index.ts#L84)*
+*Defined in [src/index.ts:84](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L84)*
 
 Check if we're authenticated, process any lobby query-parameters present in the URL,
 and initiate the user's file system if authenticated (can be disabled).

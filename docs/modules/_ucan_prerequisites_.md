@@ -16,7 +16,7 @@
 
 Ƭ **AppInfo**: *object*
 
-*Defined in [src/ucan/prerequisites.ts:6](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan/prerequisites.ts#L6)*
+*Defined in [src/ucan/prerequisites.ts:6](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan/prerequisites.ts#L6)*
 
 #### Type declaration:
 
@@ -30,7 +30,7 @@ ___
 
 Ƭ **FileSystemPrerequisites**: *object*
 
-*Defined in [src/ucan/prerequisites.ts:11](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan/prerequisites.ts#L11)*
+*Defined in [src/ucan/prerequisites.ts:11](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan/prerequisites.ts#L11)*
 
 #### Type declaration:
 
@@ -44,7 +44,7 @@ ___
 
 Ƭ **Prerequisites**: *object*
 
-*Defined in [src/ucan/prerequisites.ts:1](https://github.com/fission-suite/webnative/blob/33d72ef/src/ucan/prerequisites.ts#L1)*
+*Defined in [src/ucan/prerequisites.ts:1](https://github.com/fission-suite/webnative/blob/935d7b8/src/ucan/prerequisites.ts#L1)*
 
 #### Type declaration:
 
