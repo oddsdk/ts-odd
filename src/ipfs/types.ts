@@ -20,24 +20,24 @@ export type DAGNode = {
 
 export type DAGLink = {
   Name: string
-  Hash: string
-  Size: number
+  Hash: CIDObj
+  Tsize: number
 }
 
 export type RawDAGNode = {
   remainderPath: string
   value: {
-    _data: Uint8Array
-    _links: RawDAGLink[]
+    Data: Uint8Array
+    Links: RawDAGLink[]
     _size: number
     _serializedSize: number
   }
 }
 
 export type RawDAGLink = {
-  _name: string
-  _cid: CIDObj
-  _size: number
+  Name: string
+  Hash: CIDObj
+  Tsize: number
 }
 
 export interface DagAPI {

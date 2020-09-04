@@ -26,9 +26,17 @@ export const putEncryptedFile = async (content: FileContent, key: string): Promi
 
 export const getLinks = async (cid: CID): Promise<Links> => {
   const raw = await ipfs.ls(cid)
-  return link.arrToMap(
+  const links = link.arrToMap(
     raw.map(link.fromFSFile)
   )
+  // ipfs.ls does not return size, so we need to interpolate that in ourselves
+  const dagNode = await ipfs.dagGet(cid)
+  dagNode.Links.forEach((l) => {
+    if(links[l.Name] && links[l.Name].size === 0){
+      links[l.Name].size = l.Tsize
+    }
+  })
+  return links
 }
 
 export const putLinks = async (links: Links): Promise<AddResult> => {
