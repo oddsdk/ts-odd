@@ -1,6 +1,5 @@
 import localforage from 'localforage'
 
-import * as auth from './auth'
 import * as common from './common'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
@@ -113,10 +112,11 @@ export async function initialise(
   // Determine scenario
   if (ucans) {
     const newUser = url.searchParams.get("newUser") === "t"
-    const readKey = url.searchParams.get("readKey") || ""
+    const encryptedReadKey = url.searchParams.get("readKey") || ""
     const username = url.searchParams.get("username") || ""
 
     const ks = await keystore.get()
+    const readKey = await ks.decrypt(encryptedReadKey)
     await ks.importSymmKey(readKey, READ_KEY_FROM_LOBBY_NAME)
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
