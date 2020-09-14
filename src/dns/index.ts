@@ -1,5 +1,39 @@
-import { get as getIpfs } from '../ipfs'
+import { race } from '../common/async'
 
+/**
+ * Lookup a DNS TXT record.
+ *
+ * Race lookups to Google & Cloudflare, return the first to finish
+ *
+ * @param domain The domain to get the TXT record from.
+ * @returns Contents of the TXT record.
+ */
+export async function lookupTxtRecord(domain: string): Promise<string | null> {
+  return race([
+    googleLookup(domain),
+    cloudflareLookup(domain)
+  ])
+}
+
+/**
+ * Lookup DNS TXT record using Google DNS-over-HTTPS
+ * 
+ * @param domain The domain to get the TXT record from.
+ * @returns Contents of the TXT record.
+ */ 
+export async function googleLookup(domain: string): Promise<string | null> {
+  return dnsOverHttps(`https://dns.google/resolve?name=${domain}&type=txt`)
+}
+
+/**
+ * Lookup DNS TXT record using Cloudflare DNS-over-HTTPS
+ * 
+ * @param domain The domain to get the TXT record from.
+ * @returns Contents of the TXT record.
+ */ 
+export function cloudflareLookup(domain: string): Promise<string| null> {
+  return dnsOverHttps(`https://cloudflare-dns.com/dns-query?name=${domain}&type=txt`)
+}
 
 /**
  * Lookup a DNS TXT record.
@@ -8,11 +42,11 @@ import { get as getIpfs } from '../ipfs'
  * Records are sorted by a decimal prefix before they are joined together.
  * Prefixes have a format of `001;` → `999;`
  *
- * @param domain The domain to get the TXT record from.
+ * @param url The DNS-over-HTTPS endpoint to hit.
  * @returns Contents of the TXT record.
  */
-export function lookupTxtRecord(domain: string): Promise<string | null> {
-  return fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=TXT`, {
+export function dnsOverHttps(url: string): Promise<string | null> {
+  return fetch(url, {
     headers: {
       "accept": "application/dns-json"
     }
@@ -52,38 +86,13 @@ export function lookupTxtRecord(domain: string): Promise<string | null> {
  * @returns Contents of the DNSLink with the "ipfs/" prefix removed.
  */
 export async function lookupDnsLink(domain: string): Promise<string | null> {
-  const ipfs = await getIpfs()
-
-  let t
-
-  try {
-    t = ipfs.dns
-      ? await ipfs.dns(domain)
-      : await lookupDnsLinkWithCloudflare(domain)
-
-  } catch (err) {
-    if (err.name === "HTTPError") {
-      t = await lookupDnsLinkWithCloudflare(domain)
-    } else {
-      throw(err)
-    }
-
-  }
-
-  return t && !t.includes("/ipns/")
-    ? t.replace(/^dnslink=/, "").replace(/^\/ipfs\//, "")
-    : null
-}
-
-
-
-// ㊙️
-
-
-function lookupDnsLinkWithCloudflare(domain: string): Promise<string | null> {
-  return lookupTxtRecord(
+  const txt = await lookupTxtRecord(
     domain.startsWith("_dnslink.")
-    ? domain
-    : `_dnslink.${domain}`
+      ? domain
+      : `_dnslink.${domain}`
   )
+
+  return txt && !txt.includes("/ipns/")
+    ? txt.replace(/^dnslink=/, "").replace(/^\/ipfs\//, "")
+    : null
 }
