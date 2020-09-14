@@ -30,6 +30,7 @@ export const getLinks = async (cid: CID): Promise<Links> => {
     raw.map(link.fromFSFile)
   )
   // ipfs.ls does not return size, so we need to interpolate that in ourselves
+  // @@TODO: split into two functions: getLinks & getLinksDetailed. mtime & isFile are stored in our FS format in all but the pretty tree
   const dagNode = await ipfs.dagGet(cid)
   dagNode.Links.forEach((l) => {
     if(links[l.Name] && links[l.Name].size === 0){
