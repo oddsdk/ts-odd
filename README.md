@@ -61,13 +61,13 @@ const state = await wn.initialise({
 
 switch (state.scenario) {
 
-  case wn.AuthCancelled:
+  case wn.Scenario.AuthCancelled:
     // User was redirected to lobby,
     // but cancelled the authorisation
     break;
 
-  case wn.AuthSucceeded:
-  case wn.Continuation:
+  case wn.Scenario.AuthSucceeded:
+  case wn.Scenario.Continuation:
     // State:
     // state.authenticated    -  Will always be `true` in these scenarios
     // state.newUser          -  If the user is new to Fission
@@ -78,7 +78,7 @@ switch (state.scenario) {
     state.fs
     break;
 
-  case wn.NotAuthorised:
+  case wn.Scenario.NotAuthorised:
     wn.redirectToLobby(state.permissions)
     break;
 
