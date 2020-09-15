@@ -42,19 +42,22 @@ See [`docs/`](docs/) for more detailed documentation based on the source code.
 
 ```ts
 const state = await wn.initialise({
-  // Will ask the user permission to store
-  // your apps data in `private/Apps/Nullsoft/Winamp`
-  app: {
-    name: "Winamp",
-    creator: "Nullsoft"
-  },
+  permissions: {
+    // Will ask the user permission to store
+    // your apps data in `private/Apps/Nullsoft/Winamp`
+    app: {
+      name: "Winamp",
+      creator: "Nullsoft"
+    },
 
-  // Ask the user permission for additional filesystem paths
-  fs: {
-    privatePaths: [ "Music" ],
-    publicPaths: [ "Mixtapes" ]
+    // Ask the user permission for additional filesystem paths
+    fs: {
+      privatePaths: [ "Music" ],
+      publicPaths: [ "Mixtapes" ]
+    }
   }
 })
+
 
 switch (state.scenario) {
 
@@ -76,7 +79,7 @@ switch (state.scenario) {
     break;
 
   case wn.NotAuthorised:
-    wn.redirectToLobby(permissions)
+    wn.redirectToLobby(state.permissions)
     break;
 
 }
