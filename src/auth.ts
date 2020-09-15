@@ -36,17 +36,18 @@ export async function leave(): Promise<void> {
  * NOTE: Only works on the main thread, as it uses `window.location`.
  *
  * @param prerequisites The prerequisites from `initialise`
- * @param returnTo Specify the URL you want users to return to.
- *                 Uses the current url by default.
+ * @param redirectTo Specify the URL you want users to return to.
+ *                   Uses the current url by default.
  */
 export async function redirectToLobby(
   prerequisites: Prerequisites,
-  returnTo?: string
+  redirectTo?: string
 ): Promise<void> {
   const { app, fs } = prerequisites
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
-  const redirectTo = returnTo || window.location.href
+
+  redirectTo = redirectTo || window.location.href
 
   // Compile params
   const params = [
