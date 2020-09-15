@@ -2,7 +2,7 @@
 
 ### v0.18.0
 
-### Breaking changes
+###### Breaking changes
 
 - Decrypt `readKey` from auth lobby
 - Renamed `publicise`/`publicize` to `publish`
