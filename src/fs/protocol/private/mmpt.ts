@@ -8,6 +8,10 @@ const nibbles = { "0": true, "1": true, "2": true, "3": true, "4": true, "5": tr
                 } as {[key: string]: boolean}
 const isNibble = (str: string): boolean => nibbles[str] === true
 
+type Member = {
+  name: string
+  cid: string
+}
 
 /**
  * Modified Merkle Patricia Tree
@@ -85,6 +89,23 @@ export default class MMPT {
 
   async exists(name: string): Promise<boolean> {
     return (await this.get(name)) !== null
+  }
+
+  async members(): Promise<Array<Member>> {
+    const children = await Promise.all(
+      Object.values(this.links).map(async ({ name, cid }) => {
+        if(name.length > 1){
+          return [{ name, cid }]
+        }
+        const child = await MMPT.fromCID(cid)
+        const childMembers = await child.members()
+        return childMembers.map(mem => ({
+          ...mem,
+          name: name + mem.name
+        }))
+      })
+    )
+    return children.reduce((acc, cur) => acc.concat(cur))
   }
 
   private nextTree(name: string): string | null {

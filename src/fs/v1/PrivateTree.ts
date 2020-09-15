@@ -82,9 +82,18 @@ export default class PrivateTree extends BaseTree {
     return PrivateTree.create(this.mmpt, key, this.info.bareNameFilter)
   }
 
-  async createChildFile(content: FileContent): Promise<PrivateFile>{
-    const key = await genKeyStr()
-    return PrivateFile.create(this.mmpt, content, this.info.bareNameFilter, key)
+  async createChildFile(content: FileContent, name: string): Promise<PrivateFile>{
+    const existing = await this.getDirectChild(name)
+    let file: PrivateFile
+    if (existing === null) {
+      const key = await genKeyStr()
+      return PrivateFile.create(this.mmpt, content, this.info.bareNameFilter, key)
+    } else if (PrivateFile.instanceOf(existing)) {
+      file = await existing.updateContent(content)
+    } else {
+      throw new Error(`There is already a directory with that name: ${name}`)
+    }
+    return file
   }
 
   async putDetailed(): Promise<PrivateAddResult> {
@@ -163,7 +172,7 @@ export default class PrivateTree extends BaseTree {
     if(node === null) return null
       
     return check.isPrivateFileInfo(node)
-      ? PrivateFile.fromInfo(this.mmpt, node)
+      ? PrivateFile.fromInfo(this.mmpt, next.key, node)
       : PrivateTree.fromInfo(this.mmpt, next.key, node)
   }
 

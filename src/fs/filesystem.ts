@@ -37,6 +37,7 @@ type ConstructorParams = {
   rootDid: string
 
   permissions?: Permissions
+  localOnly?: boolean
 }
 
 type FileSystemOptions = {
@@ -44,6 +45,7 @@ type FileSystemOptions = {
   keyName?: string
   permissions?: Permissions
   rootDid?: string
+  localOnly?: boolean
 }
 
 enum Branch {
@@ -65,6 +67,7 @@ export class FileSystem implements UnixTree {
   privateTree: PrivateTree
   mmpt: MMPT
   rootDid: string
+  localOnly: boolean
 
   appPath: AppPath | undefined
   proofs: { [_: string]: Ucan }
@@ -72,13 +75,14 @@ export class FileSystem implements UnixTree {
   syncWhenOnline: Array<[CID, string]>
 
 
-  constructor({ root, publicTree, permissions, prettyTree, privateTree, mmpt, rootDid }: ConstructorParams) {
+  constructor({ root, publicTree, permissions, prettyTree, privateTree, mmpt, rootDid, localOnly }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
     this.privateTree = privateTree
     this.mmpt = mmpt
     this.rootDid = rootDid
+    this.localOnly = localOnly || false
 
     this.proofs = {}
     this.syncHooks = []
@@ -122,7 +126,7 @@ export class FileSystem implements UnixTree {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', rootDid = '', permissions } = opts
+    const { keyName = 'filesystem-root', rootDid = '', permissions, localOnly } = opts
 
     const publicTree = await PublicTree.empty()
     const prettyTree = await BareTree.empty()
@@ -140,7 +144,8 @@ export class FileSystem implements UnixTree {
       prettyTree,
       privateTree,
       mmpt,
-      rootDid
+      rootDid,
+      localOnly
     })
 
     publicTree.onUpdate = result => fs.updateRootLink(Branch.Public, result)
@@ -158,7 +163,7 @@ export class FileSystem implements UnixTree {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { keyName = 'filesystem-root', rootDid = '', permissions } = opts
+    const { keyName = 'filesystem-root', rootDid = '', permissions, localOnly } = opts
 
     const root = await BareTree.fromCID(cid)
 
@@ -189,7 +194,8 @@ export class FileSystem implements UnixTree {
       prettyTree,
       privateTree,
       mmpt,
-      rootDid
+      rootDid,
+      localOnly
     })
 
     publicTree.onUpdate = result => fs.updateRootLink(Branch.Public, result)
@@ -320,12 +326,14 @@ export class FileSystem implements UnixTree {
     const head = parts[0]
     const relPath = pathUtil.join(parts.slice(1))
 
-    const proof = await ucanInternal.lookupFilesystemUcan(path)
-    if (!proof || ucan.isExpired(proof)) {
-      throw new NoPermissionError("I don't have the necessary permissions to make these changes to the file system")
-    }
+    if(!this.localOnly) {
+      const proof = await ucanInternal.lookupFilesystemUcan(path)
+      if (!proof || ucan.isExpired(proof)) {
+        throw new NoPermissionError("I don't have the necessary permissions to make these changes to the file system")
+      }
 
-    this.proofs[proof.signature] = proof
+      this.proofs[proof.signature] = proof
+    }
 
     let result: a
     let resultPretty: a
