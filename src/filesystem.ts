@@ -84,5 +84,5 @@ async function addSampleData(fs: FileSystem): Promise<void> {
   await fs.mkdir("private/Documents")
   await fs.mkdir("private/Photos")
   await fs.mkdir("private/Video")
-  await fs.publicise()
+  await fs.publish()
 }

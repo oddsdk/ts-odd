@@ -284,14 +284,14 @@ export class FileSystem implements UnixTree {
   }
 
 
-  // PUBLICIZE
-  // ---------
+  // PUBLISH
+  // -------
 
   /**
    * Ensures the latest version of the file system is added to IPFS,
    * updates your data root, and returns the root CID.
    */
-  async publicise(): Promise<CID> {
+  async publish(): Promise<CID> {
     const proofs = Array.from(Object.entries(this.proofs))
     this.proofs = {}
 
@@ -303,13 +303,6 @@ export class FileSystem implements UnixTree {
     })
 
     return cid
-  }
-
-  /**
-   * Alias for `publicise`.
-   */
-  publicize(): Promise<CID> {
-    return this.publicise()
   }
 
 
