@@ -115,10 +115,11 @@ export async function initialise(
   // Determine scenario
   if (ucans) {
     const newUser = url.searchParams.get("newUser") === "t"
-    const readKey = url.searchParams.get("readKey") || ""
+    const encryptedReadKey = url.searchParams.get("readKey") || ""
     const username = url.searchParams.get("username") || ""
 
     const ks = await keystore.get()
+    const readKey = await ks.decrypt(encryptedReadKey)
     await ks.importSymmKey(readKey, READ_KEY_FROM_LOBBY_NAME)
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
