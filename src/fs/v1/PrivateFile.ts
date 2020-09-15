@@ -61,8 +61,7 @@ export class PrivateFile extends BaseFile implements File {
     if(!check.isPrivateFileInfo(info)) {
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
-    const content = await protocol.basic.getEncryptedFile(info.content, info.key)
-    return new PrivateFile({ mmpt, key, info, content })
+    return PrivateFile.fromInfo(mmpt, key, info)
   }
 
   static async fromInfo(mmpt: MMPT, key: string, info: PrivateFileInfo): Promise<PrivateFile> {
@@ -76,8 +75,8 @@ export class PrivateFile extends BaseFile implements File {
   }
 
   async getName(): Promise<PrivateName> {
-    const { bareNameFilter, key, revision } = this.info
-    const revisionFilter = await namefilter.addRevision(bareNameFilter, key, revision)
+    const { bareNameFilter, revision } = this.info
+    const revisionFilter = await namefilter.addRevision(bareNameFilter, this.key, revision)
     return namefilter.toPrivateName(revisionFilter)
   }
 
@@ -100,7 +99,7 @@ export class PrivateFile extends BaseFile implements File {
     return protocol.priv.addNode(this.mmpt, {
       ...this.info, 
       metadata: metadata.updateMtime(this.info.metadata)
-    }, this.info.key)
+    }, this.key)
   }
 
 }
