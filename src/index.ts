@@ -5,12 +5,11 @@ import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 
 import { READ_KEY_FROM_LOBBY_NAME, USERNAME_STORAGE_KEY } from './common'
-import { AppInfo, FileSystemPrerequisites } from './ucan/prerequisites'
+import { Permissions } from './ucan/permissions'
 import { loadFileSystem } from './filesystem'
 
 import FileSystem from './fs'
 import fsClass from './fs'
-
 
 
 // SCENARIO
@@ -36,11 +35,15 @@ export type State
 
 export type NotAuthorised = {
   scenario: Scenario.NotAuthorised
+  permissions: Permissions
+
   authenticated: false
 }
 
 export type AuthSucceeded = {
   scenario: Scenario.AuthSucceeded
+  permissions: Permissions
+
   authenticated: true
   newUser: boolean
   throughLobby: true
@@ -51,6 +54,8 @@ export type AuthSucceeded = {
 
 export type AuthCancelled = {
   scenario: Scenario.AuthCancelled
+  permissions: Permissions
+
   authenticated: false
   cancellationReason: string
   throughLobby: true
@@ -58,6 +63,8 @@ export type AuthCancelled = {
 
 export type Continuation = {
   scenario: Scenario.Continuation
+  permissions: Permissions
+
   authenticated: true
   newUser: false,
   throughLobby: false
@@ -80,9 +87,7 @@ export type Continuation = {
  */
 export async function initialise(
   options: {
-    // Prerequisites
-    app?: AppInfo,
-    fs?: FileSystemPrerequisites,
+    permissions: Permissions
 
     // Options
     autoRemoveUrlParams?: boolean
@@ -91,13 +96,13 @@ export async function initialise(
 ): Promise<State> {
   options = options || {}
 
-  const { app, fs, autoRemoveUrlParams = true } = options
-  const prerequisites = { app, fs }
+  const { permissions, autoRemoveUrlParams = true } = options
+  const { app, fs } = permissions
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
       ? undefined
-      : await loadFileSystem(prerequisites, username)
+      : await loadFileSystem(permissions, username)
   }
 
   const url = new URL(window.location.href)
@@ -125,11 +130,12 @@ export async function initialise(
       history.replaceState(null, document.title, url.toString())
     }
 
-    if (ucan.validatePrerequisites(prerequisites, username) === false) {
-      return scenarioNotAuthorised()
+    if (ucan.validatePermissions(permissions, username) === false) {
+      return scenarioNotAuthorised(permissions)
     }
 
     return scenarioAuthSucceeded(
+      permissions,
       newUser,
       username,
       await maybeLoadFs(username)
@@ -141,7 +147,7 @@ export async function initialise(
       default: return "Unknown reason"
     }})()
 
-    return scenarioAuthCancelled(c)
+    return scenarioAuthCancelled(permissions, c)
 
   }
 
@@ -149,10 +155,10 @@ export async function initialise(
 
   return (
     authedUsername &&
-    ucan.validatePrerequisites(prerequisites, authedUsername)
+    ucan.validatePermissions(permissions, authedUsername)
   )
-  ? scenarioContinuation( authedUsername, await maybeLoadFs(authedUsername))
-  : scenarioNotAuthorised()
+  ? scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+  : scenarioNotAuthorised(permissions)
 }
 
 
@@ -189,12 +195,15 @@ export * as keystore from './keystore'
 
 
 function scenarioAuthSucceeded(
+  permissions: Permissions
   newUser: boolean,
   username: string,
   fs: FileSystem | undefined
 ): AuthSucceeded {
   return {
     scenario: Scenario.AuthSucceeded,
+    permissions,
+
     authenticated: true,
     throughLobby: true,
     fs,
@@ -204,10 +213,13 @@ function scenarioAuthSucceeded(
 }
 
 function scenarioAuthCancelled(
+  permissions: Permissions
   cancellationReason: string
 ): AuthCancelled {
   return {
     scenario: Scenario.AuthCancelled,
+    permissions,
+
     authenticated: false,
     throughLobby: true,
     cancellationReason
@@ -215,11 +227,14 @@ function scenarioAuthCancelled(
 }
 
 function scenarioContinuation(
+  permissions: Permissions
   username: string,
   fs: FileSystem | undefined
 ): Continuation {
   return {
     scenario: Scenario.Continuation,
+    permissions,
+
     authenticated: true,
     newUser: false,
     throughLobby: false,
@@ -228,9 +243,11 @@ function scenarioContinuation(
   }
 }
 
-function scenarioNotAuthorised(): NotAuthorised {
+function scenarioNotAuthorised(permissions: Permissions): NotAuthorised {
   return {
     scenario: Scenario.NotAuthorised,
-    authenticated: false 
+    permissions,
+
+    authenticated: false
   }
 }

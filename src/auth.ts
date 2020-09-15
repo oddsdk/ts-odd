@@ -4,7 +4,7 @@ import * as common from './common'
 import * as did from './did'
 import * as ucan from './ucan/internal'
 import { UCANS_STORAGE_KEY, USERNAME_STORAGE_KEY } from './common'
-import { Prerequisites } from './ucan/prerequisites'
+import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
 
 
@@ -35,15 +35,15 @@ export async function leave(): Promise<void> {
  *
  * NOTE: Only works on the main thread, as it uses `window.location`.
  *
- * @param prerequisites The prerequisites from `initialise`
+ * @param permissions The permissions from `initialise`
  * @param redirectTo Specify the URL you want users to return to.
  *                   Uses the current url by default.
  */
 export async function redirectToLobby(
-  prerequisites: Prerequisites,
+  permissions: Permissions,
   redirectTo?: string
 ): Promise<void> {
-  const { app, fs } = prerequisites
+  const { app, fs } = permissions
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
 

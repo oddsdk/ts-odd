@@ -18,7 +18,7 @@ import * as ucanInternal from '../ucan/internal'
 
 import { AddResult, CID, FileContent } from '../ipfs'
 import { NoPermissionError } from '../errors'
-import { Prerequisites } from '../ucan/prerequisites'
+import { Permissions } from '../ucan/permissions'
 import { Ucan } from '../ucan'
 
 
@@ -36,13 +36,13 @@ type ConstructorParams = {
   mmpt: MMPT
   rootDid: string
 
-  prerequisites?: Prerequisites
+  permissions?: Permissions
 }
 
 type FileSystemOptions = {
   version?: SemVer
   keyName?: string
-  prerequisites?: Prerequisites
+  permissions?: Permissions
   rootDid?: string
 }
 
@@ -72,7 +72,7 @@ export class FileSystem implements UnixTree {
   syncWhenOnline: Array<[CID, string]>
 
 
-  constructor({ root, publicTree, prerequisites, prettyTree, privateTree, mmpt, rootDid }: ConstructorParams) {
+  constructor({ root, publicTree, permissions, prettyTree, privateTree, mmpt, rootDid }: ConstructorParams) {
     this.root = root
     this.publicTree = publicTree
     this.prettyTree = prettyTree
@@ -85,12 +85,12 @@ export class FileSystem implements UnixTree {
     this.syncWhenOnline = []
 
     if (
-      prerequisites &&
-      prerequisites.app &&
-      prerequisites.app.creator &&
-      prerequisites.app.name
+      permissions &&
+      permissions.app &&
+      permissions.app.creator &&
+      permissions.app.name
     ) {
-      this.appPath = appPath(prerequisites)
+      this.appPath = appPath(permissions)
     }
 
     // Add the root CID of the file system to the CID log
@@ -122,7 +122,7 @@ export class FileSystem implements UnixTree {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', rootDid = '', prerequisites } = opts
+    const { keyName = 'filesystem-root', rootDid = '', permissions } = opts
 
     const publicTree = await PublicTree.empty()
     const prettyTree = await BareTree.empty()
@@ -136,7 +136,7 @@ export class FileSystem implements UnixTree {
     const fs = new FileSystem({
       root,
       publicTree,
-      prerequisites,
+      permissions,
       prettyTree,
       privateTree,
       mmpt,
@@ -158,7 +158,7 @@ export class FileSystem implements UnixTree {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { keyName = 'filesystem-root', rootDid = '', prerequisites } = opts
+    const { keyName = 'filesystem-root', rootDid = '', permissions } = opts
 
     const root = await BareTree.fromCID(cid)
 
@@ -185,7 +185,7 @@ export class FileSystem implements UnixTree {
     const fs = new FileSystem({
       root,
       publicTree,
-      prerequisites,
+      permissions,
       prettyTree,
       privateTree,
       mmpt,
@@ -392,11 +392,11 @@ export default FileSystem
 // ㊙️
 
 
-function appPath(prerequisites: Prerequisites): ((path?: string | Array<string>) => string) {
+function appPath(permissions: Permissions): ((path?: string | Array<string>) => string) {
   return (path?: string | Array<string>): string => (
     'private/Apps/'
-      + (prerequisites.app ? prerequisites.app.creator + '/' : '')
-      + (prerequisites.app ? prerequisites.app.name : '')
+      + (permissions.app ? permissions.app.creator + '/' : '')
+      + (permissions.app ? permissions.app.name : '')
       + (path ? '/' + (typeof path == 'object' ? path.join('/') : path) : '')
   )
 }
