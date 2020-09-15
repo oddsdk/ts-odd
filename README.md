@@ -41,37 +41,46 @@ See [`docs/`](docs/) for more detailed documentation based on the source code.
 # Authentication
 
 ```ts
-const { prerequisites, scenario, state } = await wn.initialise({
-  // Will ask the user permission to store
-  // your apps data in `private/Apps/Nullsoft/Winamp`
-  app: {
-    name: "Winamp",
-    creator: "Nullsoft"
-  },
+const state = await wn.initialise({
+  permissions: {
+    // Will ask the user permission to store
+    // your apps data in `private/Apps/Nullsoft/Winamp`
+    app: {
+      name: "Winamp",
+      creator: "Nullsoft"
+    },
 
-  // Ask the user permission for additional filesystem paths
-  fs: {
-    privatePaths: [ "Music" ],
-    publicPaths: [ "Mixtapes" ]
+    // Ask the user permission for additional filesystem paths
+    fs: {
+      privatePaths: [ "Music" ],
+      publicPaths: [ "Mixtapes" ]
+    }
   }
 })
 
-if (scenario.authCancelled) {
-  // User was redirected to lobby,
-  // but cancelled the authorisation.
 
-} else if (scenario.authSucceeded || scenario.continuation) {
-  // State:
-  // state.authenticated    -  Will always be `true` in these scenarios
-  // state.newUser          -  If the user is new to Fission
-  // state.throughLobby     -  If the user authenticated through the lobby, or just came back.
-  // state.username         -  The user's username.
-  //
-  // ☞ We can now interact with our file system (more on that later)
-  state.fs
+switch (state.scenario) {
 
-} else if (scenario.notAuthorised) {
-  wn.redirectToLobby(prerequisites)
+  case wn.Scenario.AuthCancelled:
+    // User was redirected to lobby,
+    // but cancelled the authorisation
+    break;
+
+  case wn.Scenario.AuthSucceeded:
+  case wn.Scenario.Continuation:
+    // State:
+    // state.authenticated    -  Will always be `true` in these scenarios
+    // state.newUser          -  If the user is new to Fission
+    // state.throughLobby     -  If the user authenticated through the lobby, or just came back.
+    // state.username         -  The user's username.
+    //
+    // ☞ We can now interact with our file system (more on that later)
+    state.fs
+    break;
+
+  case wn.Scenario.NotAuthorised:
+    wn.redirectToLobby(state.permissions)
+    break;
 
 }
 ```
@@ -100,13 +109,13 @@ if (await fs.exists(appPath)) {
 // The user is new to the app, lets create the app-data directory.
 } else {
   await fs.mkdir(appPath)
-  await fs.publicise()
+  await fs.publish()
 
 }
 
 // Create a sub directory
 await fs.mkdir(fs.appPath([ "Sub Directory" ]))
-await fs.publicise()
+await fs.publish()
 ```
 
 
@@ -124,9 +133,9 @@ WNFS exposes a familiar POSIX-style interface:
 - `write`: alias for `add`
 
 
-## Publicise
+## Publish
 
-The `publicise` function synchronises your file system with the Fission API and IPFS. We don't do this automatically because if you add a large set of data, you only want to do this after everything is added. Otherwise it would be too slow and we would have too many network requests to the API.
+The `publish` function synchronises your file system with the Fission API and IPFS. We don't do this automatically because if you add a large set of data, you only want to do this after everything is added. Otherwise it would be too slow and we would have too many network requests to the API.
 
 
 
@@ -144,13 +153,12 @@ yarn build
 
 # test
 yarn test
-
-# test w/ reloading
 yarn test:watch
 
 # generate docs
 yarn docs
 
 # publish (run this script instead of npm publish!)
-./publish.sh
+just publish
+just publish-alpha
 ```

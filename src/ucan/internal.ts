@@ -4,7 +4,7 @@ import * as common from '../common'
 import * as pathUtil from '../fs/path'
 import * as ucan from '../ucan'
 import { UCANS_STORAGE_KEY } from '../common'
-import { Prerequisites } from './prerequisites'
+import { Permissions } from './permissions'
 import { Ucan, WNFS_PREFIX } from '../ucan'
 import { setup } from '../setup/internal'
 
@@ -72,10 +72,10 @@ export async function store(ucans: Array<string>): Promise<void> {
 
 /**
  * See if the stored UCANs in the in-memory dictionary
- * conform to the given `Prerequisites`.
+ * conform to the given `Permissions`.
  */
-export function validatePrerequisites(
-  { app, fs }: Prerequisites,
+export function validatePermissions(
+  { app, fs }: Permissions,
   username: string
 ): boolean {
   const prefix = dictionaryFilesystemPrefix(username)
@@ -84,7 +84,7 @@ export function validatePrerequisites(
   const rootUcan = dictionary["*"]
   if (rootUcan && !ucan.isExpired(rootUcan)) return true
 
-  // Check prerequisites
+  // Check permissions
   if (app) {
     const u = dictionary[`${prefix}private/Apps/${app.creator}/${app.name}`]
     if (!u || ucan.isExpired(u)) return false

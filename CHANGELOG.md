@@ -1,5 +1,15 @@
 # Changelog
 
+### v0.18.0
+
+###### Breaking changes
+
+- Renamed `publicise`/`publicize` to `publish`
+- Renamed `prerequisites` to `permissions`
+- The `app` and `fs` params to `initialise` are now grouped together by passing the `permissions` parameter.
+- Decrypt `readKey` from auth lobby (behind the scenes)
+
+
 ### v0.17.3
 
 Upgrade to js-ipfs v0.50

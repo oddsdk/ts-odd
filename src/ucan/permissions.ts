@@ -1,6 +1,6 @@
-export type Prerequisites = {
+export type Permissions = {
   app?: AppInfo
-  fs?: FileSystemPrerequisites
+  fs?: FileSystemPermissions
 }
 
 export type AppInfo = {
@@ -8,7 +8,7 @@ export type AppInfo = {
   creator: string
 }
 
-export type FileSystemPrerequisites = {
+export type FileSystemPermissions = {
   privatePaths: Array<string>
   publicPaths: Array<string>
 }
