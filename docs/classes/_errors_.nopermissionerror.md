@@ -27,7 +27,7 @@
 
 \+ **new NoPermissionError**(`message`: string): *[NoPermissionError](_errors_.nopermissionerror.md)*
 
-*Defined in [src/errors.ts:1](https://github.com/fission-suite/webnative/blob/935d7b8/src/errors.ts#L1)*
+*Defined in [src/errors.ts:1](https://github.com/fission-suite/webnative/blob/d222548/src/errors.ts#L1)*
 
 **Parameters:**
 

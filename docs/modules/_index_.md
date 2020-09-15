@@ -20,14 +20,16 @@
 * [setup](_index_.md#setup)
 * [ucan](_index_.md#ucan)
 
+### Enumerations
+
+* [Scenario](../enums/_index_.scenario.md)
+
 ### Type aliases
 
 * [AuthCancelled](_index_.md#authcancelled)
 * [AuthSucceeded](_index_.md#authsucceeded)
 * [Continuation](_index_.md#continuation)
-* [FulfilledScenario](_index_.md#fulfilledscenario)
 * [NotAuthorised](_index_.md#notauthorised)
-* [Scenario](_index_.md#scenario)
 * [State](_index_.md#state)
 
 ### Variables
@@ -122,13 +124,17 @@ ___
 
 Ƭ **AuthCancelled**: *object*
 
-*Defined in [src/index.ts:57](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L57)*
+*Defined in [src/index.ts:55](https://github.com/fission-suite/webnative/blob/d222548/src/index.ts#L55)*
 
 #### Type declaration:
 
 * **authenticated**: *false*
 
 * **cancellationReason**: *string*
+
+* **permissions**: *[Permissions](_ucan_permissions_.md#permissions)*
+
+* **scenario**: *[AuthCancelled](../enums/_index_.scenario.md#authcancelled)*
 
 * **throughLobby**: *true*
 
@@ -138,7 +144,7 @@ ___
 
 Ƭ **AuthSucceeded**: *object*
 
-*Defined in [src/index.ts:48](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L48)*
+*Defined in [src/index.ts:43](https://github.com/fission-suite/webnative/blob/d222548/src/index.ts#L43)*
 
 #### Type declaration:
 
@@ -147,6 +153,10 @@ ___
 * **fs**? : *[FileSystem](../classes/_fs_filesystem_.filesystem.md)*
 
 * **newUser**: *boolean*
+
+* **permissions**: *[Permissions](_ucan_permissions_.md#permissions)*
+
+* **scenario**: *[AuthSucceeded](../enums/_index_.scenario.md#authsucceeded)*
 
 * **throughLobby**: *true*
 
@@ -158,7 +168,7 @@ ___
 
 Ƭ **Continuation**: *object*
 
-*Defined in [src/index.ts:63](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L63)*
+*Defined in [src/index.ts:64](https://github.com/fission-suite/webnative/blob/d222548/src/index.ts#L64)*
 
 #### Type declaration:
 
@@ -168,25 +178,13 @@ ___
 
 * **newUser**: *false*
 
+* **permissions**: *[Permissions](_ucan_permissions_.md#permissions)*
+
+* **scenario**: *[Continuation](../enums/_index_.scenario.md#continuation)*
+
 * **throughLobby**: *false*
 
 * **username**: *string*
-
-___
-
-###  FulfilledScenario
-
-Ƭ **FulfilledScenario**: *object*
-
-*Defined in [src/index.ts:27](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L27)*
-
-#### Type declaration:
-
-* **prerequisites**: *[Prerequisites](_ucan_prerequisites_.md#prerequisites)*
-
-* **scenario**: *[Scenario](_index_.md#scenario)*
-
-* **state**: *[State](_index_.md#state)*
 
 ___
 
@@ -194,29 +192,15 @@ ___
 
 Ƭ **NotAuthorised**: *object*
 
-*Defined in [src/index.ts:44](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L44)*
+*Defined in [src/index.ts:36](https://github.com/fission-suite/webnative/blob/d222548/src/index.ts#L36)*
 
 #### Type declaration:
 
 * **authenticated**: *false*
 
-___
+* **permissions**: *[Permissions](_ucan_permissions_.md#permissions)*
 
-###  Scenario
-
-Ƭ **Scenario**: *object*
-
-*Defined in [src/index.ts:20](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L20)*
-
-#### Type declaration:
-
-* **authCancelled**? : *undefined | true*
-
-* **authSucceeded**? : *undefined | true*
-
-* **continuation**? : *undefined | true*
-
-* **notAuthorised**? : *undefined | true*
+* **scenario**: *[NotAuthorised](../enums/_index_.scenario.md#notauthorised)*
 
 ___
 
@@ -224,7 +208,7 @@ ___
 
 Ƭ **State**: *[NotAuthorised](_index_.md#notauthorised) | [AuthSucceeded](_index_.md#authsucceeded) | [AuthCancelled](_index_.md#authcancelled) | [Continuation](_index_.md#continuation)*
 
-*Defined in [src/index.ts:38](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L38)*
+*Defined in [src/index.ts:30](https://github.com/fission-suite/webnative/blob/d222548/src/index.ts#L30)*
 
 ## Variables
 
@@ -232,15 +216,15 @@ ___
 
 • **fs**: *[FileSystem](../classes/_fs_filesystem_.filesystem.md)* = fsClass
 
-*Defined in [src/index.ts:176](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L176)*
+*Defined in [src/index.ts:179](https://github.com/fission-suite/webnative/blob/d222548/src/index.ts#L179)*
 
 ## Functions
 
 ###  initialise
 
-▸ **initialise**(`options`: object): *Promise‹[FulfilledScenario](_index_.md#fulfilledscenario)›*
+▸ **initialise**(`options`: object): *Promise‹[State](_index_.md#state)›*
 
-*Defined in [src/index.ts:84](https://github.com/fission-suite/webnative/blob/935d7b8/src/index.ts#L84)*
+*Defined in [src/index.ts:88](https://github.com/fission-suite/webnative/blob/d222548/src/index.ts#L88)*
 
 Check if we're authenticated, process any lobby query-parameters present in the URL,
 and initiate the user's file system if authenticated (can be disabled).
@@ -254,9 +238,8 @@ NOTE: Only works on the main/ui thread, as it uses `window.location`.
 
 Name | Type |
 ------ | ------ |
-`app?` | [AppInfo](_ucan_prerequisites_.md#appinfo) |
 `autoRemoveUrlParams?` | undefined &#124; false &#124; true |
-`fs?` | [FileSystemPrerequisites](_ucan_prerequisites_.md#filesystemprerequisites) |
 `loadFileSystem?` | undefined &#124; false &#124; true |
+`permissions` | [Permissions](_ucan_permissions_.md#permissions) |
 
-**Returns:** *Promise‹[FulfilledScenario](_index_.md#fulfilledscenario)›*
+**Returns:** *Promise‹[State](_index_.md#state)›*

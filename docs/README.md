@@ -37,4 +37,4 @@
 * ["setup/internal"](modules/_setup_internal_.md)
 * ["ucan"](modules/_ucan_.md)
 * ["ucan/internal"](modules/_ucan_internal_.md)
-* ["ucan/prerequisites"](modules/_ucan_prerequisites_.md)
+* ["ucan/permissions"](modules/_ucan_permissions_.md)

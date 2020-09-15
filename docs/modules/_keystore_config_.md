@@ -16,7 +16,7 @@
 
 ▸ **clear**(): *Promise‹void›*
 
-*Defined in [src/keystore/config.ts:10](https://github.com/fission-suite/webnative/blob/935d7b8/src/keystore/config.ts#L10)*
+*Defined in [src/keystore/config.ts:11](https://github.com/fission-suite/webnative/blob/d222548/src/keystore/config.ts#L11)*
 
 **Returns:** *Promise‹void›*
 
@@ -24,24 +24,24 @@ ___
 
 ### `Const` get
 
-▸ **get**(): *Promise‹KeyStore›*
+▸ **get**(): *Promise‹RSAKeyStore›*
 
-*Defined in [src/keystore/config.ts:21](https://github.com/fission-suite/webnative/blob/935d7b8/src/keystore/config.ts#L21)*
+*Defined in [src/keystore/config.ts:22](https://github.com/fission-suite/webnative/blob/d222548/src/keystore/config.ts#L22)*
 
-**Returns:** *Promise‹KeyStore›*
+**Returns:** *Promise‹RSAKeyStore›*
 
 ___
 
 ### `Const` set
 
-▸ **set**(`userKeystore`: KeyStore): *Promise‹void›*
+▸ **set**(`userKeystore`: RSAKeyStore): *Promise‹void›*
 
-*Defined in [src/keystore/config.ts:17](https://github.com/fission-suite/webnative/blob/935d7b8/src/keystore/config.ts#L17)*
+*Defined in [src/keystore/config.ts:18](https://github.com/fission-suite/webnative/blob/d222548/src/keystore/config.ts#L18)*
 
 **Parameters:**
 
 Name | Type |
 ------ | ------ |
-`userKeystore` | KeyStore |
+`userKeystore` | RSAKeyStore |
 
 **Returns:** *Promise‹void›*

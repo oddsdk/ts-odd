@@ -29,7 +29,7 @@
 
 ▸ **didToPublicKey**(`did`: string): *object*
 
-*Defined in [src/did.ts:90](https://github.com/fission-suite/webnative/blob/935d7b8/src/did.ts#L90)*
+*Defined in [src/did.ts:90](https://github.com/fission-suite/webnative/blob/d222548/src/did.ts#L90)*
 
 Convert a DID (did:key) to a base64 public key.
 
@@ -51,7 +51,7 @@ ___
 
 ▸ **exchange**(): *Promise‹string›*
 
-*Defined in [src/did.ts:26](https://github.com/fission-suite/webnative/blob/935d7b8/src/did.ts#L26)*
+*Defined in [src/did.ts:26](https://github.com/fission-suite/webnative/blob/d222548/src/did.ts#L26)*
 
 Create a DID based on the exchange key-pair.
 
@@ -63,7 +63,7 @@ ___
 
 ▸ **publicKeyToDid**(`publicKey`: string, `type`: CryptoSystem): *string*
 
-*Defined in [src/did.ts:73](https://github.com/fission-suite/webnative/blob/935d7b8/src/did.ts#L73)*
+*Defined in [src/did.ts:73](https://github.com/fission-suite/webnative/blob/d222548/src/did.ts#L73)*
 
 Convert a base64 public key to a DID (did:key).
 
@@ -82,7 +82,7 @@ ___
 
 ▸ **root**(`username`: string): *Promise‹string›*
 
-*Defined in [src/did.ts:37](https://github.com/fission-suite/webnative/blob/935d7b8/src/did.ts#L37)*
+*Defined in [src/did.ts:37](https://github.com/fission-suite/webnative/blob/d222548/src/did.ts#L37)*
 
 Get the root write-key DID for a user.
 Stored at `_did.${username}.${endpoints.user}`
@@ -101,7 +101,7 @@ ___
 
 ▸ **verifySignedData**(`__namedParameters`: object): *Promise‹boolean›*
 
-*Defined in [src/did.ts:116](https://github.com/fission-suite/webnative/blob/935d7b8/src/did.ts#L116)*
+*Defined in [src/did.ts:116](https://github.com/fission-suite/webnative/blob/d222548/src/did.ts#L116)*
 
 Verify the signature of some data (string, ArrayBuffer or Uint8Array), given a DID.
 
@@ -123,7 +123,7 @@ ___
 
 ▸ **write**(): *Promise‹string›*
 
-*Defined in [src/did.ts:58](https://github.com/fission-suite/webnative/blob/935d7b8/src/did.ts#L58)*
+*Defined in [src/did.ts:58](https://github.com/fission-suite/webnative/blob/d222548/src/did.ts#L58)*
 
 Create a DID based on the write key-pair.
 

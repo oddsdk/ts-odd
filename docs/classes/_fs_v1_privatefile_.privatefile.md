@@ -44,7 +44,7 @@
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateFile.ts:23](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L23)*
+*Defined in [src/fs/v1/PrivateFile.ts:23](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L23)*
 
 **Parameters:**
 
@@ -66,7 +66,7 @@ Name | Type |
 
 *Inherited from void*
 
-*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/file.ts#L10)*
+*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/webnative/blob/d222548/src/fs/base/file.ts#L10)*
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 • **info**: *[PrivateFileInfo](../modules/_fs_protocol_private_types_.md#privatefileinfo)*
 
-*Defined in [src/fs/v1/PrivateFile.ts:23](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L23)*
+*Defined in [src/fs/v1/PrivateFile.ts:23](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L23)*
 
 ___
 
@@ -82,7 +82,7 @@ ___
 
 • **mmpt**: *[MMPT](_fs_protocol_private_mmpt_.mmpt.md)*
 
-*Defined in [src/fs/v1/PrivateFile.ts:22](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L22)*
+*Defined in [src/fs/v1/PrivateFile.ts:22](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L22)*
 
 ## Methods
 
@@ -90,7 +90,7 @@ ___
 
 ▸ **getName**(): *Promise‹[PrivateName](../modules/_fs_protocol_private_namefilter_.md#privatename)›*
 
-*Defined in [src/fs/v1/PrivateFile.ts:72](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L72)*
+*Defined in [src/fs/v1/PrivateFile.ts:72](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L72)*
 
 **Returns:** *Promise‹[PrivateName](../modules/_fs_protocol_private_namefilter_.md#privatename)›*
 
@@ -102,7 +102,7 @@ ___
 
 *Inherited from void*
 
-*Defined in [src/fs/base/file.ts:16](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/base/file.ts#L16)*
+*Defined in [src/fs/base/file.ts:16](https://github.com/fission-suite/webnative/blob/d222548/src/fs/base/file.ts#L16)*
 
 **Returns:** *Promise‹CID›*
 
@@ -114,7 +114,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateFile.ts:83](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L83)*
+*Defined in [src/fs/v1/PrivateFile.ts:83](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L83)*
 
 **Returns:** *Promise‹[PrivateAddResult](../modules/_fs_protocol_private_types_.md#privateaddresult)›*
 
@@ -124,7 +124,7 @@ ___
 
 ▸ **updateParentNameFilter**(`parentNameFilter`: [BareNameFilter](../modules/_fs_protocol_private_namefilter_.md#barenamefilter)): *Promise‹this›*
 
-*Defined in [src/fs/v1/PrivateFile.ts:78](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L78)*
+*Defined in [src/fs/v1/PrivateFile.ts:78](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L78)*
 
 **Parameters:**
 
@@ -140,7 +140,7 @@ ___
 
 ▸ **create**(`mmpt`: [MMPT](_fs_protocol_private_mmpt_.mmpt.md), `content`: FileContent, `parentNameFilter`: [BareNameFilter](../modules/_fs_protocol_private_namefilter_.md#barenamefilter), `key`: string): *Promise‹[PrivateFile](_fs_v1_privatefile_.privatefile.md)›*
 
-*Defined in [src/fs/v1/PrivateFile.ts:38](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L38)*
+*Defined in [src/fs/v1/PrivateFile.ts:38](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L38)*
 
 **Parameters:**
 
@@ -159,7 +159,7 @@ ___
 
 ▸ **fromInfo**(`mmpt`: [MMPT](_fs_protocol_private_mmpt_.mmpt.md), `info`: [PrivateFileInfo](../modules/_fs_protocol_private_types_.md#privatefileinfo)): *Promise‹[PrivateFile](_fs_v1_privatefile_.privatefile.md)›*
 
-*Defined in [src/fs/v1/PrivateFile.ts:63](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L63)*
+*Defined in [src/fs/v1/PrivateFile.ts:63](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L63)*
 
 **Parameters:**
 
@@ -176,7 +176,7 @@ ___
 
 ▸ **fromName**(`mmpt`: [MMPT](_fs_protocol_private_mmpt_.mmpt.md), `name`: [PrivateName](../modules/_fs_protocol_private_namefilter_.md#privatename), `key`: string): *Promise‹[PrivateFile](_fs_v1_privatefile_.privatefile.md)›*
 
-*Defined in [src/fs/v1/PrivateFile.ts:54](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L54)*
+*Defined in [src/fs/v1/PrivateFile.ts:54](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L54)*
 
 **Parameters:**
 
@@ -194,7 +194,7 @@ ___
 
 ▸ **instanceOf**(`obj`: any): *obj is PrivateFile*
 
-*Defined in [src/fs/v1/PrivateFile.ts:31](https://github.com/fission-suite/webnative/blob/935d7b8/src/fs/v1/PrivateFile.ts#L31)*
+*Defined in [src/fs/v1/PrivateFile.ts:31](https://github.com/fission-suite/webnative/blob/d222548/src/fs/v1/PrivateFile.ts#L31)*
 
 **Parameters:**
 
