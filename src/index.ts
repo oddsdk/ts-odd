@@ -195,7 +195,7 @@ export * as keystore from './keystore'
 
 
 function scenarioAuthSucceeded(
-  permissions: Permissions
+  permissions: Permissions,
   newUser: boolean,
   username: string,
   fs: FileSystem | undefined
@@ -213,7 +213,7 @@ function scenarioAuthSucceeded(
 }
 
 function scenarioAuthCancelled(
-  permissions: Permissions
+  permissions: Permissions,
   cancellationReason: string
 ): AuthCancelled {
   return {
@@ -227,7 +227,7 @@ function scenarioAuthCancelled(
 }
 
 function scenarioContinuation(
-  permissions: Permissions
+  permissions: Permissions,
   username: string,
   fs: FileSystem | undefined
 ): Continuation {
