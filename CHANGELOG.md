@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.18.1
+
+Added proofs to JWT for app routes (index,create,delete)
+
 ### v0.18.0
 
 ###### Breaking changes
@@ -10,8 +14,8 @@
 - Decrypt `readKey` from auth lobby (behind the scenes)
 
 
-### v0.17.3
 
+### v0.17.3
 Upgrade to js-ipfs v0.50
 
 
