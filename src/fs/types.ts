@@ -74,7 +74,7 @@ export interface Tree extends UnixTree {
   getOrCreateDirectChild(name: string): Promise<Tree | File>
 
   emptyChildTree(): Promise<Tree>
-  createChildFile(content: FileContent): Promise<File>
+  createChildFile(content: FileContent, name: string): Promise<File>
 
   getLinks(): BaseLinks
 }

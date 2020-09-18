@@ -13,6 +13,15 @@ export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Pro
   const filter = await namefilter.addRevision(node.bareNameFilter, key, node.revision)
   const name = await namefilter.toPrivateName(filter)
   await mmpt.add(name, cid)
+
+  // if the node is a file, we also add the content to the MMPT
+  if(check.isPrivateFileInfo(node)) {
+    const contentBareFilter = await namefilter.addToBare(node.bareNameFilter, node.key)
+    const contentFilter = await namefilter.addRevision(contentBareFilter, node.key, node.revision)
+    const contentName = await namefilter.toPrivateName(contentFilter)
+    await mmpt.add(contentName, node.content)
+  }
+
   return { cid, name, key, size }
 }
 

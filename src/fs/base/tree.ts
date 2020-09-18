@@ -85,7 +85,7 @@ abstract class BaseTree implements Tree, UnixTree {
       toAdd = await nextTree.addRecurse(nextPath, child)
     }
 
-    const toAddNode = check.isTree(toAdd) ? toAdd : await this.createChildFile(child as FileContent)
+    const toAddNode = check.isTree(toAdd) ? toAdd : await this.createChildFile(child as FileContent, name)
 
     return this.updateDirectChild(toAddNode, name)
   }
@@ -139,18 +139,18 @@ abstract class BaseTree implements Tree, UnixTree {
     return node !== null
   }
 
-  abstract async get(path: string): Promise<Tree | File | null>
+  abstract  get(path: string): Promise<Tree | File | null>
 
-  abstract async putDetailed(): Promise<AddResult>
-  abstract async updateDirectChild (child: Tree | File, name: string): Promise<this>
+  abstract  putDetailed(): Promise<AddResult>
+  abstract  updateDirectChild (child: Tree | File, name: string): Promise<this>
   abstract removeDirectChild(name: string): this
-  abstract async getDirectChild(name: string): Promise<Tree | File | null>
-  abstract async getOrCreateDirectChild(name: string): Promise<Tree | File>
+  abstract  getDirectChild(name: string): Promise<Tree | File | null>
+  abstract  getOrCreateDirectChild(name: string): Promise<Tree | File>
 
   abstract getLinks(): BaseLinks
 
-  abstract async emptyChildTree(): Promise<Tree>
-  abstract async createChildFile(content: FileContent): Promise<File>
+  abstract  emptyChildTree(): Promise<Tree>
+  abstract  createChildFile(content: FileContent, name: string): Promise<File>
 }
 
 

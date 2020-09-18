@@ -37,7 +37,10 @@ class BareTree extends BaseTree implements UnixTree {
     return new BareTree(links) 
   }
 
-  async createChildFile(content: FileContent): Promise<File> {
+  async createChildFile(content: FileContent, name: string): Promise<File> {
+    if(this.links[name]?.isFile === false) {
+      throw new Error(`There is already a directory with that name: ${name}`)
+    }
     return BareFile.create(content)
   }
 
