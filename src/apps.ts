@@ -1,10 +1,9 @@
 import localforage from 'localforage'
 
 import * as did from './did'
-import * as dns from './dns'
 import * as ucan from './ucan'
+import * as ucanInternal from './ucan/internal'
 import { api, Maybe, isDefined } from './common'
-import { CID } from './ipfs'
 import { setup } from './setup/internal'
 
 
@@ -12,16 +11,23 @@ export type App = {
   domain: string
 }
 
+
+
 /**
  * Get A list of all of your apps and their associated domain names
  */
 export async function index(): Promise<Array<App>> {
   const apiEndpoint = setup.endpoints.api
 
+  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
+  if (localUcan === null) {
+    throw "Could not find your local UCAN"
+  }
+
   const jwt = await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: undefined, // TODO: Waiting on API changes
+    proof: ucan.encode(localUcan), 
     potency: null
   })
 
@@ -46,10 +52,15 @@ export async function create(
 ): Promise<App> {
   const apiEndpoint = setup.endpoints.api
 
+  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
+  if (localUcan === null) {
+    throw "Could not find your local UCAN"
+  }
+
   const jwt = await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: undefined, // TODO: Waiting on API changes
+    proof: ucan.encode(localUcan), 
     potency: null
   })
 
@@ -75,10 +86,15 @@ export async function deleteByURL(
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
+  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
+  if (localUcan === null) {
+    throw new Error("Could not find your local UCAN")
+  }
+
   const jwt = await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: undefined, // TODO: Waiting on API changes
+    proof: ucan.encode(localUcan), 
     potency: null
   })
 
