@@ -1,27 +1,52 @@
-import localforage from 'localforage'
-
 import * as did from './did'
 import * as dns from './dns'
 import * as ucan from './ucan'
 import * as ipfs from './ipfs'
+import * as check from './fs/types/check'
 import { api } from './common'
+import * as debug from './common/debug'
 import { CID } from './ipfs'
 import { setup } from './setup/internal'
 
 
 /**
  * Get the CID of a user's data root.
+ * First check Fission server, then check DNS
  *
  * @param username The username of the user that we want to get the data root of.
  */
 export async function lookup(
   username: string
 ): Promise<CID | null> {
+  const maybeRoot = await lookupOnFisson(username)
+  if(maybeRoot !== null) return maybeRoot
+
   try {
     return await dns.lookupDnsLink(username + '.files.' + setup.endpoints.user)
   } catch(err) {
     console.error(err)
     throw new Error('Could not locate user root in dns')
+  }
+}
+
+/**
+ * Get the CID of a user's data root from the Fission server.
+ *
+ * @param username The username of the user that we want to get the data root of.
+ */
+export async function lookupOnFisson(
+  username: string
+): Promise<CID | null> {
+  try {
+    const resp = await fetch(`${setup.endpoints.api}/user/data/${username}`)
+    const cid = await resp.json()
+    if (!check.isCID(cid)) {
+      throw new Error("Did not receive a CID")
+    }
+    return cid 
+  } catch(err) {
+    debug.log('Could not locate user root on Fission server: ', err.toString())
+    return null
   }
 }
 
