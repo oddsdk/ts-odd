@@ -51,7 +51,7 @@ export const dagGet = async (cid: CID): Promise<DAGNode> => {
 
 export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   const ipfs = await getIpfs()
-  // using this format because Gateway doesn't like `dag-cbor` nodes. 
+  // using this format because Gateway doesn't like `dag-cbor` nodes.
   // I think this is because UnixFS requires `dag-pb` & the gateway requires UnixFS for directory traversal
   const cidObj = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
   const cid = cidObj.toV1().toString()
@@ -66,8 +66,8 @@ export const dagPutLinks = async (links: DAGLink[]): Promise<AddResult> => {
 
 export const size = async (cid: CID): Promise<number> => {
   const ipfs = await getIpfs()
-  const stat = await ipfs.object.stat(cid)
-  return stat.CumulativeSize
+  const stat = await ipfs.files.stat(`/ipfs/${cid}`)
+  return stat.cumulativeSize
 }
 
 export const reconnect = async (): Promise<void> => {

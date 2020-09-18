@@ -48,7 +48,7 @@ export interface DagAPI {
 }
 
 export interface FilesAPI {
-  stat: (cid: CID | CIDObj) => Promise<{ CumulativeSize: number }>
+  stat: (cid: CID | CIDObj) => Promise<{ cumulativeSize: number }>
 }
 
 export interface ObjectAPI {
