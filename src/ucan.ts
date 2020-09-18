@@ -66,7 +66,7 @@ export const WNFS_PREFIX = "floofs"
 export async function build({
   audience,
   issuer,
-  lifetimeInSeconds = 30,
+  lifetimeInSeconds = 900,
   potency = 'APPEND',
   proof,
   resource = "*"
