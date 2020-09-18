@@ -24,7 +24,10 @@ export const defaultOptions = {
       Delegates: [ DELEGATE_ADDR ],
       Swarm: [ SIGNALING_SERVER ]
     },
-   Bootstrap: [ PEER_WSS ]
+    Bootstrap: [ PEER_WSS ]
+  },
+  preload: {
+    enabled: false
   }
 }
 

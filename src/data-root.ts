@@ -1,14 +1,22 @@
+import * as check from './fs/types/check'
+import * as debug from './common/debug'
 import * as did from './did'
 import * as dns from './dns'
 import * as ucan from './ucan'
 import * as ipfs from './ipfs'
-import * as check from './fs/types/check'
-import { api } from './common'
-import * as debug from './common/debug'
 import { CID } from './ipfs'
+import { Maybe, api } from './common'
 import { setup } from './setup/internal'
+import makeRetryFetch from 'fetch-retry'
 
-/** 
+
+// `fetch` with `retries`, `retryDelay`, `retryOn` options
+const fetchWithRetry = makeRetryFetch(fetch)
+
+// Only one data-root update at a time
+let fetchController: Maybe<AbortController> = null
+
+/**
  * CID representing an empty string. We use to to speed up DNS propagation
  * However, we treat that as a null value in the code
  */
@@ -50,7 +58,7 @@ export async function lookupOnFisson(
     if (!check.isCID(cid)) {
       throw new Error("Did not receive a CID")
     }
-    return cid 
+    return cid
   } catch(err) {
     debug.log('Could not locate user root on Fission server: ', err.toString())
     return null
@@ -69,6 +77,13 @@ export async function update(
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
+  // Cancel previous updates
+  if (fetchController) {
+    try { fetchController.abort() } catch (err) {}
+  }
+
+  fetchController = new AbortController()
+
   // Construct UCAN for the API call
   const jwt = await ucan.build({
     audience: await api.did(),
@@ -84,11 +99,12 @@ export async function update(
   // Make API call
   await Promise.all([
     ipfs.reconnect(),
-    fetch(`${apiEndpoint}/user/data/${cid}`, {
+    fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
       method: 'PATCH',
-      headers: {
-        'authorization': `Bearer ${jwt}`
-      }
+      headers: { 'authorization': `Bearer ${jwt}` },
+      retries: 100,
+      retryOn: [ 503, 504 ],
+      signal: fetchController.signal
     })
   ])
 
