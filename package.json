@@ -98,7 +98,6 @@
   "dependencies": {
     "base58-universal": "^1.0.0",
     "borc": "^2.1.1",
-    "fetch-retry": "^4.0.1",
     "fission-bloom-filters": "^1.4.0",
     "ipld-dag-pb": "^0.18.2",
     "keystore-idb": "^0.13.5",

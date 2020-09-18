@@ -7,13 +7,9 @@ import * as ipfs from './ipfs'
 import { CID } from './ipfs'
 import { Maybe, api } from './common'
 import { setup } from './setup/internal'
-import makeRetryFetch from 'fetch-retry'
 
 
-// `fetch` with `retries`, `retryDelay`, `retryOn` options
-const fetchWithRetry = makeRetryFetch(fetch)
-
-// Only one data-root update at a time
+// Controller for data-root-update fetches
 let fetchController: Maybe<AbortController> = null
 
 /**
@@ -78,35 +74,68 @@ export async function update(
   const apiEndpoint = setup.endpoints.api
 
   // Cancel previous updates
-  if (fetchController) {
-    try { fetchController.abort() } catch (err) {}
-  }
-
+  if (fetchController) fetchController.abort()
   fetchController = new AbortController()
 
-  // Construct UCAN for the API call
-  const jwt = await ucan.build({
-    audience: await api.did(),
-    issuer: await did.ucan(),
-    potency: "APPEND",
-    proof,
-
-    // TODO: Waiting on API change.
-    //       Should be `username.fission.name/*`
-    resource: ucan.decode(proof).payload.rsc
-  })
+  // Ensure peer connection
+  await ipfs.reconnect()
 
   // Make API call
-  await Promise.all([
-    ipfs.reconnect(),
-    fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
-      method: 'PATCH',
-      headers: { 'authorization': `Bearer ${jwt}` },
-      retries: 100,
-      retryOn: [ 503, 504 ],
-      signal: fetchController.signal
-    })
-  ])
+  await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
+    headers: async () => {
+      const jwt = await ucan.build({
+        audience: await api.did(),
+        issuer: await did.ucan(),
+        potency: "APPEND",
+        proof,
 
-  debug.log(`📓 DNSLink updated, ${cid}`)
+        // TODO: Waiting on API change.
+        //       Should be `username.fission.name/*`
+        resource: ucan.decode(proof).payload.rsc
+      })
+
+      return { 'authorization': `Bearer ${jwt}` }
+    },
+    retries: 100,
+    retryDelay: 5000,
+    retryOn: [ 503, 504 ],
+
+  }, {
+    method: 'PATCH',
+    signal: fetchController.signal
+
+  })
+}
+
+
+
+// ㊙️
+
+
+type RetryOptions = {
+  headers: () => Promise<{ [_: string]: string }>,
+  retries: number,
+  retryDelay: number,
+  retryOn: Array<number>
+}
+
+
+async function fetchWithRetry(
+  url: string,
+  retryOptions: RetryOptions,
+  fetchOptions: RequestInit,
+  retry: number = 0
+) {
+  const headers = await retryOptions.headers()
+  const response = await fetch(url, {
+    ...fetchOptions,
+    headers: { ...fetchOptions.headers, ...headers }
+  })
+
+  if (retryOptions.retryOn.includes(response.status) && retry < retryOptions.retries) {
+    await new Promise((resolve, reject) => setTimeout(
+      () => fetchWithRetry(url, retryOptions, fetchOptions, retry + 1).then(resolve, reject),
+      retryOptions.retryDelay
+    ))
+  }
 }
