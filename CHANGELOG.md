@@ -2,7 +2,7 @@
 
 ### v0.18.1
 
-Added proofs to JWT for app routes (index,create,delete)
+Added proofs to JWT for app routes (index, create & delete)
 
 ### v0.18.0
 
@@ -16,6 +16,7 @@ Added proofs to JWT for app routes (index,create,delete)
 
 
 ### v0.17.3
+
 Upgrade to js-ipfs v0.50
 
 
