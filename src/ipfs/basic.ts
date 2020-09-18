@@ -18,6 +18,7 @@ export const add = async (content: FileContent): Promise<AddResult> => {
 export const catRaw = async (cid: CID): Promise<Buffer[]> => {
   const ipfs = await getIpfs()
   const chunks = []
+  await ipfs.pin.add(cid)
   for await (const chunk of ipfs.cat(cid)) {
     chunks.push(chunk)
   }
@@ -37,6 +38,7 @@ export const cat = async (cid: CID): Promise<string> => {
 export const ls = async (cid: CID): Promise<UnixFSFile[]> => {
   const ipfs = await getIpfs()
   const links = []
+  await ipfs.pin.add(cid)
   for await (const link of ipfs.ls(cid)) {
     links.push(link)
   }
@@ -45,6 +47,7 @@ export const ls = async (cid: CID): Promise<UnixFSFile[]> => {
 
 export const dagGet = async (cid: CID): Promise<DAGNode> => {
   const ipfs = await getIpfs()
+  await ipfs.pin.add(cid)
   const raw = await ipfs.dag.get(cid)
   return util.rawToDAGNode(raw)
 }
