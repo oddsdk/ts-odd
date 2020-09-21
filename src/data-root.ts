@@ -98,7 +98,7 @@ export async function update(
     },
     retries: 100,
     retryDelay: 5000,
-    retryOn: [ 503, 504 ],
+    retryOn: [ 502, 503, 504 ],
 
   }, {
     method: 'PATCH',
