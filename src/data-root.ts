@@ -38,7 +38,7 @@ export async function lookupOnFisson(
   username: string
 ): Promise<CID | null> {
   try {
-    const resp = await fetch(`${setup.endpoints.api}/user/data/${username}`)
+    const resp = await fetch(`${setup.endpoints.api}/user/data/${username}`, { cache: 'reload' }) // don't use cache
     const cid = await resp.json()
     if (!check.isCID(cid)) {
       throw new Error("Did not receive a CID")
