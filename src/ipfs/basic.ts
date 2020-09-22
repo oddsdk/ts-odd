@@ -38,7 +38,6 @@ export const cat = async (cid: CID): Promise<string> => {
 export const ls = async (cid: CID): Promise<UnixFSFile[]> => {
   const ipfs = await getIpfs()
   const links = []
-  await ipfs.pin.add(cid)
   for await (const link of ipfs.ls(cid)) {
     links.push(link)
   }
