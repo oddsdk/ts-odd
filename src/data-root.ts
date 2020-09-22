@@ -8,6 +8,11 @@ import * as debug from './common/debug'
 import { CID } from './ipfs'
 import { setup } from './setup/internal'
 
+/** 
+ * CID representing an empty string. We use to to speed up DNS propagation
+ * However, we treat that as a null value in the code
+ */
+const EMPTY_CID = 'Qmc5m94Gu7z62RC8waSKkZUrCCBJPyHbkpmGzEePxy2oXJ'
 
 /**
  * Get the CID of a user's data root.
@@ -19,10 +24,12 @@ export async function lookup(
   username: string
 ): Promise<CID | null> {
   const maybeRoot = await lookupOnFisson(username)
+  if(maybeRoot === EMPTY_CID) return null
   if(maybeRoot !== null) return maybeRoot
 
   try {
-    return await dns.lookupDnsLink(username + '.files.' + setup.endpoints.user)
+    const cid = await dns.lookupDnsLink(username + '.files.' + setup.endpoints.user)
+    return cid === EMPTY_CID ? null : cid
   } catch(err) {
     console.error(err)
     throw new Error('Could not locate user root in dns')
@@ -84,4 +91,6 @@ export async function update(
       }
     })
   ])
+
+  debug.log(`📓 DNSLink updated, ${cid}`)
 }
