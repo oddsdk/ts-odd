@@ -1,5 +1,12 @@
 # Changelog
 
+### v0.19
+
+- Reliability & performance improvements
+- Fixes issue with apps without permissions
+
+
+
 ### v0.18.1
 
 Added proofs to JWT for app routes (index, create & delete)
