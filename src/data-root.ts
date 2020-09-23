@@ -73,6 +73,9 @@ export async function update(
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
+  // Debug
+  debug.log("🚀 Updating your DNSLink:", cid)
+
   // Cancel previous updates
   if (fetchController) fetchController.abort()
   fetchController = new AbortController()

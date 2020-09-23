@@ -106,7 +106,6 @@ export class FileSystem implements UnixTree {
 
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
-      debug.log("🚀 Updating your DNSLink:", cid)
       if (window.navigator.onLine) return dataRoot.update(cid, proof)
       this.syncWhenOnline.push([ cid, proof ])
     }, false)
