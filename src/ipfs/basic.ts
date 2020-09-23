@@ -71,6 +71,5 @@ export const size = async (cid: CID): Promise<number> => {
 }
 
 export const reconnect = async (): Promise<void> => {
-  const ipfs = await getIpfs()
-  await ipfs.swarm.connect(PEER_WSS)
+  await getIpfs()
 }

@@ -33,17 +33,19 @@ export const set = (userIpfs: unknown): void => {
 }
 
 export const get = async (): Promise<IPFS> => {
-  if (ipfs) return ipfs
+  if (!ipfs) {
+    await loadScript(JS_IPFS)
 
-  await loadScript(JS_IPFS)
+    const Ipfs = await (window as IpfsWindow).Ipfs
+    if (!Ipfs) throw new Error(`Unable to load js-ipfs using the url: \`${JS_IPFS}\``)
 
-  const Ipfs = await (window as IpfsWindow).Ipfs
-  if (!Ipfs) throw new Error(`Unable to load js-ipfs using the url: \`${JS_IPFS}\``)
+    ipfs = await Ipfs.create({
+      ...defaultOptions,
+      ...setup.ipfs
+    })
+  }
 
-  ipfs = Ipfs.create({
-    ...defaultOptions,
-    ...setup.ipfs
-  })
+  await ipfs.swarm.connect(PEER_WSS)
 
   return ipfs
 }
