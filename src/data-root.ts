@@ -108,6 +108,9 @@ export async function update(
     signal: fetchController.signal
 
   })
+
+  // Debug
+  debug.log("🚀 DNSLink updated:", cid)
 }
 
 
