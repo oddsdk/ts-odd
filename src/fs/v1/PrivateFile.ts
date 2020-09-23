@@ -59,7 +59,7 @@ export class PrivateFile extends BaseFile implements File {
   static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
     const info = await protocol.priv.getByName(mmpt, name, key)
     if(!check.isPrivateFileInfo(info)) {
-      throw new Error(`Could not parse a valid private tree using the given key`)
+      throw new Error(`Could not parse a valid private file using the given key`)
     }
     return PrivateFile.fromInfo(mmpt, key, info)
   }
