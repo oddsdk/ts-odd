@@ -87,7 +87,7 @@ export type Continuation = {
  */
 export async function initialise(
   options: {
-    permissions: Permissions
+    permissions?: Permissions
 
     // Options
     autoRemoveUrlParams?: boolean

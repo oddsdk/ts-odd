@@ -4,7 +4,7 @@ import FileSystem from './fs'
 import * as cidLog from './common/cid-log'
 import * as debug from './common/debug'
 import * as dataRoot from './data-root'
-import { READ_KEY_FROM_LOBBY_NAME, authenticatedUsername } from './common'
+import { READ_KEY_FROM_LOBBY_NAME, Maybe, authenticatedUsername } from './common'
 import { Permissions } from './ucan/permissions'
 import { Ucan } from './ucan'
 
@@ -13,12 +13,13 @@ import { Ucan } from './ucan'
  * Load a user's file system.
  *
  * @param permissions The permissions from initialise.
+ *                    Pass `null` if working without permissions
  * @param username Optional, username of the user to load the file system from.
  *                 Will try to load the file system of the authenticated user
  *                 by default. Throws an error if there's no authenticated user.
  */
 export async function loadFileSystem(
-  permissions: Permissions,
+  permissions: Maybe<Permissions>,
   username?: string
 ): Promise<FileSystem> {
   let cid, fs
@@ -62,11 +63,13 @@ export async function loadFileSystem(
 
   // If a file system exists, load it and return it
   const keyName = READ_KEY_FROM_LOBBY_NAME
-  fs = cid ? await FileSystem.fromCID(cid, { keyName, permissions }) : null
+  const p = permissions || undefined
+
+  fs = cid ? await FileSystem.fromCID(cid, { keyName, permissions: p }) : null
   if (fs) return fs
 
   // Otherwise make a new one
-  fs = await FileSystem.empty({ keyName, permissions })
+  fs = await FileSystem.empty({ keyName, permissions: p })
   await addSampleData(fs)
 
   // Fin

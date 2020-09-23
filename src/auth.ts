@@ -3,7 +3,7 @@ import localforage from 'localforage'
 import * as common from './common'
 import * as did from './did'
 import * as ucan from './ucan/internal'
-import { UCANS_STORAGE_KEY, USERNAME_STORAGE_KEY } from './common'
+import { UCANS_STORAGE_KEY, USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
 
@@ -35,15 +35,18 @@ export async function leave(): Promise<void> {
  *
  * NOTE: Only works on the main thread, as it uses `window.location`.
  *
- * @param permissions The permissions from `initialise`
+ * @param permissions The permissions from `initialise`.
+ *                    Pass `null` if working without permissions.
  * @param redirectTo Specify the URL you want users to return to.
  *                   Uses the current url by default.
  */
 export async function redirectToLobby(
-  permissions: Permissions,
+  permissions: Maybe<Permissions>,
   redirectTo?: string
 ): Promise<void> {
-  const { app, fs } = permissions
+  const app = permissions ? permissions.app : undefined
+  const fs = permissions ? permissions.fs : undefined
+
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
 

@@ -66,7 +66,7 @@
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:29](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L29)*
+*Defined in [src/fs/v1/PrivateTree.ts:29](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L29)*
 
 **Parameters:**
 
@@ -86,7 +86,7 @@ Name | Type |
 
 • **info**: *[PrivateTreeInfo](../modules/_fs_protocol_private_types_.md#privatetreeinfo)*
 
-*Defined in [src/fs/v1/PrivateTree.ts:27](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L27)*
+*Defined in [src/fs/v1/PrivateTree.ts:27](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L27)*
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 • **key**: *string*
 
-*Defined in [src/fs/v1/PrivateTree.ts:26](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L26)*
+*Defined in [src/fs/v1/PrivateTree.ts:26](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L26)*
 
 ___
 
@@ -102,7 +102,7 @@ ___
 
 • **mmpt**: *[MMPT](_fs_protocol_private_mmpt_.mmpt.md)*
 
-*Defined in [src/fs/v1/PrivateTree.ts:25](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L25)*
+*Defined in [src/fs/v1/PrivateTree.ts:25](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L25)*
 
 ___
 
@@ -110,7 +110,7 @@ ___
 
 • **onUpdate**: *Maybe‹SyncHookDetailed›* = null
 
-*Defined in [src/fs/v1/PrivateTree.ts:29](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L29)*
+*Defined in [src/fs/v1/PrivateTree.ts:29](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L29)*
 
 ___
 
@@ -120,7 +120,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[version](_fs_v1_publictree_.publictree.md#version)*
 
-*Defined in [src/fs/base/tree.ts:13](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L13)*
+*Defined in [src/fs/base/tree.ts:13](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L13)*
 
 ## Methods
 
@@ -130,7 +130,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[add](_fs_v1_publictree_.publictree.md#add)*
 
-*Defined in [src/fs/base/tree.ts:55](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L55)*
+*Defined in [src/fs/base/tree.ts:55](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L55)*
 
 **Parameters:**
 
@@ -149,7 +149,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[addChild](_fs_v1_publictree_.publictree.md#addchild)*
 
-*Defined in [src/fs/base/tree.ts:61](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L61)*
+*Defined in [src/fs/base/tree.ts:61](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L61)*
 
 **Parameters:**
 
@@ -168,7 +168,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[addRecurse](_fs_v1_publictree_.publictree.md#addrecurse)*
 
-*Defined in [src/fs/base/tree.ts:70](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L70)*
+*Defined in [src/fs/base/tree.ts:70](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L70)*
 
 **Parameters:**
 
@@ -187,7 +187,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[cat](_fs_v1_publictree_.publictree.md#cat)*
 
-*Defined in [src/fs/base/tree.ts:45](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L45)*
+*Defined in [src/fs/base/tree.ts:45](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L45)*
 
 **Parameters:**
 
@@ -205,7 +205,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:85](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L85)*
+*Defined in [src/fs/v1/PrivateTree.ts:85](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L85)*
 
 **Parameters:**
 
@@ -224,7 +224,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:80](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L80)*
+*Defined in [src/fs/v1/PrivateTree.ts:80](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L80)*
 
 **Returns:** *Promise‹[PrivateTree](_fs_v1_privatetree_.privatetree.md)›*
 
@@ -236,7 +236,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[exists](_fs_v1_publictree_.publictree.md#exists)*
 
-*Defined in [src/fs/base/tree.ts:137](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L137)*
+*Defined in [src/fs/base/tree.ts:137](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L137)*
 
 **Parameters:**
 
@@ -254,7 +254,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:162](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L162)*
+*Defined in [src/fs/v1/PrivateTree.ts:162](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L162)*
 
 **Parameters:**
 
@@ -272,7 +272,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:131](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L131)*
+*Defined in [src/fs/v1/PrivateTree.ts:131](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L131)*
 
 **Parameters:**
 
@@ -290,7 +290,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:155](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L155)*
+*Defined in [src/fs/v1/PrivateTree.ts:155](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L155)*
 
 **Returns:** *BaseLinks*
 
@@ -300,7 +300,7 @@ ___
 
 ▸ **getName**(): *Promise‹[PrivateName](../modules/_fs_protocol_private_namefilter_.md#privatename)›*
 
-*Defined in [src/fs/v1/PrivateTree.ts:144](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L144)*
+*Defined in [src/fs/v1/PrivateTree.ts:144](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L144)*
 
 **Returns:** *Promise‹[PrivateName](../modules/_fs_protocol_private_namefilter_.md#privatename)›*
 
@@ -312,7 +312,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:139](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L139)*
+*Defined in [src/fs/v1/PrivateTree.ts:139](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L139)*
 
 **Parameters:**
 
@@ -328,7 +328,7 @@ ___
 
 ▸ **getRecurse**(`nodeInfo`: [PrivateSkeletonInfo](../modules/_fs_protocol_private_types_.md#privateskeletoninfo), `parts`: string[]): *Promise‹Maybe‹[DecryptedNode](../modules/_fs_protocol_private_types_.md#decryptednode)››*
 
-*Defined in [src/fs/v1/PrivateTree.ts:179](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L179)*
+*Defined in [src/fs/v1/PrivateTree.ts:179](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L179)*
 
 **Parameters:**
 
@@ -347,7 +347,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[ls](_fs_v1_publictree_.publictree.md#ls)*
 
-*Defined in [src/fs/base/tree.ts:24](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L24)*
+*Defined in [src/fs/base/tree.ts:24](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L24)*
 
 **Parameters:**
 
@@ -365,7 +365,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[mkdir](_fs_v1_publictree_.publictree.md#mkdir)*
 
-*Defined in [src/fs/base/tree.ts:34](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L34)*
+*Defined in [src/fs/base/tree.ts:34](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L34)*
 
 **Parameters:**
 
@@ -383,7 +383,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[mv](_fs_v1_publictree_.publictree.md#mv)*
 
-*Defined in [src/fs/base/tree.ts:118](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L118)*
+*Defined in [src/fs/base/tree.ts:118](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L118)*
 
 **Parameters:**
 
@@ -402,7 +402,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[put](_fs_v1_publictree_.publictree.md#put)*
 
-*Defined in [src/fs/base/tree.ts:19](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L19)*
+*Defined in [src/fs/base/tree.ts:19](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L19)*
 
 **Returns:** *Promise‹CID›*
 
@@ -414,7 +414,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:99](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L99)*
+*Defined in [src/fs/v1/PrivateTree.ts:99](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L99)*
 
 **Returns:** *Promise‹[PrivateAddResult](../modules/_fs_protocol_private_types_.md#privateaddresult)›*
 
@@ -426,7 +426,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:121](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L121)*
+*Defined in [src/fs/v1/PrivateTree.ts:121](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L121)*
 
 **Parameters:**
 
@@ -444,7 +444,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[rm](_fs_v1_publictree_.publictree.md#rm)*
 
-*Defined in [src/fs/base/tree.ts:93](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L93)*
+*Defined in [src/fs/base/tree.ts:93](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L93)*
 
 **Parameters:**
 
@@ -462,7 +462,7 @@ ___
 
 *Inherited from [PublicTree](_fs_v1_publictree_.publictree.md).[rmNested](_fs_v1_publictree_.publictree.md#rmnested)*
 
-*Defined in [src/fs/base/tree.ts:103](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/tree.ts#L103)*
+*Defined in [src/fs/base/tree.ts:103](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/tree.ts#L103)*
 
 **Parameters:**
 
@@ -480,7 +480,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PrivateTree.ts:111](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L111)*
+*Defined in [src/fs/v1/PrivateTree.ts:111](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L111)*
 
 **Parameters:**
 
@@ -497,7 +497,7 @@ ___
 
 ▸ **updateParentNameFilter**(`parentNameFilter`: [BareNameFilter](../modules/_fs_protocol_private_namefilter_.md#barenamefilter)): *Promise‹this›*
 
-*Defined in [src/fs/v1/PrivateTree.ts:150](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L150)*
+*Defined in [src/fs/v1/PrivateTree.ts:150](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L150)*
 
 **Parameters:**
 
@@ -513,7 +513,7 @@ ___
 
 ▸ **create**(`mmpt`: [MMPT](_fs_protocol_private_mmpt_.mmpt.md), `key`: string, `parentNameFilter`: Maybe‹[BareNameFilter](../modules/_fs_protocol_private_namefilter_.md#barenamefilter)›): *Promise‹[PrivateTree](_fs_v1_privatetree_.privatetree.md)›*
 
-*Defined in [src/fs/v1/PrivateTree.ts:44](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L44)*
+*Defined in [src/fs/v1/PrivateTree.ts:44](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L44)*
 
 **Parameters:**
 
@@ -531,7 +531,7 @@ ___
 
 ▸ **fromBaseKey**(`mmpt`: [MMPT](_fs_protocol_private_mmpt_.mmpt.md), `key`: string): *Promise‹[PrivateTree](_fs_v1_privatetree_.privatetree.md)›*
 
-*Defined in [src/fs/v1/PrivateTree.ts:61](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L61)*
+*Defined in [src/fs/v1/PrivateTree.ts:61](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L61)*
 
 **Parameters:**
 
@@ -548,7 +548,7 @@ ___
 
 ▸ **fromInfo**(`mmpt`: [MMPT](_fs_protocol_private_mmpt_.mmpt.md), `key`: string, `info`: [PrivateTreeInfo](../modules/_fs_protocol_private_types_.md#privatetreeinfo)): *Promise‹[PrivateTree](_fs_v1_privatetree_.privatetree.md)›*
 
-*Defined in [src/fs/v1/PrivateTree.ts:76](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L76)*
+*Defined in [src/fs/v1/PrivateTree.ts:76](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L76)*
 
 **Parameters:**
 
@@ -566,7 +566,7 @@ ___
 
 ▸ **fromName**(`mmpt`: [MMPT](_fs_protocol_private_mmpt_.mmpt.md), `name`: [PrivateName](../modules/_fs_protocol_private_namefilter_.md#privatename), `key`: string): *Promise‹[PrivateTree](_fs_v1_privatetree_.privatetree.md)›*
 
-*Defined in [src/fs/v1/PrivateTree.ts:68](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L68)*
+*Defined in [src/fs/v1/PrivateTree.ts:68](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L68)*
 
 **Parameters:**
 
@@ -584,7 +584,7 @@ ___
 
 ▸ **instanceOf**(`obj`: any): *obj is PrivateTree*
 
-*Defined in [src/fs/v1/PrivateTree.ts:38](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PrivateTree.ts#L38)*
+*Defined in [src/fs/v1/PrivateTree.ts:38](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PrivateTree.ts#L38)*
 
 **Parameters:**
 

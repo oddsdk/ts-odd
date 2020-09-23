@@ -16,7 +16,7 @@
 
 ▸ **lookup**(`username`: string): *Promise‹CID | null›*
 
-*Defined in [src/data-root.ts:27](https://github.com/fission-suite/webnative/blob/3b06253/src/data-root.ts#L27)*
+*Defined in [src/data-root.ts:27](https://github.com/fission-suite/webnative/blob/693f51f/src/data-root.ts#L27)*
 
 Get the CID of a user's data root.
 First check Fission server, then check DNS
@@ -35,7 +35,7 @@ ___
 
 ▸ **lookupOnFisson**(`username`: string): *Promise‹CID | null›*
 
-*Defined in [src/data-root.ts:48](https://github.com/fission-suite/webnative/blob/3b06253/src/data-root.ts#L48)*
+*Defined in [src/data-root.ts:48](https://github.com/fission-suite/webnative/blob/693f51f/src/data-root.ts#L48)*
 
 Get the CID of a user's data root from the Fission server.
 
@@ -53,7 +53,7 @@ ___
 
 ▸ **update**(`cid`: CID | string, `proof`: string): *Promise‹void›*
 
-*Defined in [src/data-root.ts:70](https://github.com/fission-suite/webnative/blob/3b06253/src/data-root.ts#L70)*
+*Defined in [src/data-root.ts:70](https://github.com/fission-suite/webnative/blob/693f51f/src/data-root.ts#L70)*
 
 Update a user's data root.
 

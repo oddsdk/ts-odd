@@ -40,7 +40,7 @@
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicFile.ts:16](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PublicFile.ts#L16)*
+*Defined in [src/fs/v1/PublicFile.ts:16](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PublicFile.ts#L16)*
 
 **Parameters:**
 
@@ -61,7 +61,7 @@ Name | Type |
 
 *Inherited from void*
 
-*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/file.ts#L10)*
+*Defined in [src/fs/base/file.ts:10](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/file.ts#L10)*
 
 ___
 
@@ -69,7 +69,7 @@ ___
 
 • **info**: *[FileHeader](../modules/_fs_protocol_public_types_.md#fileheader)*
 
-*Defined in [src/fs/v1/PublicFile.ts:16](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PublicFile.ts#L16)*
+*Defined in [src/fs/v1/PublicFile.ts:16](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PublicFile.ts#L16)*
 
 ## Methods
 
@@ -79,7 +79,7 @@ ___
 
 *Inherited from void*
 
-*Defined in [src/fs/base/file.ts:16](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/base/file.ts#L16)*
+*Defined in [src/fs/base/file.ts:16](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/base/file.ts#L16)*
 
 **Returns:** *Promise‹CID›*
 
@@ -91,7 +91,7 @@ ___
 
 *Overrides void*
 
-*Defined in [src/fs/v1/PublicFile.ts:41](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PublicFile.ts#L41)*
+*Defined in [src/fs/v1/PublicFile.ts:41](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PublicFile.ts#L41)*
 
 **Returns:** *Promise‹PutDetails›*
 
@@ -101,7 +101,7 @@ ___
 
 ▸ **create**(`content`: FileContent): *Promise‹[PublicFile](_fs_v1_publicfile_.publicfile.md)›*
 
-*Defined in [src/fs/v1/PublicFile.ts:23](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PublicFile.ts#L23)*
+*Defined in [src/fs/v1/PublicFile.ts:23](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PublicFile.ts#L23)*
 
 **Parameters:**
 
@@ -117,7 +117,7 @@ ___
 
 ▸ **fromCID**(`cid`: CID): *Promise‹[PublicFile](_fs_v1_publicfile_.publicfile.md)›*
 
-*Defined in [src/fs/v1/PublicFile.ts:30](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PublicFile.ts#L30)*
+*Defined in [src/fs/v1/PublicFile.ts:30](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PublicFile.ts#L30)*
 
 **Parameters:**
 
@@ -133,7 +133,7 @@ ___
 
 ▸ **fromInfo**(`info`: [FileInfo](../modules/_fs_protocol_public_types_.md#fileinfo)): *Promise‹[PublicFile](_fs_v1_publicfile_.publicfile.md)›*
 
-*Defined in [src/fs/v1/PublicFile.ts:35](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/v1/PublicFile.ts#L35)*
+*Defined in [src/fs/v1/PublicFile.ts:35](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/v1/PublicFile.ts#L35)*
 
 **Parameters:**
 

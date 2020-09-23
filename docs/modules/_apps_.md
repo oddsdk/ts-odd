@@ -20,7 +20,7 @@
 
 Ƭ **App**: *object*
 
-*Defined in [src/apps.ts:10](https://github.com/fission-suite/webnative/blob/3b06253/src/apps.ts#L10)*
+*Defined in [src/apps.ts:10](https://github.com/fission-suite/webnative/blob/693f51f/src/apps.ts#L10)*
 
 #### Type declaration:
 
@@ -32,7 +32,7 @@
 
 ▸ **create**(`subdomain`: Maybe‹string›): *Promise‹[App](_apps_.md#app)›*
 
-*Defined in [src/apps.ts:50](https://github.com/fission-suite/webnative/blob/3b06253/src/apps.ts#L50)*
+*Defined in [src/apps.ts:50](https://github.com/fission-suite/webnative/blob/693f51f/src/apps.ts#L50)*
 
 Creates a new app, assigns an initial subdomain, and sets an asset placeholder
 
@@ -50,7 +50,7 @@ ___
 
 ▸ **deleteByURL**(`url`: string): *Promise‹void›*
 
-*Defined in [src/apps.ts:84](https://github.com/fission-suite/webnative/blob/3b06253/src/apps.ts#L84)*
+*Defined in [src/apps.ts:84](https://github.com/fission-suite/webnative/blob/693f51f/src/apps.ts#L84)*
 
 Destroy app by any associated URL
 
@@ -68,7 +68,7 @@ ___
 
 ▸ **index**(): *Promise‹Array‹[App](_apps_.md#app)››*
 
-*Defined in [src/apps.ts:19](https://github.com/fission-suite/webnative/blob/3b06253/src/apps.ts#L19)*
+*Defined in [src/apps.ts:19](https://github.com/fission-suite/webnative/blob/693f51f/src/apps.ts#L19)*
 
 Get A list of all of your apps and their associated domain names
 

@@ -28,7 +28,7 @@
 
 Ƭ **BareNameFilter**: *Opaque‹"BareNameFilter", string›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:19](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L19)*
+*Defined in [src/fs/protocol/private/namefilter.ts:19](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L19)*
 
 ___
 
@@ -36,7 +36,7 @@ ___
 
 Ƭ **PrivateName**: *Opaque‹"PrivateName", string›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:16](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L16)*
+*Defined in [src/fs/protocol/private/namefilter.ts:16](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L16)*
 
 ___
 
@@ -44,7 +44,7 @@ ___
 
 Ƭ **RevisionNameFilter**: *Opaque‹"RevisionNameFilter", string›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:22](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L22)*
+*Defined in [src/fs/protocol/private/namefilter.ts:22](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L22)*
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 Ƭ **SaturatedNameFilter**: *Opaque‹"SaturatedNameFilter", string›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:25](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L25)*
+*Defined in [src/fs/protocol/private/namefilter.ts:25](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L25)*
 
 ## Functions
 
@@ -60,7 +60,7 @@ ___
 
 ▸ **addRevision**(`bareFilter`: [BareNameFilter](_fs_protocol_private_namefilter_.md#barenamefilter), `key`: string, `revision`: number): *Promise‹[RevisionNameFilter](_fs_protocol_private_namefilter_.md#revisionnamefilter)›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:46](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L46)*
+*Defined in [src/fs/protocol/private/namefilter.ts:46](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L46)*
 
 **Parameters:**
 
@@ -78,7 +78,7 @@ ___
 
 ▸ **addToBare**(`bareFilter`: [BareNameFilter](_fs_protocol_private_namefilter_.md#barenamefilter), `toAdd`: string): *Promise‹[BareNameFilter](_fs_protocol_private_namefilter_.md#barenamefilter)›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:38](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L38)*
+*Defined in [src/fs/protocol/private/namefilter.ts:38](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L38)*
 
 **Parameters:**
 
@@ -95,7 +95,7 @@ ___
 
 ▸ **createBare**(`key`: string): *Promise‹[BareNameFilter](_fs_protocol_private_namefilter_.md#barenamefilter)›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:32](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L32)*
+*Defined in [src/fs/protocol/private/namefilter.ts:32](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L32)*
 
 **Parameters:**
 
@@ -111,7 +111,7 @@ ___
 
 ▸ **fromHex**(`string`: string): *BloomFilter*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:108](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L108)*
+*Defined in [src/fs/protocol/private/namefilter.ts:108](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L108)*
 
 **Parameters:**
 
@@ -127,7 +127,7 @@ ___
 
 ▸ **saturate**(`filter`: [RevisionNameFilter](_fs_protocol_private_namefilter_.md#revisionnamefilter), `threshold`: number): *Promise‹[SaturatedNameFilter](_fs_protocol_private_namefilter_.md#saturatednamefilter)›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:63](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L63)*
+*Defined in [src/fs/protocol/private/namefilter.ts:63](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L63)*
 
 **Parameters:**
 
@@ -144,7 +144,7 @@ ___
 
 ▸ **toHash**(`filter`: BloomFilter): *Promise‹[PrivateName](_fs_protocol_private_namefilter_.md#privatename)›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:57](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L57)*
+*Defined in [src/fs/protocol/private/namefilter.ts:57](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L57)*
 
 **Parameters:**
 
@@ -160,7 +160,7 @@ ___
 
 ▸ **toHex**(`filter`: BloomFilter): *string*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:103](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L103)*
+*Defined in [src/fs/protocol/private/namefilter.ts:103](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L103)*
 
 **Parameters:**
 
@@ -176,7 +176,7 @@ ___
 
 ▸ **toPrivateName**(`revisionFilter`: [RevisionNameFilter](_fs_protocol_private_namefilter_.md#revisionnamefilter)): *Promise‹[PrivateName](_fs_protocol_private_namefilter_.md#privatename)›*
 
-*Defined in [src/fs/protocol/private/namefilter.ts:51](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/namefilter.ts#L51)*
+*Defined in [src/fs/protocol/private/namefilter.ts:51](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/namefilter.ts#L51)*
 
 **Parameters:**
 

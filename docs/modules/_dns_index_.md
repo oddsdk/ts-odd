@@ -18,7 +18,7 @@
 
 ▸ **cloudflareLookup**(`domain`: string): *Promise‹string | null›*
 
-*Defined in [src/dns/index.ts:34](https://github.com/fission-suite/webnative/blob/3b06253/src/dns/index.ts#L34)*
+*Defined in [src/dns/index.ts:34](https://github.com/fission-suite/webnative/blob/693f51f/src/dns/index.ts#L34)*
 
 Lookup DNS TXT record using Cloudflare DNS-over-HTTPS
 
@@ -38,7 +38,7 @@ ___
 
 ▸ **dnsOverHttps**(`url`: string): *Promise‹string | null›*
 
-*Defined in [src/dns/index.ts:48](https://github.com/fission-suite/webnative/blob/3b06253/src/dns/index.ts#L48)*
+*Defined in [src/dns/index.ts:48](https://github.com/fission-suite/webnative/blob/693f51f/src/dns/index.ts#L48)*
 
 Lookup a DNS TXT record.
 
@@ -62,7 +62,7 @@ ___
 
 ▸ **googleLookup**(`domain`: string): *Promise‹string | null›*
 
-*Defined in [src/dns/index.ts:24](https://github.com/fission-suite/webnative/blob/3b06253/src/dns/index.ts#L24)*
+*Defined in [src/dns/index.ts:24](https://github.com/fission-suite/webnative/blob/693f51f/src/dns/index.ts#L24)*
 
 Lookup DNS TXT record using Google DNS-over-HTTPS
 
@@ -82,7 +82,7 @@ ___
 
 ▸ **lookupDnsLink**(`domain`: string): *Promise‹string | null›*
 
-*Defined in [src/dns/index.ts:88](https://github.com/fission-suite/webnative/blob/3b06253/src/dns/index.ts#L88)*
+*Defined in [src/dns/index.ts:88](https://github.com/fission-suite/webnative/blob/693f51f/src/dns/index.ts#L88)*
 
 Lookup a DNSLink.
 
@@ -102,7 +102,7 @@ ___
 
 ▸ **lookupTxtRecord**(`domain`: string): *Promise‹string | null›*
 
-*Defined in [src/dns/index.ts:11](https://github.com/fission-suite/webnative/blob/3b06253/src/dns/index.ts#L11)*
+*Defined in [src/dns/index.ts:11](https://github.com/fission-suite/webnative/blob/693f51f/src/dns/index.ts#L11)*
 
 Lookup a DNS TXT record.
 

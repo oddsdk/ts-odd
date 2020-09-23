@@ -20,7 +20,7 @@
 
 ▸ **isDecryptedNode**(`obj`: any): *obj is DecryptedNode*
 
-*Defined in [src/fs/protocol/private/types/check.ts:5](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/types/check.ts#L5)*
+*Defined in [src/fs/protocol/private/types/check.ts:5](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/types/check.ts#L5)*
 
 **Parameters:**
 
@@ -36,7 +36,7 @@ ___
 
 ▸ **isPrivateFileInfo**(`obj`: any): *obj is PrivateFileInfo*
 
-*Defined in [src/fs/protocol/private/types/check.ts:9](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/types/check.ts#L9)*
+*Defined in [src/fs/protocol/private/types/check.ts:9](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/types/check.ts#L9)*
 
 **Parameters:**
 
@@ -52,7 +52,7 @@ ___
 
 ▸ **isPrivateLink**(`obj`: any): *obj is PrivateLink*
 
-*Defined in [src/fs/protocol/private/types/check.ts:26](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/types/check.ts#L26)*
+*Defined in [src/fs/protocol/private/types/check.ts:26](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/types/check.ts#L26)*
 
 **Parameters:**
 
@@ -68,7 +68,7 @@ ___
 
 ▸ **isPrivateLinks**(`obj`: any): *obj is PrivateLinks*
 
-*Defined in [src/fs/protocol/private/types/check.ts:32](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/types/check.ts#L32)*
+*Defined in [src/fs/protocol/private/types/check.ts:32](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/types/check.ts#L32)*
 
 **Parameters:**
 
@@ -84,7 +84,7 @@ ___
 
 ▸ **isPrivateSkeleton**(`obj`: any): *obj is PrivateSkeleton*
 
-*Defined in [src/fs/protocol/private/types/check.ts:37](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/types/check.ts#L37)*
+*Defined in [src/fs/protocol/private/types/check.ts:37](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/types/check.ts#L37)*
 
 **Parameters:**
 
@@ -100,7 +100,7 @@ ___
 
 ▸ **isPrivateSkeletonInfo**(`obj`: any): *obj is PrivateSkeletonInfo*
 
-*Defined in [src/fs/protocol/private/types/check.ts:42](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/types/check.ts#L42)*
+*Defined in [src/fs/protocol/private/types/check.ts:42](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/types/check.ts#L42)*
 
 **Parameters:**
 
@@ -116,7 +116,7 @@ ___
 
 ▸ **isPrivateTreeInfo**(`obj`: any): *obj is PrivateTreeInfo*
 
-*Defined in [src/fs/protocol/private/types/check.ts:17](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/types/check.ts#L17)*
+*Defined in [src/fs/protocol/private/types/check.ts:17](https://github.com/fission-suite/webnative/blob/693f51f/src/fs/protocol/private/types/check.ts#L17)*
 
 **Parameters:**
 

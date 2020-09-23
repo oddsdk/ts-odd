@@ -124,7 +124,7 @@ ___
 
 Ƭ **AuthCancelled**: *object*
 
-*Defined in [src/index.ts:55](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L55)*
+*Defined in [src/index.ts:55](https://github.com/fission-suite/webnative/blob/693f51f/src/index.ts#L55)*
 
 #### Type declaration:
 
@@ -144,7 +144,7 @@ ___
 
 Ƭ **AuthSucceeded**: *object*
 
-*Defined in [src/index.ts:43](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L43)*
+*Defined in [src/index.ts:43](https://github.com/fission-suite/webnative/blob/693f51f/src/index.ts#L43)*
 
 #### Type declaration:
 
@@ -168,7 +168,7 @@ ___
 
 Ƭ **Continuation**: *object*
 
-*Defined in [src/index.ts:64](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L64)*
+*Defined in [src/index.ts:64](https://github.com/fission-suite/webnative/blob/693f51f/src/index.ts#L64)*
 
 #### Type declaration:
 
@@ -192,7 +192,7 @@ ___
 
 Ƭ **NotAuthorised**: *object*
 
-*Defined in [src/index.ts:36](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L36)*
+*Defined in [src/index.ts:36](https://github.com/fission-suite/webnative/blob/693f51f/src/index.ts#L36)*
 
 #### Type declaration:
 
@@ -208,7 +208,7 @@ ___
 
 Ƭ **State**: *[NotAuthorised](_index_.md#notauthorised) | [AuthSucceeded](_index_.md#authsucceeded) | [AuthCancelled](_index_.md#authcancelled) | [Continuation](_index_.md#continuation)*
 
-*Defined in [src/index.ts:30](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L30)*
+*Defined in [src/index.ts:30](https://github.com/fission-suite/webnative/blob/693f51f/src/index.ts#L30)*
 
 ## Variables
 
@@ -216,7 +216,7 @@ ___
 
 • **fs**: *[FileSystem](../classes/_fs_filesystem_.filesystem.md)* = fsClass
 
-*Defined in [src/index.ts:180](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L180)*
+*Defined in [src/index.ts:180](https://github.com/fission-suite/webnative/blob/693f51f/src/index.ts#L180)*
 
 ## Functions
 
@@ -224,7 +224,7 @@ ___
 
 ▸ **initialise**(`options`: object): *Promise‹[State](_index_.md#state)›*
 
-*Defined in [src/index.ts:88](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L88)*
+*Defined in [src/index.ts:88](https://github.com/fission-suite/webnative/blob/693f51f/src/index.ts#L88)*
 
 Check if we're authenticated, process any lobby query-parameters present in the URL,
 and initiate the user's file system if authenticated (can be disabled).
@@ -240,6 +240,6 @@ Name | Type |
 ------ | ------ |
 `autoRemoveUrlParams?` | undefined &#124; false &#124; true |
 `loadFileSystem?` | undefined &#124; false &#124; true |
-`permissions` | [Permissions](_ucan_permissions_.md#permissions) |
+`permissions?` | [Permissions](_ucan_permissions_.md#permissions) |
 
 **Returns:** *Promise‹[State](_index_.md#state)›*

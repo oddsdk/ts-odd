@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.19.1
+
+Permissions should be optional for `redirectToLobby` and `loadFileSystem` as well.
+
 ### v0.19
 
 - Reliability & performance improvements

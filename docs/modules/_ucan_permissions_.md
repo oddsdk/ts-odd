@@ -16,7 +16,7 @@
 
 Ƭ **AppInfo**: *object*
 
-*Defined in [src/ucan/permissions.ts:6](https://github.com/fission-suite/webnative/blob/3b06253/src/ucan/permissions.ts#L6)*
+*Defined in [src/ucan/permissions.ts:6](https://github.com/fission-suite/webnative/blob/693f51f/src/ucan/permissions.ts#L6)*
 
 #### Type declaration:
 
@@ -30,7 +30,7 @@ ___
 
 Ƭ **FileSystemPermissions**: *object*
 
-*Defined in [src/ucan/permissions.ts:11](https://github.com/fission-suite/webnative/blob/3b06253/src/ucan/permissions.ts#L11)*
+*Defined in [src/ucan/permissions.ts:11](https://github.com/fission-suite/webnative/blob/693f51f/src/ucan/permissions.ts#L11)*
 
 #### Type declaration:
 
@@ -44,7 +44,7 @@ ___
 
 Ƭ **Permissions**: *object*
 
-*Defined in [src/ucan/permissions.ts:1](https://github.com/fission-suite/webnative/blob/3b06253/src/ucan/permissions.ts#L1)*
+*Defined in [src/ucan/permissions.ts:1](https://github.com/fission-suite/webnative/blob/693f51f/src/ucan/permissions.ts#L1)*
 
 #### Type declaration:
 

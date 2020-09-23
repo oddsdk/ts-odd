@@ -16,7 +16,7 @@
 
 ▸ **authenticatedUsername**(): *Promise‹string | null›*
 
-*Defined in [src/auth.ts:17](https://github.com/fission-suite/webnative/blob/3b06253/src/auth.ts#L17)*
+*Defined in [src/auth.ts:17](https://github.com/fission-suite/webnative/blob/693f51f/src/auth.ts#L17)*
 
 Retrieve the authenticated username.
 
@@ -28,7 +28,7 @@ ___
 
 ▸ **leave**(): *Promise‹void›*
 
-*Defined in [src/auth.ts:26](https://github.com/fission-suite/webnative/blob/3b06253/src/auth.ts#L26)*
+*Defined in [src/auth.ts:26](https://github.com/fission-suite/webnative/blob/693f51f/src/auth.ts#L26)*
 
 Leave.
 
@@ -40,9 +40,9 @@ ___
 
 ###  redirectToLobby
 
-▸ **redirectToLobby**(`permissions`: [Permissions](_ucan_permissions_.md#permissions), `redirectTo?`: undefined | string): *Promise‹void›*
+▸ **redirectToLobby**(`permissions`: Maybe‹[Permissions](_ucan_permissions_.md#permissions)›, `redirectTo?`: undefined | string): *Promise‹void›*
 
-*Defined in [src/auth.ts:42](https://github.com/fission-suite/webnative/blob/3b06253/src/auth.ts#L42)*
+*Defined in [src/auth.ts:43](https://github.com/fission-suite/webnative/blob/693f51f/src/auth.ts#L43)*
 
 Redirects to a lobby.
 
@@ -52,7 +52,7 @@ NOTE: Only works on the main thread, as it uses `window.location`.
 
 Name | Type | Description |
 ------ | ------ | ------ |
-`permissions` | [Permissions](_ucan_permissions_.md#permissions) | The permissions from `initialise` |
+`permissions` | Maybe‹[Permissions](_ucan_permissions_.md#permissions)› | The permissions from `initialise`.                    Pass `null` if working without permissions. |
 `redirectTo?` | undefined &#124; string | Specify the URL you want users to return to.                   Uses the current url by default.  |
 
 **Returns:** *Promise‹void›*
