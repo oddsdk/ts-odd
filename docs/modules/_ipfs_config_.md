@@ -26,15 +26,15 @@
 
 • **DELEGATE_ADDR**: *"/dns4/ipfs.runfission.com/tcp/443/https"* = "/dns4/ipfs.runfission.com/tcp/443/https"
 
-*Defined in [src/ipfs/config.ts:15](https://github.com/fission-suite/webnative/blob/d222548/src/ipfs/config.ts#L15)*
+*Defined in [src/ipfs/config.ts:15](https://github.com/fission-suite/webnative/blob/7fcf931/src/ipfs/config.ts#L15)*
 
 ___
 
 ### `Const` JS_IPFS
 
-• **JS_IPFS**: *"https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.50.0/index.min.js"* = "https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.50.0/index.min.js"
+• **JS_IPFS**: *"https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.50.1/index.min.js"* = "https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.50.1/index.min.js"
 
-*Defined in [src/ipfs/config.ts:12](https://github.com/fission-suite/webnative/blob/d222548/src/ipfs/config.ts#L12)*
+*Defined in [src/ipfs/config.ts:12](https://github.com/fission-suite/webnative/blob/7fcf931/src/ipfs/config.ts#L12)*
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 • **PEER_WSS**: *"/dns4/node.fission.systems/tcp/4003/wss/p2p/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw"* = "/dns4/node.fission.systems/tcp/4003/wss/p2p/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw"
 
-*Defined in [src/ipfs/config.ts:13](https://github.com/fission-suite/webnative/blob/d222548/src/ipfs/config.ts#L13)*
+*Defined in [src/ipfs/config.ts:13](https://github.com/fission-suite/webnative/blob/7fcf931/src/ipfs/config.ts#L13)*
 
 ___
 
@@ -50,7 +50,7 @@ ___
 
 • **SIGNALING_SERVER**: *"/dns4/webrtc.runfission.com/tcp/443/wss/p2p-webrtc-star/"* = "/dns4/webrtc.runfission.com/tcp/443/wss/p2p-webrtc-star/"
 
-*Defined in [src/ipfs/config.ts:14](https://github.com/fission-suite/webnative/blob/d222548/src/ipfs/config.ts#L14)*
+*Defined in [src/ipfs/config.ts:14](https://github.com/fission-suite/webnative/blob/7fcf931/src/ipfs/config.ts#L14)*
 
 ## Functions
 
@@ -58,7 +58,7 @@ ___
 
 ▸ **get**(): *Promise‹IPFS›*
 
-*Defined in [src/ipfs/config.ts:35](https://github.com/fission-suite/webnative/blob/d222548/src/ipfs/config.ts#L35)*
+*Defined in [src/ipfs/config.ts:38](https://github.com/fission-suite/webnative/blob/7fcf931/src/ipfs/config.ts#L38)*
 
 **Returns:** *Promise‹IPFS›*
 
@@ -68,7 +68,7 @@ ___
 
 ▸ **set**(`userIpfs`: unknown): *void*
 
-*Defined in [src/ipfs/config.ts:31](https://github.com/fission-suite/webnative/blob/d222548/src/ipfs/config.ts#L31)*
+*Defined in [src/ipfs/config.ts:34](https://github.com/fission-suite/webnative/blob/7fcf931/src/ipfs/config.ts#L34)*
 
 **Parameters:**
 
@@ -84,11 +84,11 @@ Name | Type |
 
 ### ▪ **defaultOptions**: *object*
 
-*Defined in [src/ipfs/config.ts:21](https://github.com/fission-suite/webnative/blob/d222548/src/ipfs/config.ts#L21)*
+*Defined in [src/ipfs/config.ts:21](https://github.com/fission-suite/webnative/blob/7fcf931/src/ipfs/config.ts#L21)*
 
 ▪ **config**: *object*
 
-*Defined in [src/ipfs/config.ts:22](https://github.com/fission-suite/webnative/blob/d222548/src/ipfs/config.ts#L22)*
+*Defined in [src/ipfs/config.ts:22](https://github.com/fission-suite/webnative/blob/7fcf931/src/ipfs/config.ts#L22)*
 
 * **Bootstrap**: *string[]* = [ PEER_WSS ]
 
@@ -97,3 +97,9 @@ Name | Type |
   * **Delegates**: *string[]* = [ DELEGATE_ADDR ]
 
   * **Swarm**: *string[]* = [ SIGNALING_SERVER ]
+
+▪ **preload**: *object*
+
+*Defined in [src/ipfs/config.ts:29](https://github.com/fission-suite/webnative/blob/7fcf931/src/ipfs/config.ts#L29)*
+
+* **enabled**: *boolean* = false

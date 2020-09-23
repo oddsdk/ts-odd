@@ -25,6 +25,7 @@ It stores items with hexidecimal keys and creates a new layer when a given layer
 * [add](_fs_protocol_private_mmpt_.mmpt.md#add)
 * [exists](_fs_protocol_private_mmpt_.mmpt.md#exists)
 * [get](_fs_protocol_private_mmpt_.mmpt.md#get)
+* [members](_fs_protocol_private_mmpt_.mmpt.md#members)
 * [put](_fs_protocol_private_mmpt_.mmpt.md#put)
 * [create](_fs_protocol_private_mmpt_.mmpt.md#static-create)
 * [fromCID](_fs_protocol_private_mmpt_.mmpt.md#static-fromcid)
@@ -35,7 +36,7 @@ It stores items with hexidecimal keys and creates a new layer when a given layer
 
 \+ **new MMPT**(`links`: Links): *[MMPT](_fs_protocol_private_mmpt_.mmpt.md)*
 
-*Defined in [src/fs/protocol/private/mmpt.ts:19](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/mmpt.ts#L19)*
+*Defined in [src/fs/protocol/private/mmpt.ts:23](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/mmpt.ts#L23)*
 
 **Parameters:**
 
@@ -51,7 +52,7 @@ Name | Type |
 
 • **links**: *Links*
 
-*Defined in [src/fs/protocol/private/mmpt.ts:19](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/mmpt.ts#L19)*
+*Defined in [src/fs/protocol/private/mmpt.ts:23](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/mmpt.ts#L23)*
 
 ## Methods
 
@@ -59,7 +60,7 @@ Name | Type |
 
 ▸ **add**(`name`: string, `value`: CID): *Promise‹this›*
 
-*Defined in [src/fs/protocol/private/mmpt.ts:38](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/mmpt.ts#L38)*
+*Defined in [src/fs/protocol/private/mmpt.ts:42](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/mmpt.ts#L42)*
 
 **Parameters:**
 
@@ -76,7 +77,7 @@ ___
 
 ▸ **exists**(`name`: string): *Promise‹boolean›*
 
-*Defined in [src/fs/protocol/private/mmpt.ts:86](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/mmpt.ts#L86)*
+*Defined in [src/fs/protocol/private/mmpt.ts:90](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/mmpt.ts#L90)*
 
 **Parameters:**
 
@@ -92,7 +93,7 @@ ___
 
 ▸ **get**(`name`: string): *Promise‹CID | null›*
 
-*Defined in [src/fs/protocol/private/mmpt.ts:74](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/mmpt.ts#L74)*
+*Defined in [src/fs/protocol/private/mmpt.ts:78](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/mmpt.ts#L78)*
 
 **Parameters:**
 
@@ -104,11 +105,21 @@ Name | Type |
 
 ___
 
+###  members
+
+▸ **members**(): *Promise‹Array‹Member››*
+
+*Defined in [src/fs/protocol/private/mmpt.ts:94](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/mmpt.ts#L94)*
+
+**Returns:** *Promise‹Array‹Member››*
+
+___
+
 ###  put
 
 ▸ **put**(): *Promise‹AddResult›*
 
-*Defined in [src/fs/protocol/private/mmpt.ts:34](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/mmpt.ts#L34)*
+*Defined in [src/fs/protocol/private/mmpt.ts:38](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/mmpt.ts#L38)*
 
 **Returns:** *Promise‹AddResult›*
 
@@ -118,7 +129,7 @@ ___
 
 ▸ **create**(): *[MMPT](_fs_protocol_private_mmpt_.mmpt.md)*
 
-*Defined in [src/fs/protocol/private/mmpt.ts:25](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/mmpt.ts#L25)*
+*Defined in [src/fs/protocol/private/mmpt.ts:29](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/mmpt.ts#L29)*
 
 **Returns:** *[MMPT](_fs_protocol_private_mmpt_.mmpt.md)*
 
@@ -128,7 +139,7 @@ ___
 
 ▸ **fromCID**(`cid`: CID): *Promise‹[MMPT](_fs_protocol_private_mmpt_.mmpt.md)›*
 
-*Defined in [src/fs/protocol/private/mmpt.ts:29](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/mmpt.ts#L29)*
+*Defined in [src/fs/protocol/private/mmpt.ts:33](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/mmpt.ts#L33)*
 
 **Parameters:**
 

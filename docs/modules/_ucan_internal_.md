@@ -18,7 +18,7 @@
 
 ▸ **clearStorage**(): *Promise‹void›*
 
-*Defined in [src/ucan/internal.ts:21](https://github.com/fission-suite/webnative/blob/d222548/src/ucan/internal.ts#L21)*
+*Defined in [src/ucan/internal.ts:21](https://github.com/fission-suite/webnative/blob/7fcf931/src/ucan/internal.ts#L21)*
 
 You didn't see anything 👀
 
@@ -30,7 +30,7 @@ ___
 
 ▸ **dictionaryFilesystemPrefix**(`username`: string): *string*
 
-*Defined in [src/ucan/internal.ts:29](https://github.com/fission-suite/webnative/blob/d222548/src/ucan/internal.ts#L29)*
+*Defined in [src/ucan/internal.ts:29](https://github.com/fission-suite/webnative/blob/7fcf931/src/ucan/internal.ts#L29)*
 
 Lookup the prefix for a filesystem key in the dictionary.
 
@@ -48,7 +48,7 @@ ___
 
 ▸ **lookupFilesystemUcan**(`path`: string): *Promise‹[Ucan](_ucan_.md#ucan) | null›*
 
-*Defined in [src/ucan/internal.ts:39](https://github.com/fission-suite/webnative/blob/d222548/src/ucan/internal.ts#L39)*
+*Defined in [src/ucan/internal.ts:39](https://github.com/fission-suite/webnative/blob/7fcf931/src/ucan/internal.ts#L39)*
 
 Look up a UCAN with a file system path.
 
@@ -66,7 +66,7 @@ ___
 
 ▸ **store**(`ucans`: Array‹string›): *Promise‹void›*
 
-*Defined in [src/ucan/internal.ts:61](https://github.com/fission-suite/webnative/blob/d222548/src/ucan/internal.ts#L61)*
+*Defined in [src/ucan/internal.ts:61](https://github.com/fission-suite/webnative/blob/7fcf931/src/ucan/internal.ts#L61)*
 
 Store UCANs and update the in-memory dictionary.
 
@@ -84,7 +84,7 @@ ___
 
 ▸ **validatePermissions**(`__namedParameters`: object, `username`: string): *boolean*
 
-*Defined in [src/ucan/internal.ts:77](https://github.com/fission-suite/webnative/blob/d222548/src/ucan/internal.ts#L77)*
+*Defined in [src/ucan/internal.ts:77](https://github.com/fission-suite/webnative/blob/7fcf931/src/ucan/internal.ts#L77)*
 
 See if the stored UCANs in the in-memory dictionary
 conform to the given `Permissions`.

@@ -21,7 +21,7 @@
 
 Ƭ **DecryptedNode**: *[PrivateFileInfo](_fs_protocol_private_types_.md#privatefileinfo) | [PrivateTreeInfo](_fs_protocol_private_types_.md#privatetreeinfo)*
 
-*Defined in [src/fs/protocol/private/types.ts:6](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/types.ts#L6)*
+*Defined in [src/fs/protocol/private/types.ts:6](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/types.ts#L6)*
 
 ___
 
@@ -29,7 +29,7 @@ ___
 
 Ƭ **PrivateAddResult**: *AddResult & object*
 
-*Defined in [src/fs/protocol/private/types.ts:39](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/types.ts#L39)*
+*Defined in [src/fs/protocol/private/types.ts:39](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/types.ts#L39)*
 
 ___
 
@@ -37,7 +37,7 @@ ___
 
 Ƭ **PrivateFileInfo**: *object*
 
-*Defined in [src/fs/protocol/private/types.ts:8](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/types.ts#L8)*
+*Defined in [src/fs/protocol/private/types.ts:8](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/types.ts#L8)*
 
 #### Type declaration:
 
@@ -57,7 +57,7 @@ ___
 
 Ƭ **PrivateLink**: *BaseLink & object*
 
-*Defined in [src/fs/protocol/private/types.ts:16](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/types.ts#L16)*
+*Defined in [src/fs/protocol/private/types.ts:16](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/types.ts#L16)*
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 Ƭ **PrivateLinks**: *object*
 
-*Defined in [src/fs/protocol/private/types.ts:21](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/types.ts#L21)*
+*Defined in [src/fs/protocol/private/types.ts:21](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/types.ts#L21)*
 
 #### Type declaration:
 
@@ -77,7 +77,7 @@ ___
 
 Ƭ **PrivateSkeleton**: *object*
 
-*Defined in [src/fs/protocol/private/types.ts:31](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/types.ts#L31)*
+*Defined in [src/fs/protocol/private/types.ts:31](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/types.ts#L31)*
 
 #### Type declaration:
 
@@ -89,7 +89,7 @@ ___
 
 Ƭ **PrivateSkeletonInfo**: *object*
 
-*Defined in [src/fs/protocol/private/types.ts:33](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/types.ts#L33)*
+*Defined in [src/fs/protocol/private/types.ts:33](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/types.ts#L33)*
 
 #### Type declaration:
 
@@ -105,7 +105,7 @@ ___
 
 Ƭ **PrivateTreeInfo**: *object*
 
-*Defined in [src/fs/protocol/private/types.ts:23](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/private/types.ts#L23)*
+*Defined in [src/fs/protocol/private/types.ts:23](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/types.ts#L23)*
 
 #### Type declaration:
 

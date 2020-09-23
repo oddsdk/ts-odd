@@ -19,7 +19,7 @@
 
 Ƭ **FileHeader**: *object*
 
-*Defined in [src/fs/protocol/public/types.ts:23](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/public/types.ts#L23)*
+*Defined in [src/fs/protocol/public/types.ts:23](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/public/types.ts#L23)*
 
 #### Type declaration:
 
@@ -31,7 +31,7 @@ ___
 
 Ƭ **FileInfo**: *[FileHeader](_fs_protocol_public_types_.md#fileheader) & object*
 
-*Defined in [src/fs/protocol/public/types.ts:27](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/public/types.ts#L27)*
+*Defined in [src/fs/protocol/public/types.ts:27](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/public/types.ts#L27)*
 
 ___
 
@@ -39,7 +39,7 @@ ___
 
 Ƭ **Skeleton**: *object*
 
-*Defined in [src/fs/protocol/public/types.ts:12](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/public/types.ts#L12)*
+*Defined in [src/fs/protocol/public/types.ts:12](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/public/types.ts#L12)*
 
 #### Type declaration:
 
@@ -51,7 +51,7 @@ ___
 
 Ƭ **SkeletonInfo**: *object*
 
-*Defined in [src/fs/protocol/public/types.ts:4](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/public/types.ts#L4)*
+*Defined in [src/fs/protocol/public/types.ts:4](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/public/types.ts#L4)*
 
 #### Type declaration:
 
@@ -71,7 +71,7 @@ ___
 
 Ƭ **TreeHeader**: *object*
 
-*Defined in [src/fs/protocol/public/types.ts:14](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/public/types.ts#L14)*
+*Defined in [src/fs/protocol/public/types.ts:14](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/public/types.ts#L14)*
 
 #### Type declaration:
 
@@ -85,4 +85,4 @@ ___
 
 Ƭ **TreeInfo**: *[TreeHeader](_fs_protocol_public_types_.md#treeheader) & object*
 
-*Defined in [src/fs/protocol/public/types.ts:19](https://github.com/fission-suite/webnative/blob/d222548/src/fs/protocol/public/types.ts#L19)*
+*Defined in [src/fs/protocol/public/types.ts:19](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/public/types.ts#L19)*
