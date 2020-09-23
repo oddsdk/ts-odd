@@ -19,7 +19,7 @@
 
 ▸ **addNode**(`mmpt`: [MMPT](../classes/_fs_protocol_private_mmpt_.mmpt.md), `node`: [DecryptedNode](_fs_protocol_private_types_.md#decryptednode), `key`: string): *Promise‹[PrivateAddResult](_fs_protocol_private_types_.md#privateaddresult)›*
 
-*Defined in [src/fs/protocol/private/index.ts:11](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/index.ts#L11)*
+*Defined in [src/fs/protocol/private/index.ts:11](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/index.ts#L11)*
 
 **Parameters:**
 
@@ -37,7 +37,7 @@ ___
 
 ▸ **findLatestRevision**(`mmpt`: [MMPT](../classes/_fs_protocol_private_mmpt_.mmpt.md), `bareName`: [BareNameFilter](_fs_protocol_private_namefilter_.md#barenamefilter), `key`: string, `lastKnownRevision`: number): *Promise‹Maybe‹Revision››*
 
-*Defined in [src/fs/protocol/private/index.ts:55](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/index.ts#L55)*
+*Defined in [src/fs/protocol/private/index.ts:55](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/index.ts#L55)*
 
 **Parameters:**
 
@@ -56,7 +56,7 @@ ___
 
 ▸ **getByCID**(`mmpt`: [MMPT](../classes/_fs_protocol_private_mmpt_.mmpt.md), `cid`: CID, `key`: string): *Promise‹[DecryptedNode](_fs_protocol_private_types_.md#decryptednode)›*
 
-*Defined in [src/fs/protocol/private/index.ts:42](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/index.ts#L42)*
+*Defined in [src/fs/protocol/private/index.ts:42](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/index.ts#L42)*
 
 **Parameters:**
 
@@ -74,7 +74,7 @@ ___
 
 ▸ **getByName**(`mmpt`: [MMPT](../classes/_fs_protocol_private_mmpt_.mmpt.md), `name`: [PrivateName](_fs_protocol_private_namefilter_.md#privatename), `key`: string): *Promise‹Maybe‹[DecryptedNode](_fs_protocol_private_types_.md#decryptednode)››*
 
-*Defined in [src/fs/protocol/private/index.ts:36](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/index.ts#L36)*
+*Defined in [src/fs/protocol/private/index.ts:36](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/index.ts#L36)*
 
 **Parameters:**
 
@@ -92,7 +92,7 @@ ___
 
 ▸ **getRevision**(`mmpt`: [MMPT](../classes/_fs_protocol_private_mmpt_.mmpt.md), `bareName`: [BareNameFilter](_fs_protocol_private_namefilter_.md#barenamefilter), `key`: string, `revision`: number): *Promise‹Maybe‹Revision››*
 
-*Defined in [src/fs/protocol/private/index.ts:86](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/index.ts#L86)*
+*Defined in [src/fs/protocol/private/index.ts:86](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/index.ts#L86)*
 
 **Parameters:**
 
@@ -111,7 +111,7 @@ ___
 
 ▸ **readNode**(`cid`: CID, `key`: string): *Promise‹[DecryptedNode](_fs_protocol_private_types_.md#decryptednode)›*
 
-*Defined in [src/fs/protocol/private/index.ts:28](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/private/index.ts#L28)*
+*Defined in [src/fs/protocol/private/index.ts:28](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/private/index.ts#L28)*
 
 **Parameters:**
 

@@ -16,7 +16,7 @@
 
 ▸ **debug**(`__namedParameters`: object): *boolean*
 
-*Defined in [src/setup.ts:13](https://github.com/fission-suite/webnative/blob/7fcf931/src/setup.ts#L13)*
+*Defined in [src/setup.ts:13](https://github.com/fission-suite/webnative/blob/3b06253/src/setup.ts#L13)*
 
 Toggle debug mode.
 
@@ -38,7 +38,7 @@ ___
 
 ▸ **endpoints**(`e`: Partial‹[Endpoints](_setup_internal_.md#endpoints)›): *[Endpoints](_setup_internal_.md#endpoints)*
 
-*Defined in [src/setup.ts:32](https://github.com/fission-suite/webnative/blob/7fcf931/src/setup.ts#L32)*
+*Defined in [src/setup.ts:32](https://github.com/fission-suite/webnative/blob/3b06253/src/setup.ts#L32)*
 
 Override endpoints.
 
@@ -66,7 +66,7 @@ ___
 
 ▸ **ipfs**(`s`: UnknownObject): *UnknownObject*
 
-*Defined in [src/setup.ts:52](https://github.com/fission-suite/webnative/blob/7fcf931/src/setup.ts#L52)*
+*Defined in [src/setup.ts:52](https://github.com/fission-suite/webnative/blob/3b06253/src/setup.ts#L52)*
 
 Override the IPFS config.
 

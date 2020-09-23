@@ -17,7 +17,7 @@
 
 • **AuthCancelled**: = "AUTH_CANCELLED"
 
-*Defined in [src/index.ts:21](https://github.com/fission-suite/webnative/blob/7fcf931/src/index.ts#L21)*
+*Defined in [src/index.ts:21](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L21)*
 
 ___
 
@@ -25,7 +25,7 @@ ___
 
 • **AuthSucceeded**: = "AUTH_SUCCEEDED"
 
-*Defined in [src/index.ts:20](https://github.com/fission-suite/webnative/blob/7fcf931/src/index.ts#L20)*
+*Defined in [src/index.ts:20](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L20)*
 
 ___
 
@@ -33,7 +33,7 @@ ___
 
 • **Continuation**: = "CONTINUATION"
 
-*Defined in [src/index.ts:22](https://github.com/fission-suite/webnative/blob/7fcf931/src/index.ts#L22)*
+*Defined in [src/index.ts:22](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L22)*
 
 ___
 
@@ -41,4 +41,4 @@ ___
 
 • **NotAuthorised**: = "NOT_AUTHORISED"
 
-*Defined in [src/index.ts:19](https://github.com/fission-suite/webnative/blob/7fcf931/src/index.ts#L19)*
+*Defined in [src/index.ts:19](https://github.com/fission-suite/webnative/blob/3b06253/src/index.ts#L19)*

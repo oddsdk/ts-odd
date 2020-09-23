@@ -53,7 +53,7 @@
 
 \+ **new FileSystem**(`__namedParameters`: object): *[FileSystem](_fs_filesystem_.filesystem.md)*
 
-*Defined in [src/fs/filesystem.ts:75](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L75)*
+*Defined in [src/fs/filesystem.ts:75](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L75)*
 
 **Parameters:**
 
@@ -78,7 +78,7 @@ Name | Type |
 
 • **appPath**: *AppPath | undefined*
 
-*Defined in [src/fs/filesystem.ts:72](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L72)*
+*Defined in [src/fs/filesystem.ts:72](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L72)*
 
 ___
 
@@ -86,7 +86,7 @@ ___
 
 • **localOnly**: *boolean*
 
-*Defined in [src/fs/filesystem.ts:70](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L70)*
+*Defined in [src/fs/filesystem.ts:70](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L70)*
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 • **mmpt**: *[MMPT](_fs_protocol_private_mmpt_.mmpt.md)*
 
-*Defined in [src/fs/filesystem.ts:68](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L68)*
+*Defined in [src/fs/filesystem.ts:68](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L68)*
 
 ___
 
@@ -102,7 +102,7 @@ ___
 
 • **prettyTree**: *BareTree*
 
-*Defined in [src/fs/filesystem.ts:66](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L66)*
+*Defined in [src/fs/filesystem.ts:66](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L66)*
 
 ___
 
@@ -110,7 +110,7 @@ ___
 
 • **privateTree**: *[PrivateTree](_fs_v1_privatetree_.privatetree.md)*
 
-*Defined in [src/fs/filesystem.ts:67](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L67)*
+*Defined in [src/fs/filesystem.ts:67](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L67)*
 
 ___
 
@@ -118,7 +118,7 @@ ___
 
 • **proofs**: *object*
 
-*Defined in [src/fs/filesystem.ts:73](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L73)*
+*Defined in [src/fs/filesystem.ts:73](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L73)*
 
 #### Type declaration:
 
@@ -130,7 +130,7 @@ ___
 
 • **publicTree**: *[PublicTree](_fs_v1_publictree_.publictree.md)*
 
-*Defined in [src/fs/filesystem.ts:65](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L65)*
+*Defined in [src/fs/filesystem.ts:65](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L65)*
 
 ___
 
@@ -138,7 +138,7 @@ ___
 
 • **root**: *BareTree*
 
-*Defined in [src/fs/filesystem.ts:64](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L64)*
+*Defined in [src/fs/filesystem.ts:64](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L64)*
 
 ___
 
@@ -146,7 +146,7 @@ ___
 
 • **rootDid**: *string*
 
-*Defined in [src/fs/filesystem.ts:69](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L69)*
+*Defined in [src/fs/filesystem.ts:69](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L69)*
 
 ___
 
@@ -154,7 +154,7 @@ ___
 
 • **syncHooks**: *Array‹SyncHook›*
 
-*Defined in [src/fs/filesystem.ts:74](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L74)*
+*Defined in [src/fs/filesystem.ts:74](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L74)*
 
 ___
 
@@ -162,7 +162,7 @@ ___
 
 • **syncWhenOnline**: *Array‹[CID, string]›*
 
-*Defined in [src/fs/filesystem.ts:75](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L75)*
+*Defined in [src/fs/filesystem.ts:75](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L75)*
 
 ## Methods
 
@@ -170,7 +170,7 @@ ___
 
 ▸ **add**(`path`: string, `content`: FileContent): *Promise‹this›*
 
-*Defined in [src/fs/filesystem.ts:238](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L238)*
+*Defined in [src/fs/filesystem.ts:238](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L238)*
 
 **Parameters:**
 
@@ -187,7 +187,7 @@ ___
 
 ▸ **cat**(`path`: string): *Promise‹FileContent›*
 
-*Defined in [src/fs/filesystem.ts:245](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L245)*
+*Defined in [src/fs/filesystem.ts:245](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L245)*
 
 **Parameters:**
 
@@ -203,7 +203,7 @@ ___
 
 ▸ **deactivate**(): *void*
 
-*Defined in [src/fs/filesystem.ts:217](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L217)*
+*Defined in [src/fs/filesystem.ts:217](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L217)*
 
 Deactivate a file system.
 
@@ -218,7 +218,7 @@ ___
 
 ▸ **exists**(`path`: string): *Promise‹boolean›*
 
-*Defined in [src/fs/filesystem.ts:251](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L251)*
+*Defined in [src/fs/filesystem.ts:251](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L251)*
 
 **Parameters:**
 
@@ -234,7 +234,7 @@ ___
 
 ▸ **get**(`path`: string): *Promise‹Tree | File | null›*
 
-*Defined in [src/fs/filesystem.ts:264](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L264)*
+*Defined in [src/fs/filesystem.ts:264](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L264)*
 
 **Parameters:**
 
@@ -250,7 +250,7 @@ ___
 
 ▸ **ls**(`path`: string): *Promise‹BaseLinks›*
 
-*Defined in [src/fs/filesystem.ts:232](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L232)*
+*Defined in [src/fs/filesystem.ts:232](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L232)*
 
 **Parameters:**
 
@@ -266,7 +266,7 @@ ___
 
 ▸ **mkdir**(`path`: string): *Promise‹this›*
 
-*Defined in [src/fs/filesystem.ts:225](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L225)*
+*Defined in [src/fs/filesystem.ts:225](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L225)*
 
 **Parameters:**
 
@@ -282,7 +282,7 @@ ___
 
 ▸ **mv**(`from`: string, `to`: string): *Promise‹this›*
 
-*Defined in [src/fs/filesystem.ts:271](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L271)*
+*Defined in [src/fs/filesystem.ts:271](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L271)*
 
 **Parameters:**
 
@@ -299,7 +299,7 @@ ___
 
 ▸ **publish**(): *Promise‹CID›*
 
-*Defined in [src/fs/filesystem.ts:299](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L299)*
+*Defined in [src/fs/filesystem.ts:299](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L299)*
 
 Ensures the latest version of the file system is added to IPFS,
 updates your data root, and returns the root CID.
@@ -312,7 +312,7 @@ ___
 
 ▸ **read**(`path`: string): *Promise‹FileContent | null›*
 
-*Defined in [src/fs/filesystem.ts:283](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L283)*
+*Defined in [src/fs/filesystem.ts:283](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L283)*
 
 **Parameters:**
 
@@ -328,7 +328,7 @@ ___
 
 ▸ **rm**(`path`: string): *Promise‹this›*
 
-*Defined in [src/fs/filesystem.ts:257](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L257)*
+*Defined in [src/fs/filesystem.ts:257](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L257)*
 
 **Parameters:**
 
@@ -344,7 +344,7 @@ ___
 
 ▸ **write**(`path`: string, `content`: FileContent): *Promise‹this›*
 
-*Defined in [src/fs/filesystem.ts:287](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L287)*
+*Defined in [src/fs/filesystem.ts:287](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L287)*
 
 **Parameters:**
 
@@ -361,7 +361,7 @@ ___
 
 ▸ **empty**(`opts`: FileSystemOptions): *Promise‹[FileSystem](_fs_filesystem_.filesystem.md)›*
 
-*Defined in [src/fs/filesystem.ts:127](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L127)*
+*Defined in [src/fs/filesystem.ts:127](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L127)*
 
 Creates a file system with an empty public tree & an empty private tree at the root.
 
@@ -379,7 +379,7 @@ ___
 
 ▸ **fromCID**(`cid`: CID, `opts`: FileSystemOptions): *Promise‹[FileSystem](_fs_filesystem_.filesystem.md) | null›*
 
-*Defined in [src/fs/filesystem.ts:164](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/filesystem.ts#L164)*
+*Defined in [src/fs/filesystem.ts:164](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/filesystem.ts#L164)*
 
 Loads an existing file system from a CID.
 

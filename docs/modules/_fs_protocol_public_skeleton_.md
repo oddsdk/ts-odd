@@ -14,7 +14,7 @@
 
 ▸ **getPath**(`skeleton`: [Skeleton](_fs_protocol_public_types_.md#skeleton), `path`: NonEmptyPath): *[SkeletonInfo](_fs_protocol_public_types_.md#skeletoninfo) | null*
 
-*Defined in [src/fs/protocol/public/skeleton.ts:5](https://github.com/fission-suite/webnative/blob/7fcf931/src/fs/protocol/public/skeleton.ts#L5)*
+*Defined in [src/fs/protocol/public/skeleton.ts:5](https://github.com/fission-suite/webnative/blob/3b06253/src/fs/protocol/public/skeleton.ts#L5)*
 
 **Parameters:**
 
