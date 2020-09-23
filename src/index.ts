@@ -97,7 +97,7 @@ export async function initialise(
   options = options || {}
 
   const { permissions, autoRemoveUrlParams = true } = options
-  const { app, fs } = permissions
+  const { app, fs } = permissions || {}
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
