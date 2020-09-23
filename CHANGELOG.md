@@ -3,7 +3,7 @@
 ### v0.19
 
 - Reliability & performance improvements
-- Fixes issue with apps without permissions
+- Permissions are now optional
 
 
 

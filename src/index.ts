@@ -4,7 +4,7 @@ import * as common from './common'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 
-import { READ_KEY_FROM_LOBBY_NAME, USERNAME_STORAGE_KEY } from './common'
+import { READ_KEY_FROM_LOBBY_NAME, USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
 import { loadFileSystem } from './filesystem'
 
@@ -35,14 +35,14 @@ export type State
 
 export type NotAuthorised = {
   scenario: Scenario.NotAuthorised
-  permissions: Permissions
+  permissions: Maybe<Permissions>
 
   authenticated: false
 }
 
 export type AuthSucceeded = {
   scenario: Scenario.AuthSucceeded
-  permissions: Permissions
+  permissions: Maybe<Permissions>
 
   authenticated: true
   newUser: boolean
@@ -54,7 +54,7 @@ export type AuthSucceeded = {
 
 export type AuthCancelled = {
   scenario: Scenario.AuthCancelled
-  permissions: Permissions
+  permissions: Maybe<Permissions>
 
   authenticated: false
   cancellationReason: string
@@ -63,7 +63,7 @@ export type AuthCancelled = {
 
 export type Continuation = {
   scenario: Scenario.Continuation
-  permissions: Permissions
+  permissions: Maybe<Permissions>
 
   authenticated: true
   newUser: false,
@@ -96,7 +96,8 @@ export async function initialise(
 ): Promise<State> {
   options = options || {}
 
-  const { permissions, autoRemoveUrlParams = true } = options
+  const permissions = options.permissions || null
+  const { autoRemoveUrlParams = true } = options
   const { app, fs } = permissions || {}
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
@@ -131,7 +132,7 @@ export async function initialise(
       history.replaceState(null, document.title, url.toString())
     }
 
-    if (ucan.validatePermissions(permissions, username) === false) {
+    if (permissions && ucan.validatePermissions(permissions, username) === false) {
       return scenarioNotAuthorised(permissions)
     }
 
@@ -156,7 +157,7 @@ export async function initialise(
 
   return (
     authedUsername &&
-    ucan.validatePermissions(permissions, authedUsername)
+    (permissions ? ucan.validatePermissions(permissions, authedUsername) : true)
   )
   ? scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
   : scenarioNotAuthorised(permissions)
@@ -196,7 +197,7 @@ export * as keystore from './keystore'
 
 
 function scenarioAuthSucceeded(
-  permissions: Permissions,
+  permissions: Maybe<Permissions>,
   newUser: boolean,
   username: string,
   fs: FileSystem | undefined
@@ -214,7 +215,7 @@ function scenarioAuthSucceeded(
 }
 
 function scenarioAuthCancelled(
-  permissions: Permissions,
+  permissions: Maybe<Permissions>,
   cancellationReason: string
 ): AuthCancelled {
   return {
@@ -228,7 +229,7 @@ function scenarioAuthCancelled(
 }
 
 function scenarioContinuation(
-  permissions: Permissions,
+  permissions: Maybe<Permissions>,
   username: string,
   fs: FileSystem | undefined
 ): Continuation {
@@ -244,7 +245,9 @@ function scenarioContinuation(
   }
 }
 
-function scenarioNotAuthorised(permissions: Permissions): NotAuthorised {
+function scenarioNotAuthorised(
+  permissions: Maybe<Permissions>
+): NotAuthorised {
   return {
     scenario: Scenario.NotAuthorised,
     permissions,
