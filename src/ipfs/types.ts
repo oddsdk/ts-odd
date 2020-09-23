@@ -6,6 +6,7 @@ export type IPFS = {
   dag: DagAPI
   files: FilesAPI
   object: ObjectAPI
+  pin: PinAPI
   swarm: SwarmAPI
 }
 
@@ -48,7 +49,7 @@ export interface DagAPI {
 }
 
 export interface FilesAPI {
-  stat: (cid: CID | CIDObj) => Promise<{ CumulativeSize: number }>
+  stat: (cid: CID | CIDObj) => Promise<{ cumulativeSize: number }>
 }
 
 export interface ObjectAPI {
@@ -56,6 +57,10 @@ export interface ObjectAPI {
   put(dagNode: unknown, options: unknown): Promise<CIDObj>
   get(cid: CID, path?: string, options?: unknown): Promise<RawDAGNode>
   tree(cid: CID, path?: string, options?: unknown): Promise<unknown>
+}
+
+export interface PinAPI {
+  add(cid: CID | CIDObj): Promise<Array<CIDObj>>
 }
 
 export type CID = string

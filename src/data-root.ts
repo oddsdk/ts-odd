@@ -1,14 +1,18 @@
+import * as check from './fs/types/check'
+import * as debug from './common/debug'
 import * as did from './did'
 import * as dns from './dns'
 import * as ucan from './ucan'
 import * as ipfs from './ipfs'
-import * as check from './fs/types/check'
-import { api } from './common'
-import * as debug from './common/debug'
 import { CID } from './ipfs'
+import { Maybe, api } from './common'
 import { setup } from './setup/internal'
 
-/** 
+
+// Controller for data-root-update fetches
+let fetchController: Maybe<AbortController> = null
+
+/**
  * CID representing an empty string. We use to to speed up DNS propagation
  * However, we treat that as a null value in the code
  */
@@ -50,7 +54,7 @@ export async function lookupOnFisson(
     if (!check.isCID(cid)) {
       throw new Error("Did not receive a CID")
     }
-    return cid 
+    return cid
   } catch(err) {
     debug.log('Could not locate user root on Fission server: ', err.toString())
     return null
@@ -69,28 +73,75 @@ export async function update(
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
-  // Construct UCAN for the API call
-  const jwt = await ucan.build({
-    audience: await api.did(),
-    issuer: await did.ucan(),
-    potency: "APPEND",
-    proof,
+  // Debug
+  debug.log("🚀 Updating your DNSLink:", cid)
 
-    // TODO: Waiting on API change.
-    //       Should be `username.fission.name/*`
-    resource: ucan.decode(proof).payload.rsc
-  })
+  // Cancel previous updates
+  if (fetchController) fetchController.abort()
+  fetchController = new AbortController()
+
+  // Ensure peer connection
+  await ipfs.reconnect()
 
   // Make API call
-  await Promise.all([
-    ipfs.reconnect(),
-    fetch(`${apiEndpoint}/user/data/${cid}`, {
-      method: 'PATCH',
-      headers: {
-        'authorization': `Bearer ${jwt}`
-      }
-    })
-  ])
+  await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
+    headers: async () => {
+      const jwt = await ucan.build({
+        audience: await api.did(),
+        issuer: await did.ucan(),
+        potency: "APPEND",
+        proof,
 
-  debug.log(`📓 DNSLink updated, ${cid}`)
+        // TODO: Waiting on API change.
+        //       Should be `username.fission.name/*`
+        resource: ucan.decode(proof).payload.rsc
+      })
+
+      return { 'authorization': `Bearer ${jwt}` }
+    },
+    retries: 100,
+    retryDelay: 5000,
+    retryOn: [ 502, 503, 504 ],
+
+  }, {
+    method: 'PATCH',
+    signal: fetchController.signal
+
+  })
+
+  // Debug
+  debug.log("🚀 DNSLink updated:", cid)
+}
+
+
+
+// ㊙️
+
+
+type RetryOptions = {
+  headers: () => Promise<{ [_: string]: string }>,
+  retries: number,
+  retryDelay: number,
+  retryOn: Array<number>
+}
+
+
+async function fetchWithRetry(
+  url: string,
+  retryOptions: RetryOptions,
+  fetchOptions: RequestInit,
+  retry: number = 0
+) {
+  const headers = await retryOptions.headers()
+  const response = await fetch(url, {
+    ...fetchOptions,
+    headers: { ...fetchOptions.headers, ...headers }
+  })
+
+  if (retryOptions.retryOn.includes(response.status) && retry < retryOptions.retries) {
+    await new Promise((resolve, reject) => setTimeout(
+      () => fetchWithRetry(url, retryOptions, fetchOptions, retry + 1).then(resolve, reject),
+      retryOptions.retryDelay
+    ))
+  }
 }
