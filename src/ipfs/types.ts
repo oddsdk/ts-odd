@@ -60,7 +60,7 @@ export interface ObjectAPI {
 }
 
 export interface PinAPI {
-  add(cid: CID | CIDObj): Promise<Array<CIDObj>>
+  add(cid: CID | CIDObj, opts?: { recursive?: boolean }): Promise<Array<CIDObj>>
 }
 
 export type CID = string
