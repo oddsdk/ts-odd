@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.19.3
+
+- Pin asynchronously
+- Don't error on failed pins
+
 ### v0.19.2
 
 Do not recursively pin content
