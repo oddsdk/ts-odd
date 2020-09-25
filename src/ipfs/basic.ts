@@ -79,7 +79,7 @@ export const reconnect = async (): Promise<void> => {
 export const attemptPin = async (cid: CID): Promise<void> => {
   const ipfs = await getIpfs()
   try {
-    ipfs.pin.add(cid, { recursive: false })
+    await ipfs.pin.add(cid, { recursive: false })
   }catch(_err) {
     // don't worry about failed pins
   }

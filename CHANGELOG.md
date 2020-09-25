@@ -1,6 +1,6 @@
 # Changelog
 
-### v0.19.4
+### v0.19.5
 
 Don't error on failed pins
 
