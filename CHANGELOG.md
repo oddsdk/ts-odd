@@ -1,9 +1,8 @@
 # Changelog
 
-### v0.19.3
+### v0.19.4
 
-- Pin asynchronously
-- Don't error on failed pins
+Don't error on failed pins
 
 ### v0.19.2
 
