@@ -1,5 +1,5 @@
 import dagPB from 'ipld-dag-pb'
-import { get as getIpfs, PEER_WSS } from './config'
+import { get as getIpfs } from './config'
 import { CID, FileContent, DAGNode, UnixFSFile, DAGLink, AddResult } from './types'
 import util from './util'
 import { DAG_NODE_DATA } from './constants'
@@ -18,7 +18,7 @@ export const add = async (content: FileContent): Promise<AddResult> => {
 export const catRaw = async (cid: CID): Promise<Buffer[]> => {
   const ipfs = await getIpfs()
   const chunks = []
-  await ipfs.pin.add(cid)
+  await attemptPin(cid)
   for await (const chunk of ipfs.cat(cid)) {
     chunks.push(chunk)
   }
@@ -46,7 +46,7 @@ export const ls = async (cid: CID): Promise<UnixFSFile[]> => {
 
 export const dagGet = async (cid: CID): Promise<DAGNode> => {
   const ipfs = await getIpfs()
-  await ipfs.pin.add(cid)
+  await attemptPin(cid)
   const raw = await ipfs.dag.get(cid)
   return util.rawToDAGNode(raw)
 }
@@ -74,4 +74,13 @@ export const size = async (cid: CID): Promise<number> => {
 
 export const reconnect = async (): Promise<void> => {
   await getIpfs()
+}
+
+export const attemptPin = async (cid: CID): Promise<void> => {
+  const ipfs = await getIpfs()
+  try {
+    ipfs.pin.add(cid, { recursive: false })
+  }catch(_err) {
+    // don't worry about failed pins
+  }
 }
