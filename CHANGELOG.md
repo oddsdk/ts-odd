@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.19.2
+
+Do not recursively pin content
+
 ### v0.19.1
 
 Permissions should be optional for `redirectToLobby` and `loadFileSystem` as well.
