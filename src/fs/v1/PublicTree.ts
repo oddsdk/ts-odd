@@ -62,7 +62,7 @@ export class PublicTree extends BaseTree {
   }
 
   async createChildFile(content: FileContent, name: string): Promise<PublicFile> {
-    if(this.links[name]?.isFile === false) {
+    if(this.header.skeleton[name]?.isFile === false) {
       throw new Error(`There is already a directory with that name: ${name}`)
     }
     return PublicFile.create(content)

@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.19.7
+
+Bugfix: updates to files on public side were failing
+
 ### v0.19.6
 
 Bugfix: changes to public tree were not being reflected in pretty tree
