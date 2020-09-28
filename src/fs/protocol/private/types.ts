@@ -39,4 +39,5 @@ export type PrivateSkeletonInfo = {
 export type PrivateAddResult = AddResult & {
   name: PrivateName
   key: string
+  skeleton: PrivateSkeleton
 }

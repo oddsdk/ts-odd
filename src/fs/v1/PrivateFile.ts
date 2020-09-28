@@ -1,4 +1,3 @@
-import { File } from '../types'
 import { FileContent } from '../../ipfs'
 import * as check from '../protocol/private/types/check'
 import * as metadata from '../metadata'
@@ -18,7 +17,7 @@ type ConstructorParams = {
   info: PrivateFileInfo
 }
 
-export class PrivateFile extends BaseFile implements File {
+export class PrivateFile extends BaseFile {
 
   mmpt: MMPT
   key: string
@@ -87,6 +86,7 @@ export class PrivateFile extends BaseFile implements File {
 
   async updateContent(content: FileContent): Promise<this> {
     const contentInfo = await protocol.basic.putEncryptedFile(content, this.info.key)
+    this.content = content
     this.info = {
       ...this.info,
       revision: this.info.revision + 1,

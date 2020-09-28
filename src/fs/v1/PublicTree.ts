@@ -1,32 +1,36 @@
-import { Links, PutDetails, SyncHookDetailed } from '../types'
-import { TreeInfo, TreeHeader } from '../protocol/public/types'
+import { Links, UpdateCallback } from '../types'
+import { TreeInfo, TreeHeader, PutDetails } from '../protocol/public/types'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
 import PublicFile from './PublicFile'
-import { Maybe } from '../../common'
 import * as protocol from '../protocol'
 import * as skeleton from '../protocol/public/skeleton'
 import * as metadata from '../metadata'
 import * as link from '../link'
 import * as pathUtil from '../path'
+import { Maybe } from '../../common'
 
 type ConstructorParams = {
   links: Links
   header: TreeHeader
+  cid: Maybe<CID>
 }
 
 export class PublicTree extends BaseTree {
 
   links: Links
   header: TreeHeader
+  cid: Maybe<CID>
 
-  onUpdate: Maybe<SyncHookDetailed> = null
+  children: { [name: string]: PublicTree | PublicFile }
 
-  constructor({ links, header }: ConstructorParams) {
+  constructor({ links, header, cid }: ConstructorParams) {
     super(header.metadata.version)
     this.links = links
     this.header = header
+    this.cid = cid
+    this.children = {}
   }
 
   static async empty (): Promise<PublicTree> {
@@ -35,7 +39,8 @@ export class PublicTree extends BaseTree {
       header: {
         metadata: metadata.empty(false),
         skeleton: {},
-      }
+      },
+      cid: null
     })
   }
 
@@ -44,72 +49,89 @@ export class PublicTree extends BaseTree {
     if(!check.isTreeInfo(info)) {
       throw new Error(`Could not parse a valid public tree at: ${cid}`)
     }
-    return PublicTree.fromInfo(info)
+    return PublicTree.fromInfo(info, cid)
   }
 
-  static async fromInfo(info: TreeInfo): Promise<PublicTree> {
+  static async fromInfo(info: TreeInfo, cid: CID): Promise<PublicTree> {
     const { userland, metadata, skeleton } = info
     const links = await protocol.basic.getLinks(userland)
-    return new PublicTree({ links, header: { metadata, skeleton } })
+    return new PublicTree({ 
+      links, 
+      header: { metadata, skeleton },
+      cid
+    })
   }
 
   static instanceOf(obj: any): obj is PublicTree {
     return check.isLinks(obj.links) && check.isTreeHeader(obj.header)
   }
 
-  async emptyChildTree(): Promise<PublicTree> {
-    return PublicTree.empty()
+  async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicTree> {
+    const child = await PublicTree.empty()
+    await this.updateDirectChild(child, name, onUpdate)
+    return child
   }
 
-  async createChildFile(content: FileContent, name: string): Promise<PublicFile> {
-    if(this.header.skeleton[name]?.isFile === false) {
+  async createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicFile> {
+    const existing = await this.getDirectChild(name)
+    let file: PublicFile
+    if(existing === null){
+      file = await PublicFile.create(content)
+    } else if (PublicFile.instanceOf(existing)) {
+      file = await existing.updateContent(content)
+    }else {
       throw new Error(`There is already a directory with that name: ${name}`)
     }
-    return PublicFile.create(content)
+    await this.updateDirectChild(file, name, onUpdate)
+    return file
   }
 
   async putDetailed(): Promise<PutDetails> {
     const details = await protocol.pub.putTree(
       this.links, 
       this.header.skeleton,
-      metadata.updateMtime(this.header.metadata)
+      this.header.metadata,
+      this.cid
     )
-    if(this.onUpdate !== null){
-      this.onUpdate(details)
-    }
+    this.cid = details.cid
     return details
   }
 
-  async updateDirectChild(child: PublicTree | PublicFile, name: string): Promise<this> {
-    const { cid, metadata, userland, size } = await child.putDetailed()
-    this.links[name] = link.make(name, cid, check.isFile(child), size)
-    this.header.skeleton[name] = { 
-      cid, 
-      metadata, 
-      userland, 
-      subSkeleton: check.isFile(child) ? {} : child.header.skeleton,
-      isFile: check.isFile(child)
-    }
+  async updateDirectChild(child: PublicTree | PublicFile, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
+    this.children[name] = child
+    const details = await child.putDetailed()
+    this.updateLink(name, details)
+    onUpdate && await onUpdate()
     return this
   }
 
   removeDirectChild(name: string): this {
     delete this.links[name]
     delete this.header.skeleton[name]
+    if(this.children[name]) {
+      delete this.children[name]
+    }
     return this
   }
 
   async getDirectChild(name: string): Promise<PublicTree | PublicFile | null> {
+    if(this.children[name]) {
+      return this.children[name]
+    }
+
     const childInfo = this.header.skeleton[name] || null
     if(childInfo === null) return null
-    return childInfo.isFile
-          ? PublicFile.fromCID(childInfo.cid)
-          : PublicTree.fromCID(childInfo.cid)
-  }
+    const child = childInfo.isFile
+      ? await PublicFile.fromCID(childInfo.cid)
+      : await PublicTree.fromCID(childInfo.cid)
 
-  async getOrCreateDirectChild(name: string): Promise<PublicTree | PublicFile> {
-    const child = await this.getDirectChild(name)
-    return child ? child : this.emptyChildTree()
+    // check that the child wasn't added while retrieving the content from the network
+    if(this.children[name]) {
+      return this.children[name]
+    }
+
+    this.children[name] = child
+    return child
   }
 
   async get(path: string): Promise<PublicTree | PublicFile | null> {
@@ -121,8 +143,8 @@ export class PublicTree extends BaseTree {
 
     const info = await protocol.pub.get(skeletonInfo.cid)
     return check.isFileInfo(info) 
-      ? PublicFile.fromInfo(info)
-      : PublicTree.fromInfo(info)
+      ? PublicFile.fromInfo(info, skeletonInfo.cid)
+      : PublicTree.fromInfo(info, skeletonInfo.cid)
   }
 
   getLinks(): Links {
@@ -136,6 +158,20 @@ export class PublicTree extends BaseTree {
         }
       }
     }, {} as Links)
+  }
+
+  updateLink(name: string, result: PutDetails): this {
+    const { cid, metadata, userland, size, isFile, skeleton } = result
+    this.links[name] = link.make(name, cid, false, size)
+    this.header.skeleton[name] = {
+      cid,
+      metadata,
+      userland,
+      subSkeleton: skeleton,
+      isFile
+    }
+    this.header.metadata.unixMeta.mtime = Date.now()
+    return this
   }
 }
 

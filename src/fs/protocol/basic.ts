@@ -4,7 +4,7 @@
 import * as ipfs from '../../ipfs'
 import { CID, FileContent, AddResult } from '../../ipfs'
 
-import { Links } from '../types'
+import { SimpleLinks, Links } from '../types'
 import * as link from '../link'
 
 
@@ -24,6 +24,13 @@ export const putEncryptedFile = async (content: FileContent, key: string): Promi
   return ipfs.encoded.add(content, key)
 }
 
+export const getSimpleLinks = async (cid: CID): Promise<SimpleLinks> => {
+  const dagNode = await ipfs.dagGet(cid)
+  return link.arrToMap(
+    dagNode.Links.map(link.fromDAGLink)
+  )
+}
+
 export const getLinks = async (cid: CID): Promise<Links> => {
   const raw = await ipfs.ls(cid)
   const links = link.arrToMap(
@@ -40,7 +47,9 @@ export const getLinks = async (cid: CID): Promise<Links> => {
   return links
 }
 
-export const putLinks = async (links: Links): Promise<AddResult> => {
-  const dagLinks = Object.values(links).map(link.toDAGLink)
+export const putLinks = async (links: Links | SimpleLinks): Promise<AddResult> => {
+  const dagLinks = Object.values(links)
+    .filter(l => l !== undefined)
+    .map(link.toDAGLink)
   return ipfs.dagPutLinks(dagLinks)
 }

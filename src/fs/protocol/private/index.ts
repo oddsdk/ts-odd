@@ -22,7 +22,8 @@ export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Pro
     await mmpt.add(contentName, node.content)
   }
 
-  return { cid, name, key, size }
+  const [skeleton, isFile] = check.isPrivateFileInfo(node) ? [{}, true] : [node.skeleton, false]
+  return { cid, name, key, size, isFile, skeleton }
 }
 
 export const readNode = async (cid: CID, key: string): Promise<DecryptedNode> => {

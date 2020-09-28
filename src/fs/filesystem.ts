@@ -1,6 +1,6 @@
 import { throttle } from 'throttle-debounce'
 
-import { SyncHook, UnixTree, Tree, File, BaseLinks } from './types'
+import { PublishHook, UnixTree, Tree, File, BaseLinks, UpdateProof } from './types'
 import { SemVer } from './semver'
 import BareTree from './bare/tree'
 import MMPT from './protocol/private/mmpt'
@@ -11,12 +11,11 @@ import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
 import * as debug from '../common/debug'
 import * as keystore from '../keystore'
-import * as link from './link'
 import * as pathUtil from './path'
 import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
 
-import { AddResult, CID, FileContent } from '../ipfs'
+import { CID, FileContent } from '../ipfs'
 import { NoPermissionError } from '../errors'
 import { Permissions } from '../ucan/permissions'
 import { Ucan } from '../ucan'
@@ -71,8 +70,8 @@ export class FileSystem implements UnixTree {
 
   appPath: AppPath | undefined
   proofs: { [_: string]: Ucan }
-  syncHooks: Array<SyncHook>
-  syncWhenOnline: Array<[CID, string]>
+  publishHooks: Array<PublishHook>
+  publishWhenOnline: Array<[CID, string]>
 
 
   constructor({ root, publicTree, permissions, prettyTree, privateTree, mmpt, rootDid, localOnly }: ConstructorParams) {
@@ -85,8 +84,8 @@ export class FileSystem implements UnixTree {
     this.localOnly = localOnly || false
 
     this.proofs = {}
-    this.syncHooks = []
-    this.syncWhenOnline = []
+    this.publishHooks = []
+    this.publishWhenOnline = []
 
     if (
       permissions &&
@@ -107,13 +106,13 @@ export class FileSystem implements UnixTree {
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
       if (window.navigator.onLine) return dataRoot.update(cid, proof)
-      this.syncWhenOnline.push([ cid, proof ])
+      this.publishWhenOnline.push([ cid, proof ])
     }, false)
 
-    this.syncHooks.push(logCid)
-    this.syncHooks.push(updateDataRootWhenOnline)
+    this.publishHooks.push(logCid)
+    this.publishHooks.push(updateDataRootWhenOnline)
 
-    // Sync when coming back online
+    // Publish when coming back online
     window.addEventListener('online', () => this.whenOnline())
   }
 
@@ -133,6 +132,7 @@ export class FileSystem implements UnixTree {
     const mmpt = MMPT.create()
     const key = await keystore.getKeyByName(keyName)
     const privateTree = await PrivateTree.create(mmpt, key, null)
+    await privateTree.put()
 
     const root = await BareTree.empty()
 
@@ -147,13 +147,11 @@ export class FileSystem implements UnixTree {
       localOnly
     })
 
-    publicTree.onUpdate = result => fs.updateRootLink(Branch.Public, result)
-    prettyTree.onUpdate = result => fs.updateRootLink(Branch.Pretty, result)
-    privateTree.onUpdate = result => fs.updateRootLink(Branch.Private, result)
-
-    await publicTree.put()
-    await prettyTree.put()
-    await privateTree.put()
+    await Promise.all([
+      root.putAndUpdateLink(publicTree, Branch.Public, null),
+      root.putAndUpdateLink(prettyTree, Branch.Pretty, null),
+      root.putAndUpdateLink(mmpt, Branch.Private, null),
+    ])
 
     return fs
   }
@@ -196,10 +194,6 @@ export class FileSystem implements UnixTree {
       rootDid,
       localOnly
     })
-
-    publicTree.onUpdate = result => fs.updateRootLink(Branch.Public, result)
-    prettyTree.onUpdate = result => fs.updateRootLink(Branch.Pretty, result)
-    privateTree.onUpdate = result => fs.updateRootLink(Branch.Private, result)
 
     return fs
   }
@@ -304,7 +298,7 @@ export class FileSystem implements UnixTree {
 
     proofs.forEach(([_, proof]) => {
       const encodedProof = ucan.encode(proof)
-      this.syncHooks.forEach(hook => hook(cid, encodedProof))
+      this.publishHooks.forEach(hook => hook(cid, encodedProof))
     })
 
     return cid
@@ -345,6 +339,10 @@ export class FileSystem implements UnixTree {
 
         this.publicTree = result
         this.prettyTree = resultPretty as unknown as BareTree
+        await Promise.all([
+          this.root.putAndUpdateLink(this.publicTree, Branch.Public, null),
+          this.root.putAndUpdateLink(this.prettyTree, Branch.Pretty, null)
+        ])
       }
 
     } else if (head === 'private') {
@@ -352,6 +350,8 @@ export class FileSystem implements UnixTree {
 
       if (isMutation && PrivateTree.instanceOf(result)) {
         this.privateTree = result
+        await this.privateTree.put()
+        await this.root.putAndUpdateLink(this.mmpt, Branch.Private, null)
       }
 
     } else if (head === 'pretty' && isMutation) {
@@ -369,17 +369,18 @@ export class FileSystem implements UnixTree {
   }
 
   /** @internal */
-  async updateRootLink(branch: Branch, update: AddResult): Promise<void> {
-    this.root.updateLink(link.make(branch, update.cid, false, update.size))
+  async updateRootLink(branch: Branch, tree: Tree): Promise<void> {
+    const details = await tree.putDetailed()
+    this.root.updateLink(branch, details)
   }
 
   /** @internal */
   whenOnline(): void {
-    const toSync = [...this.syncWhenOnline]
-    this.syncWhenOnline = []
+    const toPublish = [...this.publishWhenOnline]
+    this.publishWhenOnline = []
 
-    toSync.forEach(([cid, proof]) => {
-      this.syncHooks.forEach(hook => hook(cid, proof))
+    toPublish.forEach(([cid, proof]) => {
+      this.publishHooks.forEach(hook => hook(cid, proof))
     })
   }
 }

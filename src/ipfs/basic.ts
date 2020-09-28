@@ -11,7 +11,8 @@ export const add = async (content: FileContent): Promise<AddResult> => {
 
   return {
     cid: result.cid.toString(),
-    size: result.size
+    size: result.size,
+    isFile: true
   }
 }
 
@@ -58,7 +59,11 @@ export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   const cidObj = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
   const cid = cidObj.toV1().toString()
   const nodeSize = await size(cid)
-  return { cid, size: nodeSize }
+  return { 
+    cid, 
+    size: nodeSize,
+    isFile: false
+  }
 }
 
 export const dagPutLinks = async (links: DAGLink[]): Promise<AddResult> => {

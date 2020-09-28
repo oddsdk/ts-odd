@@ -2,10 +2,11 @@
 
 /** @internal */
 import * as pathUtil from '../path'
-import { Tree, File, NonEmptyPath, UnixTree, BaseLinks } from '../types'
+import { Tree, File, UnixTree, BaseLinks, UpdateCallback } from '../types'
 import { SemVer } from '../semver'
 import * as check from '../types/check'
 import { AddResult, CID, FileContent } from '../../ipfs'
+import { Maybe } from '../../common'
 
 
 abstract class BaseTree implements Tree, UnixTree {
@@ -31,17 +32,6 @@ abstract class BaseTree implements Tree, UnixTree {
     return dir.getLinks()
   }
 
-  async mkdir(path: string): Promise<this> {
-    const exists = await this.exists(path)
-    if (exists) {
-      throw new Error(`Path already exists: ${path}`)
-    }
-    const toAdd = await this.emptyChildTree()
-    await this.addChild(path, toAdd)
-    await this.putDetailed()
-    return this
-  }
-
   async cat(path: string): Promise<FileContent> {
     const file = await this.get(path)
     if (file === null) {
@@ -52,86 +42,94 @@ abstract class BaseTree implements Tree, UnixTree {
     return file.content
   }
 
-  async add(path: string, content: FileContent): Promise<this> {
-    await this.addChild(path, content)
-    await this.putDetailed()
+  async mkdir(path: string): Promise<this> {
+    return this.mkdirRecurse(path, () => this.put())
+  }
+
+  async mkdirRecurse(path: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
+    const { head, nextPath } = pathUtil.takeHead(path)
+    if(head === null){
+      throw new Error("Invalid path: empty")
+    }
+    const child = await this.getOrCreateDirectChild(head, onUpdate)
+    if (check.isFile(child)) {
+      throw new Error(`There is a file along the given path: ${path}`)
+    }
+    if(nextPath !== null){
+      await child.mkdirRecurse(nextPath, () => this.updateDirectChild(child, head, onUpdate) )
+    }
     return this
   }
 
-  async addChild(path: string, toAdd: Tree | FileContent): Promise<this> {
-    const parts = pathUtil.splitNonEmpty(path)
-    if (parts === null) {
-      throw new Error("Path not specified")
-    }
-    const result = parts ? await this.addRecurse(parts, toAdd) : this
-    return result
+  async add(path: string, content: FileContent): Promise<this> {
+    await this.addRecurse(path, content, () => this.put())
+    return this
   }
 
-  async addRecurse(path: NonEmptyPath, child: Tree | FileContent): Promise<this> {
-    const name = path[0]
-    const nextPath = pathUtil.nextNonEmpty(path)
-
-    let toAdd: Tree | FileContent
-
-    if (nextPath === null) {
-      toAdd = child
-    } else {
-      const nextTree = await this.getOrCreateDirectChild(name)
-
-      if (check.isFile(nextTree)) {
-        throw new Error("Attempted to add a child to a File")
-      }
-
-      toAdd = await nextTree.addRecurse(nextPath, child)
+  async addRecurse(path: string, content: FileContent, onUpdate: Maybe<UpdateCallback>): Promise<this> {
+    const { head, nextPath } = pathUtil.takeHead(path)
+    if(head === null){
+      throw new Error("Invalid path: empty")
     }
-
-    const toAddNode = check.isTree(toAdd) ? toAdd : await this.createChildFile(child as FileContent, name)
-
-    return this.updateDirectChild(toAddNode, name)
+    if(nextPath === null) {
+      await this.createOrUpdateChildFile(content, head, onUpdate)
+    }else {
+      const child = await this.getOrCreateDirectChild(head, onUpdate)
+      if(check.isFile(child)) {
+        throw new Error(`There is a file along the given path: ${path}`)
+      }
+      await child.addRecurse(nextPath, content, async () => {
+        await this.updateDirectChild(child, head, onUpdate)
+      })
+    }
+    return this
   }
 
   async rm(path: string): Promise<this> {
-    const parts = pathUtil.splitNonEmpty(path)
-    if (parts === null) {
-      throw new Error("Path does not exist")
-    }
-    await this.rmNested(parts)
-    await this.put()
+    await this.rmRecurse(path, () => this.put())
     return this
   }
 
-  async rmNested(path: NonEmptyPath): Promise<this> {
-    const filename = path[path.length - 1]
-    const parentPath = path.slice(0, path.length - 1)
-    const node = await this.get(pathUtil.join(parentPath))
-
-    if (node === null || check.isFile(node)) {
-      throw new Error("Path does not exist")
+  async rmRecurse(path: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
+    const { head, nextPath } = pathUtil.takeHead(path)
+    if(head === null){
+      throw new Error("Invalid path: empty")
     }
-
-    const updated = await node.removeDirectChild(filename)
-    return parentPath.length > 0
-            ? this.addChild(pathUtil.join(parentPath), updated)
-            : updated as this
+    if(nextPath === null) {
+      this.removeDirectChild(head)
+      onUpdate && await onUpdate()
+    }else {
+      const child = await this.getDirectChild(head)
+      if(child === null) {
+        throw new Error("Invalid path: does not exist")
+      } else if(check.isFile(child)) {
+        throw new Error(`There is a file along the given path: ${path}`)
+      } 
+      await child.rmRecurse(nextPath, async () => {
+        await this.updateDirectChild(child, head, onUpdate)
+      })
+    }
+    return this
   }
 
   async mv(from: string, to: string): Promise<this> {
-    const node = await this.get(from)
-    if (node === null) {
-      throw new Error(`Path does not exist: ${from}`)
-    }
-    const toParts = pathUtil.splitParts(to)
-    const destPath = pathUtil.join(toParts.slice(0, toParts.length - 1)) // remove file/dir name
-    const destination = await this.get(destPath)
-    if (check.isFile(destination)) {
-      throw new Error(`Can not \`mv\` to a file: ${destPath}`)
-    }
+    throw new Error("mv has been temporarily disabled")
+    // const node = await this.get(from)
+    // if (node === null) {
+    //   throw new Error(`Path does not exist: ${from}`)
+    // }
+    // const { tail, parentPath } = pathUtil.takeTail(to)
+    // if(tail === null){
+    //   throw new Error(`Path does not exist: ${to}`)
+    // }
+    // const parent = await this.get(parentPath || '')
+    // if (check.isFile(parent)) {
+    //   throw new Error(`Can not \`mv\` to a file: ${parentPath || ''}`)
+    // }
 
-    check.isTree(node)
-      ? await this.addChild(to, node)
-      : await this.addChild(to, node.content)
+    // await this.updateDirectChild(node, tail, null)
 
-    return this.rm(from)
+    // return this.rm(from)
   }
 
   async exists(path: string): Promise<boolean> {
@@ -139,18 +137,26 @@ abstract class BaseTree implements Tree, UnixTree {
     return node !== null
   }
 
-  abstract  get(path: string): Promise<Tree | File | null>
+  async getOrCreateDirectChild(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree | File> {
+    const node = await this.getDirectChild(name)
+    return node !== null
+      ? node
+      : this.createChildTree(name, onUpdate)
+  }
 
-  abstract  putDetailed(): Promise<AddResult>
-  abstract  updateDirectChild (child: Tree | File, name: string): Promise<this>
+  abstract createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
+  abstract createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
+
+  abstract putDetailed(): Promise<AddResult>
+
+  abstract updateDirectChild (child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
   abstract removeDirectChild(name: string): this
-  abstract  getDirectChild(name: string): Promise<Tree | File | null>
-  abstract  getOrCreateDirectChild(name: string): Promise<Tree | File>
+  abstract getDirectChild(name: string): Promise<Tree | File | null>
 
+  abstract get(path: string): Promise<Tree | File | null>
+
+  abstract updateLink(name: string, result: AddResult): this
   abstract getLinks(): BaseLinks
-
-  abstract  emptyChildTree(): Promise<Tree>
-  abstract  createChildFile(content: FileContent, name: string): Promise<File>
 }
 
 

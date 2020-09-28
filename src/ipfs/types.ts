@@ -103,6 +103,7 @@ export type ObjStat = {
 export type AddResult = {
   cid: CID
   size: number
+  isFile: boolean
 }
 
 export type SwarmAPI = {

@@ -18,7 +18,12 @@ export abstract class BaseFile implements File {
     return cid
   }
 
-  abstract async putDetailed(): Promise<AddResult>
+  async updateContent(content: FileContent): Promise<this> {
+    this.content = content
+    return this
+  }
+
+  abstract putDetailed(): Promise<AddResult>
 }
 
 

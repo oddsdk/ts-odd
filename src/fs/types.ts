@@ -1,3 +1,4 @@
+import { Maybe } from '../common'
 import { FileContent, CID, AddResult } from '../ipfs'
 import { SemVer } from './semver'
 
@@ -5,44 +6,53 @@ import { SemVer } from './semver'
 // LINKS
 // -----
 
-export type BaseLink = {
+export interface SimpleLink {
+  name: string
+  size: number
+  cid: CID
+}
+
+export interface BaseLink {
   name: string
   size: number
   mtime?: number
   isFile: boolean
 }
 
-export type Link = BaseLink & {
-  cid: CID
-}
+export interface Link extends SimpleLink, BaseLink {}
 
-export type BaseLinks = { [name: string]: BaseLink }
-export type Links = { [name: string]: Link }
+export interface SimpleLinks { [name: string]: SimpleLink }
+export interface BaseLinks { [name: string]: BaseLink }
+export interface Links { [name: string]: Link }
 
 
 
 // MISC
 // ----
 
-export type PutDetails = {
+export type UpdateProof = {
   cid: CID
-  userland: CID
-  metadata: CID
-  size: number
+  proof?: string
 }
 
 export type NonEmptyPath = [string, ...string[]]
-export type SyncHook = (result: CID, proof: string) => unknown
-export type SyncHookDetailed = (result: AddResult) => unknown
+
+export interface Puttable {
+  put(): Promise<CID>
+  putDetailed(): Promise<AddResult>
+}
+
+export type UpdateCallback = () => Promise<unknown>
+
+export type PublishHook = (result: CID, proof: string) => unknown
 
 
 // FILE
 // -----
 
-export interface File {
+export interface File extends Puttable {
   content: FileContent
-  put(): Promise<CID>
-  putDetailed(): Promise<AddResult>
+  updateContent(content: FileContent): Promise<this>
 }
 
 
@@ -51,7 +61,7 @@ export interface File {
 
 export interface UnixTree {
   ls(path: string): Promise<BaseLinks>
-  mkdir(path: string): Promise<this>
+  mkdir(path: string, onUpdate?: UpdateCallback): Promise<this>
   cat(path: string): Promise<FileContent>
   add(path: string, content: FileContent): Promise<this>
   rm(path: string): Promise<this>
@@ -60,21 +70,22 @@ export interface UnixTree {
   exists(path: string): Promise<boolean>
 }
 
-export interface Tree extends UnixTree {
+export interface Tree extends UnixTree, Puttable {
   version: SemVer
 
-  addChild(path: string, toAdd: Tree | FileContent): Promise<this>
-  addRecurse (path: NonEmptyPath, child: Tree | FileContent): Promise<this>
 
-  put(): Promise<CID>
-  putDetailed(): Promise<AddResult>
-  updateDirectChild (child: Tree | File, name: string): Promise<this>
+  createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
+  createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
+
+  mkdirRecurse(path: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  addRecurse(path: string, content: FileContent, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  rmRecurse(path: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
+
+  updateDirectChild(child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
   removeDirectChild(name: string): this
   getDirectChild(name: string): Promise<Tree | File | null>
-  getOrCreateDirectChild(name: string): Promise<Tree | File>
+  getOrCreateDirectChild(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree | File>
 
-  emptyChildTree(): Promise<Tree>
-  createChildFile(content: FileContent, name: string): Promise<File>
-
+  updateLink(name: string, result: AddResult): this
   getLinks(): BaseLinks
 }

@@ -1,48 +1,66 @@
-import {  PutDetails, File } from '../types'
-import { FileInfo, FileHeader } from '../protocol/public/types'
+import { FileInfo, FileHeader, PutDetails } from '../protocol/public/types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
 import * as metadata from '../metadata'
 import * as protocol from '../protocol'
+import * as check from '../types/check'
+import { isObject, Maybe } from '../../common'
 
 
 type ConstructorParams = {
   content: FileContent, 
-  info: FileHeader
+  header: FileHeader
+  cid: Maybe<CID>
 }
 
-export class PublicFile extends BaseFile implements File {
+export class PublicFile extends BaseFile {
 
-  info: FileHeader
+  header: FileHeader
+  cid: Maybe<CID>
 
-  constructor({ content, info }: ConstructorParams) {
+  constructor({ content, header, cid }: ConstructorParams) {
     super(content)
-    this.info = info
+    this.header = header
+    this.cid = cid
+  }
+
+  static instanceOf(obj: any): obj is PublicFile {
+    return isObject(obj)
+      && obj.content !== undefined
+      && check.isFileHeader(obj.header)
   }
 
   static async create(content: FileContent): Promise<PublicFile> {
     return new PublicFile({
       content, 
-      info: { metadata:  metadata.empty(true) }
+      header: { metadata:  metadata.empty(true) },
+      cid: null
     })
   }
 
   static async fromCID(cid: CID): Promise<PublicFile> {
     const info = await protocol.pub.get(cid)
-    return PublicFile.fromInfo(info)
+    return PublicFile.fromInfo(info, cid)
   }
 
-  static async fromInfo(info: FileInfo): Promise<PublicFile> {
+  static async fromInfo(info: FileInfo, cid: CID): Promise<PublicFile> {
     const { userland, metadata } = info
     const content = await protocol.basic.getFile(userland)
-    return new PublicFile({ content, info: { metadata } })
+    return new PublicFile({ 
+      content, 
+      header: { metadata },
+      cid
+    })
   }
 
   async putDetailed(): Promise<PutDetails> {
-    return protocol.pub.putFile(
+    const details = await protocol.pub.putFile(
       this.content, 
-      metadata.updateMtime(this.info.metadata)
+      metadata.updateMtime(this.header.metadata),
+      this.cid
     )
+    this.cid = details.cid
+    return details
   }
 
 }

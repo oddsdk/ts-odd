@@ -27,7 +27,20 @@ export const takeHead = (path: string): HeadParts => {
     head: parts[0] || null,
     nextPath: next.length > 0 ? join(next) : null
   }
+}
 
+type TailParts = {
+  tail: string | null
+  parentPath: string | null
+}
+
+export const takeTail = (path: string): TailParts => {
+  const parts = splitParts(path)
+  const parent = parts.slice(0, parts.length - 1)
+  return {
+    tail: parts[parts.length - 1] || null,
+    parentPath: parent.length > 0 ? join(parent) : null
+  }
 }
 
 export const splitNonEmpty = (path: string): NonEmptyPath | null => {

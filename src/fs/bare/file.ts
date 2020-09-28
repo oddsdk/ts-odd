@@ -1,6 +1,7 @@
 import { AddResult, CID, FileContent } from '../../ipfs'
 import * as protocol from '../protocol'
 import BaseFile from '../base/file'
+import { isObject } from '../../common'
 
 
 export class BareFile extends BaseFile {
@@ -12,6 +13,10 @@ export class BareFile extends BaseFile {
   static async fromCID(cid: CID): Promise<BareFile> {
     const content = await protocol.basic.getFile(cid)
     return new BareFile(content)
+  }
+
+  static instanceOf (obj: any): obj is BareFile {
+    return isObject(obj) && obj.content !== undefined
   }
 
   async put(): Promise<CID> {

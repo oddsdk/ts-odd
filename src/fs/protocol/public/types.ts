@@ -1,5 +1,12 @@
 import { Metadata } from '../../metadata'
-import { CID } from '../../../ipfs'
+import { AddResult, CID } from '../../../ipfs'
+
+export type PutDetails = AddResult & {
+  userland: CID
+  metadata: CID
+  isFile: boolean
+  skeleton: Skeleton
+}
 
 export type SkeletonInfo = {
   cid: CID
