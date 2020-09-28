@@ -4,7 +4,7 @@
 import { isString, isObject, isNum, isBool } from '../../common'
 import { CID } from '../../ipfs'
 import { Tree, File, Link, Links, BaseLink } from '../types'
-import { Skeleton, TreeInfo, FileInfo } from '../protocol/public/types'
+import { Skeleton, TreeInfo, FileInfo, TreeHeader } from '../protocol/public/types'
 import { SemVer } from '../semver'
 import { Metadata, UnixMeta } from '../metadata'
 
@@ -60,12 +60,16 @@ export const isSkeleton = (obj: any): obj is Skeleton => {
       ))
 }
 
-export const isTreeInfo = (obj: any): obj is TreeInfo => {
+export const isTreeHeader = (obj: any): obj is TreeHeader => {
   return isObject(obj)
-    && isCID(obj.userland)
     && isSkeleton(obj.skeleton)
     && isMetadata(obj.metadata)
     && obj.metadata.isFile === false
+}
+
+export const isTreeInfo = (obj: any): obj is TreeInfo => {
+  return isTreeHeader(obj)
+    && isCID((obj as any).userland)
 }
 
 export const isFileInfo = (obj: any): obj is FileInfo => {

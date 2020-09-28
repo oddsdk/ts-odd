@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.19.6
+
+Bugfix: changes to public tree were not being reflected in pretty tree
+
 ### v0.19.5
 
 Don't error on failed pins

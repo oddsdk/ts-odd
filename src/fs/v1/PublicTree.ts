@@ -13,26 +13,26 @@ import * as pathUtil from '../path'
 
 type ConstructorParams = {
   links: Links
-  info: TreeHeader
+  header: TreeHeader
 }
 
 export class PublicTree extends BaseTree {
 
   links: Links
-  info: TreeHeader
+  header: TreeHeader
 
   onUpdate: Maybe<SyncHookDetailed> = null
 
-  constructor({ links, info }: ConstructorParams) {
-    super(info.metadata.version)
+  constructor({ links, header }: ConstructorParams) {
+    super(header.metadata.version)
     this.links = links
-    this.info = info
+    this.header = header
   }
 
   static async empty (): Promise<PublicTree> {
     return new PublicTree({
       links: {},
-      info: {
+      header: {
         metadata: metadata.empty(false),
         skeleton: {},
       }
@@ -50,11 +50,11 @@ export class PublicTree extends BaseTree {
   static async fromInfo(info: TreeInfo): Promise<PublicTree> {
     const { userland, metadata, skeleton } = info
     const links = await protocol.basic.getLinks(userland)
-    return new PublicTree({ links, info: { metadata, skeleton } })
+    return new PublicTree({ links, header: { metadata, skeleton } })
   }
 
   static instanceOf(obj: any): obj is PublicTree {
-    return obj.header !== undefined
+    return check.isLinks(obj.links) && check.isTreeHeader(obj.header)
   }
 
   async emptyChildTree(): Promise<PublicTree> {
@@ -71,8 +71,8 @@ export class PublicTree extends BaseTree {
   async putDetailed(): Promise<PutDetails> {
     const details = await protocol.pub.putTree(
       this.links, 
-      this.info.skeleton,
-      metadata.updateMtime(this.info.metadata)
+      this.header.skeleton,
+      metadata.updateMtime(this.header.metadata)
     )
     if(this.onUpdate !== null){
       this.onUpdate(details)
@@ -83,11 +83,11 @@ export class PublicTree extends BaseTree {
   async updateDirectChild(child: PublicTree | PublicFile, name: string): Promise<this> {
     const { cid, metadata, userland, size } = await child.putDetailed()
     this.links[name] = link.make(name, cid, check.isFile(child), size)
-    this.info.skeleton[name] = { 
+    this.header.skeleton[name] = { 
       cid, 
       metadata, 
       userland, 
-      subSkeleton: check.isFile(child) ? {} : child.info.skeleton,
+      subSkeleton: check.isFile(child) ? {} : child.header.skeleton,
       isFile: check.isFile(child)
     }
     return this
@@ -95,12 +95,12 @@ export class PublicTree extends BaseTree {
 
   removeDirectChild(name: string): this {
     delete this.links[name]
-    delete this.info.skeleton[name]
+    delete this.header.skeleton[name]
     return this
   }
 
   async getDirectChild(name: string): Promise<PublicTree | PublicFile | null> {
-    const childInfo = this.info.skeleton[name] || null
+    const childInfo = this.header.skeleton[name] || null
     if(childInfo === null) return null
     return childInfo.isFile
           ? PublicFile.fromCID(childInfo.cid)
@@ -116,7 +116,7 @@ export class PublicTree extends BaseTree {
     const parts = pathUtil.splitNonEmpty(path)
     if(parts === null) return this
 
-    const skeletonInfo = skeleton.getPath(this.info.skeleton, parts)
+    const skeletonInfo = skeleton.getPath(this.header.skeleton, parts)
     if(skeletonInfo === null) return null
 
     const info = await protocol.pub.get(skeletonInfo.cid)
@@ -132,7 +132,7 @@ export class PublicTree extends BaseTree {
         ...acc,
         [cur.name]: {
           ...cur,
-          isFile: this.info.skeleton[cur.name]?.isFile,
+          isFile: this.header.skeleton[cur.name]?.isFile,
         }
       }
     }, {} as Links)
