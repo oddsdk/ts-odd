@@ -7,7 +7,7 @@ import { Metadata } from '../../metadata'
 import { isString } from '../../../common/type-checks'
 import * as check from '../../types/check'
 
-import { isValue } from '../../../common'
+import { isValue, Maybe } from '../../../common'
 import * as ipfs from '../../../ipfs'
 import { CID, FileContent } from '../../../ipfs'
 import * as link from '../../link'
@@ -17,7 +17,8 @@ import * as basic from '../basic'
 export const putTree = async (
     links: Links,
     skeletonVal: Skeleton,
-    metadataVal: Metadata
+    metadataVal: Metadata,
+    previousCID: Maybe<CID>
   ): Promise<PutDetails> => {
   const userlandInfo = await basic.putLinks(links)
   const userland = link.make('userland', userlandInfo.cid, true, userlandInfo.size)
@@ -25,19 +26,28 @@ export const putTree = async (
     putAndMakeLink('metadata', metadataVal),
     putAndMakeLink('skeleton', skeletonVal),
   ])
-  const internalLinks = { metadata, skeleton, userland } as Links
+  const previous = previousCID !== null 
+    ? link.make('previous', previousCID, false, await ipfs.size(previousCID))
+    : undefined
+
+  const internalLinks = { metadata, skeleton, userland, previous } as Links
   const { cid, size } = await basic.putLinks(internalLinks)
   return { cid, userland: userland.cid, metadata: metadata.cid, size }
 }
 
 export const putFile = async (
     content: FileContent,
-    metadataVal: Metadata
+    metadataVal: Metadata,
+    previousCID: Maybe<CID>
   ): Promise<PutDetails> => {
   const userlandInfo = await basic.putFile(content)
   const userland = link.make('userland', userlandInfo.cid, true, userlandInfo.size)
   const metadata = await putAndMakeLink('metadata', metadataVal)
-  const internalLinks = { metadata, userland } as Links
+  const previous = previousCID !== null 
+    ? link.make('previous', previousCID, false, await ipfs.size(previousCID))
+    : undefined
+
+  const internalLinks = { metadata, userland, previous } as Links
   const { cid, size } = await basic.putLinks(internalLinks)
   return { cid, userland: userland.cid, metadata: metadata.cid, size }
 }

@@ -41,6 +41,8 @@ export const getLinks = async (cid: CID): Promise<Links> => {
 }
 
 export const putLinks = async (links: Links): Promise<AddResult> => {
-  const dagLinks = Object.values(links).map(link.toDAGLink)
+  const dagLinks = Object.values(links)
+    .filter(l => l !== undefined)
+    .map(link.toDAGLink)
   return ipfs.dagPutLinks(dagLinks)
 }

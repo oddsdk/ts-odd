@@ -87,6 +87,7 @@ export class PrivateFile extends BaseFile implements File {
 
   async updateContent(content: FileContent): Promise<this> {
     const contentInfo = await protocol.basic.putEncryptedFile(content, this.info.key)
+    this.content = content
     this.info = {
       ...this.info,
       revision: this.info.revision + 1,

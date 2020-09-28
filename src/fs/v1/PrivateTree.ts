@@ -84,16 +84,14 @@ export default class PrivateTree extends BaseTree {
 
   async createChildFile(content: FileContent, name: string): Promise<PrivateFile>{
     const existing = await this.getDirectChild(name)
-    let file: PrivateFile
     if (existing === null) {
       const key = await genKeyStr()
       return PrivateFile.create(this.mmpt, content, this.info.bareNameFilter, key)
     } else if (PrivateFile.instanceOf(existing)) {
-      file = await existing.updateContent(content)
+      return existing.updateContent(content)
     } else {
       throw new Error(`There is already a directory with that name: ${name}`)
     }
-    return file
   }
 
   async putDetailed(): Promise<PrivateAddResult> {

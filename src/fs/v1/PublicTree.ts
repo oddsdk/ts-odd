@@ -14,19 +14,22 @@ import * as pathUtil from '../path'
 type ConstructorParams = {
   links: Links
   header: TreeHeader
+  cid: Maybe<CID>
 }
 
 export class PublicTree extends BaseTree {
 
   links: Links
   header: TreeHeader
+  cid: Maybe<CID>
 
   onUpdate: Maybe<SyncHookDetailed> = null
 
-  constructor({ links, header }: ConstructorParams) {
+  constructor({ links, header, cid }: ConstructorParams) {
     super(header.metadata.version)
     this.links = links
     this.header = header
+    this.cid = cid
   }
 
   static async empty (): Promise<PublicTree> {
@@ -35,7 +38,8 @@ export class PublicTree extends BaseTree {
       header: {
         metadata: metadata.empty(false),
         skeleton: {},
-      }
+      },
+      cid: null
     })
   }
 
@@ -44,13 +48,17 @@ export class PublicTree extends BaseTree {
     if(!check.isTreeInfo(info)) {
       throw new Error(`Could not parse a valid public tree at: ${cid}`)
     }
-    return PublicTree.fromInfo(info)
+    return PublicTree.fromInfo(info, cid)
   }
 
-  static async fromInfo(info: TreeInfo): Promise<PublicTree> {
+  static async fromInfo(info: TreeInfo, cid: CID): Promise<PublicTree> {
     const { userland, metadata, skeleton } = info
     const links = await protocol.basic.getLinks(userland)
-    return new PublicTree({ links, header: { metadata, skeleton } })
+    return new PublicTree({ 
+      links, 
+      header: { metadata, skeleton },
+      cid
+    })
   }
 
   static instanceOf(obj: any): obj is PublicTree {
@@ -62,18 +70,24 @@ export class PublicTree extends BaseTree {
   }
 
   async createChildFile(content: FileContent, name: string): Promise<PublicFile> {
-    if(this.header.skeleton[name]?.isFile === false) {
+    const existing = await this.getDirectChild(name)
+    if(existing === null){
+      return PublicFile.create(content)
+    }else if (PublicFile.instanceOf(existing)) {
+      return existing.updateContent(content)
+    } else {
       throw new Error(`There is already a directory with that name: ${name}`)
     }
-    return PublicFile.create(content)
   }
 
   async putDetailed(): Promise<PutDetails> {
     const details = await protocol.pub.putTree(
       this.links, 
       this.header.skeleton,
-      metadata.updateMtime(this.header.metadata)
+      metadata.updateMtime(this.header.metadata),
+      this.cid
     )
+    this.cid = details.cid
     if(this.onUpdate !== null){
       this.onUpdate(details)
     }
@@ -121,8 +135,8 @@ export class PublicTree extends BaseTree {
 
     const info = await protocol.pub.get(skeletonInfo.cid)
     return check.isFileInfo(info) 
-      ? PublicFile.fromInfo(info)
-      : PublicTree.fromInfo(info)
+      ? PublicFile.fromInfo(info, skeletonInfo.cid)
+      : PublicTree.fromInfo(info, skeletonInfo.cid)
   }
 
   getLinks(): Links {
