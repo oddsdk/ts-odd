@@ -340,7 +340,11 @@ export class FileSystem implements UnixTree {
     if (head === 'public') {
       result = await fn(this.publicTree, relPath)
 
+      console.log("HERE: ", isMutation)
+      console.log("HERE: ", PublicTree.instanceOf(result))
+
       if (isMutation && PublicTree.instanceOf(result)) {
+        console.log("RUNNING ON PRETTY")
         resultPretty = await fn(this.prettyTree, relPath)
 
         this.publicTree = result
