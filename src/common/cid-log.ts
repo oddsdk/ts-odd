@@ -36,3 +36,8 @@ export async function add(cid: string): Promise<void> {
   const newLog = [ cid, ...log ].slice(0, 1000)
   await localforage.setItem(key(), newLog)
 }
+
+
+export async function clear(): Promise<void> {
+  await localforage.removeItem(key())
+}

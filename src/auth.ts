@@ -1,7 +1,9 @@
 import localforage from 'localforage'
 
+import * as cidLog from './common/cid-log'
 import * as common from './common'
 import * as did from './did'
+import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 import { UCANS_STORAGE_KEY, USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
@@ -26,6 +28,8 @@ export async function authenticatedUsername(): Promise<string | null> {
 export async function leave(): Promise<void> {
   await localforage.removeItem(USERNAME_STORAGE_KEY)
   await ucan.clearStorage()
+  await cidLog.clear()
+  await keystore.clear()
 
   window.location.href = setup.endpoints.lobby
 }
