@@ -1,24 +1,34 @@
 # Changelog
 
+### v0.19.8
+
+Bugfix: clear all data when using the `leave` function.
+
+
 ### v0.19.7
 
-Bugfix: updates to files on public side were failing
+Bugfix: updates to files on public side were failing.
+
 
 ### v0.19.6
 
-Bugfix: changes to public tree were not being reflected in pretty tree
+Bugfix: changes to public tree were not being reflected in pretty tree.
+
 
 ### v0.19.5
 
-Don't error on failed pins
+Don't error on failed pins.
+
 
 ### v0.19.2
 
-Do not recursively pin content
+Do not recursively pin content.
+
 
 ### v0.19.1
 
 Permissions should be optional for `redirectToLobby` and `loadFileSystem` as well.
+
 
 ### v0.19
 
@@ -30,6 +40,7 @@ Permissions should be optional for `redirectToLobby` and `loadFileSystem` as wel
 ### v0.18.1
 
 Added proofs to JWT for app routes (index, create & delete)
+
 
 ### v0.18.0
 
