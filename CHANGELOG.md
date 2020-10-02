@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.19.9
+
+The expiration timestamp of a UCAN cannot exceed that of its proof.
+
+
 ### v0.19.8
 
 Bugfix: clear all data when using the `leave` function.
