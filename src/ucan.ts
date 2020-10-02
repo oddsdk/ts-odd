@@ -20,7 +20,7 @@ export type Ucan = {
     aud: string,
     exp: number,
     iss: string,
-    nbf: string,
+    nbf: number,
     prf: string | undefined,
     ptc: string | undefined | null,
     rsc: Resource
@@ -69,7 +69,7 @@ export async function build({
   lifetimeInSeconds = 30,
   potency = 'APPEND',
   proof,
-  resource = "*"
+  resource = '*'
 }: {
   audience: string
   issuer: string
@@ -81,18 +81,30 @@ export async function build({
   const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
 
-  // Parts
+  // Header
   const header = {
     alg: jwtAlgorithm(ks.cfg.type) || 'UnknownAlgorithm',
     typ: 'JWT',
     uav: '1.0.0',
   }
 
+  // Timestamps
+  let exp = currentTimeInSeconds + lifetimeInSeconds
+  let nbf = currentTimeInSeconds - 60
+
+  if (proof) {
+    const prf = decode(proof).payload
+
+    exp = Math.min(prf.exp, exp)
+    nbf = Math.max(prf.nbf, nbf)
+  }
+
+  // Payload
   const payload = {
     aud: audience,
-    exp: currentTimeInSeconds + lifetimeInSeconds,
+    exp: exp,
     iss: issuer,
-    nbf: currentTimeInSeconds - 60,
+    nbf: nbf,
     prf: proof,
     ptc: potency,
     rsc: resource,
