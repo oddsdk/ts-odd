@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.19.10
+
+Support the decoding of the url-safe base64 encoded read-key from the auth lobby.
+
+
 ### v0.19.9
 
 The expiration timestamp of a UCAN cannot exceed that of its proof.
