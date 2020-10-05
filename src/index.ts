@@ -120,7 +120,7 @@ export async function initialise(
     const username = url.searchParams.get("username") || ""
 
     const ks = await keystore.get()
-    const readKey = await ks.decrypt(encryptedReadKey)
+    const readKey = await ks.decrypt(common.base64.makeUrlUnsafe(encryptedReadKey))
     await ks.importSymmKey(readKey, READ_KEY_FROM_LOBBY_NAME)
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
