@@ -91,7 +91,7 @@ export async function update(
   // Make API call
   await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
     headers: async () => {
-      const jwt = await ucan.build({
+      const jwt = ucan.encode(await ucan.build({
         audience: await api.did(),
         issuer: await did.ucan(),
         potency: "APPEND",
@@ -100,7 +100,7 @@ export async function update(
         // TODO: Waiting on API change.
         //       Should be `username.fission.name/*`
         resource: ucan.decode(proof).payload.rsc
-      })
+      }))
 
       return { 'authorization': `Bearer ${jwt}` }
     },

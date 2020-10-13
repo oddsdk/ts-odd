@@ -24,12 +24,12 @@ export async function index(): Promise<Array<App>> {
     throw "Could not find your local UCAN"
   }
 
-  const jwt = await ucan.build({
+  const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan), 
+    proof: ucan.encode(localUcan),
     potency: null
-  })
+  }))
 
   const response = await fetch(`${apiEndpoint}/app`, {
     method: 'GET',
@@ -57,14 +57,16 @@ export async function create(
     throw "Could not find your local UCAN"
   }
 
-  const jwt = await ucan.build({
+  const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan), 
+    proof: ucan.encode(localUcan),
     potency: null
-  })
+  }))
 
-  const url = isDefined(subdomain) ? `${apiEndpoint}/app?${subdomain}` : `${apiEndpoint}/app`
+  const url = isDefined(subdomain)
+    ? `${apiEndpoint}/app?${subdomain}`
+    : `${apiEndpoint}/app`
 
   const response = await fetch(url, {
     method: 'POST',
@@ -91,12 +93,12 @@ export async function deleteByURL(
     throw new Error("Could not find your local UCAN")
   }
 
-  const jwt = await ucan.build({
+  const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan), 
+    proof: ucan.encode(localUcan),
     potency: null
-  })
+  }))
 
   await fetch(`${apiEndpoint}/app/associated/${url}`, {
     method: 'DELETE',

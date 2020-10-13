@@ -77,7 +77,7 @@ export async function build({
   potency?: string | null
   proof?: string
   resource?: Resource
-}): Promise<string> {
+}): Promise<Ucan> {
   const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
 
@@ -110,18 +110,15 @@ export async function build({
     rsc: resource,
   }
 
-  // Encode parts in JSON & Base64Url
-  const encodedHeader = base64.urlEncode(JSON.stringify(header))
-  const encodedPayload = base64.urlEncode(JSON.stringify(payload))
-
   // Signature
-  const signed = await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
-  const encodedSignature = base64.makeUrlSafe(signed)
+  const signature = await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
 
-  // Make JWT
-  return encodedHeader + '.' +
-         encodedPayload + '.' +
-         encodedSignature
+  // Put em' together
+  return {
+    header,
+    payload,
+    signature
+  }
 }
 
 /**

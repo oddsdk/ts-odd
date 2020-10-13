@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.21.0
+
+- `ucan.build` now returns a non-encoded UCAN, ie. not a JWT, but an object of the type `Ucan`. After that you may encode it with `ucan.encode`.
+
+
+
 ### v0.19.11
 
 - Fixes `isUsernameAvailable` function (was broken due to adjusted `dataRoot.lookup` behaviour)
