@@ -34,8 +34,17 @@ class BareTree extends BaseTree {
     return new BareTree(links) 
   }
 
-  async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<BareTree> {
+  async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree> {
     const child = await BareTree.empty()
+
+    const existing = this.children[name]
+    if(existing) {
+      if(BareFile.instanceOf(existing)) {
+        throw new Error(`There is a file at the given path: ${name}`)
+      }
+      return existing
+    }
+
     await this.updateDirectChild(child, name, onUpdate)
     return child
   }

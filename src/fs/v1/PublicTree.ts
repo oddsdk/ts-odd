@@ -68,6 +68,15 @@ export class PublicTree extends BaseTree {
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicTree> {
     const child = await PublicTree.empty()
+
+    const existing = this.children[name]
+    if(existing) {
+      if(PublicFile.instanceOf(existing)) {
+        throw new Error(`There is a file at the given path: ${name}`)
+      }
+      return existing
+    }
+
     await this.updateDirectChild(child, name, onUpdate)
     return child
   }

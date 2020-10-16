@@ -81,6 +81,15 @@ export default class PrivateTree extends BaseTree {
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateTree> {
     const key = await genKeyStr()
     const child = await PrivateTree.create(this.mmpt, key, this.info.bareNameFilter)
+
+    const existing = this.children[name]
+    if(existing) {
+      if(PrivateFile.instanceOf(existing)) {
+        throw new Error(`There is a file at the given path: ${name}`)
+      }
+      return existing
+    }
+
     await this.updateDirectChild(child, name, onUpdate)
     return child
   }
