@@ -287,8 +287,8 @@ export class FileSystem {
     return this.cat(path)
   }
 
-  async write(path: string, content: FileContent): Promise<this> {
-    return this.add(path, content)
+  async write(path: string, content: FileContent, options: MutationOptions = {}): Promise<this> {
+    return this.add(path, content, options)
   }
 
 
