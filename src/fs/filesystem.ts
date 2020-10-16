@@ -1,6 +1,6 @@
 import { throttle } from 'throttle-debounce'
 
-import { PublishHook, UnixTree, Tree, File, BaseLinks, UpdateProof } from './types'
+import { PublishHook, UnixTree, Tree, File, BaseLinks } from './types'
 import { SemVer } from './semver'
 import BareTree from './bare/tree'
 import MMPT from './protocol/private/mmpt'
@@ -47,6 +47,10 @@ type FileSystemOptions = {
   localOnly?: boolean
 }
 
+type MutationOptions = {
+  publish?: boolean
+}
+
 enum Branch {
   Public = 'public',
   Pretty = 'pretty',
@@ -54,11 +58,10 @@ enum Branch {
 }
 
 
-
 // CLASS
 
 
-export class FileSystem implements UnixTree {
+export class FileSystem {
 
   root: BareTree
   publicTree: PublicTree
@@ -216,10 +219,13 @@ export class FileSystem implements UnixTree {
   // POSIX INTERFACE
   // ---------------
 
-  async mkdir(path: string): Promise<this> {
+  async mkdir(path: string, options: MutationOptions = {}): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.mkdir(relPath)
     })
+    if(options.publish) {
+      await this.publish()
+    }
     return this
   }
 
@@ -229,10 +235,13 @@ export class FileSystem implements UnixTree {
     })
   }
 
-  async add(path: string, content: FileContent): Promise<this> {
+  async add(path: string, content: FileContent, options: MutationOptions = {}): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.add(relPath, content)
     })
+    if(options.publish) {
+      await this.publish()
+    }
     return this
   }
 

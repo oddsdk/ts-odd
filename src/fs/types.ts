@@ -30,11 +30,6 @@ export interface Links { [name: string]: Link }
 // MISC
 // ----
 
-export type UpdateProof = {
-  cid: CID
-  proof?: string
-}
-
 export type NonEmptyPath = [string, ...string[]]
 
 export interface Puttable {
