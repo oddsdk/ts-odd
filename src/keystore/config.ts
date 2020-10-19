@@ -10,7 +10,7 @@ let ks: RSAKeyStore | null = null
 
 export const clear = async (): Promise<void> => {
   if (ks) {
-    await keystore.clear()
+    await keystore.clear(ks.store)
     ks = null
   }
 }
