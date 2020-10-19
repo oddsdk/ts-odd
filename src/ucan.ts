@@ -1,7 +1,8 @@
 import { CryptoSystem } from 'keystore-idb/types'
 
-import * as app from './ucan/app'
+import * as domain from './ucan/domain'
 import * as keystore from './keystore'
+import * as web from './ucan/web'
 import * as wnfs from './ucan/wnfs'
 import { base64 } from './common'
 import { CID } from './ipfs'
@@ -10,7 +11,8 @@ import { CID } from './ipfs'
 // TYPES
 
 export type Attenuation
-  = { app: string, cap: app.Capability }
+  = { domain: string, cap: domain.Capability }
+  | { web: string, cap: web.Capability }
   | { wnfs: string, cap: wnfs.Capability }
 
 export type Fact =

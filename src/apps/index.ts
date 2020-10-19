@@ -3,7 +3,7 @@ import localforage from 'localforage'
 import * as did from '../did'
 import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
-import * as ucanApp from '../ucan/app'
+import * as web from '../ucan/web'
 import { api, Maybe, isDefined } from '../common'
 import { setup } from '../setup/internal'
 
@@ -95,7 +95,7 @@ export async function deleteByURL(
   }
 
   const jwt = ucan.encode(await ucan.build({
-    attenuations: [{ cap: "DESTROY", [ucanApp.PREFIX]: url }],
+    attenuations: [{ cap: "SUPER_USER", [web.PREFIX]: url }],
     audience: await api.did(),
     issuer: await did.ucan(),
     proof: ucan.encode(localUcan)
