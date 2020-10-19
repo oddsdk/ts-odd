@@ -29,7 +29,7 @@ export async function index(): Promise<Array<App>> {
     attenuations: [],
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan)
+    proofs: [ localUcan ]
   }))
 
   const response = await fetch(`${apiEndpoint}/app`, {
@@ -62,7 +62,7 @@ export async function create(
     attenuations: [],
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan)
+    proofs: [ localUcan ]
   }))
 
   const url = isDefined(subdomain)
@@ -98,7 +98,7 @@ export async function deleteByURL(
     attenuations: [{ cap: "SUPER_USER", [web.PREFIX]: url }],
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan)
+    proofs: [ localUcan ]
   }))
 
   await fetch(`${apiEndpoint}/app/associated/${url}`, {

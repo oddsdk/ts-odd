@@ -6,6 +6,7 @@ import * as ipfs from './ipfs'
 import * as ucan from './ucan'
 import * as wnfs from './ucan/wnfs'
 import { CID } from './ipfs'
+import { Ucan } from './ucan'
 import { Maybe, api, authenticatedUsername } from './common'
 import { setup } from './setup/internal'
 
@@ -75,7 +76,7 @@ export async function lookupOnFisson(
  */
 export async function update(
   cid: CID | string,
-  proof: string
+  proof: Ucan
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
   const username = await authenticatedUsername()
@@ -96,8 +97,7 @@ export async function update(
       const jwt = ucan.encode(await ucan.build({
         issuer: await did.ucan(),
         audience: await api.did(),
-
-        proof,
+        proofs: [ proof ],
 
         attenuations: [
           {

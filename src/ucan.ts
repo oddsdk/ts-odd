@@ -34,7 +34,7 @@ export type Ucan = {
     nbf: number,
     exp: number,
 
-    prf: CID | Ucan | undefined,
+    prf: CID | Array<Ucan>,
     att: "*" | Array<Attenuation>,
     fct: CID | Array<Fact>
   },
@@ -75,14 +75,14 @@ export async function build({
   facts = [],
   issuer,
   lifetimeInSeconds = 30,
-  proof
+  proofs = []
 }: {
   attenuations?: Array<Attenuation>
   audience: string
   facts?: CID | Array<Fact>,
   issuer: string
   lifetimeInSeconds?: number
-  proof?: CID | Ucan
+  proofs?: CID | Array<Ucan>
 }): Promise<Ucan> {
   const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
@@ -98,13 +98,11 @@ export async function build({
   let exp = currentTimeInSeconds + lifetimeInSeconds
   let nbf = currentTimeInSeconds - 60
 
-  if (proof) {
-    const prf = typeof proof === "string"
-      ? decode(proof).payload
-      : proof.payload
-
-    exp = Math.min(prf.exp, exp)
-    nbf = Math.max(prf.nbf, nbf)
+  if (Array.isArray(proofs)) {
+    proofs.forEach(prf => {
+      exp = Math.min(prf.payload.exp, exp)
+      nbf = Math.max(prf.payload.nbf, nbf)
+    })
   }
 
   // Payload
@@ -115,14 +113,19 @@ export async function build({
     nbf: nbf,
     exp: exp,
 
-    prf: proof,
+    prf: proofs,
     att: attenuations,
     fct: facts,
   }
 
   // Signature
+  const payloadWithEncodedProofs = {
+    ...payload,
+    proofs: Array.isArray(proofs) ? proofs.map(encode) : proofs
+  }
+
   const encodedHeader = base64.urlEncode(JSON.stringify(header))
-  const encodedPayload = base64.urlEncode(JSON.stringify(payload))
+  const encodedPayload = base64.urlEncode(JSON.stringify(payloadWithEncodedProofs))
   const signature = await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
 
   // Put em' together
@@ -192,8 +195,8 @@ export function decode(ucan: string, recursive = false): Ucan  {
 export function encode(ucan: Ucan): string {
   const payload = {
     ...ucan.payload,
-    prf: ucan.payload.prf && typeof ucan.payload.prf === "object"
-      ? encode(ucan.payload.prf)
+    prf: Array.isArray(ucan.payload.prf)
+      ? ucan.payload.prf.map(encode)
       : ucan.payload.prf
   }
 
@@ -203,15 +206,6 @@ export function encode(ucan: Ucan): string {
   return encodedHeader + '.' +
          encodedPayload + '.' +
          ucan.signature
-}
-
-/**
- * Check if a UCAN is encoded.
- *
- * @param ucan The UCAN to check
- */
-export function isEncoded(ucan: Ucan | string): boolean {
-  return typeof ucan === "string"
 }
 
 /**
