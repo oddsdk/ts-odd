@@ -2,10 +2,11 @@ import * as check from './fs/types/check'
 import * as debug from './common/debug'
 import * as did from './did'
 import * as dns from './dns'
-import * as ucan from './ucan'
 import * as ipfs from './ipfs'
+import * as ucan from './ucan'
+import * as wnfs from './ucan/wnfs'
 import { CID } from './ipfs'
-import { Maybe, api } from './common'
+import { Maybe, api, authenticatedUsername } from './common'
 import { setup } from './setup/internal'
 
 
@@ -77,6 +78,7 @@ export async function update(
   proof: string
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
+  const username = await authenticatedUsername()
 
   // Debug
   debug.log("🚀 Updating your DNSLink:", cid)
@@ -92,14 +94,17 @@ export async function update(
   await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
     headers: async () => {
       const jwt = ucan.encode(await ucan.build({
-        audience: await api.did(),
         issuer: await did.ucan(),
-        potency: "APPEND",
+        audience: await api.did(),
+
         proof,
 
-        // TODO: Waiting on API change.
-        //       Should be `username.fission.name/*`
-        resource: ucan.decode(proof).payload.rsc
+        attenuations: [
+          {
+            [wnfs.PREFIX]: `${username}.${setup.endpoints.user}/`,
+            cap: "OVERWRITE"
+          }
+        ]
       }))
 
       return { 'authorization': `Bearer ${jwt}` }

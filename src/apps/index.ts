@@ -1,10 +1,11 @@
 import localforage from 'localforage'
 
-import * as did from './did'
-import * as ucan from './ucan'
-import * as ucanInternal from './ucan/internal'
-import { api, Maybe, isDefined } from './common'
-import { setup } from './setup/internal'
+import * as did from '../did'
+import * as ucan from '../ucan'
+import * as ucanInternal from '../ucan/internal'
+import * as ucanApp from '../ucan/app'
+import { api, Maybe, isDefined } from '../common'
+import { setup } from '../setup/internal'
 
 
 export type App = {
@@ -25,10 +26,10 @@ export async function index(): Promise<Array<App>> {
   }
 
   const jwt = ucan.encode(await ucan.build({
+    attenuations: [],
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan),
-    potency: null
+    proof: ucan.encode(localUcan)
   }))
 
   const response = await fetch(`${apiEndpoint}/app`, {
@@ -58,10 +59,10 @@ export async function create(
   }
 
   const jwt = ucan.encode(await ucan.build({
+    attenuations: [],
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan),
-    potency: null
+    proof: ucan.encode(localUcan)
   }))
 
   const url = isDefined(subdomain)
@@ -94,10 +95,10 @@ export async function deleteByURL(
   }
 
   const jwt = ucan.encode(await ucan.build({
+    attenuations: [{ cap: "DESTROY", [ucanApp.PREFIX]: url }],
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan),
-    potency: null
+    proof: ucan.encode(localUcan)
   }))
 
   await fetch(`${apiEndpoint}/app/associated/${url}`, {

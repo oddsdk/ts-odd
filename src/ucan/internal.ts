@@ -3,9 +3,10 @@ import localforage from 'localforage'
 import * as common from '../common'
 import * as pathUtil from '../fs/path'
 import * as ucan from '../ucan'
+import * as wnfs from '../ucan/wnfs'
 import { UCANS_STORAGE_KEY } from '../common'
 import { Permissions } from './permissions'
-import { Ucan, WNFS_PREFIX } from '../ucan'
+import { Ucan } from '../ucan'
 import { setup } from '../setup/internal'
 
 
@@ -27,10 +28,8 @@ export async function clearStorage(): Promise<void> {
  * Lookup the prefix for a filesystem key in the dictionary.
  */
 export function dictionaryFilesystemPrefix(username: string): string {
-  // const host = `${username}.${setup.endpoints.user}`
-  // TODO: Waiting on API change.
-  //       Should be `${WNFS_PREFIX}:${host}/`
-  return WNFS_PREFIX + ":/"
+  const host = `${username}.${setup.endpoints.user}`
+  return `${wnfs.PREFIX}:${host}/`
 }
 
 /**

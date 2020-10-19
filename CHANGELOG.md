@@ -2,6 +2,7 @@
 
 ### v0.21.0
 
+- __UCAN v0.4.0__ as described in [https://whitepaper.fission.codes/access-control/ucan](https://whitepaper.fission.codes/access-control/ucan). Version was incorrect before this (was v1).
 - `ucan.build` now returns a non-encoded UCAN, ie. not a JWT, but an object of the type `Ucan`. After that you may encode it with `ucan.encode`.
 
 

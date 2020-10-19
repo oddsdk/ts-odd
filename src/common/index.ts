@@ -11,8 +11,8 @@ export * from './util'
 export { api, arrbufs, base64, blob }
 
 export const READ_KEY_FROM_LOBBY_NAME = "filesystem-lobby"
-export const UCANS_STORAGE_KEY = "webnative.auth_ucans"
-export const USERNAME_STORAGE_KEY = "webnative.auth_username"
+export const UCANS_STORAGE_KEY = "webnative.ucans"
+export const USERNAME_STORAGE_KEY = "webnative.username"
 
 
 /**

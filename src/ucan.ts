@@ -1,41 +1,43 @@
 import { CryptoSystem } from 'keystore-idb/types'
 
+import * as app from './ucan/app'
 import * as keystore from './keystore'
+import * as wnfs from './ucan/wnfs'
 import { base64 } from './common'
+import { CID } from './ipfs'
 
 
 // TYPES
 
+export type Attenuation
+  = { app: string, cap: app.Capability }
+  | { wnfs: string, cap: wnfs.Capability }
 
-export type Resource =
-  "*" | Record<string, string>
+export type Fact =
+  {
+    sha256: string,
+    msg: string
+  }
 
 export type Ucan = {
   header: {
     alg: string,
     typ: string,
-    uav: string
+    ucv: string
   },
   payload: {
-    aud: string,
-    exp: number,
     iss: string,
+    aud: string,
+
     nbf: number,
-    prf: string | undefined,
-    ptc: string | undefined | null,
-    rsc: Resource
+    exp: number,
+
+    prf: CID | Ucan | undefined,
+    att: "*" | Array<Attenuation>,
+    fct: CID | Array<Fact>
   },
   signature: string
 }
-
-
-
-// CONSTANTS
-
-
-// TODO: Waiting on API change.
-//       Should be `dnslink`
-export const WNFS_PREFIX = "floofs"
 
 
 
@@ -50,33 +52,35 @@ export const WNFS_PREFIX = "floofs"
  *
  * `alg`, Algorithm, the type of signature.
  * `typ`, Type, the type of this data structure, JWT.
- * `uav`, UCAN version.
+ * `ucv`, UCAN version.
  *
  * ### Payload
  *
- * `aud`, Audience, the ID of who it's intended for.
- * `exp`, Expiry, unix timestamp of when the jwt is no longer valid.
  * `iss`, Issuer, the ID of who sent this.
+ * `aud`, Audience, the ID of who it's intended for.
+ *
  * `nbf`, Not Before, unix timestamp of when the jwt becomes valid.
+ * `exp`, Expiry, unix timestamp of when the jwt is no longer valid.
+ *
  * `prf`, Proof, an optional nested token with equal or greater privileges.
- * `ptc`, Potency, which rights come with the token.
- * `rsc`, Resource, the involved resource.
+ * `att`, Attenuation, an array of heterogeneous resources and capabilities.
+ * `fct`, Facts, optional field for arbitrary facts and proofs of knowledge.
  *
  */
 export async function build({
+  attenuations = [],
   audience,
+  facts = [],
   issuer,
   lifetimeInSeconds = 30,
-  potency = 'APPEND',
-  proof,
-  resource = '*'
+  proof
 }: {
+  attenuations?: Array<Attenuation>
   audience: string
+  facts?: CID | Array<Fact>,
   issuer: string
   lifetimeInSeconds?: number
-  potency?: string | null
-  proof?: string
-  resource?: Resource
+  proof?: CID | Ucan
 }): Promise<Ucan> {
   const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
@@ -85,7 +89,7 @@ export async function build({
   const header = {
     alg: jwtAlgorithm(ks.cfg.type) || 'UnknownAlgorithm',
     typ: 'JWT',
-    uav: '1.0.0',
+    ucv: '0.4.0',
   }
 
   // Timestamps
@@ -93,7 +97,9 @@ export async function build({
   let nbf = currentTimeInSeconds - 60
 
   if (proof) {
-    const prf = decode(proof).payload
+    const prf = typeof proof === "string"
+      ? decode(proof).payload
+      : proof.payload
 
     exp = Math.min(prf.exp, exp)
     nbf = Math.max(prf.nbf, nbf)
@@ -101,16 +107,20 @@ export async function build({
 
   // Payload
   const payload = {
-    aud: audience,
-    exp: exp,
     iss: issuer,
+    aud: audience,
+
     nbf: nbf,
+    exp: exp,
+
     prf: proof,
-    ptc: potency,
-    rsc: resource,
+    att: attenuations,
+    fct: facts,
   }
 
   // Signature
+  const encodedHeader = base64.urlEncode(JSON.stringify(header))
+  const encodedPayload = base64.urlEncode(JSON.stringify(payload))
   const signature = await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
 
   // Put em' together
@@ -128,20 +138,27 @@ export async function build({
 export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
   return ucans.reduce((acc, ucanString) => {
     const ucan = decode(ucanString)
-    const { rsc } = ucan.payload
+    const { att } = ucan.payload
 
-    if (typeof rsc !== "object") {
-      return { ...acc, [rsc]: ucan }
+    if (att === "*") {
+      return { ...acc, "*": ucan }
+    } else if (typeof att !== "object") {
+      return acc
     }
 
-    const resource = Array.from(Object.entries(rsc))[0]
-    const key = resource[0] + ":" + (
-      resource[0] === WNFS_PREFIX
-        ? resource[1].replace(/\/+$/, "")
-        : resource[1]
-    )
+    return att.reduce((treasure, a) => {
+      const obj = { ...a }
+      delete obj.cap
 
-    return { ...acc, [key]: ucan }
+      const resource = Array.from(Object.entries(obj))[0]
+      const key = resource[0] + ":" + (
+        resource[0] === wnfs.PREFIX
+          ? resource[1].replace(/\/+$/, "")
+          : resource[1]
+      )
+
+      return { ...treasure, [key]: ucan }
+    }, acc)
   }, {})
 }
 
@@ -151,14 +168,16 @@ export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
  *
  * @param ucan The encoded UCAN to decode
  */
-export function decode(ucan: string): Ucan  {
+export function decode(ucan: string, recursive = false): Ucan  {
   const split = ucan.split(".")
   const header = JSON.parse(base64.urlDecode(split[0]))
   const payload = JSON.parse(base64.urlDecode(split[1]))
 
   return {
     header,
-    payload,
+    payload: payload.proof && recursive
+      ? decode(payload.proof, true)
+      : payload.proof,
     signature: split[2]
   }
 }
@@ -169,12 +188,28 @@ export function decode(ucan: string): Ucan  {
  * @param ucan The UCAN to encode
  */
 export function encode(ucan: Ucan): string {
+  const payload = {
+    ...ucan.payload,
+    prf: ucan.payload.prf && typeof ucan.payload.prf === "object"
+      ? encode(ucan.payload.prf)
+      : ucan.payload.prf
+  }
+
   const encodedHeader = base64.urlEncode(JSON.stringify(ucan.header))
-  const encodedPayload = base64.urlEncode(JSON.stringify(ucan.payload))
+  const encodedPayload = base64.urlEncode(JSON.stringify(payload))
 
   return encodedHeader + '.' +
          encodedPayload + '.' +
          ucan.signature
+}
+
+/**
+ * Check if a UCAN is encoded.
+ *
+ * @param ucan The UCAN to check
+ */
+export function isEncoded(ucan: Ucan | string): boolean {
+  return typeof ucan === "string"
 }
 
 /**
@@ -211,6 +246,7 @@ export function rootIssuer(ucan: string, level = 0): string {
  */
 function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
   switch (cryptoSystem) {
+    // case ED: return 'EdDSA';
     case CryptoSystem.RSA: return 'RS256';
     default: return null
   }
