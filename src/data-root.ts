@@ -49,15 +49,20 @@ export async function lookupOnFisson(
   username: string
 ): Promise<CID | null> {
   try {
-    const resp = await fetch(`${setup.endpoints.api}/user/data/${username}`, { cache: 'reload' }) // don't use cache
+    const resp = await fetch(
+      `${setup.endpoints.api}/user/data/${username}`,
+      { cache: 'reload' } // don't use cache
+    )
     const cid = await resp.json()
     if (!check.isCID(cid)) {
       throw new Error("Did not receive a CID")
     }
     return cid
+
   } catch(err) {
     debug.log('Could not locate user root on Fission server: ', err.toString())
     return null
+
   }
 }
 

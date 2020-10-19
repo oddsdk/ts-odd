@@ -43,7 +43,7 @@ export async function createAccount(
 export function isUsernameAvailable(
   username: string
 ): Promise<boolean> {
-  return dataRoot.lookup(username)
+  return dataRoot.lookupOnFisson(username)
     .then(a => a === null)
     .catch(() => true)
 }
