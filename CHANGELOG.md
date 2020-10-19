@@ -1,5 +1,13 @@
 # Changelog
 
+### v0.19.11
+
+- Fixes `isUsernameAvailable` function (was broken due to adjusted `dataRoot.lookup` behaviour)
+- Fixes issue with clearing data from browser.
+- Tries reconnecting to Fission gateway if initial connection fails
+- Removes `yarn` as a dependency (should've been devDependency)
+
+
 ### v0.19.10
 
 Support the decoding of the url-safe base64 encoded read-key from the auth lobby.
