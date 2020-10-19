@@ -40,12 +40,11 @@ export async function createAccount(
 /**
  * Check if a username is available.
  */
-export function isUsernameAvailable(
+export async function isUsernameAvailable(
   username: string
 ): Promise<boolean> {
-  return dataRoot.lookup(username)
-    .then(a => a === null)
-    .catch(() => true)
+  const resp = await fetch(`${setup.endpoints.api}/user/data/${username}`)
+  return !resp.ok
 }
 
 /**

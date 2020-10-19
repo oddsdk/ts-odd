@@ -9,7 +9,7 @@ type IpfsWindow = {
 }
 
 
-export const JS_IPFS = 'https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.50.1/index.min.js'
+export const JS_IPFS = 'https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.50.2/index.min.js'
 export const PEER_WSS = '/dns4/node.fission.systems/tcp/4003/wss/p2p/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw'
 export const SIGNALING_SERVER = '/dns4/webrtc.runfission.com/tcp/443/wss/p2p-webrtc-star/'
 export const DELEGATE_ADDR = '/dns4/ipfs.runfission.com/tcp/443/https'
@@ -48,7 +48,30 @@ export const get = async (): Promise<IPFS> => {
     })
   }
 
-  await ipfs.swarm.connect(PEER_WSS)
+  await swarmConnectWithRetry(PEER_WSS)
 
   return ipfs
+}
+
+/**
+ * TODO: Temporary solution for https://github.com/libp2p/js-libp2p/issues/312
+ */
+export async function swarmConnectWithRetry(address: string, attempt = 1): Promise<void> {
+  if (!ipfs) return
+
+  try {
+    await ipfs.swarm.connect(address)
+  } catch (err) {
+    console.error(`IPFS seems to be having issues connecting to \`${address}\`, will retry.`)
+    console.error(err)
+
+    if (attempt < 50) {
+      await new Promise((resolve, reject) => setTimeout(
+        () => swarmConnectWithRetry(address, attempt + 1).then(resolve, reject),
+        (attempt - 1) * 125
+      ))
+    } else {
+      console.error(`Tried connecting to \`${address}\` 50 times, I'm giving up for now.`)
+    }
+  }
 }
