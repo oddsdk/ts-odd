@@ -57,6 +57,8 @@ export const get = async (): Promise<IPFS> => {
  * TODO: Temporary solution for https://github.com/libp2p/js-libp2p/issues/312
  */
 export async function swarmConnectWithRetry(address: string, attempt: number = 1): Promise<void> {
+  if (!ipfs) return
+
   try {
     await ipfs.swarm.connect(address)
   } catch (err) {
