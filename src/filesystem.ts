@@ -4,6 +4,7 @@ import FileSystem from './fs'
 import * as cidLog from './common/cid-log'
 import * as debug from './common/debug'
 import * as dataRoot from './data-root'
+import * as ucan from './ucan/internal'
 import { READ_KEY_FROM_LOBBY_NAME, Maybe, authenticatedUsername } from './common'
 import { Permissions } from './ucan/permissions'
 import { Ucan } from './ucan'
@@ -27,6 +28,9 @@ export async function loadFileSystem(
   // Look for username
   username = username || (await authenticatedUsername() || undefined)
   if (!username) throw new Error("User hasn't authenticated yet")
+
+  // Ensure internal UCAN dictionary
+  await ucan.store([])
 
   // Determine the correct CID of the file system to load
   const dataCid = navigator.onLine ? await dataRoot.lookup(username) : null
