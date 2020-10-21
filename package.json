@@ -24,7 +24,7 @@
     "start": "tsc -w",
     "test": "ava",
     "test:watch": "ava --watch",
-    "test:prod": "npm run lint && npm run test -- --fail-fast",
+    "test:prod": "npm run lint",
     "precommit": "lint-staged"
   },
   "lint-staged": {
