@@ -4,8 +4,12 @@ import { IPFS } from './types'
 import { setup } from '../setup/internal'
 
 
-type IpfsWindow = {
+type IpfsGlobalScope = {
   Ipfs?: { create: (options: unknown) => IPFS }
+}
+
+type PossibleWorkerGlobalScope = {
+  importScripts?: (url: string) => void
 }
 
 
@@ -13,6 +17,15 @@ export const JS_IPFS = 'https://cdnjs.cloudflare.com/ajax/libs/ipfs/0.50.2/index
 export const PEER_WSS = '/dns4/node.fission.systems/tcp/4003/wss/p2p/QmVLEz2SxoNiFnuyLpbXsH6SvjPTrHNMU88vCQZyhgBzgw'
 export const SIGNALING_SERVER = '/dns4/webrtc.runfission.com/tcp/443/wss/p2p-webrtc-star/'
 export const DELEGATE_ADDR = '/dns4/ipfs.runfission.com/tcp/443/https'
+
+
+const possibleWorkerGlobalScope = self as PossibleWorkerGlobalScope
+
+
+if (possibleWorkerGlobalScope.importScripts) {
+  (self as any).window = self;
+  (self as any).RTCPeerConnection = true;
+}
 
 
 let ipfs: IPFS | null = null
@@ -37,9 +50,13 @@ export const set = (userIpfs: unknown): void => {
 
 export const get = async (): Promise<IPFS> => {
   if (!ipfs) {
-    await loadScript(JS_IPFS)
+    if (possibleWorkerGlobalScope.importScripts) {
+      possibleWorkerGlobalScope.importScripts(JS_IPFS)
+    } else {
+      await loadScript(JS_IPFS)
+    }
 
-    const Ipfs = await (window as IpfsWindow).Ipfs
+    const Ipfs = await (self as IpfsGlobalScope).Ipfs
     if (!Ipfs) throw new Error(`Unable to load js-ipfs using the url: \`${JS_IPFS}\``)
 
     ipfs = await Ipfs.create({
