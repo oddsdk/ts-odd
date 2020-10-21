@@ -18,13 +18,13 @@
   },
   "scripts": {
     "docs": "typedoc",
-    "lint": "yarn eslint src/**/*.ts test/**/*.ts",
+    "lint": "yarn eslint src/**/*.ts",
     "prebuild": "rimraf dist",
     "build": "tsc && rollup -c rollup.config.ts",
     "start": "tsc -w",
     "test": "ava",
     "test:watch": "ava --watch",
-    "test:prod": "npm run lint && npm run test -- --no-cache",
+    "test:prod": "npm run lint && npm run test -- --fail-fast",
     "precommit": "lint-staged"
   },
   "lint-staged": {
