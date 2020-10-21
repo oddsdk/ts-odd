@@ -113,7 +113,8 @@ export function didToPublicKey(did: string): {
 /**
  * Verify the signature of some data (string, ArrayBuffer or Uint8Array), given a DID.
  */
-export async function verifySignedData({ data, did, signature }: {
+export async function verifySignedData({ charSize = 16, data, did, signature }: {
+  charSize?: number,
   data: Msg,
   did: string
   signature: string
@@ -125,13 +126,15 @@ export async function verifySignedData({ data, did, signature }: {
       case "ecc": return await eccOperations.verify(
         data,
         signature,
-        publicKey
+        publicKey,
+        charSize
       )
 
       case "rsa": return await rsaOperations.verify(
         data,
         signature,
-        publicKey
+        publicKey,
+        charSize
       )
 
       default: return false

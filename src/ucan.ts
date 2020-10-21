@@ -1,5 +1,6 @@
 import { CryptoSystem } from 'keystore-idb/types'
 
+import * as did from './did'
 import * as domain from './ucan/domain'
 import * as keystore from './keystore'
 import * as web from './ucan/web'
@@ -21,23 +22,27 @@ export type Fact =
     msg: string
   }
 
+export type UcanHeader = {
+  alg: string,
+  typ: string,
+  ucv: string
+}
+
+export type UcanPayload = {
+  iss: string,
+  aud: string,
+
+  nbf: number,
+  exp: number,
+
+  prf: CID | Array<Ucan>,
+  att: "*" | Array<Attenuation>,
+  fct: CID | Array<Fact>
+}
+
 export type Ucan = {
-  header: {
-    alg: string,
-    typ: string,
-    ucv: string
-  },
-  payload: {
-    iss: string,
-    aud: string,
-
-    nbf: number,
-    exp: number,
-
-    prf: CID | Array<Ucan>,
-    att: "*" | Array<Attenuation>,
-    fct: CID | Array<Fact>
-  },
+  header: UcanHeader,
+  payload: UcanPayload,
   signature: string
 }
 
@@ -119,14 +124,7 @@ export async function build({
   }
 
   // Signature
-  const payloadWithEncodedProofs = {
-    ...payload,
-    proofs: Array.isArray(proofs) ? proofs.map(encode) : proofs
-  }
-
-  const encodedHeader = base64.urlEncode(JSON.stringify(header))
-  const encodedPayload = base64.urlEncode(JSON.stringify(payloadWithEncodedProofs))
-  const signature = await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
+  const signature = await sign(header, payload)
 
   // Put em' together
   return {
@@ -173,16 +171,19 @@ export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
  *
  * @param ucan The encoded UCAN to decode
  */
-export function decode(ucan: string, recursive = false): Ucan  {
+export function decode(ucan: string): Ucan  {
   const split = ucan.split(".")
   const header = JSON.parse(base64.urlDecode(split[0]))
   const payload = JSON.parse(base64.urlDecode(split[1]))
 
   return {
     header,
-    payload: payload.proof && recursive
-      ? decode(payload.proof, true)
-      : payload.proof,
+    payload: {
+      ...payload,
+      prf: Array.isArray(payload.prf)
+        ? payload.prf.map(decode)
+        : payload.prf
+    },
     signature: split[2]
   }
 }
@@ -218,6 +219,24 @@ export function isExpired(ucan: Ucan): boolean {
 }
 
 /**
+ * Check if a UCAN is valid.
+ *
+ * @param ucan The decoded UCAN
+ * @param did The DID associated with the signature of the UCAN
+ */
+export function isValid(ucan: Ucan, sigDid: string): Promise<boolean> {
+  const encodedHeader = encodeHeader(ucan.header)
+  const encodedPayload = encodePayload(ucan.payload)
+
+  return did.verifySignedData({
+    charSize: 8,
+    data: `${encodedHeader}.${encodedPayload}`,
+    did: sigDid,
+    signature: ucan.signature
+  })
+}
+
+/**
  * Given a UCAN, lookup the root issuer.
  *
  * Throws when given an improperly formatted UCAN.
@@ -232,32 +251,48 @@ export function rootIssuer(ucan: string, level = 0): string {
   return p.iss
 }
 
+/**
+ * Make a UCAN signature.
+ *
+ * @param header The header of the UCAN
+ * @param payload The payload of the UCAN
+ */
+export async function sign(header: UcanHeader, payload: UcanPayload): Promise<string> {
+  const encodedHeader = encodeHeader(header)
+  const encodedPayload = encodePayload(payload)
+  const ks = await keystore.get()
+
+  return ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
+}
+
 
 
 // ㊙️
 
 
-/**
- * JWT algorithm to be used in a JWT header.
- */
-function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
-  switch (cryptoSystem) {
-    // case ED: return 'EdDSA';
-    case CryptoSystem.RSA: return 'RS256';
-    default: return null
-  }
+function encodeHeader(header: UcanHeader): string {
+  return base64.urlEncode(JSON.stringify(header))
 }
 
+function encodePayload(payload: UcanPayload): string {
+  return base64.urlEncode(JSON.stringify({
+    ...payload,
+    prf: Array.isArray(payload.prf) ? payload.prf.map(encode) : payload.prf
+  }))
+}
 
-/**
- * Extract the payload of a UCAN.
- *
- * Throws when given an improperly formatted UCAN.
- */
 function extractPayload(ucan: string, level: number): { iss: string; prf: string | null } {
   try {
     return JSON.parse(base64.urlDecode(ucan.split(".")[1]))
   } catch (_) {
     throw new Error(`Invalid UCAN (${level} level${level === 1 ? "" : "s"} deep): \`${ucan}\``)
+  }
+}
+
+function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
+  switch (cryptoSystem) {
+    // case ED: return 'EdDSA';
+    case CryptoSystem.RSA: return 'RS256';
+    default: return null
   }
 }
