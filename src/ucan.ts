@@ -17,10 +17,7 @@ export type Attenuation
   | { wnfs: string, cap: wnfs.Capability }
 
 export type Fact =
-  {
-    sha256: string,
-    msg: string
-  }
+  any
 
 export type UcanHeader = {
   alg: string,
