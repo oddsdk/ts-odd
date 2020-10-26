@@ -40,7 +40,7 @@ export type UcanPayload = {
 export type Ucan = {
   header: UcanHeader,
   payload: UcanPayload,
-  signature: string
+  signature: string | null
 }
 
 
@@ -72,6 +72,7 @@ export type Ucan = {
  *
  */
 export async function build({
+  addSignature = true,
   attenuations = [],
   audience,
   facts = [],
@@ -79,9 +80,10 @@ export async function build({
   lifetimeInSeconds = 30,
   proofs = []
 }: {
+  addSignature?: boolean
   attenuations?: Array<Attenuation>
   audience: string
-  facts?: CID | Array<Fact>,
+  facts?: CID | Array<Fact>
   issuer: string
   lifetimeInSeconds?: number
   proofs?: CID | Array<Ucan>
@@ -121,7 +123,9 @@ export async function build({
   }
 
   // Signature
-  const signature = await sign(header, payload)
+  const signature = addSignature
+    ? await sign(header, payload)
+    : null
 
   // Put em' together
   return {
@@ -181,7 +185,7 @@ export function decode(ucan: string): Ucan  {
         ? payload.prf.map(decode)
         : payload.prf
     },
-    signature: split[2]
+    signature: split[2] || null
   }
 }
 
@@ -203,7 +207,7 @@ export function encode(ucan: Ucan): string {
 
   return encodedHeader + '.' +
          encodedPayload + '.' +
-         ucan.signature
+         (ucan.signature || sign(ucan.header, ucan.payload))
 }
 
 /**
@@ -229,7 +233,7 @@ export function isValid(ucan: Ucan, sigDid: string): Promise<boolean> {
     charSize: 8,
     data: `${encodedHeader}.${encodedPayload}`,
     did: sigDid,
-    signature: ucan.signature
+    signature: ucan.signature || ""
   })
 }
 

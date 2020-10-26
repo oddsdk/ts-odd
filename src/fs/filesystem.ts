@@ -327,7 +327,7 @@ export class FileSystem implements UnixTree {
 
     if(!this.localOnly) {
       const proof = await ucanInternal.lookupFilesystemUcan(path)
-      if (!proof || ucan.isExpired(proof)) {
+      if (!proof || ucan.isExpired(proof) || !proof.signature) {
         throw new NoPermissionError("I don't have the necessary permissions to make these changes to the file system")
       }
 
