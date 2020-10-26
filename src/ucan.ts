@@ -195,19 +195,33 @@ export function decode(ucan: string): Ucan  {
  * @param ucan The UCAN to encode
  */
 export function encode(ucan: Ucan): string {
-  const payload = {
-    ...ucan.payload,
-    prf: Array.isArray(ucan.payload.prf)
-      ? ucan.payload.prf.map(encode)
-      : ucan.payload.prf
-  }
-
-  const encodedHeader = base64.urlEncode(JSON.stringify(ucan.header))
-  const encodedPayload = base64.urlEncode(JSON.stringify(payload))
+  const encodedHeader = encodeHeader(ucan.header)
+  const encodedPayload = encodePayload(ucan.payload)
 
   return encodedHeader + '.' +
          encodedPayload + '.' +
          (ucan.signature || sign(ucan.header, ucan.payload))
+}
+
+/**
+ * Encode the header of a UCAN.
+ *
+ * @param header The UcanHeader to encode
+ */
+export function encodeHeader(header: UcanHeader): string {
+  return base64.urlEncode(JSON.stringify(header))
+}
+
+/**
+ * Encode the payload of a UCAN.
+ *
+ * @param payload The UcanPayload to encode
+ */
+export function encodePayload(payload: UcanPayload): string {
+  return base64.urlEncode(JSON.stringify({
+    ...payload,
+    prf: Array.isArray(payload.prf) ? payload.prf.map(encode) : payload.prf
+  }))
 }
 
 /**
@@ -270,17 +284,6 @@ export async function sign(header: UcanHeader, payload: UcanPayload): Promise<st
 
 // ㊙️
 
-
-function encodeHeader(header: UcanHeader): string {
-  return base64.urlEncode(JSON.stringify(header))
-}
-
-function encodePayload(payload: UcanPayload): string {
-  return base64.urlEncode(JSON.stringify({
-    ...payload,
-    prf: Array.isArray(payload.prf) ? payload.prf.map(encode) : payload.prf
-  }))
-}
 
 function extractPayload(ucan: string, level: number): { iss: string; prf: string | null } {
   try {
