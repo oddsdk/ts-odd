@@ -7,12 +7,11 @@ test("building a valid UCAN", withWebnativeContext, async (t, page) => {
     const ucan = await webnative.ucan.build({
       attenuations: [],
       audience: "aud",
-      issuer: "iss",
+      issuer: await webnative.did.ucan(),
       proofs: []
     })
 
-    const did = await webnative.did.ucan()
-    return webnative.ucan.isValid(ucan, did)
+    return webnative.ucan.isValid(ucan)
   })
 
   t.true(isValid)

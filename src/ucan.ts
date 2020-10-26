@@ -239,14 +239,14 @@ export function isExpired(ucan: Ucan): boolean {
  * @param ucan The decoded UCAN
  * @param did The DID associated with the signature of the UCAN
  */
-export function isValid(ucan: Ucan, sigDid: string): Promise<boolean> {
+export function isValid(ucan: Ucan): Promise<boolean> {
   const encodedHeader = encodeHeader(ucan.header)
   const encodedPayload = encodePayload(ucan.payload)
 
   return did.verifySignedData({
     charSize: 8,
     data: `${encodedHeader}.${encodedPayload}`,
-    did: sigDid,
+    did: ucan.payload.iss,
     signature: ucan.signature || ""
   })
 }
