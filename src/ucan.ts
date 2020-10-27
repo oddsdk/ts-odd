@@ -20,26 +20,26 @@ export type Fact =
   any
 
 export type UcanHeader = {
-  alg: string,
-  typ: string,
+  alg: string
+  typ: string
   ucv: string
 }
 
 export type UcanPayload = {
-  iss: string,
-  aud: string,
+  iss: string
+  aud: string
 
-  nbf: number,
-  exp: number,
+  nbf: number
+  exp: number
 
-  prf: Array<Ucan>, // TODO: Array<Ucan | CID>
-  fct: Array<Fact>, // TODO: Array<Fact | CID>
-  att: "*" | Array<Attenuation>,
+  prf: Array<Ucan> // TODO: Array<Ucan | CID>
+  fct: Array<Fact> // TODO: Array<Fact | CID>
+  att: "*" | Array<Attenuation>
 }
 
 export type Ucan = {
-  header: UcanHeader,
-  payload: UcanPayload,
+  header: UcanHeader
+  payload: UcanPayload
   signature: string | null
 }
 
