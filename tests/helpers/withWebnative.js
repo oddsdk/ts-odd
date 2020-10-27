@@ -1,11 +1,11 @@
-const path = require("path")
-const puppeteer = require("puppeteer")
+import path from "path"
+import puppeteer from "puppeteer"
 
 
 const URL = "http://localhost:9000"
 
 
-module.exports = async (t, run) => {
+export default async (t, run) => {
 	const browser = await puppeteer.launch()
 	const page = await browser.newPage()
 	try {

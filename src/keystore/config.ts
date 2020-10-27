@@ -15,12 +15,16 @@ export const clear = async (): Promise<void> => {
   }
 }
 
+export const create = async (): Promise<RSAKeyStore> => {
+  return (await keystore.init(KEYSTORE_CFG)) as RSAKeyStore
+}
+
 export const set = async (userKeystore: RSAKeyStore): Promise<void> => {
   ks = userKeystore
 }
 
 export const get = async (): Promise<RSAKeyStore> => {
   if (ks) return ks
-  ks = (await keystore.init(KEYSTORE_CFG)) as RSAKeyStore
+  ks = await create()
   return ks
 }

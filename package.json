@@ -37,6 +37,9 @@
     "semi": false,
     "singleQuote": true
   },
+  "ava": {
+    "require": [ "esm" ]
+  },
   "devDependencies": {
     "@babel/core": "^7.12.3",
     "@rollup/plugin-inject": "^4.0.1",
@@ -71,6 +74,7 @@
   "dependencies": {
     "base58-universal": "^1.0.0",
     "borc": "^2.1.1",
+    "esm": "^3.2.25",
     "fission-bloom-filters": "^1.4.0",
     "ipld-dag-pb": "^0.18.2",
     "keystore-idb": "^0.13.5",

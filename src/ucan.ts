@@ -5,7 +5,7 @@ import * as domain from './ucan/domain'
 import * as keystore from './keystore'
 import * as web from './ucan/web'
 import * as wnfs from './ucan/wnfs'
-import { base64 } from './common'
+import { base64, identity } from './common'
 import { CID } from './ipfs'
 
 
@@ -32,9 +32,9 @@ export type UcanPayload = {
   nbf: number,
   exp: number,
 
-  prf: CID | Array<Ucan>,
+  prf: Array<Ucan>, // TODO: Array<Ucan | CID>
+  fct: Array<Fact>, // TODO: Array<Fact | CID>
   att: "*" | Array<Attenuation>,
-  fct: CID | Array<Fact>
 }
 
 export type Ucan = {
@@ -83,10 +83,10 @@ export async function build({
   addSignature?: boolean
   attenuations?: Array<Attenuation>
   audience: string
-  facts?: CID | Array<Fact>
-  issuer: string
+  facts?: Array<Fact>
+  issuer?: string
   lifetimeInSeconds?: number
-  proofs?: CID | Array<Ucan>
+  proofs?: Array<Ucan>
 }): Promise<Ucan> {
   const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
@@ -102,16 +102,14 @@ export async function build({
   let exp = currentTimeInSeconds + lifetimeInSeconds
   let nbf = currentTimeInSeconds - 60
 
-  if (Array.isArray(proofs)) {
-    proofs.forEach(prf => {
-      exp = Math.min(prf.payload.exp, exp)
-      nbf = Math.max(prf.payload.nbf, nbf)
-    })
-  }
+  proofs.forEach(prf => {
+    exp = Math.min(prf.payload.exp, exp)
+    nbf = Math.max(prf.payload.nbf, nbf)
+  })
 
   // Payload
   const payload = {
-    iss: issuer,
+    iss: issuer || await did.ucan(),
     aud: audience,
 
     nbf: nbf,
@@ -170,6 +168,10 @@ export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
  * Try to decode a UCAN.
  * Will throw if it fails.
  *
+ * TODO: Keep original encoded header and payload?
+ *       When validating the signature, the result of
+ *       re-encoding the header and payload could be different.
+ *
  * @param ucan The encoded UCAN to decode
  */
 export function decode(ucan: string): Ucan  {
@@ -181,9 +183,7 @@ export function decode(ucan: string): Ucan  {
     header,
     payload: {
       ...payload,
-      prf: Array.isArray(payload.prf)
-        ? payload.prf.map(decode)
-        : payload.prf
+      prf: payload.prf.map(decode)
     },
     signature: split[2] || null
   }
@@ -220,7 +220,7 @@ export function encodeHeader(header: UcanHeader): string {
 export function encodePayload(payload: UcanPayload): string {
   return base64.urlEncode(JSON.stringify({
     ...payload,
-    prf: Array.isArray(payload.prf) ? payload.prf.map(encode) : payload.prf
+    prf: payload.prf.map(encode)
   }))
 }
 
@@ -239,16 +239,31 @@ export function isExpired(ucan: Ucan): boolean {
  * @param ucan The decoded UCAN
  * @param did The DID associated with the signature of the UCAN
  */
-export function isValid(ucan: Ucan): Promise<boolean> {
+export async function isValid(ucan: Ucan): Promise<boolean> {
   const encodedHeader = encodeHeader(ucan.header)
   const encodedPayload = encodePayload(ucan.payload)
 
-  return did.verifySignedData({
+  const a = await did.verifySignedData({
     charSize: 8,
     data: `${encodedHeader}.${encodedPayload}`,
     did: ucan.payload.iss,
     signature: ucan.signature || ""
   })
+
+  if (!a) return a
+
+  // Verify proofs
+  const b = ucan.payload.prf
+    .map(prf => prf.payload.aud)
+    .every(a => a === ucan.payload.iss)
+
+  if (!b) return b
+
+  const c = ucan.payload.prf.map(isValid)
+
+  return await Promise
+    .all(c)
+    .then(list => list.every(identity))
 }
 
 /**

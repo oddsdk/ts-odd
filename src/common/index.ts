@@ -21,3 +21,10 @@ export const USERNAME_STORAGE_KEY = "webnative.username"
 export async function authenticatedUsername(): Promise<string | null> {
   return localforage.getItem(USERNAME_STORAGE_KEY).then(u => u ? u as string : null)
 }
+
+/**
+ * Identity function.
+ */
+export function identity <A>(a: A): A {
+  return a
+}
