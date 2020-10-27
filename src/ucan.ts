@@ -29,7 +29,7 @@ export type UcanPayload = {
   iss: string
   aud: string
 
-  nbf: number
+  nbf: number | undefined
   exp: number
 
   prf: Array<Ucan> // TODO: Array<Ucan | CID>
@@ -95,7 +95,7 @@ export async function build({
   const header = {
     alg: jwtAlgorithm(ks.cfg.type) || 'UnknownAlgorithm',
     typ: 'JWT',
-    ucv: '0.4.0',
+    ucv: '0.5.0',
   }
 
   // Timestamps
@@ -104,7 +104,7 @@ export async function build({
 
   proofs.forEach(prf => {
     exp = Math.min(prf.payload.exp, exp)
-    nbf = Math.max(prf.payload.nbf, nbf)
+    nbf = Math.max(prf.payload.nbf || nbf, nbf)
   })
 
   // Payload
