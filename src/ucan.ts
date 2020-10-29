@@ -19,6 +19,7 @@ export type Ucan = {
   payload: {
     aud: string,
     exp: number,
+    fct: Array<any>,
     iss: string,
     nbf: number,
     prf: string | undefined,
@@ -65,6 +66,7 @@ export const WNFS_PREFIX = "floofs"
  */
 export async function build({
   audience,
+  facts = [],
   issuer,
   lifetimeInSeconds = 30,
   potency = 'APPEND',
@@ -72,6 +74,7 @@ export async function build({
   resource = '*'
 }: {
   audience: string
+  facts?: Array<any>
   issuer: string
   lifetimeInSeconds?: number
   potency?: string | null
@@ -85,7 +88,7 @@ export async function build({
   const header = {
     alg: jwtAlgorithm(ks.cfg.type) || 'UnknownAlgorithm',
     typ: 'JWT',
-    uav: '1.0.0',
+    uav: '0.3.1'
   }
 
   // Timestamps
@@ -103,6 +106,7 @@ export async function build({
   const payload = {
     aud: audience,
     exp: exp,
+    fct: facts,
     iss: issuer,
     nbf: nbf,
     prf: proof,

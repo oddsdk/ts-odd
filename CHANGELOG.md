@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.19.12
+
+- Adds facts `fct` to the UCANs (v0.3.1)
+
 ### v0.19.11
 
 - Fixes `isUsernameAvailable` function (was broken due to adjusted `dataRoot.lookup` behaviour)
