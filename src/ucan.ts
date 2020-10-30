@@ -88,7 +88,7 @@ export async function build({
   const header = {
     alg: jwtAlgorithm(ks.cfg.type) || 'UnknownAlgorithm',
     typ: 'JWT',
-    uav: '0.3.1'
+    uav: '1.0.0' // actually 0.3.1 but server isn't updated yet
   }
 
   // Timestamps
