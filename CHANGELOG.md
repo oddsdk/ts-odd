@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.19.12
+
+- Adds facts `fct` to the UCANs (v0.3.1)
+- Update IPFS to v0.51.0
+
 ### v0.19.11
 
 - Fixes `isUsernameAvailable` function (was broken due to adjusted `dataRoot.lookup` behaviour)
