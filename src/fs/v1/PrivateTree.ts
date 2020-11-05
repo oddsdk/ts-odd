@@ -67,7 +67,7 @@ export default class PrivateTree extends BaseTree {
   }
 
   static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
-    const info = await protocol.priv.getByName(mmpt, name, key)
+    const info = await protocol.priv.getLatestByName(mmpt, name, key)
     if(!check.isPrivateTreeInfo(info)) {
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
@@ -187,14 +187,14 @@ export default class PrivateTree extends BaseTree {
   async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<DecryptedNode>> {
     const [head, ...rest] = parts
     if(head === undefined) {
-      return protocol.priv.getByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
+      return protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
     }
     const nextChild = nodeInfo.subSkeleton[head]
     if(nextChild !== undefined) {
       return this.getRecurse(nextChild, rest)
     }
 
-    const reloadedNode = await protocol.priv.getByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
+    const reloadedNode = await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
     if(!check.isPrivateTreeInfo(reloadedNode)){
       return null
     }
