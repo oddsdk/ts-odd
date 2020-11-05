@@ -5,7 +5,8 @@ import * as protocol from '../protocol'
 import * as namefilter from '../protocol/private/namefilter'
 import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
 import MMPT from '../protocol/private/mmpt'
-import { PrivateAddResult, PrivateFileInfo } from '../protocol/private/types'
+import { PrivateAddResult, PrivateFileInfo, Revision } from '../protocol/private/types'
+import { Maybe } from '../../common'
 import { isObject } from '../../common/type-checks'
 import BaseFile from '../base/file'
 import { genKeyStr } from '../../keystore'
@@ -100,6 +101,93 @@ export class PrivateFile extends BaseFile {
       ...this.header,
       metadata: metadata.updateMtime(this.header.metadata)
     }, this.key)
+  }
+
+
+  // REVISIONS
+  // =========
+
+  /**
+   * Get a specific revision of this tree.
+   */
+  async getRevision(revision: number): Promise<PrivateFile | null> {
+    const info = await this._getRevisionInfoFromNumber(revision)
+
+    return info && await PrivateFile.fromInfo(
+      this.mmpt,
+      this.key,
+      info
+    )
+  }
+
+  /**
+   * Get the latest revision of this tree.
+   * That might be this exact one.
+   */
+  async getLatestRevision(): Promise<PrivateFile> {
+    const revision = await this._getLatestRevision()
+    return revision
+      ? await PrivateFile.fromInfo(
+          this.mmpt,
+          this.key,
+          await this._getRevisionInfo(revision)
+        )
+      : this
+  }
+
+  /**
+   * Check if this revision is the latest one.
+   */
+  async isLatestRevision(): Promise<boolean> {
+    const revision = await this._getLatestRevision()
+    return revision?.number === this.header.revision
+  }
+
+  /**
+   * List all previous revisions, this includes
+   * the content CID, the metadata, revision number, etc.
+   */
+  async listRevisions(): Promise<Array<PrivateFileInfo>> {
+    return Promise.all(
+      Array.from({ length: this.header.revision }, (_, i) =>
+        this._getRevisionInfoFromNumber(i + 1)
+      )
+    ).then(
+      list => list.filter(a => !!a) as Array<PrivateFileInfo>
+    )
+  }
+
+  /**
+   * @internal
+   */
+  _getLatestRevision(): Promise<Maybe<Revision>> {
+    return protocol.priv.findLatestRevision(
+      this.mmpt,
+      this.header.bareNameFilter,
+      this.key,
+      this.header.revision || 1
+    )
+  }
+
+  /**
+   * @internal
+   */
+  async _getRevisionInfo(revision: Revision): Promise<PrivateFileInfo> {
+    const info = await protocol.priv.readNode(revision.cid, this.key)
+
+    if (!check.isPrivateFileInfo(info)) {
+      throw new Error(`Could not parse a valid private tree using the given key`)
+    }
+
+    return info
+  }
+
+  async _getRevisionInfoFromNumber(revision: number): Promise<Maybe<PrivateFileInfo>> {
+    const { key, mmpt } = this
+    const { bareNameFilter } = this.header
+
+    const r = await protocol.priv.getRevision(mmpt, bareNameFilter, key, revision)
+    return r && this._getRevisionInfo(r)
   }
 
 }

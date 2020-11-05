@@ -2,7 +2,7 @@ import { Maybe } from "../../../common"
 import * as ipfs from "../../../ipfs"
 import { CID } from "../../../ipfs"
 import MMPT from "./mmpt"
-import { DecryptedNode, PrivateAddResult } from './types'
+import { DecryptedNode, PrivateAddResult, Revision } from './types'
 import * as check from './types/check'
 import * as namefilter from './namefilter'
 import { BareNameFilter, PrivateName } from './namefilter'
@@ -35,6 +35,9 @@ export const readNode = async (cid: CID, key: string): Promise<DecryptedNode> =>
   return content
 }
 
+/**
+ * Retrieve a private file/tree from the MMPT.
+ */
 export const getByName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
   const cid = await mmpt.get(name)
   if (cid === null) return null
@@ -42,16 +45,7 @@ export const getByName = async (mmpt: MMPT, name: PrivateName, key: string): Pro
 }
 
 export const getByCID = async (mmpt: MMPT, cid: CID, key: string): Promise<DecryptedNode> => {
-  const node = await readNode(cid, key)
-  const latest = await findLatestRevision(mmpt, node.bareNameFilter, key, node.revision)
-  return latest?.cid
-    ? readNode(latest?.cid, key)
-    : node
-}
-
-type Revision = {
-  cid: CID
-  name: PrivateName
+  return readNode(cid, key)
 }
 
 export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: string, lastKnownRevision: number): Promise<Maybe<Revision>> => {
@@ -94,5 +88,5 @@ export const getRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: str
   const filter = await namefilter.addRevision(bareName, key, revision)
   const name = await namefilter.toPrivateName(filter)
   const cid = await mmpt.get(name)
-  return cid ? { cid, name } : null
+  return cid ? { cid, name, number: revision } : null
 }
