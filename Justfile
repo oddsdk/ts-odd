@@ -7,6 +7,8 @@
   cp -r ./docs dist/
 
 @publish:
+  # TODO: Auto detect what to do based on version in package.json
+  #       if alpha version, publish alpha, otherwise latest
   just publish-latest
 
 @publish-latest:

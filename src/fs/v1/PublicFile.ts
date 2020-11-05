@@ -8,7 +8,7 @@ import { isObject, Maybe } from '../../common'
 
 
 type ConstructorParams = {
-  content: FileContent, 
+  content: FileContent,
   header: FileHeader
   cid: Maybe<CID>
 }
@@ -32,8 +32,8 @@ export class PublicFile extends BaseFile {
 
   static async create(content: FileContent): Promise<PublicFile> {
     return new PublicFile({
-      content, 
-      header: { metadata:  metadata.empty(true) },
+      content,
+      header: { metadata: metadata.empty(true) },
       cid: null
     })
   }
@@ -44,18 +44,18 @@ export class PublicFile extends BaseFile {
   }
 
   static async fromInfo(info: FileInfo, cid: CID): Promise<PublicFile> {
-    const { userland, metadata } = info
+    const { userland, metadata, previous } = info
     const content = await protocol.basic.getFile(userland)
-    return new PublicFile({ 
-      content, 
-      header: { metadata },
+    return new PublicFile({
+      content,
+      header: { metadata, previous },
       cid
     })
   }
 
   async putDetailed(): Promise<PutDetails> {
     const details = await protocol.pub.putFile(
-      this.content, 
+      this.content,
       metadata.updateMtime(this.header.metadata),
       this.cid
     )

@@ -26,14 +26,14 @@ export const putTree = async (
     putAndMakeLink('metadata', metadataVal),
     putAndMakeLink('skeleton', skeletonVal),
   ])
-  const previous = previousCID !== null 
+  const previous = previousCID != null
     ? link.make('previous', previousCID, false, await ipfs.size(previousCID))
     : undefined
 
   const internalLinks = { metadata, skeleton, userland, previous } as Links
   const { cid, size } = await basic.putLinks(internalLinks)
-  return { 
-    cid, 
+  return {
+    cid,
     userland: userland.cid,
     metadata: metadata.cid,
     size,
@@ -50,13 +50,13 @@ export const putFile = async (
   const userlandInfo = await basic.putFile(content)
   const userland = link.make('userland', userlandInfo.cid, true, userlandInfo.size)
   const metadata = await putAndMakeLink('metadata', metadataVal)
-  const previous = previousCID !== null 
+  const previous = previousCID != null
     ? link.make('previous', previousCID, false, await ipfs.size(previousCID))
     : undefined
 
   const internalLinks = { metadata, userland, previous } as Links
   const { cid, size } = await basic.putLinks(internalLinks)
-  return { 
+  return {
     cid,
     userland: userland.cid,
     metadata: metadata.cid,
@@ -74,14 +74,15 @@ export const putAndMakeLink = async (name: string, val: FileContent) => {
 export const get = async (cid: CID): Promise<TreeInfo | FileInfo> => {
   const links = await basic.getLinks(cid)
   const metadata = await getAndCheckValue(links, 'metadata', check.isMetadata)
-  const skeleton = metadata.isFile 
+  const skeleton = metadata.isFile
     ? undefined
     : await getAndCheckValue(links, 'skeleton', check.isSkeleton)
 
   const userland = links['userland']?.cid || null
-  if(!check.isCID(userland)) throw new Error("Could not find userland")
+  if (!check.isCID(userland)) throw new Error("Could not find userland")
 
-  return { userland, metadata, skeleton }
+  const previous = links['previous']?.cid || undefined
+  return { userland, metadata, previous, skeleton }
 }
 
 export const getValue = async (

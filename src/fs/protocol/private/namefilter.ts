@@ -26,7 +26,7 @@ export type SaturatedNameFilter = Opaque<"SaturatedNameFilter", string>
 
 
 
-// FUNCTIONS  
+// FUNCTIONS
 
 // create bare name filter with a single key
 export const createBare = async (key: string): Promise<BareNameFilter> => {
@@ -47,7 +47,7 @@ export const addRevision = async (bareFilter: BareNameFilter, key: string, revis
   return (await addToBare(bareFilter, revision + key)) as string as RevisionNameFilter
 }
 
-// saturate the filter to 320 bits and hash it with sha256 to give the pirvate name that a node will be stored in the MMPT with
+// saturate the filter to 320 bits and hash it with sha256 to give the private name that a node will be stored in the MMPT with
 export const toPrivateName = async (revisionFilter: RevisionNameFilter): Promise<PrivateName> => {
   const saturated = await saturateFilter(fromHex(revisionFilter))
   return toHash(saturated)

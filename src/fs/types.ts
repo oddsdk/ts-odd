@@ -3,6 +3,16 @@ import { FileContent, CID, AddResult } from '../ipfs'
 import { SemVer } from './semver'
 
 
+// FILE
+// -----
+
+export interface File extends Puttable {
+  content: FileContent
+  updateContent(content: FileContent): Promise<this>
+}
+
+
+
 // LINKS
 // -----
 
@@ -42,14 +52,6 @@ export type UpdateCallback = () => Promise<unknown>
 export type PublishHook = (result: CID, proof: string) => unknown
 
 
-// FILE
-// -----
-
-export interface File extends Puttable {
-  content: FileContent
-  updateContent(content: FileContent): Promise<this>
-}
-
 
 // TREE
 // ----
@@ -67,7 +69,6 @@ export interface UnixTree {
 
 export interface Tree extends UnixTree, Puttable {
   version: SemVer
-
 
   createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
   createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>

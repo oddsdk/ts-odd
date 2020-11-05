@@ -20,6 +20,7 @@ export type Skeleton = { [name: string]: SkeletonInfo }
 
 export type TreeHeader = {
   metadata: Metadata
+  previous?: CID
   skeleton: Skeleton
 }
 
@@ -29,9 +30,9 @@ export type TreeInfo = TreeHeader & {
 
 export type FileHeader = {
   metadata: Metadata
+  previous?: CID
 }
 
 export type FileInfo = FileHeader & {
   userland: CID
 }
-

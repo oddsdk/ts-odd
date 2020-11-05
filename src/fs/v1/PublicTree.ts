@@ -53,11 +53,11 @@ export class PublicTree extends BaseTree {
   }
 
   static async fromInfo(info: TreeInfo, cid: CID): Promise<PublicTree> {
-    const { userland, metadata, skeleton } = info
+    const { userland, metadata, previous, skeleton } = info
     const links = await protocol.basic.getLinks(userland)
-    return new PublicTree({ 
-      links, 
-      header: { metadata, skeleton },
+    return new PublicTree({
+      links,
+      header: { metadata, previous, skeleton },
       cid
     })
   }
@@ -97,7 +97,7 @@ export class PublicTree extends BaseTree {
 
   async putDetailed(): Promise<PutDetails> {
     const details = await protocol.pub.putTree(
-      this.links, 
+      this.links,
       this.header.skeleton,
       this.header.metadata,
       this.cid
@@ -151,7 +151,7 @@ export class PublicTree extends BaseTree {
     if(skeletonInfo === null) return null
 
     const info = await protocol.pub.get(skeletonInfo.cid)
-    return check.isFileInfo(info) 
+    return check.isFileInfo(info)
       ? PublicFile.fromInfo(info, skeletonInfo.cid)
       : PublicTree.fromInfo(info, skeletonInfo.cid)
   }
