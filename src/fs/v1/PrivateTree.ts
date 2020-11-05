@@ -17,39 +17,39 @@ import { genKeyStr } from '../../keystore'
 type ConstructorParams = {
   mmpt: MMPT
   key: string
-  info: PrivateTreeInfo
+  header: PrivateTreeInfo
 }
 
 export default class PrivateTree extends BaseTree {
 
   mmpt: MMPT
   key: string
-  info: PrivateTreeInfo
+  header: PrivateTreeInfo
 
   children: { [name: string]: PrivateTree | PrivateFile }
 
-  constructor({ mmpt, key, info}: ConstructorParams) {
+  constructor({ mmpt, key, header}: ConstructorParams) {
     super(semver.v1)
     this.mmpt = mmpt
     this.key = key
-    this.info = info
+    this.header = header
     this.children = {}
   }
 
   static instanceOf(obj: any): obj is PrivateTree {
-    return isObject(obj) 
-      && obj.mmpt !== undefined 
-      && check.isPrivateTreeInfo(obj.info)
+    return isObject(obj)
+      && obj.mmpt !== undefined
+      && check.isPrivateTreeInfo(obj.header)
   }
 
   static async create(mmpt: MMPT, key: string, parentNameFilter: Maybe<BareNameFilter>): Promise<PrivateTree> {
-    const bareNameFilter = parentNameFilter 
+    const bareNameFilter = parentNameFilter
       ? await namefilter.addToBare(parentNameFilter, key)
       : await namefilter.createBare(key)
     return new PrivateTree({
       mmpt,
       key,
-      info: {
+      header: {
         metadata: metadata.empty(false),
         bareNameFilter,
         revision: 1,
@@ -71,16 +71,16 @@ export default class PrivateTree extends BaseTree {
     if(!check.isPrivateTreeInfo(info)) {
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
-    return new PrivateTree({ mmpt, info, key })
+    return new PrivateTree({ mmpt, key, header: info })
   }
 
   static async fromInfo(mmpt: MMPT, key: string, info: PrivateTreeInfo): Promise<PrivateTree> {
-    return new PrivateTree({ mmpt, key, info })
+    return new PrivateTree({ mmpt, key, header: info })
   }
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateTree> {
     const key = await genKeyStr()
-    const child = await PrivateTree.create(this.mmpt, key, this.info.bareNameFilter)
+    const child = await PrivateTree.create(this.mmpt, key, this.header.bareNameFilter)
 
     const existing = this.children[name]
     if(existing) {
@@ -99,7 +99,7 @@ export default class PrivateTree extends BaseTree {
     let file: PrivateFile
     if (existing === null) {
       const key = await genKeyStr()
-      file = await PrivateFile.create(this.mmpt, content, this.info.bareNameFilter, key)
+      file = await PrivateFile.create(this.mmpt, content, this.header.bareNameFilter, key)
     } else if (PrivateFile.instanceOf(existing)) {
       file = await existing.updateContent(content)
     } else {
@@ -111,7 +111,7 @@ export default class PrivateTree extends BaseTree {
 
   async putDetailed(): Promise<PrivateAddResult> {
     // copy the object, so we're putting the current version & don't include any revisions
-    const nodeCopy = Object.assign({}, this.info)
+    const nodeCopy = Object.assign({}, this.header)
     return protocol.priv.addNode(this.mmpt, nodeCopy, this.key)
   }
 
@@ -124,11 +124,11 @@ export default class PrivateTree extends BaseTree {
   }
 
   removeDirectChild(name: string): this {
-    this.info = {
-      ...this.info,
-      revision: this.info.revision + 1,
-      links: removeKeyFromObj(this.info.links, name),
-      skeleton: removeKeyFromObj(this.info.skeleton, name)
+    this.header = {
+      ...this.header,
+      revision: this.header.revision + 1,
+      links: removeKeyFromObj(this.header.links, name),
+      skeleton: removeKeyFromObj(this.header.skeleton, name)
     }
     if(this.children[name]) {
       delete this.children[name]
@@ -141,7 +141,7 @@ export default class PrivateTree extends BaseTree {
       return this.children[name]
     }
 
-    const childInfo = this.info.links[name]
+    const childInfo = this.header.links[name]
     if(childInfo === undefined) return null
     const child = childInfo.isFile
       ? await PrivateFile.fromName(this.mmpt, childInfo.pointer, childInfo.key)
@@ -157,13 +157,13 @@ export default class PrivateTree extends BaseTree {
   }
 
   async getName(): Promise<PrivateName> {
-    const { bareNameFilter, revision } = this.info
+    const { bareNameFilter, revision } = this.header
     const revisionFilter = await namefilter.addRevision(bareNameFilter, this.key, revision)
     return namefilter.toPrivateName(revisionFilter)
   }
 
   async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
-    this.info.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.key)
+    this.header.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.key)
     return this
   }
 
@@ -173,12 +173,12 @@ export default class PrivateTree extends BaseTree {
 
     const [head, ...rest] = parts
 
-    const next = this.info.skeleton[head]
+    const next = this.header.skeleton[head]
     if(next === undefined) return null
 
     const node = await this.getRecurse(next, rest)
     if(node === null) return null
-      
+
     return check.isPrivateFileInfo(node)
       ? PrivateFile.fromInfo(this.mmpt, next.key, node)
       : PrivateTree.fromInfo(this.mmpt, next.key, node)
@@ -203,7 +203,7 @@ export default class PrivateTree extends BaseTree {
   }
 
   getLinks(): BaseLinks {
-    return mapObj(this.info.links, (link) => {
+    return mapObj(this.header.links, (link) => {
       const { key, ...rest } = link
       return { ...rest  }
     })
@@ -212,10 +212,10 @@ export default class PrivateTree extends BaseTree {
   updateLink(name: string, result: PrivateAddResult): this {
     const { cid, size, key, isFile, skeleton } = result
     const pointer = result.name
-    this.info.links[name] = { name, key, pointer, size, isFile: isFile, mtime: Date.now() }
-    this.info.skeleton[name] = { cid, key, subSkeleton: skeleton }
-    this.info.revision = this.info.revision + 1
-    this.info.metadata.unixMeta.mtime = Date.now()
+    this.header.links[name] = { name, key, pointer, size, isFile: isFile, mtime: Date.now() }
+    this.header.skeleton[name] = { cid, key, subSkeleton: skeleton }
+    this.header.revision = this.header.revision + 1
+    this.header.metadata.unixMeta.mtime = Date.now()
     return this
   }
 

@@ -14,38 +14,38 @@ type ConstructorParams = {
   content: FileContent
   mmpt: MMPT
   key: string
-  info: PrivateFileInfo
+  header: PrivateFileInfo
 }
 
 export class PrivateFile extends BaseFile {
 
   mmpt: MMPT
   key: string
-  info: PrivateFileInfo
+  header: PrivateFileInfo
 
-  constructor({ content, mmpt, key, info }: ConstructorParams) {
+  constructor({ content, mmpt, key, header }: ConstructorParams) {
     super(content)
     this.mmpt = mmpt
     this.key = key
-    this.info = info
+    this.header = header
   }
 
   static instanceOf(obj: any): obj is PrivateFile {
     return isObject(obj)
       && obj.content !== undefined
       && obj.mmpt !== undefined
-      && check.isPrivateFileInfo(obj.info)
+      && check.isPrivateFileInfo(obj.header)
   }
 
   static async create(mmpt: MMPT, content: FileContent, parentNameFilter: BareNameFilter,  key: string): Promise<PrivateFile> {
     const bareNameFilter = await namefilter.addToBare(parentNameFilter, key)
     const contentKey = await genKeyStr()
     const contentInfo = await protocol.basic.putEncryptedFile(content, contentKey)
-    return new PrivateFile({ 
+    return new PrivateFile({
       content,
       mmpt,
       key,
-      info: {
+      header: {
         bareNameFilter,
         key: contentKey,
         revision: 1,
@@ -69,27 +69,27 @@ export class PrivateFile extends BaseFile {
       content,
       key,
       mmpt,
-      info,
+      header: info
     })
   }
 
   async getName(): Promise<PrivateName> {
-    const { bareNameFilter, revision } = this.info
+    const { bareNameFilter, revision } = this.header
     const revisionFilter = await namefilter.addRevision(bareNameFilter, this.key, revision)
     return namefilter.toPrivateName(revisionFilter)
   }
 
   async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
-    this.info.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.info.key)
+    this.header.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.header.key)
     return this
   }
 
   async updateContent(content: FileContent): Promise<this> {
-    const contentInfo = await protocol.basic.putEncryptedFile(content, this.info.key)
+    const contentInfo = await protocol.basic.putEncryptedFile(content, this.header.key)
     this.content = content
-    this.info = {
-      ...this.info,
-      revision: this.info.revision + 1,
+    this.header = {
+      ...this.header,
+      revision: this.header.revision + 1,
       content: contentInfo.cid
     }
     return this
@@ -97,8 +97,8 @@ export class PrivateFile extends BaseFile {
 
   async putDetailed(): Promise<PrivateAddResult> {
     return protocol.priv.addNode(this.mmpt, {
-      ...this.info, 
-      metadata: metadata.updateMtime(this.info.metadata)
+      ...this.header,
+      metadata: metadata.updateMtime(this.header.metadata)
     }, this.key)
   }
 
