@@ -3,6 +3,7 @@ import { TreeInfo, TreeHeader, PutDetails } from '../protocol/public/types'
 import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
 import BaseTree from '../base/tree'
+import BareTree from '../bare/tree'
 import PublicFile from './PublicFile'
 import * as protocol from '../protocol'
 import * as skeleton from '../protocol/public/skeleton'
@@ -17,13 +18,16 @@ type ConstructorParams = {
   cid: Maybe<CID>
 }
 
+type Child =
+  PublicFile | PublicTree | BareTree
+
 export class PublicTree extends BaseTree {
 
   links: Links
   header: TreeHeader
   cid: Maybe<CID>
 
-  children: { [name: string]: PublicTree | PublicFile }
+  children: { [name: string]: Child }
 
   constructor({ links, header, cid }: ConstructorParams) {
     super(header.metadata.version)
@@ -70,11 +74,14 @@ export class PublicTree extends BaseTree {
     const child = await PublicTree.empty()
 
     const existing = this.children[name]
-    if(existing) {
-      if(PublicFile.instanceOf(existing)) {
+    if (existing) {
+      if (PublicFile.instanceOf(existing)) {
         throw new Error(`There is a file at the given path: ${name}`)
+      } else if (!PublicTree.instanceOf(existing)) {
+        throw new Error(`Not a public tree at the given path: ${name}`)
+      } else {
+        return existing
       }
-      return existing
     }
 
     await this.updateDirectChild(child, name, onUpdate)
@@ -102,6 +109,7 @@ export class PublicTree extends BaseTree {
       this.header.metadata,
       this.cid
     )
+    this.header.previous = this.cid || undefined
     this.cid = details.cid
     return details
   }
@@ -123,7 +131,7 @@ export class PublicTree extends BaseTree {
     return this
   }
 
-  async getDirectChild(name: string): Promise<PublicTree | PublicFile | null> {
+  async getDirectChild(name: string): Promise<Child | null> {
     if(this.children[name]) {
       return this.children[name]
     }
@@ -143,7 +151,7 @@ export class PublicTree extends BaseTree {
     return child
   }
 
-  async get(path: string): Promise<PublicTree | PublicFile | null> {
+  async get(path: string): Promise<Child | null> {
     const parts = pathUtil.splitNonEmpty(path)
     if(parts === null) return this
 

@@ -1,11 +1,13 @@
 import { throttle } from 'throttle-debounce'
 
-import { PublishHook, UnixTree, Tree, File, BaseLinks } from './types'
+import { PublishHook, UnixTree, Tree, File } from './types'
+import { BaseLinks, Puttable, UpdateCallback } from './types'
 import { SemVer } from './semver'
 import BareTree from './bare/tree'
 import MMPT from './protocol/private/mmpt'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
+import * as link from './link'
 
 import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
@@ -15,6 +17,7 @@ import * as pathUtil from './path'
 import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
 
+import { Maybe } from '../common'
 import { CID, FileContent } from '../ipfs'
 import { NoPermissionError } from '../errors'
 import { Permissions } from '../ucan/permissions'
@@ -28,7 +31,7 @@ type AppPath =
   (path?: string | Array<string>) => string
 
 type ConstructorParams = {
-  root: BareTree
+  root: PublicTree
   publicTree: PublicTree
   prettyTree: BareTree
   privateTree: PrivateTree
@@ -63,7 +66,7 @@ enum Branch {
 
 export class FileSystem {
 
-  root: BareTree
+  root: PublicTree
   publicTree: PublicTree
   prettyTree: BareTree
   privateTree: PrivateTree
@@ -116,7 +119,7 @@ export class FileSystem {
     this.publishHooks.push(updateDataRootWhenOnline)
 
     // Publish when coming back online
-    window.addEventListener('online', () => this.whenOnline())
+    window.addEventListener('online', () => this._whenOnline())
   }
 
 
@@ -137,8 +140,7 @@ export class FileSystem {
     const privateTree = await PrivateTree.create(mmpt, key, null)
     await privateTree.put()
 
-    const root = await BareTree.empty()
-
+    const root = await PublicTree.empty()
     const fs = new FileSystem({
       root,
       publicTree,
@@ -151,9 +153,9 @@ export class FileSystem {
     })
 
     await Promise.all([
-      root.putAndUpdateLink(publicTree, Branch.Public, null),
-      root.putAndUpdateLink(prettyTree, Branch.Pretty, null),
-      root.putAndUpdateLink(mmpt, Branch.Private, null),
+      fs._updateRootLink(publicTree, Branch.Public),
+      fs._updateRootLink(prettyTree, Branch.Pretty),
+      fs._updateRootLink(mmpt, Branch.Private),
     ])
 
     return fs
@@ -165,15 +167,16 @@ export class FileSystem {
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const { keyName = 'filesystem-root', rootDid = '', permissions, localOnly } = opts
 
-    const root = await BareTree.fromCID(cid)
+    const root = await PublicTree.fromCID(cid)
 
     const publicCID = root.links['public']?.cid || null
     const publicTree = publicCID === null
       ? await PublicTree.empty()
       : await PublicTree.fromCID(publicCID)
 
-    const prettyTree = (await root.getDirectChild('pretty')) as BareTree ||
-                        await BareTree.empty()
+    const prettyTree = root.links["pretty"]
+                         ? await BareTree.fromCID(root.links["pretty"].cid)
+                         : await BareTree.empty()
 
     const privateCID = root.links['private']?.cid || null
     const key = await keystore.getKeyByName(keyName)
@@ -212,7 +215,7 @@ export class FileSystem {
    * The only function of this is to stop listing to online/offline events.
    */
   deactivate(): void {
-    window.removeEventListener('online', this.whenOnline)
+    window.removeEventListener('online', this._whenOnline)
   }
 
 
@@ -348,9 +351,10 @@ export class FileSystem {
 
         this.publicTree = result
         this.prettyTree = resultPretty as unknown as BareTree
+
         await Promise.all([
-          this.root.putAndUpdateLink(this.publicTree, Branch.Public, null),
-          this.root.putAndUpdateLink(this.prettyTree, Branch.Pretty, null)
+          this._updateRootLink(this.publicTree, Branch.Public),
+          this._updateRootLink(this.prettyTree, Branch.Pretty)
         ])
       }
 
@@ -360,7 +364,7 @@ export class FileSystem {
       if (isMutation && PrivateTree.instanceOf(result)) {
         this.privateTree = result
         await this.privateTree.put()
-        await this.root.putAndUpdateLink(this.mmpt, Branch.Private, null)
+        await this._updateRootLink(this.mmpt, Branch.Private)
       }
 
     } else if (head === 'pretty' && isMutation) {
@@ -378,13 +382,15 @@ export class FileSystem {
   }
 
   /** @internal */
-  async updateRootLink(branch: Branch, tree: Tree): Promise<void> {
-    const details = await tree.putDetailed()
-    this.root.updateLink(branch, details)
+  async _updateRootLink(child: Puttable, name: string): Promise<PublicTree> {
+    const details = await child.putDetailed()
+    const { cid, size, isFile } = details
+    this.root.links[name] = link.make(name, cid, isFile, size)
+    return this.root
   }
 
   /** @internal */
-  whenOnline(): void {
+  _whenOnline(): void {
     const toPublish = [...this.publishWhenOnline]
     this.publishWhenOnline = []
 
