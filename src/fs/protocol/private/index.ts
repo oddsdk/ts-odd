@@ -35,20 +35,27 @@ export const readNode = async (cid: CID, key: string): Promise<DecryptedNode> =>
   return content
 }
 
-/**
- * Retrieve a private file/tree from the MMPT.
- */
-export const getLatestByName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
+export const getByName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
+  const cid = await mmpt.get(name)
+  if (cid === null) return null
+  return getByCID(cid, key)
+}
+
+export const getByCID = async (cid: CID, key: string): Promise<DecryptedNode> => {
+  return await readNode(cid, key)
+}
+
+export const getByLatestName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
   const cid = await mmpt.get(name)
   if (cid === null) return null
   return getLatestByCID(mmpt, cid, key)
 }
 
 export const getLatestByCID = async (mmpt: MMPT, cid: CID, key: string): Promise<DecryptedNode> => {
-  const node = await readNode(cid, key)
+  const node = await getByCID(cid, key)
   const latest = await findLatestRevision(mmpt, node.bareNameFilter, key, node.revision)
   return latest?.cid
-    ? readNode(latest?.cid, key)
+    ? await getByCID(latest?.cid, key)
     : node
 }
 

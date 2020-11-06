@@ -63,14 +63,22 @@ export default class PrivateTree extends BaseTree {
     const bareNameFilter = await namefilter.createBare(key)
     const revisionFilter = await namefilter.addRevision(bareNameFilter, key, 1)
     const name = await namefilter.toPrivateName(revisionFilter)
-    return PrivateTree.fromName(mmpt, name, key)
+    const info = await protocol.priv.getByLatestName(mmpt, name, key)
+
+    if (!check.isPrivateTreeInfo(info)) {
+      throw new Error(`Could not parse a valid private tree using the given key`)
+    }
+
+    return new PrivateTree({ mmpt, key, header: info })
   }
 
   static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
-    const info = await protocol.priv.getLatestByName(mmpt, name, key)
-    if(!check.isPrivateTreeInfo(info)) {
+    const info = await protocol.priv.getByName(mmpt, name, key)
+
+    if (!check.isPrivateTreeInfo(info)) {
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
+
     return new PrivateTree({ mmpt, key, header: info })
   }
 
@@ -83,8 +91,8 @@ export default class PrivateTree extends BaseTree {
     const child = await PrivateTree.create(this.mmpt, key, this.header.bareNameFilter)
 
     const existing = this.children[name]
-    if(existing) {
-      if(PrivateFile.instanceOf(existing)) {
+    if (existing) {
+      if (PrivateFile.instanceOf(existing)) {
         throw new Error(`There is a file at the given path: ${name}`)
       }
       return existing
@@ -187,14 +195,14 @@ export default class PrivateTree extends BaseTree {
   async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<DecryptedNode>> {
     const [head, ...rest] = parts
     if(head === undefined) {
-      return protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
+      return protocol.priv.getByCID(nodeInfo.cid, nodeInfo.key)
     }
     const nextChild = nodeInfo.subSkeleton[head]
     if(nextChild !== undefined) {
       return this.getRecurse(nextChild, rest)
     }
 
-    const reloadedNode = await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
+    const reloadedNode = await protocol.priv.getByCID(nodeInfo.cid, nodeInfo.key)
     if(!check.isPrivateTreeInfo(reloadedNode)){
       return null
     }
