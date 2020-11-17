@@ -44,7 +44,7 @@ export const addToBare = async (bareFilter: BareNameFilter, toAdd: string): Prom
 
 // add the revision number to the name filter, salted with the AES key for the node
 export const addRevision = async (bareFilter: BareNameFilter, key: string, revision: number): Promise<RevisionNameFilter> => {
-  return (await addToBare(bareFilter, revision + key)) as string as RevisionNameFilter
+  return (await addToBare(bareFilter, `${revision}${key}`)) as string as RevisionNameFilter
 }
 
 // saturate the filter to 320 bits and hash it with sha256 to give the private name that a node will be stored in the MMPT with
