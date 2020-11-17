@@ -110,6 +110,13 @@ export class PrivateFile extends BaseFile {
   // =========
 
   /**
+   * Revision of this instance of the file.
+   */
+  currentRevision(): number {
+    return this.header.revision
+  }
+
+  /**
    * Get a specific revision of this tree.
    */
   async getRevision(revision: number): Promise<PrivateFile | null> {
@@ -146,16 +153,20 @@ export class PrivateFile extends BaseFile {
   }
 
   /**
-   * List all previous revisions, this includes
-   * the content CID, the metadata, revision number, etc.
+   * List all previous revisions along with the timestamp they were created.
    */
-  async listRevisions(): Promise<Array<PrivateFileInfo>> {
+  async listRevisions(): Promise<Array<{ revision: number, timestamp: number }>> {
     return Promise.all(
       Array.from({ length: this.header.revision }, (_, i) =>
         this._getRevisionInfoFromNumber(i + 1)
       )
     ).then(
       list => list.filter(a => !!a) as Array<PrivateFileInfo>
+    ).then(
+      list => list.map(a => ({
+        revision: a.revision,
+        timestamp: a.metadata.unixMeta.mtime
+      }))
     )
   }
 

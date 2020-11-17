@@ -236,6 +236,13 @@ export default class PrivateTree extends BaseTree {
   // =========
 
   /**
+   * Revision of this instance of the tree.
+   */
+  currentRevision(): number {
+    return this.header.revision
+  }
+
+  /**
    * Get a specific revision of this tree.
    */
   async getRevision(revision: number): Promise<PrivateTree | null> {
@@ -272,16 +279,20 @@ export default class PrivateTree extends BaseTree {
   }
 
   /**
-   * List all previous revisions, this includes
-   * the content CID, the metadata, revision number, etc.
+   * List all previous revisions along with the timestamp they were created.
    */
-  async listRevisions(): Promise<Array<PrivateTreeInfo>> {
+  async listRevisions(): Promise<Array<{ revision: number, timestamp: number }>> {
     return Promise.all(
       Array.from({ length: this.header.revision }, (_, i) =>
         this._getRevisionInfoFromNumber(i + 1)
       )
     ).then(
       list => list.filter(a => !!a) as Array<PrivateTreeInfo>
+    ).then(
+      list => list.map(a => ({
+        revision: a.revision,
+        timestamp: a.metadata.unixMeta.mtime
+      }))
     )
   }
 
