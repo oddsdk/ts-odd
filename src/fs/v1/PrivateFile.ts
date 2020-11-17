@@ -112,8 +112,11 @@ export class PrivateFile extends BaseFile {
   /**
    * Revision of this instance of the file.
    */
-  currentRevision(): number {
-    return this.header.revision
+  currentRevision(): { revision: number, timestamp: number } {
+    return {
+      revision: this.header.revision,
+      timestamp: this.header.metadata.unixMeta.mtime
+    }
   }
 
   /**
