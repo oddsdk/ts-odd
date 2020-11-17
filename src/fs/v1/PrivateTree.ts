@@ -104,6 +104,7 @@ export default class PrivateTree extends BaseTree {
 
   async createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateFile>{
     const existing = await this.getDirectChild(name)
+
     let file: PrivateFile
     if (existing === null) {
       const key = await genKeyStr()
@@ -184,28 +185,31 @@ export default class PrivateTree extends BaseTree {
     const next = this.header.skeleton[head]
     if(next === undefined) return null
 
-    const node = await this.getRecurse(next, rest)
-    if(node === null) return null
+    const result = await this.getRecurse(next, rest)
+    if (result === null) return null
 
-    return check.isPrivateFileInfo(node)
-      ? PrivateFile.fromInfo(this.mmpt, next.key, node)
-      : PrivateTree.fromInfo(this.mmpt, next.key, node)
+    return check.isPrivateFileInfo(result.node)
+      ? PrivateFile.fromInfo(this.mmpt, result.key, result.node)
+      : PrivateTree.fromInfo(this.mmpt, result.key, result.node)
   }
 
-  async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<DecryptedNode>> {
+  async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<{ key: string, node: DecryptedNode }>> {
     const [head, ...rest] = parts
-    if(head === undefined) {
-      return protocol.priv.getByCID(nodeInfo.cid, nodeInfo.key)
+    if (head === undefined) return {
+      key: nodeInfo.key,
+      node: await protocol.priv.getByCID(nodeInfo.cid, nodeInfo.key)
     }
+
     const nextChild = nodeInfo.subSkeleton[head]
-    if(nextChild !== undefined) {
+    if (nextChild !== undefined) {
       return this.getRecurse(nextChild, rest)
     }
 
     const reloadedNode = await protocol.priv.getByCID(nodeInfo.cid, nodeInfo.key)
-    if(!check.isPrivateTreeInfo(reloadedNode)){
+    if (!check.isPrivateTreeInfo(reloadedNode)) {
       return null
     }
+
     const reloadedNext = reloadedNode.skeleton[head]
     return reloadedNext === undefined ? null : this.getRecurse(reloadedNext, rest)
   }
