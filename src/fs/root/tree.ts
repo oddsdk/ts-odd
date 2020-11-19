@@ -1,4 +1,4 @@
-import { Branch, Links, Puttable } from '../types'
+import { Branch, Links, Puttable, SimpleLinks } from '../types'
 import { AddResult, CID } from '../../ipfs'
 import { SemVer } from '../semver'
 import { sha256Str } from '../../keystore'
@@ -16,14 +16,16 @@ export default class RootTree implements Puttable {
 
   links: Links
   mmpt: MMPT
+  privateLog: SimpleLinks
 
   publicTree: PublicTree
   prettyTree: BareTree
   privateTree: PrivateTree
 
-  constructor({ links, mmpt, publicTree, prettyTree, privateTree }: {
+  constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateTree }: {
     links: Links,
     mmpt: MMPT,
+    privateLog: SimpleLinks,
 
     publicTree: PublicTree,
     prettyTree: BareTree,
@@ -31,6 +33,7 @@ export default class RootTree implements Puttable {
   }) {
     this.links = links
     this.mmpt = mmpt
+    this.privateLog = privateLog
 
     this.publicTree = publicTree
     this.prettyTree = prettyTree
@@ -53,6 +56,7 @@ export default class RootTree implements Puttable {
     const tree = new RootTree({
       links: {},
       mmpt,
+      privateLog: {},
 
       publicTree,
       prettyTree,
@@ -97,10 +101,14 @@ export default class RootTree implements Puttable {
       privateTree = await PrivateTree.fromBaseKey(mmpt, key)
     }
 
+    const privateLogCid = links[Branch.PrivateLog]?.cid
+    const privateLog = privateLogCid ? await protocol.basic.getSimpleLinks(privateLogCid) : {}
+
     // Construct tree
     const tree = new RootTree({
       links,
       mmpt,
+      privateLog,
 
       publicTree,
       prettyTree,
@@ -152,8 +160,7 @@ export default class RootTree implements Puttable {
 
 
   async addPrivateLogEntry(cid: string): Promise<void> {
-    const logCid = this.links[Branch.PrivateLog]?.cid
-    const log = logCid ? await protocol.basic.getSimpleLinks(logCid) : {}
+    const log = {...this.privateLog}
 
     // current chunk index
     let currentChunkIndex = log.currentChunkIndex?.cid
@@ -207,6 +214,7 @@ export default class RootTree implements Puttable {
     // save log
     const logDeposit = await protocol.basic.putLinks(log)
     this.updateLink(Branch.PrivateLog, logDeposit)
+    this.privateLog = log
   }
 
 
