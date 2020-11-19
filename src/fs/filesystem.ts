@@ -294,8 +294,9 @@ export class FileSystem {
 
       if (isMutation && PrivateTree.instanceOf(result)) {
         this.root.privateTree = result
-        await this.root.privateTree.put()
+        const cid = await this.root.privateTree.put()
         await this.root.updatePuttable(Branch.Private, this.root.mmpt)
+        await this.root.addPrivateLogEntry(cid)
       }
 
     } else if (head === Branch.Pretty && isMutation) {

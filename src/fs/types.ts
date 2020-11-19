@@ -43,7 +43,9 @@ export interface Links { [name: string]: Link }
 export enum Branch {
   Public = 'public',
   Pretty = 'p',
-  Private = 'private'
+  Private = 'private',
+  PrivateLog = 'privateLog',
+  Version = 'version'
 }
 
 export type NonEmptyPath = [string, ...string[]]
