@@ -43,7 +43,7 @@ export type RawDAGLink = {
 
 export interface DagAPI {
   put(dagNode: unknown, options?: unknown): Promise<CIDObj>
-  get(cid: string | CID, path?: string, options?: unknown): Promise<RawDAGNode>
+  get(cid: string | CID, path?: string, options?: unknown): Promise<{ value: unknown, remainderPath: string }>
   resolve(cid: string | CID | CIDObj): Promise<{ cid: CIDObj }>
   tree(cid: string | CID, path?: string, options?: unknown): Promise<Array<string>>
 }

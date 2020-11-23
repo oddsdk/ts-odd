@@ -1,4 +1,4 @@
-import { Branch, Links, Puttable, SimpleLinks } from '../types'
+import { Branch, Links, Puttable, SimpleLink } from '../types'
 import { AddResult, CID } from '../../ipfs'
 import { SemVer } from '../semver'
 import { sha256Str } from '../../keystore'
@@ -16,7 +16,7 @@ export default class RootTree implements Puttable {
 
   links: Links
   mmpt: MMPT
-  privateLog: SimpleLinks
+  privateLog: Array<SimpleLink>
 
   publicTree: PublicTree
   prettyTree: BareTree
@@ -25,7 +25,7 @@ export default class RootTree implements Puttable {
   constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateTree }: {
     links: Links,
     mmpt: MMPT,
-    privateLog: SimpleLinks,
+    privateLog: Array<SimpleLink>,
 
     publicTree: PublicTree,
     prettyTree: BareTree,
@@ -56,7 +56,7 @@ export default class RootTree implements Puttable {
     const tree = new RootTree({
       links: {},
       mmpt,
-      privateLog: {},
+      privateLog: [],
 
       publicTree,
       prettyTree,
@@ -102,7 +102,13 @@ export default class RootTree implements Puttable {
     }
 
     const privateLogCid = links[Branch.PrivateLog]?.cid
-    const privateLog = privateLogCid ? await protocol.basic.getSimpleLinks(privateLogCid) : {}
+    const privateLog = privateLogCid
+      ? await ipfs.dagGet(privateLogCid)
+          .then(dagNode => dagNode.Links.map(link.fromDAGLink))
+          .then(links => links.sort((a, b) => {
+            return parseInt(a.name, 10) - parseInt(b.name, 10)
+          }))
+      : []
 
     // Construct tree
     const tree = new RootTree({
@@ -145,13 +151,7 @@ export default class RootTree implements Puttable {
 
   // PRIVATE LOG
   // -----------
-  //
-  // {
-  //   "currentChunkIndex": 2,
-  //   "0": first_chunk,
-  //   "1": second_chunk,
-  //   "2": current_chunk
-  // }
+  // CBOR array containing chunks.
   //
   // Chunk size is based on the default IPFS block size,
   // which is 1024 * 256 bytes. 1 log chunk should fit in 1 block.
@@ -160,60 +160,45 @@ export default class RootTree implements Puttable {
 
 
   async addPrivateLogEntry(cid: string): Promise<void> {
-    const log = {...this.privateLog}
+    const log = [...this.privateLog]
+    let idx = Math.max(0, log.length - 1)
 
-    // current chunk index
-    let currentChunkIndex = log.currentChunkIndex?.cid
-      ? JSON.parse(await ipfs.cat(log.currentChunkIndex?.cid)) || 0
-      : 0
-
-    // get current chunk
-    let currentChunk = log[currentChunkIndex]?.cid
-      ? (await ipfs.cat(log[currentChunkIndex]?.cid)).split(",")
+    // get last chunk
+    let lastChunk = log[idx]?.cid
+      ? (await ipfs.cat(log[idx].cid)).split(",")
       : []
 
     // needs new chunk
-    const needsNewChunk = currentChunk.length + 1 > RootTree.LOG_CHUNK_SIZE
-
+    const needsNewChunk = lastChunk.length + 1 > RootTree.LOG_CHUNK_SIZE
     if (needsNewChunk) {
-      currentChunkIndex = currentChunkIndex + 1
-      currentChunk = []
-    }
-
-    if (needsNewChunk || !log.currentChunkIndex) {
-      const currentChunkIndexDeposit = await protocol.basic.putFile(
-        JSON.stringify(currentChunkIndex)
-      )
-
-      const currentChunkIndexLink = link.make(
-        "currentChunkIndex",
-        currentChunkIndexDeposit.cid,
-        currentChunkIndexDeposit.isFile,
-        currentChunkIndexDeposit.size
-      )
-
-      log.currentChunkIndex = currentChunkIndexLink
+      idx = idx + 1
+      lastChunk = []
     }
 
     // add to chunk
     const hashedCid = await sha256Str(cid)
-    const updatedChunk = [...currentChunk, hashedCid]
+    const updatedChunk = [...lastChunk, hashedCid]
     const updatedChunkDeposit = await protocol.basic.putFile(
       updatedChunk.join(",")
     )
 
-    const updatedChunkLink = link.make(
-      currentChunkIndex.toString(),
-      updatedChunkDeposit.cid,
-      updatedChunkDeposit.isFile,
-      updatedChunkDeposit.size
-    )
-
-    log[currentChunkIndex.toString()] = updatedChunkLink
+    log[idx] = {
+      name: idx.toString(),
+      cid: updatedChunkDeposit.cid,
+      size: updatedChunkDeposit.size
+    }
 
     // save log
-    const logDeposit = await protocol.basic.putLinks(log)
-    this.updateLink(Branch.PrivateLog, logDeposit)
+    const logDeposit = await ipfs.dagPutLinks(
+      log.map(link.toDAGLink)
+    )
+
+    this.updateLink(Branch.PrivateLog, {
+      cid: logDeposit.cid,
+      isFile: false,
+      size: await ipfs.size(logDeposit.cid)
+    })
+
     this.privateLog = log
   }
 
