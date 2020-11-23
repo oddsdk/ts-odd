@@ -57,7 +57,7 @@ export default class PrivateHistory {
   /**
    * List earlier versions along with the timestamp they were created.
    */
-  async list(amount: number): Promise<Array<{ delta: number, timestamp: number }>> {
+  async list(amount: number = 5): Promise<Array<{ delta: number, timestamp: number }>> {
     const max = this.node.header.revision
 
     return Promise.all(

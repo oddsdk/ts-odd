@@ -49,7 +49,7 @@ export default class PublicHistory {
   /**
    * List earlier versions along with the timestamp they were created.
    */
-  async list(amount: number): Promise<Array<{ delta: number, timestamp: number }>> {
+  async list(amount: number = 5): Promise<Array<{ delta: number, timestamp: number }>> {
     const { acc } = await Array.from({ length: amount }, (_, i) => i).reduce(
       (promise, i) => promise.then(({ node, acc }) => {
         if (!node) return Promise.resolve({ node: null, acc })
