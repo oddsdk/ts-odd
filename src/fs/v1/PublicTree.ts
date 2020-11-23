@@ -1,40 +1,46 @@
-import { Links, UpdateCallback } from '../types'
-import { TreeInfo, TreeHeader, PutDetails } from '../protocol/public/types'
-import * as check from '../types/check'
 import { CID, FileContent } from '../../ipfs'
+import { Links, UpdateCallback } from '../types'
+import { Maybe } from '../../common'
+import { TreeInfo, TreeHeader, PutDetails } from '../protocol/public/types'
 import BaseTree from '../base/tree'
 import BareTree from '../bare/tree'
 import PublicFile from './PublicFile'
+import PublicHistory from './PublicHistory'
+import * as check from '../types/check'
+import * as history from './PublicHistory'
+import * as link from '../link'
+import * as metadata from '../metadata'
+import * as pathUtil from '../path'
 import * as protocol from '../protocol'
 import * as skeleton from '../protocol/public/skeleton'
-import * as metadata from '../metadata'
-import * as link from '../link'
-import * as pathUtil from '../path'
-import { Maybe } from '../../common'
+
 
 type ConstructorParams = {
+  cid: Maybe<CID>
   links: Links
   header: TreeHeader
-  cid: Maybe<CID>
 }
 
 type Child =
   PublicFile | PublicTree | BareTree
 
+
 export class PublicTree extends BaseTree {
 
+  children: { [name: string]: Child }
+  cid: Maybe<CID>
   links: Links
   header: TreeHeader
-  cid: Maybe<CID>
-
-  children: { [name: string]: Child }
+  history: PublicHistory
 
   constructor({ links, header, cid }: ConstructorParams) {
     super(header.metadata.version)
+
+    this.children = {}
+    this.cid = cid
     this.links = links
     this.header = header
-    this.cid = cid
-    this.children = {}
+    this.history = new PublicHistory(this as unknown as history.Node)
   }
 
   static async empty (): Promise<PublicTree> {

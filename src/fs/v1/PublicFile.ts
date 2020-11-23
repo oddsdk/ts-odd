@@ -1,27 +1,32 @@
 import { FileInfo, FileHeader, PutDetails } from '../protocol/public/types'
 import { CID, FileContent } from '../../ipfs'
 import BaseFile from '../base/file'
+import PublicHistory from './PublicHistory'
+import * as check from '../types/check'
+import * as history from './PublicHistory'
 import * as metadata from '../metadata'
 import * as protocol from '../protocol'
-import * as check from '../types/check'
 import { isObject, Maybe } from '../../common'
 
 
 type ConstructorParams = {
+  cid: Maybe<CID>
   content: FileContent,
   header: FileHeader
-  cid: Maybe<CID>
 }
 
 export class PublicFile extends BaseFile {
 
-  header: FileHeader
   cid: Maybe<CID>
+  header: FileHeader
+  history: PublicHistory
 
   constructor({ content, header, cid }: ConstructorParams) {
     super(content)
-    this.header = header
+
     this.cid = cid
+    this.header = header
+    this.history = new PublicHistory(this as unknown as history.Node)
   }
 
   static instanceOf(obj: any): obj is PublicFile {
