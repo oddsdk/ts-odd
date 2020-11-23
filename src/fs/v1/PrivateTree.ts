@@ -1,39 +1,45 @@
-import { FileContent } from '../../ipfs'
+import BaseTree from '../base/tree'
 import MMPT from '../protocol/private/mmpt'
 import PrivateFile from './PrivateFile'
-import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, Revision } from '../protocol/private/types'
-import * as protocol from '../protocol'
-import * as check from '../protocol/private/types/check'
-import * as pathUtil from '../path'
-import * as metadata from '../metadata'
-import * as semver from '../semver'
-import * as namefilter from '../protocol/private/namefilter'
-import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
-import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common'
+import PrivateHistory from './PrivateHistory'
 import { BaseLinks, UpdateCallback } from '../types'
-import BaseTree from '../base/tree'
+import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, Revision } from '../protocol/private/types'
+import { FileContent } from '../../ipfs'
+import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
 import { genKeyStr } from '../../keystore'
+import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common'
+import * as check from '../protocol/private/types/check'
+import * as history from './PrivateHistory'
+import * as metadata from '../metadata'
+import * as namefilter from '../protocol/private/namefilter'
+import * as pathUtil from '../path'
+import * as protocol from '../protocol'
+import * as semver from '../semver'
+
 
 type ConstructorParams = {
-  mmpt: MMPT
-  key: string
   header: PrivateTreeInfo
+  key: string
+  mmpt: MMPT
 }
+
 
 export default class PrivateTree extends BaseTree {
 
-  mmpt: MMPT
-  key: string
-  header: PrivateTreeInfo
-
   children: { [name: string]: PrivateTree | PrivateFile }
+  header: PrivateTreeInfo
+  history: PrivateHistory
+  key: string
+  mmpt: MMPT
 
   constructor({ mmpt, key, header}: ConstructorParams) {
     super(semver.v1)
-    this.mmpt = mmpt
-    this.key = key
-    this.header = header
+
     this.children = {}
+    this.header = header
+    this.history = new PrivateHistory(this as unknown as history.Node)
+    this.key = key
+    this.mmpt = mmpt
   }
 
   static instanceOf(obj: any): obj is PrivateTree {
@@ -229,107 +235,6 @@ export default class PrivateTree extends BaseTree {
     this.header.revision = this.header.revision + 1
     this.header.metadata.unixMeta.mtime = Date.now()
     return this
-  }
-
-
-  // REVISIONS
-  // =========
-
-  /**
-   * Revision of this instance of the tree.
-   */
-  currentRevision(): { revision: number, timestamp: number } {
-    return {
-      revision: this.header.revision,
-      timestamp: this.header.metadata.unixMeta.mtime
-    }
-  }
-
-  /**
-   * Get a specific revision of this tree.
-   */
-  async getRevision(revision: number): Promise<PrivateTree | null> {
-    const info = await this._getRevisionInfoFromNumber(revision)
-
-    return info && await PrivateTree.fromInfo(
-      this.mmpt,
-      this.key,
-      info
-    )
-  }
-
-  /**
-   * Get the latest revision of this tree.
-   * That might be this exact one.
-   */
-  async getLatestRevision(): Promise<PrivateTree> {
-    const revision = await this._getLatestRevision()
-    return revision
-      ? await PrivateTree.fromInfo(
-          this.mmpt,
-          this.key,
-          await this._getRevisionInfo(revision)
-        )
-      : this
-  }
-
-  /**
-   * Check if this revision is the latest one.
-   */
-  async isLatestRevision(): Promise<boolean> {
-    const revision = await this._getLatestRevision()
-    return revision?.number === this.header.revision
-  }
-
-  /**
-   * List all previous revisions along with the timestamp they were created.
-   */
-  async listRevisions(): Promise<Array<{ revision: number, timestamp: number }>> {
-    return Promise.all(
-      Array.from({ length: this.header.revision }, (_, i) =>
-        this._getRevisionInfoFromNumber(i + 1)
-      )
-    ).then(
-      list => list.filter(a => !!a) as Array<PrivateTreeInfo>
-    ).then(
-      list => list.map(a => ({
-        revision: a.revision,
-        timestamp: a.metadata.unixMeta.mtime
-      }))
-    )
-  }
-
-  /**
-   * @internal
-   */
-  _getLatestRevision(): Promise<Maybe<Revision>> {
-    return protocol.priv.findLatestRevision(
-      this.mmpt,
-      this.header.bareNameFilter,
-      this.key,
-      this.header.revision || 1
-    )
-  }
-
-  /**
-   * @internal
-   */
-  async _getRevisionInfo(revision: Revision): Promise<PrivateTreeInfo> {
-    const info = await protocol.priv.readNode(revision.cid, this.key)
-
-    if (!check.isPrivateTreeInfo(info)) {
-      throw new Error(`Could not parse a valid private tree using the given key`)
-    }
-
-    return info
-  }
-
-  async _getRevisionInfoFromNumber(revision: number): Promise<Maybe<PrivateTreeInfo>> {
-    const { key, mmpt } = this
-    const { bareNameFilter } = this.header
-
-    const r = await protocol.priv.getRevision(mmpt, bareNameFilter, key, revision)
-    return r && this._getRevisionInfo(r)
   }
 
 }

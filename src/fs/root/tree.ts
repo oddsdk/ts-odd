@@ -148,9 +148,9 @@ export default class RootTree implements Puttable {
   //
   // {
   //   "currentChunkIndex": 2,
-  //   "0": first_log,
-  //   "1": second_log,
-  //   "2": current_log
+  //   "0": first_chunk,
+  //   "1": second_chunk,
+  //   "2": current_chunk
   // }
   //
   // Chunk size is based on the default IPFS block size,
