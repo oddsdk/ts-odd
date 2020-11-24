@@ -1,5 +1,12 @@
 import { Metadata } from '../../metadata'
-import { CID } from '../../../ipfs'
+import { AddResult, CID } from '../../../ipfs'
+
+export type PutDetails = AddResult & {
+  userland: CID
+  metadata: CID
+  isFile: boolean
+  skeleton: Skeleton
+}
 
 export type SkeletonInfo = {
   cid: CID
@@ -13,6 +20,7 @@ export type Skeleton = { [name: string]: SkeletonInfo }
 
 export type TreeHeader = {
   metadata: Metadata
+  previous?: CID
   skeleton: Skeleton
 }
 
@@ -22,9 +30,9 @@ export type TreeInfo = TreeHeader & {
 
 export type FileHeader = {
   metadata: Metadata
+  previous?: CID
 }
 
 export type FileInfo = FileHeader & {
   userland: CID
 }
-

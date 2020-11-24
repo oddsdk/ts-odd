@@ -1,54 +1,61 @@
-import { FileContent } from '../../ipfs'
+import BaseTree from '../base/tree'
 import MMPT from '../protocol/private/mmpt'
 import PrivateFile from './PrivateFile'
-import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult } from '../protocol/private/types'
-import * as protocol from '../protocol'
-import * as check from '../protocol/private/types/check'
-import * as pathUtil from '../path'
-import * as metadata from '../metadata'
-import * as semver from '../semver'
-import * as namefilter from '../protocol/private/namefilter'
+import PrivateHistory from './PrivateHistory'
+import { BaseLinks, UpdateCallback } from '../types'
+import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, Revision } from '../protocol/private/types'
+import { FileContent } from '../../ipfs'
 import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
-import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common'
-import { BaseLinks, SyncHookDetailed } from '../types'
-import BaseTree from '../base/tree'
 import { genKeyStr } from '../../keystore'
+import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common'
+import * as check from '../protocol/private/types/check'
+import * as history from './PrivateHistory'
+import * as metadata from '../metadata'
+import * as namefilter from '../protocol/private/namefilter'
+import * as pathUtil from '../path'
+import * as protocol from '../protocol'
+import * as semver from '../semver'
+
 
 type ConstructorParams = {
-  mmpt: MMPT
+  header: PrivateTreeInfo
   key: string
-  info: PrivateTreeInfo
+  mmpt: MMPT
 }
+
 
 export default class PrivateTree extends BaseTree {
 
-  mmpt: MMPT
+  children: { [name: string]: PrivateTree | PrivateFile }
+  header: PrivateTreeInfo
+  history: PrivateHistory
   key: string
-  info: PrivateTreeInfo
+  mmpt: MMPT
 
-  onUpdate: Maybe<SyncHookDetailed> = null
-
-  constructor({ mmpt, key, info}: ConstructorParams) {
+  constructor({ mmpt, key, header}: ConstructorParams) {
     super(semver.v1)
-    this.mmpt = mmpt
+
+    this.children = {}
+    this.header = header
+    this.history = new PrivateHistory(this as unknown as history.Node)
     this.key = key
-    this.info = info
+    this.mmpt = mmpt
   }
 
   static instanceOf(obj: any): obj is PrivateTree {
-    return isObject(obj) 
-      && obj.mmpt !== undefined 
-      && check.isPrivateTreeInfo(obj.info)
+    return isObject(obj)
+      && obj.mmpt !== undefined
+      && check.isPrivateTreeInfo(obj.header)
   }
 
   static async create(mmpt: MMPT, key: string, parentNameFilter: Maybe<BareNameFilter>): Promise<PrivateTree> {
-    const bareNameFilter = parentNameFilter 
+    const bareNameFilter = parentNameFilter
       ? await namefilter.addToBare(parentNameFilter, key)
       : await namefilter.createBare(key)
     return new PrivateTree({
       mmpt,
       key,
-      info: {
+      header: {
         metadata: metadata.empty(false),
         bareNameFilter,
         revision: 1,
@@ -62,101 +69,117 @@ export default class PrivateTree extends BaseTree {
     const bareNameFilter = await namefilter.createBare(key)
     const revisionFilter = await namefilter.addRevision(bareNameFilter, key, 1)
     const name = await namefilter.toPrivateName(revisionFilter)
-    return PrivateTree.fromName(mmpt, name, key)
+    const info = await protocol.priv.getByLatestName(mmpt, name, key)
+
+    if (!check.isPrivateTreeInfo(info)) {
+      throw new Error(`Could not parse a valid private tree using the given key`)
+    }
+
+    return new PrivateTree({ mmpt, key, header: info })
   }
 
   static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
     const info = await protocol.priv.getByName(mmpt, name, key)
-    if(!check.isPrivateTreeInfo(info)) {
+
+    if (!check.isPrivateTreeInfo(info)) {
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
-    return new PrivateTree({ mmpt, info, key })
+
+    return new PrivateTree({ mmpt, key, header: info })
   }
 
   static async fromInfo(mmpt: MMPT, key: string, info: PrivateTreeInfo): Promise<PrivateTree> {
-    return new PrivateTree({ mmpt, key, info })
+    return new PrivateTree({ mmpt, key, header: info })
   }
 
-  async emptyChildTree(): Promise<PrivateTree> {
+  async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateTree> {
     const key = await genKeyStr()
-    return PrivateTree.create(this.mmpt, key, this.info.bareNameFilter)
+    const child = await PrivateTree.create(this.mmpt, key, this.header.bareNameFilter)
+
+    const existing = this.children[name]
+    if (existing) {
+      if (PrivateFile.instanceOf(existing)) {
+        throw new Error(`There is a file at the given path: ${name}`)
+      }
+      return existing
+    }
+
+    await this.updateDirectChild(child, name, onUpdate)
+    return child
   }
 
-  async createChildFile(content: FileContent, name: string): Promise<PrivateFile>{
+  async createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateFile>{
     const existing = await this.getDirectChild(name)
+
     let file: PrivateFile
     if (existing === null) {
       const key = await genKeyStr()
-      return PrivateFile.create(this.mmpt, content, this.info.bareNameFilter, key)
+      file = await PrivateFile.create(this.mmpt, content, this.header.bareNameFilter, key)
     } else if (PrivateFile.instanceOf(existing)) {
       file = await existing.updateContent(content)
     } else {
       throw new Error(`There is already a directory with that name: ${name}`)
     }
+    await this.updateDirectChild(file, name, onUpdate)
     return file
   }
 
   async putDetailed(): Promise<PrivateAddResult> {
-    const result = await protocol.priv.addNode(this.mmpt, {
-      ...this.info, 
-      metadata: metadata.updateMtime(this.info.metadata)
-    }, this.key)
-    if(this.onUpdate !== null){
-      const syncResult = await this.mmpt.put()
-      this.onUpdate(syncResult)
-    }
-    return result
+    // copy the object, so we're putting the current version & don't include any revisions
+    const nodeCopy = Object.assign({}, this.header)
+    return protocol.priv.addNode(this.mmpt, nodeCopy, this.key)
   }
 
-  async updateDirectChild (child: PrivateTree | PrivateFile, name: string): Promise<this> {
-    await child.updateParentNameFilter(this.info.bareNameFilter)
-    const { cid, size, key } = await child.putDetailed()
-    const pointer = await child.getName()
-    this.info.links[name] = { name, key, pointer, size, isFile: PrivateFile.instanceOf(child), mtime: Date.now() }
-    this.info.skeleton[name] = { cid, key, subSkeleton: PrivateTree.instanceOf(child) ? child.info.skeleton : {} }
-    this.info.revision = this.info.revision + 1
+  async updateDirectChild(child: PrivateTree | PrivateFile, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
+    this.children[name] = child
+    const details = await child.putDetailed()
+    this.updateLink(name, details)
+    onUpdate && await onUpdate()
     return this
   }
 
   removeDirectChild(name: string): this {
-    this.info = {
-      ...this.info,
-      revision: this.info.revision + 1,
-      links: removeKeyFromObj(this.info.links, name),
-      skeleton: removeKeyFromObj(this.info.skeleton, name)
+    this.header = {
+      ...this.header,
+      revision: this.header.revision + 1,
+      links: removeKeyFromObj(this.header.links, name),
+      skeleton: removeKeyFromObj(this.header.skeleton, name)
+    }
+    if(this.children[name]) {
+      delete this.children[name]
     }
     return this
   }
 
   async getDirectChild(name: string): Promise<PrivateTree | PrivateFile | null>{
-    const child = this.info.links[name]
-    if(child === undefined) return null
-    return child.isFile
-      ? PrivateFile.fromName(this.mmpt, child.pointer, child.key)
-      : PrivateTree.fromName(this.mmpt, child.pointer, child.key)
-  }
+    if(this.children[name]) {
+      return this.children[name]
+    }
 
-  async getOrCreateDirectChild(name: string): Promise<PrivateTree | PrivateFile> {
-    const child = await this.getDirectChild(name)
-    return child ? child : this.emptyChildTree()
+    const childInfo = this.header.links[name]
+    if(childInfo === undefined) return null
+    const child = childInfo.isFile
+      ? await PrivateFile.fromName(this.mmpt, childInfo.pointer, childInfo.key)
+      : await PrivateTree.fromName(this.mmpt, childInfo.pointer, childInfo.key)
+
+    // check that the child wasn't added while retrieving the content from the network
+    if(this.children[name]) {
+      return this.children[name]
+    }
+
+    this.children[name] = child
+    return child
   }
 
   async getName(): Promise<PrivateName> {
-    const { bareNameFilter, revision } = this.info
+    const { bareNameFilter, revision } = this.header
     const revisionFilter = await namefilter.addRevision(bareNameFilter, this.key, revision)
     return namefilter.toPrivateName(revisionFilter)
   }
 
   async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
-    this.info.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.key)
+    this.header.bareNameFilter = await namefilter.addToBare(parentNameFilter, this.key)
     return this
-  }
-
-  getLinks(): BaseLinks {
-    return mapObj(this.info.links, (link) => {
-      const { key, ...rest } = link
-      return { ...rest  }
-    })
   }
 
   async get(path: string): Promise<PrivateTree | PrivateFile | null> {
@@ -165,32 +188,53 @@ export default class PrivateTree extends BaseTree {
 
     const [head, ...rest] = parts
 
-    const next = this.info.skeleton[head]
+    const next = this.header.skeleton[head]
     if(next === undefined) return null
 
-    const node = await this.getRecurse(next, rest)
-    if(node === null) return null
-      
-    return check.isPrivateFileInfo(node)
-      ? PrivateFile.fromInfo(this.mmpt, next.key, node)
-      : PrivateTree.fromInfo(this.mmpt, next.key, node)
+    const result = await this.getRecurse(next, rest)
+    if (result === null) return null
+
+    return check.isPrivateFileInfo(result.node)
+      ? PrivateFile.fromInfo(this.mmpt, result.key, result.node)
+      : PrivateTree.fromInfo(this.mmpt, result.key, result.node)
   }
 
-  async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<DecryptedNode>> {
+  async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<{ key: string, node: DecryptedNode }>> {
     const [head, ...rest] = parts
-    if(head === undefined) {
-      return protocol.priv.getByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
+    if (head === undefined) return {
+      key: nodeInfo.key,
+      node: await protocol.priv.getByCID(nodeInfo.cid, nodeInfo.key)
     }
+
     const nextChild = nodeInfo.subSkeleton[head]
-    if(nextChild !== undefined) {
+    if (nextChild !== undefined) {
       return this.getRecurse(nextChild, rest)
     }
 
-    const reloadedNode = await protocol.priv.getByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
-    if(!check.isPrivateTreeInfo(reloadedNode)){
+    const reloadedNode = await protocol.priv.getByCID(nodeInfo.cid, nodeInfo.key)
+    if (!check.isPrivateTreeInfo(reloadedNode)) {
       return null
     }
+
     const reloadedNext = reloadedNode.skeleton[head]
     return reloadedNext === undefined ? null : this.getRecurse(reloadedNext, rest)
   }
+
+  getLinks(): BaseLinks {
+    return mapObj(this.header.links, (link) => {
+      const { key, ...rest } = link
+      return { ...rest  }
+    })
+  }
+
+  updateLink(name: string, result: PrivateAddResult): this {
+    const { cid, size, key, isFile, skeleton } = result
+    const pointer = result.name
+    this.header.links[name] = { name, key, pointer, size, isFile: isFile, mtime: Date.now() }
+    this.header.skeleton[name] = { cid, key, subSkeleton: skeleton }
+    this.header.revision = this.header.revision + 1
+    this.header.metadata.unixMeta.mtime = Date.now()
+    return this
+  }
+
 }

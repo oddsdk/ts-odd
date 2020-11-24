@@ -43,7 +43,7 @@ export type RawDAGLink = {
 
 export interface DagAPI {
   put(dagNode: unknown, options?: unknown): Promise<CIDObj>
-  get(cid: string | CID, path?: string, options?: unknown): Promise<RawDAGNode>
+  get(cid: string | CID, path?: string, options?: unknown): Promise<{ value: unknown, remainderPath: string }>
   resolve(cid: string | CID | CIDObj): Promise<{ cid: CIDObj }>
   tree(cid: string | CID, path?: string, options?: unknown): Promise<Array<string>>
 }
@@ -103,6 +103,7 @@ export type ObjStat = {
 export type AddResult = {
   cid: CID
   size: number
+  isFile: boolean
 }
 
 export type SwarmAPI = {

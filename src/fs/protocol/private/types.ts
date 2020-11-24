@@ -13,7 +13,7 @@ export type PrivateFileInfo = {
   key: string
 }
 
-export type PrivateLink = BaseLink & { 
+export type PrivateLink = BaseLink & {
   key: string
   pointer: PrivateName
 }
@@ -24,7 +24,7 @@ export type PrivateTreeInfo = {
   metadata: Metadata
   bareNameFilter: BareNameFilter
   revision: number
-  links: PrivateLinks 
+  links: PrivateLinks
   skeleton: PrivateSkeleton
 }
 
@@ -39,4 +39,11 @@ export type PrivateSkeletonInfo = {
 export type PrivateAddResult = AddResult & {
   name: PrivateName
   key: string
+  skeleton: PrivateSkeleton
+}
+
+export type Revision = {
+  cid: CID
+  name: PrivateName,
+  number: number
 }

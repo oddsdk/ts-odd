@@ -1,7 +1,7 @@
 import { AddResult, CID } from "../../../ipfs"
 import * as basic from '../basic'
 import * as link from '../../link'
-import { Links } from '../../types'
+import { Puttable, SimpleLinks } from '../../types'
 
 const nibbles = { "0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true, "7": true,
                   "8": true, "9": true, "a": true, "b": true, "c": true, "d": true, "e": true, "f": true,
@@ -18,12 +18,14 @@ type Member = {
  * The tree has a node weight of 16
  * It stores items with hexidecimal keys and creates a new layer when a given layer has two keys that start with the same nibble
  */
-export default class MMPT {
+export default class MMPT implements Puttable {
 
-  links: Links
+  links: SimpleLinks
+  children: { [name: string]: MMPT }
 
-  constructor(links: Links) {
+  constructor(links: SimpleLinks) {
     this.links = links
+    this.children = {}
   }
   
   static create(): MMPT {
@@ -31,59 +33,74 @@ export default class MMPT {
   }
 
   static async fromCID(cid: CID): Promise<MMPT> {
-    const links = await basic.getLinks(cid)
+    const links = await basic.getSimpleLinks(cid)
     return new MMPT(links)
   }
 
-  async put(): Promise<AddResult> {
+  async putDetailed(): Promise<AddResult> {
     return basic.putLinks(this.links)
   }
 
-  async add(name: string, value: CID): Promise<this> {
+  async put(): Promise<CID> {
+    const { cid } = await this.putDetailed()
+    return cid
+  }
+
+  async add(name: string, value: CID): Promise<void> {
     if(!isNibble(name[0])) {
       throw new Error(`Not a valid name, must be hexadecimal`)
     }
-    const nextName = this.nextTreeOrSibling(name)
+    const nextNameOrSib = this.nextTreeOrSiblingName(name)
 
     // if already in tree, then skip
-    if(name === nextName){
-      return this
+    if(name === nextNameOrSib){
+      // skip
     }
 
     // if no children starting with first char of name, then add with entire name as key
-    else if(nextName === null) {
+    else if(nextNameOrSib === null) {
       this.links[name] = link.make(name, value, true, 0)
-      return this
     }
 
     // if multiple children with first char of names, then add to that tree
-    if(nextName.length === 1){
-      const nextTree = await MMPT.fromCID(this.links[nextName].cid)
+    else if(nextNameOrSib.length === 1){
+      const nextTree = await this.getDirectChild(nextNameOrSib)
       await nextTree.add(name.slice(1), value)
-      const { cid, size } = await  nextTree.put()
-      this.links[nextName] = link.make(nextName, cid, false, size)
-      return this
+      await this.putAndUpdateLink(nextNameOrSib, nextTree)
     }
-    
+
     // if one other child with first char of name, then put both into a child tree
+    else{
+      const newTree = this.addEmptyChild(name[0])
+      const nextCID = this.links[nextNameOrSib].cid
+      this.removeChild(nextNameOrSib)
+      await Promise.all([
+        newTree.add(name.slice(1), value),
+        newTree.add(nextNameOrSib.slice(1), nextCID)
+      ])
+      await this.putAndUpdateLink(name[0], newTree)
+    }
+  }
+
+  async putAndUpdateLink(name: string, child: MMPT): Promise<void> {
+    const { cid, size } = await child.putDetailed()
+    this.links[name] = link.make(name, cid, false, size)
+  }
+
+  addEmptyChild(name: string): MMPT {
     const tree = MMPT.create()
-    await tree.add(name.slice(1), value)
-    await tree.add(nextName.slice(1), this.links[nextName].cid)
-    const { cid, size } = await tree.put()
-    this.links[name[0]] = link.make(name[0], cid, false, size)
-    delete this.links[nextName]
-    return this
+    this.children[name] = tree
+    return tree
   }
 
   async get(name: string): Promise<CID | null> {
-    const nextName = this.nextTree(name)
+    const nextName = this.nextTreeName(name)
     if(nextName === null) return null
 
-    const nextCID = this.links[nextName].cid
     if(nextName.length > 1) {
-      return nextCID
+      return this.links[nextName].cid
     }
-    const nextTree = await MMPT.fromCID(nextCID)
+    const nextTree = await this.getDirectChild(nextName)
     return nextTree.get(name.slice(1))
   }
 
@@ -108,18 +125,44 @@ export default class MMPT {
     return children.reduce((acc, cur) => acc.concat(cur))
   }
 
-  private nextTree(name: string): string | null {
-    if(this.links[name[0]]) {
+  private async getDirectChild(name: string): Promise<MMPT> {
+    if(this.children[name]) {
+      return this.children[name]
+    }
+
+    const child = await MMPT.fromCID(this.links[name].cid)
+    // check that the child wasn't added while retrieving the mmpt from the network
+    if(this.children[name]) {
+      return this.children[name]
+    }
+
+    this.children[name] = child
+    return child
+  }
+
+  private removeChild(name: string): void {
+    delete this.links[name]
+    if(this.children[name]){
+      delete this.children[name]
+    }
+  }
+
+  private directChildExists(name: string): boolean {
+    return this.links[name] !== undefined || this.children[name] !== undefined
+  }
+
+  private nextTreeName(name: string): string | null {
+    if(this.directChildExists(name[0])) {
       return name[0]
-    }else if(this.links[name]) {
+    }else if(this.directChildExists(name)) {
       return name
     }
     return null
   }
 
-  private nextTreeOrSibling(name: string): string | null {
+  private nextTreeOrSiblingName(name: string): string | null {
     const nibble = name[0]
-    if(this.links[nibble]) {
+    if(this.directChildExists(nibble)) {
       return nibble
     }
     return Object.keys(this.links).find(child => nibble === child[0]) || null

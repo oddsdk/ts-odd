@@ -1,9 +1,10 @@
 import { throttle } from 'throttle-debounce'
 
-import { SyncHook, UnixTree, Tree, File, BaseLinks } from './types'
+import { PublishHook, UnixTree, Tree, File } from './types'
+import { BaseLinks, Branch } from './types'
 import { SemVer } from './semver'
 import BareTree from './bare/tree'
-import MMPT from './protocol/private/mmpt'
+import RootTree from './root/tree'
 import PublicTree from './v1/PublicTree'
 import PrivateTree from './v1/PrivateTree'
 
@@ -11,12 +12,12 @@ import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
 import * as debug from '../common/debug'
 import * as keystore from '../keystore'
-import * as link from './link'
 import * as pathUtil from './path'
 import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
 
-import { AddResult, CID, FileContent } from '../ipfs'
+import { Maybe } from '../common'
+import { CID, FileContent } from '../ipfs'
 import { NoPermissionError } from '../errors'
 import { Permissions } from '../ucan/permissions'
 import { Ucan } from '../ucan'
@@ -29,14 +30,8 @@ type AppPath =
   (path?: string | Array<string>) => string
 
 type ConstructorParams = {
-  root: BareTree
-  publicTree: PublicTree
-  prettyTree: BareTree
-  privateTree: PrivateTree
-  mmpt: MMPT
-  rootDid: string
-
   permissions?: Permissions
+  root: RootTree
   localOnly?: boolean
 }
 
@@ -44,49 +39,34 @@ type FileSystemOptions = {
   version?: SemVer
   keyName?: string
   permissions?: Permissions
-  rootDid?: string
   localOnly?: boolean
 }
 
-enum Branch {
-  Public = 'public',
-  Pretty = 'pretty',
-  Private = 'private'
+type MutationOptions = {
+  publish?: boolean
 }
-
 
 
 // CLASS
 
 
-export class FileSystem implements UnixTree {
+export class FileSystem {
 
-  root: BareTree
-  publicTree: PublicTree
-  prettyTree: BareTree
-  privateTree: PrivateTree
-  mmpt: MMPT
-  rootDid: string
+  root: RootTree
   localOnly: boolean
 
   appPath: AppPath | undefined
   proofs: { [_: string]: Ucan }
-  syncHooks: Array<SyncHook>
-  syncWhenOnline: Array<[CID, string]>
+  publishHooks: Array<PublishHook>
+  publishWhenOnline: Array<[CID, string]>
 
 
-  constructor({ root, publicTree, permissions, prettyTree, privateTree, mmpt, rootDid, localOnly }: ConstructorParams) {
-    this.root = root
-    this.publicTree = publicTree
-    this.prettyTree = prettyTree
-    this.privateTree = privateTree
-    this.mmpt = mmpt
-    this.rootDid = rootDid
+  constructor({ root, permissions, localOnly }: ConstructorParams) {
     this.localOnly = localOnly || false
-
     this.proofs = {}
-    this.syncHooks = []
-    this.syncWhenOnline = []
+    this.publishHooks = []
+    this.publishWhenOnline = []
+    this.root = root
 
     if (
       permissions &&
@@ -107,14 +87,14 @@ export class FileSystem implements UnixTree {
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
       if (window.navigator.onLine) return dataRoot.update(cid, proof)
-      this.syncWhenOnline.push([ cid, proof ])
+      this.publishWhenOnline.push([ cid, proof ])
     }, false)
 
-    this.syncHooks.push(logCid)
-    this.syncHooks.push(updateDataRootWhenOnline)
+    this.publishHooks.push(logCid)
+    this.publishHooks.push(updateDataRootWhenOnline)
 
-    // Sync when coming back online
-    window.addEventListener('online', () => this.whenOnline())
+    // Publish when coming back online
+    window.addEventListener('online', () => this._whenOnline())
   }
 
 
@@ -125,35 +105,15 @@ export class FileSystem implements UnixTree {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', rootDid = '', permissions, localOnly } = opts
-
-    const publicTree = await PublicTree.empty()
-    const prettyTree = await BareTree.empty()
-
-    const mmpt = MMPT.create()
+    const { keyName = 'filesystem-root', permissions, localOnly } = opts
     const key = await keystore.getKeyByName(keyName)
-    const privateTree = await PrivateTree.create(mmpt, key, null)
-
-    const root = await BareTree.empty()
+    const root = await RootTree.empty({ key })
 
     const fs = new FileSystem({
       root,
-      publicTree,
       permissions,
-      prettyTree,
-      privateTree,
-      mmpt,
-      rootDid,
       localOnly
     })
-
-    publicTree.onUpdate = result => fs.updateRootLink(Branch.Public, result)
-    prettyTree.onUpdate = result => fs.updateRootLink(Branch.Pretty, result)
-    privateTree.onUpdate = result => fs.updateRootLink(Branch.Private, result)
-
-    await publicTree.put()
-    await prettyTree.put()
-    await privateTree.put()
 
     return fs
   }
@@ -162,44 +122,15 @@ export class FileSystem implements UnixTree {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { keyName = 'filesystem-root', rootDid = '', permissions, localOnly } = opts
-
-    const root = await BareTree.fromCID(cid)
-
-    const publicCID = root.links['public']?.cid || null
-    const publicTree = publicCID === null
-      ? await PublicTree.empty()
-      : await PublicTree.fromCID(publicCID)
-
-    const prettyTree = (await root.getDirectChild('pretty')) as BareTree ||
-                        await BareTree.empty()
-
-    const privateCID = root.links['private']?.cid || null
+    const { keyName = 'filesystem-root', permissions, localOnly } = opts
     const key = await keystore.getKeyByName(keyName)
-
-    let mmpt, privateTree
-    if(privateCID === null){
-      mmpt = await MMPT.create()
-      privateTree = await PrivateTree.create(mmpt, key, null)
-    }else{
-      mmpt = await MMPT.fromCID(privateCID)
-      privateTree = await PrivateTree.fromBaseKey(mmpt, key)
-    }
+    const root = await RootTree.fromCID({ cid, key })
 
     const fs = new FileSystem({
       root,
-      publicTree,
       permissions,
-      prettyTree,
-      privateTree,
-      mmpt,
-      rootDid,
       localOnly
     })
-
-    publicTree.onUpdate = result => fs.updateRootLink(Branch.Public, result)
-    prettyTree.onUpdate = result => fs.updateRootLink(Branch.Pretty, result)
-    privateTree.onUpdate = result => fs.updateRootLink(Branch.Private, result)
 
     return fs
   }
@@ -215,17 +146,20 @@ export class FileSystem implements UnixTree {
    * The only function of this is to stop listing to online/offline events.
    */
   deactivate(): void {
-    window.removeEventListener('online', this.whenOnline)
+    window.removeEventListener('online', this._whenOnline)
   }
 
 
   // POSIX INTERFACE
   // ---------------
 
-  async mkdir(path: string): Promise<this> {
+  async mkdir(path: string, options: MutationOptions = {}): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.mkdir(relPath)
     })
+    if(options.publish) {
+      await this.publish()
+    }
     return this
   }
 
@@ -235,10 +169,13 @@ export class FileSystem implements UnixTree {
     })
   }
 
-  async add(path: string, content: FileContent): Promise<this> {
+  async add(path: string, content: FileContent, options: MutationOptions = {}): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.add(relPath, content)
     })
+    if(options.publish) {
+      await this.publish()
+    }
     return this
   }
 
@@ -284,8 +221,8 @@ export class FileSystem implements UnixTree {
     return this.cat(path)
   }
 
-  async write(path: string, content: FileContent): Promise<this> {
-    return this.add(path, content)
+  async write(path: string, content: FileContent, options: MutationOptions = {}): Promise<this> {
+    return this.add(path, content, options)
   }
 
 
@@ -304,7 +241,7 @@ export class FileSystem implements UnixTree {
 
     proofs.forEach(([_, proof]) => {
       const encodedProof = ucan.encode(proof)
-      this.syncHooks.forEach(hook => hook(cid, encodedProof))
+      this.publishHooks.forEach(hook => hook(cid, encodedProof))
     })
 
     return cid
@@ -325,7 +262,7 @@ export class FileSystem implements UnixTree {
     const head = parts[0]
     const relPath = pathUtil.join(parts.slice(1))
 
-    if(!this.localOnly) {
+    if (!this.localOnly) {
       const proof = await ucanInternal.lookupFilesystemUcan(path)
       if (!proof || ucan.isExpired(proof)) {
         throw new NoPermissionError("I don't have the necessary permissions to make these changes to the file system")
@@ -337,28 +274,36 @@ export class FileSystem implements UnixTree {
     let result: a
     let resultPretty: a
 
-    if (head === 'public') {
-      result = await fn(this.publicTree, relPath)
+    if (head === Branch.Public) {
+      result = await fn(this.root.publicTree, relPath)
 
       if (isMutation && PublicTree.instanceOf(result)) {
-        resultPretty = await fn(this.prettyTree, relPath)
+        resultPretty = await fn(this.root.prettyTree, relPath)
 
-        this.publicTree = result
-        this.prettyTree = resultPretty as unknown as BareTree
+        this.root.publicTree = result
+        this.root.prettyTree = resultPretty as unknown as BareTree
+
+        await Promise.all([
+          this.root.updatePuttable(Branch.Public, this.root.publicTree),
+          this.root.updatePuttable(Branch.Pretty, this.root.prettyTree)
+        ])
       }
 
-    } else if (head === 'private') {
-      result = await fn(this.privateTree, relPath)
+    } else if (head === Branch.Private) {
+      result = await fn(this.root.privateTree, relPath)
 
       if (isMutation && PrivateTree.instanceOf(result)) {
-        this.privateTree = result
+        this.root.privateTree = result
+        const cid = await this.root.privateTree.put()
+        await this.root.updatePuttable(Branch.Private, this.root.mmpt)
+        await this.root.addPrivateLogEntry(cid)
       }
 
-    } else if (head === 'pretty' && isMutation) {
+    } else if (head === Branch.Pretty && isMutation) {
       throw new Error("The pretty path is read only")
 
-    } else if (head === 'pretty') {
-      result = await fn(this.prettyTree, relPath)
+    } else if (head === Branch.Pretty) {
+      result = await fn(this.root.prettyTree, relPath)
 
     } else {
       throw new Error("Not a valid FileSystem path")
@@ -369,17 +314,12 @@ export class FileSystem implements UnixTree {
   }
 
   /** @internal */
-  async updateRootLink(branch: Branch, update: AddResult): Promise<void> {
-    this.root.updateLink(link.make(branch, update.cid, false, update.size))
-  }
+  _whenOnline(): void {
+    const toPublish = [...this.publishWhenOnline]
+    this.publishWhenOnline = []
 
-  /** @internal */
-  whenOnline(): void {
-    const toSync = [...this.syncWhenOnline]
-    this.syncWhenOnline = []
-
-    toSync.forEach(([cid, proof]) => {
-      this.syncHooks.forEach(hook => hook(cid, proof))
+    toPublish.forEach(([cid, proof]) => {
+      this.publishHooks.forEach(hook => hook(cid, proof))
     })
   }
 }
@@ -394,7 +334,7 @@ export default FileSystem
 
 function appPath(permissions: Permissions): ((path?: string | Array<string>) => string) {
   return (path?: string | Array<string>): string => (
-    'private/Apps/'
+    `${Branch.Private}/Apps/`
       + (permissions.app ? permissions.app.creator + '/' : '')
       + (permissions.app ? permissions.app.name : '')
       + (path ? '/' + (typeof path == 'object' ? path.join('/') : path) : '')
