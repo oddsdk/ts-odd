@@ -140,7 +140,7 @@ The `publish` function synchronises your file system with the Fission API and IP
 
 ## Versioning
 
-Each file and directory has a `history` property, which you can use to get an earlier version of that item.
+Each file and directory has a `history` property, which you can use to get an earlier version of that item. We use the `delta` variable as the order index. Primarily because the timestamps can be slightly out of sequence, due to device inconsistencies.
 
 ```ts
 const file = await fs.get("private/Blog Posts/article.md")
