@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.20.1",
+  "version": "0.20.2",
   "description": "Fission Webnative SDK",
   "keywords": ["WebCrypto", "auth", "IPFS", "files"],
   "main": "index.cjs.js",

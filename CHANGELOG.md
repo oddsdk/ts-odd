@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.20.2
+
+Fixed dependency loading issue.
+
+
 ### v0.20.1
 
 Added versioning info to the README.
@@ -16,6 +21,7 @@ Added versioning info to the README.
 
 - Adds facts `fct` to the UCANs (v0.3.1)
 - Update IPFS to v0.51.0
+
 
 ### v0.19.11
 
