@@ -1,5 +1,17 @@
 # Changelog
 
+### v0.20.1
+
+Added versioning info to the README.
+
+
+### v0.20.0
+
+- Adds versioning
+- Allows for concurrent filesystem operations
+
+
+
 ### v0.19.12
 
 - Adds facts `fct` to the UCANs (v0.3.1)
