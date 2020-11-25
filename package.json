@@ -2,7 +2,12 @@
   "name": "webnative",
   "version": "0.20.2",
   "description": "Fission Webnative SDK",
-  "keywords": ["WebCrypto", "auth", "IPFS", "files"],
+  "keywords": [
+    "WebCrypto",
+    "auth",
+    "IPFS",
+    "files"
+  ],
   "main": "index.cjs.js",
   "module": "index.es5.js",
   "browser": "index.umd.js",
@@ -66,6 +71,7 @@
     "singleQuote": true
   },
   "devDependencies": {
+    "@babel/core": "^7.12.9",
     "@rollup/plugin-inject": "^4.0.1",
     "@types/jest": "^25.2.1",
     "@types/node": "^13.7.4",
