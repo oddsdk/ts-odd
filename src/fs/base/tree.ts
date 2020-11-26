@@ -104,7 +104,7 @@ abstract class BaseTree implements Tree, UnixTree {
         throw new Error("Invalid path: does not exist")
       } else if(check.isFile(child)) {
         throw new Error(`There is a file along the given path: ${path}`)
-      } 
+      }
       await child.rmRecurse(nextPath, async () => {
         await this.updateDirectChild(child, head, onUpdate)
       })
@@ -113,23 +113,44 @@ abstract class BaseTree implements Tree, UnixTree {
   }
 
   async mv(from: string, to: string): Promise<this> {
-    throw new Error("mv has been temporarily disabled")
-    // const node = await this.get(from)
-    // if (node === null) {
-    //   throw new Error(`Path does not exist: ${from}`)
-    // }
-    // const { tail, parentPath } = pathUtil.takeTail(to)
-    // if(tail === null){
-    //   throw new Error(`Path does not exist: ${to}`)
-    // }
-    // const parent = await this.get(parentPath || '')
-    // if (check.isFile(parent)) {
-    //   throw new Error(`Can not \`mv\` to a file: ${parentPath || ''}`)
-    // }
+    const node = await this.get(from)
+    if (node === null) {
+      throw new Error(`Path does not exist: ${from}`)
+    }
 
-    // await this.updateDirectChild(node, tail, null)
+    const { tail, parentPath } = pathUtil.takeTail(to)
+    if (tail === null) {
+      throw new Error(`Path does not exist: ${to}`)
+    }
 
-    // return this.rm(from)
+    const parent = await this.get(parentPath || '')
+    if (!parent) {
+      await this.mkdir(parentPath || '')
+    } else if (check.isFile(parent)) {
+      throw new Error(`Can not \`mv\` to a file: ${parentPath || ''}`)
+    }
+
+    await this.rmRecurse(from, null)
+    const toParts = pathUtil.splitParts(to)
+
+    const directChild = await [...toParts].reverse().reduce((acc, part, idx) => {
+      return acc.then(async child => {
+        const childParentParts = toParts.slice(0, -(idx + 1))
+        const tree = childParentParts.length
+          ? await this.get(pathUtil.join(childParentParts))
+          : this
+
+        if (tree && !check.isFile(tree)) {
+          await tree.updateDirectChild(child, part, null)
+          await tree.put()
+          return tree
+        } else {
+          throw new Error("Failed to update tree while moving node")
+        }
+      })
+    }, Promise.resolve(node))
+
+    return this
   }
 
   async exists(path: string): Promise<boolean> {

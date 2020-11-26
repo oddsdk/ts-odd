@@ -131,6 +131,7 @@ export default class PrivateTree extends BaseTree {
   }
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
+    await child.updateParentNameFilter(this.header.bareNameFilter)
     this.children[name] = child
     const details = await child.putDetailed()
     this.updateLink(name, details)

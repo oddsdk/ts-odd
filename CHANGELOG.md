@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.20.3
+
+Re-enable the `mv` filesystem function.
+
+
 ### v0.20.2
 
 Fixed dependency loading issue.
