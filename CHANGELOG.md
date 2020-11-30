@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.20.4
+
+Fix `mv` issue.
+
+
 ### v0.20.3
 
 Re-enable the `mv` filesystem function.

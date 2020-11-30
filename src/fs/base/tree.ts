@@ -118,22 +118,26 @@ abstract class BaseTree implements Tree, UnixTree {
       throw new Error(`Path does not exist: ${from}`)
     }
 
-    const { tail, parentPath } = pathUtil.takeTail(to)
+    let { tail, parentPath } = pathUtil.takeTail(to)
+    parentPath = parentPath || ''
+
     if (tail === null) {
       throw new Error(`Path does not exist: ${to}`)
     }
 
-    const parent = await this.get(parentPath || '')
+    let parent = await this.get(parentPath)
+
     if (!parent) {
-      await this.mkdir(parentPath || '')
+      await this.mkdir(parentPath)
+      parent = await this.get(parentPath)
     } else if (check.isFile(parent)) {
-      throw new Error(`Can not \`mv\` to a file: ${parentPath || ''}`)
+      throw new Error(`Can not \`mv\` to a file: ${parentPath}`)
     }
 
-    await this.rmRecurse(from, null)
     const toParts = pathUtil.splitParts(to)
 
-    const directChild = await [...toParts].reverse().reduce((acc, part, idx) => {
+    await this.rm(from)
+    await [...toParts].reverse().reduce((acc, part, idx) => {
       return acc.then(async child => {
         const childParentParts = toParts.slice(0, -(idx + 1))
         const tree = childParentParts.length
@@ -142,7 +146,6 @@ abstract class BaseTree implements Tree, UnixTree {
 
         if (tree && !check.isFile(tree)) {
           await tree.updateDirectChild(child, part, null)
-          await tree.put()
           return tree
         } else {
           throw new Error("Failed to update tree while moving node")
