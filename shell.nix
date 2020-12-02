@@ -8,6 +8,6 @@ pkgs.mkShell {
   buildInputs = [
     pkgs.just
     unstable.yarn
-    unstable.nodejs-10_x
+    unstable.nodejs-14_x
   ];
 }
