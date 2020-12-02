@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import * as base64 from './base64'
 
 test('can decode an encoded string', () => {

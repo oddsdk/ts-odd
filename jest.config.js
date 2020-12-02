@@ -5,7 +5,8 @@ module.exports = {
 
   moduleFileExtensions: ['js', 'ts'],
 
-  testEnvironment: "jsdom",
+  preset: 'jest-puppeteer',
+
   testPathIgnorePatterns: ['/node_modules/'],
-  testRegex: '(/test/.*|\\.(test|spec))\\.(ts|tsx|js)$'
+  testRegex: '(/tests/.*|\\.(test|spec))\\.(ts|tsx|js)$'
 }
