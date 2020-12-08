@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.20.5
+
+Adds the `read` and `write` methods to trees.
+
+
 ### v0.20.4
 
 Fix `mv` issue.

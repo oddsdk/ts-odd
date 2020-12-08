@@ -161,6 +161,14 @@ abstract class BaseTree implements Tree, UnixTree {
     return node !== null
   }
 
+  read(path: string): Promise<Tree | File | null> {
+    return this.get(path)
+  }
+
+  write(path: string, content: FileContent): Promise<this> {
+    return this.add(path, content)
+  }
+
   async getOrCreateDirectChild(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree | File> {
     const node = await this.getDirectChild(name)
     return node !== null
