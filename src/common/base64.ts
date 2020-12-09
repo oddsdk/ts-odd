@@ -1,5 +1,5 @@
 export function urlDecode(a: string): string {
-  return atob(a.replace(/_/g, "/").replace(/-/g, "+"))
+  return atob(makeUrlUnsafe(a))
 }
 
 export function urlEncode(b: string): string {
