@@ -86,7 +86,7 @@ export class FileSystem {
 
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
-      if (window.navigator.onLine) return dataRoot.update(cid, proof)
+      if (globalThis.navigator.onLine) return dataRoot.update(cid, proof)
       this.publishWhenOnline.push([ cid, proof ])
     }, false)
 
@@ -94,7 +94,7 @@ export class FileSystem {
     this.publishHooks.push(updateDataRootWhenOnline)
 
     // Publish when coming back online
-    window.addEventListener('online', () => this._whenOnline())
+    globalThis.addEventListener('online', () => this._whenOnline())
   }
 
 
@@ -146,7 +146,7 @@ export class FileSystem {
    * The only function of this is to stop listing to online/offline events.
    */
   deactivate(): void {
-    window.removeEventListener('online', this._whenOnline)
+    globalThis.removeEventListener('online', this._whenOnline)
   }
 
 

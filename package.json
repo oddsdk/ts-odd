@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.20.5",
+  "version": "0.21.0",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -75,17 +75,19 @@
     "rollup-plugin-typescript2": "^0.26.0",
     "typedoc": "^0.17.8",
     "typedoc-plugin-markdown": "^2.3.1",
-    "typescript": "^3.8.2",
+    "typescript": "^4.0.5",
     "typescript-documentation": "^2.0.0",
     "yarn": "^1.22.4"
   },
   "dependencies": {
     "base58-universal": "^1.0.0",
     "borc": "^2.1.1",
+    "buffer": "^6.0.3",
+    "cids": "^1.0.2",
     "fission-bloom-filters": "^1.4.0",
-    "ipld-dag-pb": "^0.18.2",
-    "keystore-idb": "^0.13.5",
-    "load-script2": "^2.0.5",
+    "ipfs-message-port-client": "0.4.3",
+    "ipld-dag-pb": "^0.20.0",
+    "keystore-idb": "0.14.0",
     "localforage": "^1.7.3",
     "make-error": "^1.3.6",
     "throttle-debounce": "^2.2.1"

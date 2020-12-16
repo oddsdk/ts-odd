@@ -25,13 +25,15 @@ export async function authenticatedUsername(): Promise<string | null> {
  *
  * Removes any trace of the user and redirects to the lobby.
  */
-export async function leave(): Promise<void> {
+export async function leave({ withoutRedirect }: { withoutRedirect: boolean }): Promise<void> {
   await localforage.removeItem(USERNAME_STORAGE_KEY)
   await ucan.clearStorage()
   await cidLog.clear()
   await keystore.clear()
 
-  window.location.href = setup.endpoints.lobby
+  if (!withoutRedirect && globalThis.location) {
+    globalThis.location.href = setup.endpoints.lobby
+  }
 }
 
 /**

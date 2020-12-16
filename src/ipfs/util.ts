@@ -1,6 +1,7 @@
 import dagPB from 'ipld-dag-pb'
 import { DAGNode, RawDAGNode, DAGLink, RawDAGLink } from './types'
 
+
 export const rawToDAGLink = (raw: RawDAGLink): DAGLink => {
   return new dagPB.DAGLink(raw.Name, raw.Tsize, raw.Hash)
 }

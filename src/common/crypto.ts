@@ -1,7 +1,7 @@
 import utils from 'keystore-idb/utils'
 
 export const sha256 = async (buf: ArrayBuffer): Promise<ArrayBuffer> => {
-  return window.crypto.subtle.digest(
+  return globalThis.crypto.subtle.digest(
     {
         name: "SHA-256",
     },

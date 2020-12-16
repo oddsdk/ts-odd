@@ -31,7 +31,7 @@ The Fission webnative SDK offers tools for:
 import * as wn from 'webnative'
 
 // Browser/UMD build
-const wn = self.webnative
+const wn = globalThis.webnative
 ```
 
 See [`docs/`](docs/) for more detailed documentation based on the source code.
