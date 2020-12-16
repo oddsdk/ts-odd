@@ -43,9 +43,9 @@ export type RawDAGLink = {
 
 export interface DagAPI {
   put(dagNode: unknown, options?: unknown): Promise<CIDObj>
-  get(cid: string | CID, path?: string, options?: unknown): Promise<{ value: unknown; remainderPath: string }>
+  get(cid: string | CID | CIDObj, path?: string, options?: unknown): Promise<RawDAGNode>
   resolve(cid: string | CID | CIDObj): Promise<{ cid: CIDObj }>
-  tree(cid: string | CID, path?: string, options?: unknown): Promise<Array<string>>
+  tree(cid: string | CID | CIDObj, path?: string, options?: unknown): Promise<Array<string>>
 }
 
 export interface FilesAPI {
@@ -70,7 +70,6 @@ export type MultibaseName = string
 export type CIDObj = {
   codec: Codec
   multibaseName: MultibaseName
-  string: CID
   version: number
   toV1(): CIDObj
   toString(): string

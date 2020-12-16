@@ -1,6 +1,8 @@
+import CIDObj from 'cids'
 import dagPB from 'ipld-dag-pb'
+
 import { get as getIpfs } from './config'
-import { CID, FileContent, DAGNode, UnixFSFile, DAGLink, AddResult, RawDAGNode } from './types'
+import { CID, FileContent, DAGNode, UnixFSFile, DAGLink, AddResult } from './types'
 import util from './util'
 import { DAG_NODE_DATA } from './constants'
 
@@ -48,8 +50,9 @@ export const ls = async (cid: CID): Promise<UnixFSFile[]> => {
 export const dagGet = async (cid: CID): Promise<DAGNode> => {
   const ipfs = await getIpfs()
   await attemptPin(cid)
-  const raw = await ipfs.dag.get(cid) as RawDAGNode
-  return util.rawToDAGNode(raw)
+  const raw = await ipfs.dag.get(new CIDObj(cid))
+  const node = util.rawToDAGNode(raw)
+  return node
 }
 
 export const dagPut = async (node: DAGNode): Promise<AddResult> => {
