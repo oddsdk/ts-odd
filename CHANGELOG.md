@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.21.0
+
+Local IPFS data is shared across all browser tabs through the use of a shared web worker.
+
+
+
 ### v0.20.5
 
 Adds the `read` and `write` methods to trees.
