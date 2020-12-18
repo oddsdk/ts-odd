@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.21.1
+
+Fix issue with `leave` function, `withoutRedirect` option should not be required.
+
+
 ### v0.21.0
 
 Local IPFS data is shared across all browser tabs through the use of a shared web worker.
