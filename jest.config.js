@@ -8,5 +8,6 @@ module.exports = {
   preset: 'jest-puppeteer',
 
   testPathIgnorePatterns: ['/node_modules/'],
-  testRegex: '(/tests/.*|\\.(test|spec))\\.(ts|tsx|js)$'
+  testRegex: '(/tests/.*\\.test|\\.(test|spec))\\.(ts|tsx|js)$',
+  testTimeout: 120000
 }
