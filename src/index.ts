@@ -75,6 +75,18 @@ export type Continuation = {
 
 
 
+// ERRORS
+
+
+/**
+ * Initialisation error
+ */
+ export enum InitialisationError {
+   UnsupportedBrowser = "UNSUPPORTED_BROWSER"
+ }
+
+
+
 // INTIALISE
 
 
@@ -106,6 +118,12 @@ export async function initialise(
       : await loadFileSystem(permissions, username)
   }
 
+  // Check if browser is supported
+  if (isSupported() === false) {
+    throw InitialisationError.UnsupportedBrowser
+  }
+
+  // URL things
   const url = new URL(window.location.href)
   const cancellation = url.searchParams.get("cancelled")
   const ucans = url.searchParams.get("ucans")
@@ -171,6 +189,15 @@ export { initialise as initialize }
 
 
 
+// SUPPORTED
+
+
+export function isSupported(): boolean {
+  return globalThis.isSecureContext && localforage.supports(localforage.INDEXEDDB)
+}
+
+
+
 // EXPORT
 
 
@@ -193,7 +220,7 @@ export * as keystore from './keystore'
 
 
 
-// ㊙️
+// ㊙️  ⚛  SCENARIOS
 
 
 function scenarioAuthSucceeded(
