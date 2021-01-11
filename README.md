@@ -87,6 +87,8 @@ switch (state.scenario) {
 
 `redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes a second, optional, parameter, the url that the lobby should redirect back to (the default is `location.href`).
 
+`initialise` will return a rejected Promise if the browser, or context, is not supported.
+
 
 
 # Web Native File System
