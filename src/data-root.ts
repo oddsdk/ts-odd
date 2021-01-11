@@ -85,9 +85,6 @@ export async function update(
   if (fetchController) fetchController.abort()
   fetchController = new AbortController()
 
-  // Ensure peer connection
-  await ipfs.reconnect()
-
   // Make API call
   await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
     headers: async () => {
@@ -112,10 +109,11 @@ export async function update(
     method: 'PATCH',
     signal: fetchController.signal
 
-  })
+  }).then((response: Response) => {
+    if (response.status < 300) debug.log("🚀 DNSLink updated:", cid)
+    else debug.log("💥  Failed to update DNSLink for:", cid)
 
-  // Debug
-  debug.log("🚀 DNSLink updated:", cid)
+  })
 }
 
 
@@ -136,17 +134,23 @@ async function fetchWithRetry(
   retryOptions: RetryOptions,
   fetchOptions: RequestInit,
   retry: number = 0
-) {
+): Promise<Response> {
   const headers = await retryOptions.headers()
   const response = await fetch(url, {
     ...fetchOptions,
     headers: { ...fetchOptions.headers, ...headers }
   })
 
-  if (retryOptions.retryOn.includes(response.status) && retry < retryOptions.retries) {
-    await new Promise((resolve, reject) => setTimeout(
-      () => fetchWithRetry(url, retryOptions, fetchOptions, retry + 1).then(resolve, reject),
-      retryOptions.retryDelay
-    ))
+  if (retryOptions.retryOn.includes(response.status)) {
+    if (retry < retryOptions.retries) {
+      return await new Promise((resolve, reject) => setTimeout(
+        () => fetchWithRetry(url, retryOptions, fetchOptions, retry + 1).then(resolve, reject),
+        retryOptions.retryDelay
+      ))
+    } else {
+      throw new Error("Too many retries for fetch")
+    }
   }
+
+  return response
 }

@@ -80,10 +80,6 @@ export const size = async (cid: CID): Promise<number> => {
   return stat.cumulativeSize
 }
 
-export const reconnect = async (): Promise<void> => {
-  await getIpfs()
-}
-
 export const attemptPin = async (cid: CID): Promise<void> => {
   const ipfs = await getIpfs()
   try {
