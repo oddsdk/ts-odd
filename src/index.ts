@@ -82,6 +82,7 @@ export type Continuation = {
  * Initialisation error
  */
  export enum InitialisationError {
+   InsecureContext = "INSECURE_CONTEXT",
    UnsupportedBrowser = "UNSUPPORTED_BROWSER"
  }
 
@@ -119,9 +120,8 @@ export async function initialise(
   }
 
   // Check if browser is supported
-  if (isSupported() === false) {
-    throw InitialisationError.UnsupportedBrowser
-  }
+  if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
+  if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
 
   // URL things
   const url = new URL(window.location.href)
@@ -192,8 +192,16 @@ export { initialise as initialize }
 // SUPPORTED
 
 
-export function isSupported(): boolean {
-  return globalThis.isSecureContext && localforage.supports(localforage.INDEXEDDB)
+export async function isSupported(): Promise<boolean> {
+  return localforage.supports(localforage.INDEXEDDB)
+
+    // Firefox in private mode can't use indexedDB properly,
+    // so we test if we can actually make a database.
+    && await (() => new Promise(resolve => {
+      const db = indexedDB.open("testDatabase")
+      db.onsuccess = () => resolve(true)
+      db.onerror = () => resolve(false)
+    }))() as boolean
 }
 
 

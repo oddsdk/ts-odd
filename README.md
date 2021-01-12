@@ -56,6 +56,18 @@ const state = await wn.initialise({
       publicPaths: [ "Mixtapes" ]
     }
   }
+
+}).catch(err => {
+  switch (err) {
+    case wn.InitialisationError.InsecureContext:
+      // We need a secure context to do cryptography
+      // Usually this means we need HTTPS or localhost
+
+    case wn.InitialisationError.UnsupportedBrowser:
+      // Browser not supported.
+      // Example: Firefox private mode can't use indexedDB.
+  }
+
 })
 
 
