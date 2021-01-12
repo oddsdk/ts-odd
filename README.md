@@ -56,6 +56,18 @@ const state = await wn.initialise({
       publicPaths: [ "Mixtapes" ]
     }
   }
+
+}).catch(err => {
+  switch (err) {
+    case wn.InitialisationError.InsecureContext:
+      // We need a secure context to do cryptography
+      // Usually this means we need HTTPS or localhost
+
+    case wn.InitialisationError.UnsupportedBrowser:
+      // Browser not supported.
+      // Example: Firefox private mode can't use indexedDB.
+  }
+
 })
 
 
@@ -86,6 +98,8 @@ switch (state.scenario) {
 ```
 
 `redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes a second, optional, parameter, the url that the lobby should redirect back to (the default is `location.href`).
+
+`initialise` will return a rejected Promise if the browser, or context, is not supported.
 
 
 

@@ -210,6 +210,9 @@ export class FileSystem {
     if (!sameTree) {
       throw new Error("`mv` is only supported on the same tree for now")
     }
+    if (await this.exists(to)) {
+      throw new Error("Destination already exists")
+    }
     await this.runOnTree(from, true, (tree, relPath) => {
       const { nextPath } = pathUtil.takeHead(to)
       return tree.mv(relPath, nextPath || '')

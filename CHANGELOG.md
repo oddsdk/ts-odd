@@ -1,5 +1,13 @@
 # Changelog
 
+### v0.21.2
+
+- `fs.mv` will no longer overwrite existing files, but instead throw an error.
+- `initialise` will return a rejected Promise if the browser, or context, is not supported.
+- DNSLink updated debug statement will no longer be shown if it failed to update.
+- Hide iframe completely
+
+
 ### v0.21.1
 
 Fix issue with `leave` function, `withoutRedirect` option should not be required.

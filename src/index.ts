@@ -75,6 +75,19 @@ export type Continuation = {
 
 
 
+// ERRORS
+
+
+/**
+ * Initialisation error
+ */
+ export enum InitialisationError {
+   InsecureContext = "INSECURE_CONTEXT",
+   UnsupportedBrowser = "UNSUPPORTED_BROWSER"
+ }
+
+
+
 // INTIALISE
 
 
@@ -106,6 +119,11 @@ export async function initialise(
       : await loadFileSystem(permissions, username)
   }
 
+  // Check if browser is supported
+  if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
+  if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
+
+  // URL things
   const url = new URL(window.location.href)
   const cancellation = url.searchParams.get("cancelled")
   const ucans = url.searchParams.get("ucans")
@@ -171,6 +189,23 @@ export { initialise as initialize }
 
 
 
+// SUPPORTED
+
+
+export async function isSupported(): Promise<boolean> {
+  return localforage.supports(localforage.INDEXEDDB)
+
+    // Firefox in private mode can't use indexedDB properly,
+    // so we test if we can actually make a database.
+    && await (() => new Promise(resolve => {
+      const db = indexedDB.open("testDatabase")
+      db.onsuccess = () => resolve(true)
+      db.onerror = () => resolve(false)
+    }))() as boolean
+}
+
+
+
 // EXPORT
 
 
@@ -193,7 +228,7 @@ export * as keystore from './keystore'
 
 
 
-// ㊙️
+// ㊙️  ⚛  SCENARIOS
 
 
 function scenarioAuthSucceeded(
