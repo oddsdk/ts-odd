@@ -113,6 +113,10 @@ export async function update(
     if (response.status < 300) debug.log("🚀 DNSLink updated:", cid)
     else debug.log("💥  Failed to update DNSLink for:", cid)
 
+  }).catch(err => {
+    debug.log("💥  Failed to update DNSLink for:", cid)
+    console.error(err)
+
   })
 }
 
