@@ -9,7 +9,7 @@ import { DAG_NODE_DATA } from './constants'
 
 export const add = async (content: FileContent): Promise<AddResult> => {
   const ipfs = await getIpfs()
-  const result = await ipfs.add(content, { cidVersion: 1 })
+  const result = await ipfs.add(content, { cidVersion: 1, pin: true })
 
   return {
     cid: result.cid.toString(),
@@ -61,6 +61,7 @@ export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   // I think this is because UnixFS requires `dag-pb` & the gateway requires UnixFS for directory traversal
   const cidObj = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
   const cid = cidObj.toV1().toString()
+  await attemptPin(cid)
   const nodeSize = await size(cid)
   return {
     cid,
@@ -84,7 +85,9 @@ export const attemptPin = async (cid: CID): Promise<void> => {
   const ipfs = await getIpfs()
   try {
     await ipfs.pin.add(cid, { recursive: false })
-  }catch(_err) {
-    // don't worry about failed pins
+  } catch(err) {
+    if (!err.message || !err.message.includes("already pinned recursively")) {
+      throw new Error(err)
+    }
   }
 }
