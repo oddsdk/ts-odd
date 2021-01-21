@@ -1,7 +1,7 @@
-import babel from 'rollup-plugin-babel'
-import resolve from 'rollup-plugin-node-resolve'
-import commonjs from 'rollup-plugin-commonjs'
-import json from 'rollup-plugin-json'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
+import babel from '@rollup/plugin-babel'
+import commonjs from '@rollup/plugin-commonjs'
+import json from '@rollup/plugin-json'
 import inject from '@rollup/plugin-inject'
 import polyfills from 'rollup-plugin-node-polyfills'
 import typescript from 'rollup-plugin-typescript2'
@@ -28,10 +28,10 @@ const plugins = [
   typescript({ useTsconfigDeclarationDir: true }),
 
   // Node modules resolution
-  resolve({ browser: true, preferBuiltins: true }),
+  nodeResolve({ browser: true, preferBuiltins: false }),
 
   // // Let's transpile our own ES6 code into ES5
-  babel({ exclude: 'node_modules/**' }),
+  babel({ babelHelpers: "bundled", exclude: 'node_modules/**' }),
 
   // Most packages in node_modules are legacy CommonJS, so let's convert them to ES
   commonjs(),
