@@ -79,11 +79,12 @@ export async function update(
   const apiEndpoint = setup.endpoints.api
 
   // Debug
-  debug.log("🚀 Updating your DNSLink:", cid)
+  debug.log("🌊 Updating your DNSLink:", cid)
 
   // Cancel previous updates
   if (fetchController) fetchController.abort()
   fetchController = new AbortController()
+  const signal = fetchController.signal
 
   // Make API call
   await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
@@ -107,15 +108,19 @@ export async function update(
 
   }, {
     method: 'PATCH',
-    signal: fetchController.signal
+    signal
 
   }).then((response: Response) => {
-    if (response.status < 300) debug.log("🚀 DNSLink updated:", cid)
-    else debug.log("💥  Failed to update DNSLink for:", cid)
+    if (response.status < 300) debug.log("🪴 DNSLink updated:", cid)
+    else debug.log("🔥 Failed to update DNSLink for:", cid)
 
   }).catch(err => {
-    debug.log("💥  Failed to update DNSLink for:", cid)
-    console.error(err)
+    if (signal.aborted) {
+      debug.log("⛄️ Cancelling DNSLink update for:", cid)
+    } else {
+      debug.log("🔥 Failed to update DNSLink for:", cid)
+      console.error(err)
+    }
 
   })
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.21.3
+
+- IPFS connection and pinning improvements
+- Don't show the "failed to update dnslink" debug message when cancelling a dnslink update
+
+
 ### v0.21.2
 
 - `fs.mv` will no longer overwrite existing files, but instead throw an error.
