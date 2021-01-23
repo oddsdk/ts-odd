@@ -12,7 +12,7 @@ Fission helps developers build and scale their apps. We’re building a web nati
 
 ---
 
-**[Read the Guide for extended documentation and getting started information »](https://guide.fission.codes/webnative-sdk/getting-started-webnative-sdk)**
+**[Read the Guide for extended documentation and getting started information »](https://guide.fission.codes/developers/webnative)**
 
 ---
 
