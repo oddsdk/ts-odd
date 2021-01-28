@@ -1,0 +1,13 @@
+.*
+/*.config.ts
+Justfile
+/*.nix
+tsconfig.json
+tslint.json
+typedoc.json
+*.lock
+/tests
+/node_modules
+/nix
+/.github
+/src

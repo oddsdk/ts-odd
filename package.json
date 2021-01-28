@@ -8,9 +8,9 @@
     "IPFS",
     "files"
   ],
-  "main": "index.cjs.js",
-  "module": "index.es5.js",
-  "browser": "index.umd.js",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.es5.js",
+  "browser": "dist/index.umd.js",
   "typings": "types/index.d.ts",
   "author": "Daniel Holmgren <daniel@fission.codes>",
   "repository": {
@@ -30,8 +30,10 @@
     "start": "tsc -w",
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
-    "test:prod": "npm run build && npm run lint && npm run test -- --no-cache",
-    "precommit": "lint-staged"
+    "test:prod": "yarn run build && yarn run lint && yarn run test -- --no-cache",
+    "precommit": "lint-staged",
+    "publish-alpha": "yarn build && yarn docs && npm publish --tag alpha --dry-run",
+    "publish-latest": "yarn build && yarn docs && npm publish --tag latest --dry-run"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
