@@ -32,8 +32,8 @@
     "test:watch": "jest --coverage --watch",
     "test:prod": "yarn run build && yarn run lint && yarn run test -- --no-cache",
     "precommit": "lint-staged",
-    "publish-alpha": "yarn build && yarn docs && npm publish --tag alpha --dry-run",
-    "publish-latest": "yarn build && yarn docs && npm publish --tag latest --dry-run"
+    "publish-alpha": "yarn build && yarn docs && npm publish --tag alpha",
+    "publish-latest": "yarn build && yarn docs && npm publish --tag latest"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
