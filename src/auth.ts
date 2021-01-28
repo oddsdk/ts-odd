@@ -4,8 +4,8 @@ import * as cidLog from './common/cid-log'
 import * as common from './common'
 import * as did from './did'
 import * as keystore from './keystore'
-import * as ucan from './ucan/internal'
-import * as ucanApi from './ucan'
+import * as ucanInternal from './ucan/internal'
+import * as ucan from './ucan'
 import { api, UCANS_STORAGE_KEY, USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
@@ -28,7 +28,7 @@ export async function authenticatedUsername(): Promise<string | null> {
  */
 export async function leave({ withoutRedirect }: { withoutRedirect?: boolean } = {}): Promise<void> {
   await localforage.removeItem(USERNAME_STORAGE_KEY)
-  await ucan.clearStorage()
+  await ucanInternal.clearStorage()
   await cidLog.clear()
   await keystore.clear()
 
@@ -86,15 +86,15 @@ export async function redirectToLobby(
 export async function resendVerificationEmail(): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucan.lookupFilesystemUcan("*")
+  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
 
-  const jwt = await ucanApi.build({
+  const jwt = await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucanApi.encode(localUcan), 
+    proof: ucan.encode(localUcan), 
     potency: null
   })
 
