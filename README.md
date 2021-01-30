@@ -34,10 +34,6 @@ import * as wn from 'webnative'
 const wn = globalThis.webnative
 ```
 
-See [`docs/`](docs/) for more detailed documentation based on the source code.
-
-
-
 # Authentication
 
 ```ts
