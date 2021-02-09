@@ -5,14 +5,13 @@
     "src/ipfs/!(config.ts)",
     "src/keystore/!(config.ts)"
   ],
+  "entryPoints": [ "./src/index.ts" ],
   "excludeExternals": true,
-  "excludeNotExported": true,
+  "excludeInternal": true,
   "excludePrivate": true,
   "excludeProtected": true,
-  "inputFiles": [ "./src/index.ts" ],
-  "mode": "modules",
+  "includeVersion": true,
   "name": "Fission SDK",
   "out": "docs",
-  "readme": "none",
-  "stripInternal": true
+  "readme": "none"
 }
