@@ -11,6 +11,14 @@
   "main": "dist/index.cjs.js",
   "module": "dist/index.es5.js",
   "browser": "dist/index.umd.js",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "package.json",
+    "docs"
+  ],
   "typings": "types/index.d.ts",
   "author": "Daniel Holmgren <daniel@fission.codes>",
   "repository": {
@@ -32,6 +40,7 @@
     "test:watch": "jest --coverage --watch",
     "test:prod": "yarn run build && yarn run lint && yarn run test -- --no-cache",
     "precommit": "lint-staged",
+    "publish-dry": "yarn build && yarn docs && npm publish --dry-run",
     "publish-alpha": "yarn build && yarn docs && npm publish --tag alpha",
     "publish-latest": "yarn build && yarn docs && npm publish --tag latest"
   },
