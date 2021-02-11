@@ -5,6 +5,7 @@ import json from '@rollup/plugin-json'
 import inject from '@rollup/plugin-inject'
 import polyfills from 'rollup-plugin-node-polyfills'
 import typescript from 'rollup-plugin-typescript2'
+import { terser } from "rollup-plugin-terser"
 
 // Require understands JSON files.
 const pkg = require('./package.json')
@@ -53,7 +54,7 @@ const configUMD = {
     format: 'umd',
     sourcemap: true
   },
-  plugins,
+  plugins: [...plugins, terser()],
   external,
   context
 }
