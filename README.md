@@ -193,7 +193,7 @@ yarn test:watch
 # generate docs
 yarn docs
 
-# publish (run this script instead of npm publish!)
-just publish
-just publish-alpha
+# publish
+yarn publish-latest
+yarn publish-alpha
 ```
