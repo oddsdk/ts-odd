@@ -4,9 +4,8 @@ import * as cidLog from './common/cid-log'
 import * as common from './common'
 import * as did from './did'
 import * as keystore from './keystore'
-import * as ucanInternal from './ucan/internal'
-import * as ucan from './ucan'
-import { api, UCANS_STORAGE_KEY, USERNAME_STORAGE_KEY, Maybe } from './common'
+import * as ucan from './ucan/internal'
+import { USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
 
@@ -28,7 +27,7 @@ export async function authenticatedUsername(): Promise<string | null> {
  */
 export async function leave({ withoutRedirect }: { withoutRedirect?: boolean } = {}): Promise<void> {
   await localforage.removeItem(USERNAME_STORAGE_KEY)
-  await ucanInternal.clearStorage()
+  await ucan.clearStorage()
   await cidLog.clear()
   await keystore.clear()
 
@@ -75,33 +74,4 @@ export async function redirectToLobby(
     params
       .map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v))
       .join("&")
-}
-
-/**
- * Ask the fission server to send another verification email to the
- * user currently logged in.
- * 
- * Throws if the user is not logged in.
- */
-export async function resendVerificationEmail(): Promise<void> {
-  const apiEndpoint = setup.endpoints.api
-
-  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
-  if (localUcan === null) {
-    throw "Could not find your local UCAN"
-  }
-
-  const jwt = await ucan.build({
-    audience: await api.did(),
-    issuer: await did.ucan(),
-    proof: ucan.encode(localUcan), 
-    potency: null
-  })
-
-  await fetch(`${apiEndpoint}/user/email/resend`, {
-    method: 'POST',
-    headers: {
-      'authorization': `Bearer ${jwt}`
-    }
-  })
 }
