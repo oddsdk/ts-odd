@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.21.4
+
+Does not cancel data-root updates anymore, slightly increasing the performance of concurrent writes.
+
+
 ### v0.21.3
 
 - IPFS connection and pinning improvements
