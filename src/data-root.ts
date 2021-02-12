@@ -8,10 +8,6 @@ import { CID } from './ipfs'
 import { Maybe, api } from './common'
 import { setup } from './setup/internal'
 
-
-// Controller for data-root-update fetches
-let fetchController: Maybe<AbortController> = null
-
 /**
  * CID representing an empty string. We use to to speed up DNS propagation
  * However, we treat that as a null value in the code
@@ -81,11 +77,6 @@ export async function update(
   // Debug
   debug.log("🌊 Updating your DNSLink:", cid)
 
-  // Cancel previous updates
-  if (fetchController) fetchController.abort()
-  fetchController = new AbortController()
-  const signal = fetchController.signal
-
   // Make API call
   await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
     headers: async () => {
@@ -107,20 +98,15 @@ export async function update(
     retryOn: [ 502, 503, 504 ],
 
   }, {
-    method: 'PATCH',
-    signal
+    method: 'PATCH'
 
   }).then((response: Response) => {
     if (response.status < 300) debug.log("🪴 DNSLink updated:", cid)
     else debug.log("🔥 Failed to update DNSLink for:", cid)
 
   }).catch(err => {
-    if (signal.aborted) {
-      debug.log("⛄️ Cancelling DNSLink update for:", cid)
-    } else {
-      debug.log("🔥 Failed to update DNSLink for:", cid)
-      console.error(err)
-    }
+    debug.log("🔥 Failed to update DNSLink for:", cid)
+    console.error(err)
 
   })
 }
