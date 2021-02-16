@@ -6,6 +6,7 @@ import inject from '@rollup/plugin-inject'
 import polyfills from 'rollup-plugin-node-polyfills'
 import typescript from 'rollup-plugin-typescript2'
 import { terser } from "rollup-plugin-terser"
+import gzipPlugin from 'rollup-plugin-gzip'
 
 // Require understands JSON files.
 const pkg = require('./package.json')
@@ -54,7 +55,20 @@ const configUMD = {
     format: 'umd',
     sourcemap: true
   },
-  plugins: [...plugins, terser()],
+  plugins,
+  external,
+  context
+}
+
+const configUMDMinified = {
+  input,
+  output: {
+    name,
+    file: pkg.browser.replace(".js", ".min.js"),
+    format: 'umd',
+    sourcemap: true
+  },
+  plugins: [...plugins, terser(), gzipPlugin()],
   external,
   context
 }
@@ -84,4 +98,4 @@ const configCjsAndEs = {
   context
 }
 
-export default [configUMD, configCjsAndEs]
+export default [configUMD, configUMDMinified, configCjsAndEs]
