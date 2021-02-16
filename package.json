@@ -31,7 +31,7 @@
     "node": ">=10.21.0"
   },
   "scripts": {
-    "docs": "typedoc",
+    "docs": "rimraf docs && typedoc",
     "lint": "yarn eslint src/**/*.ts",
     "prebuild": "rimraf dist",
     "build": "tsc && rollup -c rollup.config.ts",
@@ -40,9 +40,10 @@
     "test:watch": "jest --coverage --watch",
     "test:prod": "yarn run build && yarn run lint && yarn run test -- --no-cache",
     "precommit": "lint-staged",
-    "publish-dry": "yarn build && yarn docs && npm publish --dry-run",
-    "publish-alpha": "yarn build && yarn docs && npm publish --tag alpha",
-    "publish-latest": "yarn build && yarn docs && npm publish --tag latest"
+    "prepublishOnly": "yarn build && yarn docs",
+    "publish-dry": "npm publish --dry-run",
+    "publish-alpha": "npm publish --tag alpha",
+    "publish-latest": "npm publish --tag latest"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
