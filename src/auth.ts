@@ -5,7 +5,7 @@ import * as common from './common'
 import * as did from './did'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
-import { UCANS_STORAGE_KEY, USERNAME_STORAGE_KEY, Maybe } from './common'
+import { USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
 

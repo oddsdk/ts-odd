@@ -1,6 +1,7 @@
 import * as dataRoot from '../data-root'
 import * as did from '../did'
 import * as ucan from '../ucan'
+import * as ucanInternal from '../ucan/internal'
 import { api } from '../common'
 import { setup } from '../setup/internal'
 
@@ -55,4 +56,36 @@ export function isUsernameValid(username: string): boolean {
          !username.endsWith("-") &&
          !!username.match(/[a-zA-Z1-9-]+/) &&
          !USERNAME_BLOCKLIST.includes(username)
+}
+
+/**
+ * Ask the fission server to send another verification email to the
+ * user currently logged in.
+ * 
+ * Throws if the user is not logged in.
+ */
+export async function resendVerificationEmail(): Promise<{ success: boolean }> {
+  const apiEndpoint = setup.endpoints.api
+
+  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
+  if (localUcan === null) {
+    throw "Could not find your local UCAN"
+  }
+
+  const jwt = await ucan.build({
+    audience: await api.did(),
+    issuer: await did.ucan(),
+    proof: ucan.encode(localUcan), 
+    potency: null
+  })
+
+  const response = await fetch(`${apiEndpoint}/user/email/resend`, {
+    method: 'POST',
+    headers: {
+      'authorization': `Bearer ${jwt}`
+    }
+  })
+  return {
+    success: response.status < 300
+  }
 }
