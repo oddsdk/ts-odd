@@ -31,7 +31,7 @@
     "node": ">=10.21.0"
   },
   "scripts": {
-    "docs": "rimraf docs && typedoc",
+    "docs": "rimraf docs && typedoc && typedoc --entryPoints ./src/fs --out docs/fs",
     "lint": "yarn eslint src/**/*.ts",
     "prebuild": "rimraf dist",
     "build": "tsc && rollup -c rollup.config.ts",

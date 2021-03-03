@@ -1,10 +1,4 @@
 {
-  "exclude": [
-    "src/common/**/*.ts",
-    "src/fs/!(filesystem.ts)",
-    "src/ipfs/!(config.ts)",
-    "src/keystore/!(config.ts)"
-  ],
   "entryPoints": [ "./src/index.ts" ],
   "excludeExternals": true,
   "excludeInternal": true,
