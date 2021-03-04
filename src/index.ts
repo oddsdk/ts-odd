@@ -4,7 +4,7 @@ import * as common from './common'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 
-import { READ_KEY_FROM_LOBBY_NAME, USERNAME_STORAGE_KEY, Maybe } from './common'
+import { USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
 import { loadFileSystem } from './filesystem'
 
@@ -134,12 +134,23 @@ export async function initialise(
   // Determine scenario
   if (ucans) {
     const newUser = url.searchParams.get("newUser") === "t"
-    const encryptedReadKey = url.searchParams.get("readKey") || ""
     const username = url.searchParams.get("username") || ""
-
     const ks = await keystore.get()
-    const readKey = await ks.decrypt(common.base64.makeUrlUnsafe(encryptedReadKey))
-    await ks.importSymmKey(readKey, READ_KEY_FROM_LOBBY_NAME)
+
+    const readKeysParam = url.searchParams.get("readKeys")
+    const encryptedReadKeys = readKeysParam
+      ? JSON.parse(atob(readKeysParam))
+      : {}
+
+    // Import all the read keys
+    await Object.entries(encryptedReadKeys).reduce(
+      (acc, [path, encryptedKey]) => acc.then(async col => {
+        const readKey = await ks.decrypt(common.base64.makeUrlUnsafe(encryptedKey as string))
+        await ks.importSymmKey(readKey, await keystore.keyNameForWnfsPath(path))
+      }),
+      Promise.resolve()
+    )
+
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
     if (autoRemoveUrlParams) {

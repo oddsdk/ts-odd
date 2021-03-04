@@ -10,6 +10,10 @@ export const getKeyByName = async (keyName: string): Promise<string> => {
   return ks.exportSymmKey(keyName)
 }
 
+export const keyNameForWnfsPath = async (path: string): Promise<string> => {
+  return `wnfs__read-key__${await sha256Str(path)}`
+}
+
 export const encrypt = async (data: Uint8Array, keyStr: string): Promise<Uint8Array> => {
   const key = await aes.importKey(keyStr, { length: SymmKeyLength.B256 })
   const encrypted = await aes.encryptBytes(data.buffer, key)

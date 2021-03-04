@@ -10,6 +10,7 @@ export * from './type-checks'
 export * from './util'
 export { api, arrbufs, base64, blob }
 
+// TODO: Remove once all related code has been removed
 export const READ_KEY_FROM_LOBBY_NAME = "filesystem-lobby"
 export const UCANS_STORAGE_KEY = "webnative.auth_ucans"
 export const USERNAME_STORAGE_KEY = "webnative.auth_username"
