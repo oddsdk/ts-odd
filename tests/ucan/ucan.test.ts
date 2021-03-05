@@ -5,14 +5,15 @@ describe('UCAN', () => {
   it('can build a UCAN', async () => {
     await loadWebnativePage()
 
-    const ucan = await page.evaluate(async () => {
-      return webnative.ucan.build({
+    const isValid = await page.evaluate(async () => {
+      const ucan = await webnative.ucan.build({
         audience: await randomRsaDid(),
         issuer: await webnative.did.ucan()
       })
+
+      return webnative.ucan.isValid(ucan)
     })
 
-    // TODO: replace with `isValid`
-    expect(ucan.length).toBeGreaterThan(100)
+    expect(isValid).toBe(true)
   })
 });

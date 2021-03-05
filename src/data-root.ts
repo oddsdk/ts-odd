@@ -3,9 +3,9 @@ import * as debug from './common/debug'
 import * as did from './did'
 import * as dns from './dns'
 import * as ucan from './ucan'
-import * as ipfs from './ipfs'
 import { CID } from './ipfs'
-import { Maybe, api } from './common'
+import { api } from './common'
+import { Ucan } from './ucan'
 import { setup } from './setup/internal'
 
 /**
@@ -70,7 +70,7 @@ export async function lookupOnFisson(
  */
 export async function update(
   cid: CID | string,
-  proof: string
+  proof: Ucan
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
@@ -80,16 +80,16 @@ export async function update(
   // Make API call
   await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
     headers: async () => {
-      const jwt = await ucan.build({
+      const jwt = ucan.encode(await ucan.build({
         audience: await api.did(),
         issuer: await did.ucan(),
         potency: "APPEND",
-        proof,
+        proofs: [proof],
 
         // TODO: Waiting on API change.
         //       Should be `username.fission.name/*`
-        resource: ucan.decode(proof).payload.rsc
-      })
+        resource: proof.payload.rsc
+      }))
 
       return { 'authorization': `Bearer ${jwt}` }
     },
@@ -117,9 +117,9 @@ export async function update(
 
 
 type RetryOptions = {
-  headers: () => Promise<{ [_: string]: string }>,
-  retries: number,
-  retryDelay: number,
+  headers: () => Promise<{ [_: string]: string }>
+  retries: number
+  retryDelay: number
   retryOn: Array<number>
 }
 
