@@ -6,7 +6,11 @@ import { base64 } from './common'
 
 // TYPES
 
-export type Fact = any
+export type SessionKey = {
+  sessionKey: string
+}
+
+export type Fact = SessionKey | Record<string, string>
 
 export type Resource =
   "*" | Record<string, string>
@@ -202,7 +206,7 @@ export function encode(ucan: Ucan): string {
 export function encodePayload(payload: UcanPayload): string {
   return base64.urlEncode(JSON.stringify({
     ...payload,
-    prf: payload.prf.map(encode)
+    prf: payload.prf.slice(1).map(encode) // TODO: 0.3.1 only supports a single proof.
   }))
 }
 
