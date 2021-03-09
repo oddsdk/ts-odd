@@ -10,9 +10,15 @@ export const join = (parts: string[]): string => {
 
 export const joinNoSuffix = (parts: string[]): string => {
   const joined = join(parts)
-  return joined[joined.length -1] === '/' 
+  return joined[joined.length -1] === '/'
           ? joined.slice(0, joined.length -1)
           : joined
+}
+
+export const parent = (path: string): string | null => {
+  const parts = splitParts(path)
+  if (parts.length < 2) return null
+  return join(parts.slice(0, -1))
 }
 
 type HeadParts = {

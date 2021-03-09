@@ -32,7 +32,7 @@ export default class PrivateTree extends BaseTree {
   key: string
   mmpt: MMPT
 
-  constructor({ mmpt, key, header}: ConstructorParams) {
+  constructor({ mmpt, key, header }: ConstructorParams) {
     super(semver.v1)
 
     this.children = {}
@@ -67,6 +67,10 @@ export default class PrivateTree extends BaseTree {
 
   static async fromBaseKey(mmpt: MMPT, key: string): Promise<PrivateTree> {
     const bareNameFilter = await namefilter.createBare(key)
+    return this.fromBareNameFilter(mmpt, bareNameFilter, key)
+  }
+
+  static async fromBareNameFilter(mmpt: MMPT, bareNameFilter: BareNameFilter, key: string): Promise<PrivateTree> {
     const revisionFilter = await namefilter.addRevision(bareNameFilter, key, 1)
     const name = await namefilter.toPrivateName(revisionFilter)
     const info = await protocol.priv.getByLatestName(mmpt, name, key)
@@ -75,7 +79,7 @@ export default class PrivateTree extends BaseTree {
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
 
-    return new PrivateTree({ mmpt, key, header: info })
+    return this.fromInfo(mmpt, key, info)
   }
 
   static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
@@ -85,7 +89,7 @@ export default class PrivateTree extends BaseTree {
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
 
-    return new PrivateTree({ mmpt, key, header: info })
+    return this.fromInfo(mmpt, key, info)
   }
 
   static async fromInfo(mmpt: MMPT, key: string, info: PrivateTreeInfo): Promise<PrivateTree> {

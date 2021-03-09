@@ -11,10 +11,12 @@ import PrivateTree from './v1/PrivateTree'
 import * as cidLog from '../common/cid-log'
 import * as dataRoot from '../data-root'
 import * as debug from '../common/debug'
+import * as identifiers from '../common/identifiers'
 import * as keystore from '../keystore'
 import * as pathUtil from './path'
 import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
+import * as ucanPermissions from '../ucan/permissions'
 
 import { Maybe } from '../common'
 import { CID, FileContent } from '../ipfs'
@@ -105,9 +107,9 @@ export class FileSystem {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { keyName = 'filesystem-root', permissions, localOnly } = opts
-    const key = await keystore.getKeyByName(keyName)
-    const root = await RootTree.empty({ key })
+    const { permissions, localOnly } = opts
+    const keys = permissions ? await permissionKeys(permissions) : {}
+    const root = await RootTree.empty({ keys })
 
     const fs = new FileSystem({
       root,
@@ -122,9 +124,9 @@ export class FileSystem {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { keyName = 'filesystem-root', permissions, localOnly } = opts
-    const key = await keystore.getKeyByName(keyName)
-    const root = await RootTree.fromCID({ cid, key })
+    const { permissions, localOnly } = opts
+    const keys = permissions ? await permissionKeys(permissions) : {}
+    const root = await RootTree.fromCID({ cid, keys })
 
     const fs = new FileSystem({
       root,
@@ -293,11 +295,20 @@ export class FileSystem {
       }
 
     } else if (head === Branch.Private) {
-      result = await fn(this.root.privateTree, relPath)
+      const [treePath, tree] = this.root.findPrivateTree(parts.slice(1))
+
+      if (!tree) {
+        throw new NoPermissionError("I don't have the necessary permissions to make these changes to the file system")
+      }
+
+      result = await fn(
+        tree,
+        relPath.replace(new RegExp("^" + treePath), "")
+      )
 
       if (isMutation && PrivateTree.instanceOf(result)) {
-        this.root.privateTree = result
-        const cid = await this.root.privateTree.put()
+        this.root.privateTrees[treePath] = result
+        const cid = await result.put()
         await this.root.updatePuttable(Branch.Private, this.root.mmpt)
         await this.root.addPrivateLogEntry(cid)
       }
@@ -342,4 +353,13 @@ function appPath(permissions: Permissions): ((path?: string | Array<string>) => 
       + (permissions.app ? permissions.app.name : '')
       + (path ? '/' + (typeof path == 'object' ? path.join('/') : path) : '')
   )
+}
+
+
+async function permissionKeys(permissions: Permissions): Promise<Record<string, string>> {
+  return ucanPermissions.paths(permissions).reduce(async (acc, p) => {
+    if (p.startsWith('/public')) return acc
+    const name = await identifiers.readKey({ path: p })
+    return acc.then(async map => ({ ...map, [p]: (await keystore.getKeyByName(name)) }))
+  }, Promise.resolve({}))
 }

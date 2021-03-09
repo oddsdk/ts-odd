@@ -1,6 +1,9 @@
 import localforage from 'localforage'
+import utils from 'keystore-idb/utils'
+import { CharSize } from 'keystore-idb/types'
 
 import * as common from './common'
+import * as identifiers from './common/identifiers'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 
@@ -136,26 +139,49 @@ export async function initialise(
     const newUser = url.searchParams.get("newUser") === "t"
     const username = url.searchParams.get("username") || ""
     const ks = await keystore.get()
+    const classifiedParam = url.searchParams.get("classified")
 
-    const readKeysParam = url.searchParams.get("readKeys")
-    const encryptedReadKeys = readKeysParam
-      ? JSON.parse(atob(readKeysParam))
+    // Import all the read keys & bare name filters
+    const classifiedInfo = classifiedParam
+      ? JSON.parse(common.base64.urlDecode(classifiedParam))
       : {}
 
-    // Import all the read keys
-    await Object.entries(encryptedReadKeys).reduce(
-      (acc, [path, encryptedKey]) => acc.then(async col => {
-        const readKey = await ks.decrypt(common.base64.makeUrlUnsafe(encryptedKey as string))
-        await ks.importSymmKey(readKey, await keystore.keyNameForWnfsPath(path))
-      }),
-      Promise.resolve()
+    const iv = utils.base64ToArrBuf(classifiedInfo.iv)
+    const rawSessionKey = await ks.decrypt(classifiedInfo.sessionKey)
+    const sessionKey = await crypto.subtle.importKey(
+      "raw",
+      utils.base64ToArrBuf(rawSessionKey),
+      "AES-GCM",
+      false,
+      [ "encrypt", "decrypt" ]
     )
 
+    const secrets: Record<string, { key: string, bareNameFilter: string }> =
+      JSON.parse(utils.arrBufToStr(await crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: iv
+        },
+        sessionKey,
+        utils.base64ToArrBuf(classifiedInfo.secrets)
+      ), CharSize.B8))
+
+    await Promise.all(
+      Object.entries(secrets).map(async ([ path, { bareNameFilter, key } ]) => {
+        const readKeyId = await identifiers.readKey({ path })
+        const bareNameFilterId = await identifiers.bareNameFilter({ path })
+
+        await ks.importSymmKey(key, readKeyId)
+        await localforage.setItem(bareNameFilterId, bareNameFilter)
+      })
+    )
+
+    // Carry on
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
     if (autoRemoveUrlParams) {
+      url.searchParams.delete("classified")
       url.searchParams.delete("newUser")
-      url.searchParams.delete("readKey")
       url.searchParams.delete("ucans")
       url.searchParams.delete("username")
       history.replaceState(null, document.title, url.toString())
