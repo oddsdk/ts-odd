@@ -159,6 +159,7 @@ export default class RootTree implements Puttable {
 
   // PRIVATE TREES
   // -------------
+
   findPrivateTree(path: string[]): [string, PrivateTree | null] {
     return findPrivateTree(this.privateTrees, path)
   }
