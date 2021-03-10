@@ -307,10 +307,10 @@ export class FileSystem {
 
       if (isMutation && PrivateTree.instanceOf(result)) {
         this.root.privateTrees[treePath] = result
-        const cid = await result.put()
+        await result.put()
         await this.root.updatePuttable(Branch.Private, this.root.mmpt)
 
-        // TODO: Not sure about this
+        const cid = await this.root.mmpt.put()
         await this.root.addPrivateLogEntry(cid)
       }
 
