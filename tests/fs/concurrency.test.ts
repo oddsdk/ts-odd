@@ -6,7 +6,14 @@ describe("FS", () => {
     await loadWebnativePage()
 
     const string = await page.evaluate(async () => {
-      const fs = await new webnative.fs.empty({ localOnly: true })
+      const fs = await new webnative.fs.empty({
+        localOnly: true,
+        permissions: {
+          fs: {
+            privatePaths: [ "/" ]
+          }
+        }
+      })
 
       await Promise.all([
         fs.write("private/a", "x")
