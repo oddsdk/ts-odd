@@ -71,14 +71,14 @@ export async function lookupOnFisson(
 export async function update(
   cid: CID | string,
   proof: Ucan
-): Promise<void> {
+): Promise<{ success: boolean }> {
   const apiEndpoint = setup.endpoints.api
 
   // Debug
   debug.log("🌊 Updating your DNSLink:", cid)
 
   // Make API call
-  await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
+  return await fetchWithRetry(`${apiEndpoint}/user/data/${cid}`, {
     headers: async () => {
       const jwt = ucan.encode(await ucan.build({
         audience: await api.did(),
@@ -103,10 +103,11 @@ export async function update(
   }).then((response: Response) => {
     if (response.status < 300) debug.log("🪴 DNSLink updated:", cid)
     else debug.log("🔥 Failed to update DNSLink for:", cid)
+    return { success: response.status < 300 }
 
   }).catch(err => {
     debug.log("🔥 Failed to update DNSLink for:", cid)
-    console.error(err)
+    return { success: false }
 
   })
 }
