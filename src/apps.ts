@@ -25,7 +25,7 @@ export async function index(): Promise<Array<App>> {
   const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proofs: [localUcan], 
+    proof: localUcan, 
     potency: null
   }))
 
@@ -58,7 +58,7 @@ export async function create(
   const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proofs: [localUcan], 
+    proof: localUcan, 
     potency: null
   }))
 
@@ -92,7 +92,7 @@ export async function deleteByURL(
   const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proofs: [localUcan], 
+    proof: localUcan, 
     potency: null
   }))
 

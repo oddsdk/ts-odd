@@ -27,7 +27,7 @@ export type UcanPayload = {
   fct: Array<Fact>
   iss: string
   nbf: number
-  prf: Array<Ucan>
+  prf: Ucan | undefined
   ptc: string | undefined | null 
   rsc: Resource
 }
@@ -78,7 +78,7 @@ export async function build({
   issuer,
   lifetimeInSeconds = 30,
   potency = 'APPEND',
-  proofs = [],
+  proof,
   resource = '*'
 }: {
   addSignature?: boolean
@@ -87,7 +87,7 @@ export async function build({
   issuer: string
   lifetimeInSeconds?: number
   potency?: string | null
-  proofs?: Array<Ucan>
+  proof?: Ucan
   resource?: Resource
 }): Promise<Ucan> {
   const ks = await keystore.get()
@@ -104,10 +104,12 @@ export async function build({
   let exp = currentTimeInSeconds + lifetimeInSeconds
   let nbf = currentTimeInSeconds - 60
 
-  proofs.forEach(prf => {
-    exp = Math.min(prf.payload.exp, exp)
-    nbf = Math.max(prf.payload.nbf || nbf, nbf)
-  })
+  if (proof) {
+    const prf = proof.payload
+
+    exp = Math.min(prf.exp, exp)
+    nbf = Math.max(prf.nbf, nbf)
+  }
 
   // Payload
   const payload = {
@@ -116,7 +118,7 @@ export async function build({
     fct: facts,
     iss: issuer || await did.ucan(),
     nbf: nbf,
-    prf: proofs,
+    prf: proof,
     ptc: potency,
     rsc: resource,
   }
@@ -169,7 +171,7 @@ export function decode(ucan: string): Ucan  {
     header,
     payload: {
       ...payload,
-      prf: payload.prf.map(decode)
+      prf: decode(payload.prf)
     },
     signature: split[2] || null
   }
@@ -206,7 +208,7 @@ export function encode(ucan: Ucan): string {
 export function encodePayload(payload: UcanPayload): string {
   return base64.urlEncode(JSON.stringify({
     ...payload,
-    prf: payload.prf.slice(1).map(encode) // TODO: 0.3.1 only supports a single proof.
+    prf: payload.prf ? encode(payload.prf) : undefined// TODO: 0.3.1 only supports a single proof.
   }))
 }
 
@@ -238,18 +240,14 @@ export function isExpired(ucan: Ucan): boolean {
 
   if (!a) return a
 
+  if (!ucan.payload.prf) return true
+
   // Verify proofs
-  const b = ucan.payload.prf
-    .map(prf => prf.payload.aud)
-    .every(a => a === ucan.payload.iss)
+  const b = ucan.payload.prf.payload.aud === ucan.payload.iss
 
   if (!b) return b
 
-  const c = ucan.payload.prf.map(isValid)
-
-  return await Promise
-    .all(c)
-    .then(list => list.every(i => i))
+  return await isValid(ucan.payload.prf)
 }
 
 /**

@@ -75,7 +75,7 @@ export async function resendVerificationEmail(): Promise<{ success: boolean }> {
   const jwt = await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proofs: [localUcan], 
+    proof: localUcan, 
     potency: null
   })
 

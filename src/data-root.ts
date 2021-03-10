@@ -84,7 +84,7 @@ export async function update(
         audience: await api.did(),
         issuer: await did.ucan(),
         potency: "APPEND",
-        proofs: [proof],
+        proof,
 
         // TODO: Waiting on API change.
         //       Should be `username.fission.name/*`
