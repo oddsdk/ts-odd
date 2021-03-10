@@ -19,10 +19,10 @@ export async function createAccount(
 ): Promise<{ success: boolean }> {
   const apiEndpoint = setup.endpoints.api
 
-  const jwt = await ucan.build({
+  const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-  })
+  }))
 
   const response = await fetch(`${apiEndpoint}/user`, {
     method: 'PUT',
@@ -75,7 +75,7 @@ export async function resendVerificationEmail(): Promise<{ success: boolean }> {
   const jwt = await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: ucan.encode(localUcan), 
+    proof: localUcan, 
     potency: null
   })
 

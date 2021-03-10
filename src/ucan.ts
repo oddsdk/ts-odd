@@ -1,35 +1,42 @@
 import { CryptoSystem } from 'keystore-idb/types'
 
+import * as did from './did'
 import * as keystore from './keystore'
 import { base64 } from './common'
 
-
 // TYPES
 
+export type SessionKey = {
+  sessionKey: string
+}
+
+export type Fact = SessionKey | Record<string, string>
 
 export type Resource =
   "*" | Record<string, string>
 
-export type Ucan = {
-  header: {
-    alg: string,
-    typ: string,
-    uav: string
-  },
-  payload: {
-    aud: string,
-    exp: number,
-    fct: Array<any>,
-    iss: string,
-    nbf: number,
-    prf: string | undefined,
-    ptc: string | undefined | null,
-    rsc: Resource
-  },
-  signature: string
+export type UcanHeader = {
+  alg: string
+  typ: string 
+  uav: string
 }
 
+export type UcanPayload = {
+  aud: string
+  exp: number
+  fct: Array<Fact>
+  iss: string
+  nbf: number
+  prf: Ucan | undefined
+  ptc: string | undefined | null 
+  rsc: Resource
+}
 
+export type Ucan = {
+  header: UcanHeader
+  payload: UcanPayload
+  signature: string | null
+}
 
 // CONSTANTS
 
@@ -65,6 +72,7 @@ export const WNFS_PREFIX = "floofs"
  *
  */
 export async function build({
+  addSignature = true,
   audience,
   facts = [],
   issuer,
@@ -73,14 +81,15 @@ export async function build({
   proof,
   resource = '*'
 }: {
+  addSignature?: boolean
   audience: string
-  facts?: Array<any>
+  facts?: Array<Fact>
   issuer: string
   lifetimeInSeconds?: number
   potency?: string | null
-  proof?: string
+  proof?: Ucan
   resource?: Resource
-}): Promise<string> {
+}): Promise<Ucan> {
   const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
 
@@ -96,7 +105,7 @@ export async function build({
   let nbf = currentTimeInSeconds - 60
 
   if (proof) {
-    const prf = decode(proof).payload
+    const prf = proof.payload
 
     exp = Math.min(prf.exp, exp)
     nbf = Math.max(prf.nbf, nbf)
@@ -107,25 +116,20 @@ export async function build({
     aud: audience,
     exp: exp,
     fct: facts,
-    iss: issuer,
+    iss: issuer || await did.ucan(),
     nbf: nbf,
     prf: proof,
     ptc: potency,
     rsc: resource,
   }
 
-  // Encode parts in JSON & Base64Url
-  const encodedHeader = base64.urlEncode(JSON.stringify(header))
-  const encodedPayload = base64.urlEncode(JSON.stringify(payload))
-
-  // Signature
-  const signed = await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
-  const encodedSignature = base64.makeUrlSafe(signed)
-
-  // Make JWT
-  return encodedHeader + '.' +
-         encodedPayload + '.' +
-         encodedSignature
+  const signature = addSignature ? await sign(header, payload) : null
+  
+  return {
+    header,
+    payload,
+    signature
+  }
 }
 
 /**
@@ -165,8 +169,11 @@ export function decode(ucan: string): Ucan  {
 
   return {
     header,
-    payload,
-    signature: split[2]
+    payload: {
+      ...payload,
+      prf: decode(payload.prf)
+    },
+    signature: split[2] || null
   }
 }
 
@@ -176,12 +183,33 @@ export function decode(ucan: string): Ucan  {
  * @param ucan The UCAN to encode
  */
 export function encode(ucan: Ucan): string {
-  const encodedHeader = base64.urlEncode(JSON.stringify(ucan.header))
-  const encodedPayload = base64.urlEncode(JSON.stringify(ucan.payload))
+  const encodedHeader = encodeHeader(ucan.header)
+  const encodedPayload = encodePayload(ucan.payload)
 
   return encodedHeader + '.' +
          encodedPayload + '.' +
-         ucan.signature
+         (ucan.signature || sign(ucan.header, ucan.payload))
+}
+
+/**
+ * Encode the header of a UCAN.
+ *
+ * @param header The UcanHeader to encode
+ */
+ export function encodeHeader(header: UcanHeader): string {
+  return base64.urlEncode(JSON.stringify(header))
+}
+
+/**
+ * Encode the payload of a UCAN.
+ *
+ * @param payload The UcanPayload to encode
+ */
+export function encodePayload(payload: UcanPayload): string {
+  return base64.urlEncode(JSON.stringify({
+    ...payload,
+    prf: payload.prf ? encode(payload.prf) : undefined// TODO: 0.3.1 only supports a single proof.
+  }))
 }
 
 /**
@@ -191,6 +219,35 @@ export function encode(ucan: Ucan): string {
  */
 export function isExpired(ucan: Ucan): boolean {
   return ucan.payload.exp <= Math.floor(Date.now() / 1000)
+}
+
+/**
+ * Check if a UCAN is valid.
+ *
+ * @param ucan The decoded UCAN
+ * @param did The DID associated with the signature of the UCAN
+ */
+ export async function isValid(ucan: Ucan): Promise<boolean> {
+  const encodedHeader = encodeHeader(ucan.header)
+  const encodedPayload = encodePayload(ucan.payload)
+
+  const a = await did.verifySignedData({
+    charSize: 8,
+    data: `${encodedHeader}.${encodedPayload}`,
+    did: ucan.payload.iss,
+    signature: ucan.signature || ""
+  })
+
+  if (!a) return a
+
+  if (!ucan.payload.prf) return true
+
+  // Verify proofs
+  const b = ucan.payload.prf.payload.aud === ucan.payload.iss
+
+  if (!b) return b
+
+  return await isValid(ucan.payload.prf)
 }
 
 /**
@@ -208,7 +265,13 @@ export function rootIssuer(ucan: string, level = 0): string {
   return p.iss
 }
 
+export async function sign(header: UcanHeader, payload: UcanPayload): Promise<string> {
+  const encodedHeader = encodeHeader(header)
+  const encodedPayload = encodePayload(payload)
+  const ks = await keystore.get()
 
+  return ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
+}
 
 // ㊙️
 
