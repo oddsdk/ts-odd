@@ -39,7 +39,6 @@ type ConstructorParams = {
 
 type FileSystemOptions = {
   version?: SemVer
-  keyName?: string
   permissions?: Permissions
   localOnly?: boolean
 }
@@ -303,7 +302,7 @@ export class FileSystem {
 
       result = await fn(
         tree,
-        relPath.replace(new RegExp("^" + treePath + "\/?"), "")
+        relPath.replace(new RegExp("^" + treePath + "/?"), "")
       )
 
       if (isMutation && PrivateTree.instanceOf(result)) {

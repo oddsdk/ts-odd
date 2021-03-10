@@ -5,7 +5,7 @@ import * as cidLog from './common/cid-log'
 import * as debug from './common/debug'
 import * as dataRoot from './data-root'
 import * as ucan from './ucan/internal'
-import { READ_KEY_FROM_LOBBY_NAME, Maybe, authenticatedUsername } from './common'
+import { Maybe, authenticatedUsername } from './common'
 import { Permissions } from './ucan/permissions'
 import { Ucan } from './ucan'
 
@@ -66,14 +66,13 @@ export async function loadFileSystem(
   }
 
   // If a file system exists, load it and return it
-  const keyName = READ_KEY_FROM_LOBBY_NAME
   const p = permissions || undefined
 
-  fs = cid ? await FileSystem.fromCID(cid, { keyName, permissions: p }) : null
+  fs = cid ? await FileSystem.fromCID(cid, { permissions: p }) : null
   if (fs) return fs
 
   // Otherwise make a new one
-  fs = await FileSystem.empty({ keyName, permissions: p })
+  fs = await FileSystem.empty({ permissions: p })
   await addSampleData(fs)
 
   // Fin

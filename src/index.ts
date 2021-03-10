@@ -1,6 +1,6 @@
+import { CharSize } from 'keystore-idb/types'
 import localforage from 'localforage'
 import utils from 'keystore-idb/utils'
-import { CharSize } from 'keystore-idb/types'
 
 import * as common from './common'
 import * as identifiers from './common/identifiers'
@@ -138,45 +138,9 @@ export async function initialise(
   if (ucans) {
     const newUser = url.searchParams.get("newUser") === "t"
     const username = url.searchParams.get("username") || ""
-    const ks = await keystore.get()
     const classifiedParam = url.searchParams.get("classified")
 
-    // Import all the read keys & bare name filters
-    const classifiedInfo = classifiedParam
-      ? JSON.parse(common.base64.urlDecode(classifiedParam))
-      : {}
-
-    const iv = utils.base64ToArrBuf(classifiedInfo.iv)
-    const rawSessionKey = await ks.decrypt(classifiedInfo.sessionKey)
-    const sessionKey = await crypto.subtle.importKey(
-      "raw",
-      utils.base64ToArrBuf(rawSessionKey),
-      "AES-GCM",
-      false,
-      [ "encrypt", "decrypt" ]
-    )
-
-    const secrets: Record<string, { key: string, bareNameFilter: string }> =
-      JSON.parse(utils.arrBufToStr(await crypto.subtle.decrypt(
-        {
-          name: "AES-GCM",
-          iv: iv
-        },
-        sessionKey,
-        utils.base64ToArrBuf(classifiedInfo.secrets)
-      ), CharSize.B8))
-
-    await Promise.all(
-      Object.entries(secrets).map(async ([ path, { bareNameFilter, key } ]) => {
-        const readKeyId = await identifiers.readKey({ path })
-        const bareNameFilterId = await identifiers.bareNameFilter({ path })
-
-        await ks.importSymmKey(key, readKeyId)
-        await localforage.setItem(bareNameFilterId, bareNameFilter)
-      })
-    )
-
-    // Carry on
+    await importClassifiedInfo(classifiedParam)
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
     if (autoRemoveUrlParams) {
@@ -326,4 +290,51 @@ function scenarioNotAuthorised(
 
     authenticated: false
   }
+}
+
+
+
+// ㊙️
+
+
+async function importClassifiedInfo(
+  classifiedParam: Maybe<string>
+): Promise<void> {
+  if (!classifiedParam) return
+
+  const ks = await keystore.get()
+  const classifiedInfo = JSON.parse(common.base64.urlDecode(classifiedParam))
+
+  // Extract session key and its iv
+  const iv = utils.base64ToArrBuf(classifiedInfo.iv)
+  const rawSessionKey = await ks.decrypt(classifiedInfo.sessionKey)
+  const sessionKey = await crypto.subtle.importKey(
+    "raw",
+    utils.base64ToArrBuf(rawSessionKey),
+    "AES-GCM",
+    false,
+    [ "encrypt", "decrypt" ]
+  )
+
+  // Decrypt secrets
+  const secrets: Record<string, { key: string, bareNameFilter: string }> =
+    JSON.parse(utils.arrBufToStr(await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: iv
+      },
+      sessionKey,
+      utils.base64ToArrBuf(classifiedInfo.secrets)
+    ), CharSize.B8))
+
+  // Import read keys and bare name filters
+  await Promise.all(
+    Object.entries(secrets).map(async ([ path, { bareNameFilter, key } ]) => {
+      const readKeyId = await identifiers.readKey({ path })
+      const bareNameFilterId = await identifiers.bareNameFilter({ path })
+
+      await ks.importSymmKey(key, readKeyId)
+      await localforage.setItem(bareNameFilterId, bareNameFilter)
+    })
+  )
 }

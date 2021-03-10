@@ -107,6 +107,7 @@ export async function update(
 
   }).catch(err => {
     debug.log("🔥 Failed to update DNSLink for:", cid)
+    console.error(err)
     return { success: false }
 
   })
