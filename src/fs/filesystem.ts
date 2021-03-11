@@ -62,7 +62,7 @@ export class FileSystem {
   appPath: AppPath | undefined
   proofs: { [_: string]: Ucan }
   publishHooks: Array<PublishHook>
-  publishWhenOnline: Array<[CID, string]>
+  publishWhenOnline: Array<[CID, Ucan]>
 
 
   constructor({ root, permissions, localOnly }: ConstructorParams) {
@@ -245,8 +245,7 @@ export class FileSystem {
     const cid = await this.root.put()
 
     proofs.forEach(([_, proof]) => {
-      const encodedProof = ucan.encode(proof)
-      this.publishHooks.forEach(hook => hook(cid, encodedProof))
+      this.publishHooks.forEach(hook => hook(cid, proof))
     })
 
     return cid
