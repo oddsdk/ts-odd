@@ -109,18 +109,19 @@ export async function initialise(
     // Options
     autoRemoveUrlParams?: boolean
     loadFileSystem?: boolean
+    rootKey?: string
   }
 ): Promise<State> {
   options = options || {}
 
   const permissions = options.permissions || null
-  const { autoRemoveUrlParams = true } = options
+  const { autoRemoveUrlParams = true, rootKey } = options
   const { app, fs } = permissions || {}
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
       ? undefined
-      : await loadFileSystem(permissions, username)
+      : await loadFileSystem(permissions, username, rootKey)
   }
 
   // Check if browser is supported
@@ -345,16 +346,16 @@ async function importClassifiedInfo(
 }
 
 
-function validateSecrets(permissions: Permissions): Promise<boolean> {
+async function validateSecrets(permissions: Permissions): Promise<boolean> {
+  const ks = await keystore.get()
+
   return ucanPermissions.paths(permissions).reduce(
     (acc, path) => acc.then(async bool => {
       if (bool === false) return bool
       if (path.startsWith('/public')) return true
 
       const keyName = await identifiers.readKey({ path })
-      const key = await keystore.getKeyByName(keyName)
-
-      return !!key
+      return await ks.keyExists(keyName)
     }),
     Promise.resolve(true)
   )

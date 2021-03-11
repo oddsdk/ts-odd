@@ -16,7 +16,6 @@ import * as keystore from '../keystore'
 import * as pathUtil from './path'
 import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
-import * as ucanPermissions from '../ucan/permissions'
 
 import { Maybe } from '../common'
 import { CID, FileContent } from '../ipfs'
@@ -32,15 +31,19 @@ type AppPath =
   (path?: string | Array<string>) => string
 
 type ConstructorParams = {
+  localOnly?: boolean
   permissions?: Permissions
   root: RootTree
-  localOnly?: boolean
 }
 
 type FileSystemOptions = {
-  version?: SemVer
-  permissions?: Permissions
   localOnly?: boolean
+  permissions?: Permissions
+  version?: SemVer
+}
+
+type NewFileSystemOptions = FileSystemOptions & {
+  rootKey: string
 }
 
 type MutationOptions = {
@@ -105,10 +108,9 @@ export class FileSystem {
   /**
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
-  static async empty(opts: FileSystemOptions = {}): Promise<FileSystem> {
-    const { permissions, localOnly } = opts
-    const keys = permissions ? await permissionKeys(permissions) : {}
-    const root = await RootTree.empty({ keys })
+  static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
+    const { permissions, localOnly, rootKey } = opts
+    const root = await RootTree.empty({ rootKey })
 
     const fs = new FileSystem({
       root,
@@ -124,8 +126,7 @@ export class FileSystem {
    */
   static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
     const { permissions, localOnly } = opts
-    const keys = permissions ? await permissionKeys(permissions) : {}
-    const root = await RootTree.fromCID({ cid, keys })
+    const root = await RootTree.fromCID({ cid, permissions })
 
     const fs = new FileSystem({
       root,
@@ -354,13 +355,4 @@ function appPath(permissions: Permissions): ((path?: string | Array<string>) => 
       + (permissions.app ? permissions.app.name : '')
       + (path ? '/' + (typeof path == 'object' ? path.join('/') : path) : '')
   )
-}
-
-
-async function permissionKeys(permissions: Permissions): Promise<Record<string, string>> {
-  return ucanPermissions.paths(permissions).reduce(async (acc, p) => {
-    if (p.startsWith('/public')) return acc
-    const name = await identifiers.readKey({ path: p })
-    return acc.then(async map => ({ ...map, [p]: (await keystore.getKeyByName(name)) }))
-  }, Promise.resolve({}))
 }
