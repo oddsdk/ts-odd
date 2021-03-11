@@ -17,7 +17,7 @@ export type Resource =
 
 export type UcanHeader = {
   alg: string
-  typ: string 
+  typ: string
   uav: string
 }
 
@@ -28,7 +28,7 @@ export type UcanPayload = {
   iss: string
   nbf: number
   prf: Ucan | undefined
-  ptc: string | undefined | null 
+  ptc: string | undefined | null
   rsc: Resource
 }
 
@@ -124,7 +124,7 @@ export async function build({
   }
 
   const signature = addSignature ? await sign(header, payload) : null
-  
+
   return {
     header,
     payload,
@@ -171,7 +171,7 @@ export function decode(ucan: string): Ucan  {
     header,
     payload: {
       ...payload,
-      prf: decode(payload.prf)
+      prf: payload.prf ? decode(payload.prf) : null
     },
     signature: split[2] || null
   }
