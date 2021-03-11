@@ -63,8 +63,18 @@ export class PrivateFile extends BaseFile {
     })
   }
 
-  static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
+  static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
     const info = await protocol.priv.getByLatestName(mmpt, name, key)
+
+    if (!check.isPrivateFileInfo(info)) {
+      throw new Error(`Could not parse a valid private file using the given key`)
+    }
+
+    return PrivateFile.fromInfo(mmpt, key, info)
+  }
+
+  static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
+    const info = await protocol.priv.getByName(mmpt, name, key)
 
     if (!check.isPrivateFileInfo(info)) {
       throw new Error(`Could not parse a valid private file using the given key`)
