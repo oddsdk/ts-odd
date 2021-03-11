@@ -248,8 +248,9 @@ export default class RootTree implements Puttable {
 
 async function findBareNameFilter(
   map: Record<string, PrivateTree>,
-  privatePath: string
+  privatePathWithLeadingSlash: string
 ): Promise<Maybe<BareNameFilter>> {
+  const privatePath = privatePathWithLeadingSlash.slice(1)
   const bareNameFilterId = await identifiers.bareNameFilter({ path: "/private/" + privatePath })
   const bareNameFilter: Maybe<BareNameFilter> = await localforage.getItem(bareNameFilterId)
   if (bareNameFilter) return bareNameFilter
