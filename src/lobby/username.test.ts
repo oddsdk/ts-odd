@@ -22,6 +22,10 @@ describe('isUsernameValid', () => {
     expect(isUsernameValid("reCovErY")).toBe(false)
   })
 
+  it("does not allow empty strings", () => {
+    expect(isUsernameValid("")).toBe(false)
+  })
+
   it("does not allow special characters", () => {
     expect(isUsernameValid("plus+plus")).toBe(false)
   })
