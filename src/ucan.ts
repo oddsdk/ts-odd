@@ -265,13 +265,19 @@ export function rootIssuer(ucan: string, level = 0): string {
   return p.iss
 }
 
+/**
+ * Generate UCAN signature.
+ */
 export async function sign(header: UcanHeader, payload: UcanPayload): Promise<string> {
   const encodedHeader = encodeHeader(header)
   const encodedPayload = encodePayload(payload)
   const ks = await keystore.get()
 
-  return ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
+  return base64.makeUrlSafe(
+    await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
+  )
 }
+
 
 // ㊙️
 
