@@ -6,6 +6,7 @@ import * as common from './common'
 import * as identifiers from './common/identifiers'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
+import * as ucanPermissions from './ucan/permissions'
 
 import { USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
@@ -149,6 +150,10 @@ export async function initialise(
       url.searchParams.delete("ucans")
       url.searchParams.delete("username")
       history.replaceState(null, document.title, url.toString())
+    }
+
+    if (permissions && await validateSecrets(permissions) === false) {
+      return scenarioNotAuthorised(permissions)
     }
 
     if (permissions && ucan.validatePermissions(permissions, username) === false) {
@@ -336,5 +341,21 @@ async function importClassifiedInfo(
       await ks.importSymmKey(key, readKeyId)
       await localforage.setItem(bareNameFilterId, bareNameFilter)
     })
+  )
+}
+
+
+function validateSecrets(permissions: Permissions): Promise<boolean> {
+  return ucanPermissions.paths(permissions).reduce(
+    (acc, path) => acc.then(async bool => {
+      if (bool === false) return bool
+      if (path.startsWith('/public')) return true
+
+      const keyName = await identifiers.readKey({ path })
+      const key = await keystore.getKeyByName(keyName)
+
+      return !!key
+    }),
+    Promise.resolve(true)
   )
 }
