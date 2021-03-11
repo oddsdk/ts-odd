@@ -16,9 +16,7 @@ export const joinNoSuffix = (parts: string[]): string => {
 }
 
 export const parent = (path: string): string | null => {
-  const parts = splitParts(path)
-  if (parts.length < 2) return null
-  return join(parts.slice(0, -1))
+  return takeTail(path).parentPath
 }
 
 type HeadParts = {
