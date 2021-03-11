@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.21.5
+
+Fix regex of username validation and allow non-prefixed underscores in usernames
+
 ### v0.21.4
 
 Does not cancel data-root updates anymore, slightly increasing the performance of concurrent writes.
