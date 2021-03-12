@@ -43,7 +43,7 @@ type FileSystemOptions = {
 }
 
 type NewFileSystemOptions = FileSystemOptions & {
-  rootKey: string
+  rootKey?: string
 }
 
 type MutationOptions = {
@@ -109,7 +109,8 @@ export class FileSystem {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
-    const { permissions, localOnly, rootKey } = opts
+    const { permissions, localOnly } = opts
+    const rootKey = opts.rootKey || await keystore.genKeyStr()
     const root = await RootTree.empty({ rootKey })
 
     const fs = new FileSystem({
