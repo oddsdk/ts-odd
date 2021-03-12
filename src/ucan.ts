@@ -235,16 +235,14 @@ export function isExpired(ucan: Ucan): boolean {
     charSize: 8,
     data: `${encodedHeader}.${encodedPayload}`,
     did: ucan.payload.iss,
-    signature: ucan.signature || ""
+    signature: base64.makeUrlUnsafe(ucan.signature || "")
   })
 
   if (!a) return a
-
   if (!ucan.payload.prf) return true
 
   // Verify proofs
   const b = ucan.payload.prf.payload.aud === ucan.payload.iss
-
   if (!b) return b
 
   return await isValid(ucan.payload.prf)
