@@ -43,7 +43,7 @@ export type Ucan = {
 
 // TODO: Waiting on API change.
 //       Should be `dnslink`
-export const WNFS_PREFIX = "floofs"
+export const WNFS_PREFIX = "wnfs"
 
 
 
