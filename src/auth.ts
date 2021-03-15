@@ -6,6 +6,7 @@ import * as did from './did'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 import { USERNAME_STORAGE_KEY, Maybe } from './common'
+import { FileSystem } from './fs/filesystem'
 import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
 
@@ -30,6 +31,8 @@ export async function leave({ withoutRedirect }: { withoutRedirect?: boolean } =
   await ucan.clearStorage()
   await cidLog.clear()
   await keystore.clear()
+
+  ;((globalThis as any).filesystems || []).forEach((f: FileSystem) => f.deactivate())
 
   if (!withoutRedirect && globalThis.location) {
     globalThis.location.href = setup.endpoints.lobby

@@ -62,15 +62,26 @@ export class FileSystem {
   appPath: AppPath | undefined
   proofs: { [_: string]: Ucan }
   publishHooks: Array<PublishHook>
-  publishWhenOnline: Array<[CID, Ucan]>
+
+  _publishWhenOnline: Array<[CID, Ucan]>
+  _publishing: false | [CID, true]
 
 
   constructor({ root, permissions, localOnly }: ConstructorParams) {
     this.localOnly = localOnly || false
     this.proofs = {}
     this.publishHooks = []
-    this.publishWhenOnline = []
     this.root = root
+
+    this._publishWhenOnline = []
+    this._publishing = false
+
+    this._whenOnline = this._whenOnline.bind(this)
+    this._beforeLeaving = this._beforeLeaving.bind(this)
+
+    const globe = (globalThis as any)
+    globe.filesystems = globe.filesystems || []
+    globe.filesystems.push(this)
 
     if (
       permissions &&
@@ -90,15 +101,26 @@ export class FileSystem {
 
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
-      if (globalThis.navigator.onLine) return dataRoot.update(cid, proof)
-      this.publishWhenOnline.push([ cid, proof ])
+      if (globalThis.navigator.onLine) {
+        this._publishing = [cid, true]
+        return dataRoot.update(cid, proof).then(() => {
+          if (this._publishing && this._publishing[0] === cid) {
+            this._publishing = false
+          }
+        })
+      }
+
+      this._publishWhenOnline.push([ cid, proof ])
     }, false)
 
     this.publishHooks.push(logCid)
     this.publishHooks.push(updateDataRootWhenOnline)
 
     // Publish when coming back online
-    globalThis.addEventListener('online', () => this._whenOnline())
+    globalThis.addEventListener('online', this._whenOnline)
+
+    // Show an alert when leaving the page while updating the data root
+    globalThis.addEventListener('beforeunload', this._beforeLeaving)
   }
 
 
@@ -149,7 +171,10 @@ export class FileSystem {
    * The only function of this is to stop listing to online/offline events.
    */
   deactivate(): void {
-    globalThis.removeEventListener('online', this._whenOnline)
+    const globe = (globalThis as any)
+    globe.filesystems = globe.filesystems.filter((a: FileSystem) => a !== this)
+    globe.removeEventListener('online', this._whenOnline)
+    globe.removeEventListener('beforeunload', this._beforeLeaving)
   }
 
 
@@ -331,12 +356,22 @@ export class FileSystem {
 
   /** @internal */
   _whenOnline(): void {
-    const toPublish = [...this.publishWhenOnline]
-    this.publishWhenOnline = []
+    const toPublish = [...this._publishWhenOnline]
+    this._publishWhenOnline = []
 
     toPublish.forEach(([cid, proof]) => {
       this.publishHooks.forEach(hook => hook(cid, proof))
     })
+  }
+
+  /** @internal */
+  _beforeLeaving(e: Event): void | string {
+    const msg: string = "Are you sure you want to leave? We don't control the browser so you may lose your data."
+
+    if (this._publishing || this._publishWhenOnline.length) {
+      (e || globalThis.event).returnValue = msg as any
+      return msg
+    }
   }
 }
 
