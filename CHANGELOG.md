@@ -1,8 +1,19 @@
 # Changelog
 
+### v0.22.0
+
+- **UCAN permission system and improved security**.
+- Show alert when leaving the page while publishing changes, to avoid data loss.
+- Better usage of the `Ucan` type in the UCAN functions.
+- Data root update function returns `{ success }` boolean.
+- Improved username validation
+
+
+
 ### v0.21.5
 
-Fix regex of username validation and allow non-prefixed underscores in usernames
+Fix regex of username validation and allow non-prefixed underscores in usernames.
+
 
 ### v0.21.4
 
