@@ -366,7 +366,7 @@ export class FileSystem {
 
   /** @internal */
   _beforeLeaving(e: Event): void | string {
-    const msg: string = "Are you sure you want to leave? We don't control the browser so you may lose your data."
+    const msg = "Are you sure you want to leave? We don't control the browser so you may lose your data."
 
     if (this._publishing || this._publishWhenOnline.length) {
       (e || globalThis.event).returnValue = msg as any
