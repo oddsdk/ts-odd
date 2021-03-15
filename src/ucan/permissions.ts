@@ -1,6 +1,7 @@
 export type Permissions = {
   app?: AppInfo
   fs?: FileSystemPermissions
+  platform?: PlatformPermissions
 }
 
 export type AppInfo = {
@@ -11,6 +12,10 @@ export type AppInfo = {
 export type FileSystemPermissions = {
   privatePaths: Array<string>
   publicPaths: Array<string>
+}
+
+export type PlatformPermissions = {
+  app: '*' | string
 }
 
 

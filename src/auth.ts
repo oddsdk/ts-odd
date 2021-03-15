@@ -50,8 +50,9 @@ export async function redirectToLobby(
   permissions: Maybe<Permissions>,
   redirectTo?: string
 ): Promise<void> {
-  const app = permissions ? permissions.app : undefined
-  const fs = permissions ? permissions.fs : undefined
+  const app = permissions?.app
+  const fs = permissions?.fs
+  const platform = permissions?.platform
 
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
@@ -67,6 +68,7 @@ export async function redirectToLobby(
     app                     ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
     fs && fs.privatePaths   ? fs.privatePaths.map(path => [ "privatePath", path ]) : [],
     fs && fs.publicPaths    ? fs.publicPaths.map(path => [ "publicPath", path ]) : [],
+    platform?.app           ? [[ "app", platform.app ]] : [],
   )
 
   // And, go!
