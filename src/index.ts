@@ -150,10 +150,12 @@ export async function initialise(
     }
 
     if (permissions && await validateSecrets(permissions) === false) {
+      console.warn("Unable to validate filesystem secrets")
       return scenarioNotAuthorised(permissions)
     }
 
     if (permissions && ucan.validatePermissions(permissions, username) === false) {
+      console.warn("Unable to validate UCAN permissions")
       return scenarioNotAuthorised(permissions)
     }
 
