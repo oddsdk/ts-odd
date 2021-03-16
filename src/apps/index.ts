@@ -37,7 +37,10 @@ export async function index(): Promise<Array<App>> {
   })
 
   const data = await response.json();
-  return Object.values(data).map(d => ({ domain: (d as Array<string>)[0] }))
+  return Object
+    .values(data)
+    .filter(v => (v as Array<string>).length > 0)
+    .map(v => ({ domain: (v as Array<string>)[0] }))
 }
 
 /**
