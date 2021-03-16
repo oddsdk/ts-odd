@@ -3,6 +3,7 @@ import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
 import { api, Maybe, isString } from '../common'
 import { setup } from '../setup/internal'
+import { CID } from '../ipfs'
 
 
 export type App = {
@@ -107,4 +108,39 @@ export async function deleteByDomain(
       'authorization': `Bearer ${jwt}`
     }
   })
+}
+
+/**
+ * Updates an app by CID
+ *
+ * @param subdomain Subdomain to create the fission app with
+ */
+export async function publish(
+  subdomain: string,
+  cid: CID,
+): Promise<App> {
+  const apiEndpoint = setup.endpoints.api
+
+  const localUcan = await ucanInternal.lookupAppUcan(subdomain)
+  if (localUcan === null) {
+    throw "Could not find your local UCAN"
+  }
+
+  const jwt = ucan.encode(await ucan.build({
+    audience: await api.did(),
+    issuer: await did.ucan(),
+    proof: localUcan, 
+    potency: null
+  }))
+
+  const url = `${apiEndpoint}/app/${subdomain}/${cid}`
+
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'authorization': `Bearer ${jwt}`
+    }
+  })
+  const data = await response.json();
+  return data
 }
