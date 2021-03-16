@@ -356,7 +356,7 @@ async function validateSecrets(permissions: Permissions): Promise<boolean> {
   return ucanPermissions.paths(permissions).reduce(
     (acc, path) => acc.then(async bool => {
       if (bool === false) return bool
-      if (path.startsWith('/public')) return true
+      if (path.startsWith('/public')) return bool
 
       const keyName = await identifiers.readKey({ path })
       return await ks.keyExists(keyName)
