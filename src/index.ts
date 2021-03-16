@@ -4,6 +4,7 @@ import utils from 'keystore-idb/utils'
 
 import * as common from './common'
 import * as identifiers from './common/identifiers'
+import * as ipfs from './ipfs'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 import * as ucanPermissions from './ucan/permissions'
@@ -130,25 +131,20 @@ export async function initialise(
 
   // URL things
   const url = new URL(window.location.href)
+  const authorised = url.searchParams.get("authorised")
   const cancellation = url.searchParams.get("cancelled")
-  const ucans = url.searchParams.get("ucans")
-
-  // Add UCANs to the storage
-  await ucan.store(ucans ? ucans.split(",") : [])
 
   // Determine scenario
-  if (ucans) {
+  if (authorised) {
     const newUser = url.searchParams.get("newUser") === "t"
     const username = url.searchParams.get("username") || ""
-    const classifiedParam = url.searchParams.get("classified")
 
-    await importClassifiedInfo(classifiedParam)
+    await importClassifiedInfo(authorised)
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
     if (autoRemoveUrlParams) {
-      url.searchParams.delete("classified")
+      url.searchParams.delete("authorised")
       url.searchParams.delete("newUser")
-      url.searchParams.delete("ucans")
       url.searchParams.delete("username")
       history.replaceState(null, document.title, url.toString())
     }
@@ -175,6 +171,10 @@ export async function initialise(
     }})()
 
     return scenarioAuthCancelled(permissions, c)
+
+  } else {
+    // trigger build for internal ucan dictionary
+    ucan.store([])
 
   }
 
@@ -304,16 +304,14 @@ function scenarioNotAuthorised(
 
 
 async function importClassifiedInfo(
-  classifiedParam: Maybe<string>
+  cid: string
 ): Promise<void> {
-  if (!classifiedParam) return
-
   const ks = await keystore.get()
-  const classifiedInfo = JSON.parse(common.base64.urlDecode(classifiedParam))
+  const info = JSON.parse(await ipfs.cat(cid))
 
   // Extract session key and its iv
-  const iv = utils.base64ToArrBuf(classifiedInfo.iv)
-  const rawSessionKey = await ks.decrypt(classifiedInfo.sessionKey)
+  const iv = utils.base64ToArrBuf(info.iv)
+  const rawSessionKey = await ks.decrypt(info.sessionKey)
   const sessionKey = await crypto.subtle.importKey(
     "raw",
     utils.base64ToArrBuf(rawSessionKey),
@@ -323,19 +321,22 @@ async function importClassifiedInfo(
   )
 
   // Decrypt secrets
-  const secrets: Record<string, { key: string, bareNameFilter: string }> =
+  const secrets =
     JSON.parse(utils.arrBufToStr(await crypto.subtle.decrypt(
       {
         name: "AES-GCM",
         iv: iv
       },
       sessionKey,
-      utils.base64ToArrBuf(classifiedInfo.secrets)
+      utils.base64ToArrBuf(info.secrets)
     ), CharSize.B8))
+
+  const fsSecrets: Record<string, { key: string, bareNameFilter: string }> = secrets.fs
+  const ucans = secrets.ucans
 
   // Import read keys and bare name filters
   await Promise.all(
-    Object.entries(secrets).map(async ([ path, { bareNameFilter, key } ]) => {
+    Object.entries(fsSecrets).map(async ([ path, { bareNameFilter, key } ]) => {
       const readKeyId = await identifiers.readKey({ path })
       const bareNameFilterId = await identifiers.bareNameFilter({ path })
 
@@ -343,6 +344,9 @@ async function importClassifiedInfo(
       await localforage.setItem(bareNameFilterId, bareNameFilter)
     })
   )
+
+  // Add UCANs to the storage
+  await ucan.store(ucans)
 }
 
 

@@ -4,6 +4,7 @@
 
 - **UCAN permission system and improved security**.
 - Show alert when leaving the page while publishing changes, to avoid data loss.
+- Fix issue with urls that were too long while redirecting back from the lobby.
 - Better usage of the `Ucan` type in the UCAN functions.
 - Data root update function returns `{ success }` boolean.
 - Improved username validation
