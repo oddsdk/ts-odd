@@ -64,11 +64,6 @@ export default class RootTree implements Puttable {
     const rootTree = await PrivateTree.create(mmpt, rootKey, null)
     await rootTree.put()
 
-    // Store root key
-    const rootKeyId = await identifiers.readKey({ path: '/private' })
-    const ks = await keystore.get()
-    await ks.importSymmKey(rootKey, rootKeyId)
-
     // Construct tree
     const tree = new RootTree({
       links: {},
@@ -81,6 +76,9 @@ export default class RootTree implements Puttable {
         '/': rootTree
       }
     })
+
+    // Store root key
+    await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
     tree.setVersion(semver.v1)
@@ -95,7 +93,9 @@ export default class RootTree implements Puttable {
     return tree
   }
 
-  static async fromCID({ cid, permissions }: { cid: CID, permissions?: Permissions }): Promise<RootTree> {
+  static async fromCID(
+    { cid, permissions }: { cid: CID, permissions?: Permissions }
+  ): Promise<RootTree> {
     const links = await protocol.basic.getLinks(cid)
     const keys = permissions ? await permissionKeys(permissions) : {}
 
@@ -171,6 +171,12 @@ export default class RootTree implements Puttable {
 
   // PRIVATE TREES
   // -------------
+
+  static async storeRootKey(rootKey: string): Promise<void> {
+    const rootKeyId = await identifiers.readKey({ path: '/private' })
+    const ks = await keystore.get()
+    await ks.importSymmKey(rootKey, rootKeyId)
+  }
 
   findPrivateTree(path: string[]): [string, PrivateTree | null] {
     return findPrivateTree(this.privateTrees, path)

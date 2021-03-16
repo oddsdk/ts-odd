@@ -160,6 +160,13 @@ export class FileSystem {
     return fs
   }
 
+  /**
+   * Store the read key for the root `PrivateTree` (ie. `/private`)
+   */
+  static storeRootKey(key: string): Promise<void> {
+    return RootTree.storeRootKey(key)
+  }
+
 
   // DEACTIVATE
   // ----------
