@@ -182,12 +182,23 @@ export async function initialise(
 
   const authedUsername = await common.authenticatedUsername()
 
-  return (
-    authedUsername &&
-    (permissions ? ucan.validatePermissions(permissions, authedUsername) : true)
-  )
-  ? scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
-  : scenarioNotAuthorised(permissions)
+  if (authedUsername && permissions) {
+    const validSecrets = await validateSecrets(permissions)
+    const validUcans = ucan.validatePermissions(permissions, authedUsername)
+
+    if (validSecrets && validUcans) {
+      return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+    } else {
+      return scenarioNotAuthorised(permissions)
+    }
+
+  } else if (authedUsername) {
+    return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+
+  } else {
+    return scenarioNotAuthorised(permissions)
+
+  }
 }
 
 
