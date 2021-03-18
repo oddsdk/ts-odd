@@ -79,7 +79,7 @@ export async function build({
   lifetimeInSeconds = 30,
   potency = 'APPEND',
   proof,
-  resource = '*'
+  resource
 }: {
   addSignature?: boolean
   audience: string
@@ -120,7 +120,7 @@ export async function build({
     nbf: nbf,
     prf: proof,
     ptc: potency,
-    rsc: resource,
+    rsc: resource ? resource : (proof ? proof.payload.rsc : '*'),
   }
 
   const signature = addSignature ? await sign(header, payload) : null
