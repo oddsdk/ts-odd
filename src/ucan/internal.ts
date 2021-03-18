@@ -38,8 +38,7 @@ export function dictionaryFilesystemPrefix(username: string): string {
  * Look up a UCAN for a platform app.
  */
 export async function lookupAppUcan(domain: string): Promise<Ucan | null> {
-  if (dictionary["*"]) return dictionary["*"]
-  return dictionary[`app:${domain}`]
+  return dictionary["*"] || dictionary["app:*"] || dictionary[`app:${domain}`]
 }
 
 /**
