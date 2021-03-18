@@ -15,7 +15,7 @@ export type FileSystemPermissions = {
 }
 
 export type PlatformPermissions = {
-  app: '*' | string
+  apps: '*' | Array<string>
 }
 
 

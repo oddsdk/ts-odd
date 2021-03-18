@@ -67,12 +67,22 @@ export async function redirectToLobby(
     [ "didExchange", exchangeDid ],
     [ "didWrite", writeDid ],
     [ "redirectTo", redirectTo ]
+
   ].concat(
     app                     ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
     fs && fs.privatePaths   ? fs.privatePaths.map(path => [ "privatePath", path ]) : [],
-    fs && fs.publicPaths    ? fs.publicPaths.map(path => [ "publicPath", path ]) : [],
-    platform?.app           ? [[ "app", platform.app ]] : [],
-  )
+    fs && fs.publicPaths    ? fs.publicPaths.map(path => [ "publicPath", path ]) : []
+
+  ).concat((() => {
+    const apps = platform?.apps
+
+    switch (typeof apps) {
+      case "string": return [[ "app", apps ]]
+      case "object": return apps.map(a => [ "app", a ])
+      default: return []
+    }
+
+  })())
 
   // And, go!
   window.location.href = setup.endpoints.lobby + "?" +
