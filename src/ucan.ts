@@ -17,7 +17,7 @@ export type Resource =
 
 export type UcanHeader = {
   alg: string
-  typ: string 
+  typ: string
   uav: string
 }
 
@@ -28,7 +28,7 @@ export type UcanPayload = {
   iss: string
   nbf: number
   prf: Ucan | undefined
-  ptc: string | undefined | null 
+  ptc: string | undefined | null
   rsc: Resource
 }
 
@@ -43,7 +43,7 @@ export type Ucan = {
 
 // TODO: Waiting on API change.
 //       Should be `dnslink`
-export const WNFS_PREFIX = "floofs"
+export const WNFS_PREFIX = "wnfs"
 
 
 
@@ -79,7 +79,7 @@ export async function build({
   lifetimeInSeconds = 30,
   potency = 'APPEND',
   proof,
-  resource = '*'
+  resource
 }: {
   addSignature?: boolean
   audience: string
@@ -120,11 +120,11 @@ export async function build({
     nbf: nbf,
     prf: proof,
     ptc: potency,
-    rsc: resource,
+    rsc: resource ? resource : (proof ? proof.payload.rsc : '*'),
   }
 
   const signature = addSignature ? await sign(header, payload) : null
-  
+
   return {
     header,
     payload,
@@ -171,7 +171,7 @@ export function decode(ucan: string): Ucan  {
     header,
     payload: {
       ...payload,
-      prf: decode(payload.prf)
+      prf: payload.prf ? decode(payload.prf) : null
     },
     signature: split[2] || null
   }
@@ -235,16 +235,14 @@ export function isExpired(ucan: Ucan): boolean {
     charSize: 8,
     data: `${encodedHeader}.${encodedPayload}`,
     did: ucan.payload.iss,
-    signature: ucan.signature || ""
+    signature: base64.makeUrlUnsafe(ucan.signature || "")
   })
 
   if (!a) return a
-
   if (!ucan.payload.prf) return true
 
   // Verify proofs
   const b = ucan.payload.prf.payload.aud === ucan.payload.iss
-
   if (!b) return b
 
   return await isValid(ucan.payload.prf)
@@ -265,13 +263,19 @@ export function rootIssuer(ucan: string, level = 0): string {
   return p.iss
 }
 
+/**
+ * Generate UCAN signature.
+ */
 export async function sign(header: UcanHeader, payload: UcanPayload): Promise<string> {
   const encodedHeader = encodeHeader(header)
   const encodedPayload = encodePayload(payload)
   const ks = await keystore.get()
 
-  return ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
+  return base64.makeUrlSafe(
+    await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
+  )
 }
+
 
 // ㊙️
 

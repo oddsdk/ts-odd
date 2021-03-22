@@ -1,10 +1,15 @@
+import { CharSize } from 'keystore-idb/types'
 import localforage from 'localforage'
+import utils from 'keystore-idb/utils'
 
 import * as common from './common'
+import * as identifiers from './common/identifiers'
+import * as ipfs from './ipfs'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
+import * as ucanPermissions from './ucan/permissions'
 
-import { READ_KEY_FROM_LOBBY_NAME, USERNAME_STORAGE_KEY, Maybe } from './common'
+import { USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
 import { loadFileSystem } from './filesystem'
 
@@ -105,18 +110,19 @@ export async function initialise(
     // Options
     autoRemoveUrlParams?: boolean
     loadFileSystem?: boolean
+    rootKey?: string
   }
 ): Promise<State> {
   options = options || {}
 
   const permissions = options.permissions || null
-  const { autoRemoveUrlParams = true } = options
+  const { autoRemoveUrlParams = true, rootKey } = options
   const { app, fs } = permissions || {}
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
       ? undefined
-      : await loadFileSystem(permissions, username)
+      : await loadFileSystem(permissions, username, rootKey)
   }
 
   // Check if browser is supported
@@ -125,32 +131,31 @@ export async function initialise(
 
   // URL things
   const url = new URL(window.location.href)
+  const authorised = url.searchParams.get("authorised")
   const cancellation = url.searchParams.get("cancelled")
-  const ucans = url.searchParams.get("ucans")
-
-  // Add UCANs to the storage
-  await ucan.store(ucans ? ucans.split(",") : [])
 
   // Determine scenario
-  if (ucans) {
+  if (authorised) {
     const newUser = url.searchParams.get("newUser") === "t"
-    const encryptedReadKey = url.searchParams.get("readKey") || ""
     const username = url.searchParams.get("username") || ""
 
-    const ks = await keystore.get()
-    const readKey = await ks.decrypt(common.base64.makeUrlUnsafe(encryptedReadKey))
-    await ks.importSymmKey(readKey, READ_KEY_FROM_LOBBY_NAME)
+    await importClassifiedInfo(authorised)
     await localforage.setItem(USERNAME_STORAGE_KEY, username)
 
     if (autoRemoveUrlParams) {
+      url.searchParams.delete("authorised")
       url.searchParams.delete("newUser")
-      url.searchParams.delete("readKey")
-      url.searchParams.delete("ucans")
       url.searchParams.delete("username")
       history.replaceState(null, document.title, url.toString())
     }
 
+    if (permissions && await validateSecrets(permissions) === false) {
+      console.warn("Unable to validate filesystem secrets")
+      return scenarioNotAuthorised(permissions)
+    }
+
     if (permissions && ucan.validatePermissions(permissions, username) === false) {
+      console.warn("Unable to validate UCAN permissions")
       return scenarioNotAuthorised(permissions)
     }
 
@@ -169,16 +174,31 @@ export async function initialise(
 
     return scenarioAuthCancelled(permissions, c)
 
+  } else {
+    // trigger build for internal ucan dictionary
+    ucan.store([])
+
   }
 
   const authedUsername = await common.authenticatedUsername()
 
-  return (
-    authedUsername &&
-    (permissions ? ucan.validatePermissions(permissions, authedUsername) : true)
-  )
-  ? scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
-  : scenarioNotAuthorised(permissions)
+  if (authedUsername && permissions) {
+    const validSecrets = await validateSecrets(permissions)
+    const validUcans = ucan.validatePermissions(permissions, authedUsername)
+
+    if (validSecrets && validUcans) {
+      return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+    } else {
+      return scenarioNotAuthorised(permissions)
+    }
+
+  } else if (authedUsername) {
+    return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+
+  } else {
+    return scenarioNotAuthorised(permissions)
+
+  }
 }
 
 
@@ -289,4 +309,71 @@ function scenarioNotAuthorised(
 
     authenticated: false
   }
+}
+
+
+
+// ㊙️
+
+
+async function importClassifiedInfo(
+  cid: string
+): Promise<void> {
+  const ks = await keystore.get()
+  const info = JSON.parse(await ipfs.cat(cid))
+
+  // Extract session key and its iv
+  const iv = utils.base64ToArrBuf(info.iv)
+  const rawSessionKey = await ks.decrypt(info.sessionKey)
+  const sessionKey = await crypto.subtle.importKey(
+    "raw",
+    utils.base64ToArrBuf(rawSessionKey),
+    "AES-GCM",
+    false,
+    [ "encrypt", "decrypt" ]
+  )
+
+  // Decrypt secrets
+  const secrets =
+    JSON.parse(utils.arrBufToStr(await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: iv
+      },
+      sessionKey,
+      utils.base64ToArrBuf(info.secrets)
+    ), CharSize.B8))
+
+  const fsSecrets: Record<string, { key: string, bareNameFilter: string }> = secrets.fs
+  const ucans = secrets.ucans
+
+  // Import read keys and bare name filters
+  await Promise.all(
+    Object.entries(fsSecrets).map(async ([ path, { bareNameFilter, key } ]) => {
+      const readKeyId = await identifiers.readKey({ path })
+      const bareNameFilterId = await identifiers.bareNameFilter({ path })
+
+      await ks.importSymmKey(key, readKeyId)
+      await localforage.setItem(bareNameFilterId, bareNameFilter)
+    })
+  )
+
+  // Add UCANs to the storage
+  await ucan.store(ucans)
+}
+
+
+async function validateSecrets(permissions: Permissions): Promise<boolean> {
+  const ks = await keystore.get()
+
+  return ucanPermissions.paths(permissions).reduce(
+    (acc, path) => acc.then(async bool => {
+      if (bool === false) return bool
+      if (path.startsWith('/public')) return bool
+
+      const keyName = await identifiers.readKey({ path })
+      return await ks.keyExists(keyName)
+    }),
+    Promise.resolve(true)
+  )
 }

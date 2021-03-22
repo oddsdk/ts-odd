@@ -3,6 +3,7 @@ import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
 import { api } from '../common'
 import { setup } from '../setup/internal'
+import RootTree from '../fs/root/tree'
 
 export * from './username'
 
@@ -41,7 +42,7 @@ export async function createAccount(
 /**
  * Ask the fission server to send another verification email to the
  * user currently logged in.
- * 
+ *
  * Throws if the user is not logged in.
  */
 export async function resendVerificationEmail(): Promise<{ success: boolean }> {
@@ -55,7 +56,7 @@ export async function resendVerificationEmail(): Promise<{ success: boolean }> {
   const jwt = await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: localUcan, 
+    proof: localUcan,
     potency: null
   })
 
@@ -68,4 +69,12 @@ export async function resendVerificationEmail(): Promise<{ success: boolean }> {
   return {
     success: response.status < 300
   }
+}
+
+
+/**
+ * Store the read key for the root `PrivateTree` (ie. `/private`)
+ */
+export function storeFileSystemRootKey(key: string): Promise<void> {
+  return RootTree.storeRootKey(key)
 }

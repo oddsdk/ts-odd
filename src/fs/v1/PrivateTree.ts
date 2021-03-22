@@ -32,7 +32,7 @@ export default class PrivateTree extends BaseTree {
   key: string
   mmpt: MMPT
 
-  constructor({ mmpt, key, header}: ConstructorParams) {
+  constructor({ mmpt, key, header }: ConstructorParams) {
     super(semver.v1)
 
     this.children = {}
@@ -67,28 +67,32 @@ export default class PrivateTree extends BaseTree {
 
   static async fromBaseKey(mmpt: MMPT, key: string): Promise<PrivateTree> {
     const bareNameFilter = await namefilter.createBare(key)
+    return this.fromBareNameFilter(mmpt, bareNameFilter, key)
+  }
+
+  static async fromBareNameFilter(mmpt: MMPT, bareNameFilter: BareNameFilter, key: string): Promise<PrivateTree> {
     const revisionFilter = await namefilter.addRevision(bareNameFilter, key, 1)
     const name = await namefilter.toPrivateName(revisionFilter)
     const info = await protocol.priv.getByLatestName(mmpt, name, key)
 
-    if (!check.isPrivateTreeInfo(info)) {
-      throw new Error(`Could not parse a valid private tree using the given key`)
-    }
+    return this.fromInfo(mmpt, key, info)
+  }
 
-    return new PrivateTree({ mmpt, key, header: info })
+  static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
+    const info = await protocol.priv.getByLatestName(mmpt, name, key)
+    return this.fromInfo(mmpt, key, info)
   }
 
   static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
     const info = await protocol.priv.getByName(mmpt, name, key)
+    return this.fromInfo(mmpt, key, info)
+  }
 
+  static async fromInfo(mmpt: MMPT, key: string, info: Maybe<DecryptedNode>): Promise<PrivateTree> {
     if (!check.isPrivateTreeInfo(info)) {
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
 
-    return new PrivateTree({ mmpt, key, header: info })
-  }
-
-  static async fromInfo(mmpt: MMPT, key: string, info: PrivateTreeInfo): Promise<PrivateTree> {
     return new PrivateTree({ mmpt, key, header: info })
   }
 
@@ -160,8 +164,8 @@ export default class PrivateTree extends BaseTree {
     const childInfo = this.header.links[name]
     if(childInfo === undefined) return null
     const child = childInfo.isFile
-      ? await PrivateFile.fromName(this.mmpt, childInfo.pointer, childInfo.key)
-      : await PrivateTree.fromName(this.mmpt, childInfo.pointer, childInfo.key)
+      ? await PrivateFile.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
+      : await PrivateTree.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
 
     // check that the child wasn't added while retrieving the content from the network
     if(this.children[name]) {
@@ -204,7 +208,7 @@ export default class PrivateTree extends BaseTree {
     const [head, ...rest] = parts
     if (head === undefined) return {
       key: nodeInfo.key,
-      node: await protocol.priv.getByCID(nodeInfo.cid, nodeInfo.key)
+      node: await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
     }
 
     const nextChild = nodeInfo.subSkeleton[head]
@@ -212,7 +216,7 @@ export default class PrivateTree extends BaseTree {
       return this.getRecurse(nextChild, rest)
     }
 
-    const reloadedNode = await protocol.priv.getByCID(nodeInfo.cid, nodeInfo.key)
+    const reloadedNode = await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
     if (!check.isPrivateTreeInfo(reloadedNode)) {
       return null
     }

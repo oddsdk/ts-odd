@@ -5,7 +5,7 @@ import * as cidLog from './common/cid-log'
 import * as debug from './common/debug'
 import * as dataRoot from './data-root'
 import * as ucan from './ucan/internal'
-import { READ_KEY_FROM_LOBBY_NAME, Maybe, authenticatedUsername } from './common'
+import { Maybe, authenticatedUsername } from './common'
 import { Permissions } from './ucan/permissions'
 import { Ucan } from './ucan'
 
@@ -18,10 +18,13 @@ import { Ucan } from './ucan'
  * @param username Optional, username of the user to load the file system from.
  *                 Will try to load the file system of the authenticated user
  *                 by default. Throws an error if there's no authenticated user.
+ * @param rootKey Optional, AES key to be the root key of a new filesystem.
+ *                Will be used if a filesystem hasn't been created yet.
  */
 export async function loadFileSystem(
   permissions: Maybe<Permissions>,
-  username?: string
+  username?: string,
+  rootKey?: string
 ): Promise<FileSystem> {
   let cid, fs
 
@@ -66,14 +69,14 @@ export async function loadFileSystem(
   }
 
   // If a file system exists, load it and return it
-  const keyName = READ_KEY_FROM_LOBBY_NAME
   const p = permissions || undefined
 
-  fs = cid ? await FileSystem.fromCID(cid, { keyName, permissions: p }) : null
+  fs = cid ? await FileSystem.fromCID(cid, { permissions: p }) : null
   if (fs) return fs
 
   // Otherwise make a new one
-  fs = await FileSystem.empty({ keyName, permissions: p })
+  if (!rootKey) throw new Error("Can't make new filesystem without a root AES key")
+  fs = await FileSystem.empty({ permissions: p, rootKey })
   await addSampleData(fs)
 
   // Fin

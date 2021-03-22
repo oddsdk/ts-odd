@@ -1,6 +1,7 @@
 import { Maybe } from '../common'
 import { FileContent, CID, AddResult } from '../ipfs'
 import { SemVer } from './semver'
+import { Ucan } from '../ucan'
 
 
 // FILE
@@ -57,7 +58,7 @@ export interface Puttable {
 
 export type UpdateCallback = () => Promise<unknown>
 
-export type PublishHook = (result: CID, proof: string) => unknown
+export type PublishHook = (result: CID, proof: Ucan) => unknown
 
 
 

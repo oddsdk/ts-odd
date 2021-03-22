@@ -1,8 +1,8 @@
-import * as did from './did'
-import * as ucan from './ucan'
-import * as ucanInternal from './ucan/internal'
-import { api, Maybe, isDefined } from './common'
-import { setup } from './setup/internal'
+import * as did from '../did'
+import * as ucan from '../ucan'
+import * as ucanInternal from '../ucan/internal'
+import { api, Maybe, isString } from '../common'
+import { setup } from '../setup/internal'
 
 
 export type App = {
@@ -17,7 +17,7 @@ export type App = {
 export async function index(): Promise<Array<App>> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
+  const localUcan = await ucanInternal.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
@@ -25,7 +25,7 @@ export async function index(): Promise<Array<App>> {
   const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: localUcan, 
+    proof: localUcan,
     potency: null
   }))
 
@@ -37,7 +37,10 @@ export async function index(): Promise<Array<App>> {
   })
 
   const data = await response.json();
-  return data
+  return Object
+    .values(data)
+    .filter(v => (v as Array<string>).length > 0)
+    .map(v => ({ domain: (v as Array<string>)[0] }))
 }
 
 /**
@@ -50,7 +53,7 @@ export async function create(
 ): Promise<App> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
+  const localUcan = await ucanInternal.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
@@ -58,11 +61,13 @@ export async function create(
   const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: localUcan, 
+    proof: localUcan,
     potency: null
   }))
 
-  const url = isDefined(subdomain) ? `${apiEndpoint}/app?${subdomain}` : `${apiEndpoint}/app`
+  const url = isString(subdomain)
+    ? `${apiEndpoint}/app?subdomain=${encodeURIComponent(subdomain)}`
+    : `${apiEndpoint}/app`
 
   const response = await fetch(url, {
     method: 'POST',
@@ -71,20 +76,20 @@ export async function create(
     }
   })
   const data = await response.json();
-  return data
+  return { domain: data }
 }
 
 /**
- * Destroy app by any associated URL
+ * Destroy app by any associated domain
  *
- * @param url The url we want to delete
+ * @param domain The domain associated with the app we want to delete
  */
-export async function deleteByURL(
-  url: string
+export async function deleteByDomain(
+  domain: string
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
+  const localUcan = await ucanInternal.lookupAppUcan(domain)
   if (localUcan === null) {
     throw new Error("Could not find your local UCAN")
   }
@@ -92,11 +97,11 @@ export async function deleteByURL(
   const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: localUcan, 
+    proof: localUcan,
     potency: null
   }))
 
-  await fetch(`${apiEndpoint}/app/associated/${url}`, {
+  await fetch(`${apiEndpoint}/app/associated/${encodeURIComponent(domain)}`, {
     method: 'DELETE',
     headers: {
       'authorization': `Bearer ${jwt}`

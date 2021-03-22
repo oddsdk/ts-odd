@@ -2,6 +2,7 @@ import localforage from 'localforage'
 
 import * as common from '../common'
 import * as pathUtil from '../fs/path'
+import * as permissions from './permissions'
 import * as ucan from '../ucan'
 import { UCANS_STORAGE_KEY } from '../common'
 import { Permissions } from './permissions'
@@ -31,6 +32,13 @@ export function dictionaryFilesystemPrefix(username: string): string {
   // TODO: Waiting on API change.
   //       Should be `${WNFS_PREFIX}:${host}/`
   return WNFS_PREFIX + ":/"
+}
+
+/**
+ * Look up a UCAN for a platform app.
+ */
+export async function lookupAppUcan(domain: string): Promise<Ucan | null> {
+  return dictionary["*"] || dictionary["app:*"] || dictionary[`app:${domain}`]
 }
 
 /**
@@ -86,7 +94,7 @@ export function validatePermissions(
 
   // Check permissions
   if (app) {
-    const u = dictionary[`${prefix}private/Apps/${app.creator}/${app.name}`]
+    const u = dictionary[prefix + permissions.appDataPath(app)]
     if (!u || ucan.isExpired(u)) return false
   }
 

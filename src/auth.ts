@@ -6,6 +6,7 @@ import * as did from './did'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 import { USERNAME_STORAGE_KEY, Maybe } from './common'
+import { FileSystem } from './fs/filesystem'
 import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
 
@@ -31,6 +32,8 @@ export async function leave({ withoutRedirect }: { withoutRedirect?: boolean } =
   await cidLog.clear()
   await keystore.clear()
 
+  ;((globalThis as any).filesystems || []).forEach((f: FileSystem) => f.deactivate())
+
   if (!withoutRedirect && globalThis.location) {
     globalThis.location.href = setup.endpoints.lobby
   }
@@ -50,8 +53,9 @@ export async function redirectToLobby(
   permissions: Maybe<Permissions>,
   redirectTo?: string
 ): Promise<void> {
-  const app = permissions ? permissions.app : undefined
-  const fs = permissions ? permissions.fs : undefined
+  const app = permissions?.app
+  const fs = permissions?.fs
+  const platform = permissions?.platform
 
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
@@ -63,11 +67,22 @@ export async function redirectToLobby(
     [ "didExchange", exchangeDid ],
     [ "didWrite", writeDid ],
     [ "redirectTo", redirectTo ]
+
   ].concat(
     app                     ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
     fs && fs.privatePaths   ? fs.privatePaths.map(path => [ "privatePath", path ]) : [],
-    fs && fs.publicPaths    ? fs.publicPaths.map(path => [ "publicPath", path ]) : [],
-  )
+    fs && fs.publicPaths    ? fs.publicPaths.map(path => [ "publicPath", path ]) : []
+
+  ).concat((() => {
+    const apps = platform?.apps
+
+    switch (typeof apps) {
+      case "string": return [[ "app", apps ]]
+      case "object": return apps.map(a => [ "app", a ])
+      default: return []
+    }
+
+  })())
 
   // And, go!
   window.location.href = setup.endpoints.lobby + "?" +
