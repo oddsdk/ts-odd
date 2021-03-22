@@ -66,7 +66,10 @@ export async function redirectToLobby(
   const params = [
     [ "didExchange", exchangeDid ],
     [ "didWrite", writeDid ],
-    [ "redirectTo", redirectTo ]
+    [ "redirectTo", redirectTo ],
+
+    // TODO: Remove backwards compatibility
+    [ "newFlow", "t" ]
 
   ].concat(
     app                     ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
