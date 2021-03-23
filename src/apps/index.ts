@@ -102,7 +102,20 @@ export async function deleteByDomain(
     potency: null
   }))
 
-  await fetch(`${apiEndpoint}/app/associated/${encodeURIComponent(domain)}`, {
+  const appIndexResponse = await fetch(`${apiEndpoint}/app`, {
+    method: 'GET',
+    headers: {
+      'authorization': `Bearer ${jwt}`
+    }
+  })
+
+  const index = await appIndexResponse.json() as { [_: string]: string[] };
+  const appToDelete = Object.entries(index).find(([_, domains]) => domains.includes(domain))
+  if (appToDelete == null) {
+    throw new Error(`Couldn't find an app with domain ${domain}`)
+  }
+
+  await fetch(`${apiEndpoint}/app/${encodeURIComponent(appToDelete[0])}`, {
     method: 'DELETE',
     headers: {
       'authorization': `Bearer ${jwt}`
@@ -116,12 +129,12 @@ export async function deleteByDomain(
  * @param subdomain Subdomain to create the fission app with
  */
 export async function publish(
-  subdomain: string,
+  domain: string,
   cid: CID,
-): Promise<App> {
+): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucanInternal.lookupAppUcan(subdomain)
+  const localUcan = await ucanInternal.lookupAppUcan(domain)
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
@@ -133,14 +146,12 @@ export async function publish(
     potency: null
   }))
 
-  const url = `${apiEndpoint}/app/${subdomain}/${cid}`
+  const url = `${apiEndpoint}/app/${domain}/${cid}`
 
-  const response = await fetch(url, {
+  await fetch(url, {
     method: 'PATCH',
     headers: {
       'authorization': `Bearer ${jwt}`
     }
   })
-  const data = await response.json();
-  return data
 }
