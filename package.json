@@ -39,6 +39,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:prod": "yarn run build && yarn run lint && yarn run test -- --no-cache",
+    "test:unit": "jest --watch --testPathPattern=src/",
     "precommit": "lint-staged",
     "prepublishOnly": "yarn build && yarn docs",
     "publish-dry": "npm publish --dry-run",
