@@ -231,6 +231,7 @@ export async function isSupported(): Promise<boolean> {
 
 export * from './auth'
 export * from './filesystem'
+export * from './common/version'
 
 export const fs = fsClass
 

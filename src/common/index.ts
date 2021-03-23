@@ -8,6 +8,7 @@ import * as blob from './blob'
 export * from './types'
 export * from './type-checks'
 export * from './util'
+export * from './version'
 export { api, arrbufs, base64, blob }
 
 export const UCANS_STORAGE_KEY = "webnative.auth_ucans"

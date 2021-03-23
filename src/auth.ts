@@ -5,7 +5,7 @@ import * as common from './common'
 import * as did from './did'
 import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
-import { USERNAME_STORAGE_KEY, Maybe } from './common'
+import { USERNAME_STORAGE_KEY, Maybe, VERSION } from './common'
 import { FileSystem } from './fs/filesystem'
 import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
@@ -67,9 +67,7 @@ export async function redirectToLobby(
     [ "didExchange", exchangeDid ],
     [ "didWrite", writeDid ],
     [ "redirectTo", redirectTo ],
-
-    // TODO: Remove backwards compatibility
-    [ "newFlow", "t" ]
+    [ "sdk", VERSION.toString() ]
 
   ].concat(
     app                     ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],

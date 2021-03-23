@@ -1,6 +1,6 @@
 # Changelog
 
-### v0.22.0
+### v0.23.0
 
 - **UCAN permission system and improved security**.
 - Show alert when leaving the page while publishing changes, to avoid data loss.
