@@ -1,21 +1,22 @@
+import * as fc from 'fast-check';
 import { equal } from './arrbufs'
 
-describe('arrbufs equal', () => {
-  it('returns true on identical buffers', () => {
-    const buffA = new ArrayBuffer(8)
-    const buffB = new ArrayBuffer(8)
-    expect(equal(buffA, buffB)).toBe(true)
-  })
+test('arrbufs equal', () => {
+  fc.assert(
+    fc.property(fc.uint8Array(), data => {
+      expect(equal(data.buffer, data.buffer)).toBe(true);
+    })
+  )
+})
 
-  it('returns false on different buffers', () => {
-    const buffA = new Uint8Array([0xed, 0x01])
-    const buffB = new Uint8Array([0xed, 0x02])
-    expect(equal(buffA, buffB)).toBe(false)
-  })
-
-  it('returns false on buffers with different lengths', () => {
-    const buffA = new Uint8Array([0x01, 0x02])
-    const buffB = new Uint8Array([0x01, 0x02, 0x03])
-    expect(equal(buffA, buffB)).toBe(false)
-  })
+test('arrbufs not equal', () => {
+  fc.assert(
+    fc.property(
+      fc.tuple(
+        fc.uint8Array({ minLength: 3 }),
+        fc.uint8Array({ minLength: 3 })
+      ), data => {
+        expect(equal(data[0].buffer, data[1].buffer)).toBe(false);
+      })
+  )
 })
