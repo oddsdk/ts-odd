@@ -1,10 +1,15 @@
 /**
  * @jest-environment jsdom
  */
+import * as fc from 'fast-check';
 import * as base64 from './base64'
 
-test('can decode an encoded string', () => {
-  const testString = 'ab/c-d=='
-  const encoded = base64.urlEncode(testString)
-  expect(base64.urlDecode(encoded)).toEqual(testString)
+test('round trip encode and decode a string', () => {
+  fc.assert(
+    fc.property(fc.string({ maxLength: 2000 }), data => {
+      const encodedData = base64.urlEncode(data)
+      const decodedData = base64.urlDecode(encodedData)
+      expect(data).toEqual(decodedData)
+    })
+  );
 })
