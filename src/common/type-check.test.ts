@@ -1,8 +1,25 @@
+import * as fc from 'fast-check';
 import * as check from './type-checks'
 
+
 describe('is defined', () => {
-  it('returns true when passed a value', () => {
-    expect(check.isDefined(1)).toBe(true)
+  fc.assert(
+    fc.property(fc.frequency(
+      { arbitrary: fc.object(), weight: 10 },
+      { arbitrary: fc.string(), weight: 5 },
+      { arbitrary: fc.integer(), weight: 1 },
+      { arbitrary: fc.double(), weight: 1 }
+    ), data => {
+      expect(check.isDefined(data)).toEqual(true)
+    })
+  )
+
+  it('returns true when passed true', () => {
+    expect(check.isDefined(true)).toBe(true)
+  })
+
+  it('returns true when passed false', () => {
+    expect(check.isDefined(false)).toBe(true)
   })
 
   it('returns true when passed a null', () => {
@@ -16,8 +33,23 @@ describe('is defined', () => {
 
 
 describe('not null', () => {
-  it('returns true when passed a value', () => {
-    expect(check.notNull(1)).toBe(true)
+  fc.assert(
+    fc.property(fc.frequency(
+      { arbitrary: fc.object(), weight: 10 },
+      { arbitrary: fc.string(), weight: 5 },
+      { arbitrary: fc.integer(), weight: 1 },
+      { arbitrary: fc.double(), weight: 1 }
+    ), data => {
+      expect(check.notNull(data)).toEqual(true)
+    })
+  )
+
+  it('returns true when passed true', () => {
+    expect(check.notNull(true)).toBe(true)
+  })
+
+  it('returns true when passed false', () => {
+    expect(check.notNull(false)).toBe(true)
   })
 
   it('returns true when passed undefined', () => {
@@ -30,8 +62,23 @@ describe('not null', () => {
 })
 
 describe('is just', () => {
-  it('returns true when passed a value', () => {
-    expect(check.isJust(1)).toBe(true)
+  fc.assert(
+    fc.property(fc.frequency(
+      { arbitrary: fc.object(), weight: 10 },
+      { arbitrary: fc.string(), weight: 5 },
+      { arbitrary: fc.integer(), weight: 1 },
+      { arbitrary: fc.double(), weight: 1 }
+    ), data => {
+      expect(check.isJust(data)).toEqual(true)
+    })
+  )
+
+  it('returns true when passed true', () => {
+    expect(check.isJust(true)).toBe(true)
+  })
+
+  it('returns true when passed false', () => {
+    expect(check.isJust(false)).toBe(true)
   })
 
   it('returns true when passed undefined', () => {
@@ -44,8 +91,23 @@ describe('is just', () => {
 })
 
 describe('is value', () => {
-  it('returns true when passed a value', () => {
-    expect(check.isValue(1)).toBe(true)
+  fc.assert(
+    fc.property(fc.frequency(
+      { arbitrary: fc.object(), weight: 10 },
+      { arbitrary: fc.string(), weight: 5 },
+      { arbitrary: fc.integer(), weight: 1 },
+      { arbitrary: fc.double(), weight: 1 }
+    ), data => {
+      expect(check.isValue(data)).toEqual(true)
+    })
+  )
+
+  it('returns true when passed true', () => {
+    expect(check.isValue(true)).toBe(true)
+  })
+
+  it('returns true when passed false', () => {
+    expect(check.isValue(false)).toBe(true)
   })
 
   it('returns false when passed undefined', () => {
@@ -66,9 +128,16 @@ describe('is boolean', () => {
     expect(check.isBool(false)).toBe(true)
   })
 
-  it('returns false when passed a non-boolean value', () => {
-    expect(check.isBool(1)).toBe(false)
-  })
+  fc.assert(
+    fc.property(fc.frequency(
+      { arbitrary: fc.object(), weight: 10 },
+      { arbitrary: fc.string(), weight: 5 },
+      { arbitrary: fc.integer(), weight: 1 },
+      { arbitrary: fc.double(), weight: 1 }
+    ), data => {
+      expect(check.isBool(data)).toEqual(false)
+    })
+  )
 
   it('returns false when passed a null', () => {
     expect(check.isBool(null)).toBe(false)
@@ -80,21 +149,15 @@ describe('is boolean', () => {
 })
 
 describe('is num', () => {
-  it('returns true when passed a number', () => {
-    expect(check.isNum(1)).toBe(true)
-  })
-
-  it('returns true when passed a hex number', () => {
-    expect(check.isNum(0x1)).toBe(true)
-  })
-
-  it('returns true when passed a binary number', () => {
-    expect(check.isNum(0b1)).toBe(true)
-  })
-
-  it('returns true when passed a octal number', () => {
-    expect(check.isNum(0o1)).toBe(true)
-  })
+  fc.assert(
+    fc.property(fc.frequency(
+      { arbitrary: fc.integer(), weight: 1 },
+      { arbitrary: fc.float(), weight: 1 },
+      { arbitrary: fc.double(), weight: 1 }
+    ), data => {
+      expect(check.isNum(data)).toEqual(true)
+    })
+  )
 
   it('returns true when passed infinity', () => {
     expect(check.isNum(Infinity)).toBe(true)
@@ -104,8 +167,25 @@ describe('is num', () => {
     expect(check.isNum(-Infinity)).toBe(true)
   })
 
-  it('returns false when passed a non-numeric value', () => {
-    expect(check.isNum('1')).toBe(false)
+  it('returns true when passed a NaN', () => {
+    expect(check.isNum(NaN)).toBe(true)
+  })
+
+  fc.assert(
+    fc.property(fc.frequency(
+      { arbitrary: fc.object(), weight: 10 },
+      { arbitrary: fc.string(), weight: 5 },
+    ), data => {
+      expect(check.isNum(data)).toEqual(false)
+    })
+  )
+
+  it('returns false when passed true', () => {
+    expect(check.isNum(true)).toBe(false)
+  })
+
+  it('returns false when passed false', () => {
+    expect(check.isNum(false)).toBe(false)
   })
 
   it('returns false when passed undefined', () => {
@@ -117,17 +197,30 @@ describe('is num', () => {
   })
 })
 
+
 describe('is string', () => {
-  it('returns true when passed a string', () => {
-    expect(check.isString('a')).toBe(true)
+  fc.assert(
+    fc.property(fc.string(), data => {
+      expect(check.isString(data)).toEqual(true)
+    })
+  )
+
+  fc.assert(
+    fc.property(fc.frequency(
+      { arbitrary: fc.object(), weight: 10 },
+      { arbitrary: fc.integer(), weight: 1 },
+      { arbitrary: fc.double(), weight: 1 }
+    ), data => {
+      expect(check.isString(data)).toEqual(false)
+    })
+  )
+
+  it('returns false when passed true', () => {
+    expect(check.isString(true)).toBe(false)
   })
 
-  it('returns true when passed an empty string', () => {
-    expect(check.isString('')).toBe(true)
-  })
-
-  it('returns false when passed an non-string value', () => {
-    expect(check.isString(1)).toBe(false)
+  it('returns false when passed false', () => {
+    expect(check.isString(false)).toBe(false)
   })
 
   it('returns false when passed undefined ', () => {
@@ -140,16 +233,28 @@ describe('is string', () => {
 })
 
 describe('is object', () => {
-  it('returns true when passed a object', () => {
-    expect(check.isObject({ a: 1 })).toBe(true)
+  fc.assert(
+    fc.property(fc.object(), data => {
+      expect(check.isObject(data)).toEqual(true)
+    })
+  )
+
+  fc.assert(
+    fc.property(fc.frequency(
+      { arbitrary: fc.string(), weight: 5 },
+      { arbitrary: fc.integer(), weight: 1 },
+      { arbitrary: fc.double(), weight: 1 }
+    ), data => {
+      expect(check.isObject(data)).toEqual(false)
+    })
+  )
+
+  it('returns false when passed true', () => {
+    expect(check.isObject(true)).toBe(false)
   })
 
-  it('returns true when passed an empty object', () => {
-    expect(check.isObject({})).toBe(true)
-  })
-
-  it('returns false when passed an non-object value', () => {
-    expect(check.isObject(1)).toBe(false)
+  it('returns false when passed false', () => {
+    expect(check.isObject(false)).toBe(false)
   })
 
   it('returns false when passed undefined ', () => {
