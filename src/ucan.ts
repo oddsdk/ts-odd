@@ -141,6 +141,8 @@ export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
     const ucan = decode(ucanString)
     const { rsc } = ucan.payload
 
+    if (isExpired(ucan)) return acc
+
     if (typeof rsc !== "object") {
       return { ...acc, [rsc]: ucan }
     }
