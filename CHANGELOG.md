@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.23.1
+
+More detailed error message for NoPermissionError.
+
+
 ### v0.23.0
 
 - **UCAN permission system and improved security**.
