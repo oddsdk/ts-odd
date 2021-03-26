@@ -295,7 +295,10 @@ export class FileSystem {
     if (!this.localOnly) {
       const proof = await ucanInternal.lookupFilesystemUcan(path)
       if (!proof || ucan.isExpired(proof) || !proof.signature) {
-        throw new NoPermissionError(`I don't have the necessary permissions to make changes to the file system at "${path}"`)
+        const operation = isMutation
+          ? "make changes to"
+          : "query"
+        throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${path}"`)
       }
 
       this.proofs[proof.signature] = proof
