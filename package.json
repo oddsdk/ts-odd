@@ -33,7 +33,7 @@
   "scripts": {
     "docs": "rimraf docs && typedoc && typedoc --entryPoints ./src/fs --out docs/fs",
     "lint": "yarn eslint src/**/*.ts",
-    "prebuild": "rimraf dist",
+    "prebuild": "rimraf dist && ts-node scripts/gen-version.ts",
     "build": "tsc && rollup -c rollup.config.ts",
     "start": "tsc -w",
     "test": "jest",
@@ -87,6 +87,7 @@
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.29.0",
+    "ts-node": "^9.1.1",
     "tslib": "^2.1.0",
     "typedoc": "^0.20.23",
     "typescript": "^4.1.3",
