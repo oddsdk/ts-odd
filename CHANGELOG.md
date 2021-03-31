@@ -1,5 +1,15 @@
 # Changelog
 
+### v0.23.2
+
+Don't keep old UCANs around.
+
+
+### v0.23.1
+
+More detailed error message for NoPermissionError.
+
+
 ### v0.23.0
 
 - **UCAN permission system and improved security**.
