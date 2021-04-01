@@ -33,7 +33,7 @@
   "scripts": {
     "docs": "rimraf docs && typedoc && typedoc --entryPoints ./src/fs --out docs/fs",
     "lint": "yarn eslint src/**/*.ts",
-    "prebuild": "rimraf dist && node scripts/gen-version.mjs",
+    "prebuild": "rimraf dist && node scripts/gen-version.js",
     "build": "tsc && rollup -c rollup.config.ts",
     "start": "tsc -w",
     "test": "jest",
