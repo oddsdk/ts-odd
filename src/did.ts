@@ -1,17 +1,17 @@
 import * as base58 from 'base58-universal/main.js'
-import { CryptoSystem, Msg } from 'keystore-idb/types'
+import * as ed25519 from 'noble-ed25519'
+import { Msg } from 'keystore-idb/types'
 
-import eccOperations from 'keystore-idb/ecc/operations'
 import rsaOperations from 'keystore-idb/rsa/operations'
-import utils from 'keystore-idb/utils'
+import * as utils from 'keystore-idb/utils'
 
 import * as dns from './dns'
 import * as keystore from './keystore'
-import { arrbufs } from './common'
+import { arrbufs, base64 } from './common'
 import { setup } from './setup/internal'
 
 
-const ECC_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
+const EDWARDS_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
 const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
 const BASE58_DID_PREFIX: string = 'did:key:z'
 
@@ -72,7 +72,7 @@ export async function write(): Promise<string> {
  */
 export function publicKeyToDid(
   publicKey: string,
-  type: CryptoSystem
+  type: string
 ): string {
   const pubKeyBuf = utils.base64ToArrBuf(publicKey)
 
@@ -89,7 +89,7 @@ export function publicKeyToDid(
  */
 export function didToPublicKey(did: string): {
   publicKey: string,
-  type: CryptoSystem
+  type: string
 } {
   if (!did.startsWith(BASE58_DID_PREFIX)) {
     throw new Error("Please use a base58-encoded DID formatted `did:key:z...`")
@@ -123,12 +123,17 @@ export async function verifySignedData({ charSize = 16, data, did, signature }: 
     const { type, publicKey } = didToPublicKey(did)
 
     switch (type) {
-      case "ecc": return await eccOperations.verify(
-        data,
-        signature,
-        publicKey,
-        charSize
-      )
+
+      case "ed25519":
+        const hash = typeof data === "string"
+          ? new Uint8Array(utils.normalizeUnicodeToBuf(data, charSize))
+          : new Uint8Array(data)
+
+        return await ed25519.verify(
+          new Uint8Array(utils.base64ToArrBuf(signature)),
+          hash,
+          new Uint8Array(utils.base64ToArrBuf(publicKey))
+        )
 
       case "rsa": return await rsaOperations.verify(
         data,
@@ -154,9 +159,10 @@ export async function verifySignedData({ charSize = 16, data, did, signature }: 
 /**
  * Magic bytes.
  */
-function magicBytes(cryptoSystem: CryptoSystem): ArrayBuffer | null {
+function magicBytes(cryptoSystem: string): ArrayBuffer | null {
   switch (cryptoSystem) {
-    case CryptoSystem.RSA: return RSA_DID_PREFIX;
+    case "ed25519": return EDWARDS_DID_PREFIX;
+    case "rsa": return RSA_DID_PREFIX;
     default: return null
   }
 }
@@ -167,20 +173,20 @@ function magicBytes(cryptoSystem: CryptoSystem): ArrayBuffer | null {
  */
 const parseMagicBytes = (prefixedKey: ArrayBuffer): {
   keyBuffer: ArrayBuffer
-  type: CryptoSystem
+  type: string
 } => {
   // RSA
   if (hasPrefix(prefixedKey, RSA_DID_PREFIX)) {
     return {
       keyBuffer: prefixedKey.slice(RSA_DID_PREFIX.byteLength),
-      type: CryptoSystem.RSA
+      type: "rsa"
     }
 
-  // ECC
-  } else if (hasPrefix(prefixedKey, ECC_DID_PREFIX)) {
+  // EDWARDS
+  } else if (hasPrefix(prefixedKey, EDWARDS_DID_PREFIX)) {
     return {
-      keyBuffer: prefixedKey.slice(ECC_DID_PREFIX.byteLength),
-      type: CryptoSystem.ECC
+      keyBuffer: prefixedKey.slice(EDWARDS_DID_PREFIX.byteLength),
+      type: "ed25519"
     }
 
   }

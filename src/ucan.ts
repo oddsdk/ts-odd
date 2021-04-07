@@ -285,9 +285,10 @@ export async function sign(header: UcanHeader, payload: UcanPayload): Promise<st
 /**
  * JWT algorithm to be used in a JWT header.
  */
-function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
+function jwtAlgorithm(cryptoSystem: string): string | null {
   switch (cryptoSystem) {
-    case CryptoSystem.RSA: return 'RS256';
+    case "ed25519": return 'EdDSA';
+    case "rsa": return 'RS256';
     default: return null
   }
 }
