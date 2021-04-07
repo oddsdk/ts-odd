@@ -2,11 +2,10 @@ import BaseFile from '../base/file'
 import MMPT from '../protocol/private/mmpt'
 import PrivateHistory from './PrivateHistory'
 import { FileContent } from '../../ipfs'
-import { Maybe } from '../../common'
 import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
-import { PrivateAddResult, PrivateFileInfo, Revision } from '../protocol/private/types'
-import { genKeyStr } from '../../keystore'
+import { PrivateAddResult, PrivateFileInfo } from '../protocol/private/types'
 import { isObject } from '../../common/type-checks'
+import * as crypto from '../../crypto'
 import * as check from '../protocol/private/types/check'
 import * as history from './PrivateHistory'
 import * as metadata from '../metadata'
@@ -47,7 +46,7 @@ export class PrivateFile extends BaseFile {
 
   static async create(mmpt: MMPT, content: FileContent, parentNameFilter: BareNameFilter,  key: string): Promise<PrivateFile> {
     const bareNameFilter = await namefilter.addToBare(parentNameFilter, key)
-    const contentKey = await genKeyStr()
+    const contentKey = await crypto.aes.genKeyStr()
     const contentInfo = await protocol.basic.putEncryptedFile(content, contentKey)
     return new PrivateFile({
       content,

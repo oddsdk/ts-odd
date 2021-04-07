@@ -1,7 +1,5 @@
-import { CryptoSystem } from 'keystore-idb/types'
-
 import * as did from './did'
-import * as keystore from './keystore'
+import * as crypto from './crypto'
 import { base64 } from './common'
 
 // TYPES
@@ -90,13 +88,13 @@ export async function build({
   proof?: string
   resource?: Resource
 }): Promise<Ucan> {
-  const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
   const decodedProof = proof && decode(proof)
+  const ksAlg = await crypto.keystore.getAlg()
 
   // Header
   const header = {
-    alg: jwtAlgorithm(ks.cfg.type) || 'UnknownAlgorithm',
+    alg: jwtAlgorithm(ksAlg) || 'UnknownAlgorithm',
     typ: 'JWT',
     uav: '1.0.0' // actually 0.3.1 but server isn't updated yet
   }
@@ -269,10 +267,9 @@ export function rootIssuer(ucan: string, level = 0): string {
 export async function sign(header: UcanHeader, payload: UcanPayload): Promise<string> {
   const encodedHeader = encodeHeader(header)
   const encodedPayload = encodePayload(payload)
-  const ks = await keystore.get()
 
   return base64.makeUrlSafe(
-    await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
+    await crypto.keystore.sign(`${encodedHeader}.${encodedPayload}`, 8)
   )
 }
 

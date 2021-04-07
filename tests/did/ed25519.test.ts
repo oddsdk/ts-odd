@@ -12,7 +12,6 @@ describe('Ed25519 Signatures', () => {
 
       const encodedHeader = webnative.ucan.encodeHeader(ucan.header)
       const encodedPayload = webnative.ucan.encodePayload(ucan.payload)
-
       return webnative.did.verifySignedData({
         charSize: 8,
         data: `${encodedHeader}.${encodedPayload}`,

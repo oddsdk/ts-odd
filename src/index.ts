@@ -5,8 +5,9 @@ import utils from 'keystore-idb/utils'
 import * as common from './common'
 import * as identifiers from './common/identifiers'
 import * as ipfs from './ipfs'
-import * as keystore from './keystore'
 import * as pathing from './path'
+import * as crypto from './crypto'
+import * as storage from './storage'
 import * as ucan from './ucan/internal'
 import * as ucanPermissions from './ucan/permissions'
 
@@ -141,7 +142,7 @@ export async function initialise(
     const username = url.searchParams.get("username") || ""
 
     await importClassifiedInfo(authorised)
-    await localforage.setItem(USERNAME_STORAGE_KEY, username)
+    await storage.setItem(USERNAME_STORAGE_KEY, username)
 
     if (autoRemoveUrlParams) {
       url.searchParams.delete("authorised")
@@ -249,6 +250,7 @@ export * as dns from './dns'
 export * as ipfs from './ipfs'
 export * as keystore from './keystore'
 export * as machinery from './common'
+export * as crypto from './crypto'
 
 
 
@@ -323,30 +325,14 @@ function scenarioNotAuthorised(
 async function importClassifiedInfo(
   cid: string
 ): Promise<void> {
-  const ks = await keystore.get()
   const info = JSON.parse(await ipfs.cat(cid))
 
   // Extract session key and its iv
-  const iv = utils.base64ToArrBuf(info.iv)
-  const rawSessionKey = await ks.decrypt(info.sessionKey)
-  const sessionKey = await crypto.subtle.importKey(
-    "raw",
-    utils.base64ToArrBuf(rawSessionKey),
-    "AES-GCM",
-    false,
-    [ "encrypt", "decrypt" ]
-  )
+  const rawSessionKey = await crypto.keystore.decrypt(info.sessionKey)
 
   // Decrypt secrets
-  const secrets =
-    JSON.parse(utils.arrBufToStr(await crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: iv
-      },
-      sessionKey,
-      utils.base64ToArrBuf(info.secrets)
-    ), CharSize.B8))
+  const secretsStr = await crypto.aes.decryptGCM(info.secrets, rawSessionKey, info.iv)
+  const secrets = JSON.parse(secretsStr)
 
   const fsSecrets: Record<string, { key: string, bareNameFilter: string }> = secrets.fs
   const ucans = secrets.ucans
@@ -358,8 +344,8 @@ async function importClassifiedInfo(
       const readKeyId = await identifiers.readKey({ path })
       const bareNameFilterId = await identifiers.bareNameFilter({ path })
 
-      await ks.importSymmKey(key, readKeyId)
-      await localforage.setItem(bareNameFilterId, bareNameFilter)
+      await crypto.keystore.importSymmKey(key, readKeyId)
+      await storage.setItem(bareNameFilterId, bareNameFilter)
     })
   )
 
@@ -369,15 +355,13 @@ async function importClassifiedInfo(
 
 
 async function validateSecrets(permissions: Permissions): Promise<boolean> {
-  const ks = await keystore.get()
-
   return ucanPermissions.paths(permissions).reduce(
     (acc, path) => acc.then(async bool => {
       if (bool === false) return bool
       if (pathing.isBranch(pathing.Branch.Public, path)) return bool
 
       const keyName = await identifiers.readKey({ path })
-      return await ks.keyExists(keyName)
+      return await crypto.keystore.keyExists(keyName)
     }),
     Promise.resolve(true)
   )

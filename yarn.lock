@@ -4081,10 +4081,10 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
-fission-bloom-filters@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/fission-bloom-filters/-/fission-bloom-filters-1.4.0.tgz#1aa9a7fdc455dc4ab7723b246c94005db8252b7d"
-  integrity sha512-7wif9/Uj7IKqTUQhk/KlWVh9fRin65UQSz2BCx+7myG67sgS2ETpyu8iV/yNou7M2KcrZhZd94vn4a54L6T70Q==
+fission-bloom-filters@1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/fission-bloom-filters/-/fission-bloom-filters-1.6.0.tgz#0122929e205300651da0b697683b90ae90c3cbb6"
+  integrity sha512-pJWpxdU7RqcuES0PvlHAeoW3+meW0/cf4/9KrnQN41We+9ulSyD5VauyeLqobQ6uQvDhOjymE/7Gq2nzAkOhjA==
   dependencies:
     is-buffer "^2.0.4"
     lodash "^4.17.15"
@@ -6670,12 +6670,13 @@ keypair@^1.0.1:
   resolved "https://registry.yarnpkg.com/keypair/-/keypair-1.0.1.tgz#7603719270afb6564ed38a22087a06fc9aa4ea1b"
   integrity sha1-dgNxknCvtlZO04oiCHoG/Jqk6hs=
 
-keystore-idb@0.14.0:
-  version "0.14.0"
-  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.14.0.tgz#06ca51065747fad08aed5b26aeb6117833dddb9d"
-  integrity sha512-LX6BipvB4t90XZgD/6yYg6/7Avv9V+yEg6j48Vds2T5QRd82De03ApKlCbkYYGl3G2odwY28odL7ES6+eKcglg==
+keystore-idb@0.14.1:
+  version "0.14.1"
+  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.14.1.tgz#313dc199aa85c7a3ce27ebf3afc1a537dbd50282"
+  integrity sha512-oyymnax18EycBDlS8Leg9WmJJ39J3fITDXUWd+he8gkq44hgnEDjjgfiGWuCBLlB9/3E3AmLWvpXFPlPAG6jWQ==
   dependencies:
     "@ungap/global-this" "^0.4.3"
+    buffer "^6.0.3"
     localforage "^1.7.3"
 
 keyv@^3.0.0:

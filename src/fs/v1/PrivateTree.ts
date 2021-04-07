@@ -4,13 +4,12 @@ import PrivateFile from './PrivateFile'
 import PrivateHistory from './PrivateHistory'
 
 import { BaseLinks, UpdateCallback } from '../types'
-import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, Revision } from '../protocol/private/types'
+import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult } from '../protocol/private/types'
 import { FileContent } from '../../ipfs'
 import { Path } from '../../path'
 import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
-import { genKeyStr } from '../../keystore'
 import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common'
-
+import * as crypto from '../../crypto'
 import * as check from '../protocol/private/types/check'
 import * as history from './PrivateHistory'
 import * as metadata from '../metadata'
@@ -99,7 +98,7 @@ export default class PrivateTree extends BaseTree {
   }
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateTree> {
-    const key = await genKeyStr()
+    const key = await crypto.aes.genKeyStr()
     const child = await PrivateTree.create(this.mmpt, key, this.header.bareNameFilter)
 
     const existing = this.children[name]
@@ -119,7 +118,7 @@ export default class PrivateTree extends BaseTree {
 
     let file: PrivateFile
     if (existing === null) {
-      const key = await genKeyStr()
+      const key = await crypto.aes.genKeyStr()
       file = await PrivateFile.create(this.mmpt, content, this.header.bareNameFilter, key)
     } else if (PrivateFile.instanceOf(existing)) {
       file = await existing.updateContent(content)

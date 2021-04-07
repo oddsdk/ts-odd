@@ -1,5 +1,3 @@
-import localforage from 'localforage'
-
 import { AddResult, CID } from '../../ipfs'
 import { BareNameFilter } from '../protocol/private/namefilter'
 import { Links, Puttable, SimpleLink } from '../types'
@@ -7,15 +5,15 @@ import { Branch, DistinctivePath } from '../../path'
 import { Maybe } from '../../common'
 import { Permissions } from '../../ucan/permissions'
 import { SemVer } from '../semver'
-import { sha256Str } from '../../keystore'
 
+import * as crypto from '../../crypto'
 import * as identifiers from '../../common/identifiers'
 import * as ipfs from '../../ipfs'
-import * as keystore from '../../keystore'
 import * as link from '../link'
 import * as pathing from '../../path'
 import * as protocol from '../protocol'
 import * as semver from '../semver'
+import * as storage from '../../storage'
 import * as ucanPermissions from '../../ucan/permissions'
 
 import BareTree from '../bare/tree'
@@ -177,8 +175,7 @@ export default class RootTree implements Puttable {
   static async storeRootKey(rootKey: string): Promise<void> {
     const path = pathing.directory(pathing.Branch.Private)
     const rootKeyId = await identifiers.readKey({ path })
-    const ks = await keystore.get()
-    await ks.importSymmKey(rootKey, rootKeyId)
+    await crypto.keystore.importSymmKey(rootKey, rootKeyId)
   }
 
   findPrivateTree(path: DistinctivePath): [DistinctivePath, PrivateTree | null] {
@@ -213,7 +210,7 @@ export default class RootTree implements Puttable {
     }
 
     // add to chunk
-    const hashedCid = await sha256Str(cid)
+    const hashedCid = await crypto.hash.sha256Str(cid)
     const updatedChunk = [...lastChunk, hashedCid]
     const updatedChunkDeposit = await protocol.basic.putFile(
       updatedChunk.join(",")
@@ -263,7 +260,7 @@ async function findBareNameFilter(
   path: DistinctivePath
 ): Promise<Maybe<BareNameFilter>> {
   const bareNameFilterId = await identifiers.bareNameFilter({ path })
-  const bareNameFilter: Maybe<BareNameFilter> = await localforage.getItem(bareNameFilterId)
+  const bareNameFilter: Maybe<BareNameFilter> = await storage.getItem(bareNameFilterId)
   if (bareNameFilter) return bareNameFilter
 
   const [treePath, tree] = findPrivateTree(map, path)
@@ -331,7 +328,7 @@ async function permissionKeys(
     if (pathing.isBranch(pathing.Branch.Public, path)) return acc
 
     const name = await identifiers.readKey({ path })
-    const key = await keystore.getKeyByName(name)
+    const key = await crypto.keystore.exportSymmKey(name)
     const pk: PathKey = { path: path, key: key }
 
     return acc.then(
