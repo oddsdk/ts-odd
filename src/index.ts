@@ -1,6 +1,4 @@
-import { CharSize } from 'keystore-idb/types'
 import localforage from 'localforage'
-import utils from 'keystore-idb/utils'
 
 import * as common from './common'
 import * as identifiers from './common/identifiers'
