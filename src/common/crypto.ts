@@ -1,5 +1,15 @@
 import utils from 'keystore-idb/utils'
 
+export function hexToArrayBuffer(hex: string): ArrayBuffer {
+  const view = new Uint8Array(hex.length / 2)
+
+  for (let i = 0; i < hex.length; i += 2) {
+    view[i / 2] = parseInt(hex.substring(i, i + 2), 16)
+  }
+
+  return view.buffer
+}
+
 export const sha256 = async (buf: ArrayBuffer): Promise<ArrayBuffer> => {
   return globalThis.crypto.subtle.digest(
     {

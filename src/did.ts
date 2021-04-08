@@ -5,13 +5,14 @@ import { Msg } from 'keystore-idb/types'
 import rsaOperations from 'keystore-idb/rsa/operations'
 import * as utils from 'keystore-idb/utils'
 
+import * as crypto from './common/crypto'
 import * as dns from './dns'
 import * as keystore from './keystore'
 import { arrbufs, base64 } from './common'
 import { setup } from './setup/internal'
 
 
-const EDWARDS_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
+const EDWARDS_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed ]).buffer
 const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
 const BASE58_DID_PREFIX: string = 'did:key:z'
 
@@ -132,7 +133,7 @@ export async function verifySignedData({ charSize = 16, data, did, signature }: 
         return await ed25519.verify(
           new Uint8Array(utils.base64ToArrBuf(signature)),
           hash,
-          new Uint8Array(utils.base64ToArrBuf(publicKey))
+          new Uint8Array(crypto.hexToArrayBuffer(publicKey))
         )
 
       case "rsa": return await rsaOperations.verify(
