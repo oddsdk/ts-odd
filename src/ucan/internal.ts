@@ -5,7 +5,7 @@ import * as pathUtil from '../fs/path'
 import * as permissions from './permissions'
 import * as ucan from '../ucan'
 import { UCANS_STORAGE_KEY } from '../common'
-import { Permissions } from './permissions'
+import { Permissions, fileSystemPaths } from './permissions'
 import { Ucan, WNFS_PREFIX } from '../ucan'
 import { setup } from '../setup/internal'
 
@@ -98,9 +98,8 @@ export function validatePermissions(
     if (!u || ucan.isExpired(u)) return false
   }
 
-  if (fs && fs.privatePaths) {
-    const priv = fs.privatePaths.every(pathRaw => {
-      const path = pathRaw.replace(/^\/+/, "")
+  if (fs?.private) {
+    const priv = fileSystemPaths(fs.private).every(path => {
       const pathWithPrefix = path.length ? `${prefix}private/${path}` : `${prefix}private`
       const u = dictionary[pathWithPrefix]
       return u && !ucan.isExpired(u)
@@ -108,9 +107,8 @@ export function validatePermissions(
     if (!priv) return false
   }
 
-  if (fs && fs.publicPaths) {
-    const publ = fs.publicPaths.every(pathRaw => {
-      const path = pathRaw.replace(/^\/+/, "")
+  if (fs?.public) {
+    const publ = fileSystemPaths(fs.public).every(path => {
       const pathWithPrefix = path.length ? `${prefix}public/${path}` : `${prefix}public`
       const u = dictionary[pathWithPrefix]
       return u && !ucan.isExpired(u)

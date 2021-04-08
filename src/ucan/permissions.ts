@@ -10,8 +10,13 @@ export type AppInfo = {
 }
 
 export type FileSystemPermissions = {
-  privatePaths: Array<string>
-  publicPaths: Array<string>
+  private: SubFileSystemPermissions
+  public: SubFileSystemPermissions
+}
+
+export type SubFileSystemPermissions = {
+  directories: Array<string>
+  files: Array<string>
 }
 
 export type PlatformPermissions = {
@@ -19,25 +24,64 @@ export type PlatformPermissions = {
 }
 
 
+/**
+ * Relative path for `AppInfo`.
+ */
 export function appDataPath(app: AppInfo) {
   return `private/Apps/${app.creator}/${app.name}`
 }
 
 
+/**
+ * Lists the filesystems paths for a set of `Permissions`.
+ * This'll return a list of absolute paths.
+ *
+ *     /private/directory/
+ *     /public/file
+ */
 export function paths(permissions: Permissions): string[] {
   let list = []
 
   if (permissions.app) list.push('/' + appDataPath(permissions.app))
-  if (permissions.fs && permissions.fs.privatePaths) list = list.concat(
-    permissions.fs.privatePaths
-      .map(p => '/private/' + p.replace(/^\/+/, ""))
-      .map(p => p.replace(/\/+$/, ""))
+  if (permissions.fs?.private) list = list.concat(
+    fileSystemPaths(permissions.fs?.private).map(p => '/private/' + p)
   )
-  if (permissions.fs && permissions.fs.publicPaths) list = list.concat(
-    permissions.fs.publicPaths
-      .map(p => '/public/' + p.replace(/^\/+/, ""))
-      .map(p => p.replace(/\/+$/, ""))
+
+  if (permissions.fs?.public) list = list.concat(
+    fileSystemPaths(permissions.fs?.public).map(p => '/public/' + p)
   )
 
   return list
+}
+
+/**
+ * Lists the filesystems paths for a set of `SubFileSystemPermissions`.
+ * This'll return a list of relative paths.
+ *
+ *     directory/
+ *     file
+ */
+export function fileSystemPaths(permissions: SubFileSystemPermissions): string[] {
+  return ([] as string[])
+    .concat( (permissions.directories || []).map(p => cleanDirectoryPath(p)) )
+    .concat( (permissions.files || []).map(p => cleanFilePath(p)) )
+}
+
+
+// 🛠
+
+/**
+ * Properly format a directory path.
+ * example/directory/
+ */
+export function cleanDirectoryPath(path: string): string {
+  return cleanDirectoryPath(path).replace(/\/+$/, '') + '/'
+}
+
+/**
+ * Properly format a file path.
+ * example/file
+ */
+export function cleanFilePath(path: string): string {
+  return path.replace(/^\/+/, '')
 }
