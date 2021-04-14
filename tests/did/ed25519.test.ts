@@ -33,7 +33,7 @@ describe('Ed25519 Signatures', () => {
       return webnative.did.verifySignedData({
         charSize: 8,
         data: s.slice(0, 2).join("."),
-        did: webnative.did.publicKeyToDid("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a", "ed25519"),
+        did: webnative.did.publicKeyToDid("11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo", "ed25519"),
         signature: s[2].replace(/_/g, "/").replace(/-/g, "+")
       })
     })
