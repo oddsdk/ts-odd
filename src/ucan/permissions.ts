@@ -10,8 +10,8 @@ export type AppInfo = {
 }
 
 export type FileSystemPermissions = {
-  private: SubFileSystemPermissions
-  public: SubFileSystemPermissions
+  private?: SubFileSystemPermissions
+  public?: SubFileSystemPermissions
 }
 
 export type SubFileSystemPermissions = {
