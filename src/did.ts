@@ -20,7 +20,7 @@ const BASE58_DID_PREFIX = 'did:key:z'
 export enum KeyType {
   RSA = 'rsa',
   Edwards = 'ed25519',
-  BLS = 'bls'
+  BLS = 'bls12-381'
 }
 
 
