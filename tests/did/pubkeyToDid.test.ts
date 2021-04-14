@@ -27,7 +27,7 @@ describe('publicKeyToDid', () => {
       expect(did).toEqual(expectedDid)
     })
 
-    it('handles Ed25519 Keys', async () => {
+    it('handles BLS12-381 Keys', async () => {
       const expectedDid = "did:key:z6HpYD1br5P4QVh5rjRGAkBfKMWes44uhKmKdJ6dN2Nm9gHK"
 
       const did = await page.evaluate(async () => {

@@ -150,7 +150,7 @@ export async function verifySignedData({ charSize = 16, data, did, signature }: 
         return await ed25519.verify(
           new Uint8Array(utils.base64ToArrBuf(signature)),
           hash,
-          new Uint8Array(crypto.hexToArrayBuffer(publicKey))
+          new Uint8Array(utils.base64ToArrBuf(publicKey)),
         )
 
       case KeyType.RSA: return await rsaOperations.verify(
