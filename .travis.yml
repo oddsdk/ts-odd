@@ -6,9 +6,6 @@ notifications:
   email: false
 node_js:
   - node
-  - lts/*
-  - 12
-  - 10
 script:
   - yarn test:prod && yarn build
 after_success:
