@@ -246,6 +246,7 @@ export * as ucan from './ucan'
 export * as dns from './dns'
 export * as ipfs from './ipfs'
 export * as keystore from './keystore'
+export * as common from './common'
 
 
 

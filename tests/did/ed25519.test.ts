@@ -1,22 +1,23 @@
 import { loadWebnativePage } from '../helpers/page'
 
-
-describe('UCAN', () => {
+describe('Ed25519 Signatures', () => {
   beforeEach(async () => {
     await loadWebnativePage()
   })
 
   it('can verify a UCAN signature', async () => {
     const isValid = await page.evaluate(async () => {
-      const ucan = "eyJ1YXYiOiIxLjAuMCIsImFsZyI6IkVkRFNBIiwiY3R5IjpudWxsLCJ0eXAiOiJKV1QifQ.eyJwdGMiOiJBUFBFTkQiLCJuYmYiOjE2MTc4NTMyMjIsInJzYyI6IioiLCJleHAiOjk2NTk1MzMyNTIsImlzcyI6ImRpZDprZXk6ejJEV3NHWEZTVndGM3FUcGFEcnVXbVU3S01tR3FId3JIbnpqMmJYTWk0SjQzaFMiLCJwcmYiOm51bGwsImF1ZCI6ImRpZDprZXk6ejJEU1c1MzZiY1d4UEd1ejdaTW5YZGp1NjRwQm9XcnliVHl6VHFXWVdhN0Vqc0IiLCJmY3QiOltdfQ.kV8w3viTHShkqwSjfV99vtImO4E1p-k6bIWQbe68KyPB54ZpiGyJogjIuPKxEZsbDk7UZW9qED14IwT89S1IBg"
+      const encodedUcan = "eyJ1YXYiOiIxLjAuMCIsImFsZyI6IkVkRFNBIiwiY3R5IjpudWxsLCJ0eXAiOiJKV1QifQ.eyJwdGMiOiJBUFBFTkQiLCJuYmYiOjE2MTg0MjU4NzYsInJzYyI6eyJ3bmZzIjoiLyJ9LCJleHAiOjE2MTg0MjU5MzYsImlzcyI6ImRpZDprZXk6ejZNa3BoTWtYc24ybzVnN2E4M292MndjalBOeXNkZXlNMm9CdEVaUlphRXJqSlU1IiwicHJmIjpudWxsLCJhdWQiOiJkaWQ6a2V5Ono2TWtnWUdGM3RobjhrMUZ2NHA0ZFdYS3RzWENuTEg3cTl5dzRRZ05QVUxEbURLQiIsImZjdCI6W119.DItB729fJHKYhVuhjpXFOyqJeJwSpa8y5cAvbkdzzTbKTUEpKv5YfgKn5FWKzY_cnCeCLjqL_Zw9gto7kPqVCw"
+      const ucan = webnative.ucan.decode(encodedUcan)
 
-      const decodedUcan = webnative.ucan.decode(ucan)
-
+      const encodedHeader = webnative.ucan.encodeHeader(ucan.header)
+      const encodedPayload = webnative.ucan.encodePayload(ucan.payload)
+    
       return webnative.did.verifySignedData({
         charSize: 8,
-        data: ucan.split(".").slice(0, 2).join("."),
-        did: decodedUcan.payload.iss,
-        signature: decodedUcan.signature.replace(/_/g, "/").replace(/-/g, "+")
+        data: `${encodedHeader}.${encodedPayload}`,
+        did: ucan.payload.iss,
+        signature: webnative.common.base64.makeUrlUnsafe(ucan.signature || "")
       })
     })
 
@@ -32,7 +33,7 @@ describe('UCAN', () => {
       return webnative.did.verifySignedData({
         charSize: 8,
         data: s.slice(0, 2).join("."),
-        did: webnative.did.publicKeyToDid("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a", "ed25519"),
+        did: webnative.did.publicKeyToDid("11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo", "ed25519"),
         signature: s[2].replace(/_/g, "/").replace(/-/g, "+")
       })
     })

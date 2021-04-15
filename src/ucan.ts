@@ -210,7 +210,7 @@ export function encode(ucan: Ucan): string {
 export function encodePayload(payload: UcanPayload): string {
   return base64.urlEncode(JSON.stringify({
     ...payload,
-    prf: payload.prf ? encode(payload.prf) : undefined// TODO: 0.3.1 only supports a single proof.
+    prf: payload.prf ? encode(payload.prf) : null // TODO: 0.3.1 only supports a single proof.
   }))
 }
 
