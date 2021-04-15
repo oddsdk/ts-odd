@@ -12,12 +12,12 @@ describe('Ed25519 Signatures', () => {
 
       const encodedHeader = webnative.ucan.encodeHeader(ucan.header)
       const encodedPayload = webnative.ucan.encodePayload(ucan.payload)
-    
+
       return webnative.did.verifySignedData({
         charSize: 8,
         data: `${encodedHeader}.${encodedPayload}`,
         did: ucan.payload.iss,
-        signature: webnative.common.base64.makeUrlUnsafe(ucan.signature || "")
+        signature: webnative.machinery.base64.makeUrlUnsafe(ucan.signature || "")
       })
     })
 
@@ -34,7 +34,7 @@ describe('Ed25519 Signatures', () => {
         charSize: 8,
         data: s.slice(0, 2).join("."),
         did: webnative.did.publicKeyToDid("11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo", "ed25519"),
-        signature: s[2].replace(/_/g, "/").replace(/-/g, "+")
+        signature: webnative.machinery.base64.makeUrlUnsafe(s[2])
       })
     })
 
