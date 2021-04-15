@@ -5,7 +5,6 @@ import { CryptoSystem, Msg } from 'keystore-idb/types'
 import rsaOperations from 'keystore-idb/rsa/operations'
 import * as utils from 'keystore-idb/utils'
 
-import * as crypto from './common/crypto'
 import * as dns from './dns'
 import * as keystore from './keystore'
 import { arrbufs } from './common'
@@ -36,7 +35,7 @@ export async function exchange(): Promise<string> {
   const pubKeyB64 = await ks.publicReadKey()
 
   return publicKeyToDid(
-    pubKeyB64, 
+    pubKeyB64,
     cryptoSystemToKeyType(ks.cfg.type)
   )
 }
@@ -95,7 +94,7 @@ export function publicKeyToDid(
   if (prefix === null) {
     throw new Error(`Key type '${type}' not supported`)
   }
-  
+
   const prefixedBuf = utils.joinBufs(prefix, pubKeyBuf)
 
   // Encode prefixed
