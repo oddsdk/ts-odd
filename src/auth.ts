@@ -59,6 +59,7 @@ export async function redirectToLobby(
 
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
+  const sharedRepo = !!document.body.querySelector("iframe[src$=\"/ipfs.html\"]") && typeof SharedWorker === "function"
 
   redirectTo = redirectTo || window.location.href
 
@@ -67,7 +68,8 @@ export async function redirectToLobby(
     [ "didExchange", exchangeDid ],
     [ "didWrite", writeDid ],
     [ "redirectTo", redirectTo ],
-    [ "sdk", VERSION.toString() ]
+    [ "sdk", VERSION.toString() ],
+    [ "sharedRepo", sharedRepo ? "t" : "f" ]
 
   ].concat(
     app                     ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
