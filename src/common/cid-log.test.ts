@@ -26,6 +26,13 @@ test('gets cid log', async () => {
   )
 })
 
+test('gets an empty log when key is missing', async () => {
+  localforage.getItem.mockResolvedValue(null)
+  const log = await cidLog.get()
+  expect(log).toEqual([])
+})
+
+
 test('gets index of a cid', async () => {
   fc.assert(
     fc.asyncProperty(
@@ -46,6 +53,7 @@ test('gets index of a cid', async () => {
       })
   )
 })
+
 
 test('gets the newest cid', async () => {
   fc.assert(
