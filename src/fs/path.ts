@@ -1,5 +1,9 @@
 import { NonEmptyPath } from './types'
 
+export function ensureDirPath(path: string): string {
+  return path.replace(/\/+$/, '') + '/'
+}
+
 export const splitParts = (path: string): string[] => {
   return path.split('/').filter(p => p.length > 0)
 }

@@ -28,7 +28,7 @@ export type PlatformPermissions = {
  * Relative path for `AppInfo`.
  */
 export function appDataPath(app: AppInfo) {
-  return `private/Apps/${app.creator}/${app.name}`
+  return `private/Apps/${app.creator}/${app.name}/`
 }
 
 
@@ -44,11 +44,11 @@ export function paths(permissions: Permissions): string[] {
 
   if (permissions.app) list.push('/' + appDataPath(permissions.app))
   if (permissions.fs?.private) list = list.concat(
-    fileSystemPaths(permissions.fs?.private).map(p => '/private/' + p)
+    fileSystemPaths(permissions.fs?.private).map(p => '/private/' + (p === '/' ? '' : p))
   )
 
   if (permissions.fs?.public) list = list.concat(
-    fileSystemPaths(permissions.fs?.public).map(p => '/public/' + p)
+    fileSystemPaths(permissions.fs?.public).map(p => '/public/' + (p === '/' ? '' : p))
   )
 
   return list

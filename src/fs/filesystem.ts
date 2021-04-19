@@ -182,7 +182,7 @@ export class FileSystem {
   // ---------------
 
   async mkdir(path: string, options: MutationOptions = {}): Promise<this> {
-    await this.runOnTree(path, true, (tree, relPath) => {
+    await this.runOnTree(pathUtil.ensureDirPath(path), true, (tree, relPath) => {
       return tree.mkdir(relPath)
     })
     if(options.publish) {
@@ -192,7 +192,7 @@ export class FileSystem {
   }
 
   async ls(path: string): Promise<BaseLinks> {
-    return this.runOnTree(path, false, (tree, relPath) => {
+    return this.runOnTree(pathUtil.ensureDirPath(path), false, (tree, relPath) => {
       return tree.ls(relPath)
     })
   }
@@ -391,6 +391,7 @@ function appPath(permissions: Permissions): ((path?: string | Array<string>) => 
     `${Branch.Private}/Apps/`
       + (permissions.app ? permissions.app.creator + '/' : '')
       + (permissions.app ? permissions.app.name : '')
-      + (path ? '/' + (typeof path == 'object' ? path.join('/') : path) : '')
+      + '/'
+      + (typeof path == 'object' ? path.join('/') : path)
   )
 }

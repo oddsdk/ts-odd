@@ -289,7 +289,7 @@ function loadPrivateTrees(
 ): Promise<Record<string, PrivateTree>> {
   return sortedKeys(keys).reduce((acc, [path, key]) => {
     return acc.then(async map => {
-      const prop = removePrivatePrefixAndLaggingSlash(path)
+      const prop = removePrivatePrefix(path)
 
       let privateTree
 
@@ -320,11 +320,10 @@ async function permissionKeys(
   }, Promise.resolve({}))
 }
 
-function removePrivatePrefixAndLaggingSlash(path: string): string {
+function removePrivatePrefix(path: string): string {
   return '/' + path
     .replace(/^\/?private(\/|$)/, "")
     .replace(/^\/+/, "")
-    .replace(/\/+$/, "")
 }
 
 /**

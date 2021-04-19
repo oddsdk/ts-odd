@@ -45,6 +45,7 @@ export async function lookupAppUcan(domain: string): Promise<Ucan | null> {
  * Look up a UCAN with a file system path.
  */
 export async function lookupFilesystemUcan(path: string): Promise<Ucan | null> {
+  const isDirectory = path.endsWith("/")
   const pathParts = pathUtil.splitParts(path)
   const username = await common.authenticatedUsername()
   const prefix = username ? dictionaryFilesystemPrefix(username) : ""
@@ -56,7 +57,14 @@ export async function lookupFilesystemUcan(path: string): Promise<Ucan | null> {
   return pathParts.reduce(
     (acc: Ucan | null, part: string, idx: number) => {
       if (acc) return acc
-      const partialPath = pathUtil.join(pathParts.slice(0, pathParts.length - idx))
+      const partialPath = pathUtil.join(
+        pathParts.slice(0, pathParts.length - idx)
+      ) + (
+        idx + 1 === pathParts.length
+          ? (isDirectory ? '/' : '')
+          : '/'
+      )
+
       return dictionary[`${prefix}${partialPath}`] || null
     },
     null
@@ -100,7 +108,7 @@ export function validatePermissions(
 
   if (fs?.private) {
     const priv = fileSystemPaths(fs.private).every(path => {
-      const pathWithPrefix = path.length ? `${prefix}private/${path}` : `${prefix}private`
+      const pathWithPrefix = path === '/' ? `${prefix}private/` : `${prefix}private/${path}`
       const u = dictionary[pathWithPrefix]
       return u && !ucan.isExpired(u)
     })
@@ -109,7 +117,7 @@ export function validatePermissions(
 
   if (fs?.public) {
     const publ = fileSystemPaths(fs.public).every(path => {
-      const pathWithPrefix = path.length ? `${prefix}public/${path}` : `${prefix}public`
+      const pathWithPrefix = path === '/' ? `${prefix}public/` : `${prefix}public/${path}`
       const u = dictionary[pathWithPrefix]
       return u && !ucan.isExpired(u)
     })

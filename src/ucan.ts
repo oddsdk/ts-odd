@@ -148,11 +148,7 @@ export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
     }
 
     const resource = Array.from(Object.entries(rsc))[0]
-    const key = resource[0] + ":" + (
-      resource[0] === WNFS_PREFIX
-        ? resource[1].replace(/\/+$/, "")
-        : resource[1]
-    )
+    const key = resource[0] + ":" + resource[1]
 
     return { ...acc, [key]: ucan }
   }, {})
