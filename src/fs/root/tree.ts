@@ -173,7 +173,7 @@ export default class RootTree implements Puttable {
   // -------------
 
   static async storeRootKey(rootKey: string): Promise<void> {
-    const rootKeyId = await identifiers.readKey({ path: '/private' })
+    const rootKeyId = await identifiers.readKey({ path: '/private/' })
     const ks = await keystore.get()
     await ks.importSymmKey(rootKey, rootKeyId)
   }
