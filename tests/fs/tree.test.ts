@@ -10,7 +10,7 @@ describe("FS", () => {
       const fs = await new webnative.fs.empty({
         localOnly: true,
         permissions: {
-          fs: { privatePaths: [ "/" ] }
+          fs: { private: { directories: [ "/" ] } }
         }
       })
 

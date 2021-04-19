@@ -19,7 +19,7 @@
     "package.json",
     "docs"
   ],
-  "typings": "types/index.d.ts",
+  "types": "dist/index.d.ts",
   "author": "Daniel Holmgren <daniel@fission.codes>",
   "repository": {
     "type": "git",
@@ -39,6 +39,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:prod": "yarn run build && yarn run lint && yarn run test -- --no-cache",
+    "test:types": "cp -RT tests/types/ dist/ && yarn run tsd",
     "test:unit": "jest --watch --testPathPattern=src/",
     "precommit": "lint-staged",
     "prepublishOnly": "yarn build && yarn docs",
@@ -111,5 +112,8 @@
   },
   "resolutions": {
     "**/ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz"
+  },
+  "tsd": {
+    "directory": "dist"
   }
 }

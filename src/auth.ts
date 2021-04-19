@@ -7,7 +7,7 @@ import * as keystore from './keystore'
 import * as ucan from './ucan/internal'
 import { USERNAME_STORAGE_KEY, Maybe, VERSION } from './common'
 import { FileSystem } from './fs/filesystem'
-import { Permissions } from './ucan/permissions'
+import { Permissions, fileSystemPaths } from './ucan/permissions'
 import { setup } from './setup/internal'
 
 
@@ -72,9 +72,9 @@ export async function redirectToLobby(
     [ "sharedRepo", sharedRepo ? "t" : "f" ]
 
   ].concat(
-    app                     ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
-    fs && fs.privatePaths   ? fs.privatePaths.map(path => [ "privatePath", path ]) : [],
-    fs && fs.publicPaths    ? fs.publicPaths.map(path => [ "publicPath", path ]) : []
+    app           ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
+    fs?.private   ? fileSystemPaths(fs.private).map(path => [ "privatePath", path ]) : [],
+    fs?.public    ? fileSystemPaths(fs.public).map(path => [ "publicPath", path ]) : []
 
   ).concat((() => {
     const apps = platform?.apps
