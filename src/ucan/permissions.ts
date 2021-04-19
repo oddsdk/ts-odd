@@ -75,7 +75,7 @@ export function fileSystemPaths(permissions: SubFileSystemPermissions): string[]
  * example/directory/
  */
 export function cleanDirectoryPath(path: string): string {
-  return cleanDirectoryPath(path).replace(/\/+$/, '') + '/'
+  return cleanFilePath(path).replace(/\/+$/, '') + '/'
 }
 
 /**
