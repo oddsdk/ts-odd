@@ -210,7 +210,7 @@ export function encode(ucan: Ucan): string {
 export function encodePayload(payload: UcanPayload): string {
   return base64.urlEncode(JSON.stringify({
     ...payload,
-    prf: payload.prf ? encode(payload.prf) : undefined// TODO: 0.3.1 only supports a single proof.
+    prf: payload.prf ? encode(payload.prf) : null // TODO: 0.3.1 only supports a single proof.
   }))
 }
 
@@ -285,9 +285,10 @@ export async function sign(header: UcanHeader, payload: UcanPayload): Promise<st
 /**
  * JWT algorithm to be used in a JWT header.
  */
-function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
+function jwtAlgorithm(cryptoSystem: string): string | null {
   switch (cryptoSystem) {
-    case CryptoSystem.RSA: return 'RS256';
+    case "ed25519": return 'EdDSA';
+    case "rsa": return 'RS256';
     default: return null
   }
 }

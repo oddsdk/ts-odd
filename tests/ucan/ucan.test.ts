@@ -65,4 +65,16 @@ describe('UCAN', () => {
 
     expect(isValid).toBe(true)
   })
+
+  it('decodes and reencodes UCAN to the same value', async() => {
+    const isSame = await page.evaluate(async () => {
+      const ucan = "eyJ1YXYiOiIxLjAuMCIsImFsZyI6IkVkRFNBIiwiY3R5IjpudWxsLCJ0eXAiOiJKV1QifQ.eyJwdGMiOiJBUFBFTkQiLCJuYmYiOjE2MTg0MjU4NzYsInJzYyI6eyJ3bmZzIjoiLyJ9LCJleHAiOjE2MTg0MjU5MzYsImlzcyI6ImRpZDprZXk6ejZNa3BoTWtYc24ybzVnN2E4M292MndjalBOeXNkZXlNMm9CdEVaUlphRXJqSlU1IiwicHJmIjpudWxsLCJhdWQiOiJkaWQ6a2V5Ono2TWtnWUdGM3RobjhrMUZ2NHA0ZFdYS3RzWENuTEg3cTl5dzRRZ05QVUxEbURLQiIsImZjdCI6W119.DItB729fJHKYhVuhjpXFOyqJeJwSpa8y5cAvbkdzzTbKTUEpKv5YfgKn5FWKzY_cnCeCLjqL_Zw9gto7kPqVCw"
+      const decoded = webnative.ucan.decode(ucan)
+      const reencoded = webnative.ucan.encode(decoded)
+      return ucan === reencoded
+    })
+
+    expect(isSame).toBe(true)
+  })
+
 });

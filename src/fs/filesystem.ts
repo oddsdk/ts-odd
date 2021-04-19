@@ -130,7 +130,7 @@ export class FileSystem {
   /**
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
-  static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
+  static async empty(opts: NewFileSystemOptions = {}): Promise<FileSystem> {
     const { permissions, localOnly } = opts
     const rootKey = opts.rootKey || await keystore.genKeyStr()
     const root = await RootTree.empty({ rootKey })
