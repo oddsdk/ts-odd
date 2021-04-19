@@ -59,7 +59,7 @@ export async function redirectToLobby(
 
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
-  const sharedRepo = !!document.body.querySelector("iframe[src$=\"/ipfs.html\"]") && typeof SharedWorker === "function"
+  const sharedRepo = !!document.body.querySelector("iframe#webnative-ipfs") && typeof SharedWorker === "function"
 
   redirectTo = redirectTo || window.location.href
 
