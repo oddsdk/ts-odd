@@ -60,10 +60,10 @@ export class FileSystem {
   localOnly: boolean
 
   appPath: AppPath | undefined
-  proofs: { [_: string]: Ucan }
+  proofs: { [_: string]: string }
   publishHooks: Array<PublishHook>
 
-  _publishWhenOnline: Array<[CID, Ucan]>
+  _publishWhenOnline: Array<[CID, string]>
   _publishing: false | [CID, true]
 
 
@@ -178,8 +178,14 @@ export class FileSystem {
   }
 
 
-  // POSIX INTERFACE
-  // ---------------
+  // POSIX INTERFACE (DIRECTORIES)
+  // -----------------------------
+
+  async ls(path: string): Promise<BaseLinks> {
+    return this.runOnTree(pathUtil.ensureDirPath(path), false, (tree, relPath) => {
+      return tree.ls(relPath)
+    })
+  }
 
   async mkdir(path: string, options: MutationOptions = {}): Promise<this> {
     await this.runOnTree(pathUtil.ensureDirPath(path), true, (tree, relPath) => {
@@ -191,11 +197,8 @@ export class FileSystem {
     return this
   }
 
-  async ls(path: string): Promise<BaseLinks> {
-    return this.runOnTree(pathUtil.ensureDirPath(path), false, (tree, relPath) => {
-      return tree.ls(relPath)
-    })
-  }
+  // POSIX INTERFACE (FILES)
+  // -----------------------
 
   async add(path: string, content: FileContent, options: MutationOptions = {}): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
@@ -213,17 +216,21 @@ export class FileSystem {
     })
   }
 
+  async read(path: string): Promise<FileContent | null> {
+    return this.cat(path)
+  }
+
+  async write(path: string, content: FileContent, options: MutationOptions = {}): Promise<this> {
+    return this.add(path, content, options)
+  }
+
+  // POSIX INTERFACE (GENERAL)
+  // -------------------------
+
   async exists(path: string): Promise<boolean> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.exists(relPath)
     })
-  }
-
-  async rm(path: string): Promise<this> {
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.rm(relPath)
-    })
-    return this
   }
 
   async get(path: string): Promise<Tree | File | null> {
@@ -235,25 +242,29 @@ export class FileSystem {
   // This is only implemented on the same tree for now and will error otherwise
   async mv(from: string, to: string): Promise<this> {
     const sameTree = pathUtil.sameParent(from, to)
+
     if (!sameTree) {
       throw new Error("`mv` is only supported on the same tree for now")
     }
+
     if (await this.exists(to)) {
       throw new Error("Destination already exists")
     }
+
     await this.runOnTree(from, true, (tree, relPath) => {
       const { nextPath } = pathUtil.takeHead(to)
       return tree.mv(relPath, nextPath || '')
     })
+
     return this
   }
 
-  async read(path: string): Promise<FileContent | null> {
-    return this.cat(path)
-  }
+  async rm(path: string): Promise<this> {
+    await this.runOnTree(path, true, (tree, relPath) => {
+      return tree.rm(relPath)
+    })
 
-  async write(path: string, content: FileContent, options: MutationOptions = {}): Promise<this> {
-    return this.add(path, content, options)
+    return this
   }
 
 
@@ -294,14 +305,16 @@ export class FileSystem {
 
     if (!this.localOnly) {
       const proof = await ucanInternal.lookupFilesystemUcan(path)
-      if (!proof || ucan.isExpired(proof) || !proof.signature) {
+      const decodedProof = proof && ucan.decode(proof)
+
+      if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {
         const operation = isMutation
           ? "make changes to"
           : "query"
         throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${path}"`)
       }
 
-      this.proofs[proof.signature] = proof
+      this.proofs[decodedProof.signature] = proof
     }
 
     let result: a

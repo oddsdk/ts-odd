@@ -27,7 +27,7 @@ export type UcanPayload = {
   fct: Array<Fact>
   iss: string
   nbf: number
-  prf: Ucan | null
+  prf: string | null
   ptc: string | undefined | null
   rsc: Resource
 }
@@ -87,11 +87,12 @@ export async function build({
   issuer: string
   lifetimeInSeconds?: number
   potency?: string | null
-  proof?: Ucan
+  proof?: string
   resource?: Resource
 }): Promise<Ucan> {
   const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
+  const decodedProof = proof && decode(proof)
 
   // Header
   const header = {
@@ -104,8 +105,8 @@ export async function build({
   let exp = currentTimeInSeconds + lifetimeInSeconds
   let nbf = currentTimeInSeconds - 60
 
-  if (proof) {
-    const prf = proof.payload
+  if (decodedProof) {
+    const prf = decodedProof.payload
 
     exp = Math.min(prf.exp, exp)
     nbf = Math.max(prf.nbf, nbf)
@@ -120,7 +121,7 @@ export async function build({
     nbf: nbf,
     prf: proof || null,
     ptc: potency,
-    rsc: resource ? resource : (proof ? proof.payload.rsc : '*'),
+    rsc: resource ? resource : (decodedProof ? decodedProof.payload.rsc : '*'),
   }
 
   const signature = addSignature ? await sign(header, payload) : null
@@ -136,7 +137,7 @@ export async function build({
  * Given a list of UCANs, generate a dictionary.
  * The key will be in the form of `${resourceKey}:${resourceValue}`
  */
-export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
+export function compileDictionary(ucans: Array<string>): Record<string, string> {
   return ucans.reduce((acc, ucanString) => {
     const ucan = decode(ucanString)
     const { rsc } = ucan.payload
@@ -150,7 +151,7 @@ export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
     const resource = Array.from(Object.entries(rsc))[0]
     const key = resource[0] + ":" + resource[1]
 
-    return { ...acc, [key]: ucan }
+    return { ...acc, [key]: ucanString }
   }, {})
 }
 
@@ -167,10 +168,7 @@ export function decode(ucan: string): Ucan  {
 
   return {
     header,
-    payload: {
-      ...payload,
-      prf: payload.prf ? decode(payload.prf) : null
-    },
+    payload,
     signature: split[2] || null
   }
 }
@@ -205,8 +203,7 @@ export function encode(ucan: Ucan): string {
  */
 export function encodePayload(payload: UcanPayload): string {
   return base64.urlEncode(JSON.stringify({
-    ...payload,
-    prf: payload.prf ? encode(payload.prf) : null // TODO: 0.3.1 only supports a single proof.
+    ...payload
   }))
 }
 
@@ -240,10 +237,11 @@ export function isExpired(ucan: Ucan): boolean {
   if (!ucan.payload.prf) return true
 
   // Verify proofs
-  const b = ucan.payload.prf.payload.aud === ucan.payload.iss
+  const prf = decode(ucan.payload.prf)
+  const b = prf.payload.aud === ucan.payload.iss
   if (!b) return b
 
-  return await isValid(ucan.payload.prf)
+  return await isValid(prf)
 }
 
 /**

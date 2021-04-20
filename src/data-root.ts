@@ -70,7 +70,7 @@ export async function lookupOnFisson(
  */
 export async function update(
   cid: CID | string,
-  proof: Ucan
+  proof: string
 ): Promise<{ success: boolean }> {
   const apiEndpoint = setup.endpoints.api
 
@@ -88,7 +88,7 @@ export async function update(
 
         // TODO: Waiting on API change.
         //       Should be `username.fission.name/*`
-        resource: proof.payload.rsc
+        resource: ucan.decode(proof).payload.rsc
       }))
 
       return { 'authorization': `Bearer ${jwt}` }

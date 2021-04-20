@@ -10,7 +10,7 @@ import { Ucan, WNFS_PREFIX } from '../ucan'
 import { setup } from '../setup/internal'
 
 
-let dictionary: Record<string, Ucan> = {}
+let dictionary: Record<string, string> = {}
 
 
 // FUNCTIONS
@@ -37,14 +37,14 @@ export function dictionaryFilesystemPrefix(username: string): string {
 /**
  * Look up a UCAN for a platform app.
  */
-export async function lookupAppUcan(domain: string): Promise<Ucan | null> {
+export async function lookupAppUcan(domain: string): Promise<string | null> {
   return dictionary["*"] || dictionary["app:*"] || dictionary[`app:${domain}`]
 }
 
 /**
  * Look up a UCAN with a file system path.
  */
-export async function lookupFilesystemUcan(path: string): Promise<Ucan | null> {
+export async function lookupFilesystemUcan(path: string): Promise<string | null> {
   const isDirectory = path.endsWith("/")
   const pathParts = pathUtil.splitParts(path)
   const username = await common.authenticatedUsername()
@@ -55,7 +55,7 @@ export async function lookupFilesystemUcan(path: string): Promise<Ucan | null> {
   }
 
   return pathParts.reduce(
-    (acc: Ucan | null, part: string, idx: number) => {
+    (acc: string | null, part: string, idx: number) => {
       if (acc) return acc
       const partialPath = pathUtil.join(
         pathParts.slice(0, pathParts.length - idx)
@@ -81,9 +81,7 @@ export async function store(ucans: Array<string>): Promise<void> {
   dictionary = ucan.compileDictionary(newList)
 
   const filteredList = listFromDictionary()
-  const encodedList = filteredList.map(ucan.encode)
-
-  await localforage.setItem(UCANS_STORAGE_KEY, encodedList)
+  await localforage.setItem(UCANS_STORAGE_KEY, filteredList)
 }
 
 /**
@@ -98,19 +96,19 @@ export function validatePermissions(
 
   // Root access
   const rootUcan = dictionary["*"]
-  if (rootUcan && !ucan.isExpired(rootUcan)) return true
+  if (rootUcan && !ucan.isExpired(ucan.decode(rootUcan))) return true
 
   // Check permissions
   if (app) {
     const u = dictionary[prefix + permissions.appDataPath(app)]
-    if (!u || ucan.isExpired(u)) return false
+    if (!u || ucan.isExpired(ucan.decode(u))) return false
   }
 
   if (fs?.private) {
     const priv = fileSystemPaths(fs.private).every(path => {
       const pathWithPrefix = path === '/' ? `${prefix}private/` : `${prefix}private/${path}`
       const u = dictionary[pathWithPrefix]
-      return u && !ucan.isExpired(u)
+      return u && !ucan.isExpired(ucan.decode(u))
     })
     if (!priv) return false
   }
@@ -119,7 +117,7 @@ export function validatePermissions(
     const publ = fileSystemPaths(fs.public).every(path => {
       const pathWithPrefix = path === '/' ? `${prefix}public/` : `${prefix}public/${path}`
       const u = dictionary[pathWithPrefix]
-      return u && !ucan.isExpired(u)
+      return u && !ucan.isExpired(ucan.decode(u))
     })
     if (!publ) return false
   }
@@ -132,6 +130,6 @@ export function validatePermissions(
 // ㊙️
 
 
-function listFromDictionary(): Array<Ucan> {
+function listFromDictionary(): Array<string> {
   return Object.values(dictionary)
 }
