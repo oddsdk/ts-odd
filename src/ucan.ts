@@ -27,7 +27,7 @@ export type UcanPayload = {
   fct: Array<Fact>
   iss: string
   nbf: number
-  prf: Ucan | undefined
+  prf: Ucan | null
   ptc: string | undefined | null
   rsc: Resource
 }
@@ -118,7 +118,7 @@ export async function build({
     fct: facts,
     iss: issuer || await did.ucan(),
     nbf: nbf,
-    prf: proof,
+    prf: proof || null,
     ptc: potency,
     rsc: resource ? resource : (proof ? proof.payload.rsc : '*'),
   }
