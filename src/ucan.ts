@@ -145,7 +145,7 @@ export function compileDictionary(ucans: Array<string>): Record<string, string> 
     if (isExpired(ucan)) return acc
 
     if (typeof rsc !== "object") {
-      return { ...acc, [rsc]: ucan }
+      return { ...acc, [rsc]: ucanString }
     }
 
     const resource = Array.from(Object.entries(rsc))[0]
