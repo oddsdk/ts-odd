@@ -184,7 +184,7 @@ export function encode(ucan: Ucan): string {
 
   return encodedHeader + '.' +
          encodedPayload + '.' +
-         (ucan.signature || sign(ucan.header, ucan.payload))
+         ucan.signature
 }
 
 /**
