@@ -6,9 +6,12 @@ in
 
 pkgs.mkShell {
   buildInputs = [
-    pkgs.just
     unstable.yarn
     unstable.nodejs-15_x
     unstable.niv
   ];
+
+  shellHook = ''
+    ${unstable.yarn}/bin/yarn install
+  '';
 }

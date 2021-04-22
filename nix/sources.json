@@ -1,16 +1,4 @@
 {
-    "just": {
-        "branch": "master",
-        "description": "🤖 Just a command runner",
-        "homepage": "",
-        "owner": "casey",
-        "repo": "just",
-        "rev": "d03aedd5c4c93d36bab2c55373ed8314a1eb2a36",
-        "sha256": "0mgbghwqkwiqbqjzvhgczbnpg3dagj2z3401kcihjs5nq9jwv87g",
-        "type": "tarball",
-        "url": "https://github.com/casey/just/archive/d03aedd5c4c93d36bab2c55373ed8314a1eb2a36.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
     "niv": {
         "branch": "master",
         "description": "Easy dependency management for Nix projects",
@@ -41,10 +29,10 @@
         "homepage": null,
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "a73020b2a150322c9832b50baeb0296ba3b13dd7",
-        "sha256": "1s0ckc2qscrflr7bssd0s32zddp48dg5jk22w1dip2q2q7ks6cj0",
+        "rev": "0a5f5bab0e08e968ef25cff393312aa51a3512cf",
+        "sha256": "161xisa5a7wi2h5hs0p1w7zbf095w21cs0wp0524kp7p6cpvvfyn",
         "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/a73020b2a150322c9832b50baeb0296ba3b13dd7.tar.gz",
+        "url": "https://github.com/NixOS/nixpkgs/archive/0a5f5bab0e08e968ef25cff393312aa51a3512cf.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }
