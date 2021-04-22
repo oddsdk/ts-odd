@@ -1,3 +1,6 @@
+import * as path from '../path'
+
+
 export type Permissions = {
   app?: AppInfo
   fs?: FileSystemPermissions
@@ -10,13 +13,8 @@ export type AppInfo = {
 }
 
 export type FileSystemPermissions = {
-  private?: SubFileSystemPermissions
-  public?: SubFileSystemPermissions
-}
-
-export type SubFileSystemPermissions = {
-  directories: Array<string>
-  files: Array<string>
+  private?: Array<DistinctivePath>
+  public?: Array<DistinctivePath>
 }
 
 export type PlatformPermissions = {
@@ -25,63 +23,23 @@ export type PlatformPermissions = {
 
 
 /**
- * Relative path for `AppInfo`.
+ * Path for `AppInfo`.
  */
-export function appDataPath(app: AppInfo) {
-  return `private/Apps/${app.creator}/${app.name}/`
+export function appDataPath(app: AppInfo): DistinctivePath {
+  return path.directory(path.Branch.Private, "Apps", app.creator, app.name)
 }
 
 
 /**
  * Lists the filesystems paths for a set of `Permissions`.
- * This'll return a list of absolute paths.
- *
- *     /private/directory/
- *     /public/file
+ * This'll return a list of `DistinctivePath`s.
  */
-export function paths(permissions: Permissions): string[] {
+export function paths(permissions: Permissions): DistinctivePath[] {
   let list = []
 
-  if (permissions.app) list.push('/' + appDataPath(permissions.app))
-  if (permissions.fs?.private) list = list.concat(
-    fileSystemPaths(permissions.fs?.private).map(p => '/private/' + (p === '/' ? '' : p))
-  )
-
-  if (permissions.fs?.public) list = list.concat(
-    fileSystemPaths(permissions.fs?.public).map(p => '/public/' + (p === '/' ? '' : p))
-  )
+  if (permissions.app) list.push(appDataPath(permissions.app))
+  if (permissions.fs?.private) list = list.concat(permissions.fs?.private)
+  if (permissions.fs?.public) list = list.concat(permissions.fs?.public)
 
   return list
-}
-
-/**
- * Lists the filesystems paths for a set of `SubFileSystemPermissions`.
- * This'll return a list of relative paths.
- *
- *     directory/
- *     file
- */
-export function fileSystemPaths(permissions: SubFileSystemPermissions): string[] {
-  return ([] as string[])
-    .concat( (permissions.directories || []).map(p => cleanDirectoryPath(p)) )
-    .concat( (permissions.files || []).map(p => cleanFilePath(p)) )
-}
-
-
-// 🛠
-
-/**
- * Properly format a directory path.
- * example/directory/
- */
-export function cleanDirectoryPath(path: string): string {
-  return cleanFilePath(path).replace(/\/+$/, '') + '/'
-}
-
-/**
- * Properly format a file path.
- * example/file
- */
-export function cleanFilePath(path: string): string {
-  return path.replace(/^\/+/, '')
 }

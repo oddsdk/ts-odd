@@ -61,6 +61,7 @@ export default class RootTree implements Puttable {
     const mmpt = MMPT.create()
 
     // Private tree
+    const rootPath = pathing.toPosix(pathing.rootDirectory())
     const rootTree = await PrivateTree.create(mmpt, rootKey, null)
     await rootTree.put()
 
@@ -73,7 +74,7 @@ export default class RootTree implements Puttable {
       publicTree,
       prettyTree,
       privateTrees: {
-        '/': rootTree
+        [rootPath]: rootTree
       }
     })
 
@@ -173,12 +174,13 @@ export default class RootTree implements Puttable {
   // -------------
 
   static async storeRootKey(rootKey: string): Promise<void> {
-    const rootKeyId = await identifiers.readKey({ path: '/private/' })
+    const path = pathing.directory(pathing.branch.Private)
+    const rootKeyId = await identifiers.readKey({ path })
     const ks = await keystore.get()
     await ks.importSymmKey(rootKey, rootKeyId)
   }
 
-  findPrivateTree(path: string[]): [string, PrivateTree | null] {
+  findPrivateTree(path: Path): [Path, PrivateTree | null] {
     return findPrivateTree(this.privateTrees, path)
   }
 
@@ -272,10 +274,10 @@ async function findBareNameFilter(
 
 function findPrivateTree(
   map: Record<string, PrivateTree>,
-  path: string[]
-): [string, PrivateTree | null] {
-  const fullPath = pathUtil.join(path)
-  const t = map['/' + fullPath]
+  path: Path
+): [Path, PrivateTree | null] {
+  const fullPath = pathing.directory(...path)
+  const t = map[pathing.toPosix(fullPath)]
   if (t) return [ fullPath, t ]
 
   return path.length > 0
@@ -287,14 +289,16 @@ function loadPrivateTrees(
   keys: Record<string, string>,
   mmpt: MMPT
 ): Promise<Record<string, PrivateTree>> {
+  const privateRoot = pathing.toPosix(
+    pathing.directory(pathing.branch.Private)
+  )
+
   return sortedKeys(keys).reduce((acc, [path, key]) => {
     return acc.then(async map => {
-      const prop = removePrivatePrefix(path)
-
       let privateTree
 
       // if root, no need for bare name filter
-      if (prop === "/" || prop === "") {
+      if (path === privateRoot) {
         privateTree = await PrivateTree.fromBaseKey(mmpt, key)
 
       } else {
@@ -313,17 +317,12 @@ function loadPrivateTrees(
 async function permissionKeys(
   permissions: Permissions
 ): Promise<Record<string, string>> {
-  return ucanPermissions.paths(permissions).reduce(async (acc, p) => {
-    if (p.startsWith('/public')) return acc
+  return ucanPermissions.paths(permissions).reduce(async (acc, path) => {
+    if (pathing.isBranch(pathing.Branch.Public, path)) return acc
+    const p = pathing.toPosix(path)
     const name = await identifiers.readKey({ path: p })
     return acc.then(async map => ({ ...map, [p]: (await keystore.getKeyByName(name)) }))
   }, Promise.resolve({}))
-}
-
-function removePrivatePrefix(path: string): string {
-  return '/' + path
-    .replace(/^\/?private(\/|$)/, "")
-    .replace(/^\/+/, "")
 }
 
 /**

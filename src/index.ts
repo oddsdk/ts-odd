@@ -240,6 +240,7 @@ export * as dataRoot from './data-root'
 export * as did from './did'
 export * as errors from './errors'
 export * as lobby from './lobby'
+export * as path from './path'
 export * as setup from './setup'
 export * as ucan from './ucan'
 

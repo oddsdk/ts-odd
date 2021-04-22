@@ -1,7 +1,7 @@
 import { throttle } from 'throttle-debounce'
 
 import { PublishHook, UnixTree, Tree, File } from './types'
-import { BaseLinks, Branch } from './types'
+import { BaseLinks } from './types'
 import { SemVer } from './semver'
 import BareTree from './bare/tree'
 import RootTree from './root/tree'
@@ -13,6 +13,7 @@ import * as dataRoot from '../data-root'
 import * as debug from '../common/debug'
 import * as identifiers from '../common/identifiers'
 import * as keystore from '../keystore'
+import * as pathing from './path'
 import * as pathUtil from './path'
 import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
@@ -28,7 +29,7 @@ import { Ucan } from '../ucan'
 
 
 type AppPath =
-  (path?: string | Array<string>) => string
+  (path?: DistinctivePath) => DistinctivePath
 
 type ConstructorParams = {
   localOnly?: boolean
@@ -181,14 +182,14 @@ export class FileSystem {
   // POSIX INTERFACE (DIRECTORIES)
   // -----------------------------
 
-  async ls(path: string): Promise<BaseLinks> {
-    return this.runOnTree(pathUtil.ensureDirPath(path), false, (tree, relPath) => {
+  async ls(path: DirectoryPath): Promise<BaseLinks> {
+    return this.runOnTree(path, false, (tree, relPath) => {
       return tree.ls(relPath)
     })
   }
 
-  async mkdir(path: string, options: MutationOptions = {}): Promise<this> {
-    await this.runOnTree(pathUtil.ensureDirPath(path), true, (tree, relPath) => {
+  async mkdir(path: DirectoryPath, options: MutationOptions = {}): Promise<this> {
+    await this.runOnTree(path, true, (tree, relPath) => {
       return tree.mkdir(relPath)
     })
     if(options.publish) {
@@ -200,7 +201,7 @@ export class FileSystem {
   // POSIX INTERFACE (FILES)
   // -----------------------
 
-  async add(path: string, content: FileContent, options: MutationOptions = {}): Promise<this> {
+  async add(path: FilePath, content: FileContent, options: MutationOptions = {}): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.add(relPath, content)
     })
@@ -210,37 +211,37 @@ export class FileSystem {
     return this
   }
 
-  async cat(path: string): Promise<FileContent> {
+  async cat(path: FilePath): Promise<FileContent> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.cat(relPath)
     })
   }
 
-  async read(path: string): Promise<FileContent | null> {
+  async read(path: FilePath): Promise<FileContent | null> {
     return this.cat(path)
   }
 
-  async write(path: string, content: FileContent, options: MutationOptions = {}): Promise<this> {
+  async write(path: FilePath, content: FileContent, options: MutationOptions = {}): Promise<this> {
     return this.add(path, content, options)
   }
 
   // POSIX INTERFACE (GENERAL)
   // -------------------------
 
-  async exists(path: string): Promise<boolean> {
+  async exists(path: DistinctivePath): Promise<boolean> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.exists(relPath)
     })
   }
 
-  async get(path: string): Promise<Tree | File | null> {
+  async get(path: DistinctivePath): Promise<Tree | File | null> {
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.get(relPath)
     })
   }
 
   // This is only implemented on the same tree for now and will error otherwise
-  async mv(from: string, to: string): Promise<this> {
+  async mv(from: DistinctivePath, to: DistinctivePath): Promise<this> {
     const sameTree = pathUtil.sameParent(from, to)
 
     if (!sameTree) {
@@ -259,7 +260,7 @@ export class FileSystem {
     return this
   }
 
-  async rm(path: string): Promise<this> {
+  async rm(path: DistinctivePath): Promise<this> {
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.rm(relPath)
     })
@@ -295,23 +296,23 @@ export class FileSystem {
 
   /** @internal */
   async runOnTree<a>(
-    path: string,
+    path: DistinctivePath,
     isMutation: boolean,
-    fn: (tree: UnixTree, relPath: string) => Promise<a>
+    fn: (tree: UnixTree, relPath: Path) => Promise<a>
   ): Promise<a> {
-    const parts = pathUtil.splitParts(path)
+    const parts = pathing.unwrap(path)
     const head = parts[0]
-    const relPath = pathUtil.join(parts.slice(1))
+    const relPath = paths.slice(1)
 
     if (!this.localOnly) {
-      const proof = await ucanInternal.lookupFilesystemUcan(path)
+      const proof = await ucanInternal.lookupFilesystemUcan(parts)
       const decodedProof = proof && ucan.decode(proof)
 
       if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {
         const operation = isMutation
           ? "make changes to"
           : "query"
-        throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${path}"`)
+        throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${pathing.toPosix(path)}"`)
       }
 
       this.proofs[decodedProof.signature] = proof
@@ -336,7 +337,7 @@ export class FileSystem {
       }
 
     } else if (head === Branch.Private) {
-      const [treePath, tree] = this.root.findPrivateTree(parts.slice(1))
+      const [treePath, tree] = this.root.findPrivateTree(relPath)
 
       if (!tree) {
         throw new NoPermissionError("I don't have the necessary permissions to make these changes to the file system")
@@ -344,6 +345,7 @@ export class FileSystem {
 
       result = await fn(
         tree,
+        // TODO
         relPath.replace(new RegExp("^" + treePath + "/?"), "")
       )
 
@@ -399,12 +401,12 @@ export default FileSystem
 // ㊙️
 
 
-function appPath(permissions: Permissions): ((path?: string | Array<string>) => string) {
-  return (path?: string | Array<string>): string => (
-    `${Branch.Private}/Apps/`
-      + (permissions.app ? permissions.app.creator + '/' : '')
-      + (permissions.app ? permissions.app.name : '')
-      + '/'
-      + (typeof path == 'object' ? path.join('/') : path)
-  )
+function appPath(permissions: Permissions): ((path?: DistinctivePath) => string) {
+  if (!permissions.app) throw Error("Only works with app permissions")
+  const base = appDataPath(permissions.app)
+
+  return (path?: DistinctivePath): string => {
+    if (path) return pathing.combine(base, path)
+    return base
+  }
 }

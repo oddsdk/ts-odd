@@ -1,7 +1,7 @@
 import localforage from 'localforage'
 
 import * as common from '../common'
-import * as pathUtil from '../fs/path'
+import * as pathing from '../path'
 import * as permissions from './permissions'
 import * as ucan from '../ucan'
 import { UCANS_STORAGE_KEY } from '../common'
@@ -44,9 +44,9 @@ export async function lookupAppUcan(domain: string): Promise<string | null> {
 /**
  * Look up a UCAN with a file system path.
  */
-export async function lookupFilesystemUcan(path: string): Promise<string | null> {
-  const isDirectory = path.endsWith("/")
-  const pathParts = pathUtil.splitParts(path)
+export async function lookupFilesystemUcan(path: DistinctivePath): Promise<string | null> {
+  const isDirectory = pathing.isDirectory(path)
+  const pathParts = pathing.unwrap(path)
   const username = await common.authenticatedUsername()
   const prefix = username ? dictionaryFilesystemPrefix(username) : ""
 
@@ -57,12 +57,14 @@ export async function lookupFilesystemUcan(path: string): Promise<string | null>
   return pathParts.reduce(
     (acc: string | null, part: string, idx: number) => {
       if (acc) return acc
-      const partialPath = pathUtil.join(
-        pathParts.slice(0, pathParts.length - idx)
-      ) + (
-        idx + 1 === pathParts.length
-          ? (isDirectory ? '/' : '')
-          : '/'
+
+      const isLastPart = (idx + 1 === pathParts.length)
+      const partsSlice = pathParts.slice(0, pathParts.length - idx)
+
+      const partialPath = pathing.toPosix(
+        isLastPart && !isDirectory
+          ? pathing.file(partsSlice
+          : pathing.directory(partsSlice)
       )
 
       return dictionary[`${prefix}${partialPath}`] || null
@@ -105,8 +107,8 @@ export function validatePermissions(
   }
 
   if (fs?.private) {
-    const priv = fileSystemPaths(fs.private).every(path => {
-      const pathWithPrefix = path === '/' ? `${prefix}private/` : `${prefix}private/${path}`
+    const priv = fs.private.every(path => {
+      const pathWithPrefix = `${prefix}private/` + pathing.toPosix(path)
       const u = dictionary[pathWithPrefix]
       return u && !ucan.isExpired(ucan.decode(u))
     })
@@ -115,7 +117,7 @@ export function validatePermissions(
 
   if (fs?.public) {
     const publ = fileSystemPaths(fs.public).every(path => {
-      const pathWithPrefix = path === '/' ? `${prefix}public/` : `${prefix}public/${path}`
+      const pathWithPrefix = `${prefix}public/` + pathing.toPosix(path)
       const u = dictionary[pathWithPrefix]
       return u && !ucan.isExpired(ucan.decode(u))
     })

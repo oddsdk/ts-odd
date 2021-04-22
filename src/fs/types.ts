@@ -40,14 +40,6 @@ export interface Links { [name: string]: Link }
 // MISC
 // ----
 
-export enum Branch {
-  Public = 'public',
-  Pretty = 'p',
-  Private = 'private',
-  PrivateLog = 'privateLog',
-  Version = 'version'
-}
-
 export type NonEmptyPath = [string, ...string[]]
 
 export interface Puttable {
