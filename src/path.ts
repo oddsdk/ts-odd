@@ -1,3 +1,6 @@
+import { Maybe } from './common/types'
+
+
 export enum Branch {
   Public = 'public',
   Pretty = 'p',
@@ -124,6 +127,15 @@ export function isRootDirectory(path: DirectoryPath): boolean {
 export function map(fn: Path => Path, path: DistinctivePath): DistinctivePath {
   if (path.directory) return { directory: fn(path.directory) }
   return { file: fn(path.file) }
+}
+
+/**
+ * Get the parent directory of a `DistinctivePath`.
+ */
+export function parent(path: DistinctivePath): Maybe<DirectoryPath> {
+  return isRootDirectory(path)
+    ? null
+    : directory(...unwrap(path).slice(0, -1))
 }
 
 /**

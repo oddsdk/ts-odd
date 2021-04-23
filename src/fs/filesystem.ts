@@ -345,8 +345,7 @@ export class FileSystem {
 
       result = await fn(
         tree,
-        // TODO
-        relPath.replace(new RegExp("^" + treePath + "/?"), "")
+        relPath.slice(pathing.unwrap(treePath).length)
       )
 
       if (isMutation && PrivateTree.instanceOf(result)) {
