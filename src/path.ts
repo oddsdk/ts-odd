@@ -154,3 +154,15 @@ export function removeBranch(path: DistinctivePath): DistinctivePath {
 export function unwrap(path: DistinctivePath): Path {
   return a.directory || a.file
 }
+
+
+
+// ⚗️
+
+
+/**
+ * Render a raw `Path` to a string for logging purposes.
+ */
+export function log(path: Path): string {
+  return `[ ${path.join(", ")} ]`
+}

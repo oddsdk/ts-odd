@@ -1,5 +1,6 @@
 import { Maybe } from '../common'
 import { FileContent, CID, AddResult } from '../ipfs'
+import { Path } from '../path'
 import { SemVer } from './semver'
 
 
@@ -57,14 +58,14 @@ export type PublishHook = (result: CID, proof: string) => unknown
 // ----
 
 export interface UnixTree {
-  ls(path: string): Promise<BaseLinks>
-  mkdir(path: string, onUpdate?: UpdateCallback): Promise<this>
-  cat(path: string): Promise<FileContent>
-  add(path: string, content: FileContent): Promise<this>
-  rm(path: string): Promise<this>
-  mv(from: string, to: string): Promise<this>
-  get(path: string): Promise<Tree | File | null>
-  exists(path: string): Promise<boolean>
+  ls(path: Path): Promise<BaseLinks>
+  mkdir(path: Path, onUpdate?: UpdateCallback): Promise<this>
+  cat(path: Path): Promise<FileContent>
+  add(path: Path, content: FileContent): Promise<this>
+  rm(path: Path): Promise<this>
+  mv(from: Path, to: Path): Promise<this>
+  get(path: Path): Promise<Tree | File | null>
+  exists(path: Path): Promise<boolean>
 }
 
 export interface Tree extends UnixTree, Puttable {
@@ -73,9 +74,9 @@ export interface Tree extends UnixTree, Puttable {
   createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
   createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
 
-  mkdirRecurse(path: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
-  addRecurse(path: string, content: FileContent, onUpdate: Maybe<UpdateCallback>): Promise<this>
-  rmRecurse(path: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  mkdirRecurse(path: Path, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  addRecurse(path: Path, content: FileContent, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  rmRecurse(path: Path, onUpdate: Maybe<UpdateCallback>): Promise<this>
 
   updateDirectChild(child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
   removeDirectChild(name: string): this

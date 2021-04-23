@@ -1,13 +1,15 @@
-import * as protocol from '../protocol'
-import { Links, BaseLinks, Tree, File, Puttable, UpdateCallback } from '../types'
 import * as check from '../types/check'
+import * as protocol from '../protocol'
+import * as link from '../link'
+import * as pathUtil from '../path'
+import * as semver from '../semver'
+
 import { AddResult, CID, FileContent } from '../../ipfs'
+import { Links, BaseLinks, Tree, File, Puttable, UpdateCallback } from '../types'
+import { Maybe } from '../../common'
+
 import BareFile from '../bare/file'
 import BaseTree from '../base/tree'
-import * as link from '../link'
-import * as semver from '../semver'
-import * as pathUtil from '../path'
-import { Maybe } from '../../common'
 
 
 class BareTree extends BaseTree {
@@ -27,11 +29,11 @@ class BareTree extends BaseTree {
 
   static async fromCID(cid: CID): Promise<BareTree> {
     const links = await protocol.basic.getLinks(cid)
-    return new BareTree(links) 
+    return new BareTree(links)
   }
 
   static fromLinks(links: Links): BareTree {
-    return new BareTree(links) 
+    return new BareTree(links)
   }
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree> {
@@ -107,7 +109,8 @@ class BareTree extends BaseTree {
     return child
   }
 
-  async get(path: string): Promise<Tree | File | null> {
+  // TODO
+  async get(path: Path): Promise<Tree | File | null> {
     const { head, nextPath } = pathUtil.takeHead(path)
     if(head === null) return this
     const nextTree = await this.getDirectChild(head)

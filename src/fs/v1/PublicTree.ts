@@ -157,7 +157,8 @@ export class PublicTree extends BaseTree {
     return child
   }
 
-  async get(path: string): Promise<Child | null> {
+  // TODO
+  async get(path: Path): Promise<Child | null> {
     const parts = pathUtil.splitNonEmpty(path)
     if(parts === null) return this
 

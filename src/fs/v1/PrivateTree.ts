@@ -187,7 +187,8 @@ export default class PrivateTree extends BaseTree {
     return this
   }
 
-  async get(path: string): Promise<PrivateTree | PrivateFile | null> {
+  // TODO
+  async get(path: Path): Promise<PrivateTree | PrivateFile | null> {
     const parts = pathUtil.splitParts(path)
     if(parts.length === 0) return this
 
