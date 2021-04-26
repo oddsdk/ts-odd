@@ -1,8 +1,9 @@
 import localforage from 'localforage'
 
-import { BareNameFilter } from '../protocol/private/namefilter'
-import { Branch, Links, Puttable, SimpleLink } from '../types'
 import { AddResult, CID } from '../../ipfs'
+import { BareNameFilter } from '../protocol/private/namefilter'
+import { Links, Puttable, SimpleLink } from '../types'
+import { Branch, DistinctivePath } from '../../path'
 import { Maybe } from '../../common'
 import { Permissions } from '../../ucan/permissions'
 import { SemVer } from '../semver'
@@ -12,7 +13,7 @@ import * as identifiers from '../../common/identifiers'
 import * as ipfs from '../../ipfs'
 import * as keystore from '../../keystore'
 import * as link from '../link'
-import * as pathUtil from '../path'
+import * as pathing from '../../path'
 import * as protocol from '../protocol'
 import * as semver from '../semver'
 import * as ucanPermissions from '../../ucan/permissions'
@@ -98,7 +99,7 @@ export default class RootTree implements Puttable {
     { cid, permissions }: { cid: CID, permissions?: Permissions }
   ): Promise<RootTree> {
     const links = await protocol.basic.getLinks(cid)
-    const keys = permissions ? await permissionKeys(permissions) : {}
+    const keys = permissions ? await permissionKeys(permissions) : []
 
     // Load public parts
     const publicCID = links[Branch.Public]?.cid || null
@@ -174,7 +175,7 @@ export default class RootTree implements Puttable {
   // -------------
 
   static async storeRootKey(rootKey: string): Promise<void> {
-    const path = pathing.directory(pathing.branch.Private)
+    const path = pathing.directory(pathing.Branch.Private)
     const rootKeyId = await identifiers.readKey({ path })
     const ks = await keystore.get()
     await ks.importSymmKey(rootKey, rootKeyId)
@@ -268,9 +269,10 @@ async function findBareNameFilter(
   const [treePath, tree] = findPrivateTree(map, path)
   if (!tree) return null
 
+  const unwrappedPath = pathing.unwrap(path)
   const relativePath = unwrappedPath.slice(pathing.unwrap(treePath).length)
   if (!tree.exists(relativePath)) {
-    if (pathing.isDirectory(path) await tree.mkdir(relativePath)
+    if (pathing.isDirectory(path)) await tree.mkdir(relativePath)
     else await tree.add(relativePath, "")
   }
 
@@ -295,12 +297,12 @@ function loadPrivateTrees(
   pathKeys: PathKey[],
   mmpt: MMPT
 ): Promise<Record<string, PrivateTree>> {
-  return sortedPathKeys(pathKeys).reduce((acc, ({ path, key })) => {
+  return sortedPathKeys(pathKeys).reduce((acc, { path, key }) => {
     return acc.then(async map => {
       let privateTree
 
       // if root, no need for bare name filter
-      if (pathing.isBranch(pathing.branch.Private, path)) {
+      if (pathing.isBranch(pathing.Branch.Private, path)) {
         privateTree = await PrivateTree.fromBaseKey(mmpt, key)
 
       } else {
@@ -320,14 +322,22 @@ function loadPrivateTrees(
 async function permissionKeys(
   permissions: Permissions
 ): Promise<PathKey[]> {
-  return ucanPermissions.paths(permissions).reduce(async (acc, path) => {
+  return ucanPermissions.paths(permissions).reduce(async (
+    acc: Promise<PathKey[]>,
+    path: DistinctivePath
+  ): Promise<PathKey[]> => {
     if (pathing.isBranch(pathing.Branch.Public, path)) return acc
 
     const name = await identifiers.readKey({ path })
     const key = await keystore.getKeyByName(name)
+    const pk: PathKey = { path: path, key: key }
 
-    return acc.then(async list => [ ...list, { path, key } ])
-  }, Promise.resolve([]))
+    return acc.then(
+      list => [ ...list, pk ]
+    )
+  }, Promise.resolve(
+    []
+  ))
 }
 
 /**
@@ -336,6 +346,6 @@ async function permissionKeys(
  */
 function sortedPathKeys(list: PathKey[]): PathKey[] {
   return list.sort(
-    (a, b) => a.path.localeCompare(b.path)
+    (a, b) => pathing.toPosix(a.path).localeCompare(pathing.toPosix(b.path))
   )
 }

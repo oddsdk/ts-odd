@@ -1,12 +1,12 @@
 import * as check from '../types/check'
 import * as protocol from '../protocol'
 import * as link from '../link'
-import * as pathUtil from '../path'
 import * as semver from '../semver'
 
 import { AddResult, CID, FileContent } from '../../ipfs'
 import { Links, BaseLinks, Tree, File, Puttable, UpdateCallback } from '../types'
 import { Maybe } from '../../common'
+import { Path } from '../../path'
 
 import BareFile from '../bare/file'
 import BaseTree from '../base/tree'
@@ -111,11 +111,12 @@ class BareTree extends BaseTree {
 
   // TODO
   async get(path: Path): Promise<Tree | File | null> {
-    const { head, nextPath } = pathUtil.takeHead(path)
-    if(head === null) return this
+    const [ head, ...nextPath ] = path
+
+    if (!head) return this
     const nextTree = await this.getDirectChild(head)
 
-    if (nextPath === null) {
+    if (!nextPath.length) {
       return nextTree
     } else if (nextTree === null || check.isFile(nextTree)) {
       return null

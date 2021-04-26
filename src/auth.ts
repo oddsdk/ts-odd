@@ -9,7 +9,7 @@ import * as ucan from './ucan/internal'
 
 import { USERNAME_STORAGE_KEY, Maybe, VERSION } from './common'
 import { FileSystem } from './fs/filesystem'
-import { Permissions, fileSystemPaths } from './ucan/permissions'
+import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
 
 

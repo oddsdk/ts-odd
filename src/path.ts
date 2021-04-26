@@ -72,11 +72,12 @@ export function fromPosix(path: string): DistinctivePath {
  */
 export function toPosix(
   path: DistinctivePath,
-  { absolute: boolean } = { absolute: false }
+  { absolute }: { absolute: boolean } = { absolute: false }
 ): string {
   const prefix = absolute ? "/" : ""
-  if (path.directory) return prefix + path.join("/") + "/"
-  return prefix + path.join("/")
+  const joinedPath = unwrap(path).join("/")
+  if (isDirectory(path)) return prefix + joinedPath + "/"
+  return prefix + joinedPath
 }
 
 
@@ -87,9 +88,9 @@ export function toPosix(
 /**
  * Combine two `DistinctivePath`s.
  */
-export function combine(a: DistinctivePath, b: DistinctivePath) {
-  const unwrappedA = a.directory || a.file
-  if (b.directory) return { directory: unwrappedA.concat(b.directory) }
+export function combine(a: DistinctivePath, b: DistinctivePath): DistinctivePath {
+  const unwrappedA = unwrap(a)
+  if (isDirectory(b)) return { directory: unwrappedA.concat(b.directory) }
   return { file: unwrappedA.concat(b.file) }
 }
 
@@ -103,15 +104,15 @@ export function isBranch(branch: Branch, path: DistinctivePath): boolean {
 /**
  * Is this `DistinctivePath` a directory?
  */
-export function isDirectory(path: DistinctivePath): boolean {
-  return !!path.directory
+export function isDirectory(path: DistinctivePath): path is DirectoryPath {
+  return !!(path as DirectoryPath).directory
 }
 
 /**
  * Is this `DistinctivePath` a file?
  */
-export function isFile(path: DistinctivePath): boolean {
-  return !!path.file
+export function isFile(path: DistinctivePath): path is FilePath {
+  return !!(path as FilePath).file
 }
 
 /**
@@ -124,16 +125,17 @@ export function isRootDirectory(path: DirectoryPath): boolean {
 /**
  * Map a `DistinctivePath`.
  */
-export function map(fn: Path => Path, path: DistinctivePath): DistinctivePath {
-  if (path.directory) return { directory: fn(path.directory) }
-  return { file: fn(path.file) }
+export function map(fn: (p: Path) => Path, path: DistinctivePath): DistinctivePath {
+  if (isDirectory(path)) return { directory: fn(path.directory) }
+  else if (isFile(path)) return { file: fn(path.file) }
+  return path
 }
 
 /**
  * Get the parent directory of a `DistinctivePath`.
  */
 export function parent(path: DistinctivePath): Maybe<DirectoryPath> {
-  return isRootDirectory(path)
+  return isDirectory(path) && isRootDirectory(path as DirectoryPath)
     ? null
     : directory(...unwrap(path).slice(0, -1))
 }
@@ -152,7 +154,13 @@ export function removeBranch(path: DistinctivePath): DistinctivePath {
  * Unwrap a `DistinctivePath`.
  */
 export function unwrap(path: DistinctivePath): Path {
-  return a.directory || a.file
+  if (isDirectory(path)) {
+    return path.directory
+  } else if (isFile(path)) {
+    return path.file
+  }
+
+  return []
 }
 
 

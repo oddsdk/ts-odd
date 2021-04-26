@@ -1,4 +1,5 @@
-import * as path from '../path'
+import * as pathing from '../path'
+import { DistinctivePath } from '../path'
 
 
 export type Permissions = {
@@ -26,7 +27,7 @@ export type PlatformPermissions = {
  * Path for `AppInfo`.
  */
 export function appDataPath(app: AppInfo): DistinctivePath {
-  return path.directory(path.Branch.Private, "Apps", app.creator, app.name)
+  return pathing.directory(pathing.Branch.Private, "Apps", app.creator, app.name)
 }
 
 

@@ -129,17 +129,14 @@ abstract class BaseTree implements Tree, UnixTree {
   async mv(from: Path, to: Path): Promise<this> {
     const node = await this.get(from)
     if (node === null) {
-      throw new Error(`Path does not exist: ${from}`)
+      throw new Error(`Path does not exist: ${pathing.log(from)}`)
     }
 
-    // TODO
-    let { tail, parentPath } = pathUtil.takeTail(to)
-    parentPath = parentPath || ''
-
-    if (tail === null) {
-      throw new Error(`Path does not exist: ${to}`)
+    if (to.length < 1) {
+      throw new Error(`Path does not exist: ${pathing.log(to)}`)
     }
 
+    const parentPath = to.slice(0, -1)
     let parent = await this.get(parentPath)
 
     if (!parent) {
@@ -154,7 +151,7 @@ abstract class BaseTree implements Tree, UnixTree {
       return acc.then(async child => {
         const childParentParts = to.slice(0, -(idx + 1))
         const tree = childParentParts.length
-          ? await this.get(pathUtil.join(childParentParts))
+          ? await this.get(childParentParts)
           : this
 
         if (tree && !check.isFile(tree)) {

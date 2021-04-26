@@ -4,8 +4,10 @@ import * as common from '../common'
 import * as pathing from '../path'
 import * as permissions from './permissions'
 import * as ucan from '../ucan'
+
 import { UCANS_STORAGE_KEY } from '../common'
-import { Permissions, fileSystemPaths } from './permissions'
+import { DistinctivePath } from '../path'
+import { Permissions } from './permissions'
 import { Ucan, WNFS_PREFIX } from '../ucan'
 import { setup } from '../setup/internal'
 
@@ -44,15 +46,16 @@ export async function lookupAppUcan(domain: string): Promise<string | null> {
 /**
  * Look up a UCAN with a file system path.
  */
-export async function lookupFilesystemUcan(path: DistinctivePath): Promise<string | null> {
-  const isDirectory = pathing.isDirectory(path)
-  const pathParts = pathing.unwrap(path)
-  const username = await common.authenticatedUsername()
-  const prefix = username ? dictionaryFilesystemPrefix(username) : ""
-
+export async function lookupFilesystemUcan(path: DistinctivePath | "*"): Promise<string | null> {
   if (dictionary["*"]) {
     return dictionary["*"]
   }
+
+  const all = path === "*"
+  const isDirectory = all ? false : pathing.isDirectory(path as DistinctivePath)
+  const pathParts = all ? [ "*" ] : pathing.unwrap(path as DistinctivePath)
+  const username = await common.authenticatedUsername()
+  const prefix = username ? dictionaryFilesystemPrefix(username) : ""
 
   return pathParts.reduce(
     (acc: string | null, part: string, idx: number) => {
@@ -63,8 +66,8 @@ export async function lookupFilesystemUcan(path: DistinctivePath): Promise<strin
 
       const partialPath = pathing.toPosix(
         isLastPart && !isDirectory
-          ? pathing.file(partsSlice
-          : pathing.directory(partsSlice)
+          ? pathing.file(...partsSlice)
+          : pathing.directory(...partsSlice)
       )
 
       return dictionary[`${prefix}${partialPath}`] || null
@@ -116,7 +119,7 @@ export function validatePermissions(
   }
 
   if (fs?.public) {
-    const publ = fileSystemPaths(fs.public).every(path => {
+    const publ = fs.public.every(path => {
       const pathWithPrefix = `${prefix}public/` + pathing.toPosix(path)
       const u = dictionary[pathWithPrefix]
       return u && !ucan.isExpired(ucan.decode(u))

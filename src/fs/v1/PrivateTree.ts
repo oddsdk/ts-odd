@@ -2,17 +2,19 @@ import BaseTree from '../base/tree'
 import MMPT from '../protocol/private/mmpt'
 import PrivateFile from './PrivateFile'
 import PrivateHistory from './PrivateHistory'
+
 import { BaseLinks, UpdateCallback } from '../types'
 import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, Revision } from '../protocol/private/types'
 import { FileContent } from '../../ipfs'
+import { Path } from '../../path'
 import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
 import { genKeyStr } from '../../keystore'
 import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common'
+
 import * as check from '../protocol/private/types/check'
 import * as history from './PrivateHistory'
 import * as metadata from '../metadata'
 import * as namefilter from '../protocol/private/namefilter'
-import * as pathUtil from '../path'
 import * as protocol from '../protocol'
 import * as semver from '../semver'
 
@@ -187,15 +189,13 @@ export default class PrivateTree extends BaseTree {
     return this
   }
 
-  // TODO
   async get(path: Path): Promise<PrivateTree | PrivateFile | null> {
-    const parts = pathUtil.splitParts(path)
-    if(parts.length === 0) return this
+    if (path.length === 0) return this
 
-    const [head, ...rest] = parts
+    const [head, ...rest] = path
 
     const next = this.header.skeleton[head]
-    if(next === undefined) return null
+    if (next === undefined) return null
 
     const result = await this.getRecurse(next, rest)
     if (result === null) return null

@@ -1,7 +1,8 @@
 import { throttle } from 'throttle-debounce'
 
-import { PublishHook, UnixTree, Tree, File } from './types'
 import { BaseLinks } from './types'
+import { DistinctivePath, DirectoryPath, FilePath, Path } from '../path'
+import { PublishHook, UnixTree, Tree, File } from './types'
 import { SemVer } from './semver'
 import BareTree from './bare/tree'
 import RootTree from './root/tree'
