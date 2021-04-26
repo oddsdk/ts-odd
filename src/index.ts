@@ -118,7 +118,6 @@ export async function initialise(
 
   const permissions = options.permissions || null
   const { autoRemoveUrlParams = true, rootKey } = options
-  const { app, fs } = permissions || {}
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
@@ -257,6 +256,9 @@ export * as ipfs from './ipfs'
 export * as keystore from './keystore'
 export * as machinery from './common'
 export * as crypto from './crypto'
+
+// DELTE THIS
+export * as ucanInternal from './ucan/internal'
 
 
 

@@ -1,5 +1,6 @@
 import * as cidLog from './common/cid-log'
 import * as common from './common'
+import * as base64 from './common/base64'
 import * as did from './did'
 import * as path from './path'
 import * as crypto from './crypto'
@@ -57,6 +58,7 @@ export async function redirectToLobby(
   const app = permissions?.app
   const fs = permissions?.fs
   const platform = permissions?.platform
+  const raw = permissions?.raw
 
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
@@ -75,7 +77,8 @@ export async function redirectToLobby(
   ].concat(
     app           ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
     fs?.private   ? fs.private.map(p => [ "privatePath", path.toPosix(p, { absolute: true }) ]) : [],
-    fs?.public    ? fs.public.map(p => [ "publicPath", path.toPosix(p, { absolute: true }) ]) : []
+    fs?.public    ? fs.public.map(p => [ "publicPath", path.toPosix(p, { absolute: true }) ]) : [],
+    raw           ? [["raw", base64.urlEncode(JSON.stringify(raw))]]  : []
 
   ).concat((() => {
     const apps = platform?.apps

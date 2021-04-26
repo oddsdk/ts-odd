@@ -8,14 +8,19 @@ import * as ucan from '../ucan'
 import { UCANS_STORAGE_KEY } from '../common'
 import { DistinctivePath } from '../path'
 import { Permissions } from './permissions'
-import { Ucan, WNFS_PREFIX } from '../ucan'
+import { WNFS_PREFIX } from '../ucan'
 
 
 let dictionary: Record<string, string> = {}
 
-
 // FUNCTIONS
 
+/**
+ * Retrieve dictionary
+ */
+export function getDictionary(): Record<string, string> {
+  return dictionary
+}
 
 /**
  * You didn't see anything 👀
@@ -93,7 +98,7 @@ export async function store(ucans: Array<string>): Promise<void> {
  * conform to the given `Permissions`.
  */
 export function validatePermissions(
-  { app, fs }: Permissions,
+  { app, fs, raw }: Permissions,
   username: string
 ): boolean {
   const prefix = dictionaryFilesystemPrefix(username)
@@ -125,6 +130,15 @@ export function validatePermissions(
       return u && !ucan.isExpired(ucan.decode(u))
     })
     if (!publ) return false
+  }
+
+  if (raw) {
+    const hasRaw = raw.every(r => {
+      const label = ucan.resourceLabel(r.rsc)
+      const u = dictionary[label]
+      return u && !ucan.isExpired(ucan.decode(u))
+    })
+    if(!hasRaw) return false
   }
 
   return true

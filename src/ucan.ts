@@ -4,6 +4,7 @@ import { base64 } from './common'
 
 // TYPES
 
+
 export type SessionKey = {
   sessionKey: string
 }
@@ -12,6 +13,8 @@ export type Fact = SessionKey | Record<string, string>
 
 export type Resource =
   "*" | Record<string, string>
+
+export type Potency = string |  Record<string, unknown> | undefined | null
 
 export type UcanHeader = {
   alg: string
@@ -26,7 +29,7 @@ export type UcanPayload = {
   iss: string
   nbf: number
   prf: string | null
-  ptc: string | undefined | null
+  ptc: Potency
   rsc: Resource
 }
 
@@ -75,6 +78,7 @@ export async function build({
   facts = [],
   issuer,
   lifetimeInSeconds = 30,
+  expiration,
   potency = 'APPEND',
   proof,
   resource
@@ -82,9 +86,10 @@ export async function build({
   addSignature?: boolean
   audience: string
   facts?: Array<Fact>
-  issuer: string
+  issuer?: string
   lifetimeInSeconds?: number
-  potency?: string | null
+  expiration?: number
+  potency?: Potency
   proof?: string
   resource?: Resource
 }): Promise<Ucan> {
@@ -100,7 +105,7 @@ export async function build({
   }
 
   // Timestamps
-  let exp = currentTimeInSeconds + lifetimeInSeconds
+  let exp = expiration || (currentTimeInSeconds + lifetimeInSeconds)
   let nbf = currentTimeInSeconds - 60
 
   if (decodedProof) {
@@ -138,23 +143,28 @@ export async function build({
 export function compileDictionary(ucans: Array<string>): Record<string, string> {
   return ucans.reduce((acc, ucanString) => {
     const ucan = decode(ucanString)
-    const { rsc } = ucan.payload
 
     if (isExpired(ucan)) return acc
 
-    if (typeof rsc !== "object") {
-      return { ...acc, [rsc]: ucanString }
-    }
-
-    const resource = Array.from(Object.entries(rsc))[0]
-    const key = resource[0] + ":" + (
-      resource[0] === WNFS_PREFIX
-        ? resource[1].replace(/^\/+/, "")
-        : resource[1]
-    )
-
-    return { ...acc, [key]: ucanString }
+    const label = resourceLabel(ucan.payload.rsc)
+    return { ...acc, [label]: ucanString }
   }, {})
+}
+
+/**
+ * Creates the label for a given resource in the UCAN dictionary
+ */
+export function resourceLabel(rsc: Resource): string {
+  if (typeof rsc !== "object") {
+    return rsc
+  }
+
+  const resource = Array.from(Object.entries(rsc))[0]
+  return resource[0] + ":" + (
+    resource[0] === WNFS_PREFIX
+      ? resource[1].replace(/^\/+/, "")
+      : resource[1]
+  )
 }
 
 /**
