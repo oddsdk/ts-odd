@@ -123,6 +123,13 @@ export function isRootDirectory(path: DirectoryPath): boolean {
 }
 
 /**
+ * Check if two `DistinctivePath` have the same `Branch`.
+ */
+export function isSameBranch(a: DistinctivePath, b: DistinctivePath): boolean {
+  return unwrap(a)[0] === unwrap(b)[0]
+}
+
+/**
  * Map a `DistinctivePath`.
  */
 export function map(fn: (p: Path) => Path, path: DistinctivePath): DistinctivePath {

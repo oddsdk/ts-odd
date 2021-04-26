@@ -1,7 +1,7 @@
 import { throttle } from 'throttle-debounce'
 
 import { BaseLinks } from './types'
-import { DistinctivePath, DirectoryPath, FilePath, Path } from '../path'
+import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from '../path'
 import { PublishHook, UnixTree, Tree, File } from './types'
 import { SemVer } from './semver'
 import BareTree from './bare/tree'
@@ -14,15 +14,14 @@ import * as dataRoot from '../data-root'
 import * as debug from '../common/debug'
 import * as identifiers from '../common/identifiers'
 import * as keystore from '../keystore'
-import * as pathing from './path'
-import * as pathUtil from './path'
+import * as pathing from '../path'
 import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
 
 import { Maybe } from '../common'
 import { CID, FileContent } from '../ipfs'
 import { NoPermissionError } from '../errors'
-import { Permissions } from '../ucan/permissions'
+import { Permissions, appDataPath } from '../ucan/permissions'
 import { Ucan } from '../ucan'
 
 
@@ -243,7 +242,7 @@ export class FileSystem {
 
   // This is only implemented on the same tree for now and will error otherwise
   async mv(from: DistinctivePath, to: DistinctivePath): Promise<this> {
-    const sameTree = pathUtil.sameParent(from, to)
+    const sameTree = pathing.isSameBranch(from, to)
 
     if (!sameTree) {
       throw new Error("`mv` is only supported on the same tree for now")
@@ -254,8 +253,8 @@ export class FileSystem {
     }
 
     await this.runOnTree(from, true, (tree, relPath) => {
-      const { nextPath } = pathUtil.takeHead(to)
-      return tree.mv(relPath, nextPath || '')
+      const [ head, ...nextPath ] = pathing.unwrap(to)
+      return tree.mv(relPath, nextPath)
     })
 
     return this
@@ -303,10 +302,10 @@ export class FileSystem {
   ): Promise<a> {
     const parts = pathing.unwrap(path)
     const head = parts[0]
-    const relPath = paths.slice(1)
+    const relPath = parts.slice(1)
 
     if (!this.localOnly) {
-      const proof = await ucanInternal.lookupFilesystemUcan(parts)
+      const proof = await ucanInternal.lookupFilesystemUcan({ directory: parts })
       const decodedProof = proof && ucan.decode(proof)
 
       if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {
@@ -338,7 +337,9 @@ export class FileSystem {
       }
 
     } else if (head === Branch.Private) {
-      const [treePath, tree] = this.root.findPrivateTree(relPath)
+      const [treePath, tree] = this.root.findPrivateTree(
+        pathing.map(p => p.slice(1), path)
+      )
 
       if (!tree) {
         throw new NoPermissionError("I don't have the necessary permissions to make these changes to the file system")
@@ -350,7 +351,7 @@ export class FileSystem {
       )
 
       if (isMutation && PrivateTree.instanceOf(result)) {
-        this.root.privateTrees[treePath] = result
+        this.root.privateTrees[pathing.toPosix(treePath)] = result
         await result.put()
         await this.root.updatePuttable(Branch.Private, this.root.mmpt)
 
@@ -401,11 +402,11 @@ export default FileSystem
 // ㊙️
 
 
-function appPath(permissions: Permissions): ((path?: DistinctivePath) => string) {
+function appPath(permissions: Permissions): ((path?: DistinctivePath) => DistinctivePath) {
   if (!permissions.app) throw Error("Only works with app permissions")
   const base = appDataPath(permissions.app)
 
-  return (path?: DistinctivePath): string => {
+  return (path?: DistinctivePath): DistinctivePath => {
     if (path) return pathing.combine(base, path)
     return base
   }

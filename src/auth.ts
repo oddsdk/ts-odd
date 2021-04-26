@@ -75,8 +75,8 @@ export async function redirectToLobby(
 
   ].concat(
     app           ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
-    fs?.private   ? fs.private.map(p => [ "privatePath", path.toPosixPath(p) ]) : [],
-    fs?.public    ? fs.public.map(p => [ "publicPath", path.toPosixPath(p) ]) : []
+    fs?.private   ? fs.private.map(p => [ "privatePath", path.toPosix(p) ]) : [],
+    fs?.public    ? fs.public.map(p => [ "publicPath", path.toPosix(p) ]) : []
 
   ).concat((() => {
     const apps = platform?.apps
