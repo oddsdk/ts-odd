@@ -347,7 +347,7 @@ export class FileSystem {
 
       result = await fn(
         tree,
-        relPath.slice(pathing.unwrap(treePath).length)
+        parts.slice(pathing.unwrap(treePath).length)
       )
 
       if (isMutation && PrivateTree.instanceOf(result)) {
