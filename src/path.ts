@@ -28,6 +28,9 @@ export type DistinctivePath = DirectoryPath | FilePath
  * Utility function to create a `DirectoryPath`
  */
 export function directory(...args: Path): DirectoryPath {
+  if (args.some(p => p.includes("/"))) {
+    throw new Error("Forward slashes `/` are not allowed")
+  }
   return { directory: args }
 }
 
@@ -35,13 +38,16 @@ export function directory(...args: Path): DirectoryPath {
  * Utility function to create a `FilePath`
  */
 export function file(...args: Path): FilePath {
+  if (args.some(p => p.includes("/"))) {
+    throw new Error("Forward slashes `/` are not allowed")
+  }
   return { file: args }
 }
 
 /**
  * Utility function to create a root `DirectoryPath`
  */
-export function rootDirectory(): DirectoryPath {
+export function root(): DirectoryPath {
   return { directory: [] }
 }
 
@@ -89,9 +95,8 @@ export function toPosix(
  * Combine two `DistinctivePath`s.
  */
 export function combine(a: DistinctivePath, b: DistinctivePath): DistinctivePath {
-  const unwrappedA = unwrap(a)
-  if (isDirectory(b)) return { directory: unwrappedA.concat(b.directory) }
-  return { file: unwrappedA.concat(b.file) }
+  if (isFile(a)) throw new Error("Can't combine a FilePath with another DistinctivePath")
+  return map(p => unwrap(a).concat(p), b)
 }
 
 /**
