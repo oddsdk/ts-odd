@@ -105,20 +105,6 @@ test("combine", () => {
   ).toEqual(
     { file: [ "a", "b" ] }
   )
-
-  expect(() =>
-    pathing.combine(
-      pathing.file("a"),
-      pathing.directory("b")
-    )
-  ).toThrow()
-
-  expect(() =>
-    pathing.combine(
-      pathing.file("a"),
-      pathing.file("b")
-    )
-  ).toThrow()
 })
 
 

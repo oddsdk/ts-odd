@@ -94,8 +94,7 @@ export function toPosix(
 /**
  * Combine two `DistinctivePath`s.
  */
-export function combine(a: DistinctivePath, b: DistinctivePath): DistinctivePath {
-  if (isFile(a)) throw new Error("Can't combine a FilePath with another DistinctivePath")
+export function combine(a: DirectoryPath, b: DistinctivePath): DistinctivePath {
   return map(p => unwrap(a).concat(p), b)
 }
 
