@@ -1,5 +1,5 @@
 import * as pathing from '../path'
-import { DistinctivePath } from '../path'
+import { DirectoryPath, DistinctivePath } from '../path'
 
 
 export type Permissions = {
@@ -26,7 +26,7 @@ export type PlatformPermissions = {
 /**
  * Path for `AppInfo`.
  */
-export function appDataPath(app: AppInfo): DistinctivePath {
+export function appDataPath(app: AppInfo): DirectoryPath {
   return pathing.directory(pathing.Branch.Private, "Apps", app.creator, app.name)
 }
 
@@ -36,7 +36,7 @@ export function appDataPath(app: AppInfo): DistinctivePath {
  * This'll return a list of `DistinctivePath`s.
  */
 export function paths(permissions: Permissions): DistinctivePath[] {
-  let list = []
+  let list = [] as DistinctivePath[]
 
   if (permissions.app) list.push(appDataPath(permissions.app))
   if (permissions.fs?.private) list = list.concat(permissions.fs?.private)
