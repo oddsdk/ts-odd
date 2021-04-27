@@ -338,7 +338,7 @@ export class FileSystem {
 
     } else if (head === Branch.Private) {
       const [treePath, tree] = this.root.findPrivateTree(
-        pathing.map(p => p.slice(1), path)
+        path
       )
 
       if (!tree) {
