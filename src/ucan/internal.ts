@@ -33,7 +33,7 @@ export function dictionaryFilesystemPrefix(username: string): string {
   // const host = `${username}.${setup.endpoints.user}`
   // TODO: Waiting on API change.
   //       Should be `${WNFS_PREFIX}:${host}/`
-  return WNFS_PREFIX + ":/"
+  return WNFS_PREFIX + ":"
 }
 
 /**
@@ -105,7 +105,8 @@ export function validatePermissions(
 
   // Check permissions
   if (app) {
-    const u = dictionary[prefix + permissions.appDataPath(app)]
+    const k = prefix + pathing.toPosix(permissions.appDataPath(app))
+    const u = dictionary[k]
     if (!u || ucan.isExpired(ucan.decode(u))) return false
   }
 

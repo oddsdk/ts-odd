@@ -82,7 +82,7 @@ export function toPosix(
 ): string {
   const prefix = absolute ? "/" : ""
   const joinedPath = unwrap(path).join("/")
-  if (isDirectory(path)) return prefix + joinedPath + "/"
+  if (isDirectory(path)) return prefix + joinedPath + (joinedPath.length ? "/" : "")
   return prefix + joinedPath
 }
 

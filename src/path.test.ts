@@ -55,6 +55,12 @@ test("Creating a path from a POSIX formatted string", () => {
   )
 
   expect(
+    pathing.fromPosix("/")
+  ).toEqual(
+    { directory: [] }
+  )
+
+  expect(
     pathing.fromPosix("foo/bar")
   ).toEqual(
     { file: [ "foo", "bar" ] }
@@ -73,6 +79,12 @@ test("Converting a path to the POSIX format", () => {
     pathing.toPosix({ directory: [ "foo", "bar" ] })
   ).toEqual(
     "foo/bar/"
+  )
+
+  expect(
+    pathing.toPosix({ directory: [] })
+  ).toEqual(
+    ""
   )
 
   expect(

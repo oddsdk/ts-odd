@@ -301,8 +301,10 @@ function loadPrivateTrees(
     return acc.then(async map => {
       let privateTree
 
+      const unwrappedPath = pathing.unwrap(path)
+
       // if root, no need for bare name filter
-      if (pathing.isBranch(pathing.Branch.Private, path)) {
+      if (unwrappedPath.length === 1 && unwrappedPath[0] === pathing.Branch.Private) {
         privateTree = await PrivateTree.fromBaseKey(mmpt, key)
 
       } else {

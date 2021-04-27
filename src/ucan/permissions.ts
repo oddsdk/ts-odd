@@ -39,8 +39,18 @@ export function paths(permissions: Permissions): DistinctivePath[] {
   let list = [] as DistinctivePath[]
 
   if (permissions.app) list.push(appDataPath(permissions.app))
-  if (permissions.fs?.private) list = list.concat(permissions.fs?.private)
-  if (permissions.fs?.public) list = list.concat(permissions.fs?.public)
+  if (permissions.fs?.private) list = list.concat(
+    permissions.fs?.private.map(p => pathing.combine(
+      pathing.directory(pathing.Branch.Private),
+      p
+    ))
+  )
+  if (permissions.fs?.public) list = list.concat(
+    permissions.fs?.public.map(p => pathing.combine(
+      pathing.directory(pathing.Branch.Public),
+      p
+    ))
+  )
 
   return list
 }
