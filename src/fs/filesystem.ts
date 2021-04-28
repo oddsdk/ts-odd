@@ -408,11 +408,11 @@ export default FileSystem
 // ㊙️
 
 
-function appPath(permissions: Permissions): ((path?: DistinctivePath) => DistinctivePath) {
+function appPath(permissions: Permissions): AppPath {
   if (!permissions.app) throw Error("Only works with app permissions")
   const base = appDataPath(permissions.app)
 
-  return (path?: DistinctivePath): DistinctivePath => {
+  return path => {
     if (path) return pathing.combine(base, path)
     return base
   }
