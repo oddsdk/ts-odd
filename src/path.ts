@@ -67,6 +67,7 @@ export function root(): DirectoryPath {
 export function fromPosix(path: string): DistinctivePath {
   const split = path.replace(/^\/+/, "").split("/")
   if (path.endsWith("/")) return { directory: split.slice(0, -1) }
+  else if (path === "") return root()
   return { file: split }
 }
 
