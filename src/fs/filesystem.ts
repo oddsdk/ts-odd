@@ -183,12 +183,14 @@ export class FileSystem {
   // -----------------------------
 
   async ls(path: DirectoryPath): Promise<BaseLinks> {
+    if (pathing.isFile(path)) throw new Error("`ls` only accepts directory paths")
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.ls(relPath)
     })
   }
 
   async mkdir(path: DirectoryPath, options: MutationOptions = {}): Promise<this> {
+    if (pathing.isFile(path)) throw new Error("`mkdir` only accepts directory paths")
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.mkdir(relPath)
     })
@@ -202,6 +204,7 @@ export class FileSystem {
   // -----------------------
 
   async add(path: FilePath, content: FileContent, options: MutationOptions = {}): Promise<this> {
+    if (pathing.isDirectory(path)) throw new Error("`add` only accepts file paths")
     await this.runOnTree(path, true, (tree, relPath) => {
       return tree.add(relPath, content)
     })
@@ -212,16 +215,19 @@ export class FileSystem {
   }
 
   async cat(path: FilePath): Promise<FileContent> {
+    if (pathing.isDirectory(path)) throw new Error("`cat` only accepts file paths")
     return this.runOnTree(path, false, (tree, relPath) => {
       return tree.cat(relPath)
     })
   }
 
   async read(path: FilePath): Promise<FileContent | null> {
+    if (pathing.isDirectory(path)) throw new Error("`read` only accepts file paths")
     return this.cat(path)
   }
 
   async write(path: FilePath, content: FileContent, options: MutationOptions = {}): Promise<this> {
+    if (pathing.isDirectory(path)) throw new Error("`write` only accepts file paths")
     return this.add(path, content, options)
   }
 
