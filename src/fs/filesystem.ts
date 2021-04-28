@@ -250,6 +250,12 @@ export class FileSystem {
   async mv(from: DistinctivePath, to: DistinctivePath): Promise<this> {
     const sameTree = pathing.isSameBranch(from, to)
 
+    if (!pathing.isSameKind(from, to)) {
+      const kindFrom = pathing.kind(from)
+      const kindTo = pathing.kind(to)
+      throw new Error(`Can't move to a different kind of path, from is a ${kindFrom} and to is a ${kindTo}`)
+    }
+
     if (!sameTree) {
       throw new Error("`mv` is only supported on the same tree for now")
     }

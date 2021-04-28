@@ -205,6 +205,52 @@ test("isSameBranch", () => {
 })
 
 
+test("isSameKind", () => {
+  expect(
+    pathing.isSameKind(
+      pathing.directory(),
+      pathing.file()
+    )
+  ).toBe(false)
+
+  expect(
+    pathing.isSameKind(
+      pathing.file(),
+      pathing.directory()
+    )
+  ).toBe(false)
+
+  expect(
+    pathing.isSameKind(
+      pathing.directory(),
+      pathing.directory()
+    )
+  ).toBe(true)
+
+  expect(
+    pathing.isSameKind(
+      pathing.file(),
+      pathing.file()
+    )
+  ).toBe(true)
+})
+
+
+test("kind", () => {
+  expect(
+    pathing.kind(pathing.directory())
+  ).toEqual(
+    pathing.Kind.Directory
+  )
+
+  expect(
+    pathing.kind(pathing.file())
+  ).toEqual(
+    pathing.Kind.File
+  )
+})
+
+
 test("map", () => {
   expect(
     pathing.map(

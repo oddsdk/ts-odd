@@ -9,6 +9,11 @@ export enum Branch {
   Version = 'version'
 }
 
+export enum Kind {
+  Directory = "directory",
+  File = "file"
+}
+
 export type Path = string[]
 
 export type DirectoryPath = { directory: Path }
@@ -132,6 +137,23 @@ export function isRootDirectory(path: DirectoryPath): boolean {
  */
 export function isSameBranch(a: DistinctivePath, b: DistinctivePath): boolean {
   return unwrap(a)[0] === unwrap(b)[0]
+}
+
+/**
+ * Check if two `DistinctivePath` are of the same kind.
+ */
+export function isSameKind(a: DistinctivePath, b: DistinctivePath): boolean {
+  if (isDirectory(a) && isDirectory(b)) return true
+  else if (isFile(a) && isFile(b)) return true
+  else return false
+}
+
+/**
+ * What `Kind` of path are we dealing with?
+ */
+export function kind(path: DistinctivePath): Kind {
+  if (isDirectory(path)) return Kind.Directory
+  return Kind.File
 }
 
 /**
