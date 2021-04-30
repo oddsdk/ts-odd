@@ -3,9 +3,10 @@ import * as basic from '../basic'
 import * as link from '../../link'
 import { Puttable, SimpleLinks } from '../../types'
 
-const nibbles = { "0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true, "7": true,
-                  "8": true, "9": true, "a": true, "b": true, "c": true, "d": true, "e": true, "f": true,
-                } as {[key: string]: boolean}
+const nibbles = {
+  "0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true, "7": true,
+  "8": true, "9": true, "a": true, "b": true, "c": true, "d": true, "e": true, "f": true,
+} as { [key: string]: boolean }
 const isNibble = (str: string): boolean => nibbles[str] === true
 
 type Member = {
@@ -27,7 +28,7 @@ export default class MMPT implements Puttable {
     this.links = links
     this.children = {}
   }
-  
+
   static create(): MMPT {
     return new MMPT({})
   }
@@ -47,30 +48,30 @@ export default class MMPT implements Puttable {
   }
 
   async add(name: string, value: CID): Promise<void> {
-    if(!isNibble(name[0])) {
+    if (!isNibble(name[0])) {
       throw new Error(`Not a valid name, must be hexadecimal`)
     }
     const nextNameOrSib = this.nextTreeOrSiblingName(name)
 
     // if already in tree, then skip
-    if(name === nextNameOrSib){
+    if (name === nextNameOrSib) {
       // skip
     }
 
     // if no children starting with first char of name, then add with entire name as key
-    else if(nextNameOrSib === null) {
+    else if (nextNameOrSib === null) {
       this.links[name] = link.make(name, value, true, 0)
     }
 
     // if multiple children with first char of names, then add to that tree
-    else if(nextNameOrSib.length === 1){
+    else if (nextNameOrSib.length === 1) {
       const nextTree = await this.getDirectChild(nextNameOrSib)
       await nextTree.add(name.slice(1), value)
       await this.putAndUpdateChildLink(nextNameOrSib)
     }
 
     // if one other child with first char of name, then put both into a child tree
-    else{
+    else {
       const newTree = this.addEmptyChild(name[0])
       const nextCID = this.links[nextNameOrSib].cid
       this.removeChild(nextNameOrSib)
@@ -105,9 +106,9 @@ export default class MMPT implements Puttable {
 
   async get(name: string): Promise<CID | null> {
     const nextName = this.nextTreeName(name)
-    if(nextName === null) return null
+    if (nextName === null) return null
 
-    if(nextName.length > 1) {
+    if (nextName.length > 1) {
       return this.links[nextName].cid
     }
     const nextTree = await this.getDirectChild(nextName)
@@ -121,7 +122,7 @@ export default class MMPT implements Puttable {
   async members(): Promise<Array<Member>> {
     const children = await Promise.all(
       Object.values(this.links).map(async ({ name, cid }) => {
-        if(name.length > 1){
+        if (name.length > 1) {
           return [{ name, cid }]
         }
         const child = await MMPT.fromCID(cid)
@@ -136,13 +137,13 @@ export default class MMPT implements Puttable {
   }
 
   private async getDirectChild(name: string): Promise<MMPT> {
-    if(this.children[name]) {
+    if (this.children[name]) {
       return this.children[name]
     }
 
     const child = await MMPT.fromCID(this.links[name].cid)
     // check that the child wasn't added while retrieving the mmpt from the network
-    if(this.children[name]) {
+    if (this.children[name]) {
       return this.children[name]
     }
 
@@ -152,7 +153,7 @@ export default class MMPT implements Puttable {
 
   private removeChild(name: string): void {
     delete this.links[name]
-    if(this.children[name]){
+    if (this.children[name]) {
       delete this.children[name]
     }
   }
@@ -162,9 +163,9 @@ export default class MMPT implements Puttable {
   }
 
   private nextTreeName(name: string): string | null {
-    if(this.directChildExists(name[0])) {
+    if (this.directChildExists(name[0])) {
       return name[0]
-    }else if(this.directChildExists(name)) {
+    } else if (this.directChildExists(name)) {
       return name
     }
     return null
@@ -172,7 +173,7 @@ export default class MMPT implements Puttable {
 
   private nextTreeOrSiblingName(name: string): string | null {
     const nibble = name[0]
-    if(this.directChildExists(nibble)) {
+    if (this.directChildExists(nibble)) {
       return nibble
     }
     return Object.keys(this.links).find(child => nibble === child[0]) || null
