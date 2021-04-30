@@ -66,7 +66,7 @@ export default class MMPT implements Puttable {
     else if(nextNameOrSib.length === 1){
       const nextTree = await this.getDirectChild(nextNameOrSib)
       await nextTree.add(name.slice(1), value)
-      await this.putAndUpdateLink(nextNameOrSib, nextTree)
+      await this.putAndUpdateChildLink(nextNameOrSib)
     }
 
     // if one other child with first char of name, then put both into a child tree
@@ -78,12 +78,22 @@ export default class MMPT implements Puttable {
         newTree.add(name.slice(1), value),
         newTree.add(nextNameOrSib.slice(1), nextCID)
       ])
-      await this.putAndUpdateLink(name[0], newTree)
+      await this.putAndUpdateChildLink(name[0])
     }
   }
 
-  async putAndUpdateLink(name: string, child: MMPT): Promise<void> {
-    const { cid, size } = await child.putDetailed()
+  async putAndUpdateChildLink(name: string): Promise<void> {
+    const cidBefore = this.links[name]?.cid
+    const { cid, size } = await this.children[name].putDetailed()
+    const cidNow = this.links[name]?.cid
+
+    if (cidBefore != cidNow) {
+      // If there are changes in-between, we have to
+      // re-try updating. Otherwise we can overwrite changes that
+      // a concurrent update made
+      return await this.putAndUpdateChildLink(name)
+    }
+
     this.links[name] = link.make(name, cid, false, size)
   }
 
