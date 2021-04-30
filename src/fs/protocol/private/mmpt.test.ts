@@ -46,7 +46,7 @@ beforeAll(async done => {
 })
 
 afterAll(async done => {
-  ipfs.stop()
+  await ipfs.stop()
   done()
 })
 
@@ -55,7 +55,7 @@ describe("the mmpt", () => {
     const mmpt = MMPT.create()
 
     // Generate lots of entries
-    const amount = 1000
+    const amount = 2000
     const entries = await generateExampleEntries(amount)
 
     // Concurrently add all those entries to the MMPT
@@ -63,10 +63,10 @@ describe("the mmpt", () => {
 
     // Check that the MMPT contains all entries we added
     const members = await mmpt.members()
-    const hashes = members.map(member => member.cid).sort()
-    const inputHashes = entries.map(entry => entry.cid).sort()
+    const keys = members.map(member => member.name).sort()
+    const intputKeys = entries.map(entry => entry.name).sort()
 
-    expect(hashes).toStrictEqual(inputHashes)
+    expect(keys).toStrictEqual(intputKeys)
   })
 
   // This test used to generate even more data races
@@ -74,7 +74,7 @@ describe("the mmpt", () => {
     const mmpt = MMPT.create()
 
     // Generate lots of entries
-    const amount = 500
+    const amount = 1000
     const entries = await generateExampleEntries(amount)
 
     const slice_size = 5
@@ -102,5 +102,29 @@ describe("the mmpt", () => {
     missing = soFar.filter(({name}) => !reMembers.some(mem => mem.name === name))
 
     expect(missing.length).toStrictEqual(0)
+  })
+
+  // reconstructing from CID causes the MMPT to be in a weird
+  // half-in-memory half-in-ipfs state where not all branches are fetched
+  // that's worth testing for sure
+  it("can handle concurrent adds when reconstructed from CID", async () => {
+    const firstMMPT = MMPT.create()
+    for (const entry of await generateExampleEntries(500)) {
+      await firstMMPT.add(entry.name, entry.cid)
+    }
+
+    // Reconstruct an MMPT from a CID. This causes it to only fetch branches from ipfs on-demand
+    const reconstructedMMPT = await MMPT.fromCID(await firstMMPT.put())
+
+    // Test asynchronous adds
+    const entries = await generateExampleEntries(500)
+    await Promise.all(entries.map(entry => reconstructedMMPT.add(entry.name, entry.cid)))
+
+    // Check that the MMPT contains all entries we added
+    const members = await reconstructedMMPT.members()
+    const keys = members.map(member => member.name).sort()
+    const intputKeys = entries.map(entry => entry.name).sort()
+
+    expect(keys).toStrictEqual(intputKeys)
   })
 })
