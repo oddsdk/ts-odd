@@ -2,6 +2,7 @@ import { AddResult, CID } from "../../../ipfs"
 import * as basic from '../basic'
 import * as link from '../../link'
 import { Puttable, SimpleLinks } from '../../types'
+import fs from 'fs'
 
 const nibbles = { "0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true, "7": true,
                   "8": true, "9": true, "a": true, "b": true, "c": true, "d": true, "e": true, "f": true,
@@ -11,6 +12,14 @@ const isNibble = (str: string): boolean => nibbles[str] === true
 type Member = {
   name: string
   cid: string
+}
+
+const filename = `logs-${Date.now()}.log`
+const file = fs.openSync(filename, 'a')
+
+const log = (txt: string) => {
+  // fs.appendFileSync(file, txt, 'utf8')
+  fs.appendFileSync(file, `${txt}\n`, 'utf8')
 }
 
 /**
@@ -26,6 +35,11 @@ export default class MMPT implements Puttable {
   constructor(links: SimpleLinks) {
     this.links = links
     this.children = {}
+  }
+
+  static break(num: number): void {
+    log(`\n----Break ${num}----\n`)
+    return
   }
   
   static create(): MMPT {
@@ -69,7 +83,7 @@ export default class MMPT implements Puttable {
       await this.putAndUpdateLink(nextNameOrSib, nextTree)
     }
 
-    // if one other child with first char of name, then put both into a child tree
+    // if one other child with first char of name, then put both into a new child tree
     else{
       const newTree = this.addEmptyChild(name[0])
       const nextCID = this.links[nextNameOrSib].cid
@@ -84,6 +98,18 @@ export default class MMPT implements Puttable {
 
   async putAndUpdateLink(name: string, child: MMPT): Promise<void> {
     const { cid, size } = await child.putDetailed()
+    log(
+      `
+\n
+----
+name: ${name}
+cid: ${cid}
+links: 
+${Object.values(child.links).map(l => `- ${l.name}: ${l.cid}\n`)}
+----
+\n
+      `
+    )
     this.links[name] = link.make(name, cid, false, size)
   }
 
