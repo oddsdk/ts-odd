@@ -6,6 +6,7 @@ import * as common from './common'
 import * as identifiers from './common/identifiers'
 import * as ipfs from './ipfs'
 import * as keystore from './keystore'
+import * as pathing from './path'
 import * as ucan from './ucan/internal'
 import * as ucanPermissions from './ucan/permissions'
 
@@ -240,6 +241,7 @@ export * as dataRoot from './data-root'
 export * as did from './did'
 export * as errors from './errors'
 export * as lobby from './lobby'
+export * as path from './path'
 export * as setup from './setup'
 export * as ucan from './ucan'
 
@@ -351,7 +353,8 @@ async function importClassifiedInfo(
 
   // Import read keys and bare name filters
   await Promise.all(
-    Object.entries(fsSecrets).map(async ([ path, { bareNameFilter, key } ]) => {
+    Object.entries(fsSecrets).map(async ([ posixPath, { bareNameFilter, key } ]) => {
+      const path = pathing.fromPosix(posixPath)
       const readKeyId = await identifiers.readKey({ path })
       const bareNameFilterId = await identifiers.bareNameFilter({ path })
 
@@ -371,7 +374,7 @@ async function validateSecrets(permissions: Permissions): Promise<boolean> {
   return ucanPermissions.paths(permissions).reduce(
     (acc, path) => acc.then(async bool => {
       if (bool === false) return bool
-      if (path.startsWith('/public/')) return bool
+      if (pathing.isBranch(pathing.Branch.Public, path)) return bool
 
       const keyName = await identifiers.readKey({ path })
       return await ks.keyExists(keyName)

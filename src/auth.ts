@@ -4,10 +4,12 @@ import * as cidLog from './common/cid-log'
 import * as common from './common'
 import * as did from './did'
 import * as keystore from './keystore'
+import * as path from './path'
 import * as ucan from './ucan/internal'
+
 import { USERNAME_STORAGE_KEY, Maybe, VERSION } from './common'
 import { FileSystem } from './fs/filesystem'
-import { Permissions, fileSystemPaths } from './ucan/permissions'
+import { Permissions } from './ucan/permissions'
 import { setup } from './setup/internal'
 
 
@@ -73,8 +75,8 @@ export async function redirectToLobby(
 
   ].concat(
     app           ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
-    fs?.private   ? fileSystemPaths(fs.private).map(path => [ "privatePath", path ]) : [],
-    fs?.public    ? fileSystemPaths(fs.public).map(path => [ "publicPath", path ]) : []
+    fs?.private   ? fs.private.map(p => [ "privatePath", path.toPosix(p, { absolute: true }) ]) : [],
+    fs?.public    ? fs.public.map(p => [ "publicPath", path.toPosix(p, { absolute: true }) ]) : []
 
   ).concat((() => {
     const apps = platform?.apps
