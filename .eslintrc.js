@@ -16,6 +16,7 @@ module.exports = {
         "requireLast": false
       },
     }],
-    "@typescript-eslint/no-use-before-define": ["off"]
+    "@typescript-eslint/no-use-before-define": ["off"],
+    "@typescript-eslint/semi": ["error", "never"]
   }
-};
+}
