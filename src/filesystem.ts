@@ -1,5 +1,3 @@
-import localforage from 'localforage'
-
 import FileSystem from './fs'
 
 import * as cidLog from './common/cid-log'
@@ -10,7 +8,6 @@ import * as ucan from './ucan/internal'
 import { Branch } from './path'
 import { Maybe, authenticatedUsername } from './common'
 import { Permissions } from './ucan/permissions'
-import { Ucan } from './ucan'
 
 
 /**
