@@ -22,7 +22,7 @@ const context = 'null'
 // don't try to bundle them but rather leave their import statements in place"
 const external = []
 
-const plugins = [
+const browserPlugins = [
   // Allow json resolution
   json(),
 
@@ -46,6 +46,9 @@ const plugins = [
   polyfills(),
 ]
 
+const nodePlugins = [...browserPlugins]
+nodePlugins[2] = nodeResolve({ browser: false, preferBuiltins: true })
+
 // browser-friendly UMD build
 const configUMD = {
   input,
@@ -55,7 +58,7 @@ const configUMD = {
     format: 'umd',
     sourcemap: true
   },
-  plugins,
+  plugins: browserPlugins,
   external,
   context
 }
@@ -68,34 +71,35 @@ const configUMDMinified = {
     format: 'umd',
     sourcemap: true
   },
-  plugins: [...plugins, terser(), gzipPlugin()],
+  plugins: [...browserPlugins, terser(), gzipPlugin()],
   external,
   context
 }
 
-// CommonJS (for Node) and ES module (for bundlers) build.
-// (We could have three entries in the configuration array
-// instead of two, but it's quicker to generate multiple
-// builds from a single configuration where possible, using
-// an array for the `output` option, where we can specify
-// `file` and `format` for each target)
-const configCjsAndEs = {
+// ES module (for bundlers)
+const configEs = {
   input,
-  output: [
-    {
-      file: pkg.main,
-      format: 'cjs',
-      sourcemap: true
-    },
-    {
-      file: pkg.module,
-      format: 'es',
-      sourcemap: true
-    }
-  ],
-  plugins,
+  output: {
+    file: pkg.module,
+    format: 'es',
+    sourcemap: true
+  },
+  plugins: browserPlugins,
   external,
   context
 }
 
-export default [configUMD, configUMDMinified, configCjsAndEs]
+// CommonJS (for Node)
+const configCjs = {
+  input,
+  output: {
+    file: pkg.main,
+    format: 'cjs',
+    sourcemap: true
+  },
+  plugins: nodePlugins,
+  external,
+  context
+}
+
+export default [configUMD, configUMDMinified, configEs, configCjs]

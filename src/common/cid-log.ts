@@ -1,4 +1,4 @@
-import localforage from 'localforage'
+import * as storage from '../storage'
 import { setup } from '../setup/internal'
 
 
@@ -14,7 +14,7 @@ function key() {
 
 
 export async function get(): Promise<Array<string>> {
-  return (await localforage.getItem(key())) || []
+  return (await storage.getItem(key())) || []
 }
 
 export async function index(cid: string): Promise<[number, number]> {
@@ -34,10 +34,10 @@ export async function newest(): Promise<string> {
 export async function add(cid: string): Promise<void> {
   const log = await get()
   const newLog = [ cid, ...log ].slice(0, 1000)
-  await localforage.setItem(key(), newLog)
+  await storage.setItem(key(), newLog)
 }
 
 
 export async function clear(): Promise<void> {
-  await localforage.removeItem(key())
+  await storage.removeItem(key())
 }

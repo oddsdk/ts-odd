@@ -1,19 +1,16 @@
 import * as base58 from 'base58-universal/main.js'
-import * as ed25519 from 'noble-ed25519'
-import { CryptoSystem, Msg } from 'keystore-idb/types'
 
-import rsaOperations from 'keystore-idb/rsa/operations'
+import * as crypto from './crypto'
 import * as utils from 'keystore-idb/utils'
 
 import * as dns from './dns'
-import * as keystore from './keystore'
 import { arrbufs } from './common'
 import { setup } from './setup/internal'
 
 
-const EDWARDS_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xed, 0x01 ]).buffer
-const BLS_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0xea, 0x01 ]).buffer
-const RSA_DID_PREFIX: ArrayBuffer = new Uint8Array([ 0x00, 0xf5, 0x02 ]).buffer
+const EDWARDS_DID_PREFIX = new Uint8Array([ 0xed, 0x01 ])
+const BLS_DID_PREFIX = new Uint8Array([ 0xea, 0x01 ])
+const RSA_DID_PREFIX = new Uint8Array([ 0x00, 0xf5, 0x02 ])
 const BASE58_DID_PREFIX = 'did:key:z'
 
 export enum KeyType {
@@ -31,12 +28,12 @@ export enum KeyType {
  * Create a DID based on the exchange key-pair.
  */
 export async function exchange(): Promise<string> {
-  const ks = await keystore.get()
-  const pubKeyB64 = await ks.publicReadKey()
+  const pubKeyB64 = await crypto.keystore.publicReadKey()
+  const ksAlg = await crypto.keystore.getAlg()
 
   return publicKeyToDid(
     pubKeyB64,
-    cryptoSystemToKeyType(ks.cfg.type)
+    toKeyType(ksAlg)
   )
 }
 
@@ -52,7 +49,7 @@ export async function root(
   try {
     const maybeDid = await dns.lookupTxtRecord(`_did.${username}.${domain}`)
     if (maybeDid !== null) return maybeDid
-  } catch (_err) {}
+  } catch (_err) { }
 
   throw new Error("Could not locate user DID in DNS.")
 }
@@ -66,12 +63,12 @@ export { write as ucan }
  * Create a DID based on the write key-pair.
  */
 export async function write(): Promise<string> {
-  const ks = await keystore.get()
-  const pubKeyB64 = await ks.publicWriteKey()
+  const pubKeyB64 = await crypto.keystore.publicWriteKey()
+  const ksAlg = await crypto.keystore.getAlg()
 
   return publicKeyToDid(
     pubKeyB64,
-    cryptoSystemToKeyType(ks.cfg.type)
+    toKeyType(ksAlg)
   )
 }
 
@@ -105,7 +102,7 @@ export function publicKeyToDid(
  * Convert a DID (did:key) to a base64 public key.
  */
 export function didToPublicKey(did: string): {
-  publicKey: string,
+  publicKey: string
   type: KeyType
 } {
   if (!did.startsWith(BASE58_DID_PREFIX)) {
@@ -113,7 +110,7 @@ export function didToPublicKey(did: string): {
   }
 
   const didWithoutPrefix = did.substr(BASE58_DID_PREFIX.length)
-  const magicalBuf = base58.decode(didWithoutPrefix).buffer as ArrayBuffer
+  const magicalBuf = base58.decode(didWithoutPrefix)
   const { keyBuffer, type } = parseMagicBytes(magicalBuf)
 
   return {
@@ -131,33 +128,25 @@ export function didToPublicKey(did: string): {
  * Verify the signature of some data (string, ArrayBuffer or Uint8Array), given a DID.
  */
 export async function verifySignedData({ charSize = 16, data, did, signature }: {
-  charSize?: number,
-  data: Msg,
+  charSize?: number
+  data: string
   did: string
   signature: string
 }): Promise<boolean> {
   try {
     const { type, publicKey } = didToPublicKey(did)
 
+    const sigBytes = new Uint8Array(utils.base64ToArrBuf(signature))
+    const dataBytes = new Uint8Array(utils.normalizeUnicodeToBuf(data, charSize))
+    const keyBytes = new Uint8Array(utils.base64ToArrBuf(publicKey))
+
     switch (type) {
 
       case KeyType.Edwards:
-        const hash = typeof data === "string"
-          ? new Uint8Array(utils.normalizeUnicodeToBuf(data, charSize))
-          : new Uint8Array(data)
+        return await crypto.ed25519.verify(dataBytes, sigBytes, keyBytes)
 
-        return await ed25519.verify(
-          new Uint8Array(utils.base64ToArrBuf(signature)),
-          hash,
-          new Uint8Array(utils.base64ToArrBuf(publicKey)),
-        )
-
-      case KeyType.RSA: return await rsaOperations.verify(
-        data,
-        signature,
-        publicKey,
-        charSize
-      )
+      case KeyType.RSA: 
+        return await crypto.rsa.verify(dataBytes, sigBytes, keyBytes)
 
       default: return false
     }
@@ -176,7 +165,7 @@ export async function verifySignedData({ charSize = 16, data, did, signature }: 
 /**
  * Magic bytes.
  */
-function magicBytes(keyType: KeyType): ArrayBuffer | null {
+function magicBytes(keyType: KeyType): Uint8Array | null {
   switch (keyType) {
     case KeyType.Edwards: return EDWARDS_DID_PREFIX;
     case KeyType.RSA: return RSA_DID_PREFIX;
@@ -189,8 +178,8 @@ function magicBytes(keyType: KeyType): ArrayBuffer | null {
  * Parse magic bytes on prefixed key-buffer
  * to determine cryptosystem & the unprefixed key-buffer.
  */
-const parseMagicBytes = (prefixedKey: ArrayBuffer): {
-  keyBuffer: ArrayBuffer
+const parseMagicBytes = (prefixedKey: Uint8Array): {
+  keyBuffer: Uint8Array
   type: KeyType
 } => {
   // RSA
@@ -226,9 +215,11 @@ const hasPrefix = (prefixedKey: ArrayBuffer, prefix: ArrayBuffer): boolean => {
   return arrbufs.equal(prefix, prefixedKey.slice(0, prefix.byteLength))
 }
 
-const cryptoSystemToKeyType = (cryptoSystem: CryptoSystem): KeyType => {
-  if(cryptoSystem === CryptoSystem.RSA) {
-    return KeyType.RSA
+const toKeyType = (str: string): KeyType => {
+  switch(str) {
+    case 'rsa': return KeyType.RSA
+    case 'ed25519': return KeyType.Edwards
+    case 'bls12-381': return KeyType.BLS
   }
-  throw new Error(`Key type '${cryptoSystem}' not supported`)
+  throw new Error(`Key Type ${str} not supported`)
 }

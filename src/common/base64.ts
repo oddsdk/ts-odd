@@ -1,9 +1,17 @@
-export function urlDecode(a: string): string {
-  return atob(makeUrlUnsafe(a))
+export function decode(base64: string): string {
+  return Buffer.from(base64, 'base64').toString('binary')
 }
 
-export function urlEncode(b: string): string {
-  return makeUrlSafe(btoa(b))
+export function encode(str: string): string {
+  return Buffer.from(str, 'binary').toString('base64')
+}
+
+export function urlDecode(base64: string): string {
+  return decode(makeUrlUnsafe(base64))
+}
+
+export function urlEncode(str: string): string {
+  return makeUrlSafe(encode(str))
 }
 
 export function makeUrlSafe(a: string): string {
