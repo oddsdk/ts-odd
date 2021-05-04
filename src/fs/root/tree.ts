@@ -60,7 +60,7 @@ export default class RootTree implements Puttable {
     const mmpt = MMPT.create()
 
     // Private tree
-    const rootPath = pathing.toPosix(pathing.root())
+    const rootPath = pathing.toPosix(pathing.directory(pathing.Branch.Private))
     const rootTree = await PrivateTree.create(mmpt, rootKey, null)
     await rootTree.put()
 
