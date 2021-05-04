@@ -37,7 +37,7 @@ export async function index(): Promise<Array<App>> {
     }
   })
 
-  const data = await response.json();
+  const data = await response.json()
   return Object
     .values(data)
     .filter(v => (v as Array<string>).length > 0)
@@ -76,7 +76,7 @@ export async function create(
       'authorization': `Bearer ${jwt}`
     }
   })
-  const data = await response.json();
+  const data = await response.json()
   return { domain: data }
 }
 
@@ -109,7 +109,7 @@ export async function deleteByDomain(
     }
   })
 
-  const index = await appIndexResponse.json() as { [_: string]: string[] };
+  const index = await appIndexResponse.json() as { [_: string]: string[] }
   const appToDelete = Object.entries(index).find(([_, domains]) => domains.includes(domain))
   if (appToDelete == null) {
     throw new Error(`Couldn't find an app with domain ${domain}`)

@@ -2,7 +2,7 @@ export const fromBuffer = (buf: ArrayBuffer): string => {
   return Array.prototype.map.call(
     new Uint8Array(buf), 
     x => ('00' + x.toString(16)).slice(-2) // '00' is for left padding
-  ).join('');
+  ).join('')
 }
 
 export const toBuffer = (hex: string): ArrayBuffer => {

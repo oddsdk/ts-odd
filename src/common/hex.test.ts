@@ -1,4 +1,4 @@
-import * as fc from 'fast-check';
+import * as fc from 'fast-check'
 import { fromBuffer, toBuffer } from './hex'
 
 test('round trip to buffer and back out', () => {
@@ -22,5 +22,5 @@ test('round trip to buffer and back out', () => {
 
       expect(returnData).toEqual(hexData)
     })
-  );
-});
+  )
+})
