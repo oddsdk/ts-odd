@@ -142,11 +142,11 @@ export async function initialise(
     const newUser = url.searchParams.get("newUser") === "t"
     const username = url.searchParams.get("username") || ""
 
-    if (authorised === "via-postmessage") {
-      await importClassifiedViaPostMessage()
-    } else {
-      await importClassifiedInfo(authorised)
-    }
+    await importClassifiedInfo(
+      authorised === "via-postmessage"
+        ? await getClassifiedViaPostMessage()
+        : await ipfs.cat(authorised) // in any other case we expect it to be a CID
+    )
 
     await storage.setItem(USERNAME_STORAGE_KEY, username)
 
@@ -329,11 +329,17 @@ function scenarioNotAuthorised(
 
 // ㊙️
 
+interface AuthLobbyClassifiedInfo {
+  sessionKey: string;
+  secrets: string;
+  iv: string
+}
+
 
 async function importClassifiedInfo(
-  cid: string
+  classified : string
 ): Promise<void> {
-  const info = JSON.parse(await ipfs.cat(cid))
+  const info: AuthLobbyClassifiedInfo = JSON.parse(classified)
 
   // Extract session key and its iv
   const rawSessionKey = await crypto.keystore.decrypt(info.sessionKey)
@@ -361,7 +367,7 @@ async function importClassifiedInfo(
   await ucan.store(ucans)
 }
 
-async function importClassifiedViaPostMessage(): Promise<string> {
+async function getClassifiedViaPostMessage(): Promise<string> {
   const iframe: HTMLIFrameElement = await new Promise((resolve, reject) => {
     const iframe = document.createElement("iframe")
     iframe.style.width = "0"
@@ -382,7 +388,7 @@ async function importClassifiedViaPostMessage(): Promise<string> {
     const answer: Promise<string> = new Promise((resolve, reject) => {
       window.addEventListener("message", listen)
 
-      function listen(event: MessageEvent) {
+      function listen(event: MessageEvent<string>) {
         window.removeEventListener("message", listen)
         if (event.data) {
           resolve(event.data)
