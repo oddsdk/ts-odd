@@ -370,6 +370,7 @@ async function importClassifiedInfo(
 async function getClassifiedViaPostMessage(): Promise<string> {
   const iframe: HTMLIFrameElement = await new Promise((resolve, reject) => {
     const iframe = document.createElement("iframe")
+    iframe.id = "webnative-secret-exchange"
     iframe.style.width = "0"
     iframe.style.height = "0"
     iframe.style.border = "none"
