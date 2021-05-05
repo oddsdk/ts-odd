@@ -1,10 +1,26 @@
-import { sha256Str } from '../keystore/basic'
+import { DistinctivePath } from '../path'
+import * as crypto from '../crypto'
+
+import * as pathing from '../path'
 
 
-export async function bareNameFilter({ path }: { path: string }) {
-  return `wnfs__bareNameFilter__${await sha256Str(path)}`
+export async function bareNameFilter({ path }: { path: DistinctivePath }): Promise<string> {
+  const hash = await crypto.hash.sha256Str(pathToString(path))
+  return `wnfs__bareNameFilter__${hash}`
 }
 
-export async function readKey({ path }: { path: string }): Promise<string> {
-  return `wnfs__readKey__${await sha256Str(path)}`
+export async function readKey({ path }: { path: DistinctivePath }): Promise<string> {
+  const hash = await crypto.hash.sha256Str(pathToString(path))
+  return `wnfs__readKey__${hash}`
+}
+
+
+/**
+ * This bit needs to backwards compatible.
+ *
+ * In webnative version < 0.24, we used to have `readKey({ path: "/private" })`
+ * for the private root tree (aka. directory).
+ */
+function pathToString(path: DistinctivePath) {
+  return "/" + pathing.unwrap(path).join("/")
 }

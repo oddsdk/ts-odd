@@ -21,6 +21,7 @@ export const get = async (): Promise<IPFS> => {
 export function iframe(): Promise<MessagePort> {
   return new Promise((resolve, reject) => {
     const iframe = document.createElement("iframe")
+    iframe.id = "webnative-ipfs"
     iframe.style.width = "0"
     iframe.style.height = "0"
     iframe.style.border = "none"

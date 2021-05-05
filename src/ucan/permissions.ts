@@ -1,3 +1,7 @@
+import * as pathing from '../path'
+import { DirectoryPath, DistinctivePath } from '../path'
+
+
 export type Permissions = {
   app?: AppInfo
   fs?: FileSystemPermissions
@@ -10,8 +14,8 @@ export type AppInfo = {
 }
 
 export type FileSystemPermissions = {
-  privatePaths: Array<string>
-  publicPaths: Array<string>
+  private?: Array<DistinctivePath>
+  public?: Array<DistinctivePath>
 }
 
 export type PlatformPermissions = {
@@ -19,24 +23,33 @@ export type PlatformPermissions = {
 }
 
 
-export function appDataPath(app: AppInfo) {
-  return `private/Apps/${app.creator}/${app.name}`
+/**
+ * Path for `AppInfo`.
+ */
+export function appDataPath(app: AppInfo): DirectoryPath {
+  return pathing.directory(pathing.Branch.Private, "Apps", app.creator, app.name)
 }
 
 
-export function paths(permissions: Permissions): string[] {
-  let list = []
+/**
+ * Lists the filesystems paths for a set of `Permissions`.
+ * This'll return a list of `DistinctivePath`s.
+ */
+export function paths(permissions: Permissions): DistinctivePath[] {
+  let list = [] as DistinctivePath[]
 
-  if (permissions.app) list.push('/' + appDataPath(permissions.app))
-  if (permissions.fs && permissions.fs.privatePaths) list = list.concat(
-    permissions.fs.privatePaths
-      .map(p => '/private/' + p.replace(/^\/+/, ""))
-      .map(p => p.replace(/\/+$/, ""))
+  if (permissions.app) list.push(appDataPath(permissions.app))
+  if (permissions.fs?.private) list = list.concat(
+    permissions.fs?.private.map(p => pathing.combine(
+      pathing.directory(pathing.Branch.Private),
+      p
+    ))
   )
-  if (permissions.fs && permissions.fs.publicPaths) list = list.concat(
-    permissions.fs.publicPaths
-      .map(p => '/public/' + p.replace(/^\/+/, ""))
-      .map(p => p.replace(/\/+$/, ""))
+  if (permissions.fs?.public) list = list.concat(
+    permissions.fs?.public.map(p => pathing.combine(
+      pathing.directory(pathing.Branch.Public),
+      p
+    ))
   )
 
   return list

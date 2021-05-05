@@ -47,10 +47,10 @@ const state = await wn.initialise({
       creator: "Nullsoft"
     },
 
-    // Ask the user permission for additional filesystem paths
+    // Ask the user permission to additional filesystem paths
     fs: {
-      privatePaths: [ "Music" ],
-      publicPaths: [ "Mixtapes" ]
+      private: [ wn.path.directory("Audio", "Music") ],
+      public: [ wn.path.directory("Audio", "Mixtapes") ]
     }
   }
 
@@ -116,8 +116,10 @@ const fs = state.fs
 await fs.ls(fs.appPath())
 
 // Create a sub directory and add some content
-await fs.mkdir(fs.appPath([ "Sub Directory" ]))
-await fs.write(fs.appPath([ "Sub Directory", "hello.txt" ]), "👋")
+await fs.write(
+  fs.appPath(wn.path.file("Sub Directory", "hello.txt")),
+  "👋"
+)
 
 // Announce the changes to the server
 await fs.publish()

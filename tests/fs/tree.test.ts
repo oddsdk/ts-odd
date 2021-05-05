@@ -7,15 +7,17 @@ describe("FS", () => {
 
     const string = await page.evaluate(async () => {
       const expected = "content"
-      const fs = await new webnative.fs.empty({
+      const wn = webnative
+
+      const fs = await new wn.fs.empty({
         localOnly: true,
         permissions: {
-          fs: { privatePaths: [ "/" ] }
+          fs: { private: [ wn.path.root() ] }
         }
       })
 
-      const privatePath = "private/a/b/c.txt"
-      const publicPath = "public/a/b/c.txt"
+      const privatePath = wn.path.file(wn.path.Branch.Private, "a", "b", "c.txt")
+      const publicPath = wn.path.file(wn.path.Branch.Public, "a", "b", "c.txt")
 
       await fs.write(privatePath, expected)
       await fs.write(publicPath, expected)

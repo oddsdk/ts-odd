@@ -6,31 +6,34 @@ describe("FS", () => {
     await loadWebnativePage()
 
     const string = await page.evaluate(async () => {
-      const fs = await new webnative.fs.empty({
+      const wn = webnative
+
+      const fs = await new wn.fs.empty({
         localOnly: true,
         permissions: {
-          fs: {
-            privatePaths: [ "/" ]
-          }
+          fs: { private: [ wn.path.root() ] }
         }
       })
 
+      const pathA = wn.path.file(wn.path.Branch.Private, "a")
+      const pathB = wn.path.file(wn.path.Branch.Private, "b")
+      const pathC = wn.path.file(wn.path.Branch.Private, "c", "foo")
+
       await Promise.all([
-        fs.write("private/a", "x")
-          .then(_ => fs.write("private/a", "y"))
-          .then(_ => fs.write("private/a", "z")),
+        fs.write(pathA, "x")
+          .then(_ => fs.write(pathA, "y"))
+          .then(_ => fs.write(pathA, "z")),
 
-        fs.write("private/b", "1")
-          .then(_ => fs.write("private/b", "2")),
+        fs.write(pathB, "1")
+          .then(_ => fs.write(pathB, "2")),
 
-        fs.mkdir("private/c")
-          .then(_ => fs.write("private/c/foo", "bar")),
+        fs.write(pathC, "bar"),
       ])
 
       return [
-        await fs.read("private/a"),
-        await fs.read("private/b"),
-        await fs.read("private/c/foo")
+        await fs.read(pathA),
+        await fs.read(pathB),
+        await fs.read(pathC)
       ].join("")
     })
 

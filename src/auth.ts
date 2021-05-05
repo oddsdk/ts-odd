@@ -1,10 +1,11 @@
-import localforage from 'localforage'
-
 import * as cidLog from './common/cid-log'
 import * as common from './common'
 import * as did from './did'
-import * as keystore from './keystore'
+import * as path from './path'
+import * as crypto from './crypto'
+import * as storage from './storage'
 import * as ucan from './ucan/internal'
+
 import { USERNAME_STORAGE_KEY, Maybe, VERSION } from './common'
 import { FileSystem } from './fs/filesystem'
 import { Permissions } from './ucan/permissions'
@@ -27,10 +28,10 @@ export async function authenticatedUsername(): Promise<string | null> {
  * Removes any trace of the user and redirects to the lobby.
  */
 export async function leave({ withoutRedirect }: { withoutRedirect?: boolean } = {}): Promise<void> {
-  await localforage.removeItem(USERNAME_STORAGE_KEY)
+  await storage.removeItem(USERNAME_STORAGE_KEY)
   await ucan.clearStorage()
   await cidLog.clear()
-  await keystore.clear()
+  await crypto.keystore.clear()
 
   ;((globalThis as any).filesystems || []).forEach((f: FileSystem) => f.deactivate())
 
@@ -59,6 +60,7 @@ export async function redirectToLobby(
 
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
+  const sharedRepo = !!document.body.querySelector("iframe#webnative-ipfs") && typeof SharedWorker === "function"
 
   redirectTo = redirectTo || window.location.href
 
@@ -67,12 +69,13 @@ export async function redirectToLobby(
     [ "didExchange", exchangeDid ],
     [ "didWrite", writeDid ],
     [ "redirectTo", redirectTo ],
-    [ "sdk", VERSION.toString() ]
+    [ "sdk", VERSION.toString() ],
+    [ "sharedRepo", sharedRepo ? "t" : "f" ]
 
   ].concat(
-    app                     ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
-    fs && fs.privatePaths   ? fs.privatePaths.map(path => [ "privatePath", path ]) : [],
-    fs && fs.publicPaths    ? fs.publicPaths.map(path => [ "publicPath", path ]) : []
+    app           ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
+    fs?.private   ? fs.private.map(p => [ "privatePath", path.toPosix(p, { absolute: true }) ]) : [],
+    fs?.public    ? fs.public.map(p => [ "publicPath", path.toPosix(p, { absolute: true }) ]) : []
 
   ).concat((() => {
     const apps = platform?.apps

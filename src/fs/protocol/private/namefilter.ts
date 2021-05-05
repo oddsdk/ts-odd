@@ -1,7 +1,7 @@
 import { BloomFilter } from 'fission-bloom-filters'
 import * as hex from '../../../common/hex'
 import { Opaque } from '../../../common/types'
-import { sha256, sha256Str } from '../../../keystore'
+import * as crypto from '../../../crypto'
 
 // CONSTANTS
 
@@ -37,7 +37,7 @@ export const createBare = async (key: string): Promise<BareNameFilter> => {
 // add some string to a name filter
 export const addToBare = async (bareFilter: BareNameFilter, toAdd: string): Promise<BareNameFilter> =>  {
   const filter = fromHex(bareFilter)
-  const hash = await sha256Str(toAdd)
+  const hash = await crypto.hash.sha256Str(toAdd)
   filter.add(hash)
   return (await toHex(filter)) as BareNameFilter
 }
@@ -55,8 +55,9 @@ export const toPrivateName = async (revisionFilter: RevisionNameFilter): Promise
 
 // hash a filter with sha256
 export const toHash = async (filter: BloomFilter): Promise<PrivateName> => {
-  const hash = await sha256(filter.toBuffer())
-  return (hex.fromBuffer(hash)) as PrivateName
+  const filterBytes = new Uint8Array(filter.toBytes())
+  const hash = await crypto.hash.sha256(filterBytes)
+  return (hex.fromBytes(hash)) as PrivateName
 }
 
 // saturate a filter (string) to 320 bits
@@ -67,7 +68,7 @@ export const saturate = async (filter: RevisionNameFilter, threshold = SATURATIO
 
 // saturate a filter to 320 bits
 const saturateFilter = async (filter: BloomFilter, threshold = SATURATION_THRESHOLD): Promise<BloomFilter> => {
-  if(threshold > filter.toBuffer().byteLength * 8) {
+  if(threshold > filter.toBytes().byteLength * 8) {
     throw new Error("threshold is bigger than filter size")
   }
   const bits = countOnes(filter)
@@ -78,20 +79,20 @@ const saturateFilter = async (filter: BloomFilter, threshold = SATURATION_THRESH
   // add hash of filter to saturate
   // theres a chance that the hash will collide with the existing filter and this gets stuck in an infinite loop
   // in that case keep re-hashing the hash & adding to the filter until there is no collision
-  const before = filter.toBuffer()
+  const before = filter.toBytes()
   let toHash = before
   do {
-    const hash = await sha256(toHash)
-    filter.add(hex.fromBuffer(hash))
+    const hash = await crypto.hash.sha256(toHash)
+    filter.add(hex.fromBytes(hash))
     toHash = hash
-  } while (bufEquals(before, filter.toBuffer()))
+  } while (bufEquals(before, filter.toBytes()))
 
   return saturateFilter(filter, threshold)
 }
 
 // count the number of 1 bits in a filter
 const countOnes = (filter: BloomFilter): number => {
-  const arr = new Uint32Array(filter.toBuffer())
+  const arr = new Uint32Array(filter.toBytes())
   let count = 0
   for(let i=0; i< arr.length; i++){
     count += bitCount32(arr[i])
@@ -100,14 +101,14 @@ const countOnes = (filter: BloomFilter): number => {
 }
 
 // convert a filter to hex
-export const toHex = (filter: BloomFilter) => {
-  return hex.fromBuffer(filter.toBuffer())
+export const toHex = (filter: BloomFilter): string => {
+  return hex.fromBytes(filter.toBytes())
 }
 
 // convert hex to a BloomFilter object
 export const fromHex = (string: string): BloomFilter => {
-  const buf = hex.toBuffer(string)
-  return BloomFilter.fromBuffer(buf, HASH_COUNT)
+  const buf = hex.toBytes(string)
+  return BloomFilter.fromBytes(buf, HASH_COUNT)
 }
 
 const bufEquals = (buf1: ArrayBuffer, buf2: ArrayBuffer): boolean => {

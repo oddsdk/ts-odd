@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.24.0
+- Dependency injection for crypto and storage functions to allow for use in Node.js
+- Fix race condition in Private tree that would occasional drop FS nodes
+- Improve path management
+- Add support for Ed25519 & BLS DIDs
+
 ### v0.23.2
 
 Don't keep old UCANs around.

@@ -1,13 +1,13 @@
-import localforage from 'localforage'
-
 import FileSystem from './fs'
+
 import * as cidLog from './common/cid-log'
 import * as debug from './common/debug'
 import * as dataRoot from './data-root'
 import * as ucan from './ucan/internal'
+
+import { Branch } from './path'
 import { Maybe, authenticatedUsername } from './common'
 import { Permissions } from './ucan/permissions'
-import { Ucan } from './ucan'
 
 
 /**
@@ -89,10 +89,10 @@ export async function loadFileSystem(
 
 
 async function addSampleData(fs: FileSystem): Promise<void> {
-  await fs.mkdir("private/Apps")
-  await fs.mkdir("private/Audio")
-  await fs.mkdir("private/Documents")
-  await fs.mkdir("private/Photos")
-  await fs.mkdir("private/Video")
+  await fs.mkdir({ directory: [ Branch.Private, "Apps" ] })
+  await fs.mkdir({ directory: [ Branch.Private, "Audio" ] })
+  await fs.mkdir({ directory: [ Branch.Private, "Documents" ] })
+  await fs.mkdir({ directory: [ Branch.Private, "Photos" ] })
+  await fs.mkdir({ directory: [ Branch.Private, "Video" ] })
   await fs.publish()
 }

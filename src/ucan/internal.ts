@@ -1,16 +1,17 @@
-import localforage from 'localforage'
-
 import * as common from '../common'
-import * as pathUtil from '../fs/path'
+import * as pathing from '../path'
 import * as permissions from './permissions'
+import * as storage from '../storage'
+
 import * as ucan from '../ucan'
+
 import { UCANS_STORAGE_KEY } from '../common'
+import { DistinctivePath } from '../path'
 import { Permissions } from './permissions'
 import { Ucan, WNFS_PREFIX } from '../ucan'
-import { setup } from '../setup/internal'
 
 
-let dictionary: Record<string, Ucan> = {}
+let dictionary: Record<string, string> = {}
 
 
 // FUNCTIONS
@@ -21,7 +22,7 @@ let dictionary: Record<string, Ucan> = {}
  */
 export async function clearStorage(): Promise<void> {
   dictionary = {}
-  await localforage.removeItem(UCANS_STORAGE_KEY)
+  await storage.removeItem(UCANS_STORAGE_KEY)
 }
 
 /**
@@ -31,32 +32,43 @@ export function dictionaryFilesystemPrefix(username: string): string {
   // const host = `${username}.${setup.endpoints.user}`
   // TODO: Waiting on API change.
   //       Should be `${WNFS_PREFIX}:${host}/`
-  return WNFS_PREFIX + ":/"
+  return WNFS_PREFIX + ":"
 }
 
 /**
  * Look up a UCAN for a platform app.
  */
-export async function lookupAppUcan(domain: string): Promise<Ucan | null> {
+export async function lookupAppUcan(domain: string): Promise<string | null> {
   return dictionary["*"] || dictionary["app:*"] || dictionary[`app:${domain}`]
 }
 
 /**
  * Look up a UCAN with a file system path.
  */
-export async function lookupFilesystemUcan(path: string): Promise<Ucan | null> {
-  const pathParts = pathUtil.splitParts(path)
-  const username = await common.authenticatedUsername()
-  const prefix = username ? dictionaryFilesystemPrefix(username) : ""
-
+export async function lookupFilesystemUcan(path: DistinctivePath | "*"): Promise<string | null> {
   if (dictionary["*"]) {
     return dictionary["*"]
   }
 
+  const all = path === "*"
+  const isDirectory = all ? false : pathing.isDirectory(path as DistinctivePath)
+  const pathParts = all ? [ "*" ] : pathing.unwrap(path as DistinctivePath)
+  const username = await common.authenticatedUsername()
+  const prefix = username ? dictionaryFilesystemPrefix(username) : ""
+
   return pathParts.reduce(
-    (acc: Ucan | null, part: string, idx: number) => {
+    (acc: string | null, part: string, idx: number) => {
       if (acc) return acc
-      const partialPath = pathUtil.join(pathParts.slice(0, pathParts.length - idx))
+
+      const isLastPart = (idx + 1 === pathParts.length)
+      const partsSlice = pathParts.slice(0, pathParts.length - idx)
+
+      const partialPath = pathing.toPosix(
+        isLastPart && !isDirectory
+          ? pathing.file(...partsSlice)
+          : pathing.directory(...partsSlice)
+      )
+
       return dictionary[`${prefix}${partialPath}`] || null
     },
     null
@@ -67,15 +79,13 @@ export async function lookupFilesystemUcan(path: string): Promise<Ucan | null> {
  * Store UCANs and update the in-memory dictionary.
  */
 export async function store(ucans: Array<string>): Promise<void> {
-  const existing = await localforage.getItem(UCANS_STORAGE_KEY) as Array<string>
+  const existing = await storage.getItem(UCANS_STORAGE_KEY) as Array<string>
   const newList = (existing || []).concat(ucans)
 
   dictionary = ucan.compileDictionary(newList)
 
   const filteredList = listFromDictionary()
-  const encodedList = filteredList.map(ucan.encode)
-
-  await localforage.setItem(UCANS_STORAGE_KEY, encodedList)
+  await storage.setItem(UCANS_STORAGE_KEY, filteredList)
 }
 
 /**
@@ -90,30 +100,29 @@ export function validatePermissions(
 
   // Root access
   const rootUcan = dictionary["*"]
-  if (rootUcan && !ucan.isExpired(rootUcan)) return true
+  if (rootUcan && !ucan.isExpired(ucan.decode(rootUcan))) return true
 
   // Check permissions
   if (app) {
-    const u = dictionary[prefix + permissions.appDataPath(app)]
-    if (!u || ucan.isExpired(u)) return false
+    const k = prefix + pathing.toPosix(permissions.appDataPath(app))
+    const u = dictionary[k]
+    if (!u || ucan.isExpired(ucan.decode(u))) return false
   }
 
-  if (fs && fs.privatePaths) {
-    const priv = fs.privatePaths.every(pathRaw => {
-      const path = pathRaw.replace(/^\/+/, "")
-      const pathWithPrefix = path.length ? `${prefix}private/${path}` : `${prefix}private`
+  if (fs?.private) {
+    const priv = fs.private.every(path => {
+      const pathWithPrefix = `${prefix}private/` + pathing.toPosix(path)
       const u = dictionary[pathWithPrefix]
-      return u && !ucan.isExpired(u)
+      return u && !ucan.isExpired(ucan.decode(u))
     })
     if (!priv) return false
   }
 
-  if (fs && fs.publicPaths) {
-    const publ = fs.publicPaths.every(pathRaw => {
-      const path = pathRaw.replace(/^\/+/, "")
-      const pathWithPrefix = path.length ? `${prefix}public/${path}` : `${prefix}public`
+  if (fs?.public) {
+    const publ = fs.public.every(path => {
+      const pathWithPrefix = `${prefix}public/` + pathing.toPosix(path)
       const u = dictionary[pathWithPrefix]
-      return u && !ucan.isExpired(u)
+      return u && !ucan.isExpired(ucan.decode(u))
     })
     if (!publ) return false
   }
@@ -126,6 +135,6 @@ export function validatePermissions(
 // ㊙️
 
 
-function listFromDictionary(): Array<Ucan> {
+function listFromDictionary(): Array<string> {
   return Object.values(dictionary)
 }

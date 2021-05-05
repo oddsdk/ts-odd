@@ -1,16 +1,18 @@
 import { CID, FileContent } from '../../ipfs'
-import { Links, UpdateCallback } from '../types'
+import { Links, NonEmptyPath, UpdateCallback } from '../types'
 import { Maybe } from '../../common'
+import { Path } from '../../path'
 import { TreeInfo, TreeHeader, PutDetails } from '../protocol/public/types'
+
 import BaseTree from '../base/tree'
 import BareTree from '../bare/tree'
 import PublicFile from './PublicFile'
 import PublicHistory from './PublicHistory'
+
 import * as check from '../types/check'
 import * as history from './PublicHistory'
 import * as link from '../link'
 import * as metadata from '../metadata'
-import * as pathUtil from '../path'
 import * as protocol from '../protocol'
 import * as skeleton from '../protocol/public/skeleton'
 
@@ -157,12 +159,11 @@ export class PublicTree extends BaseTree {
     return child
   }
 
-  async get(path: string): Promise<Child | null> {
-    const parts = pathUtil.splitNonEmpty(path)
-    if(parts === null) return this
+  async get(path: Path): Promise<Child | null> {
+    if (path.length < 1) return this
 
-    const skeletonInfo = skeleton.getPath(this.header.skeleton, parts)
-    if(skeletonInfo === null) return null
+    const skeletonInfo = skeleton.getPath(this.header.skeleton, path as NonEmptyPath)
+    if (skeletonInfo === null) return null
 
     const info = await protocol.pub.get(skeletonInfo.cid)
     return check.isFileInfo(info)

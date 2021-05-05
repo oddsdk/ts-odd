@@ -1,7 +1,5 @@
-import { CryptoSystem } from 'keystore-idb/types'
-
 import * as did from './did'
-import * as keystore from './keystore'
+import * as crypto from './crypto'
 import { base64 } from './common'
 
 // TYPES
@@ -27,7 +25,7 @@ export type UcanPayload = {
   fct: Array<Fact>
   iss: string
   nbf: number
-  prf: Ucan | undefined
+  prf: string | null
   ptc: string | undefined | null
   rsc: Resource
 }
@@ -87,15 +85,16 @@ export async function build({
   issuer: string
   lifetimeInSeconds?: number
   potency?: string | null
-  proof?: Ucan
+  proof?: string
   resource?: Resource
 }): Promise<Ucan> {
-  const ks = await keystore.get()
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
+  const decodedProof = proof && decode(proof)
+  const ksAlg = await crypto.keystore.getAlg()
 
   // Header
   const header = {
-    alg: jwtAlgorithm(ks.cfg.type) || 'UnknownAlgorithm',
+    alg: jwtAlgorithm(ksAlg) || 'UnknownAlgorithm',
     typ: 'JWT',
     uav: '1.0.0' // actually 0.3.1 but server isn't updated yet
   }
@@ -104,8 +103,8 @@ export async function build({
   let exp = currentTimeInSeconds + lifetimeInSeconds
   let nbf = currentTimeInSeconds - 60
 
-  if (proof) {
-    const prf = proof.payload
+  if (decodedProof) {
+    const prf = decodedProof.payload
 
     exp = Math.min(prf.exp, exp)
     nbf = Math.max(prf.nbf, nbf)
@@ -118,9 +117,9 @@ export async function build({
     fct: facts,
     iss: issuer || await did.ucan(),
     nbf: nbf,
-    prf: proof,
+    prf: proof || null,
     ptc: potency,
-    rsc: resource ? resource : (proof ? proof.payload.rsc : '*'),
+    rsc: resource ? resource : (decodedProof ? decodedProof.payload.rsc : '*'),
   }
 
   const signature = addSignature ? await sign(header, payload) : null
@@ -136,7 +135,7 @@ export async function build({
  * Given a list of UCANs, generate a dictionary.
  * The key will be in the form of `${resourceKey}:${resourceValue}`
  */
-export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
+export function compileDictionary(ucans: Array<string>): Record<string, string> {
   return ucans.reduce((acc, ucanString) => {
     const ucan = decode(ucanString)
     const { rsc } = ucan.payload
@@ -144,17 +143,17 @@ export function compileDictionary(ucans: Array<string>): Record<string, Ucan> {
     if (isExpired(ucan)) return acc
 
     if (typeof rsc !== "object") {
-      return { ...acc, [rsc]: ucan }
+      return { ...acc, [rsc]: ucanString }
     }
 
     const resource = Array.from(Object.entries(rsc))[0]
     const key = resource[0] + ":" + (
       resource[0] === WNFS_PREFIX
-        ? resource[1].replace(/\/+$/, "")
+        ? resource[1].replace(/^\/+/, "")
         : resource[1]
     )
 
-    return { ...acc, [key]: ucan }
+    return { ...acc, [key]: ucanString }
   }, {})
 }
 
@@ -171,10 +170,7 @@ export function decode(ucan: string): Ucan  {
 
   return {
     header,
-    payload: {
-      ...payload,
-      prf: payload.prf ? decode(payload.prf) : null
-    },
+    payload,
     signature: split[2] || null
   }
 }
@@ -190,7 +186,7 @@ export function encode(ucan: Ucan): string {
 
   return encodedHeader + '.' +
          encodedPayload + '.' +
-         (ucan.signature || sign(ucan.header, ucan.payload))
+         ucan.signature
 }
 
 /**
@@ -209,8 +205,7 @@ export function encode(ucan: Ucan): string {
  */
 export function encodePayload(payload: UcanPayload): string {
   return base64.urlEncode(JSON.stringify({
-    ...payload,
-    prf: payload.prf ? encode(payload.prf) : undefined// TODO: 0.3.1 only supports a single proof.
+    ...payload
   }))
 }
 
@@ -244,10 +239,11 @@ export function isExpired(ucan: Ucan): boolean {
   if (!ucan.payload.prf) return true
 
   // Verify proofs
-  const b = ucan.payload.prf.payload.aud === ucan.payload.iss
+  const prf = decode(ucan.payload.prf)
+  const b = prf.payload.aud === ucan.payload.iss
   if (!b) return b
 
-  return await isValid(ucan.payload.prf)
+  return await isValid(prf)
 }
 
 /**
@@ -271,10 +267,9 @@ export function rootIssuer(ucan: string, level = 0): string {
 export async function sign(header: UcanHeader, payload: UcanPayload): Promise<string> {
   const encodedHeader = encodeHeader(header)
   const encodedPayload = encodePayload(payload)
-  const ks = await keystore.get()
 
   return base64.makeUrlSafe(
-    await ks.sign(`${encodedHeader}.${encodedPayload}`, { charSize: 8 })
+    await crypto.keystore.sign(`${encodedHeader}.${encodedPayload}`, 8)
   )
 }
 
@@ -285,9 +280,10 @@ export async function sign(header: UcanHeader, payload: UcanPayload): Promise<st
 /**
  * JWT algorithm to be used in a JWT header.
  */
-function jwtAlgorithm(cryptoSystem: CryptoSystem): string | null {
+function jwtAlgorithm(cryptoSystem: string): string | null {
   switch (cryptoSystem) {
-    case CryptoSystem.RSA: return 'RS256';
+    case "ed25519": return 'EdDSA';
+    case "rsa": return 'RS256';
     default: return null
   }
 }

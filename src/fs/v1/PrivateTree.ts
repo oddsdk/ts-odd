@@ -2,17 +2,18 @@ import BaseTree from '../base/tree'
 import MMPT from '../protocol/private/mmpt'
 import PrivateFile from './PrivateFile'
 import PrivateHistory from './PrivateHistory'
+
 import { BaseLinks, UpdateCallback } from '../types'
-import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, Revision } from '../protocol/private/types'
+import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult } from '../protocol/private/types'
 import { FileContent } from '../../ipfs'
+import { Path } from '../../path'
 import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
-import { genKeyStr } from '../../keystore'
 import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common'
+import * as crypto from '../../crypto'
 import * as check from '../protocol/private/types/check'
 import * as history from './PrivateHistory'
 import * as metadata from '../metadata'
 import * as namefilter from '../protocol/private/namefilter'
-import * as pathUtil from '../path'
 import * as protocol from '../protocol'
 import * as semver from '../semver'
 
@@ -97,7 +98,7 @@ export default class PrivateTree extends BaseTree {
   }
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateTree> {
-    const key = await genKeyStr()
+    const key = await crypto.aes.genKeyStr()
     const child = await PrivateTree.create(this.mmpt, key, this.header.bareNameFilter)
 
     const existing = this.children[name]
@@ -117,7 +118,7 @@ export default class PrivateTree extends BaseTree {
 
     let file: PrivateFile
     if (existing === null) {
-      const key = await genKeyStr()
+      const key = await crypto.aes.genKeyStr()
       file = await PrivateFile.create(this.mmpt, content, this.header.bareNameFilter, key)
     } else if (PrivateFile.instanceOf(existing)) {
       file = await existing.updateContent(content)
@@ -187,14 +188,13 @@ export default class PrivateTree extends BaseTree {
     return this
   }
 
-  async get(path: string): Promise<PrivateTree | PrivateFile | null> {
-    const parts = pathUtil.splitParts(path)
-    if(parts.length === 0) return this
+  async get(path: Path): Promise<PrivateTree | PrivateFile | null> {
+    if (path.length === 0) return this
 
-    const [head, ...rest] = parts
+    const [head, ...rest] = path
 
     const next = this.header.skeleton[head]
-    if(next === undefined) return null
+    if (next === undefined) return null
 
     const result = await this.getRecurse(next, rest)
     if (result === null) return null

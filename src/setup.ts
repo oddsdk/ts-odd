@@ -33,3 +33,5 @@ export function endpoints(e: Partial<Endpoints>): Endpoints {
   internalSetup.endpoints = { ...internalSetup.endpoints, ...e }
   return { ...internalSetup.endpoints }
 }
+
+export { setDependencies } from './setup/dependencies'
