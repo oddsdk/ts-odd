@@ -23,6 +23,17 @@ export const isPrivateTreeInfo = (obj: any): obj is PrivateTreeInfo => {
     && isPrivateSkeleton(obj.skeleton)
 }
 
+export const isPrivateTreeInfoLog = (obj: any): void => {
+  console.log(isObject(obj))
+  console.log(check.isMetadata(obj.metadata))
+  console.log(obj.metadata.isFile === false)
+  console.log(isNum(obj.revision))
+  console.log(isPrivateLinks(obj.links))
+  console.log(isPrivateSkeleton(obj.skeleton))
+}
+
+
+
 export const isPrivateLink = (obj: any): obj is PrivateLink => {
   return check.isBaseLink(obj)
     && isString((obj as any).key)

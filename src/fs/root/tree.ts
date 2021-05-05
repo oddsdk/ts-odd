@@ -15,11 +15,13 @@ import * as protocol from '../protocol'
 import * as semver from '../semver'
 import * as storage from '../../storage'
 import * as ucanPermissions from '../../ucan/permissions'
+import * as check from '../protocol/private/types/check'
 
 import BareTree from '../bare/tree'
 import MMPT from '../protocol/private/mmpt'
 import PublicTree from '../v1/PublicTree'
 import PrivateTree from '../v1/PrivateTree'
+import PrivateFile from '../v1/PrivateFile'
 
 
 export default class RootTree implements Puttable {
@@ -30,7 +32,7 @@ export default class RootTree implements Puttable {
 
   publicTree: PublicTree
   prettyTree: BareTree
-  privateTrees: Record<string, PrivateTree>
+  privateTrees: Record<string, PrivateTree | PrivateFile>
 
   constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateTrees }: {
     links: Links,
@@ -39,7 +41,7 @@ export default class RootTree implements Puttable {
 
     publicTree: PublicTree,
     prettyTree: BareTree,
-    privateTrees: Record<string, PrivateTree>,
+    privateTrees: Record<string, PrivateTree | PrivateFile>,
   }) {
     this.links = links
     this.mmpt = mmpt
@@ -178,7 +180,7 @@ export default class RootTree implements Puttable {
     await crypto.keystore.importSymmKey(rootKey, rootKeyId)
   }
 
-  findPrivateTree(path: DistinctivePath): [DistinctivePath, PrivateTree | null] {
+  findPrivateTree(path: DistinctivePath): [DistinctivePath, PrivateTree | PrivateFile | null] {
     return findPrivateTree(this.privateTrees, path)
   }
 
@@ -277,9 +279,9 @@ async function findBareNameFilter(
 }
 
 function findPrivateTree(
-  map: Record<string, PrivateTree>,
+  map: Record<string, PrivateTree | PrivateFile>,
   path: DistinctivePath
-): [DistinctivePath, PrivateTree | null] {
+): [DistinctivePath, PrivateTree | PrivateFile | null] {
   const t = map[pathing.toPosix(path)]
   if (t) return [ path, t ]
 
@@ -293,7 +295,7 @@ function findPrivateTree(
 function loadPrivateTrees(
   pathKeys: PathKey[],
   mmpt: MMPT
-): Promise<Record<string, PrivateTree>> {
+): Promise<Record<string, PrivateTree | PrivateFile>> {
   return sortedPathKeys(pathKeys).reduce((acc, { path, key }) => {
     return acc.then(async map => {
       let privateTree
@@ -308,8 +310,15 @@ function loadPrivateTrees(
         const bareNameFilter = await findBareNameFilter(map, path)
         if (!bareNameFilter) throw new Error(`Was trying to load the PrivateTree for the path \`${path}\`, but couldn't find the bare name filter for it.`)
 
-        privateTree = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key)
-
+        const maybeInfo = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key)
+        if (maybeInfo === null) throw new Error(`Could not find content in filesystem for path ${path}`)
+        if(check.isPrivateTreeInfo(maybeInfo)) {
+          privateTree = await PrivateTree.fromInfo(mmpt, key, maybeInfo)
+        } else if(check.isPrivateFileInfo(maybeInfo)) {
+          privateTree = await PrivateFile.fromInfo(mmpt, key, maybeInfo)
+        } else {
+          throw new Error(`Could not decipher a valid filesystem object at path ${path}`)
+        }
       }
 
       const posixPath = pathing.toPosix(path)

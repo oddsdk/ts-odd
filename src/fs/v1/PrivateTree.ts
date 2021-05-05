@@ -68,29 +68,31 @@ export default class PrivateTree extends BaseTree {
 
   static async fromBaseKey(mmpt: MMPT, key: string): Promise<PrivateTree> {
     const bareNameFilter = await namefilter.createBare(key)
+    console.log('fromBaseKey')
     return this.fromBareNameFilter(mmpt, bareNameFilter, key)
   }
 
   static async fromBareNameFilter(mmpt: MMPT, bareNameFilter: BareNameFilter, key: string): Promise<PrivateTree> {
-    const revisionFilter = await namefilter.addRevision(bareNameFilter, key, 1)
-    const name = await namefilter.toPrivateName(revisionFilter)
-    const info = await protocol.priv.getByLatestName(mmpt, name, key)
-
+    const info = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key)
     return this.fromInfo(mmpt, key, info)
   }
 
   static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
     const info = await protocol.priv.getByLatestName(mmpt, name, key)
+    console.log('fromLatestName')
     return this.fromInfo(mmpt, key, info)
   }
 
   static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
     const info = await protocol.priv.getByName(mmpt, name, key)
+    console.log('fromName')
     return this.fromInfo(mmpt, key, info)
   }
 
   static async fromInfo(mmpt: MMPT, key: string, info: Maybe<DecryptedNode>): Promise<PrivateTree> {
     if (!check.isPrivateTreeInfo(info)) {
+      console.log("HERE: ", info)
+      check.isPrivateTreeInfoLog(info)
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
 

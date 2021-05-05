@@ -59,6 +59,12 @@ export const getLatestByCID = async (mmpt: MMPT, cid: CID, key: string): Promise
     : node
 }
 
+export const getLatestByBareNameFilter = async(mmpt: MMPT, bareName: BareNameFilter, key:string): Promise<Maybe<DecryptedNode>> => {
+  const revisionFilter = await namefilter.addRevision(bareName, key, 1)
+  const name = await namefilter.toPrivateName(revisionFilter)
+  return getByLatestName(mmpt, name, key)
+}
+
 export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: string, lastKnownRevision: number): Promise<Maybe<Revision>> => {
   // Exponential search forward
   let lowerBound = lastKnownRevision, upperBound = null
