@@ -345,7 +345,7 @@ export class FileSystem {
       : "query"
 
     if (!this.localOnly) {
-      const proof = await ucanInternal.lookupFilesystemUcan({ directory: parts })
+      const proof = await ucanInternal.lookupFilesystemUcan(path)
       const decodedProof = proof && ucan.decode(proof)
 
       if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {
