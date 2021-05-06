@@ -55,7 +55,7 @@ describe("the mmpt", () => {
     const mmpt = MMPT.create()
 
     // Generate lots of entries
-    const amount = 2000
+    const amount = 500
     const entries = await generateExampleEntries(amount)
 
     // Concurrently add all those entries to the MMPT
@@ -74,7 +74,7 @@ describe("the mmpt", () => {
     const mmpt = MMPT.create()
 
     // Generate lots of entries
-    const amount = 1000
+    const amount = 500
     const entries = await generateExampleEntries(amount)
 
     const slice_size = 5
