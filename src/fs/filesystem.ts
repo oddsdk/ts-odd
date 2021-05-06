@@ -7,6 +7,7 @@ import { SemVer } from './semver'
 import BareTree from './bare/tree'
 import RootTree from './root/tree'
 import PublicTree from './v1/PublicTree'
+import PrivateFile from './v1/PrivateFile'
 import PrivateTree from './v1/PrivateTree'
 
 import * as cidLog from '../common/cid-log'
@@ -14,6 +15,7 @@ import * as dataRoot from '../data-root'
 import * as debug from '../common/debug'
 import * as crypto from '../crypto'
 import * as pathing from '../path'
+import * as typeCheck from './types/check'
 import * as ucan from '../ucan'
 import * as ucanInternal from '../ucan/internal'
 
@@ -181,17 +183,25 @@ export class FileSystem {
 
   async ls(path: DirectoryPath): Promise<BaseLinks> {
     if (pathing.isFile(path)) throw new Error("`ls` only accepts directory paths")
-    return this.runOnTree(path, false, (tree, relPath) => {
-      return tree.ls(relPath)
+    return this.runOnNode(path, false, (node, relPath) => {
+      if (typeCheck.isFile(node)) {
+        throw new Error("Tried to `ls` a file")
+      } else {
+        return node.ls(relPath)
+      }
     })
   }
 
   async mkdir(path: DirectoryPath, options: MutationOptions = {}): Promise<this> {
     if (pathing.isFile(path)) throw new Error("`mkdir` only accepts directory paths")
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.mkdir(relPath)
+    await this.runOnNode(path, true, (node, relPath) => {
+      if (typeCheck.isFile(node)) {
+        throw new Error("Tried to `mkdir` a file")
+      } else {
+        return node.mkdir(relPath)
+      }
     })
-    if(options.publish) {
+    if (options.publish) {
       await this.publish()
     }
     return this
@@ -202,10 +212,12 @@ export class FileSystem {
 
   async add(path: FilePath, content: FileContent, options: MutationOptions = {}): Promise<this> {
     if (pathing.isDirectory(path)) throw new Error("`add` only accepts file paths")
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.add(relPath, content)
+    await this.runOnNode(path, true, async (node, relPath) => {
+      return typeCheck.isFile(node)
+        ? node.updateContent(content)
+        : node.add(relPath, content)
     })
-    if(options.publish) {
+    if (options.publish) {
       await this.publish()
     }
     return this
@@ -213,8 +225,10 @@ export class FileSystem {
 
   async cat(path: FilePath): Promise<FileContent> {
     if (pathing.isDirectory(path)) throw new Error("`cat` only accepts file paths")
-    return this.runOnTree(path, false, (tree, relPath) => {
-      return tree.cat(relPath)
+    return this.runOnNode(path, false, async (node, relPath) => {
+      return typeCheck.isFile(node)
+        ? node.content
+        : node.cat(relPath)
     })
   }
 
@@ -232,14 +246,18 @@ export class FileSystem {
   // -------------------------
 
   async exists(path: DistinctivePath): Promise<boolean> {
-    return this.runOnTree(path, false, (tree, relPath) => {
-      return tree.exists(relPath)
+    return this.runOnNode(path, false, async (node, relPath) => {
+      return typeCheck.isFile(node)
+        ? true // tried to check the existance of itself
+        : node.exists(relPath)
     })
   }
 
   async get(path: DistinctivePath): Promise<Tree | File | null> {
-    return this.runOnTree(path, false, (tree, relPath) => {
-      return tree.get(relPath)
+    return this.runOnNode(path, false, async (node, relPath) => {
+      return typeCheck.isFile(node)
+        ? node // tried to get itself
+        : node.get(relPath)
     })
   }
 
@@ -261,17 +279,25 @@ export class FileSystem {
       throw new Error("Destination already exists")
     }
 
-    await this.runOnTree(from, true, (tree, relPath) => {
+    await this.runOnNode(from, true, (node, relPath) => {
+      if (typeCheck.isFile(node)) {
+        throw new Error("Tried to `mv` within a file")
+      }
+
       const [ head, ...nextPath ] = pathing.unwrap(to)
-      return tree.mv(relPath, nextPath)
+      return node.mv(relPath, nextPath)
     })
 
     return this
   }
 
   async rm(path: DistinctivePath): Promise<this> {
-    await this.runOnTree(path, true, (tree, relPath) => {
-      return tree.rm(relPath)
+    await this.runOnNode(path, true, (node, relPath) => {
+      if (typeCheck.isFile(node)) {
+        throw new Error("Cannot `rm` a file you've asked permission for")
+      } else {
+        return node.rm(relPath)
+      }
     })
 
     return this
@@ -304,10 +330,10 @@ export class FileSystem {
   // --------
 
   /** @internal */
-  async runOnTree<a>(
+  async runOnNode<a>(
     path: DistinctivePath,
     isMutation: boolean,
-    fn: (tree: UnixTree, relPath: Path) => Promise<a>
+    fn: (node: UnixTree | File, relPath: Path) => Promise<a>
   ): Promise<a> {
     console.log('path: ', path)
     const parts = pathing.unwrap(path)
@@ -361,7 +387,10 @@ export class FileSystem {
         parts.slice(pathing.unwrap(nodePath).length)
       )
 
-      if (isMutation && PrivateTree.instanceOf(result)) {
+      if (
+        isMutation &&
+        (PrivateTree.instanceOf(result) || PrivateFile.instanceOf(result))
+      ) {
         this.root.privateNodes[pathing.toPosix(nodePath)] = result
         await result.put()
         await this.root.updatePuttable(Branch.Private, this.root.mmpt)
