@@ -335,7 +335,6 @@ export class FileSystem {
     isMutation: boolean,
     fn: (node: UnixTree | File, relPath: Path) => Promise<a>
   ): Promise<a> {
-    console.log('path: ', path)
     const parts = pathing.unwrap(path)
     const head = parts[0]
     const relPath = parts.slice(1)
