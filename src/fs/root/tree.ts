@@ -15,11 +15,16 @@ import * as protocol from '../protocol'
 import * as semver from '../semver'
 import * as storage from '../../storage'
 import * as ucanPermissions from '../../ucan/permissions'
+import * as check from '../protocol/private/types/check'
 
 import BareTree from '../bare/tree'
 import MMPT from '../protocol/private/mmpt'
 import PublicTree from '../v1/PublicTree'
 import PrivateTree from '../v1/PrivateTree'
+import PrivateFile from '../v1/PrivateFile'
+
+
+type PrivateNode = PrivateTree | PrivateFile
 
 
 export default class RootTree implements Puttable {
@@ -30,16 +35,16 @@ export default class RootTree implements Puttable {
 
   publicTree: PublicTree
   prettyTree: BareTree
-  privateTrees: Record<string, PrivateTree>
+  privateNodes: Record<string, PrivateNode>
 
-  constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateTrees }: {
+  constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateNodes }: {
     links: Links,
     mmpt: MMPT,
     privateLog: Array<SimpleLink>,
 
     publicTree: PublicTree,
     prettyTree: BareTree,
-    privateTrees: Record<string, PrivateTree>,
+    privateNodes: Record<string, PrivateNode>,
   }) {
     this.links = links
     this.mmpt = mmpt
@@ -47,7 +52,7 @@ export default class RootTree implements Puttable {
 
     this.publicTree = publicTree
     this.prettyTree = prettyTree
-    this.privateTrees = privateTrees
+    this.privateNodes = privateNodes
   }
 
 
@@ -72,7 +77,7 @@ export default class RootTree implements Puttable {
 
       publicTree,
       prettyTree,
-      privateTrees: {
+      privateNodes: {
         [rootPath]: rootTree
       }
     })
@@ -112,13 +117,13 @@ export default class RootTree implements Puttable {
     // Load private bits
     const privateCID = links[Branch.Private]?.cid || null
 
-    let mmpt, privateTrees
+    let mmpt, privateNodes
     if (privateCID === null) {
       mmpt = await MMPT.create()
-      privateTrees = {}
+      privateNodes = {}
     } else {
       mmpt = await MMPT.fromCID(privateCID)
-      privateTrees = await loadPrivateTrees(keys, mmpt)
+      privateNodes = await loadPrivateNodes(keys, mmpt)
     }
 
     const privateLogCid = links[Branch.PrivateLog]?.cid
@@ -138,7 +143,7 @@ export default class RootTree implements Puttable {
 
       publicTree,
       prettyTree,
-      privateTrees
+      privateNodes
     })
 
     // Fin
@@ -178,8 +183,8 @@ export default class RootTree implements Puttable {
     await crypto.keystore.importSymmKey(rootKey, rootKeyId)
   }
 
-  findPrivateTree(path: DistinctivePath): [DistinctivePath, PrivateTree | null] {
-    return findPrivateTree(this.privateTrees, path)
+  findPrivateNode(path: DistinctivePath): [DistinctivePath, PrivateNode | null] {
+    return findPrivateNode(this.privateNodes, path)
   }
 
 
@@ -256,64 +261,71 @@ type PathKey = { path: DistinctivePath, key: string }
 
 
 async function findBareNameFilter(
-  map: Record<string, PrivateTree>,
+  map: Record<string, PrivateNode>,
   path: DistinctivePath
 ): Promise<Maybe<BareNameFilter>> {
   const bareNameFilterId = await identifiers.bareNameFilter({ path })
   const bareNameFilter: Maybe<BareNameFilter> = await storage.getItem(bareNameFilterId)
   if (bareNameFilter) return bareNameFilter
 
-  const [treePath, tree] = findPrivateTree(map, path)
-  if (!tree) return null
+  const [nodePath, node] = findPrivateNode(map, path)
+  if (!node) return null
 
   const unwrappedPath = pathing.unwrap(path)
-  const relativePath = unwrappedPath.slice(pathing.unwrap(treePath).length)
-  if (!tree.exists(relativePath)) {
-    if (pathing.isDirectory(path)) await tree.mkdir(relativePath)
-    else await tree.add(relativePath, "")
+  const relativePath = unwrappedPath.slice(pathing.unwrap(nodePath).length)
+
+  if (PrivateFile.instanceOf(node)) {
+    return relativePath.length === 0 ? node.header.bareNameFilter : null
   }
 
-  return tree.get(relativePath).then(t => t ? t.header.bareNameFilter : null)
+  if (!node.exists(relativePath)) {
+    if (pathing.isDirectory(path)) await node.mkdir(relativePath)
+    else await node.add(relativePath, "")
+  }
+
+  return node.get(relativePath).then(t => t ? t.header.bareNameFilter : null)
 }
 
-function findPrivateTree(
-  map: Record<string, PrivateTree>,
+function findPrivateNode(
+  map: Record<string, PrivateNode>,
   path: DistinctivePath
-): [DistinctivePath, PrivateTree | null] {
+): [DistinctivePath, PrivateNode | null] {
   const t = map[pathing.toPosix(path)]
   if (t) return [ path, t ]
 
   const parent = pathing.parent(path)
 
   return parent
-    ? findPrivateTree(map, parent)
+    ? findPrivateNode(map, parent)
     : [ path, null ]
 }
 
-function loadPrivateTrees(
+function loadPrivateNodes(
   pathKeys: PathKey[],
   mmpt: MMPT
-): Promise<Record<string, PrivateTree>> {
+): Promise<Record<string, PrivateNode>> {
   return sortedPathKeys(pathKeys).reduce((acc, { path, key }) => {
     return acc.then(async map => {
-      let privateTree
+      let privateNode
 
       const unwrappedPath = pathing.unwrap(path)
 
       // if root, no need for bare name filter
       if (unwrappedPath.length === 1 && unwrappedPath[0] === pathing.Branch.Private) {
-        privateTree = await PrivateTree.fromBaseKey(mmpt, key)
+        privateNode = await PrivateTree.fromBaseKey(mmpt, key)
 
       } else {
         const bareNameFilter = await findBareNameFilter(map, path)
         if (!bareNameFilter) throw new Error(`Was trying to load the PrivateTree for the path \`${path}\`, but couldn't find the bare name filter for it.`)
-
-        privateTree = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key)
-
+        if (pathing.isDirectory(path)) {
+          privateNode = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key)
+        } else {
+          privateNode = await PrivateFile.fromBareNameFilter(mmpt, bareNameFilter, key)
+        }
       }
 
       const posixPath = pathing.toPosix(path)
-      return { ...map, [posixPath]: privateTree }
+      return { ...map, [posixPath]: privateNode }
     })
   }, Promise.resolve({}))
 }

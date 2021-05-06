@@ -72,10 +72,7 @@ export default class PrivateTree extends BaseTree {
   }
 
   static async fromBareNameFilter(mmpt: MMPT, bareNameFilter: BareNameFilter, key: string): Promise<PrivateTree> {
-    const revisionFilter = await namefilter.addRevision(bareNameFilter, key, 1)
-    const name = await namefilter.toPrivateName(revisionFilter)
-    const info = await protocol.priv.getByLatestName(mmpt, name, key)
-
+    const info = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key)
     return this.fromInfo(mmpt, key, info)
   }
 
