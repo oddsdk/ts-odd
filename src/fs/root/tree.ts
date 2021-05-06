@@ -183,7 +183,7 @@ export default class RootTree implements Puttable {
     await crypto.keystore.importSymmKey(rootKey, rootKeyId)
   }
 
-  findPrivateTree(path: DistinctivePath): [DistinctivePath, PrivateNode | null] {
+  findPrivateNode(path: DistinctivePath): [DistinctivePath, PrivateNode | null] {
     return findPrivateNode(this.privateNodes, path)
   }
 
@@ -273,9 +273,11 @@ async function findBareNameFilter(
 
   const unwrappedPath = pathing.unwrap(path)
   const relativePath = unwrappedPath.slice(pathing.unwrap(nodePath).length)
-  if(PrivateFile.instanceOf(node)) {
+
+  if (PrivateFile.instanceOf(node)) {
     return relativePath.length === 0 ? node.header.bareNameFilter : null
   }
+
   if (!node.exists(relativePath)) {
     if (pathing.isDirectory(path)) await node.mkdir(relativePath)
     else await node.add(relativePath, "")

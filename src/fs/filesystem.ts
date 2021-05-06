@@ -314,14 +314,15 @@ export class FileSystem {
     const head = parts[0]
     const relPath = parts.slice(1)
 
+    const operation = isMutation
+      ? "make changes to"
+      : "query"
+
     if (!this.localOnly) {
       const proof = await ucanInternal.lookupFilesystemUcan({ directory: parts })
       const decodedProof = proof && ucan.decode(proof)
 
       if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {
-        const operation = isMutation
-          ? "make changes to"
-          : "query"
         throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${pathing.toPosix(path)}"`)
       }
 
@@ -347,21 +348,21 @@ export class FileSystem {
       }
 
     } else if (head === Branch.Private) {
-      const [treePath, tree] = this.root.findPrivateTree(
+      const [nodePath, node] = this.root.findPrivateNode(
         path
       )
 
-      if (!tree) {
-        throw new NoPermissionError("I don't have the necessary permissions to make these changes to the file system")
+      if (!node) {
+        throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${pathing.toPosix(path)}"`)
       }
 
       result = await fn(
-        tree,
-        parts.slice(pathing.unwrap(treePath).length)
+        node,
+        parts.slice(pathing.unwrap(nodePath).length)
       )
 
       if (isMutation && PrivateTree.instanceOf(result)) {
-        this.root.privateNodes[pathing.toPosix(treePath)] = result
+        this.root.privateNodes[pathing.toPosix(nodePath)] = result
         await result.put()
         await this.root.updatePuttable(Branch.Private, this.root.mmpt)
 
