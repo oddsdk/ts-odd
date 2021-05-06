@@ -317,15 +317,10 @@ function loadPrivateNodes(
       } else {
         const bareNameFilter = await findBareNameFilter(map, path)
         if (!bareNameFilter) throw new Error(`Was trying to load the PrivateTree for the path \`${path}\`, but couldn't find the bare name filter for it.`)
-
-        const maybeInfo = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key)
-        if (maybeInfo === null) throw new Error(`Could not find content in filesystem for path ${path}`)
-        if(check.isPrivateTreeInfo(maybeInfo)) {
-          privateNode = await PrivateTree.fromInfo(mmpt, key, maybeInfo)
-        } else if(check.isPrivateFileInfo(maybeInfo)) {
-          privateNode = await PrivateFile.fromInfo(mmpt, key, maybeInfo)
+        if (pathing.isDirectory(path)) {
+          privateNode = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key)
         } else {
-          throw new Error(`Could not decipher a valid filesystem object at path ${path}`)
+          privateNode = await PrivateFile.fromBareNameFilter(mmpt, bareNameFilter, key)
         }
       }
 
