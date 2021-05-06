@@ -10,6 +10,7 @@ import * as crypto from './crypto'
 import * as storage from './storage'
 import * as ucan from './ucan/internal'
 import * as ucanPermissions from './ucan/permissions'
+import { setup } from './setup/internal'
 
 import { USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
@@ -88,10 +89,10 @@ export type Continuation = {
 /**
  * Initialisation error
  */
- export enum InitialisationError {
-   InsecureContext = "INSECURE_CONTEXT",
-   UnsupportedBrowser = "UNSUPPORTED_BROWSER"
- }
+export enum InitialisationError {
+  InsecureContext = "INSECURE_CONTEXT",
+  UnsupportedBrowser = "UNSUPPORTED_BROWSER"
+}
 
 
 
@@ -141,7 +142,12 @@ export async function initialise(
     const newUser = url.searchParams.get("newUser") === "t"
     const username = url.searchParams.get("username") || ""
 
-    await importClassifiedInfo(authorised)
+    await importClassifiedInfo(
+      authorised === "via-postmessage"
+        ? await getClassifiedViaPostMessage()
+        : await ipfs.cat(authorised) // in any other case we expect it to be a CID
+    )
+
     await storage.setItem(USERNAME_STORAGE_KEY, username)
 
     if (autoRemoveUrlParams) {
@@ -169,10 +175,12 @@ export async function initialise(
     )
 
   } else if (cancellation) {
-    const c = (_ => { switch (cancellation) {
-      case "DENIED": return "User denied authorisation"
-      default: return "Unknown reason"
-    }})()
+    const c = (_ => {
+      switch (cancellation) {
+        case "DENIED": return "User denied authorisation"
+        default: return "Unknown reason"
+      }
+    })()
 
     return scenarioAuthCancelled(permissions, c)
 
@@ -321,11 +329,17 @@ function scenarioNotAuthorised(
 
 // ㊙️
 
+interface AuthLobbyClassifiedInfo {
+  sessionKey: string;
+  secrets: string;
+  iv: string
+}
+
 
 async function importClassifiedInfo(
-  cid: string
+  classified : string
 ): Promise<void> {
-  const info = JSON.parse(await ipfs.cat(cid))
+  const info: AuthLobbyClassifiedInfo = JSON.parse(classified)
 
   // Extract session key and its iv
   const rawSessionKey = await crypto.keystore.decrypt(info.sessionKey)
@@ -339,7 +353,7 @@ async function importClassifiedInfo(
 
   // Import read keys and bare name filters
   await Promise.all(
-    Object.entries(fsSecrets).map(async ([ posixPath, { bareNameFilter, key } ]) => {
+    Object.entries(fsSecrets).map(async ([posixPath, { bareNameFilter, key }]) => {
       const path = pathing.fromPosix(posixPath)
       const readKeyId = await identifiers.readKey({ path })
       const bareNameFilterId = await identifiers.bareNameFilter({ path })
@@ -353,6 +367,49 @@ async function importClassifiedInfo(
   await ucan.store(ucans)
 }
 
+async function getClassifiedViaPostMessage(): Promise<string> {
+  const iframe: HTMLIFrameElement = await new Promise((resolve, reject) => {
+    const iframe = document.createElement("iframe")
+    iframe.id = "webnative-secret-exchange"
+    iframe.style.width = "0"
+    iframe.style.height = "0"
+    iframe.style.border = "none"
+    iframe.style.display = "none"
+    document.body.appendChild(iframe)
+
+    iframe.onload = () => {
+      resolve(iframe)
+    }
+
+    iframe.src = `${setup.endpoints.lobby}/exchange.html`
+  })
+
+  try {
+
+    const answer: Promise<string> = new Promise((resolve, reject) => {
+      window.addEventListener("message", listen)
+
+      function listen(event: MessageEvent<string>) {
+        window.removeEventListener("message", listen)
+        if (event.data) {
+          resolve(event.data)
+        } else {
+          reject(new Error("Can't import UCANs & readKey(s): Missing data"))
+        }
+      }
+    })
+
+    if (iframe.contentWindow == null) throw new Error("Can't import UCANs & readKey(s): No access to its contentWindow")
+    // Technically, the message doesn't matter
+    const message = { webnative: "exchange-secrets" }
+    iframe.contentWindow.postMessage(message, iframe.src)
+
+    return await answer
+
+  } finally {
+    document.body.removeChild(iframe)
+  }
+}
 
 async function validateSecrets(permissions: Permissions): Promise<boolean> {
   return ucanPermissions.paths(permissions).reduce(
