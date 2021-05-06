@@ -361,7 +361,7 @@ export class FileSystem {
       )
 
       if (isMutation && PrivateTree.instanceOf(result)) {
-        this.root.privateTrees[pathing.toPosix(treePath)] = result
+        this.root.privateNodes[pathing.toPosix(treePath)] = result
         await result.put()
         await this.root.updatePuttable(Branch.Private, this.root.mmpt)
 

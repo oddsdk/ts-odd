@@ -23,6 +23,7 @@ import PublicTree from '../v1/PublicTree'
 import PrivateTree from '../v1/PrivateTree'
 import PrivateFile from '../v1/PrivateFile'
 
+
 type PrivateNode = PrivateTree | PrivateFile
 
 
@@ -34,16 +35,16 @@ export default class RootTree implements Puttable {
 
   publicTree: PublicTree
   prettyTree: BareTree
-  privateTrees: Record<string, PrivateNode>
+  privateNodes: Record<string, PrivateNode>
 
-  constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateTrees }: {
+  constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateNodes }: {
     links: Links,
     mmpt: MMPT,
     privateLog: Array<SimpleLink>,
 
     publicTree: PublicTree,
     prettyTree: BareTree,
-    privateTrees: Record<string, PrivateNode>,
+    privateNodes: Record<string, PrivateNode>,
   }) {
     this.links = links
     this.mmpt = mmpt
@@ -51,7 +52,7 @@ export default class RootTree implements Puttable {
 
     this.publicTree = publicTree
     this.prettyTree = prettyTree
-    this.privateTrees = privateTrees
+    this.privateNodes = privateNodes
   }
 
 
@@ -76,7 +77,7 @@ export default class RootTree implements Puttable {
 
       publicTree,
       prettyTree,
-      privateTrees: {
+      privateNodes: {
         [rootPath]: rootTree
       }
     })
@@ -116,13 +117,13 @@ export default class RootTree implements Puttable {
     // Load private bits
     const privateCID = links[Branch.Private]?.cid || null
 
-    let mmpt, privateTrees
+    let mmpt, privateNodes
     if (privateCID === null) {
       mmpt = await MMPT.create()
-      privateTrees = {}
+      privateNodes = {}
     } else {
       mmpt = await MMPT.fromCID(privateCID)
-      privateTrees = await loadPrivateNodes(keys, mmpt)
+      privateNodes = await loadPrivateNodes(keys, mmpt)
     }
 
     const privateLogCid = links[Branch.PrivateLog]?.cid
@@ -142,7 +143,7 @@ export default class RootTree implements Puttable {
 
       publicTree,
       prettyTree,
-      privateTrees
+      privateNodes
     })
 
     // Fin
@@ -183,7 +184,7 @@ export default class RootTree implements Puttable {
   }
 
   findPrivateTree(path: DistinctivePath): [DistinctivePath, PrivateNode | null] {
-    return findPrivateNode(this.privateTrees, path)
+    return findPrivateNode(this.privateNodes, path)
   }
 
 
@@ -303,13 +304,13 @@ function loadPrivateNodes(
 ): Promise<Record<string, PrivateNode>> {
   return sortedPathKeys(pathKeys).reduce((acc, { path, key }) => {
     return acc.then(async map => {
-      let privateTree
+      let privateNode
 
       const unwrappedPath = pathing.unwrap(path)
 
       // if root, no need for bare name filter
       if (unwrappedPath.length === 1 && unwrappedPath[0] === pathing.Branch.Private) {
-        privateTree = await PrivateTree.fromBaseKey(mmpt, key)
+        privateNode = await PrivateTree.fromBaseKey(mmpt, key)
 
       } else {
         const bareNameFilter = await findBareNameFilter(map, path)
@@ -318,16 +319,16 @@ function loadPrivateNodes(
         const maybeInfo = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key)
         if (maybeInfo === null) throw new Error(`Could not find content in filesystem for path ${path}`)
         if(check.isPrivateTreeInfo(maybeInfo)) {
-          privateTree = await PrivateTree.fromInfo(mmpt, key, maybeInfo)
+          privateNode = await PrivateTree.fromInfo(mmpt, key, maybeInfo)
         } else if(check.isPrivateFileInfo(maybeInfo)) {
-          privateTree = await PrivateFile.fromInfo(mmpt, key, maybeInfo)
+          privateNode = await PrivateFile.fromInfo(mmpt, key, maybeInfo)
         } else {
           throw new Error(`Could not decipher a valid filesystem object at path ${path}`)
         }
       }
 
       const posixPath = pathing.toPosix(path)
-      return { ...map, [posixPath]: privateTree }
+      return { ...map, [posixPath]: privateNode }
     })
   }, Promise.resolve({}))
 }
