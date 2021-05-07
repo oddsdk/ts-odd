@@ -40,12 +40,22 @@ export let impl: Dependencies = DEFAULT_IMPLEMENTATION
 
 export const setDependencies = (fns: Partial<Dependencies>): Dependencies => {
   impl = {
-    ...impl,
-    ...fns,
+    hash: merge(impl.hash, fns.hash),
+    aes: merge(impl.aes, fns.aes),
+    rsa: merge(impl.rsa, fns.rsa),
+    ed25519: merge(impl.ed25519, fns.ed25519),
+    keystore: merge(impl.keystore, fns.keystore),
+    storage: merge(impl.storage, fns.storage),
   }
   return impl
 }
 
+const merge = <T>(first: T, second: Partial<T> | undefined): T => {
+  return {
+    ...first,
+    ...(second || {})
+  }
+}
 
 export interface Dependencies {
   hash: {
