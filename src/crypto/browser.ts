@@ -31,7 +31,7 @@ export const genKeyStr = async (): Promise<string> => {
 export const decryptGCM = async (encrypted: string, keyStr: string, ivStr: string): Promise<string> => {
   assertBrowser('aes.decryptGCM')
   const iv = utils.base64ToArrBuf(ivStr)
-  const sessionKey = await window.crypto.subtle.importKey(
+  const sessionKey = await crypto.subtle.importKey(
     "raw",
     utils.base64ToArrBuf(keyStr),
     "AES-GCM",
@@ -40,7 +40,7 @@ export const decryptGCM = async (encrypted: string, keyStr: string, ivStr: strin
   )
 
   // Decrypt secrets
-  const decrypted = await window.crypto.subtle.decrypt(
+  const decrypted = await crypto.subtle.decrypt(
     {
       name: "AES-GCM",
       iv: iv
