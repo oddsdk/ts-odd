@@ -60,7 +60,7 @@ export async function lookupFilesystemUcan(path: DistinctivePath | "*"): Promise
     (acc: string | null, part: string, idx: number) => {
       if (acc) return acc
 
-      const isLastPart = (idx + 1 === pathParts.length)
+      const isLastPart = idx === 0
       const partsSlice = pathParts.slice(0, pathParts.length - idx)
 
       const partialPath = pathing.toPosix(

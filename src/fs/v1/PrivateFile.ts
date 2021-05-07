@@ -3,8 +3,9 @@ import MMPT from '../protocol/private/mmpt'
 import PrivateHistory from './PrivateHistory'
 import { FileContent } from '../../ipfs'
 import { PrivateName, BareNameFilter } from '../protocol/private/namefilter'
-import { PrivateAddResult, PrivateFileInfo } from '../protocol/private/types'
+import { DecryptedNode, PrivateAddResult, PrivateFileInfo } from '../protocol/private/types'
 import { isObject } from '../../common/type-checks'
+import { Maybe } from '../../common'
 import * as crypto from '../../crypto'
 import * as check from '../protocol/private/types/check'
 import * as history from './PrivateHistory'
@@ -62,27 +63,26 @@ export class PrivateFile extends BaseFile {
     })
   }
 
+  static async fromBareNameFilter(mmpt: MMPT, bareNameFilter: BareNameFilter, key: string): Promise<PrivateFile> {
+    const info = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key)
+    return this.fromInfo(mmpt, key, info)
+  }
+
   static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
     const info = await protocol.priv.getByLatestName(mmpt, name, key)
-
-    if (!check.isPrivateFileInfo(info)) {
-      throw new Error(`Could not parse a valid private file using the given key`)
-    }
-
     return PrivateFile.fromInfo(mmpt, key, info)
   }
 
   static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
     const info = await protocol.priv.getByName(mmpt, name, key)
+    return PrivateFile.fromInfo(mmpt, key, info)
+  }
 
+  static async fromInfo(mmpt: MMPT, key: string, info: Maybe<DecryptedNode>): Promise<PrivateFile> {
     if (!check.isPrivateFileInfo(info)) {
       throw new Error(`Could not parse a valid private file using the given key`)
     }
 
-    return PrivateFile.fromInfo(mmpt, key, info)
-  }
-
-  static async fromInfo(mmpt: MMPT, key: string, info: PrivateFileInfo): Promise<PrivateFile> {
     const content = await protocol.basic.getEncryptedFile(info.content, info.key)
     return new PrivateFile({
       content,

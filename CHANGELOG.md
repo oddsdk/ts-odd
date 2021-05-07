@@ -1,10 +1,14 @@
 # Changelog
 
 ### v0.24.0
+
 - Dependency injection for crypto and storage functions to allow for use in Node.js
-- Fix race condition in Private tree that would occasional drop FS nodes
-- Improve path management
+- Fix race condition in private tree that would occasionally drop filesystem nodes
+- Improved path management (`webnative.path` module)
 - Add support for Ed25519 & BLS DIDs
+- Allow permissioning of files
+
+
 
 ### v0.23.2
 
