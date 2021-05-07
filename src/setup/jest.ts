@@ -1,6 +1,6 @@
 
 import * as browserCrypto from '../crypto/browser'
-import { Storage } from '../storage/jest'
+import { Storage } from '../../tests/storage/inMemory'
 
 import { setDependencies } from './dependencies'
 

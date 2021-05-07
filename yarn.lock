@@ -3576,13 +3576,6 @@ err-code@^2.0.0, err-code@^2.0.1, err-code@^2.0.3:
   resolved "https://registry.npmjs.org/err-code/-/err-code-2.0.3.tgz"
   integrity sha512-2bmlRpNKBxT/CRmPOlyISQpNj+qSeYvcym/uT0Jx2bMOlKLtSy1ZmLuVxSEKKyor/N5yhvp/ZiG1oE3DEYMSFA==
 
-<<<<<<< HEAD
-err-code@^3.0.0:
-  version "3.0.1"
-  resolved "https://registry.npmjs.org/err-code/-/err-code-3.0.1.tgz"
-  integrity sha512-GiaH0KJUewYok+eeY05IIgjtAe4Yltygk9Wqp1V5yVWLdhf0hYZchRjNIT9bb0mSwRcIusT3cx7PJUf3zEIfUA==
-
-=======
 err-code@^3.0.0, err-code@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/err-code/-/err-code-3.0.1.tgz#a444c7b992705f2b120ee320b09972eef331c920"
@@ -3595,7 +3588,6 @@ errno@~0.1.1:
   dependencies:
     prr "~1.0.1"
 
->>>>>>> main
 error-ex@^1.3.1:
   version "1.3.2"
   resolved "https://registry.npmjs.org/error-ex/-/error-ex-1.3.2.tgz"
@@ -4094,17 +4086,10 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
-<<<<<<< HEAD
-fission-bloom-filters@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.npmjs.org/fission-bloom-filters/-/fission-bloom-filters-1.4.0.tgz"
-  integrity sha512-7wif9/Uj7IKqTUQhk/KlWVh9fRin65UQSz2BCx+7myG67sgS2ETpyu8iV/yNou7M2KcrZhZd94vn4a54L6T70Q==
-=======
 fission-bloom-filters@1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/fission-bloom-filters/-/fission-bloom-filters-1.6.0.tgz#0122929e205300651da0b697683b90ae90c3cbb6"
   integrity sha512-pJWpxdU7RqcuES0PvlHAeoW3+meW0/cf4/9KrnQN41We+9ulSyD5VauyeLqobQ6uQvDhOjymE/7Gq2nzAkOhjA==
->>>>>>> main
   dependencies:
     is-buffer "^2.0.4"
     lodash "^4.17.15"
@@ -4793,12 +4778,6 @@ interpret@^1.0.0:
   resolved "https://registry.npmjs.org/interpret/-/interpret-1.4.0.tgz"
   integrity sha512-agE4QfB2Lkp9uICn7BAqoscw4SZP9kTE2hxiFI3jBPmXJfdqiahTbUuKGsMoN2GtqL9AxhYioAcVvgsb1HvRbA==
 
-<<<<<<< HEAD
-ip-regex@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.npmjs.org/ip-regex/-/ip-regex-2.1.0.tgz"
-  integrity sha1-+ni/XS5pE8kRzp+BnuUUa7bYROk=
-=======
 ip-address@^6.1.0:
   version "6.4.0"
   resolved "https://registry.yarnpkg.com/ip-address/-/ip-address-6.4.0.tgz#8f7d43e76002a1c3c230792c748f5d8c143f908a"
@@ -4819,7 +4798,6 @@ ip-address@^7.1.0:
   dependencies:
     jsbn "1.1.0"
     sprintf-js "1.1.2"
->>>>>>> main
 
 ip-regex@^2.1.0:
   version "2.1.0"
@@ -6697,17 +6675,10 @@ keypair@^1.0.1:
   resolved "https://registry.npmjs.org/keypair/-/keypair-1.0.1.tgz"
   integrity sha1-dgNxknCvtlZO04oiCHoG/Jqk6hs=
 
-<<<<<<< HEAD
-keystore-idb@0.14.0:
-  version "0.14.0"
-  resolved "https://registry.npmjs.org/keystore-idb/-/keystore-idb-0.14.0.tgz"
-  integrity sha512-LX6BipvB4t90XZgD/6yYg6/7Avv9V+yEg6j48Vds2T5QRd82De03ApKlCbkYYGl3G2odwY28odL7ES6+eKcglg==
-=======
 keystore-idb@0.14.1:
   version "0.14.1"
   resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.14.1.tgz#313dc199aa85c7a3ce27ebf3afc1a537dbd50282"
   integrity sha512-oyymnax18EycBDlS8Leg9WmJJ39J3fITDXUWd+he8gkq44hgnEDjjgfiGWuCBLlB9/3E3AmLWvpXFPlPAG6jWQ==
->>>>>>> main
   dependencies:
     "@ungap/global-this" "^0.4.3"
     buffer "^6.0.3"
@@ -7752,15 +7723,6 @@ multibase@^3.0.0, multibase@^3.0.1, multibase@^3.1.0:
     "@multiformats/base-x" "^4.0.1"
     web-encoding "^1.0.6"
 
-<<<<<<< HEAD
-multibase@^4.0.1:
-  version "4.0.2"
-  resolved "https://registry.npmjs.org/multibase/-/multibase-4.0.2.tgz"
-  integrity sha512-l0XMK4O5I9cCfxC0/UMDX/UxlIlrqkjEZQNG+ZUUrsGhnXWgFXgatYOQSONiR/lQGfBO463UyZkh3SiQBpjRIQ==
-  dependencies:
-    "@multiformats/base-x" "^4.0.1"
-    web-encoding "^1.1.0"
-=======
 multibase@^3.1.1:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/multibase/-/multibase-3.1.2.tgz#59314e1e2c35d018db38e4c20bb79026827f0f2f"
@@ -7783,7 +7745,6 @@ multicast-dns@^7.2.0:
   dependencies:
     dns-packet "^4.0.0"
     thunky "^1.0.2"
->>>>>>> main
 
 multicodec@^2.0.0, multicodec@^2.1.0:
   version "2.1.0"
@@ -7810,11 +7771,6 @@ multihashes@^3.0.1, multihashes@^3.1.0:
     uint8arrays "^2.0.5"
     varint "^6.0.0"
 
-<<<<<<< HEAD
-multihashes@^4.0.1:
-  version "4.0.2"
-  resolved "https://registry.npmjs.org/multihashes/-/multihashes-4.0.2.tgz"
-=======
 multihashes@^3.1.1:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/multihashes/-/multihashes-3.1.2.tgz#ffa5e50497aceb7911f7b4a3b6cada9b9730edfc"
@@ -7827,31 +7783,23 @@ multihashes@^3.1.1:
 multihashes@^4.0.1, multihashes@^4.0.2:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/multihashes/-/multihashes-4.0.2.tgz#d76aeac3a302a1bed9fe1ec964fb7a22fa662283"
->>>>>>> main
   integrity sha512-xpx++1iZr4ZQHjN1mcrXS6904R36LWLxX/CBifczjtmrtCXEX623DMWOF1eiNSg+pFpiZDFVBgou/4v6ayCHSQ==
   dependencies:
     multibase "^4.0.1"
     uint8arrays "^2.1.3"
     varint "^5.0.2"
 
-<<<<<<< HEAD
-multihashing-async@^2.0.0, multihashing-async@^2.0.1, multihashing-async@^2.1.2:
-  version "2.1.2"
-  resolved "https://registry.npmjs.org/multihashing-async/-/multihashing-async-2.1.2.tgz"
-  integrity sha512-FTPNnWWxwIK5dXXmTFhySSF8Fkdqf7vzqpV09+RWsmfUhrsL/b3Arg3+bRrBnXTtjxm3JRGI3wSAtQHL0QCxhQ==
-=======
 multihashing-async@^2.0.0, multihashing-async@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/multihashing-async/-/multihashing-async-2.0.1.tgz#cc50e05e88b02ed0a2d8a9518d8a6cf1fcf12aa1"
   integrity sha512-LZcH8PqW4iEKymaJ3RpsgpSJhXF29kAvO02ccqbysiXkQhZpVce8rrg+vzRKWO89hhyIBnQHI2e/ZoRVxmiJ2Q==
->>>>>>> main
   dependencies:
     blakejs "^1.1.0"
-    err-code "^3.0.0"
+    err-code "^2.0.0"
     js-sha3 "^0.8.0"
-    multihashes "^4.0.1"
+    multihashes "^3.0.1"
     murmurhash3js-revisited "^3.0.0"
-    uint8arrays "^2.1.3"
+    uint8arrays "^1.0.0"
 
 multihashing-async@^2.1.2:
   version "2.1.2"
@@ -7990,11 +7938,6 @@ nice-try@^1.0.4:
   resolved "https://registry.npmjs.org/nice-try/-/nice-try-1.0.5.tgz"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-noble-ed25519@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/noble-ed25519/-/noble-ed25519-1.0.4.tgz#d3beb67d386d1a800b6fb47e499ad4daf6586877"
-  integrity sha512-Sp9F8ukrY5v9PZezW8Q8dI+tbIH5f6i4E2Alb7kPDPgsQA5CgsrM0BVyUoy06/CRH5QoN2QUOVZH+QIXgesNLQ==
-
 nise@^4.0.4:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/nise/-/nise-4.1.0.tgz#8fb75a26e90b99202fa1e63f448f58efbcdedaf6"
@@ -8013,6 +7956,11 @@ no-case@^3.0.4:
   dependencies:
     lower-case "^2.0.2"
     tslib "^2.0.3"
+
+noble-ed25519@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/noble-ed25519/-/noble-ed25519-1.0.4.tgz#d3beb67d386d1a800b6fb47e499ad4daf6586877"
+  integrity sha512-Sp9F8ukrY5v9PZezW8Q8dI+tbIH5f6i4E2Alb7kPDPgsQA5CgsrM0BVyUoy06/CRH5QoN2QUOVZH+QIXgesNLQ==
 
 node-addon-api@^2.0.0:
   version "2.0.2"
@@ -10505,22 +10453,12 @@ uint8arrays@^2.0.5:
     multibase "^3.0.0"
     web-encoding "^1.0.5"
 
-<<<<<<< HEAD
-uint8arrays@^2.1.3:
-  version "2.1.3"
-  resolved "https://registry.npmjs.org/uint8arrays/-/uint8arrays-2.1.3.tgz"
-  integrity sha512-2h2Z2OIqzrhHmZTv9ViJVyZZreFkHRHeihh7SxLVY/nLUVJhU4ey/u74tWsgMR6hhMSO2g5rhKmdLQIg3lKiUQ==
-  dependencies:
-    multibase "^4.0.1"
-    web-encoding "^1.1.0"
-=======
 uint8arrays@^2.1.3, uint8arrays@^2.1.4:
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/uint8arrays/-/uint8arrays-2.1.5.tgz#9e6e6377a9463d5eba4620a3f0450f7eb389a351"
   integrity sha512-CSR7AO+4AHUeSOnZ/NBNCElDeWfRh9bXtOck27083kc7SznmmHIhNEkEOCQOn0wvrIMjS3IH0TNLR16vuc46mA==
   dependencies:
     multibase "^4.0.1"
->>>>>>> main
 
 unbzip2-stream@^1.3.3:
   version "1.4.3"
@@ -10721,8 +10659,6 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
 
-<<<<<<< HEAD
-=======
 varint-decoder@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/varint-decoder/-/varint-decoder-1.0.0.tgz#289dab7887ee58d0c7be3a3353abeab4ca60aa77"
@@ -10730,7 +10666,6 @@ varint-decoder@^1.0.0:
   dependencies:
     varint "^5.0.0"
 
->>>>>>> main
 varint@^5.0.0, varint@^5.0.2, varint@~5.0.0:
   version "5.0.2"
   resolved "https://registry.npmjs.org/varint/-/varint-5.0.2.tgz"
@@ -10801,7 +10736,7 @@ walker@^1.0.7, walker@~1.0.5:
   dependencies:
     makeerror "1.0.x"
 
-web-encoding@^1.0.2, web-encoding@^1.0.5, web-encoding@^1.0.6, web-encoding@^1.1.0:
+web-encoding@^1.0.2, web-encoding@^1.0.5, web-encoding@^1.0.6:
   version "1.1.3"
   resolved "https://registry.npmjs.org/web-encoding/-/web-encoding-1.1.3.tgz"
   integrity sha512-7yliVJ2PZZKbwOSypc3EHZvZTby0Cp7N3oz9hwKtuKy175u5x84gLHYb7D608lufMjPTQm/p5fJ5Pu0oztMBPw==
