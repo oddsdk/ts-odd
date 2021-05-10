@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.24.1
+
+Fix a couple of bugs in dependency injection
 ### v0.24.0
 
 - Dependency injection for crypto and storage functions to allow for use in Node.js
