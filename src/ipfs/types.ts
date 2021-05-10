@@ -1,5 +1,5 @@
 export type IPFS = {
-  add(data: FileContent, options?: unknown): UnixFSFile
+  add(data: FileContent, options?: unknown): Promise<UnixFSFile>
   cat(cid: CID): AsyncIterable<FileContentRaw>
   ls(cid: CID): AsyncIterable<UnixFSFile>
   dns(domain: string): Promise<CID>
@@ -75,8 +75,8 @@ export type CIDObj = {
   toString(): string
 }
 
-export type FileContent = Record<string, unknown> | Buffer | Blob | string | number | boolean
-export type FileContentRaw = Buffer
+export type FileContent = Record<string, unknown> | Uint8Array | Blob | string | number | boolean
+export type FileContentRaw = Uint8Array
 
 export type FileMode = number
 
