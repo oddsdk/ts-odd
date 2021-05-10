@@ -1,10 +1,11 @@
 import * as base58 from 'base58-universal/main.js'
 
 import * as crypto from './crypto'
+import * as storage from './storage'
 import * as utils from 'keystore-idb/utils'
 
 import * as dns from './dns'
-import { arrbufs } from './common'
+import { arrbufs, isString, USERNAME_STORAGE_KEY } from './common'
 import { setup } from './setup/internal'
 
 
@@ -52,6 +53,18 @@ export async function root(
   } catch (_err) { }
 
   throw new Error("Could not locate user DID in DNS.")
+}
+
+/**
+ * Get a user's own root write-key DID.
+ * Stored at `_did.${username}.${endpoints.user}`
+ */
+export async function ownRoot(): Promise<string> {
+  const username = await storage.getItem(USERNAME_STORAGE_KEY)
+  if(!isString(username)) {
+    throw new Error("No logged in user")
+  }
+  return root(username)
 }
 
 /**
