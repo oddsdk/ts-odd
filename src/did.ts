@@ -50,7 +50,9 @@ export async function root(
   try {
     const maybeDid = await dns.lookupTxtRecord(`_did.${username}.${domain}`)
     if (maybeDid !== null) return maybeDid
-  } catch (_err) { }
+  } catch (_err) { 
+    // lookup failed
+  }
 
   throw new Error("Could not locate user DID in DNS.")
 }

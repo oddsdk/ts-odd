@@ -1,54 +1,7 @@
-import * as did from './did'
-import * as crypto from './crypto'
-import { base64 } from './common'
-
-// TYPES
-
-
-export type SessionKey = {
-  sessionKey: string
-}
-
-export type Fact = SessionKey | Record<string, string>
-
-export type Resource =
-  "*" | Record<string, string>
-
-export type Potency = string |  Record<string, unknown> | undefined | null
-
-export type UcanHeader = {
-  alg: string
-  typ: string
-  uav: string
-}
-
-export type UcanPayload = {
-  aud: string
-  exp: number
-  fct: Array<Fact>
-  iss: string
-  nbf: number
-  prf: string | null
-  ptc: Potency
-  rsc: Resource
-}
-
-export type Ucan = {
-  header: UcanHeader
-  payload: UcanPayload
-  signature: string | null
-}
-
-// CONSTANTS
-
-
-// TODO: Waiting on API change.
-//       Should be `dnslink`
-export const WNFS_PREFIX = "wnfs"
-
-
-
-// FUNCTIONS
+import * as did from '../did'
+import * as crypto from '../crypto'
+import { base64 } from '../common'
+import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from './types'
 
 
 /**
@@ -134,37 +87,6 @@ export async function build({
     payload,
     signature
   }
-}
-
-/**
- * Given a list of UCANs, generate a dictionary.
- * The key will be in the form of `${resourceKey}:${resourceValue}`
- */
-export function compileDictionary(ucans: Array<string>): Record<string, string> {
-  return ucans.reduce((acc, ucanString) => {
-    const ucan = decode(ucanString)
-
-    if (isExpired(ucan)) return acc
-
-    const label = resourceLabel(ucan.payload.rsc)
-    return { ...acc, [label]: ucanString }
-  }, {})
-}
-
-/**
- * Creates the label for a given resource in the UCAN dictionary
- */
-export function resourceLabel(rsc: Resource): string {
-  if (typeof rsc !== "object") {
-    return rsc
-  }
-
-  const resource = Array.from(Object.entries(rsc))[0]
-  return resource[0] + ":" + (
-    resource[0] === WNFS_PREFIX
-      ? resource[1].replace(/^\/+/, "")
-      : resource[1]
-  )
 }
 
 /**

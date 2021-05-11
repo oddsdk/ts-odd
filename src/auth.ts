@@ -5,7 +5,7 @@ import * as did from './did'
 import * as path from './path'
 import * as crypto from './crypto'
 import * as storage from './storage'
-import * as ucan from './ucan/internal'
+import * as ucan from './ucan/store'
 
 import { USERNAME_STORAGE_KEY, Maybe, VERSION } from './common'
 import { FileSystem } from './fs/filesystem'

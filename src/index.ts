@@ -257,9 +257,6 @@ export * as keystore from './keystore'
 export * as machinery from './common'
 export * as crypto from './crypto'
 
-// DELTE THIS
-export * as ucanInternal from './ucan/internal'
-
 
 
 // ㊙️  ⚛  SCENARIOS
@@ -330,8 +327,8 @@ function scenarioNotAuthorised(
 // ㊙️
 
 interface AuthLobbyClassifiedInfo {
-  sessionKey: string;
-  secrets: string;
+  sessionKey: string
+  secrets: string
   iv: string
 }
 
