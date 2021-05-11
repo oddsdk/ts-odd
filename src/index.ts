@@ -183,7 +183,7 @@ export async function initialise(
 
   } else {
     // trigger build for internal ucan dictionary
-    ucan.store([])
+    await ucan.store([])
 
   }
 
