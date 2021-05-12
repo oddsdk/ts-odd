@@ -1,13 +1,15 @@
 
 import * as browserCrypto from '../crypto/browser'
-import { Storage } from '../../tests/storage/inMemory'
+import crypto from 'crypto'
 
+import { Storage } from '../../tests/storage/inMemory'
 import { setDependencies } from './dependencies'
 
-// node implementation of webcrypto
-import { webcrypto } from 'crypto'
+// FIXME: Upgrade @node/types as soon as webcrypto types are available
+// @ts-ignore
+const webcrypto: Crypto = crypto.webcrypto
+globalThis.crypto = webcrypto
 
-// only sha256 is tested so far
 export const sha256 = async (bytes: Uint8Array): Promise<Uint8Array> => {
   const buf = bytes.buffer
   const hash = await webcrypto.subtle.digest('SHA-256', buf)
