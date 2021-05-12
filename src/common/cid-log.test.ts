@@ -4,11 +4,6 @@ import multihash from 'multihashing-async'
 import * as cidLog from './cid-log'
 import * as storage from '../storage'
 
-// beforeEach(async done => {
-//   return storage.clear()
-//   done()
-// })
-
 async function generateCids(data: Uint8Array[]): Promise<string[]> {
   const promisedCids = data.map(async bytes => {
     const mhash = await multihash(bytes, 'sha2-256')
@@ -107,7 +102,8 @@ test('drops older cids when cid log reaches 1000 entries', async () => {
 
         // Expect only the newest 1000 CIDs to be left
         expect(log).toEqual(cids.slice(0, 1000))
-      })
+      }),
+      { numRuns: 2 }
   )
 })
 
