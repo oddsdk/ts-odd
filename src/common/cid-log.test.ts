@@ -26,7 +26,7 @@ test('gets an empty log when key is missing', async () => {
 })
 
 test('adds cids and gets an ordered log', async () => {
-  fc.assert(
+  await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({ maxLength: 100 }), { maxLength: 10 }), async data => {
         await storage.clear()
@@ -49,7 +49,7 @@ test('adds cids and gets an ordered log', async () => {
 })
 
 test('gets index of a cid', async () => {
-  fc.assert(
+  await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({ maxLength: 100 }), { minLength: 1, maxLength: 10 }), async data => {
         await storage.clear()
@@ -71,7 +71,7 @@ test('gets index of a cid', async () => {
 })
 
 test('gets the newest cid', async () => {
-  fc.assert(
+  await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({ maxLength: 100 }), { minLength: 1, maxLength: 10 }), async data => {
         await storage.clear()
@@ -92,7 +92,7 @@ test('gets the newest cid', async () => {
 })
 
 test('drops older cids when cid log reaches 1000 entries', async () => {
-  fc.assert(
+  await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({ maxLength: 100 }), { minLength: 1001, maxLength: 1003 }), async data => {
         await storage.clear()
@@ -112,7 +112,7 @@ test('drops older cids when cid log reaches 1000 entries', async () => {
 })
 
 test('clears the cid log', async () => {
-  fc.assert(
+  await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({ maxLength: 100 }), { maxLength: 5 }), async data => {
         await storage.clear()
