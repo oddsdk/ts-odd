@@ -1,4 +1,4 @@
-import * as fc from 'fast-check';
+import * as fc from 'fast-check'
 import { fromBytes, toBytes } from './hex'
 
 test('round trip to bytes and back out', () => {
@@ -22,5 +22,5 @@ test('round trip to bytes and back out', () => {
 
       expect(returnData).toEqual(hexData)
     })
-  );
-});
+  )
+})

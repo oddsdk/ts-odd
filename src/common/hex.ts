@@ -2,7 +2,7 @@ export const fromBytes = (bytes: Uint8Array): string => {
   return Array.prototype.map.call(
     bytes, 
     x => ('00' + x.toString(16)).slice(-2) // '00' is for left padding
-  ).join('');
+  ).join('')
 }
 
 export const toBytes = (hex: string): Uint8Array => {

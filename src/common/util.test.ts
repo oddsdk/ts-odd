@@ -90,17 +90,17 @@ describe('async maps over an object', () => {
 describe('array contains', () => {
   it('returns true when an array contains an entry', () => {
     const arr = [1, 2, 3]
-    expect(util.arrContains(arr, 2)).toBe(true);
+    expect(util.arrContains(arr, 2)).toBe(true)
   })
 
   it('returns false when an array does not contain an entry', () => {
     const arr = [1, 2, 3]
-    expect(util.arrContains(arr, 0)).toBe(false);
+    expect(util.arrContains(arr, 0)).toBe(false)
   })
 
   it('returns false when an array is empty', () => {
     const arr = []
-    expect(util.arrContains(arr, 1)).toBe(false);
+    expect(util.arrContains(arr, 1)).toBe(false)
   })
 })
 
