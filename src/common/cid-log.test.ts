@@ -46,7 +46,7 @@ test('adds cids and gets an ordered log', async () => {
 test('gets index of a cid', async () => {
   await fc.assert(
     fc.asyncProperty(
-      fc.array(fc.uint8Array({ maxLength: 100 }), { minLength: 1, maxLength: 10 }), async data => {
+      fc.array(fc.uint8Array({minLength:1, maxLength: 100 }), { minLength: 1, maxLength: 10 }), async data => {
         await storage.clear()
 
         const cids: string[] = await generateCids(data)
