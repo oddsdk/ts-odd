@@ -4,6 +4,6 @@
 export function race <T>(promises: Promise<T>[]): Promise<T> {
   return new Promise((resolve, reject) => {
      for(const promise of promises)
-        promise.then(resolve, reject);
-  });
+        promise.then(resolve, reject)
+  })
 }
