@@ -6,7 +6,7 @@ import { Storage } from '../../tests/storage/inMemory'
 import { setDependencies } from './dependencies'
 
 // FIXME: Upgrade @node/types as soon as webcrypto types are available
-// @ts-ignore
+// @ts-ignore: Upgrade @node/types as soon as webcrypto types are available
 const webcrypto: Crypto = crypto.webcrypto
 globalThis.crypto = webcrypto
 

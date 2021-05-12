@@ -17,6 +17,7 @@ module.exports = {
       },
     }],
     "@typescript-eslint/no-use-before-define": ["off"],
-    "@typescript-eslint/semi": ["error", "never"]
+    "@typescript-eslint/semi": ["error", "never"],
+    "@typescript-eslint/ban-ts-comment": 1
   }
 }
