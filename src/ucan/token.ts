@@ -215,8 +215,8 @@ export async function sign(header: UcanHeader, payload: UcanPayload): Promise<st
  */
 function jwtAlgorithm(cryptoSystem: string): string | null {
   switch (cryptoSystem) {
-    case "ed25519": return 'EdDSA';
-    case "rsa": return 'RS256';
+    case "ed25519": return 'EdDSA'
+    case "rsa": return 'RS256'
     default: return null
   }
 }
