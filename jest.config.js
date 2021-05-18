@@ -9,5 +9,7 @@ module.exports = {
 
   testPathIgnorePatterns: ['/node_modules/'],
   testRegex: '(/tests/.*\\.test|\\.(test|spec))\\.(ts|tsx|js)$',
-  testTimeout: 120000
+  testTimeout: 120000,
+
+  setupFiles: ['./src/setup/jest.ts']
 }
