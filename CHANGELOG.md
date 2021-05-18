@@ -1,5 +1,12 @@
 # Changelog
 
+### v0.25.0
+
+- Allow raw UCANs
+- Expose functions for looking up stored UCANs
+- Add function to look up user's root DID
+
+
 ### v0.24.2
 
 Fixed issue with browser detection, didn't work in web/service workers.
