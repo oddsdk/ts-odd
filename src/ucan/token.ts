@@ -1,4 +1,5 @@
-import * as did from '../did'
+import * as did from '../did/local'
+import { verifySignedData } from '../did/validation'
 import * as crypto from '../crypto'
 import { base64 } from '../common'
 import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from './types'
@@ -160,7 +161,7 @@ export function isExpired(ucan: Ucan): boolean {
   const encodedHeader = encodeHeader(ucan.header)
   const encodedPayload = encodePayload(ucan.payload)
 
-  const a = await did.verifySignedData({
+  const a = await verifySignedData({
     charSize: 8,
     data: `${encodedHeader}.${encodedPayload}`,
     did: ucan.payload.iss,

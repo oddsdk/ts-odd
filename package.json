@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.24.2",
+  "version": "0.24.2-alpha-3",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -10,7 +10,7 @@
   ],
   "main": "dist/index.cjs.js",
   "module": "dist/index.es5.js",
-  "browser": "dist/index.umd.js",
+  "browser": "dist/index.umd.min.js",
   "files": [
     "dist",
     "README.md",

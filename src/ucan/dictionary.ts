@@ -62,7 +62,7 @@ export function filesystemPrefix(username: string): string {
 }
 
 /**
- * Look up a UCAN for a platform app.
+ * Look up a UCAN by label
  */
 export function lookup(label: string): string | null {
   return getDictionary()[label]
