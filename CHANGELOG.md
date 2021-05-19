@@ -5,6 +5,8 @@
 - Allow raw UCANs
 - Expose functions for looking up stored UCANs
 - Add function to look up user's root DID
+- Default browser build to minified UMD
+- Build CJS & ES5 for node
 
 
 ### v0.24.2
