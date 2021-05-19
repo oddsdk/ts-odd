@@ -1,4 +1,4 @@
-import cbor from 'borc'
+import * as cbor from 'cborg'
 
 import { isBlob, isJust } from '../common/type-checks'
 import { Maybe } from '../common/types'
@@ -16,7 +16,7 @@ export const add = async (content: FileContent, key: Maybe<string>): Promise<Add
   const normalized = isBlob(content) ? await blob.toBuffer(content) : content
   const encoded = cbor.encode(normalized)
   const toAdd = isJust(key) ? await crypto.aes.encrypt(encoded, key) : encoded
-  return basic.add(toAdd)
+  return basic.add(Buffer.from(toAdd))
 }
 
 export const catAndDecode = async (cid: CID, key: Maybe<string>): Promise<unknown> => {
