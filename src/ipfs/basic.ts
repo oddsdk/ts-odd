@@ -18,7 +18,7 @@ export const add = async (content: FileContent): Promise<AddResult> => {
   }
 }
 
-export const catRaw = async (cid: CID): Promise<Uint8Array[]> => {
+export const catRaw = async (cid: CID): Promise<Buffer[]> => {
   const ipfs = await getIpfs()
   const chunks = []
   await attemptPin(cid)
@@ -28,9 +28,9 @@ export const catRaw = async (cid: CID): Promise<Uint8Array[]> => {
   return chunks
 }
 
-export const catBuf = async (cid: CID): Promise<Uint8Array> => {
+export const catBuf = async (cid: CID): Promise<Buffer> => {
   const raw = await catRaw(cid)
-  return Uint8Array.from(Buffer.concat(raw))
+  return Buffer.concat(raw)
 }
 
 export const cat = async (cid: CID): Promise<string> => {
