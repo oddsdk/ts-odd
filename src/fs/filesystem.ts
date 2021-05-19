@@ -17,7 +17,6 @@ import * as crypto from '../crypto'
 import * as pathing from '../path'
 import * as typeCheck from './types/check'
 import * as ucan from '../ucan'
-import * as ucanInternal from '../ucan/internal'
 
 import { CID, FileContent } from '../ipfs'
 import { NoPermissionError } from '../errors'
@@ -344,7 +343,7 @@ export class FileSystem {
       : "query"
 
     if (!this.localOnly) {
-      const proof = await ucanInternal.lookupFilesystemUcan(path)
+      const proof = await ucan.dictionary.lookupFilesystemUcan(path)
       const decodedProof = proof && ucan.decode(proof)
 
       if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {

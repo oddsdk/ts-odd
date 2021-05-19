@@ -1,11 +1,12 @@
 import * as pathing from '../path'
 import { DirectoryPath, DistinctivePath } from '../path'
-
+import { Potency, Resource } from "../ucan"
 
 export type Permissions = {
   app?: AppInfo
   fs?: FileSystemPermissions
   platform?: PlatformPermissions
+  raw?: RawPermissions
 }
 
 export type AppInfo = {
@@ -20,6 +21,14 @@ export type FileSystemPermissions = {
 
 export type PlatformPermissions = {
   apps: '*' | Array<string>
+}
+
+export type RawPermissions = Array<RawPermission>
+
+export type RawPermission = {
+  exp: number
+  rsc: Resource
+  ptc: Potency
 }
 
 
