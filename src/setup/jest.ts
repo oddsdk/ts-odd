@@ -82,14 +82,19 @@ const ed25519Verify = (message: Uint8Array, signature: Uint8Array, publicKey: Ui
 // Node RSA Keystore
 //-------------------------------------
 
+
 class InMemoryRSAKeyStore implements KeyStore {
 
-  store: Record<string, any>;
-  cfg: Config;
+  cfg: Config
+  readKeyPair: CryptoKeyPair
+  writeKeyPair: CryptoKeyPair
+  inMemoryStore: Record<string, CryptoKey>
 
-  constructor(cfg: Config, store: Record<string, any>) {
+  constructor(cfg: Config, readKeyPair: CryptoKeyPair, writeKeyPair: CryptoKeyPair) {
     this.cfg = cfg
-    this.store = store
+    this.inMemoryStore = {}
+    this.readKeyPair = readKeyPair
+    this.writeKeyPair = writeKeyPair
   }
 
   static async init(maybeCfg?: Partial<Config>): Promise<InMemoryRSAKeyStore> {
@@ -98,52 +103,50 @@ class InMemoryRSAKeyStore implements KeyStore {
       type: CryptoSystem.RSA
     })
 
-    const { rsaSize, hashAlg, readKeyName, writeKeyName } = cfg
+    const { rsaSize, hashAlg } = cfg
 
-    let store: Record<string, any> = {}
+    const readKeyPair = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Read)
+    const writeKeyPair = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Write)
 
-    store[readKeyName] = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Read);
-    store[writeKeyName] = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Write)
-
-    return new InMemoryRSAKeyStore(cfg, store)
+    return new InMemoryRSAKeyStore(cfg, readKeyPair, writeKeyPair)
   }
 
   async readKey() {
-    return this.store[this.cfg.readKeyName]
+    return this.readKeyPair
   }
 
   async writeKey() {
-    return this.store[this.cfg.writeKeyName]
+    return this.writeKeyPair
   }
 
   async getSymmKey(keyName: string, cfg?: Partial<Config>): Promise<CryptoKey> {
     const mergedCfg = config.merge(this.cfg, cfg)
-    const maybeKey = this.store[keyName]
+    const maybeKey = this.inMemoryStore[keyName]
     if(maybeKey !== null) {
       return maybeKey
     }
     const key = await aes.makeKey(config.symmKeyOpts(mergedCfg))
-    this.store[keyName] = key
+    this.inMemoryStore[keyName] = key
     return key
   }
 
   async keyExists(keyName: string): Promise<boolean> {
-    const key = this.store[keyName]
+    const key = this.inMemoryStore[keyName]
     return key !== null
   }
 
   async deleteKey(keyName: string): Promise<void> {
-    delete this.store[keyName]
+    delete this.inMemoryStore[keyName]
   }
 
   async destroy(): Promise<void> {
-    this.store = {}
+    this.inMemoryStore = {}
   }
 
   async importSymmKey(keyStr: string, keyName: string, cfg?: Partial<Config>): Promise<void> {
     const mergedCfg = config.merge(this.cfg, cfg)
     const key = await aes.importKey(keyStr, config.symmKeyOpts(mergedCfg))
-    this.store[keyName] = key
+    this.inMemoryStore[keyName] = key
   }
 
   async exportSymmKey(keyName: string, cfg?: Partial<Config>): Promise<string> {
@@ -252,7 +255,7 @@ class InMemoryRSAKeyStore implements KeyStore {
 //-------------------------------------
 
 const getKeystore = (() => {
-  let keystore: null | InMemoryRSAKeyStore = null;
+  let keystore: null | InMemoryRSAKeyStore = null
 
   return async function get() {
     if (keystore == null) {
@@ -314,6 +317,7 @@ export const JEST_IMPLEMENTATION = {
       return ks.cfg.type
     },
     async clear(): Promise<void> {
+      return
     },
   },
   storage: {
