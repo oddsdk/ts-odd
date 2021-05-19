@@ -1,6 +1,4 @@
-import { CharSize } from 'keystore-idb/types'
 import localforage from 'localforage'
-import utils from 'keystore-idb/utils'
 
 import * as common from './common'
 import * as identifiers from './common/identifiers'
@@ -120,7 +118,6 @@ export async function initialise(
 
   const permissions = options.permissions || null
   const { autoRemoveUrlParams = true, rootKey } = options
-  const { app, fs } = permissions || {}
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
@@ -186,7 +183,7 @@ export async function initialise(
 
   } else {
     // trigger build for internal ucan dictionary
-    ucan.store([])
+    await ucan.store([])
 
   }
 
@@ -330,8 +327,8 @@ function scenarioNotAuthorised(
 // ㊙️
 
 interface AuthLobbyClassifiedInfo {
-  sessionKey: string;
-  secrets: string;
+  sessionKey: string
+  secrets: string
   iv: string
 }
 

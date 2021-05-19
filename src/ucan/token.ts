@@ -1,51 +1,8 @@
-import * as did from './did'
-import * as crypto from './crypto'
-import { base64 } from './common'
-
-// TYPES
-
-export type SessionKey = {
-  sessionKey: string
-}
-
-export type Fact = SessionKey | Record<string, string>
-
-export type Resource =
-  "*" | Record<string, string>
-
-export type UcanHeader = {
-  alg: string
-  typ: string
-  uav: string
-}
-
-export type UcanPayload = {
-  aud: string
-  exp: number
-  fct: Array<Fact>
-  iss: string
-  nbf: number
-  prf: string | null
-  ptc: string | undefined | null
-  rsc: Resource
-}
-
-export type Ucan = {
-  header: UcanHeader
-  payload: UcanPayload
-  signature: string | null
-}
-
-// CONSTANTS
-
-
-// TODO: Waiting on API change.
-//       Should be `dnslink`
-export const WNFS_PREFIX = "wnfs"
-
-
-
-// FUNCTIONS
+import * as did from '../did/local'
+import { verifySignedData } from '../did/validation'
+import * as crypto from '../crypto'
+import { base64 } from '../common'
+import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from './types'
 
 
 /**
@@ -75,6 +32,7 @@ export async function build({
   facts = [],
   issuer,
   lifetimeInSeconds = 30,
+  expiration,
   potency = 'APPEND',
   proof,
   resource
@@ -82,9 +40,10 @@ export async function build({
   addSignature?: boolean
   audience: string
   facts?: Array<Fact>
-  issuer: string
+  issuer?: string
   lifetimeInSeconds?: number
-  potency?: string | null
+  expiration?: number
+  potency?: Potency
   proof?: string
   resource?: Resource
 }): Promise<Ucan> {
@@ -100,7 +59,7 @@ export async function build({
   }
 
   // Timestamps
-  let exp = currentTimeInSeconds + lifetimeInSeconds
+  let exp = expiration || (currentTimeInSeconds + lifetimeInSeconds)
   let nbf = currentTimeInSeconds - 60
 
   if (decodedProof) {
@@ -129,32 +88,6 @@ export async function build({
     payload,
     signature
   }
-}
-
-/**
- * Given a list of UCANs, generate a dictionary.
- * The key will be in the form of `${resourceKey}:${resourceValue}`
- */
-export function compileDictionary(ucans: Array<string>): Record<string, string> {
-  return ucans.reduce((acc, ucanString) => {
-    const ucan = decode(ucanString)
-    const { rsc } = ucan.payload
-
-    if (isExpired(ucan)) return acc
-
-    if (typeof rsc !== "object") {
-      return { ...acc, [rsc]: ucanString }
-    }
-
-    const resource = Array.from(Object.entries(rsc))[0]
-    const key = resource[0] + ":" + (
-      resource[0] === WNFS_PREFIX
-        ? resource[1].replace(/^\/+/, "")
-        : resource[1]
-    )
-
-    return { ...acc, [key]: ucanString }
-  }, {})
 }
 
 /**
@@ -228,7 +161,7 @@ export function isExpired(ucan: Ucan): boolean {
   const encodedHeader = encodeHeader(ucan.header)
   const encodedPayload = encodePayload(ucan.payload)
 
-  const a = await did.verifySignedData({
+  const a = await verifySignedData({
     charSize: 8,
     data: `${encodedHeader}.${encodedPayload}`,
     did: ucan.payload.iss,
@@ -282,8 +215,8 @@ export async function sign(header: UcanHeader, payload: UcanPayload): Promise<st
  */
 function jwtAlgorithm(cryptoSystem: string): string | null {
   switch (cryptoSystem) {
-    case "ed25519": return 'EdDSA';
-    case "rsa": return 'RS256';
+    case "ed25519": return 'EdDSA'
+    case "rsa": return 'RS256'
     default: return null
   }
 }

@@ -1,6 +1,5 @@
 import * as did from '../did'
 import * as ucan from '../ucan'
-import * as ucanInternal from '../ucan/internal'
 import { api } from '../common'
 import { setup } from '../setup/internal'
 import RootTree from '../fs/root/tree'
@@ -48,7 +47,7 @@ export async function createAccount(
 export async function resendVerificationEmail(): Promise<{ success: boolean }> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucanInternal.lookupFilesystemUcan("*")
+  const localUcan = await ucan.dictionary.lookupFilesystemUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }

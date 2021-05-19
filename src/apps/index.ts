@@ -1,6 +1,5 @@
 import * as did from '../did'
 import * as ucan from '../ucan'
-import * as ucanInternal from '../ucan/internal'
 import { api, Maybe, isString } from '../common'
 import { setup } from '../setup/internal'
 import { CID } from '../ipfs'
@@ -18,7 +17,7 @@ export type App = {
 export async function index(): Promise<Array<App>> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucanInternal.lookupAppUcan("*")
+  const localUcan = await ucan.dictionary.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
@@ -54,7 +53,7 @@ export async function create(
 ): Promise<App> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucanInternal.lookupAppUcan("*")
+  const localUcan = await ucan.dictionary.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
@@ -90,7 +89,7 @@ export async function deleteByDomain(
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucanInternal.lookupAppUcan(domain)
+  const localUcan = await ucan.dictionary.lookupAppUcan(domain)
   if (localUcan === null) {
     throw new Error("Could not find your local UCAN")
   }
@@ -134,7 +133,7 @@ export async function publish(
 ): Promise<void> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucanInternal.lookupAppUcan(domain)
+  const localUcan = await ucan.dictionary.lookupAppUcan(domain)
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
