@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.25.1
+
+Fix naming for minified UMD build
+
+
 ### v0.25.0
 
 - Allow raw UCANs

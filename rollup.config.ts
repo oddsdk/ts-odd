@@ -54,7 +54,7 @@ const configUMD = {
   input,
   output: {
     name,
-    file: pkg.browser,
+    file: pkg.browser.replace(".min.js", ".js"),
     format: 'umd',
     sourcemap: true
   },
@@ -67,7 +67,7 @@ const configUMDMinified = {
   input,
   output: {
     name,
-    file: pkg.browser.replace(".js", ".min.js"),
+    file: pkg.browser,
     format: 'umd',
     sourcemap: true
   },
