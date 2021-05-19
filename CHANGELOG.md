@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.25.2
+
+Typescript output to `dist/` instead of `dist/src/`
+
+
 ### v0.25.1
 
 Fix naming for minified UMD build

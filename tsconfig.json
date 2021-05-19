@@ -18,9 +18,11 @@
     ]
   },
   "include": [
-    "src"
+    "src/**/*"
   ],
   "exclude": [
-    "src/**/*.test.ts"
+    "src/**/*.test.ts",
+    "tests/**/*",
+    "src/setup/jest.ts"
   ]
 }
