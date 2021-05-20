@@ -1,2 +1,2 @@
-declare module 'base58-universal/main.js'
+declare module 'base58-universal'
 declare module 'ipld-dag-pb'

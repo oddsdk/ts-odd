@@ -1,4 +1,4 @@
-import * as base58 from 'base58-universal/main.js'
+import * as base58 from 'base58-universal'
 
 import * as utils from 'keystore-idb/utils'
 
