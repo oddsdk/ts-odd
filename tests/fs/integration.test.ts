@@ -29,11 +29,9 @@ describe("the filesystem", () => {
     const cids = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
     const rootCID = cids[0]
     globalThis.cids = cids.map(cid => cid.toString())
-    console.log("loaded CAR file")
 
     const readKey = "pJW/xgBGck9/ZXwQHNPhV3zSuqGlUpXiChxwigwvUws="
     await crypto.keystore.importSymmKey(readKey, await identifiers.readKey({ path: path.directory("private") }))
-    console.log("imported read key")
 
     const fs = await FileSystem.fromCID(rootCID.toString(), {
       localOnly: true,
@@ -44,11 +42,8 @@ describe("the filesystem", () => {
         }
       }
     })
-    console.log("loaded filesystem")
 
     const files = await listFiles(fs, path.root())
-
-    console.log("found", files.length, "files")
 
     expect(files).not.toEqual([])
   })
