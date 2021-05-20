@@ -1,8 +1,9 @@
 import crypto from "crypto"
-import Ipfs, { IPFS } from "ipfs-core"
+import { IPFS } from "ipfs-core"
 
 import MMPT from "./mmpt"
 import * as ipfsConfig from "../../../ipfs/config"
+import { createInMemoryIPFS } from "../../../../tests/helpers/in-memory-ipfs"
 
 function sha256Str(str: string): string {
   return crypto.createHash('sha256').update(str).digest('hex')
@@ -12,7 +13,20 @@ function encode(str: string): Uint8Array {
   return (new TextEncoder()).encode(str)
 }
 
-let ipfs: IPFS;
+
+let ipfs: IPFS | null = null
+
+beforeAll(async done => {
+  ipfs = await createInMemoryIPFS()
+  ipfsConfig.set(ipfs)
+  done()
+})
+
+afterAll(async done => {
+  if (ipfs == null) return
+  await ipfs.stop()
+  done()
+})
 
 /*
 Generates lots of entries for insertion into the MMPT.
@@ -22,8 +36,8 @@ The MMPT is a glorified key-value store.
 This returns an array of key-values sorted by the key,
 so that key collisions are more likely to be tested.
 */
-async function generateExampleEntries(amount: number): Promise<{ name: string, cid: string }[]> {
-  let entries: { name: string, cid: string }[] = []
+async function generateExampleEntries(amount: number): Promise<{ name: string; cid: string }[]> {
+  const entries: { name: string; cid: string }[] = []
 
   for (const i of Array(amount).keys()) {
     const hash = sha256Str(`${i}`)
@@ -38,17 +52,6 @@ async function generateExampleEntries(amount: number): Promise<{ name: string, c
 }
 
 
-
-beforeAll(async done => {
-  ipfs = await Ipfs.create({ offline: true, silent: true })
-  ipfsConfig.set(ipfs)
-  done()
-})
-
-afterAll(async done => {
-  await ipfs.stop()
-  done()
-})
 
 describe("the mmpt", () => {
   it("can handle concurrent adds", async () => {

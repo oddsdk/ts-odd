@@ -1180,6 +1180,23 @@
     "@hapi/bourne" "2.x.x"
     "@hapi/hoek" "9.x.x"
 
+"@ipld/car@https://github.com/matheus23/ipld-car-jest-fix":
+  version "0.0.0-dev"
+  resolved "https://github.com/matheus23/ipld-car-jest-fix#d0d541ec828dc82a577052620fc650222c901cdb"
+  dependencies:
+    "@ipld/dag-cbor" "^5.0.5"
+    "@types/varint" "^6.0.0"
+    multiformats "^8.0.6"
+    varint "^6.0.0"
+
+"@ipld/dag-cbor@^5.0.5":
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/@ipld/dag-cbor/-/dag-cbor-5.0.5.tgz#080fdb47ba7431c905c0ec93bc3d80d5c16f920b"
+  integrity sha512-nSWGvqhwE9nHsrBx8YL4TiwhsitLhJ54Md5BMCUdK+s10QPxYsO7l/rRxU9bLV/L13WUTfLEll2K3Q2ijlZCWw==
+  dependencies:
+    cborg "^1.2.1"
+    multiformats "^8.0.3"
+
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"
   resolved "https://registry.npmjs.org/@istanbuljs/load-nyc-config/-/load-nyc-config-1.1.0.tgz"
@@ -1721,6 +1738,13 @@
   version "2.1.0"
   resolved "https://registry.npmjs.org/@types/throttle-debounce/-/throttle-debounce-2.1.0.tgz"
   integrity sha512-5eQEtSCoESnh2FsiLTxE121IiE60hnMqcb435fShf4bpLRjEu1Eoekht23y6zXS9Ts3l+Szu3TARnTsA0GkOkQ==
+
+"@types/varint@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@types/varint/-/varint-6.0.0.tgz#4ad73c23cbc9b7e44379a7729ace7ed9c8bc9854"
+  integrity sha512-2jBazyxGl4644tvu3VAez8UA/AtrcEetT9HOeAbqZ/vAcRVL/ZDFQjSS7rkWusU5cyONQVUz+nwwrNZdMva4ow==
+  dependencies:
+    "@types/node" "*"
 
 "@types/yargs-parser@*":
   version "20.2.0"
@@ -4396,7 +4420,7 @@ ini@^1.3.4:
   resolved "https://registry.npmjs.org/ini/-/ini-1.3.8.tgz"
   integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
 
-interface-datastore@^4.0.0:
+interface-datastore@^4.0.0, interface-datastore@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/interface-datastore/-/interface-datastore-4.0.1.tgz#bf549b4352bce3581a762625a5b58e0c9e0df953"
   integrity sha512-Q2zh5jGWzLylee1wuT/aSi0aqy4mW7ePlWhfzoISRZ+Uoz3Vq8WksC4og/Sq4Au6p2ujNRlwMO9VjwrQ48HYYw==
@@ -6952,6 +6976,11 @@ multicodec@^3.0.1:
   dependencies:
     uint8arrays "^2.1.3"
     varint "^5.0.2"
+
+multiformats@^8.0.3, multiformats@^8.0.6:
+  version "8.0.6"
+  resolved "https://registry.yarnpkg.com/multiformats/-/multiformats-8.0.6.tgz#af90b9291db70f479ecd6a5583f0ebb07d38e990"
+  integrity sha512-pG+WjFje4KUE54CrHfqhzmoxgf/9om7CBaxVzf264cW9JwsF8yXfc/RJIaqxrrD4RqUnvgkWhJ1aqMNPApI/Qg==
 
 multihashes@^3.0.1, multihashes@^3.1.0:
   version "3.1.1"
