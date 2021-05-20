@@ -1,6 +1,5 @@
 import fs from 'fs'
 import { CID, IPFS } from 'ipfs-core'
-// @ts-ignore
 import { CarBlockIterator } from '@ipld/car'
 
 export async function loadCAR(filepath: string, ipfs: IPFS): Promise<CID[]> {

@@ -71,7 +71,7 @@
     "@types/throttle-debounce": "^2.1.0",
     "@typescript-eslint/eslint-plugin": "^4.24.0",
     "@typescript-eslint/parser": "^4.24.0",
-    "@ipld/car": "https://github.com/matheus23/ipld-car-jest-fix",
+    "@ipld/car": "https://github.com/matheus23/ipld-car-jest-fix#28fa48a8d0e701ddaf6e4785d0d9f08735b67bc8",
     "babel-jest": "^26.6.3",
     "braces": "^3.0.2",
     "eslint": "^7.26.0",
