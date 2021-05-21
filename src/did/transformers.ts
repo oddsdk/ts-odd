@@ -1,5 +1,4 @@
 import * as base58 from 'base58-universal'
-
 import * as utils from 'keystore-idb/utils'
 
 import { BASE58_DID_PREFIX, magicBytes, parseMagicBytes } from './util'
