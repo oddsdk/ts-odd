@@ -6,6 +6,11 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
   return await Ipfs.create({
     offline: true,
     silent: true,
+    config: {
+      Addresses: {
+        Swarm: []
+      },
+    },
     repo: new Repo('inmem', {
       lock: {
         lock: async () => ({ close: async () => { return } }),
@@ -18,8 +23,7 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
         keys: MemoryDatastore,
         datastore: MemoryDatastore,
         pins: MemoryDatastore,
-      }
+      },
     })
   })
 }
-
