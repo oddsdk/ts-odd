@@ -1,4 +1,4 @@
-import * as cbor from 'cborg'
+import cbor from 'borc'
 import * as aes from 'keystore-idb/aes/index'
 import { SymmKeyLength } from 'keystore-idb/types'
 import { JEST_IMPLEMENTATION } from '../src/setup/jest'
