@@ -1180,9 +1180,9 @@
     "@hapi/bourne" "2.x.x"
     "@hapi/hoek" "9.x.x"
 
-"@ipld/car@https://github.com/matheus23/ipld-car-jest-fix":
+"@ipld/car@https://github.com/matheus23/ipld-car-jest-fix#28fa48a8d0e701ddaf6e4785d0d9f08735b67bc8":
   version "0.0.0-dev"
-  resolved "https://github.com/matheus23/ipld-car-jest-fix#d0d541ec828dc82a577052620fc650222c901cdb"
+  resolved "https://github.com/matheus23/ipld-car-jest-fix#28fa48a8d0e701ddaf6e4785d0d9f08735b67bc8"
   dependencies:
     "@ipld/dag-cbor" "^5.0.5"
     "@types/varint" "^6.0.0"

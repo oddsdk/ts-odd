@@ -43,7 +43,8 @@ describe("the filesystem", () => {
       }
     })
 
-    const files = await listFiles(fs, path.root())
+    let files = await listFiles(fs, path.directory("public"))
+    files = files.concat(await listFiles(fs, path.directory("private")))
 
     expect(files).not.toEqual([])
   })

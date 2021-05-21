@@ -1,4 +1,3 @@
-
 import crypto from 'crypto'
 import * as ed25519 from 'noble-ed25519'
 import utils from "keystore-idb/utils"
@@ -23,13 +22,13 @@ globalThis.crypto = webcrypto
 
 const encrypt = async (data: Uint8Array, keyStr: string): Promise<Uint8Array> => {
   const key = await aes.importKey(keyStr, { length: SymmKeyLength.B256 })
-  const encrypted = await aes.encryptBytes(data.buffer, key)
+  const encrypted = await aes.encryptBytes(data, key)
   return new Uint8Array(encrypted)
 }
 
 const decrypt = async (encrypted: Uint8Array, keyStr: string): Promise<Uint8Array> => {
   const key = await aes.importKey(keyStr, { length: SymmKeyLength.B256 })
-  const decryptedBuf = await aes.decryptBytes(encrypted.buffer, key)
+  const decryptedBuf = await aes.decryptBytes(encrypted, key)
   return new Uint8Array(decryptedBuf)
 }
 
@@ -328,4 +327,4 @@ export const JEST_IMPLEMENTATION = {
   }
 }
 
-setDependencies(JEST_IMPLEMENTATION) 
+setDependencies(JEST_IMPLEMENTATION)
