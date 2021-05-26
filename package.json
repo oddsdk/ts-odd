@@ -36,7 +36,7 @@
     "prebuild": "rimraf dist && node scripts/gen-version.js",
     "build": "tsc && rollup -c rollup.config.ts",
     "start": "tsc -w",
-    "test": "jest",
+    "test": "jest --forceExit",
     "test:watch": "jest --watch",
     "test:prod": "yarn run build && yarn run lint && yarn run test -- --no-cache",
     "test:types": "cp -RT tests/types/ dist/ && yarn run tsd",
