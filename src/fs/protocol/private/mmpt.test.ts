@@ -16,18 +16,16 @@ function encode(str: string): Uint8Array {
 
 let ipfs: IPFS | null = null
 
-beforeAll(async () => {
+beforeAll(async done => {
   ipfs = await createInMemoryIPFS()
   ipfsConfig.set(ipfs)
+  done()
 })
 
-afterAll(async () => {
+afterAll(async done => {
   if (ipfs == null) return
   await ipfs.stop()
-  // This seems to trigger GC, which seems to
-  // close some file handles or smth, which
-  // causes jest to finish properly
-  ipfs = null
+  done()
 })
 
 /*

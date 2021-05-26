@@ -21,10 +21,6 @@ beforeAll(async () => {
 afterAll(async () => {
   if (ipfs == null) return
   await ipfs.stop()
-  // This seems to trigger GC, which seems to
-  // close some file handles or smth, which
-  // causes jest to finish properly
-  ipfs = null
 })
 
 
