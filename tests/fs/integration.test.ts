@@ -10,8 +10,6 @@ import * as path from '../../src/path'
 import * as identifiers from '../../src/common/identifiers'
 import * as crypto from '../../src/crypto'
 
-import wtf from 'wtfnode'
-
 
 let ipfs: IPFS | null = null
 
@@ -27,16 +25,6 @@ afterAll(async () => {
   // close some file handles or smth, which
   // causes jest to finish properly
   ipfs = null
-  let stuff = ""
-  wtf.setLogger("info", (msg: string) => {
-    stuff += msg
-    stuff += "\n"
-  })
-  const msgs = await new Promise(resolve => setTimeout(() => {
-    wtf.dump()
-    resolve(stuff)
-  }, 2000))
-  console.log(msgs)
 })
 
 
