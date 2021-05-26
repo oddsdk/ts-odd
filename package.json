@@ -99,6 +99,7 @@
     "typedoc": "^0.20.23",
     "typescript": "^4.1.3",
     "typescript-documentation": "^2.0.0",
+    "wtfnode": "^0.8.4",
     "yarn": "^1.22.4"
   },
   "dependencies": {

@@ -6,6 +6,9 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
   return await Ipfs.create({
     offline: true,
     silent: true,
+    preload: {
+      enabled: false,
+    },
     config: {
       Addresses: {
         Swarm: []
