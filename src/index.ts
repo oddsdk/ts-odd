@@ -72,7 +72,7 @@ export type Continuation = {
   permissions: Maybe<Permissions>
 
   authenticated: true
-  newUser: false,
+  newUser: false
   throughLobby: false
   username: string
 
@@ -172,7 +172,7 @@ export async function initialise(
     )
 
   } else if (cancellation) {
-    const c = (_ => {
+    const c = (() => {
       switch (cancellation) {
         case "DENIED": return "User denied authorisation"
         default: return "Unknown reason"
@@ -256,6 +256,7 @@ export * as ipfs from './ipfs'
 export * as keystore from './keystore'
 export * as machinery from './common'
 export * as crypto from './crypto'
+export * as cbor from 'borc'
 
 
 
@@ -345,7 +346,7 @@ async function importClassifiedInfo(
   const secretsStr = await crypto.aes.decryptGCM(info.secrets, rawSessionKey, info.iv)
   const secrets = JSON.parse(secretsStr)
 
-  const fsSecrets: Record<string, { key: string, bareNameFilter: string }> = secrets.fs
+  const fsSecrets: Record<string, { key: string; bareNameFilter: string }> = secrets.fs
   const ucans = secrets.ucans
 
   // Import read keys and bare name filters
@@ -365,7 +366,7 @@ async function importClassifiedInfo(
 }
 
 async function getClassifiedViaPostMessage(): Promise<string> {
-  const iframe: HTMLIFrameElement = await new Promise((resolve, reject) => {
+  const iframe: HTMLIFrameElement = await new Promise(resolve => {
     const iframe = document.createElement("iframe")
     iframe.id = "webnative-secret-exchange"
     iframe.style.width = "0"
