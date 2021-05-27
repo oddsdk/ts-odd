@@ -1,13 +1,13 @@
 /** @internal */
 
 /** @internal */
-import { Links } from '../../types'
+import { Link, Links } from '../../types'
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from './types'
 import { Metadata } from '../../metadata'
 import { isString } from '../../../common/type-checks'
 import * as check from '../../types/check'
 
-import { isValue, Maybe } from '../../../common'
+import { isValue, Maybe, blob } from '../../../common'
 import * as ipfs from '../../../ipfs'
 import { CID, FileContent } from '../../../ipfs'
 import * as link from '../../link'
@@ -47,7 +47,7 @@ export const putFile = async (
     metadataVal: Metadata,
     previousCID: Maybe<CID>
   ): Promise<PutDetails> => {
-  const userlandInfo = await basic.putFile(content)
+  const userlandInfo = await basic.putFile(await normalizeFileContent(content))
   const userland = link.make('userland', userlandInfo.cid, true, userlandInfo.size)
   const metadata = await putAndMakeLink('metadata', metadataVal)
   const previous = previousCID != null
@@ -66,7 +66,7 @@ export const putFile = async (
   }
 }
 
-export const putAndMakeLink = async (name: string, val: FileContent) => {
+export const putAndMakeLink = async (name: string, val: FileContent): Promise<Link> => {
   const { cid, size } = await ipfs.encoded.add(val, null)
   return link.make(name, cid, true, size)
 }
@@ -125,4 +125,22 @@ export const checkValue = <T>(val: any, name: string, checkFn: (val: any) => val
     return val
   }
   throw new Error(`Improperly formatted header value: ${name}`)
+}
+
+export async function normalizeFileContent(content: FileContent): Promise<Uint8Array> {
+  if (content instanceof Uint8Array) {
+    return content
+  }
+  if (content instanceof Blob) {
+    return await blob.toBuffer(content)
+  }
+  
+  const encoder = new TextEncoder()
+  
+  if (typeof content === "string") {
+    return encoder.encode(content)
+  }
+  
+  const json = JSON.stringify(content)
+  return encoder.encode(json)
 }

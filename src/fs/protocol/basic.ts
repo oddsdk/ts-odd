@@ -1,6 +1,6 @@
 /** @internal */
+import type { ImportCandidate } from 'ipfs-core-types/src/utils'
 
-/** @internal */
 import * as ipfs from '../../ipfs'
 import { CID, FileContent, AddResult } from '../../ipfs'
 
@@ -8,7 +8,7 @@ import { SimpleLinks, Links } from '../types'
 import * as link from '../link'
 
 
-export const getFile = async (cid: CID): Promise<FileContent> => {
+export const getFile = async (cid: CID): Promise<Uint8Array> => {
   return ipfs.catBuf(cid)
 }
 
@@ -16,7 +16,7 @@ export const getEncryptedFile = async (cid: CID, key: string): Promise<FileConte
   return ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent>
 }
 
-export const putFile = async (content: FileContent): Promise<AddResult> => {
+export const putFile = async (content: ImportCandidate): Promise<AddResult> => {
   return ipfs.add(content)
 }
 

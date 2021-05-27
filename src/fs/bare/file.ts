@@ -25,7 +25,7 @@ export class BareFile extends BaseFile {
   }
 
   async putDetailed(): Promise<AddResult> {
-    return protocol.basic.putFile(this.content)
+    return protocol.basic.putFile(await protocol.pub.normalizeFileContent(this.content))
   }
 }
 

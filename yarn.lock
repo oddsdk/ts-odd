@@ -4538,6 +4538,17 @@ ipfs-core-types@^0.4.0:
     multiaddr "^9.0.1"
     multibase "^4.0.2"
 
+ipfs-core-types@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/ipfs-core-types/-/ipfs-core-types-0.5.0.tgz#c5775f249e586a7c2e029b5ed2d73bcc548abb2d"
+  integrity sha512-Upd++4T3beEijnegundRgjSaKsyjqzyf9gmKZHy47rRetObC6trJZALvp5VBpiR0cQXoFEegcXpVOuC/om/4pw==
+  dependencies:
+    cids "^1.1.6"
+    interface-datastore "^4.0.0"
+    ipld-block "^0.11.1"
+    multiaddr "^9.0.1"
+    multibase "^4.0.2"
+
 ipfs-core-utils@^0.8.0:
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/ipfs-core-utils/-/ipfs-core-utils-0.8.0.tgz#6bed0616ed01ba2a3ce456393666f1965baf600a"
@@ -4794,21 +4805,6 @@ ipld-dag-cbor@^1.0.0:
     multicodec "^3.0.1"
     multihashing-async "^2.0.0"
     uint8arrays "^2.1.3"
-
-ipld-dag-pb@^0.20.0:
-  version "0.20.0"
-  resolved "https://registry.npmjs.org/ipld-dag-pb/-/ipld-dag-pb-0.20.0.tgz"
-  integrity sha512-zfM0EdaolqNjAxIrtpuGKvXxWk5YtH9jKinBuQGTcngOsWFQhyybGCTJHGNGGtRjHNJi2hz5Udy/8pzv4kcKyg==
-  dependencies:
-    cids "^1.0.0"
-    class-is "^1.1.0"
-    multicodec "^2.0.0"
-    multihashing-async "^2.0.0"
-    protons "^2.0.0"
-    reset "^0.1.0"
-    run "^1.4.0"
-    stable "^0.1.8"
-    uint8arrays "^1.0.0"
 
 ipld-dag-pb@^0.22.0, ipld-dag-pb@^0.22.1, ipld-dag-pb@^0.22.2:
   version "0.22.2"
@@ -6856,7 +6852,7 @@ minimalistic-crypto-utils@^1.0.1:
   resolved "https://registry.npmjs.org/minimalistic-crypto-utils/-/minimalistic-crypto-utils-1.0.1.tgz"
   integrity sha1-9sAMHAsIIkblxNmd+4x8CDsrWCo=
 
-minimatch@*, minimatch@^3.0.0, minimatch@^3.0.4:
+minimatch@^3.0.0, minimatch@^3.0.4:
   version "3.0.4"
   resolved "https://registry.npmjs.org/minimatch/-/minimatch-3.0.4.tgz"
   integrity sha512-yJHVQEhyqPLUTgt9B83PXu6W3rx4MvvHvSUvToogpwoGDOUQ+yDrR0HRot+yOCdCO7u4hX3pWft6kWBBcqh0UA==
@@ -8116,11 +8112,6 @@ require-main-filename@^2.0.0:
   resolved "https://registry.npmjs.org/require-main-filename/-/require-main-filename-2.0.0.tgz"
   integrity sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==
 
-reset@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.npmjs.org/reset/-/reset-0.1.0.tgz"
-  integrity sha1-n8cxQXGZWubLC35YsGznUir0uvs=
-
 resolve-cwd@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/resolve-cwd/-/resolve-cwd-3.0.0.tgz"
@@ -8293,13 +8284,6 @@ run-parallel@^1.1.9:
   integrity sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==
   dependencies:
     queue-microtask "^1.2.2"
-
-run@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.npmjs.org/run/-/run-1.4.0.tgz"
-  integrity sha1-4X2ekEOrL+F3dsspnhI3848LT/o=
-  dependencies:
-    minimatch "*"
 
 rxjs@^6.6.3:
   version "6.6.3"
