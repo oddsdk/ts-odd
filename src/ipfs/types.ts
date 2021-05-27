@@ -1,5 +1,5 @@
 export type IPFS = {
-  add(data: FileContent, options?: unknown): UnixFSFile
+  add(data: FileContent, options?: unknown): Promise<UnixFSFile>
   cat(cid: CID): AsyncIterable<FileContentRaw>
   ls(cid: CID): AsyncIterable<UnixFSFile>
   dns(domain: string): Promise<CID>

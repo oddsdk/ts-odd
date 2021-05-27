@@ -44,6 +44,6 @@ export type PrivateAddResult = AddResult & {
 
 export type Revision = {
   cid: CID
-  name: PrivateName,
+  name: PrivateName
   number: number
 }

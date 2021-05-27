@@ -17,7 +17,6 @@ import * as crypto from '../crypto'
 import * as pathing from '../path'
 import * as typeCheck from './types/check'
 import * as ucan from '../ucan'
-import * as ucanInternal from '../ucan/internal'
 
 import { CID, FileContent } from '../ipfs'
 import { NoPermissionError } from '../errors'
@@ -57,7 +56,7 @@ type MutationOptions = {
 export class FileSystem {
 
   root: RootTree
-  localOnly: boolean
+  readonly localOnly: boolean
 
   appPath: AppPath | undefined
   proofs: { [_: string]: string }
@@ -116,11 +115,13 @@ export class FileSystem {
     this.publishHooks.push(logCid)
     this.publishHooks.push(updateDataRootWhenOnline)
 
-    // Publish when coming back online
-    globalThis.addEventListener('online', this._whenOnline)
-
-    // Show an alert when leaving the page while updating the data root
-    globalThis.addEventListener('beforeunload', this._beforeLeaving)
+    if (!this.localOnly) {
+      // Publish when coming back online
+      globalThis.addEventListener('online', this._whenOnline)
+      
+      // Show an alert when leaving the page while updating the data root
+      globalThis.addEventListener('beforeunload', this._beforeLeaving)
+    }
   }
 
 
@@ -171,6 +172,7 @@ export class FileSystem {
    * The only function of this is to stop listing to online/offline events.
    */
   deactivate(): void {
+    if (this.localOnly) return
     const globe = (globalThis as any)
     globe.filesystems = globe.filesystems.filter((a: FileSystem) => a !== this)
     globe.removeEventListener('online', this._whenOnline)
@@ -344,7 +346,7 @@ export class FileSystem {
       : "query"
 
     if (!this.localOnly) {
-      const proof = await ucanInternal.lookupFilesystemUcan(path)
+      const proof = await ucan.dictionary.lookupFilesystemUcan(path)
       const decodedProof = proof && ucan.decode(proof)
 
       if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {

@@ -1,8 +1,34 @@
 # Changelog
 
+### v0.25.2
+
+Typescript output to `dist/` instead of `dist/src/`
+
+
+### v0.25.1
+
+Fix naming for minified UMD build
+
+
+### v0.25.0
+
+- Allow raw UCANs
+- Expose functions for looking up stored UCANs
+- Add function to look up user's root DID
+- Default browser build to minified UMD
+- Build CJS & ES5 for node
+
+
+### v0.24.2
+
+Fixed issue with browser detection, didn't work in web/service workers.
+
+
 ### v0.24.1
 
 Fix a couple of bugs in dependency injection
+
+
 ### v0.24.0
 
 - Dependency injection for crypto and storage functions to allow for use in Node.js
