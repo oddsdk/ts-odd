@@ -131,16 +131,16 @@ export async function normalizeFileContent(content: FileContent): Promise<Uint8A
   if (content instanceof Uint8Array) {
     return content
   }
-  if (content instanceof Blob) {
+  if (typeof Blob !== "undefined" && content instanceof Blob) {
     return await blob.toBuffer(content)
   }
-  
+
   const encoder = new TextEncoder()
-  
+
   if (typeof content === "string") {
     return encoder.encode(content)
   }
-  
+
   const json = JSON.stringify(content)
   return encoder.encode(json)
 }
