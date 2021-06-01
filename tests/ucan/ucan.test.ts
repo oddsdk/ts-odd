@@ -6,6 +6,16 @@ describe('UCAN', () => {
     await loadWebnativePage()
   })
 
+  it('can build an empty UCAN', async () => {
+    const [did1,did2] = await page.evaluate(async () => {
+      let did = await webnative.did.ucan()
+      let ucan = await webnative.ucan.build({})
+      return [ucan.payload.aud, did]
+    })
+
+    expect(did1).toEqual(did2)
+  })
+
   it('can build a UCAN', async () => {
     const isValid = await page.evaluate(async () => {
       const ucan = await webnative.ucan.build({

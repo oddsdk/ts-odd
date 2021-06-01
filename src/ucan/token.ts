@@ -38,7 +38,7 @@ export async function build({
   resource
 }: {
   addSignature?: boolean
-  audience: string
+  audience?: string
   facts?: Array<Fact>
   issuer?: string
   lifetimeInSeconds?: number
@@ -50,7 +50,6 @@ export async function build({
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
   const decodedProof = proof && decode(proof)
   const ksAlg = await crypto.keystore.getAlg()
-
   // Header
   const header = {
     alg: jwtAlgorithm(ksAlg) || 'UnknownAlgorithm',
@@ -69,12 +68,13 @@ export async function build({
     nbf = Math.max(prf.nbf, nbf)
   }
 
+  const didStr = await did.ucan()
   // Payload
   const payload = {
-    aud: audience,
+    aud: audience || didStr,
     exp: exp,
     fct: facts,
-    iss: issuer || await did.ucan(),
+    iss: issuer || didStr,
     nbf: nbf,
     prf: proof || null,
     ptc: potency,
