@@ -12,7 +12,4 @@ pkgs.mkShell {
     unstable.niv
   ];
 
-  shellHook = ''
-    ${unstable.yarn}/bin/yarn install
-  '';
 }
