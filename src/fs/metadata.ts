@@ -1,3 +1,4 @@
+import type { Mtime } from 'ipfs-unixfs'
 import * as semver from './semver'
 import { SemVer } from './semver'
 
@@ -45,3 +46,11 @@ export const updateMtime = (metadata: Metadata): Metadata => ({
     mtime: Date.now()
   }
 })
+
+export function mtimeFromMs(ms: number): Mtime {
+  const secs = Math.floor(ms / 1000)
+  return {
+    secs: secs,
+    nsecs: (ms - (secs * 1000)) * 1000
+  }
+}

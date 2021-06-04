@@ -2,17 +2,18 @@ let
   sources  = import ./nix/sources.nix;
   pkgs     = import sources.nixpkgs  {};
   unstable = import sources.unstable {};
+  # https://github.com/NixOS/nixpkgs/issues/53820
+  yarn = unstable.yarn.override { nodejs = unstable.nodejs-16_x; };
 in
 
 pkgs.mkShell {
   buildInputs = [
-    # https://github.com/NixOS/nixpkgs/issues/53820#issuecomment-617973476
-    (unstable.yarn.override { nodejs = null; })
-    unstable.nodejs-15_x
+    yarn
+    unstable.nodejs-16_x
     unstable.niv
   ];
 
   shellHook = ''
-    ${unstable.yarn}/bin/yarn install
+    ${yarn}/bin/yarn install
   '';
 }

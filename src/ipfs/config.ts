@@ -1,5 +1,5 @@
 import IpfsMessagePortClient from 'ipfs-message-port-client'
-import { IPFS } from './types'
+import type { IPFS } from 'ipfs-core'
 import { setup } from '../setup/internal'
 
 
