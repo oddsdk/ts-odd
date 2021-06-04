@@ -1,3 +1,4 @@
+import type { Mtime } from 'ipfs-unixfs'
 import { Maybe } from '../common'
 import { FileContent, CID, AddResult } from '../ipfs'
 import { Path } from '../path'
@@ -26,7 +27,7 @@ export interface SimpleLink {
 export interface BaseLink {
   name: string
   size: number
-  mtime?: number
+  mtime?: Mtime
   isFile: boolean
 }
 

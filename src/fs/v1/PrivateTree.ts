@@ -230,12 +230,13 @@ export default class PrivateTree extends BaseTree {
   }
 
   updateLink(name: string, result: PrivateAddResult): this {
+    const now = Date.now()
     const { cid, size, key, isFile, skeleton } = result
     const pointer = result.name
-    this.header.links[name] = { name, key, pointer, size, isFile: isFile, mtime: Date.now() }
+    this.header.links[name] = { name, key, pointer, size, isFile: isFile, mtime: metadata.mtimeFromMs(now) }
     this.header.skeleton[name] = { cid, key, subSkeleton: skeleton }
     this.header.revision = this.header.revision + 1
-    this.header.metadata.unixMeta.mtime = Date.now()
+    this.header.metadata.unixMeta.mtime = now
     return this
   }
 

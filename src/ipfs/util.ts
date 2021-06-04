@@ -1,19 +1,19 @@
-import dagPB from 'ipld-dag-pb'
-import { DAGNode, RawDAGNode, DAGLink, RawDAGLink } from './types'
+import dagPB, { DAGLink, DAGNode } from 'ipld-dag-pb'
+import type { GetResult } from 'ipfs-core-types/src/dag'
+import { CID } from 'ipfs-message-port-client/src/block'
 
+type RawDAGLink = {
+  Name: string
+  Hash: CID
+  Tsize: number
+}
 
-export const rawToDAGLink = (raw: RawDAGLink): DAGLink => {
+const rawToDAGLink = (raw: RawDAGLink): DAGLink => {
   return new dagPB.DAGLink(raw.Name, raw.Tsize, raw.Hash)
 }
 
-export const rawToDAGNode = (raw: RawDAGNode): DAGNode => {
+export const rawToDAGNode = (raw: GetResult): DAGNode => {
   const data = raw?.value?.Data
   const links = raw?.value?.Links?.map(rawToDAGLink)
   return new dagPB.DAGNode(data, links)
-}
-
-
-export default {
-  rawToDAGLink,
-  rawToDAGNode
 }

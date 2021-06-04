@@ -11,7 +11,7 @@ import { isObject, Maybe } from '../../common'
 
 type ConstructorParams = {
   cid: Maybe<CID>
-  content: FileContent,
+  content: FileContent
   header: FileHeader
 }
 
@@ -29,7 +29,7 @@ export class PublicFile extends BaseFile {
     this.history = new PublicHistory(this as unknown as history.Node)
   }
 
-  static instanceOf(obj: any): obj is PublicFile {
+  static instanceOf(obj: unknown): obj is PublicFile {
     return isObject(obj)
       && obj.content !== undefined
       && check.isFileHeader(obj.header)

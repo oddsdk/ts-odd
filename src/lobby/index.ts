@@ -1,5 +1,6 @@
 import * as did from '../did'
 import * as ucan from '../ucan'
+import * as ucanStore from '../ucan/store'
 import { api } from '../common'
 import { setup } from '../setup/internal'
 import RootTree from '../fs/root/tree'
@@ -47,17 +48,19 @@ export async function createAccount(
 export async function resendVerificationEmail(): Promise<{ success: boolean }> {
   const apiEndpoint = setup.endpoints.api
 
-  const localUcan = await ucan.dictionary.lookupFilesystemUcan("*")
+  // We've not implemented an "administer account" resource/ucan, so authenticating
+  // with any kind of ucan will work server-side
+  const localUcan = Object.values(ucanStore.getDictionary())[0]
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
 
-  const jwt = await ucan.build({
+  const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
     proof: localUcan,
     potency: null
-  })
+  }))
 
   const response = await fetch(`${apiEndpoint}/user/email/resend`, {
     method: 'POST',
