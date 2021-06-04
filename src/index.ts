@@ -9,6 +9,7 @@ import * as storage from './storage'
 import * as ucan from './ucan/internal'
 import * as ucanPermissions from './ucan/permissions'
 import { setup } from './setup/internal'
+import * as did from './did'
 
 import { USERNAME_STORAGE_KEY, Maybe } from './common'
 import { Permissions } from './ucan/permissions'
@@ -398,8 +399,10 @@ async function getClassifiedViaPostMessage(): Promise<string> {
     })
 
     if (iframe.contentWindow == null) throw new Error("Can't import UCANs & readKey(s): No access to its contentWindow")
-    // Technically, the message doesn't matter
-    const message = { webnative: "exchange-secrets" }
+    const message = {
+      webnative: "exchange-secrets",
+      didExchange: await did.exchange()
+    }
     iframe.contentWindow.postMessage(message, iframe.src)
 
     return await answer
