@@ -26,7 +26,7 @@ afterAll(async () => {
 fc.configureGlobal({ numRuns: 10 })
 
 describe('the filesystem api', () => {
-  it('write files', async () => {
+  it('writes files', async () => {
     const fs = await emptyFilesystem()
 
     await fc.assert(
@@ -35,7 +35,6 @@ describe('the filesystem api', () => {
           const filepath = path.file('public', data[0])
           const [val] = data[1]
 
-
           await fs.write(filepath, val)
 
           expect(await fs.exists(filepath)).toEqual(true)
@@ -43,7 +42,7 @@ describe('the filesystem api', () => {
     )
   })
 
-  it('remove files it writes', async () => {
+  it('removes files it writes', async () => {
     const fs = await emptyFilesystem()
 
     await fc.assert(
@@ -60,7 +59,7 @@ describe('the filesystem api', () => {
     )
   })
 
-  it('read files it writes', async () => {
+  it('reads files it writes', async () => {
     const fs = await emptyFilesystem()
 
     await fc.assert(
@@ -121,7 +120,7 @@ describe('the filesystem api', () => {
     )
   })
 
-  it('make directories', async () => {
+  it('makes directories', async () => {
     const fs = await emptyFilesystem()
 
     await fc.assert(
@@ -132,7 +131,8 @@ describe('the filesystem api', () => {
           await fs.mkdir(dirpath)
 
           expect(await fs.exists(dirpath)).toEqual(true)
-        })
+        }),
+      { numRuns: 100 }
     )
   })
 
@@ -247,15 +247,15 @@ const pathSegmentPair = () => {
 
 const fileContent = () => {
   return fc.frequency(
-    { arbitrary: simpleContent(), weight: 10 },
-    { arbitrary: rawFileContent(), weight: 3 },
+    { arbitrary: simpleContent(), weight: 9 },
+    { arbitrary: rawFileContent(), weight: 1 },
   )
 }
 
 const simpleContent = () => {
   return fc.frequency(
-    { arbitrary: fc.tuple(fc.json(), fc.constant('string')), weight: 10 },
-    { arbitrary: fc.tuple(fc.string({ minLength: 1 }), fc.constant('string')), weight: 5 },
+    { arbitrary: fc.tuple(fc.json(), fc.constant('string')), weight: 6 },
+    { arbitrary: fc.tuple(fc.string({ minLength: 1 }), fc.constant('string')), weight: 4 },
     { arbitrary: fc.tuple(fc.integer(), fc.constant('number')), weight: 2 },
     { arbitrary: fc.tuple(fc.double(), fc.constant('number')), weight: 2 },
     { arbitrary: fc.tuple(fc.boolean(), fc.constant('boolean')), weight: 1 }

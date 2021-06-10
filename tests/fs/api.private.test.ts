@@ -25,7 +25,7 @@ afterAll(async () => {
 fc.configureGlobal({ numRuns: 10 })
 
 describe('the filesystem api', () => {
-  it('write files', async () => {
+  it('writes files', async () => {
     const fs = await emptyFilesystem()
 
     await fc.assert(
@@ -41,7 +41,7 @@ describe('the filesystem api', () => {
     )
   })
 
-  it('remove what it writes', async () => {
+  it('removes what it writes', async () => {
     const fs = await emptyFilesystem()
     await fc.assert(
       fc.asyncProperty(
@@ -57,7 +57,7 @@ describe('the filesystem api', () => {
     )
   })
 
-  it('read files it writes', async () => {
+  it('reads files it writes', async () => {
     const fs = await emptyFilesystem()
 
     await fc.assert(
@@ -118,7 +118,7 @@ describe('the filesystem api', () => {
     )
   })
 
-  it('make directories', async () => {
+  it('makes directories', async () => {
     const fs = await emptyFilesystem()
 
     await fc.assert(
@@ -235,7 +235,7 @@ const pathSegment = () => {
 
 const pathSegmentPair = () => {
   return fc.set(
-    fc.hexaString({ minLength: 1, maxLength: 20 }),
+    fc.hexaString({ minLength: 4, maxLength: 20 }),
     { minLength: 2, maxLength: 2 }
   )
 }
@@ -252,8 +252,8 @@ const fileContent = () => {
 
 const simpleContent = () => {
   return fc.frequency(
-    { arbitrary: fc.tuple(fc.json(), fc.constant('string')), weight: 10 },
-    { arbitrary: fc.tuple(fc.string({ minLength: 1 }), fc.constant('string')), weight: 5 },
+    { arbitrary: fc.tuple(fc.json(), fc.constant('string')), weight: 6 },
+    { arbitrary: fc.tuple(fc.string({ minLength: 1 }), fc.constant('string')), weight: 4 },
     { arbitrary: fc.tuple(fc.integer(), fc.constant('number')), weight: 2 },
     { arbitrary: fc.tuple(fc.double(), fc.constant('number')), weight: 2 },
     { arbitrary: fc.tuple(fc.boolean(), fc.constant('boolean')), weight: 1 }
