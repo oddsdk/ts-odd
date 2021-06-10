@@ -257,7 +257,7 @@ export * as ipfs from './ipfs'
 export * as keystore from './keystore'
 export * as machinery from './common'
 export * as crypto from './crypto'
-export * as cbor from 'borc'
+export * as cbor from 'cborg'
 
 
 

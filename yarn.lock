@@ -2573,6 +2573,11 @@ cborg@^1.0.4, cborg@^1.2.1:
   resolved "https://registry.yarnpkg.com/cborg/-/cborg-1.3.2.tgz#b61d51ff5a64cd6d76a97a0b88e4b57a08492ec6"
   integrity sha512-Mzv+gp5dOGrABoobxhuY9Os+zaQs5pvHXMoMfEWo5gzdrcF4kO4KL4mG/7XbmJ8nqLrJkPlp/1tqgvcTpiHU9A==
 
+cborg@^1.3.4:
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/cborg/-/cborg-1.3.4.tgz#12390c691e53fccf9a0759f10a4855b86ac09c5a"
+  integrity sha512-w/sCTLy2k4AI6XbDMiaPsGc07bBAcX/It3VYQBwKJ5fvAAyUOXi5nC1wjW0OXIfY5ROkOGJCAUOR5AW1ykkiCQ==
+
 chai-checkmark@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/chai-checkmark/-/chai-checkmark-1.0.1.tgz#9fbb3c9ad9101f097ef288328d30f4227d74fffb"

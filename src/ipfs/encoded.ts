@@ -1,4 +1,4 @@
-import cbor from 'borc'
+import cbor from 'cborg'
 
 import { isBlob, isJust } from '../common/type-checks'
 import { Maybe } from '../common/types'
