@@ -38,9 +38,9 @@ const browserPlugins = [
   // Most packages in node_modules are legacy CommonJS, so let's convert them to ES
   commonjs(),
 
-  inject({
-    Buffer: ['buffer/', 'Buffer']
-  }),
+  // inject({
+  //   Buffer: ['buffer/', 'Buffer']
+  // }),
 
   // Polyfills for node builtins/globals
   polyfills(),
@@ -50,31 +50,31 @@ const nodePlugins = [...browserPlugins]
 nodePlugins[2] = nodeResolve({ browser: false, preferBuiltins: true })
 
 // browser-friendly UMD build
-const configUMD = {
-  input,
-  output: {
-    name,
-    file: pkg.browser.replace(".min.js", ".js"),
-    format: 'umd',
-    sourcemap: true
-  },
-  plugins: browserPlugins,
-  external,
-  context
-}
+// const configUMD = {
+//   input,
+//   output: {
+//     name,
+//     file: pkg.browser.replace(".min.js", ".js"),
+//     format: 'umd',
+//     sourcemap: true
+//   },
+//   plugins: browserPlugins,
+//   external,
+//   context
+// }
 
-const configUMDMinified = {
-  input,
-  output: {
-    name,
-    file: pkg.browser,
-    format: 'umd',
-    sourcemap: true
-  },
-  plugins: [...browserPlugins, terser(), gzipPlugin()],
-  external,
-  context
-}
+// const configUMDMinified = {
+//   input,
+//   output: {
+//     name,
+//     file: pkg.browser,
+//     format: 'umd',
+//     sourcemap: true
+//   },
+//   plugins: [...browserPlugins, terser(), gzipPlugin()],
+//   external,
+//   context
+// }
 
 // CommonJS (for Node) and ES module (for bundlers) build.
 // (We could have three entries in the configuration array
@@ -90,15 +90,15 @@ const configCjsAndEs = {
       format: 'cjs',
       sourcemap: true
     },
-    {
-      file: pkg.module,
-      format: 'es',
-      sourcemap: true
-    }
+    // {
+    //   file: pkg.module,
+    //   format: 'es',
+    //   sourcemap: true
+    // }
   ],
-  plugins: nodePlugins,
+  plugins: browserPlugins,
   external,
   context,
 }
 
-export default [configUMD, configUMDMinified, configCjsAndEs]
+export default [configCjsAndEs]

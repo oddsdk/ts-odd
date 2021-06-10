@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer'
 import CIDObj from 'cids'
 import dagPB, { DAGLink, DAGNode } from 'ipld-dag-pb'
 import type { IPFSEntry } from 'ipfs-core-types/src/root'

@@ -1,4 +1,4 @@
-const fs = require("fs").promises
+import { promises as fs } from 'fs'
 
 fs.readFile("package.json", { encoding: "utf-8" }).then(pkg => {
     const pkgJson = JSON.parse(pkg)
