@@ -42,10 +42,10 @@
     "start": "tsc -w",
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
-    "test:prod": "yarn run build && yarn run lint && yarn run test -- --no-cache",
+    "test:prod": "yarn run build && yarn run lint && yarn run test --no-cache",
     "test:types": "cp -RT tests/types/ dist/ && yarn run tsd",
     "test:unit": "jest --watch --testPathPattern=src/",
-    "prepublishOnly": "yarn build && yarn docs",
+    "prepare": "yarn build && yarn docs",
     "publish-dry": "npm publish --dry-run",
     "publish-alpha": "npm publish --tag alpha",
     "publish-latest": "npm publish --tag latest"
