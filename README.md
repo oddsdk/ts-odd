@@ -31,7 +31,7 @@ The Fission webnative SDK offers tools for:
 // ES6
 import * as wn from 'webnative'
 
-// Browser/UMD build
+// Browser/IIFE build
 const wn = globalThis.webnative
 ```
 
@@ -150,7 +150,7 @@ The `publish` function synchronises your file system with the Fission API and IP
 Each file and directory has a `history` property, which you can use to get an earlier version of that item. We use the `delta` variable as the order index. Primarily because the timestamps can be slightly out of sequence, due to device inconsistencies.
 
 ```ts
-const file = await fs.get("private/Blog Posts/article.md")
+const file = await fs.get(wn.path.file("private", "Blog Posts", "article.md"))
 
 file.history.list()
 // { delta: -1, timestamp: 1606236743 }
@@ -183,7 +183,7 @@ yarn start
 yarn build
 
 # test
-yarn test
+yarn test:prod
 yarn test:watch
 
 # generate docs
