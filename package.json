@@ -31,7 +31,7 @@
   "homepage": "https://guide.fission.codes",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=10.21.0"
+    "node": ">=12"
   },
   "scripts": {
     "docs": "rimraf docs && typedoc && typedoc --entryPoints ./src/fs --out docs/fs",
