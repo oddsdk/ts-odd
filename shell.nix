@@ -12,8 +12,4 @@ pkgs.mkShell {
     unstable.nodejs-16_x
     unstable.niv
   ];
-
-  shellHook = ''
-    ${yarn}/bin/yarn install
-  '';
 }
