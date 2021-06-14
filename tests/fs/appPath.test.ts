@@ -8,7 +8,7 @@ describe("FS", () => {
     const string = await page.evaluate(async () => {
       const wn = webnative
 
-      const fs = await wn.fs.empty({
+      const fs = await new wn.fs.empty({
         localOnly: true,
         permissions: {
           app: {
