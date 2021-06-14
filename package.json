@@ -9,12 +9,12 @@
     "files"
   ],
   "type": "module",
-  "main": "dist/index.js",
+  "main": "modules/index.js",
   "browser": {
     "crypto": false
   },
   "files": [
-    "dist",
+    "modules",
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
@@ -22,7 +22,7 @@
     "!*.test.ts",
     "docs"
   ],
-  "types": "dist/index.d.ts",
+  "types": "modules/index.d.ts",
   "author": "Daniel Holmgren <daniel@fission.codes>",
   "repository": {
     "type": "git",
@@ -31,19 +31,19 @@
   "homepage": "https://guide.fission.codes",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=12"
+    "node": ">=15"
   },
   "scripts": {
     "docs": "rimraf docs && typedoc && typedoc --entryPoints ./src/fs --out docs/fs",
     "lint": "yarn eslint src/**/*.ts",
-    "prebuild": "rimraf dist && node scripts/gen-version.js",
+    "prebuild": "rimraf modules && node scripts/gen-version.js",
     "build": "tsc && yarn run build:minified",
-    "build:minified": "esbuild src/index.ts --outfile=dist/index.min.js --bundle --minify --sourcemap --platform=browser --format=iife --target=es2020 && gzip -k9 dist/index.min.js",
+    "build:minified": "esbuild src/index.ts --outfile=modules/index.min.js --bundle --minify --sourcemap --platform=browser --format=iife --target=es2020 && gzip -k9 dist/index.min.js",
     "start": "tsc -w",
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
     "test:prod": "yarn run build && yarn run lint && yarn run test --no-cache",
-    "test:types": "cp -RT tests/types/ dist/ && yarn run tsd",
+    "test:types": "cp -RT tests/types/ modules/ && yarn run tsd",
     "test:unit": "jest --watch --testPathPattern=src/",
     "prepare": "yarn build && yarn docs",
     "publish-dry": "npm publish --dry-run",
@@ -99,6 +99,6 @@
     "**/ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz"
   },
   "tsd": {
-    "directory": "dist"
+    "directory": "modules"
   }
 }
