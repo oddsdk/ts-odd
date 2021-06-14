@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node Environment
         uses: actions/setup-node@v2
         with:
-          node_version: '16'
+          node-version: '16'
 
       - name: Install Dependencies
         run: yarn install
