@@ -24,13 +24,13 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
-      - name: Setup Node Environment
-        uses: actions/setup-node@v2
+      - name: Install nix
+        uses: cachix/install-nix-action@v12
         with:
-          node-version: '16'
+          nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Install Dependencies
-        run: yarn install --network-concurrency 1
+        run: nix-shell --run "yarn install --network-concurrency 1"
 
       - name: Build & Test
-        run: 'yarn test:prod'
+        run: nix-shell --run "yarn test:prod"
