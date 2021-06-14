@@ -5,7 +5,7 @@ on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [ main ]
-  
+
   pull_request:
     branches: [ main ]
 
@@ -28,6 +28,20 @@ jobs:
         uses: cachix/install-nix-action@v12
         with:
           nix_path: nixpkgs=channel:nixos-unstable
+
+      # https://github.com/actions/cache/blob/main/examples.md#node---yarn
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(nix-shell --run 'yarn cache dir')"
+
+      - uses: actions/cache@v2
+        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      # ---
 
       - name: Install Dependencies
         run: nix-shell --run "yarn install --network-concurrency 1"
