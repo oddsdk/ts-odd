@@ -2,15 +2,16 @@ import * as fc from 'fast-check'
 
 import { IPFS } from 'ipfs-core'
 import { createInMemoryIPFS } from '../helpers/in-memory-ipfs'
-import FileSystem from '../../src/fs/filesystem'
 
 import * as ipfsConfig from '../../src/ipfs'
 import * as path from '../../src/path'
-import * as crypto from '../../src/crypto'
+
+import { pathSegment, pathSegmentPair } from '../helpers/paths'
+import { emptyFilesystem } from '../helpers/filesystem'
+import { privateFileContent as fileContent, privateDecode as decode } from '../helpers/fileContent'
 
 
 let ipfs: IPFS | null = null
-let rootKey: string
 
 beforeAll(async () => {
   ipfs = await createInMemoryIPFS()
@@ -30,11 +31,11 @@ describe('the filesystem api', () => {
 
     await fc.assert(
       fc.asyncProperty(
-        fc.tuple(pathSegment(), fileContent()), async data => {
-          const filepath = path.file('private', data[0])
-          const [val] = data[1]
+        fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
+        async ({ pathSegment, fileContent }) => {
+          const filepath = path.file('private', pathSegment)
 
-          await fs.write(filepath, val)
+          await fs.write(filepath, fileContent.val)
 
           expect(await fs.exists(filepath)).toEqual(true)
         })
@@ -45,11 +46,11 @@ describe('the filesystem api', () => {
     const fs = await emptyFilesystem()
     await fc.assert(
       fc.asyncProperty(
-        fc.tuple(pathSegment(), fileContent()), async data => {
-          const filepath = path.file('private', data[0])
-          const [val] = data[1]
+        fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
+        async ({ pathSegment, fileContent }) => {
+          const filepath = path.file('private', pathSegment)
 
-          await fs.write(filepath, val)
+          await fs.write(filepath, fileContent.val)
           await fs.rm(filepath)
 
           expect(await fs.exists(filepath)).toEqual(false)
@@ -62,15 +63,15 @@ describe('the filesystem api', () => {
 
     await fc.assert(
       fc.asyncProperty(
-        fc.tuple(pathSegment(), fileContent()), async data => {
-          const filepath = path.file('private', data[0])
-          const [val, type] = data[1]
+        fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
+        async ({ pathSegment, fileContent }) => {
+          const filepath = path.file('private', pathSegment)
 
-          await fs.write(filepath, val)
+          await fs.write(filepath, fileContent.val)
           const file = await fs.read(filepath)
-          const content = maybeDecode(file, type)
+          const content = decode(file, fileContent.type)
 
-          expect(content).toEqual(val)
+          expect(content).toEqual(fileContent.val)
         })
     )
   })
@@ -80,13 +81,12 @@ describe('the filesystem api', () => {
 
     await fc.assert(
       fc.asyncProperty(
-        fc.tuple(pathSegmentPair(), fileContent()), async data => {
-          const [from, to] = data[0]
-          const [val] = data[1]
-          const fromPath = path.file('private', from)
-          const toPath = path.file('private', to)
+        fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
+        async ({ pathSegmentPair, fileContent }) => {
+          const fromPath = path.file('private', pathSegmentPair.first)
+          const toPath = path.file('private', pathSegmentPair.second)
 
-          await fs.write(fromPath, val)
+          await fs.write(fromPath, fileContent.val)
           await fs.mv(fromPath, toPath)
           const fromExists = await fs.exists(fromPath)
           const toExists = await fs.exists(toPath)
@@ -101,19 +101,18 @@ describe('the filesystem api', () => {
 
     await fc.assert(
       fc.asyncProperty(
-        fc.tuple(pathSegmentPair(), fileContent()), async data => {
-          const [from, to] = data[0]
-          const [val, type] = data[1]
-          const fromPath = path.file('private', from)
-          const toPath = path.file('private', to)
+        fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
+        async ({ pathSegmentPair, fileContent }) => {
+          const fromPath = path.file('private', pathSegmentPair.first)
+          const toPath = path.file('private', pathSegmentPair.second)
 
-          await fs.write(fromPath, val)
+          await fs.write(fromPath, fileContent.val)
           await fs.mv(fromPath, toPath)
 
           const file = await fs.read(toPath)
-          const content = maybeDecode(file, type)
+          const content = decode(file, fileContent.type)
 
-          expect(content).toEqual(val)
+          expect(content).toEqual(fileContent.val)
         })
     )
   })
@@ -123,8 +122,8 @@ describe('the filesystem api', () => {
 
     await fc.assert(
       fc.asyncProperty(
-        pathSegment(), async data => {
-          const dirpath = path.directory('private', data[0])
+        pathSegment(), async pathSegment => {
+          const dirpath = path.directory('private', pathSegment)
 
           await fs.mkdir(dirpath)
 
@@ -138,8 +137,8 @@ describe('the filesystem api', () => {
 
     await fc.assert(
       fc.asyncProperty(
-        pathSegment(), async data => {
-          const dirpath = path.directory('private', data[0])
+        pathSegment(), async pathSegment => {
+          const dirpath = path.directory('private', pathSegment)
 
           await fs.mkdir(dirpath)
           await fs.rm(dirpath)
@@ -151,16 +150,14 @@ describe('the filesystem api', () => {
 
   it('writes files to a directory', async () => {
     const fs = await emptyFilesystem()
-    const dirpath = path.directory('private', 'testDir')
-    await fs.mkdir(dirpath)
 
     await fc.assert(
       fc.asyncProperty(
-        fc.tuple(pathSegment(), fileContent()), async data => {
-          const filepath = path.file('private', 'testDir', data[0])
-          const [val] = data[1]
+        fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
+        async ({ pathSegment, fileContent }) => {
+          const filepath = path.file('private', pathSegment)
 
-          await fs.write(filepath, val)
+          await fs.write(filepath, fileContent.val)
 
           expect(await fs.exists(filepath)).toEqual(true)
         })
@@ -174,14 +171,14 @@ describe('the filesystem api', () => {
 
     await fc.assert(
       fc.asyncProperty(
-        fc.tuple(pathSegment(), fileContent()), async data => {
-          const filepath = path.file('private', 'testDir', data[0])
-          const [val] = data[1]
+        fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
+        async ({ pathSegment, fileContent }) => {
+          const filepath = path.file('private', 'testDir', pathSegment)
 
-          await fs.write(filepath, val)
+          await fs.write(filepath, fileContent.val)
           const listing = await fs.ls(dirpath)
 
-          expect(data[0] in listing).toEqual(true)
+          expect(pathSegment in listing).toEqual(true)
         })
     )
   })
@@ -193,13 +190,12 @@ describe('the filesystem api', () => {
 
     await fc.assert(
       fc.asyncProperty(
-        fc.tuple(pathSegmentPair(), fileContent()), async data => {
-          const [from, to] = data[0]
-          const [val] = data[1]
-          const fromPath = path.file('private', from)
-          const toPath = path.file('private', 'testDir', to)
+        fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
+        async ({ pathSegmentPair, fileContent }) => {
+          const fromPath = path.file('private', pathSegmentPair.first)
+          const toPath = path.file('private', pathSegmentPair.second)
 
-          await fs.write(fromPath, val)
+          await fs.write(fromPath, fileContent.val)
           await fs.mv(fromPath, toPath)
           const fromExists = await fs.exists(fromPath)
           const toExists = await fs.exists(toPath)
@@ -209,76 +205,3 @@ describe('the filesystem api', () => {
     )
   })
 })
-
-
-/* Filesystem */
-
-const emptyFilesystem = async () => {
-  rootKey = await crypto.aes.genKeyStr()
-  return FileSystem.empty({
-    localOnly: true,
-    permissions: {
-      fs: {
-        public: [path.root()],
-        private: [path.root()]
-      }
-    },
-    rootKey
-  })
-}
-
-/* Paths */
-
-const pathSegment = () => {
-  return fc.hexaString({ minLength: 1, maxLength: 20 })
-}
-
-const pathSegmentPair = () => {
-  return fc.set(
-    fc.hexaString({ minLength: 4, maxLength: 20 }),
-    { minLength: 2, maxLength: 2 }
-  )
-}
-
-/* File content */
-
-const fileContent = () => {
-  return fc.frequency(
-    { arbitrary: simpleContent(), weight: 10 },
-    { arbitrary: rawFileContent(), weight: 1 },
-    { arbitrary: recordContent(), weight: 1 }
-  )
-}
-
-const simpleContent = () => {
-  return fc.frequency(
-    { arbitrary: fc.tuple(fc.json(), fc.constant('string')), weight: 6 },
-    { arbitrary: fc.tuple(fc.string({ minLength: 1 }), fc.constant('string')), weight: 4 },
-    { arbitrary: fc.tuple(fc.integer(), fc.constant('number')), weight: 2 },
-    { arbitrary: fc.tuple(fc.double(), fc.constant('number')), weight: 2 },
-    { arbitrary: fc.tuple(fc.boolean(), fc.constant('boolean')), weight: 1 }
-  )
-}
-
-const rawFileContent = () => {
-  return fc.tuple(fc.uint8Array({ minLength: 1 }), fc.constant('rawFileContent'))
-}
-
-const recordContent = () => {
-  return fc.tuple(
-    fc.record({
-      key: fc.string({ minLength: 1, maxLength: 20 }),
-      value: simpleContent()
-    }),
-    fc.constant('record'))
-}
-
-const maybeDecode = (file, type) => {
-  switch (type) {
-    case 'rawFileContent':
-      return Uint8Array.from(file as Buffer)
-
-    default:
-      return file
-  }
-}
