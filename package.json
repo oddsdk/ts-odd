@@ -8,13 +8,28 @@
     "IPFS",
     "files"
   ],
-  "type": "module",
-  "main": "modules/index.js",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./*": "./lib/*.js",
+    "./package.json": "./package.json"
+  },
+  "types": "lib/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "lib/index.d.ts": [
+        "lib/index.d.ts"
+      ],
+      "*": [
+        "lib/*"
+      ]
+    }
+  },
   "browser": {
     "crypto": false
   },
   "files": [
-    "modules",
+    "lib",
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
@@ -22,7 +37,6 @@
     "!*.test.ts",
     "docs"
   ],
-  "types": "modules/index.d.ts",
   "author": "Daniel Holmgren <daniel@fission.codes>",
   "repository": {
     "type": "git",
@@ -36,14 +50,14 @@
   "scripts": {
     "docs": "rimraf docs && typedoc && typedoc --entryPoints ./src/fs --out docs/fs",
     "lint": "yarn eslint src/**/*.ts",
-    "prebuild": "rimraf modules && node scripts/gen-version.js",
-    "build": "tsc && yarn run build:minified",
-    "build:minified": "esbuild src/index.ts --outfile=modules/index.min.js --bundle --minify --sourcemap --platform=browser --format=iife --target=es2020 && gzip -k9 dist/index.min.js",
+    "prebuild": "rimraf lib dist && node scripts/gen-version.js",
+    "build": "tsc && yarn run build:minified && cp src/package.json lib/package.json",
+    "build:minified": "esbuild src/index.ts --outfile=dist/index.min.js --bundle --minify --sourcemap --platform=browser --format=iife --global-name=webnative --target=es2020 && gzip -k9 dist/index.min.js",
     "start": "tsc -w",
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
     "test:prod": "yarn run build && yarn run lint && yarn run test --no-cache",
-    "test:types": "cp -RT tests/types/ modules/ && yarn run tsd",
+    "test:types": "cp -RT tests/types/ lib/ && yarn run tsd",
     "test:unit": "jest --watch --testPathPattern=src/",
     "prepare": "yarn build && yarn docs",
     "publish-dry": "npm publish --dry-run",
@@ -90,7 +104,7 @@
     "ipfs-message-port-client": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-client.tar.gz",
     "ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz",
     "ipld-dag-pb": "^0.22.2",
-    "keystore-idb": "0.14.1",
+    "keystore-idb": "0.14.2",
     "localforage": "^1.9.0",
     "noble-ed25519": "^1.2.2",
     "throttle-debounce": "^3.0.1"
@@ -99,6 +113,6 @@
     "**/ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz"
   },
   "tsd": {
-    "directory": "modules"
+    "directory": "lib"
   }
 }

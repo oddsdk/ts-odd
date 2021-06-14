@@ -1,5 +1,6 @@
 /coverage
 /dist
+/lib
 /docs
 /node_modules
 /yarn-error.log
