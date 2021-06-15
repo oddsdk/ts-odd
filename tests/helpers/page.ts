@@ -3,7 +3,7 @@ import { promises as fs } from 'fs'
 
 export async function loadWebnativePage(): Promise<void> {
   const htmlPath = path.join(__dirname, '../fixtures/index.html')
-  await page.goto(`file://${htmlPath}`, { waitUntil: 'domcontentloaded' })
+  await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle2' })
   const { isWebnativeLoaded } = await page.evaluate(async function () {
     return {
       isWebnativeLoaded: window.webnative != null,
