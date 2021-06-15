@@ -3534,11 +3534,12 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
-fission-bloom-filters@1.7.0:
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/fission-bloom-filters/-/fission-bloom-filters-1.7.0.tgz#1e1fc2307a9b45ea9c52365e6e8585fb3ff774a0"
-  integrity sha512-R7lQAZ6c3y4mK98MlXWJbQam3mVWg3ROfIX5IwgEFD1xFHHEODwu79nwmUICR2ai97fB3PfxX4TDIVqGzTujhg==
+fission-bloom-filters@1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/fission-bloom-filters/-/fission-bloom-filters-1.7.1.tgz#94a002ec499d673a8a09a596f77c74e6b9e9ff33"
+  integrity sha512-AAVWxwqgSDK+/3Tn2kx+a9j/ND/pyVNVZgn/rL5pfQaX7w0qfP81PlLCNKhM4XKOhcg1kFXNcoWkQKg3MyyULw==
   dependencies:
+    buffer "^6.0.3"
     is-buffer "^2.0.4"
     lodash "^4.17.15"
     lodash.eq "^4.0.0"

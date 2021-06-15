@@ -100,7 +100,7 @@
     "buffer": "^6.0.3",
     "cborg": "^1.3.4",
     "cids": "^1.1.6",
-    "fission-bloom-filters": "1.7.0",
+    "fission-bloom-filters": "1.7.1",
     "ipfs-message-port-client": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-client.tar.gz",
     "ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz",
     "ipld-dag-pb": "^0.22.2",
