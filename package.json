@@ -52,7 +52,7 @@
     "lint": "yarn eslint src/**/*.ts",
     "prebuild": "rimraf lib dist && node scripts/gen-version.js",
     "build": "tsc && yarn run build:minified && cp src/package.json lib/package.json",
-    "build:minified": "esbuild src/index.ts --outfile=dist/index.min.js --bundle --minify --sourcemap --platform=browser --format=iife --global-name=webnative --target=es2020 && gzip -k9 dist/index.min.js",
+    "build:minified": "esbuild src/index.ts --outfile=dist/index.min.js --bundle --minify --sourcemap --platform=browser --format=iife --global-name=window.webnative --target=es2020 && gzip -k9 dist/index.min.js",
     "start": "tsc -w",
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
