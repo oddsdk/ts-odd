@@ -24,15 +24,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
-      - name: Install nix
-        uses: cachix/install-nix-action@v12
+      - name: Setup Node Environment
+        uses: actions/setup-node@v2
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
+          node-version: '16'
 
       # https://github.com/actions/cache/blob/main/examples.md#node---yarn
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(nix-shell --run 'yarn cache dir')"
+        run: echo "::set-output name=dir::$(yarn cache dir)"
 
       - uses: actions/cache@v2
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
@@ -44,7 +44,7 @@ jobs:
       # ---
 
       - name: Install Dependencies
-        run: nix-shell --run "yarn install --network-concurrency 1"
+        run: yarn install --network-concurrency 1
 
       - name: Build & Test
-        run: nix-shell --run "yarn test:prod"
+        run: yarn test:prod
