@@ -6,7 +6,7 @@ import config from "keystore-idb/config.js"
 import aes from 'keystore-idb/aes/index.js'
 import rsa from 'keystore-idb/rsa/index.js'
 
-import { Storage } from '../storage/inMemory.js'
+import { Storage } from '../../tests/storage/inMemory.js'
 import { setDependencies } from './dependencies.js'
 
 // FIXME: Upgrade @node/types as soon as webcrypto types are available

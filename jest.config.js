@@ -5,6 +5,8 @@ module.exports = {
 
   moduleFileExtensions: ['js', 'ts'],
 
+  transform: {"\\.[jt]sx?$": "ts-jest"},
+
   preset: 'jest-puppeteer',
 
   testPathIgnorePatterns: ['/node_modules/'],
