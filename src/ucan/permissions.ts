@@ -1,6 +1,6 @@
 import * as pathing from '../path'
 import { DirectoryPath, DistinctivePath } from '../path'
-import { Potency, Resource } from "../ucan"
+import { Potency, Resource } from "../ucan/index"
 
 export type Permissions = {
   app?: AppInfo

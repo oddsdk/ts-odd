@@ -1,7 +1,7 @@
-import * as common from '../common'
+import * as common from '../common/index'
 
-import * as dns from '../dns'
-import { isString } from '../common'
+import * as dns from '../dns/index'
+import { isString } from '../common/index'
 import { getDictionary } from '../ucan/store'
 import { rootIssuer } from '../ucan/token'
 import { setup } from '../setup/internal'

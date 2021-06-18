@@ -1,8 +1,8 @@
 /** @internal */
 
 /** @internal */
-import { isString, isObject, isNum, isBool } from '../../common'
-import { CID } from '../../ipfs'
+import { isString, isObject, isNum, isBool } from '../../common/index'
+import { CID } from '../../ipfs/index'
 import { Tree, File, Link, Links, BaseLink } from '../types'
 import { Skeleton, TreeInfo, FileInfo, TreeHeader, FileHeader } from '../protocol/public/types'
 import { SemVer } from '../semver'

@@ -1,12 +1,12 @@
 import { FileInfo, FileHeader, PutDetails } from '../protocol/public/types'
-import { CID, FileContent } from '../../ipfs'
+import { CID, FileContent } from '../../ipfs/index'
 import BaseFile from '../base/file'
 import PublicHistory from './PublicHistory'
 import * as check from '../types/check'
 import * as history from './PublicHistory'
 import * as metadata from '../metadata'
-import * as protocol from '../protocol'
-import { isObject, Maybe } from '../../common'
+import * as protocol from '../protocol/index'
+import { isObject, Maybe } from '../../common/index'
 
 
 type ConstructorParams = {

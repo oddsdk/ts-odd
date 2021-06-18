@@ -1,6 +1,6 @@
 import { BaseLink } from "../../types"
 import  { Metadata } from '../../metadata'
-import { AddResult, CID } from "../../../ipfs"
+import { AddResult, CID } from "../../../ipfs/index"
 import { BareNameFilter, PrivateName } from './namefilter'
 
 export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo

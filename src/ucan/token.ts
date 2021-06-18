@@ -1,7 +1,7 @@
 import * as did from '../did/local'
 import { verifySignedData } from '../did/validation'
-import * as crypto from '../crypto'
-import { base64 } from '../common'
+import * as crypto from '../crypto/index'
+import { base64 } from '../common/index'
 import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from './types'
 
 

@@ -7,9 +7,9 @@ import { Metadata } from '../../metadata'
 import { isString } from '../../../common/type-checks'
 import * as check from '../../types/check'
 
-import { isValue, Maybe, blob } from '../../../common'
-import * as ipfs from '../../../ipfs'
-import { CID, FileContent } from '../../../ipfs'
+import { isValue, Maybe, blob } from '../../../common/index'
+import * as ipfs from '../../../ipfs/index'
+import { CID, FileContent } from '../../../ipfs/index'
 import * as link from '../../link'
 
 import * as basic from '../basic'

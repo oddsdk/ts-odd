@@ -1,6 +1,6 @@
-import { Maybe } from "../../../common"
-import * as ipfs from "../../../ipfs"
-import { CID } from "../../../ipfs"
+import { Maybe } from "../../../common/index"
+import * as ipfs from "../../../ipfs/index"
+import { CID } from "../../../ipfs/index"
 import MMPT from "./mmpt"
 import { DecryptedNode, PrivateAddResult, Revision } from './types'
 import * as check from './types/check'

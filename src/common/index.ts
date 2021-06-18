@@ -2,7 +2,7 @@ import * as api from './api'
 import * as arrbufs from './arrbufs'
 import * as base64 from './base64'
 import * as blob from './blob'
-import * as storage from '../storage'
+import * as storage from '../storage/index'
 
 export * from './types'
 export * from './type-checks'

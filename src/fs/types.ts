@@ -1,6 +1,6 @@
 import type { Mtime } from 'ipfs-unixfs'
-import { Maybe } from '../common'
-import { FileContent, CID, AddResult } from '../ipfs'
+import { Maybe } from '../common/index'
+import { FileContent, CID, AddResult } from '../ipfs/index'
 import { Path } from '../path'
 import { SemVer } from './semver'
 

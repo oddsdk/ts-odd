@@ -1,5 +1,5 @@
 import { Metadata } from '../../metadata'
-import { AddResult, CID } from '../../../ipfs'
+import { AddResult, CID } from '../../../ipfs/index'
 
 export type PutDetails = AddResult & {
   userland: CID

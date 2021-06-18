@@ -1,4 +1,4 @@
-import { isNum, isObject, isString } from '../../../../common'
+import { isNum, isObject, isString } from '../../../../common/index'
 import * as check  from '../../../types/check'
 import { PrivateFileInfo, PrivateTreeInfo, PrivateLink, PrivateLinks, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from '../types'
 

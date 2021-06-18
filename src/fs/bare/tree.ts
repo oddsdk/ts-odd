@@ -1,11 +1,11 @@
 import * as check from '../types/check'
-import * as protocol from '../protocol'
+import * as protocol from '../protocol/index'
 import * as link from '../link'
 import * as semver from '../semver'
 
-import { AddResult, CID, FileContent } from '../../ipfs'
+import { AddResult, CID, FileContent } from '../../ipfs/index'
 import { Links, BaseLinks, Tree, File, Puttable, UpdateCallback } from '../types'
-import { Maybe } from '../../common'
+import { Maybe } from '../../common/index'
 import { Path } from '../../path'
 
 import BareFile from '../bare/file'

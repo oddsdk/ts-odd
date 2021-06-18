@@ -1,4 +1,4 @@
-import * as dns from '../dns'
+import * as dns from '../dns/index'
 import { setup } from '../setup/internal'
 
 

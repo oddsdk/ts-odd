@@ -1,4 +1,4 @@
-import * as crypto from '../crypto'
+import * as crypto from '../crypto/index'
 import { publicKeyToDid } from './transformers'
 import { toKeyType } from './util'
 

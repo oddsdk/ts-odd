@@ -1,4 +1,4 @@
-import * as storage from '../storage'
+import * as storage from '../storage/index'
 import { setup } from '../setup/internal'
 
 

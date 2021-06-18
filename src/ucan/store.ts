@@ -1,5 +1,5 @@
-import * as storage from '../storage'
-import { UCANS_STORAGE_KEY } from '../common'
+import * as storage from '../storage/index'
+import { UCANS_STORAGE_KEY } from '../common/index'
 
 let dictionary: Record<string, string> = {}
 

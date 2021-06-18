@@ -1,4 +1,4 @@
-import { AddResult, CID } from "../../../ipfs"
+import { AddResult, CID } from "../../../ipfs/index"
 import * as basic from '../basic'
 import * as link from '../../link'
 import { Puttable, SimpleLinks } from '../../types'

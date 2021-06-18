@@ -1,5 +1,5 @@
 import * as pathing from '../path'
-import * as common from '../common'
+import * as common from '../common/index'
 
 import * as token from './token'
 

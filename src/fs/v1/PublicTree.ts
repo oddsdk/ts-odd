@@ -1,6 +1,6 @@
-import { CID, FileContent } from '../../ipfs'
+import { CID, FileContent } from '../../ipfs/index'
 import { Links, NonEmptyPath, UpdateCallback } from '../types'
-import { Maybe } from '../../common'
+import { Maybe } from '../../common/index'
 import { Path } from '../../path'
 import { TreeInfo, TreeHeader, PutDetails } from '../protocol/public/types'
 
@@ -13,7 +13,7 @@ import * as check from '../types/check'
 import * as history from './PublicHistory'
 import * as link from '../link'
 import * as metadata from '../metadata'
-import * as protocol from '../protocol'
+import * as protocol from '../protocol/index'
 import * as skeleton from '../protocol/public/skeleton'
 
 
