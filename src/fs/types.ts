@@ -1,8 +1,8 @@
 import type { Mtime } from 'ipfs-unixfs'
-import { Maybe } from '../common/index.js'
-import { FileContent, CID, AddResult } from '../ipfs/index.js'
-import { Path } from '../path.js'
-import { SemVer } from './semver.js'
+import { Maybe } from '../common'
+import { FileContent, CID, AddResult } from '../ipfs'
+import { Path } from '../path'
+import { SemVer } from './semver'
 
 
 // FILE

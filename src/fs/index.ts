@@ -1,4 +1,4 @@
-import FileSystem from './filesystem.js'
+import FileSystem from './filesystem'
 
 
 /**

@@ -4,10 +4,10 @@ import dagPB, { DAGLink, DAGNode } from 'ipld-dag-pb'
 import type { IPFSEntry } from 'ipfs-core-types/src/root'
 import type { ImportCandidate } from 'ipfs-core-types/src/utils'
 
-import { get as getIpfs } from './config.js'
-import { CID, AddResult } from './types.js'
-import * as util from './util.js'
-import { DAG_NODE_DATA } from './constants.js'
+import { get as getIpfs } from './config'
+import { CID, AddResult } from './types'
+import * as util from './util'
+import { DAG_NODE_DATA } from './constants'
 
 
 export const add = async (content: ImportCandidate): Promise<AddResult> => {

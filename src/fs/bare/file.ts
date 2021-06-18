@@ -1,7 +1,7 @@
-import { AddResult, CID, FileContent } from '../../ipfs/index.js'
-import * as protocol from '../protocol/index.js'
-import BaseFile from '../base/file.js'
-import { isObject } from '../../common/index.js'
+import { AddResult, CID, FileContent } from '../../ipfs'
+import * as protocol from '../protocol'
+import BaseFile from '../base/file'
+import { isObject } from '../../common'
 
 
 export class BareFile extends BaseFile {

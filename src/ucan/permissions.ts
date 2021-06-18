@@ -1,6 +1,6 @@
-import * as pathing from '../path.js'
-import { DirectoryPath, DistinctivePath } from '../path.js'
-import { Potency, Resource } from "../ucan/index.js"
+import * as pathing from '../path'
+import { DirectoryPath, DistinctivePath } from '../path'
+import { Potency, Resource } from "../ucan"
 
 export type Permissions = {
   app?: AppInfo

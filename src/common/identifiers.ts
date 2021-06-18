@@ -1,7 +1,7 @@
-import { DistinctivePath } from '../path.js'
-import * as crypto from '../crypto/index.js'
+import { DistinctivePath } from '../path'
+import * as crypto from '../crypto'
 
-import * as pathing from '../path.js'
+import * as pathing from '../path'
 
 
 export async function bareNameFilter({ path }: { path: DistinctivePath }): Promise<string> {

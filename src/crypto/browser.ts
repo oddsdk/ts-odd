@@ -1,11 +1,11 @@
 import * as ed25519 from 'noble-ed25519'
-import rsaOperations from 'keystore-idb/rsa/index.js'
-import utils from 'keystore-idb/utils.js'
-import aes from 'keystore-idb/aes/index.js'
-import { CharSize, SymmKeyLength } from 'keystore-idb/types.js'
+import rsaOperations from 'keystore-idb/rsa'
+import utils from 'keystore-idb/utils'
+import aes from 'keystore-idb/aes'
+import { CharSize, SymmKeyLength } from 'keystore-idb/types'
 
-import { assertBrowser } from '../common/browser.js'
-import * as keystore from '../keystore.js'
+import { assertBrowser } from '../common/browser'
+import * as keystore from '../keystore'
 
 
 export const encrypt = async (data: Uint8Array, keyStr: string): Promise<Uint8Array> => {

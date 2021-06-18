@@ -1,8 +1,8 @@
-import * as did from '../did/index.js'
-import * as ucan from '../ucan/index.js'
-import { api, Maybe, isString } from '../common/index.js'
-import { setup } from '../setup/internal.js'
-import { CID } from '../ipfs/index.js'
+import * as did from '../did'
+import * as ucan from '../ucan'
+import { api, Maybe, isString } from '../common'
+import { setup } from '../setup/internal'
+import { CID } from '../ipfs'
 
 
 export type App = {

@@ -1,6 +1,6 @@
-import * as crypto from '../crypto/index.js'
-import { publicKeyToDid } from './transformers.js'
-import { toKeyType } from './util.js'
+import * as crypto from '../crypto'
+import { publicKeyToDid } from './transformers'
+import { toKeyType } from './util'
 
 
 /**

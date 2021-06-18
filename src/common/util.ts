@@ -1,4 +1,4 @@
-import { Maybe } from "./types.js"
+import { Maybe } from "./types"
 
 export const removeKeyFromObj = <T> (
     obj: {[key: string]: T},

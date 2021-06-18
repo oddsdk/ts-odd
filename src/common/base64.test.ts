@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import * as fc from 'fast-check'
-import * as base64 from './base64.js'
+import * as base64 from './base64'
 
 test('round trip encode and decode a url', () => {
   fc.assert(

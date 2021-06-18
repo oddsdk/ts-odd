@@ -3,7 +3,6 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: [
     '@typescript-eslint',
-    'eslint-plugin-import',
   ],
   extends: [
     'eslint:recommended',
@@ -19,9 +18,6 @@ module.exports = {
     }],
     "@typescript-eslint/no-use-before-define": ["off"],
     "@typescript-eslint/semi": ["error", "never"],
-    "@typescript-eslint/ban-ts-comment": 1, // 1 = warning
-    // We need to enforce .js file extensions for correct javascript output
-    "import/extensions": ["error", "ignorePackages"]
-  },
-  "ignorePatterns": ["lib/", "dist/"],
+    "@typescript-eslint/ban-ts-comment": 1
+  }
 }

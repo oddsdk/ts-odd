@@ -1,6 +1,6 @@
 import type { Mtime } from 'ipfs-unixfs'
-import * as semver from './semver.js'
-import { SemVer } from './semver.js'
+import * as semver from './semver'
+import { SemVer } from './semver'
 
 export type UnixFileMode = number
 

@@ -1,8 +1,8 @@
-import * as did from '../did/local.js'
-import { verifySignedData } from '../did/validation.js'
-import * as crypto from '../crypto/index.js'
-import { base64 } from '../common/index.js'
-import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from './types.js'
+import * as did from '../did/local'
+import { verifySignedData } from '../did/validation'
+import * as crypto from '../crypto'
+import { base64 } from '../common'
+import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from './types'
 
 
 /**

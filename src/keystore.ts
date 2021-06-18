@@ -1,6 +1,6 @@
 import keystore from 'keystore-idb'
-import RSAKeyStore from 'keystore-idb/rsa/keystore.js'
-import { CryptoSystem } from 'keystore-idb/types.js'
+import RSAKeyStore from 'keystore-idb/rsa/keystore'
+import { CryptoSystem } from 'keystore-idb/types'
 
 const KEYSTORE_CFG = { type: CryptoSystem.RSA }
 

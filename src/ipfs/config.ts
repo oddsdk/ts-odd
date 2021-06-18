@@ -1,6 +1,6 @@
 import IpfsMessagePortClient from 'ipfs-message-port-client'
 import type { IPFS } from 'ipfs-core'
-import { setup } from '../setup/internal.js'
+import { setup } from '../setup/internal'
 
 
 let ipfs: IPFS | null = null
