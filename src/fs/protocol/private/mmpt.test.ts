@@ -1,9 +1,9 @@
 import crypto from "crypto"
 import { IPFS } from "ipfs-core"
 
-import MMPT from "./mmpt"
-import * as ipfsConfig from "../../../ipfs/config"
-import { createInMemoryIPFS } from "../../../../tests/helpers/in-memory-ipfs"
+import MMPT from "./mmpt.js"
+import * as ipfsConfig from "../../../ipfs/config.js"
+import { createInMemoryIPFS } from "../../../../tests/helpers/in-memory-ipfs.js"
 
 function sha256Str(str: string): string {
   return crypto.createHash('sha256').update(str).digest('hex')

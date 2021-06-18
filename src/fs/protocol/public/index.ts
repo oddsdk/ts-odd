@@ -1,18 +1,18 @@
 /** @internal */
 
 /** @internal */
-import { Link, Links } from '../../types'
-import { TreeInfo, FileInfo, Skeleton, PutDetails } from './types'
-import { Metadata } from '../../metadata'
-import { isString } from '../../../common/type-checks'
-import * as check from '../../types/check'
+import { Link, Links } from '../../types.js'
+import { TreeInfo, FileInfo, Skeleton, PutDetails } from './types.js'
+import { Metadata } from '../../metadata.js'
+import { isString } from '../../../common/type-checks.js'
+import * as check from '../../types/check.js'
 
-import { isValue, Maybe, blob } from '../../../common'
-import * as ipfs from '../../../ipfs'
-import { CID, FileContent } from '../../../ipfs'
-import * as link from '../../link'
+import { isValue, Maybe, blob } from '../../../common/index.js'
+import * as ipfs from '../../../ipfs/index.js'
+import { CID, FileContent } from '../../../ipfs/index.js'
+import * as link from '../../link.js'
 
-import * as basic from '../basic'
+import * as basic from '../basic.js'
 
 export const putTree = async (
     links: Links,

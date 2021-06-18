@@ -1,8 +1,8 @@
 /** @internal */
 
 /** @internal */
-import { File } from '../types'
-import { AddResult, CID, FileContent } from '../../ipfs'
+import { File } from '../types.js'
+import { AddResult, CID, FileContent } from '../../ipfs/index.js'
 
 
 export abstract class BaseFile implements File {

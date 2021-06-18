@@ -1,11 +1,11 @@
-import * as check from '../types/check'
-import * as pathing from '../../path'
+import * as check from '../types/check.js'
+import * as pathing from '../../path.js'
 
-import { AddResult, CID, FileContent } from '../../ipfs'
-import { Maybe } from '../../common'
-import { Path } from '../../path'
-import { SemVer } from '../semver'
-import { Tree, File, UnixTree, BaseLinks, UpdateCallback } from '../types'
+import { AddResult, CID, FileContent } from '../../ipfs/index.js'
+import { Maybe } from '../../common/index.js'
+import { Path } from '../../path.js'
+import { SemVer } from '../semver.js'
+import { Tree, File, UnixTree, BaseLinks, UpdateCallback } from '../types.js'
 
 
 abstract class BaseTree implements Tree, UnixTree {

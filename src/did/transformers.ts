@@ -1,8 +1,8 @@
 import * as base58 from 'base58-universal'
-import * as utils from 'keystore-idb/utils'
+import * as utils from 'keystore-idb/utils.js'
 
-import { BASE58_DID_PREFIX, magicBytes, parseMagicBytes } from './util'
-import { KeyType } from './types'
+import { BASE58_DID_PREFIX, magicBytes, parseMagicBytes } from './util.js'
+import { KeyType } from './types.js'
 
 
 /**

@@ -1,5 +1,5 @@
-import { arrbufs } from '../common'
-import { KeyType } from './types'
+import { arrbufs } from '../common/index.js'
+import { KeyType } from './types.js'
 
 
 export const EDWARDS_DID_PREFIX = new Uint8Array([ 0xed, 0x01 ])

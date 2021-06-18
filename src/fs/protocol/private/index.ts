@@ -1,12 +1,12 @@
-import { Maybe } from "../../../common"
-import * as ipfs from "../../../ipfs"
-import { CID } from "../../../ipfs"
-import MMPT from "./mmpt"
-import { DecryptedNode, PrivateAddResult, Revision } from './types'
-import * as check from './types/check'
-import * as namefilter from './namefilter'
-import { BareNameFilter, PrivateName } from './namefilter'
-import * as basic from '../basic'
+import { Maybe } from "../../../common/index.js"
+import * as ipfs from "../../../ipfs/index.js"
+import { CID } from "../../../ipfs/index.js"
+import MMPT from "./mmpt.js"
+import { DecryptedNode, PrivateAddResult, Revision } from './types.js'
+import * as check from './types/check.js'
+import * as namefilter from './namefilter.js'
+import { BareNameFilter, PrivateName } from './namefilter.js'
+import * as basic from '../basic.js'
 
 
 export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Promise<PrivateAddResult> => {

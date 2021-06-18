@@ -1,6 +1,6 @@
-import { setup } from '../setup/internal'
+import { setup } from '../setup/internal.js'
 
-import { USERNAME_BLOCKLIST } from './blocklist'
+import { USERNAME_BLOCKLIST } from './blocklist.js'
 
 /**
  * Check if a username is available.

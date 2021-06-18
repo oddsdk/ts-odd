@@ -1,12 +1,12 @@
-import { FileInfo, FileHeader, PutDetails } from '../protocol/public/types'
-import { CID, FileContent } from '../../ipfs'
-import BaseFile from '../base/file'
-import PublicHistory from './PublicHistory'
-import * as check from '../types/check'
-import * as history from './PublicHistory'
-import * as metadata from '../metadata'
-import * as protocol from '../protocol'
-import { isObject, Maybe } from '../../common'
+import { FileInfo, FileHeader, PutDetails } from '../protocol/public/types.js'
+import { CID, FileContent } from '../../ipfs/index.js'
+import BaseFile from '../base/file.js'
+import PublicHistory from './PublicHistory.js'
+import * as check from '../types/check.js'
+import * as history from './PublicHistory.js'
+import * as metadata from '../metadata.js'
+import * as protocol from '../protocol/index.js'
+import { isObject, Maybe } from '../../common/index.js'
 
 
 type ConstructorParams = {

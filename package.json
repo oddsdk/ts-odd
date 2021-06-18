@@ -79,6 +79,7 @@
     "babel-jest": "^27.0.1",
     "esbuild": "^0.12.8",
     "eslint": "^7.27.0",
+    "eslint-plugin-import": "^2.23.4",
     "fast-check": "^2.14.0",
     "interface-datastore": "^4.0.1",
     "ipfs-core": "^0.7.0",

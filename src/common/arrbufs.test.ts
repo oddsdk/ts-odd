@@ -1,5 +1,5 @@
 import * as fc from 'fast-check'
-import { equal } from './arrbufs'
+import { equal } from './arrbufs.js'
 
 test('arrbufs equal', () => {
   fc.assert(

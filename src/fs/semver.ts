@@ -1,4 +1,4 @@
-import { Maybe } from '../common'
+import { Maybe } from '../common/index.js'
 
 
 // TYPES

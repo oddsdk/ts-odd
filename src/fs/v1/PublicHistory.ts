@@ -1,7 +1,6 @@
-import { CID } from '../../ipfs'
-import { Maybe } from '../../common'
-import { Metadata } from '../metadata'
-import * as protocol from '../protocol'
+import { CID } from '../../ipfs/index.js'
+import { Maybe } from '../../common/index.js'
+import { Metadata } from '../metadata.js'
 
 
 export type Node = {

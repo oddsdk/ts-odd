@@ -1,12 +1,12 @@
-import * as check from './fs/types/check'
-import * as debug from './common/debug'
-import * as did from './did'
-import * as dns from './dns'
-import * as ucan from './ucan'
-import { CID } from './ipfs'
-import { api } from './common'
-import { Ucan } from './ucan'
-import { setup } from './setup/internal'
+import * as check from './fs/types/check.js'
+import * as debug from './common/debug.js'
+import * as did from './did/index.js'
+import * as dns from './dns/index.js'
+import * as ucan from './ucan/index.js'
+import { CID } from './ipfs/index.js'
+import { api } from './common/index.js'
+import { Ucan } from './ucan/index.js'
+import { setup } from './setup/internal.js'
 
 /**
  * CID representing an empty string. We use to to speed up DNS propagation
@@ -130,7 +130,7 @@ async function fetchWithRetry(
   url: string,
   retryOptions: RetryOptions,
   fetchOptions: RequestInit,
-  retry: number = 0
+  retry = 0
 ): Promise<Response> {
   const headers = await retryOptions.headers()
   const response = await fetch(url, {

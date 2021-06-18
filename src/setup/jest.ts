@@ -1,13 +1,13 @@
 import crypto from 'crypto'
 import * as ed25519 from 'noble-ed25519'
-import utils from "keystore-idb/utils"
-import { CharSize, Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey, SymmKeyLength } from 'keystore-idb/types'
-import config from "keystore-idb/config"
-import aes from 'keystore-idb/aes'
-import rsa from 'keystore-idb/rsa'
+import utils from "keystore-idb/utils.js"
+import { CharSize, Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey, SymmKeyLength } from 'keystore-idb/types.js'
+import config from "keystore-idb/config.js"
+import aes from 'keystore-idb/aes/index.js'
+import rsa from 'keystore-idb/rsa/index.js'
 
-import { Storage } from '../../tests/storage/inMemory'
-import { setDependencies } from './dependencies'
+import { Storage } from '../storage/inMemory.js'
+import { setDependencies } from './dependencies.js'
 
 // FIXME: Upgrade @node/types as soon as webcrypto types are available
 // @ts-ignore: Upgrade @node/types as soon as webcrypto types are available
