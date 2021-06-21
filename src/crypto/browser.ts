@@ -1,7 +1,7 @@
 import * as ed25519 from 'noble-ed25519'
-import rsaOperations from 'keystore-idb/rsa'
+import rsaOperations from 'keystore-idb/rsa/index'
 import utils from 'keystore-idb/utils'
-import aes from 'keystore-idb/aes'
+import aes from 'keystore-idb/aes/index'
 import { CharSize, SymmKeyLength } from 'keystore-idb/types'
 
 import { assertBrowser } from '../common/browser'

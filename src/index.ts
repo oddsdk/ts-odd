@@ -242,20 +242,20 @@ export * from './common/version'
 
 export const fs = FileSystem
 
-export * as apps from './apps'
+export * as apps from './apps/index'
 export * as dataRoot from './data-root'
-export * as did from './did'
+export * as did from './did/index'
 export * as errors from './errors'
-export * as lobby from './lobby'
+export * as lobby from './lobby/index'
 export * as path from './path'
 export * as setup from './setup'
-export * as ucan from './ucan'
+export * as ucan from './ucan/index'
 
-export * as dns from './dns'
-export * as ipfs from './ipfs'
+export * as dns from './dns/index'
+export * as ipfs from './ipfs/index'
 export * as keystore from './keystore'
-export * as machinery from './common'
-export * as crypto from './crypto'
+export * as machinery from './common/index'
+export * as crypto from './crypto/index'
 export * as cbor from 'cborg'
 
 
