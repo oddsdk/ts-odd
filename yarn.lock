@@ -6471,10 +6471,10 @@ nise@^5.0.1:
     just-extend "^4.0.2"
     path-to-regexp "^1.7.0"
 
-noble-ed25519@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/noble-ed25519/-/noble-ed25519-1.2.2.tgz#c2ca6e6b94fdc7769deeea2e9ffb89b7e2586ee8"
-  integrity sha512-cbKeR7b1YG4rravd/LU/IP9KEwCd75gDDnKYtdBWUJlLnmawlZnMGSEWNmawXsdI+DnD2nczmwX995AscXM+KA==
+noble-ed25519@^1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/noble-ed25519/-/noble-ed25519-1.2.4.tgz#49bf25d5cc2db03d6e2c83004e84de1a770917df"
+  integrity sha512-IwV+j1xDYIF0ouiUhqH4Ot5jTLCWNbQZTUlCvYDQT4LRiGVwoK8FvkLlCeOlvMv3nXxLixSf05Kfi2nugtiBAQ==
 
 node-addon-api@^2.0.0:
   version "2.0.2"
