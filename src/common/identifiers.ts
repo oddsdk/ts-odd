@@ -1,5 +1,5 @@
 import { DistinctivePath } from '../path'
-import * as crypto from '../crypto'
+import * as crypto from '../crypto/index'
 
 import * as pathing from '../path'
 

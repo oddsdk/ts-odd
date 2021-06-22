@@ -2,7 +2,7 @@
 
 /** @internal */
 import { File } from '../types'
-import { AddResult, CID, FileContent } from '../../ipfs'
+import { AddResult, CID, FileContent } from '../../ipfs/index'
 
 
 export abstract class BaseFile implements File {

@@ -5,10 +5,10 @@ import { createInMemoryIPFS } from '../helpers/in-memory-ipfs'
 
 import FileSystem from '../../src/fs/filesystem'
 import { File } from '../../src/fs/types'
-import * as ipfsConfig from '../../src/ipfs'
+import * as ipfsConfig from '../../src/ipfs/index'
 import * as path from '../../src/path'
 import * as identifiers from '../../src/common/identifiers'
-import * as crypto from '../../src/crypto'
+import * as crypto from '../../src/crypto/index'
 
 
 let ipfs: IPFS | null = null

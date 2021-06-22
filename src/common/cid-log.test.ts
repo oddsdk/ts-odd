@@ -2,7 +2,7 @@ import * as fc from 'fast-check'
 import CID from 'cids'
 import multihash from 'multihashing-async'
 import * as cidLog from './cid-log'
-import * as storage from '../storage'
+import * as storage from '../storage/index'
 
 async function generateCids(data: Uint8Array[]): Promise<string[]> {
   const promisedCids = data.map(async bytes => {

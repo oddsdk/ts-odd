@@ -1,4 +1,4 @@
-import { arrbufs } from '../common'
+import { arrbufs } from '../common/index'
 import { KeyType } from './types'
 
 

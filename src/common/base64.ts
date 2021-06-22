@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer'
+
 export function decode(base64: string): string {
   return Buffer.from(base64, 'base64').toString('binary')
 }

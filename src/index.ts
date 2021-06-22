@@ -1,22 +1,21 @@
 import localforage from 'localforage'
 
-import * as common from './common'
+import * as common from './common/index'
 import * as identifiers from './common/identifiers'
-import * as ipfs from './ipfs'
+import * as ipfs from './ipfs/index'
 import * as pathing from './path'
-import * as crypto from './crypto'
-import * as storage from './storage'
+import * as crypto from './crypto/index'
+import * as storage from './storage/index'
 import * as ucan from './ucan/internal'
 import * as ucanPermissions from './ucan/permissions'
 import { setup } from './setup/internal'
-import * as did from './did'
+import * as did from './did/index'
 
-import { USERNAME_STORAGE_KEY, Maybe } from './common'
+import { USERNAME_STORAGE_KEY, Maybe } from './common/index'
 import { Permissions } from './ucan/permissions'
 import { loadFileSystem } from './filesystem'
 
-import FileSystem from './fs'
-import fsClass from './fs'
+import FileSystem from './fs/index'
 
 
 // SCENARIO
@@ -241,23 +240,23 @@ export * from './auth'
 export * from './filesystem'
 export * from './common/version'
 
-export const fs = fsClass
+export const fs = FileSystem
 
-export * as apps from './apps'
+export * as apps from './apps/index'
 export * as dataRoot from './data-root'
-export * as did from './did'
+export * as did from './did/index'
 export * as errors from './errors'
-export * as lobby from './lobby'
+export * as lobby from './lobby/index'
 export * as path from './path'
 export * as setup from './setup'
-export * as ucan from './ucan'
+export * as ucan from './ucan/index'
 
-export * as dns from './dns'
-export * as ipfs from './ipfs'
+export * as dns from './dns/index'
+export * as ipfs from './ipfs/index'
 export * as keystore from './keystore'
-export * as machinery from './common'
-export * as crypto from './crypto'
-export * as cbor from 'borc'
+export * as machinery from './common/index'
+export * as crypto from './crypto/index'
+export * as cbor from 'cborg'
 
 
 

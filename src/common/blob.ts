@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer'
+
 export const toBuffer = async (blob: Blob): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
     const fail: (() => void) = () => reject(new Error("Failed to read file"))

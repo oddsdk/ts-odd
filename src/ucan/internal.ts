@@ -1,12 +1,12 @@
 import * as pathing from '../path'
 import * as permissions from './permissions'
-import * as storage from '../storage'
+import * as storage from '../storage/index'
 
 import * as dictionary from './dictionary'
 import * as token from './token'
 import { getDictionary, setDictionary } from './store'
 
-import { UCANS_STORAGE_KEY } from '../common'
+import { UCANS_STORAGE_KEY } from '../common/index'
 import { Permissions } from './permissions'
 
 

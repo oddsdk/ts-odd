@@ -1,8 +1,8 @@
 import * as check from '../types/check'
 import * as pathing from '../../path'
 
-import { AddResult, CID, FileContent } from '../../ipfs'
-import { Maybe } from '../../common'
+import { AddResult, CID, FileContent } from '../../ipfs/index'
+import { Maybe } from '../../common/index'
 import { Path } from '../../path'
 import { SemVer } from '../semver'
 import { Tree, File, UnixTree, BaseLinks, UpdateCallback } from '../types'

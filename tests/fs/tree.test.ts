@@ -9,7 +9,7 @@ describe("FS", () => {
       const expected = "content"
       const wn = webnative
 
-      const fs = await new wn.fs.empty({
+      const fs = await wn.fs.empty({
         localOnly: true,
         permissions: {
           fs: { private: [ wn.path.root() ] }

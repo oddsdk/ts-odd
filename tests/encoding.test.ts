@@ -1,4 +1,4 @@
-import cbor from 'borc'
+import * as cbor from 'cborg'
 import * as aes from 'keystore-idb/aes/index'
 import { SymmKeyLength } from 'keystore-idb/types'
 import { JEST_IMPLEMENTATION } from '../src/setup/jest'
@@ -28,10 +28,8 @@ describe("cbor encoding", () => {
             const keyStr = await webnative.crypto.aes.genKeyStr()
 
             const encoded = webnative.cbor.encode(message)
-            console.log(encoded.length, encoded.byteLength)
             const cipher = await webnative.crypto.aes.encrypt(encoded, keyStr)
             const decipher = await webnative.crypto.aes.decrypt(cipher, keyStr)
-            console.log(decipher.length, decipher.byteLength)
             const decoded = webnative.cbor.decode(decipher)
 
             return decoded

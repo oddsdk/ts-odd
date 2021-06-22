@@ -1,8 +1,8 @@
 /** @internal */
 import type { ImportCandidate } from 'ipfs-core-types/src/utils'
 
-import * as ipfs from '../../ipfs'
-import { CID, FileContent, AddResult } from '../../ipfs'
+import * as ipfs from '../../ipfs/index'
+import { CID, FileContent, AddResult } from '../../ipfs/index'
 
 import { SimpleLinks, Links } from '../types'
 import * as link from '../link'

@@ -1,7 +1,7 @@
-import * as did from '../did'
-import * as ucan from '../ucan'
+import * as did from '../did/index'
+import * as ucan from '../ucan/index'
 import * as ucanStore from '../ucan/store'
-import { api } from '../common'
+import { api } from '../common/index'
 import { setup } from '../setup/internal'
 import RootTree from '../fs/root/tree'
 

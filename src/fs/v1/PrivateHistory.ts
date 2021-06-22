@@ -1,9 +1,9 @@
 import MMPT from "../protocol/private/mmpt"
 import { BareNameFilter } from '../protocol/private/namefilter'
 import { DecryptedNode, Revision } from "../protocol/private/types"
-import { Maybe } from '../../common'
+import { Maybe } from '../../common/index'
 import { Metadata } from '../metadata'
-import * as protocol from '../protocol'
+import * as protocol from '../protocol/index'
 
 
 export type Node = {

@@ -1,11 +1,11 @@
 import * as check from './fs/types/check'
 import * as debug from './common/debug'
-import * as did from './did'
-import * as dns from './dns'
-import * as ucan from './ucan'
-import { CID } from './ipfs'
-import { api } from './common'
-import { Ucan } from './ucan'
+import * as did from './did/index'
+import * as dns from './dns/index'
+import * as ucan from './ucan/index'
+import { CID } from './ipfs/index'
+import { api } from './common/index'
+import { Ucan } from './ucan/index'
 import { setup } from './setup/internal'
 
 /**

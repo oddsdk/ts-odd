@@ -1,4 +1,4 @@
-import FileSystem from './fs'
+import FileSystem from './fs/index'
 
 import * as cidLog from './common/cid-log'
 import * as debug from './common/debug'
@@ -6,7 +6,7 @@ import * as dataRoot from './data-root'
 import * as ucan from './ucan/internal'
 
 import { Branch } from './path'
-import { Maybe, authenticatedUsername } from './common'
+import { Maybe, authenticatedUsername } from './common/index'
 import { Permissions } from './ucan/permissions'
 
 

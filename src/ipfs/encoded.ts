@@ -1,9 +1,9 @@
-import cbor from 'borc'
+import * as cbor from 'cborg'
 
 import { isBlob, isJust } from '../common/type-checks'
 import { Maybe } from '../common/types'
 import * as blob from '../common/blob'
-import * as crypto from '../crypto'
+import * as crypto from '../crypto/index'
 
 // IPFS
 
