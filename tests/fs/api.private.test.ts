@@ -25,6 +25,8 @@ afterAll(async () => {
 
 fc.configureGlobal(process.env.TEST_ENV === 'gh-action' ? { numRuns: 100 } : { numRuns: 10 })
 
+jest.setTimeout(300000)
+
 describe('the filesystem api', () => {
   it('writes files', async () => {
     const fs = await emptyFilesystem()
