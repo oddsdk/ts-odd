@@ -9,10 +9,9 @@ let ks: RSAKeyStore | null = null
 
 
 export const clear = async (): Promise<void> => {
-  if (ks) {
-    await ks.destroy()
-    ks = null
-  }
+  ks = await get()
+  await ks.destroy()
+  ks = null
 }
 
 export const create = async (): Promise<RSAKeyStore> => {
