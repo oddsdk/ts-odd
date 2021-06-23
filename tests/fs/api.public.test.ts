@@ -23,7 +23,7 @@ afterAll(async () => {
   await ipfs.stop()
 })
 
-fc.configureGlobal({ numRuns: 10 })
+fc.configureGlobal(process.env.TEST_ENV === 'gh-action' ? { numRuns: 100 } : { numRuns: 10 })
 
 describe('the filesystem api', () => {
   it('writes files', async () => {
