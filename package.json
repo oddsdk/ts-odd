@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.25.2",
+  "version": "0.26.0",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -91,9 +91,8 @@
     "rimraf": "^3.0.2",
     "tslib": "^2.2.0",
     "ttypescript": "^1.5.12",
-    "typedoc": "^0.21.0-beta.2",
+    "typedoc": "^0.21.2",
     "typescript": "^4.3.2",
-    "typescript-documentation": "^2.0.0",
     "yarn": "^1.22.4"
   },
   "dependencies": {

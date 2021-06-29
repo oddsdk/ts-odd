@@ -1,5 +1,14 @@
 # Changelog
 
+### v0.26.0
+
+- Export maps, you can now import `webnative/path` instead of `webnative/dist/path`
+- Move library files from `dist` to `lib`
+- Use a better and faster build system
+- Fix issues with `Buffer`
+- Switch from the borc library to cborg
+
+
 ### v0.25.2
 
 Typescript output to `dist/` instead of `dist/src/`
@@ -17,6 +26,7 @@ Fix naming for minified UMD build
 - Add function to look up user's root DID
 - Default browser build to minified UMD
 - Build CJS & ES5 for node
+
 
 
 ### v0.24.2

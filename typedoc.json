@@ -4,7 +4,6 @@
   "excludeInternal": true,
   "excludePrivate": true,
   "excludeProtected": true,
-  "includeVersion": true,
   "name": "Fission SDK",
   "out": "docs",
   "readme": "none"
