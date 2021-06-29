@@ -6,6 +6,8 @@
 - Move library files from `dist` to `lib`
 - Use a better and faster build system
 - Fix issues with `Buffer`
+- `fs.write` on the public side now takes raw objects, arrays and numeric values as well
+- Use the IPFS types from `ipfs-core`
 - Switch from the borc library to cborg
 
 
