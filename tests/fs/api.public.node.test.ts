@@ -13,18 +13,18 @@ import { emptyFilesystem } from "../helpers/filesystem.js"
 import { publicFileContent as fileContent, publicDecode as decode } from "../helpers/fileContent.js"
 
 
-fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 50 } : { numRuns: 10 })
-
 describe("the public filesystem api", function () {
 
   let ipfs: IPFS | null = null
 
   before(async function () {
+    fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 50 } : { numRuns: 10 })
     ipfs = await createInMemoryIPFS()
     ipfsConfig.set(ipfs)
   })
 
   after(async () => {
+    fc.resetConfigureGlobal()
     if (ipfs === null) return
     await ipfs.stop()
   })
