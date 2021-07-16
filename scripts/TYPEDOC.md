@@ -6,6 +6,7 @@ This is source-derived, auto-generated API reference for [webnative](https://git
 
 If you need an introduction to webnative, we recommend reading the [fission guide](https://guide.fission.codes/developers/webnative) instead. This document is meant to be used as API reference.
 
+
 ## Which Docs to Look At
 
 When you import webnative like this:
@@ -28,3 +29,15 @@ Then you'll have a `webnative` variable at disposal which contains the [`index` 
 
 Once you've loaded a filesystem, you'll have an instance of the [`FileSystem` class](/classes/fs_filesystem.FileSystem.html). Read its docs to see what filesystem operations are supported.
 
+
+## These Docs for another Webnative Version
+
+The docs at [webnative.fission.app](https://webnative.fission.app) will always be the docs for the most recent webnative version.
+
+If you want to look at the docs for an older webnative version, keep in mind that webnative's npm package ships with these docs at`node_modules/webnative/docs/`. So if you want to take a look at them, you can start your own local http server:
+
+```sh
+$ npm i -D http-server
+$ npx http-server ./node_modules/webnative/docs
+# open localhost:8080
+```
