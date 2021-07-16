@@ -46,7 +46,7 @@
     "node": ">=15"
   },
   "scripts": {
-    "docs": "rimraf docs && typedoc && typedoc --entryPoints ./src/fs --out docs/fs",
+    "docs": "rimraf docs && typedoc",
     "lint": "yarn eslint src/**/*.ts",
     "prebuild": "rimraf lib dist && node scripts/gen-version.js",
     "build": "ttsc && yarn run build:minified && cp src/package.json lib/package.json",
@@ -91,7 +91,7 @@
     "rimraf": "^3.0.2",
     "tslib": "^2.2.0",
     "ttypescript": "^1.5.12",
-    "typedoc": "^0.21.2",
+    "typedoc": "^0.21.4",
     "typescript": "^4.3.2",
     "yarn": "^1.22.4"
   },

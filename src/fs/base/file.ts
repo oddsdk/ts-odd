@@ -1,6 +1,4 @@
 /** @internal */
-
-/** @internal */
 import { File } from '../types'
 import { AddResult, CID, FileContent } from '../../ipfs/index'
 
