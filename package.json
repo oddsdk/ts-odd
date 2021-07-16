@@ -107,7 +107,8 @@
     "keystore-idb": "0.14.2",
     "localforage": "^1.9.0",
     "noble-ed25519": "^1.2.4",
-    "throttle-debounce": "^3.0.1"
+    "throttle-debounce": "^3.0.1",
+    "uint8arrays": "^2.1.7"
   },
   "resolutions": {
     "**/ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz"
