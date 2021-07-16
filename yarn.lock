@@ -2226,10 +2226,6 @@ balanced-match@^1.0.0:
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
 
-"base58-universal@https://github.com/digitalbazaar/base58-universal#de970560f005de0f7054723c35ef6e0ff4b328b7":
-  version "1.0.1-0"
-  resolved "https://github.com/digitalbazaar/base58-universal#de970560f005de0f7054723c35ef6e0ff4b328b7"
-
 base64-arraybuffer@0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/base64-arraybuffer/-/base64-arraybuffer-0.1.4.tgz#9818c79e059b1355f97e0428a017c838e90ba812"
