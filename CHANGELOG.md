@@ -1,5 +1,10 @@
 # Changelog
 
+### Next
+
+- Fix #259: Disallow trailing underscores in usernames in `webnative.lobby.isUsernameValid`.
+
+
 ### v0.26.0
 
 - Export maps, you can now import `webnative/path` instead of `webnative/dist/path`
