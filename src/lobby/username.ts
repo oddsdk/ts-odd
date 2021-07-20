@@ -19,6 +19,7 @@ export function isUsernameValid(username: string): boolean {
   return !username.startsWith("-") &&
          !username.endsWith("-") &&
          !username.startsWith("_") &&
+         !username.endsWith("_") &&
          /^[a-zA-Z0-9_-]+$/.test(username) &&
          !USERNAME_BLOCKLIST.includes(username.toLowerCase())
 }

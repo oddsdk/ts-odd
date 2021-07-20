@@ -46,6 +46,10 @@ describe('isUsernameValid', () => {
     expect(isUsernameValid("_startswith")).toBe(false)
   })
 
+  it("does not allow suffixed underscores", () => {
+    expect(isUsernameValid("endswith_")).toBe(false)
+  })
+
   it("does not allow spaces", () => {
     expect(isUsernameValid("with space")).toBe(false)
   })
