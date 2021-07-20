@@ -1,5 +1,10 @@
 # Changelog
 
+### Next
+
+- Bring back the [UMD](https://github.com/umdjs/umd) build (#261)
+
+
 ### v0.26.0
 
 - Export maps, you can now import `webnative/path` instead of `webnative/dist/path`

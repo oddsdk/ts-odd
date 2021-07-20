@@ -26,9 +26,9 @@ export async function loadWebnativePage(): Promise<void> {
   })
   if (!isWebnativeLoaded) {
     try {
-      await fs.readFile(path.join(__dirname, "../../dist/index.min.js"))
+      await fs.readFile(path.join(__dirname, "../../dist/index.umd.min.js"))
     } catch {
-      throw new Error("Can't load webpage without a built browser bundle (dist/index.min.js). Please yarn build first.")
+      throw new Error("Can't load webpage without a built browser bundle (dist/index.umd.min.js). Please yarn build first.")
     }
     throw new Error("Couldn't load webnative in the browser for unknown reasons.")
   }
