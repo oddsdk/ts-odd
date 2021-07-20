@@ -1,4 +1,4 @@
-import * as base58 from 'base58-universal'
+import * as uint8arrays from 'uint8arrays'
 import * as utils from 'keystore-idb/utils'
 
 import { BASE58_DID_PREFIX, magicBytes, parseMagicBytes } from './util'
@@ -23,7 +23,7 @@ export function publicKeyToDid(
   const prefixedBuf = utils.joinBufs(prefix, pubKeyBuf)
 
   // Encode prefixed
-  return BASE58_DID_PREFIX + base58.encode(new Uint8Array(prefixedBuf))
+  return BASE58_DID_PREFIX + uint8arrays.toString(new Uint8Array(prefixedBuf), "base58btc")
 }
 
 /**
@@ -38,7 +38,7 @@ export function didToPublicKey(did: string): {
   }
 
   const didWithoutPrefix = did.substr(BASE58_DID_PREFIX.length)
-  const magicalBuf = base58.decode(didWithoutPrefix)
+  const magicalBuf = uint8arrays.fromString(didWithoutPrefix, "base58btc")
   const { keyBuffer, type } = parseMagicBytes(magicalBuf)
 
   return {

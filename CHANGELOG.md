@@ -2,6 +2,7 @@
 
 ### Next
 
+- Bring back the [UMD](https://github.com/umdjs/umd) build (#261)
 - Fix #259: Disallow trailing underscores in usernames in `webnative.lobby.isUsernameValid`.
 
 
