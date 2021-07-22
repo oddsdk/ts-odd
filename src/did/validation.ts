@@ -1,6 +1,6 @@
 
 import * as crypto from '../crypto/index'
-import * as utils from 'keystore-idb/utils'
+import * as utils from 'keystore-idb/utils.js'
 import { didToPublicKey } from './transformers'
 import { KeyType } from './types'
 

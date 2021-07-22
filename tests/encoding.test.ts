@@ -1,6 +1,6 @@
 import * as cbor from 'cborg'
-import * as aes from 'keystore-idb/aes/index'
-import { SymmKeyLength } from 'keystore-idb/types'
+import * as aes from 'keystore-idb/aes/index.js'
+import { SymmKeyLength } from 'keystore-idb/types.js'
 import { JEST_IMPLEMENTATION } from '../src/setup/jest'
 import { loadWebnativePage } from './helpers/page'
 

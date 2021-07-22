@@ -1,4 +1,4 @@
-import { strToArrBuf } from 'keystore-idb/utils'
+import { strToArrBuf } from 'keystore-idb/utils.js'
 import * as hex from '../common/hex'
 import { impl } from '../setup/dependencies'
 
