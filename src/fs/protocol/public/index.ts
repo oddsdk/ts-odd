@@ -132,7 +132,7 @@ export async function normalizeFileContent(content: FileContent): Promise<Uint8A
     return content
   }
   if (typeof Blob !== "undefined" && content instanceof Blob) {
-    return await blob.toBuffer(content)
+    return await blob.toUint8Array(content)
   }
 
   const encoder = new TextEncoder()

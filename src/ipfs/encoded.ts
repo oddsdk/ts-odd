@@ -13,7 +13,7 @@ import * as basic from './basic'
 
 export const add = async (content: FileContent, key: Maybe<string>): Promise<AddResult> => {
   // can't cbor encode blobs ie file streams
-  const normalized = isBlob(content) ? await blob.toBuffer(content) : content
+  const normalized = isBlob(content) ? await blob.toUint8Array(content) : content
   const encoded = cbor.encode(normalized)
   const toAdd = isJust(key) ? await crypto.aes.encrypt(encoded, key) : encoded
   return basic.add(toAdd)

@@ -24,10 +24,10 @@ describe("FS", () => {
 
       return [
         await fs.read(privatePath),
-        await fs.read(publicPath)
+        new TextDecoder().decode(await fs.read(publicPath))
       ].join("/")
     })
 
     expect(string).toEqual("content/content")
   })
-});
+})

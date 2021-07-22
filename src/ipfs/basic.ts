@@ -1,4 +1,3 @@
-import { Buffer } from 'buffer'
 import CIDObj from 'cids'
 import dagPB, { DAGLink, DAGNode } from 'ipld-dag-pb'
 import type { IPFSEntry } from 'ipfs-core-types/src/root'
@@ -8,6 +7,7 @@ import { get as getIpfs } from './config'
 import { CID, AddResult } from './types'
 import * as util from './util'
 import { DAG_NODE_DATA } from './constants'
+import * as uint8arrays from 'uint8arrays'
 
 
 export const add = async (content: ImportCandidate): Promise<AddResult> => {
@@ -33,7 +33,7 @@ export const catRaw = async (cid: CID): Promise<Uint8Array[]> => {
 
 export const catBuf = async (cid: CID): Promise<Uint8Array> => {
   const raw = await catRaw(cid)
-  return Buffer.concat(raw)
+  return uint8arrays.concat(raw)
 }
 
 export const cat = async (cid: CID): Promise<string> => {
