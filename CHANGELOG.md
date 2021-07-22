@@ -1,8 +1,9 @@
 # Changelog
 
-### Next
+### v0.26.1
 
 - Bring back the [UMD](https://github.com/umdjs/umd) build (#261)
+- Bugfix: Internal `keystore-idb/*` imports were extensionless. Only some bundlers like esbuild and vite handle this fine. We added `*.js` extensions. (#265)
 
 
 ### v0.26.0
