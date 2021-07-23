@@ -8,6 +8,10 @@ import rsa from 'keystore-idb/rsa/index.js'
 
 import { Storage } from '../../tests/storage/inMemory'
 import { setDependencies } from './dependencies'
+import * as setup from '../../src/setup'
+
+setup.shouldPin({ enabled: false })
+
 
 // FIXME: Upgrade @node/types as soon as webcrypto types are available
 // @ts-ignore: Upgrade @node/types as soon as webcrypto types are available
