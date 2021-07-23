@@ -1,13 +1,13 @@
-import FileSystem from './fs/index'
+import FileSystem from './fs/index.js'
 
-import * as cidLog from './common/cid-log'
-import * as debug from './common/debug'
-import * as dataRoot from './data-root'
-import * as ucan from './ucan/internal'
+import * as cidLog from './common/cid-log.js'
+import * as debug from './common/debug.js'
+import * as dataRoot from './data-root.js'
+import * as ucan from './ucan/internal.js'
 
-import { Branch } from './path'
-import { Maybe, authenticatedUsername } from './common/index'
-import { Permissions } from './ucan/permissions'
+import { Branch } from './path.js'
+import { Maybe, authenticatedUsername } from './common/index.js'
+import { Permissions } from './ucan/permissions.js'
 
 
 /**

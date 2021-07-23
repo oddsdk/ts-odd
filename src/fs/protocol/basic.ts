@@ -1,11 +1,11 @@
 /** @internal */
 import type { ImportCandidate } from 'ipfs-core-types/src/utils'
 
-import * as ipfs from '../../ipfs/index'
-import { CID, FileContent, AddResult } from '../../ipfs/index'
+import * as ipfs from '../../ipfs/index.js'
+import { CID, FileContent, AddResult } from '../../ipfs/index.js'
 
-import { SimpleLinks, Links } from '../types'
-import * as link from '../link'
+import { SimpleLinks, Links } from '../types.js'
+import * as link from '../link.js'
 
 
 export const getFile = async (cid: CID): Promise<Uint8Array> => {

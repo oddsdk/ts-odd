@@ -1,5 +1,5 @@
 import * as fc from 'fast-check'
-import * as check from './type-checks'
+import * as check from './type-checks.js'
 
 
 describe('is defined', () => {

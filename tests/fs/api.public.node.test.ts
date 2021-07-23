@@ -1,16 +1,16 @@
-import * as expect from 'expect'
+import expect from 'expect'
 import * as fc from 'fast-check'
 
 import { IPFS } from 'ipfs-core'
-import { createInMemoryIPFS } from '../helpers/in-memory-ipfs'
+import { createInMemoryIPFS } from '../helpers/in-memory-ipfs.js'
 
-import '../../src/setup/node'
-import * as ipfsConfig from '../../src/ipfs'
-import * as path from '../../src/path'
+import '../../src/setup/node.js'
+import * as ipfsConfig from '../../src/ipfs/index.js'
+import * as path from '../../src/path.js'
 
-import { pathSegment, pathSegmentPair } from '../helpers/paths'
-import { emptyFilesystem } from '../helpers/filesystem'
-import { publicFileContent as fileContent, publicDecode as decode } from '../helpers/fileContent'
+import { pathSegment, pathSegmentPair } from '../helpers/paths.js'
+import { emptyFilesystem } from '../helpers/filesystem.js'
+import { publicFileContent as fileContent, publicDecode as decode } from '../helpers/fileContent.js'
 
 
 let ipfs: IPFS | null = null

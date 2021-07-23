@@ -1,5 +1,5 @@
 import localforage from 'localforage'
-import { assertBrowser } from '../common/browser'
+import { assertBrowser } from '../common/browser.js'
 
 export const getItem = <T>(key: string): Promise<T | null> => {
   assertBrowser('storage.getItem')

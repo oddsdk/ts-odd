@@ -1,4 +1,4 @@
-import { isUsernameValid } from "./username"
+import { isUsernameValid } from "./username.js"
 
 describe('isUsernameValid', () => {
 

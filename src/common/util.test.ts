@@ -1,4 +1,4 @@
-import * as util from './util'
+import * as util from './util.js'
 
 describe('removes a key from an object', () => {
   it('removes a key from an object', () => {

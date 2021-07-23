@@ -1,5 +1,5 @@
-import * as browserCrypto from '../crypto/browser'
-import * as browserStorage from '../storage/browser'
+import * as browserCrypto from '../crypto/browser.js'
+import * as browserStorage from '../storage/browser.js'
 
 export const DEFAULT_IMPLEMENTATION: Dependencies = { 
   hash: {

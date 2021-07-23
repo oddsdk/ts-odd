@@ -1,11 +1,11 @@
-import * as did from '../did/index'
-import * as ucan from '../ucan/index'
-import * as ucanStore from '../ucan/store'
-import { api } from '../common/index'
-import { setup } from '../setup/internal'
-import RootTree from '../fs/root/tree'
+import * as did from '../did/index.js'
+import * as ucan from '../ucan/index.js'
+import * as ucanStore from '../ucan/store.js'
+import { api } from '../common/index.js'
+import { setup } from '../setup/internal.js'
+import RootTree from '../fs/root/tree.js'
 
-export * from './username'
+export * from './username.js'
 
 
 /**

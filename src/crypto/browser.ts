@@ -4,8 +4,8 @@ import utils from 'keystore-idb/utils.js'
 import aes from 'keystore-idb/aes/index.js'
 import { CharSize, SymmKeyLength } from 'keystore-idb/types.js'
 
-import { assertBrowser } from '../common/browser'
-import * as keystore from '../keystore'
+import { assertBrowser } from '../common/browser.js'
+import * as keystore from '../keystore.js'
 
 
 export const encrypt = async (data: Uint8Array, keyStr: string): Promise<Uint8Array> => {

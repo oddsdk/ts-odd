@@ -1,6 +1,6 @@
 import * as fc from 'fast-check'
 
-import { FileContent } from '../../src/ipfs/types'
+import { FileContent } from '../../src/ipfs/types.js'
 
 const utf8decoder = new TextDecoder()
 

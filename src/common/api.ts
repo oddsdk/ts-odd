@@ -1,5 +1,5 @@
-import * as dns from '../dns/index'
-import { setup } from '../setup/internal'
+import * as dns from '../dns/index.js'
+import { setup } from '../setup/internal.js'
 
 
 const didCache: {

@@ -1,12 +1,12 @@
-import * as check from './fs/types/check'
-import * as debug from './common/debug'
-import * as did from './did/index'
-import * as dns from './dns/index'
-import * as ucan from './ucan/index'
-import { CID } from './ipfs/index'
-import { api } from './common/index'
-import { Ucan } from './ucan/index'
-import { setup } from './setup/internal'
+import * as check from './fs/types/check.js'
+import * as debug from './common/debug.js'
+import * as did from './did/index.js'
+import * as dns from './dns/index.js'
+import * as ucan from './ucan/index.js'
+import { CID } from './ipfs/index.js'
+import { api } from './common/index.js'
+import { Ucan } from './ucan/index.js'
+import { setup } from './setup/internal.js'
 
 /**
  * CID representing an empty string. We use to to speed up DNS propagation

@@ -1,5 +1,5 @@
 import * as fc from 'fast-check'
-import { race } from './async'
+import { race } from './async.js'
 
 test('race returns a promise that was passed into it', () => {
   fc.assert(

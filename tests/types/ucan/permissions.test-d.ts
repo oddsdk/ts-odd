@@ -1,5 +1,5 @@
 import { expectError } from 'tsd'
-import * as permissions from './permissions'
+import * as permissions from './permissions.js'
 
 expectError(() => {
   permissions.paths({

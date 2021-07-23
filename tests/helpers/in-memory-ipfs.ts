@@ -1,9 +1,9 @@
-import { create as createIPFS, IPFS } from 'ipfs-core'
-import * as Repo from 'ipfs-repo'
+import Ipfs, { IPFS } from 'ipfs-core'
+import Repo from 'ipfs-repo'
 import { MemoryDatastore } from 'interface-datastore'
 
 export async function createInMemoryIPFS(): Promise<IPFS> {
-  return await createIPFS({
+  return await Ipfs.create({
     offline: true,
     silent: true,
     preload: {

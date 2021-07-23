@@ -1,4 +1,4 @@
-import { race } from '../common/async'
+import { race } from '../common/async.js'
 
 /**
  * Lookup a DNS TXT record.

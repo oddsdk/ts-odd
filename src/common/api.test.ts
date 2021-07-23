@@ -1,5 +1,5 @@
-import * as dns from '../dns/index'
-import { did } from './api'
+import * as dns from '../dns/index.js'
+import { did } from './api.js'
 
 jest.mock('../dns')
 

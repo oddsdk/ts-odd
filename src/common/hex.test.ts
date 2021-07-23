@@ -1,5 +1,5 @@
 import * as fc from 'fast-check'
-import { fromBytes, toBytes } from './hex'
+import { fromBytes, toBytes } from './hex.js'
 
 test('round trip to bytes and back out', () => {
   fc.assert(

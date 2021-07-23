@@ -1,8 +1,8 @@
 import * as cbor from 'cborg'
 import * as aes from 'keystore-idb/aes/index.js'
 import { SymmKeyLength } from 'keystore-idb/types.js'
-import { NODE_IMPLEMENTATION } from '../src/setup/node'
-import { loadWebnativePage } from './helpers/page'
+import { NODE_IMPLEMENTATION } from '../src/setup/node.js'
+import { loadWebnativePage } from './helpers/page.js'
 
 
 describe("cbor encoding", () => {
