@@ -1,8 +1,10 @@
+import * as expect from 'expect'
 import { IPFS } from 'ipfs-core'
 
 import { loadCAR } from '../helpers/loadCAR'
 import { createInMemoryIPFS } from '../helpers/in-memory-ipfs'
 
+import '../../src/setup/node'
 import FileSystem from '../../src/fs/filesystem'
 import { File } from '../../src/fs/types'
 import * as ipfsConfig from '../../src/ipfs/index'
@@ -13,12 +15,13 @@ import * as crypto from '../../src/crypto/index'
 
 let ipfs: IPFS | null = null
 
-beforeAll(async () => {
+before(async function () {
+  this.timeout(10000)
   ipfs = await createInMemoryIPFS()
   ipfsConfig.set(ipfs)
 })
 
-afterAll(async () => {
+after(async () => {
   if (ipfs == null) return
   await ipfs.stop()
 })
@@ -26,9 +29,8 @@ afterAll(async () => {
 
 describe("the filesystem", () => {
   it("can load filesystem fixtures", async () => {
-    const cids = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
+    const cids = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs as IPFS)
     const rootCID = cids[0]
-    globalThis.cids = cids.map(cid => cid.toString())
 
     const readKey = "pJW/xgBGck9/ZXwQHNPhV3zSuqGlUpXiChxwigwvUws="
     await crypto.keystore.importSymmKey(readKey, await identifiers.readKey({ path: path.directory("private") }))
@@ -42,6 +44,11 @@ describe("the filesystem", () => {
         }
       }
     })
+
+    if (fs == null) {
+      expect(fs).not.toBe(null)
+      return
+    }
 
     let files = await listFiles(fs, path.directory("public"))
     files = files.concat(await listFiles(fs, path.directory("private")))

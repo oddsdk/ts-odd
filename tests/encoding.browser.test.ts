@@ -1,7 +1,7 @@
 import * as cbor from 'cborg'
 import * as aes from 'keystore-idb/aes/index.js'
 import { SymmKeyLength } from 'keystore-idb/types.js'
-import { JEST_IMPLEMENTATION } from '../src/setup/jest'
+import { NODE_IMPLEMENTATION } from '../src/setup/node'
 import { loadWebnativePage } from './helpers/page'
 
 
@@ -14,8 +14,8 @@ describe("cbor encoding", () => {
             hello: "world!"
         }
         const encoded = cbor.encode(message)
-        const cipher = await JEST_IMPLEMENTATION.aes.encrypt(encoded, keyStr)
-        const decipher = await JEST_IMPLEMENTATION.aes.decrypt(cipher, keyStr)
+        const cipher = await NODE_IMPLEMENTATION.aes.encrypt(encoded, keyStr)
+        const decipher = await NODE_IMPLEMENTATION.aes.decrypt(cipher, keyStr)
         const decoded = cbor.decode(decipher)
 
         expect(decoded).toEqual(message)

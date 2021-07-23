@@ -26,6 +26,6 @@
   "exclude": [
     "src/**/*.test.ts",
     "tests/**/*",
-    "src/setup/jest.ts"
+    "src/setup/node.ts"
   ]
 }

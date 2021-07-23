@@ -1,5 +1,5 @@
-import CIDObj from 'cids'
-import dagPB, { DAGLink, DAGNode } from 'ipld-dag-pb'
+import * as CIDObj from 'cids'
+import { DAGLink, DAGNode } from 'ipld-dag-pb'
 import type { IPFSEntry } from 'ipfs-core-types/src/root'
 import type { ImportCandidate } from 'ipfs-core-types/src/utils'
 
@@ -75,7 +75,7 @@ export const dagPut = async (node: DAGNode): Promise<AddResult> => {
 }
 
 export const dagPutLinks = async (links: DAGLink[]): Promise<AddResult> => {
-  const node = new dagPB.DAGNode(DAG_NODE_DATA, links)
+  const node = new DAGNode(DAG_NODE_DATA, links)
   return dagPut(node)
 }
 

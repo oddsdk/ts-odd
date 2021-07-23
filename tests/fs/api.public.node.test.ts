@@ -1,31 +1,35 @@
+import * as expect from 'expect'
 import * as fc from 'fast-check'
 
 import { IPFS } from 'ipfs-core'
 import { createInMemoryIPFS } from '../helpers/in-memory-ipfs'
 
+import '../../src/setup/node'
 import * as ipfsConfig from '../../src/ipfs'
 import * as path from '../../src/path'
 
 import { pathSegment, pathSegmentPair } from '../helpers/paths'
 import { emptyFilesystem } from '../helpers/filesystem'
-import { privateFileContent as fileContent, privateDecode as decode } from '../helpers/fileContent'
+import { publicFileContent as fileContent, publicDecode as decode } from '../helpers/fileContent'
 
 
 let ipfs: IPFS | null = null
 
-beforeAll(async () => {
+before(async function () {
+  this.timeout(10000)
   ipfs = await createInMemoryIPFS()
   ipfsConfig.set(ipfs)
 })
 
-afterAll(async () => {
+after(async () => {
   if (ipfs === null) return
   await ipfs.stop()
 })
 
 fc.configureGlobal(process.env.TEST_ENV === 'gh-action' ? { numRuns: 50 } : { numRuns: 10 })
 
-describe('the filesystem api', () => {
+describe('the filesystem api', function () {
+  this.timeout(120000)
   it('writes files', async () => {
     const fs = await emptyFilesystem()
 
@@ -33,7 +37,7 @@ describe('the filesystem api', () => {
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file('private', pathSegment)
+          const filepath = path.file('public', pathSegment)
 
           await fs.write(filepath, fileContent.val)
 
@@ -42,13 +46,14 @@ describe('the filesystem api', () => {
     )
   })
 
-  it('removes what it writes', async () => {
+  it('removes files it writes', async () => {
     const fs = await emptyFilesystem()
+
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file('private', pathSegment)
+          const filepath = path.file('public', pathSegment)
 
           await fs.write(filepath, fileContent.val)
           await fs.rm(filepath)
@@ -65,13 +70,17 @@ describe('the filesystem api', () => {
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file('private', pathSegment)
+          const filepath = path.file('public', pathSegment)
 
           await fs.write(filepath, fileContent.val)
           const file = await fs.read(filepath)
-          const content = decode(file, fileContent.type)
+          if (file == null) {
+            expect(file).not.toBe(null)
+            return
+          }
+          const decodedContent = decode(file, fileContent.type)
 
-          expect(content).toEqual(fileContent.val)
+          expect(decodedContent).toEqual(fileContent.val)
         })
     )
   })
@@ -83,8 +92,8 @@ describe('the filesystem api', () => {
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {
-          const fromPath = path.file('private', pathSegmentPair.first)
-          const toPath = path.file('private', pathSegmentPair.second)
+          const fromPath = path.file('public', pathSegmentPair.first)
+          const toPath = path.file('public', pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
           await fs.mv(fromPath, toPath)
@@ -103,16 +112,21 @@ describe('the filesystem api', () => {
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {
-          const fromPath = path.file('private', pathSegmentPair.first)
-          const toPath = path.file('private', pathSegmentPair.second)
+          const fromPath = path.file('public', pathSegmentPair.first)
+          const toPath = path.file('public', pathSegmentPair.second)
+
 
           await fs.write(fromPath, fileContent.val)
           await fs.mv(fromPath, toPath)
 
           const file = await fs.read(toPath)
-          const content = decode(file, fileContent.type)
+          if (file == null) {
+            expect(file).not.toBe(null)
+            return
+          }
+          const decodedContent = decode(file, fileContent.type)
 
-          expect(content).toEqual(fileContent.val)
+          expect(decodedContent).toEqual(fileContent.val)
         })
     )
   })
@@ -123,12 +137,13 @@ describe('the filesystem api', () => {
     await fc.assert(
       fc.asyncProperty(
         pathSegment(), async pathSegment => {
-          const dirpath = path.directory('private', pathSegment)
+          const dirpath = path.directory('public', pathSegment)
 
           await fs.mkdir(dirpath)
 
           expect(await fs.exists(dirpath)).toEqual(true)
-        })
+        }),
+      { numRuns: 100 }
     )
   })
 
@@ -138,7 +153,7 @@ describe('the filesystem api', () => {
     await fc.assert(
       fc.asyncProperty(
         pathSegment(), async pathSegment => {
-          const dirpath = path.directory('private', pathSegment)
+          const dirpath = path.directory('public', pathSegment)
 
           await fs.mkdir(dirpath)
           await fs.rm(dirpath)
@@ -155,7 +170,7 @@ describe('the filesystem api', () => {
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file('private', pathSegment)
+          const filepath = path.file('public', pathSegment)
 
           await fs.write(filepath, fileContent.val)
 
@@ -166,14 +181,14 @@ describe('the filesystem api', () => {
 
   it('lists files written to a directory', async () => {
     const fs = await emptyFilesystem()
-    const dirpath = path.directory('private', 'testDir')
+    const dirpath = path.directory('public', 'testDir')
     await fs.mkdir(dirpath)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file('private', 'testDir', pathSegment)
+          const filepath = path.file('public', 'testDir', pathSegment)
 
           await fs.write(filepath, fileContent.val)
           const listing = await fs.ls(dirpath)
@@ -185,15 +200,15 @@ describe('the filesystem api', () => {
 
   it('moves files into a directory', async () => {
     const fs = await emptyFilesystem()
-    const dirpath = path.directory('private', 'testDir')
+    const dirpath = path.directory('public', 'testDir')
     await fs.mkdir(dirpath)
 
-    await fc.assert(
+    await await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {
-          const fromPath = path.file('private', pathSegmentPair.first)
-          const toPath = path.file('private', pathSegmentPair.second)
+          const fromPath = path.file('public', pathSegmentPair.first)
+          const toPath = path.file('public', pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
           await fs.mv(fromPath, toPath)

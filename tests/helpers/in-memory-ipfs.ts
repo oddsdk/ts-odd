@@ -1,11 +1,14 @@
-import Ipfs, { IPFS } from 'ipfs-core'
-import Repo from 'ipfs-repo'
+import { create as createIPFS, IPFS } from 'ipfs-core'
+import * as Repo from 'ipfs-repo'
 import { MemoryDatastore } from 'interface-datastore'
 
 export async function createInMemoryIPFS(): Promise<IPFS> {
-  return await Ipfs.create({
+  return await createIPFS({
     offline: true,
     silent: true,
+    preload: {
+      enabled: false,
+    },
     config: {
       Addresses: {
         Swarm: []
@@ -14,7 +17,7 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
     repo: new Repo('inmem', {
       lock: {
         lock: async () => ({ close: async () => { return } }),
-        locked: async () => Promise.resolve(false)
+        locked: async () => false
       },
       autoMigrate: false,
       storageBackends: {

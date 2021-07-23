@@ -6,9 +6,9 @@ import config from "keystore-idb/config.js"
 import aes from 'keystore-idb/aes/index.js'
 import rsa from 'keystore-idb/rsa/index.js'
 
-import { Storage } from '../../tests/storage/inMemory'
-import { setDependencies } from './dependencies'
-import * as setup from '../../src/setup'
+import { Storage } from '../../tests/storage/inMemory.js'
+import { setDependencies } from './dependencies.js'
+import * as setup from '../../src/setup.js'
 
 setup.shouldPin({ enabled: false })
 
@@ -270,7 +270,7 @@ const getKeystore = (() => {
 
 const inMemoryStorage = new Storage()
 
-export const JEST_IMPLEMENTATION = {
+export const NODE_IMPLEMENTATION = {
   hash: {
     sha256: sha256
   },
@@ -331,4 +331,4 @@ export const JEST_IMPLEMENTATION = {
   }
 }
 
-setDependencies(JEST_IMPLEMENTATION)
+setDependencies(NODE_IMPLEMENTATION)
