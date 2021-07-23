@@ -100,7 +100,10 @@ export function toPosix(
 /**
  * Combine two `DistinctivePath`s.
  */
-export function combine(a: DirectoryPath, b: DistinctivePath): DistinctivePath {
+export function combine(a: DirectoryPath, b: FilePath): FilePath
+export function combine(a: DirectoryPath, b: DirectoryPath): DirectoryPath
+export function combine(a: DirectoryPath, b: DistinctivePath): DistinctivePath
+export function combine(a: any, b: any): any {
   return map(p => unwrap(a).concat(p), b)
 }
 

@@ -26,8 +26,11 @@ import { Permissions, appDataPath } from "../ucan/permissions.js"
 // TYPES
 
 
-type AppPath =
-  (path?: DistinctivePath) => DistinctivePath
+interface AppPath {
+  (): DirectoryPath
+  (path: DirectoryPath): DirectoryPath
+  (path: FilePath): FilePath
+}
 
 type ConstructorParams = {
   localOnly?: boolean
@@ -447,8 +450,8 @@ function appPath(permissions: Permissions): AppPath {
   if (!permissions.app) throw Error("Only works with app permissions")
   const base = appDataPath(permissions.app)
 
-  return path => {
+  return ((path?: DistinctivePath) => {
     if (path) return pathing.combine(base, path)
     return base
-  }
+  }) as unknown as AppPath
 }

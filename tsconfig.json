@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
-    "target": "ES2015",
+    "target": "ES2020",
     "module":"ESNext",
     "lib": ["dom"],
     "strict": true,
@@ -13,12 +13,6 @@
     "skipLibCheck": true,
     "declarationDir": "lib",
     "outDir": "lib",
-    "plugins": [
-      {
-        "transform": "@zoltu/typescript-transformer-append-js-extension/output/index.js",
-        "after": true,
-      },
-    ],
   },
   "include": [
     "src/**/*"
