@@ -8,11 +8,12 @@ import { CID, AddResult } from './types'
 import * as util from './util'
 import { DAG_NODE_DATA } from './constants'
 import * as uint8arrays from 'uint8arrays'
+import { setup } from '../setup/internal'
 
 
 export const add = async (content: ImportCandidate): Promise<AddResult> => {
   const ipfs = await getIpfs()
-  const result = await ipfs.add(content, { cidVersion: 1, pin: true })
+  const result = await ipfs.add(content, { cidVersion: 1, pin: setup.shouldPin })
 
   return {
     cid: result.cid.toString(),
@@ -85,6 +86,8 @@ export const size = async (cid: CID): Promise<number> => {
 }
 
 export const attemptPin = async (cid: CID): Promise<void> => {
+  if (!setup.shouldPin) return
+
   const ipfs = await getIpfs()
   try {
     await ipfs.pin.add(cid, { recursive: false })

@@ -15,6 +15,15 @@ export function debug({ enabled }: { enabled: boolean }): boolean {
   return internalSetup.debug
 }
 
+/**
+ * Configure whether webnative should aggressively pin
+ * everything, or pin nothing at all.
+ */
+export function shouldPin({ enabled }: { enabled: boolean }): boolean {
+  internalSetup.shouldPin = enabled
+  return internalSetup.shouldPin
+}
+
 
 /**
  * Override endpoints.

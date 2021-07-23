@@ -5,11 +5,14 @@ import { createInMemoryIPFS } from '../helpers/in-memory-ipfs'
 
 import * as ipfsConfig from '../../src/ipfs'
 import * as path from '../../src/path'
+import * as setup from '../../src/setup'
 
 import { pathSegment, pathSegmentPair } from '../helpers/paths'
 import { emptyFilesystem } from '../helpers/filesystem'
 import { privateFileContent as fileContent, privateDecode as decode } from '../helpers/fileContent'
 
+
+setup.shouldPin({ enabled: false })
 
 let ipfs: IPFS | null = null
 
