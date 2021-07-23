@@ -1,4 +1,4 @@
-import { loadWebnativePage } from '../helpers/page.js'
+import { loadWebnativePage } from "../helpers/page.js"
 
 
 describe('publicKeyToDid', () => {

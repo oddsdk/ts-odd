@@ -1,7 +1,7 @@
 import { BaseLink } from "../../types.js"
-import  { Metadata } from '../../metadata.js'
+import  { Metadata } from "../../metadata.js"
 import { AddResult, CID } from "../../../ipfs/index.js"
-import { BareNameFilter, PrivateName } from './namefilter.js'
+import { BareNameFilter, PrivateName } from "./namefilter.js"
 
 export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo
 

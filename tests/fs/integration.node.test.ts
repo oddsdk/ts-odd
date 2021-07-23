@@ -1,16 +1,16 @@
-import expect from 'expect'
-import { IPFS } from 'ipfs-core'
+import expect from "expect"
+import { IPFS } from "ipfs-core"
 
-import { loadCAR } from '../helpers/loadCAR.js'
-import { createInMemoryIPFS } from '../helpers/in-memory-ipfs.js'
+import { loadCAR } from "../helpers/loadCAR.js"
+import { createInMemoryIPFS } from "../helpers/in-memory-ipfs.js"
 
-import '../../src/setup/node.js'
-import FileSystem from '../../src/fs/filesystem.js'
-import { File } from '../../src/fs/types.js'
-import * as ipfsConfig from '../../src/ipfs/index.js'
-import * as path from '../../src/path.js'
-import * as identifiers from '../../src/common/identifiers.js'
-import * as crypto from '../../src/crypto/index.js'
+import "../../src/setup/node.js"
+import FileSystem from "../../src/fs/filesystem.js"
+import { File } from "../../src/fs/types.js"
+import * as ipfsConfig from "../../src/ipfs/index.js"
+import * as path from "../../src/path.js"
+import * as identifiers from "../../src/common/identifiers.js"
+import * as crypto from "../../src/crypto/index.js"
 
 
 let ipfs: IPFS | null = null

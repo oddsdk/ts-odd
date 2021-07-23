@@ -1,4 +1,4 @@
-import * as fc from 'fast-check'
+import * as fc from "fast-check"
 
 /** Path segment.
  * Cannot be an empty string or contain '/'.

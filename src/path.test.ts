@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import * as fc from 'fast-check';
-import * as pathing from './path.js'
+import * as pathing from "./path.js"
 
 
 // CREATION

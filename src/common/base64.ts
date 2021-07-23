@@ -1,4 +1,4 @@
-import * as uint8arrays from 'uint8arrays'
+import * as uint8arrays from "uint8arrays"
 
 export function decode(base64: string): string {
   return uint8arrays.toString(uint8arrays.fromString(base64, "base64pad"))

@@ -1,4 +1,4 @@
-import * as uint8arrays from 'uint8arrays'
+import * as uint8arrays from "uint8arrays"
 
 export const toUint8Array = async (blob: Blob): Promise<Uint8Array> => {
   return new Promise((resolve, reject) => {

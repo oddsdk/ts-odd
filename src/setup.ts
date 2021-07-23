@@ -1,4 +1,4 @@
-import { Endpoints, setup as internalSetup } from './setup/internal.js'
+import { Endpoints, setup as internalSetup } from "./setup/internal.js"
 
 
 type UnknownObject =
@@ -43,4 +43,4 @@ export function endpoints(e: Partial<Endpoints>): Endpoints {
   return { ...internalSetup.endpoints }
 }
 
-export { setDependencies } from './setup/dependencies.js'
+export { setDependencies } from "./setup/dependencies.js"

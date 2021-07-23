@@ -1,4 +1,4 @@
-import { bareNameFilter, readKey } from './identifiers.js'
+import { bareNameFilter, readKey } from "./identifiers.js"
 
 test('bare name filter starts with wnfs__bareNameFilter__', async () => {
   const result = await bareNameFilter({ path: {file: ['public', 'test']} })

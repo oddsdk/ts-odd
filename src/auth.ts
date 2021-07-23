@@ -1,16 +1,16 @@
-import * as cidLog from './common/cid-log.js'
-import * as common from './common/index.js'
-import * as base64 from './common/base64.js'
-import * as did from './did/index.js'
-import * as path from './path.js'
-import * as crypto from './crypto/index.js'
-import * as storage from './storage/index.js'
-import * as ucan from './ucan/store.js'
+import * as cidLog from "./common/cid-log.js"
+import * as common from "./common/index.js"
+import * as base64 from "./common/base64.js"
+import * as did from "./did/index.js"
+import * as path from "./path.js"
+import * as crypto from "./crypto/index.js"
+import * as storage from "./storage/index.js"
+import * as ucan from "./ucan/store.js"
 
-import { USERNAME_STORAGE_KEY, Maybe, VERSION } from './common/index.js'
-import { FileSystem } from './fs/filesystem.js'
-import { Permissions } from './ucan/permissions.js'
-import { setup } from './setup/internal.js'
+import { USERNAME_STORAGE_KEY, Maybe, VERSION } from "./common/index.js"
+import { FileSystem } from "./fs/filesystem.js"
+import { Permissions } from "./ucan/permissions.js"
+import { setup } from "./setup/internal.js"
 
 
 // FUNCTIONS
