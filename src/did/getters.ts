@@ -1,12 +1,12 @@
-import * as common from '../common/index.js'
+import * as common from "../common/index.js"
 
-import * as dns from '../dns/index.js'
-import { isString } from '../common/index.js'
-import { getDictionary } from '../ucan/store.js'
-import { rootIssuer } from '../ucan/token.js'
-import { setup } from '../setup/internal.js'
+import * as dns from "../dns/index.js"
+import { isString } from "../common/index.js"
+import { getDictionary } from "../ucan/store.js"
+import { rootIssuer } from "../ucan/token.js"
+import { setup } from "../setup/internal.js"
 
-export * from './local.js'
+export * from "./local.js"
 
 
 /**

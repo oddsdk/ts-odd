@@ -1,7 +1,7 @@
-import * as fc from 'fast-check'
-import { equal } from './arrbufs.js'
+import * as fc from "fast-check"
+import { equal } from "./arrbufs.js"
 
-test('arrbufs equal', () => {
+test("arrbufs equal", () => {
   fc.assert(
     fc.property(fc.uint8Array(), data => {
       expect(equal(data.buffer, data.buffer)).toBe(true)
@@ -9,7 +9,7 @@ test('arrbufs equal', () => {
   )
 })
 
-test('arrbufs not equal', () => {
+test("arrbufs not equal", () => {
   fc.assert(
     fc.property(
       fc.tuple(

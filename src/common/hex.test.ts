@@ -1,7 +1,7 @@
-import * as fc from 'fast-check'
-import { fromBytes, toBytes } from './hex.js'
+import * as fc from "fast-check"
+import { fromBytes, toBytes } from "./hex.js"
 
-test('round trip to bytes and back out', () => {
+test("round trip to bytes and back out", () => {
   fc.assert(
     fc.property(fc.array(fc.integer(16, 255)), data => {
       const hexData = []

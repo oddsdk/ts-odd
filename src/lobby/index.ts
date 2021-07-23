@@ -1,11 +1,11 @@
-import * as did from '../did/index.js'
-import * as ucan from '../ucan/index.js'
-import * as ucanStore from '../ucan/store.js'
-import { api } from '../common/index.js'
-import { setup } from '../setup/internal.js'
-import RootTree from '../fs/root/tree.js'
+import * as did from "../did/index.js"
+import * as ucan from "../ucan/index.js"
+import * as ucanStore from "../ucan/store.js"
+import { api } from "../common/index.js"
+import { setup } from "../setup/internal.js"
+import RootTree from "../fs/root/tree.js"
 
-export * from './username.js'
+export * from "./username.js"
 
 
 /**
@@ -25,10 +25,10 @@ export async function createAccount(
   }))
 
   const response = await fetch(`${apiEndpoint}/user`, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'authorization': `Bearer ${jwt}`,
-      'content-type': 'application/json'
+      "authorization": `Bearer ${jwt}`,
+      "content-type": "application/json"
     },
     body: JSON.stringify(userProps)
   })
@@ -63,9 +63,9 @@ export async function resendVerificationEmail(): Promise<{ success: boolean }> {
   }))
 
   const response = await fetch(`${apiEndpoint}/user/email/resend`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'authorization': `Bearer ${jwt}`
+      "authorization": `Bearer ${jwt}`
     }
   })
   return {

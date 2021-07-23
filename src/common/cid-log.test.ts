@@ -1,26 +1,26 @@
-import * as fc from 'fast-check'
-import CID from 'cids'
-import multihash from 'multihashing-async'
-import * as cidLog from './cid-log.js'
-import * as storage from '../storage/index.js'
+import * as fc from "fast-check"
+import CID from "cids"
+import multihash from "multihashing-async"
+import * as cidLog from "./cid-log.js"
+import * as storage from "../storage/index.js"
 
 async function generateCids(data: Uint8Array[]): Promise<string[]> {
   const promisedCids = data.map(async bytes => {
-    const mhash = await multihash(bytes, 'sha2-256')
-    const cid = new CID(1, 'dag-pb', mhash)
+    const mhash = await multihash(bytes, "sha2-256")
+    const cid = new CID(1, "dag-pb", mhash)
     return cid.toString()
   })
   return Promise.all(promisedCids)
 }
 
-test('gets an empty log when key is missing', async () => {
+test("gets an empty log when key is missing", async () => {
   await storage.clear()
 
   const log = await cidLog.get()
   expect(log).toEqual([])
 })
 
-test('adds cids and gets an ordered log', async () => {
+test("adds cids and gets an ordered log", async () => {
   await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({ maxLength: 100 }), { maxLength: 10 }), async data => {
@@ -43,7 +43,7 @@ test('adds cids and gets an ordered log', async () => {
   )
 })
 
-test('gets index of a cid', async () => {
+test("gets index of a cid", async () => {
   await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({minLength:1, maxLength: 100 }), { minLength: 1, maxLength: 10 }), async data => {
@@ -65,7 +65,7 @@ test('gets index of a cid', async () => {
   )
 })
 
-test('gets the newest cid', async () => {
+test("gets the newest cid", async () => {
   await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({ maxLength: 100 }), { minLength: 1, maxLength: 10 }), async data => {
@@ -86,7 +86,7 @@ test('gets the newest cid', async () => {
   )
 })
 
-test('drops older cids when cid log reaches 1000 entries', async () => {
+test("drops older cids when cid log reaches 1000 entries", async () => {
   await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({ maxLength: 100 }), { minLength: 1001, maxLength: 1003 }), async data => {
@@ -107,7 +107,7 @@ test('drops older cids when cid log reaches 1000 entries', async () => {
   )
 })
 
-test('clears the cid log', async () => {
+test("clears the cid log", async () => {
   await fc.assert(
     fc.asyncProperty(
       fc.array(fc.uint8Array({ maxLength: 100 }), { maxLength: 5 }), async data => {

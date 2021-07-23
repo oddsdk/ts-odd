@@ -1,5 +1,5 @@
-import * as dns from '../dns/index.js'
-import { setup } from '../setup/internal.js'
+import * as dns from "../dns/index.js"
+import { setup } from "../setup/internal.js"
 
 
 const didCache: {
@@ -18,14 +18,14 @@ const didCache: {
  * This function caches the DID for 3 hours.
  */
 export async function did(): Promise<string> {
-  const host = setup.endpoints.api.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  const host = setup.endpoints.api.replace(/^https?:\/\//, "").replace(/\/$/, "")
   const now = Date.now() // in milliseconds
 
   if (
     didCache.host !== host ||
     didCache.lastFetched + 1000 * 60 * 60 * 3 <= now
   ) {
-    didCache.did = await dns.lookupTxtRecord('_did.' + host)
+    didCache.did = await dns.lookupTxtRecord("_did." + host)
     didCache.host = host
     didCache.lastFetched = now
   }

@@ -1,26 +1,26 @@
-import { throttle } from 'throttle-debounce'
+import { throttle } from "throttle-debounce"
 
-import { BaseLinks } from './types.js'
-import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from '../path.js'
-import { PublishHook, UnixTree, Tree, File } from './types.js'
-import { SemVer } from './semver.js'
-import BareTree from './bare/tree.js'
-import RootTree from './root/tree.js'
-import PublicTree from './v1/PublicTree.js'
-import PrivateFile from './v1/PrivateFile.js'
-import PrivateTree from './v1/PrivateTree.js'
+import { BaseLinks } from "./types.js"
+import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
+import { PublishHook, UnixTree, Tree, File } from "./types.js"
+import { SemVer } from "./semver.js"
+import BareTree from "./bare/tree.js"
+import RootTree from "./root/tree.js"
+import PublicTree from "./v1/PublicTree.js"
+import PrivateFile from "./v1/PrivateFile.js"
+import PrivateTree from "./v1/PrivateTree.js"
 
-import * as cidLog from '../common/cid-log.js'
-import * as dataRoot from '../data-root.js'
-import * as debug from '../common/debug.js'
-import * as crypto from '../crypto/index.js'
-import * as pathing from '../path.js'
-import * as typeCheck from './types/check.js'
-import * as ucan from '../ucan/index.js'
+import * as cidLog from "../common/cid-log.js"
+import * as dataRoot from "../data-root.js"
+import * as debug from "../common/debug.js"
+import * as crypto from "../crypto/index.js"
+import * as pathing from "../path.js"
+import * as typeCheck from "./types/check.js"
+import * as ucan from "../ucan/index.js"
 
-import { CID, FileContent } from '../ipfs/index.js'
-import { NoPermissionError } from '../errors.js'
-import { Permissions, appDataPath } from '../ucan/permissions.js'
+import { CID, FileContent } from "../ipfs/index.js"
+import { NoPermissionError } from "../errors.js"
+import { Permissions, appDataPath } from "../ucan/permissions.js"
 
 
 // TYPES
@@ -117,10 +117,10 @@ export class FileSystem {
 
     if (!this.localOnly) {
       // Publish when coming back online
-      globalThis.addEventListener('online', this._whenOnline)
+      globalThis.addEventListener("online", this._whenOnline)
       
       // Show an alert when leaving the page while updating the data root
-      globalThis.addEventListener('beforeunload', this._beforeLeaving)
+      globalThis.addEventListener("beforeunload", this._beforeLeaving)
     }
   }
 
@@ -175,8 +175,8 @@ export class FileSystem {
     if (this.localOnly) return
     const globe = (globalThis as any)
     globe.filesystems = globe.filesystems.filter((a: FileSystem) => a !== this)
-    globe.removeEventListener('online', this._whenOnline)
-    globe.removeEventListener('beforeunload', this._beforeLeaving)
+    globe.removeEventListener("online", this._whenOnline)
+    globe.removeEventListener("beforeunload", this._beforeLeaving)
   }
 
 

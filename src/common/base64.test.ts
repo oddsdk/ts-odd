@@ -1,10 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import * as fc from 'fast-check'
-import * as base64 from './base64.js'
+import * as fc from "fast-check"
+import * as base64 from "./base64.js"
 
-test('round trip encode and decode a url', () => {
+test("round trip encode and decode a url", () => {
   fc.assert(
     fc.property(fc.string({ maxLength: 4000 }), data => {
       const encodedData = base64.urlEncode(data)

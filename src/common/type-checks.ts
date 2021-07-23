@@ -13,22 +13,22 @@ export const isValue = <T>(val: T | undefined | null): val is T => {
 }
 
 export const isBool = (val: unknown): val is boolean => {
-  return typeof val === 'boolean'
+  return typeof val === "boolean"
 }
 
 export const isNum = (val: unknown): val is number => {
-  return typeof val === 'number'
+  return typeof val === "number"
 }
 
 export const isString = (val: unknown): val is string => {
-  return typeof val === 'string'
+  return typeof val === "string"
 }
 
 export const isObject = <T>(val: unknown): val is Record<string, T> => {
-  return val !== null && typeof val === 'object'
+  return val !== null && typeof val === "object"
 }
 
 export const isBlob = (val: unknown): val is Blob => {
-  if (typeof Blob === 'undefined') return false
-  return val instanceof Blob || (isObject(val) && val?.constructor?.name === 'Blob')
+  if (typeof Blob === "undefined") return false
+  return val instanceof Blob || (isObject(val) && val?.constructor?.name === "Blob")
 }

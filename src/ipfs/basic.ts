@@ -1,14 +1,14 @@
-import CIDObj from 'cids'
-import dagPb, { DAGLink, DAGNode } from 'ipld-dag-pb'
-import type { IPFSEntry } from 'ipfs-core-types/src/root'
-import type { ImportCandidate } from 'ipfs-core-types/src/utils'
+import CIDObj from "cids"
+import dagPb, { DAGLink, DAGNode } from "ipld-dag-pb"
+import type { IPFSEntry } from "ipfs-core-types/src/root"
+import type { ImportCandidate } from "ipfs-core-types/src/utils"
 
-import { get as getIpfs } from './config.js'
-import { CID, AddResult } from './types.js'
-import * as util from './util.js'
-import { DAG_NODE_DATA } from './constants.js'
-import * as uint8arrays from 'uint8arrays'
-import { setup } from '../setup/internal.js'
+import { get as getIpfs } from "./config.js"
+import { CID, AddResult } from "./types.js"
+import * as util from "./util.js"
+import { DAG_NODE_DATA } from "./constants.js"
+import * as uint8arrays from "uint8arrays"
+import { setup } from "../setup/internal.js"
 
 
 export const add = async (content: ImportCandidate): Promise<AddResult> => {
@@ -63,7 +63,7 @@ export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   const ipfs = await getIpfs()
   // using this format because Gateway doesn't like `dag-cbor` nodes.
   // I think this is because UnixFS requires `dag-pb` & the gateway requires UnixFS for directory traversal
-  const cidObj = await ipfs.dag.put(node, { format: 'dag-pb', hashAlg: 'sha2-256' })
+  const cidObj = await ipfs.dag.put(node, { format: "dag-pb", hashAlg: "sha2-256" })
   const cid = cidObj.toV1().toString()
   await attemptPin(cid)
   const nodeSize = await size(cid)

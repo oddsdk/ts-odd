@@ -1,11 +1,11 @@
-import * as pathing from '../path.js'
-import * as common from '../common/index.js'
+import * as pathing from "../path.js"
+import * as common from "../common/index.js"
 
-import * as token from './token.js'
+import * as token from "./token.js"
 
-import { Resource } from './types.js'
-import { getDictionary } from './store.js'
-import { DistinctivePath } from '../path.js'
+import { Resource } from "./types.js"
+import { getDictionary } from "./store.js"
+import { DistinctivePath } from "../path.js"
 
 
 // CONSTANTS

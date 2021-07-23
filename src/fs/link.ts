@@ -1,8 +1,8 @@
-import dagPb, { DAGLink } from 'ipld-dag-pb'
-import type { IPFSEntry } from 'ipfs-core-types/src/root'
+import dagPb, { DAGLink } from "ipld-dag-pb"
+import type { IPFSEntry } from "ipfs-core-types/src/root"
 
-import { Link, SimpleLink } from './types.js'
-import { mtimeFromMs } from './metadata.js'
+import { Link, SimpleLink } from "./types.js"
+import { mtimeFromMs } from "./metadata.js"
 
 
 export const toDAGLink = (link: SimpleLink): DAGLink => {
@@ -11,7 +11,7 @@ export const toDAGLink = (link: SimpleLink): DAGLink => {
 }
 
 export const fromFSFile = (fsObj: IPFSEntry): Link => {
-  const { name = '', cid, size, mtime, type } = fsObj
+  const { name = "", cid, size, mtime, type } = fsObj
   return {
     name,
     cid: cid.toString(),

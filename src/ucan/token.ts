@@ -1,8 +1,8 @@
-import * as did from '../did/local.js'
-import { verifySignedData } from '../did/validation.js'
-import * as crypto from '../crypto/index.js'
-import { base64 } from '../common/index.js'
-import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from './types.js'
+import * as did from "../did/local.js"
+import { verifySignedData } from "../did/validation.js"
+import * as crypto from "../crypto/index.js"
+import { base64 } from "../common/index.js"
+import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from "./types.js"
 
 
 /**
@@ -33,7 +33,7 @@ export async function build({
   issuer,
   lifetimeInSeconds = 30,
   expiration,
-  potency = 'APPEND',
+  potency = "APPEND",
   proof,
   resource
 }: {
@@ -53,9 +53,9 @@ export async function build({
 
   // Header
   const header = {
-    alg: jwtAlgorithm(ksAlg) || 'UnknownAlgorithm',
-    typ: 'JWT',
-    uav: '1.0.0' // actually 0.3.1 but server isn't updated yet
+    alg: jwtAlgorithm(ksAlg) || "UnknownAlgorithm",
+    typ: "JWT",
+    uav: "1.0.0" // actually 0.3.1 but server isn't updated yet
   }
 
   // Timestamps
@@ -78,7 +78,7 @@ export async function build({
     nbf: nbf,
     prf: proof || null,
     ptc: potency,
-    rsc: resource ? resource : (decodedProof ? decodedProof.payload.rsc : '*'),
+    rsc: resource ? resource : (decodedProof ? decodedProof.payload.rsc : "*"),
   }
 
   const signature = addSignature ? await sign(header, payload) : null
@@ -117,8 +117,8 @@ export function encode(ucan: Ucan): string {
   const encodedHeader = encodeHeader(ucan.header)
   const encodedPayload = encodePayload(ucan.payload)
 
-  return encodedHeader + '.' +
-         encodedPayload + '.' +
+  return encodedHeader + "." +
+         encodedPayload + "." +
          ucan.signature
 }
 
@@ -215,8 +215,8 @@ export async function sign(header: UcanHeader, payload: UcanPayload): Promise<st
  */
 function jwtAlgorithm(cryptoSystem: string): string | null {
   switch (cryptoSystem) {
-    case "ed25519": return 'EdDSA'
-    case "rsa": return 'RS256'
+    case "ed25519": return "EdDSA"
+    case "rsa": return "RS256"
     default: return null
   }
 }

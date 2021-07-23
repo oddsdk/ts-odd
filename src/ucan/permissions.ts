@@ -1,5 +1,5 @@
-import * as pathing from '../path.js'
-import { DirectoryPath, DistinctivePath } from '../path.js'
+import * as pathing from "../path.js"
+import { DirectoryPath, DistinctivePath } from "../path.js"
 import { Potency, Resource } from "../ucan/index.js"
 
 export type Permissions = {
@@ -20,7 +20,7 @@ export type FileSystemPermissions = {
 }
 
 export type PlatformPermissions = {
-  apps: '*' | Array<string>
+  apps: "*" | Array<string>
 }
 
 export type RawPermissions = Array<RawPermission>

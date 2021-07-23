@@ -1,16 +1,16 @@
 module.exports = {
   root: true,
-  parser: '@typescript-eslint/parser',
+  parser: "@typescript-eslint/parser",
   plugins: [
-    '@typescript-eslint',
+    "@typescript-eslint",
   ],
   extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/eslint-recommended',
-    'plugin:@typescript-eslint/recommended',
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
   ],
   rules: {
-    '@typescript-eslint/member-delimiter-style': ['error', {
+    "@typescript-eslint/member-delimiter-style": ["error", {
       "multiline": {
         "delimiter": "none",
         "requireLast": false
@@ -18,6 +18,9 @@ module.exports = {
     }],
     "@typescript-eslint/no-use-before-define": ["off"],
     "@typescript-eslint/semi": ["error", "never"],
-    "@typescript-eslint/ban-ts-comment": 1
+    "@typescript-eslint/ban-ts-comment": 1,
+    "@typescript-eslint/quotes": ["error", "double", {
+      allowTemplateLiterals: true
+    }]
   }
 }

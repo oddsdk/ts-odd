@@ -1,13 +1,13 @@
-import * as pathing from '../path.js'
-import * as permissions from './permissions.js'
-import * as storage from '../storage/index.js'
+import * as pathing from "../path.js"
+import * as permissions from "./permissions.js"
+import * as storage from "../storage/index.js"
 
-import * as dictionary from './dictionary.js'
-import * as token from './token.js'
-import { getDictionary, setDictionary } from './store.js'
+import * as dictionary from "./dictionary.js"
+import * as token from "./token.js"
+import { getDictionary, setDictionary } from "./store.js"
 
-import { UCANS_STORAGE_KEY } from '../common/index.js'
-import { Permissions } from './permissions.js'
+import { UCANS_STORAGE_KEY } from "../common/index.js"
+import { Permissions } from "./permissions.js"
 
 
 

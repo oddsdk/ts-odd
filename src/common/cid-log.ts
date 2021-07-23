@@ -1,5 +1,5 @@
-import * as storage from '../storage/index.js'
-import { setup } from '../setup/internal.js'
+import * as storage from "../storage/index.js"
+import { setup } from "../setup/internal.js"
 
 
 const FS_CID_LOG_PREFIX = "webnative.wnfs_cid_log"

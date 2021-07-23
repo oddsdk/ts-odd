@@ -1,14 +1,14 @@
-import crypto from 'crypto'
-import * as ed25519 from 'noble-ed25519'
+import crypto from "crypto"
+import * as ed25519 from "noble-ed25519"
 import utils from "keystore-idb/utils.js"
-import { CharSize, Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey, SymmKeyLength } from 'keystore-idb/types.js'
+import { CharSize, Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey, SymmKeyLength } from "keystore-idb/types.js"
 import config from "keystore-idb/config.js"
-import aes from 'keystore-idb/aes/index.js'
-import rsa from 'keystore-idb/rsa/index.js'
+import aes from "keystore-idb/aes/index.js"
+import rsa from "keystore-idb/rsa/index.js"
 
-import { Storage } from '../../tests/storage/inMemory.js'
-import { setDependencies } from './dependencies.js'
-import * as setup from '../../src/setup.js'
+import { Storage } from "../../tests/storage/inMemory.js"
+import { setDependencies } from "./dependencies.js"
+import * as setup from "../../src/setup.js"
 
 setup.shouldPin({ enabled: false })
 
@@ -65,7 +65,7 @@ const decryptGCM = async (encrypted: string, keyStr: string, ivStr: string): Pro
 
 const sha256 = async (bytes: Uint8Array): Promise<Uint8Array> => {
   const buf = bytes.buffer
-  const hash = await webcrypto.subtle.digest('SHA-256', buf)
+  const hash = await webcrypto.subtle.digest("SHA-256", buf)
   return new Uint8Array(hash)
 }
 

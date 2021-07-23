@@ -1,6 +1,6 @@
 import { isUsernameValid } from "./username.js"
 
-describe('isUsernameValid', () => {
+describe("isUsernameValid", () => {
 
   it("allows basic usernames", () => {
     expect(isUsernameValid("simple")).toBe(true)

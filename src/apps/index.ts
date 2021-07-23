@@ -1,8 +1,8 @@
-import * as did from '../did/index.js'
-import * as ucan from '../ucan/index.js'
-import { api, Maybe, isString } from '../common/index.js'
-import { setup } from '../setup/internal.js'
-import { CID } from '../ipfs/index.js'
+import * as did from "../did/index.js"
+import * as ucan from "../ucan/index.js"
+import { api, Maybe, isString } from "../common/index.js"
+import { setup } from "../setup/internal.js"
+import { CID } from "../ipfs/index.js"
 
 
 export type App = {
@@ -30,9 +30,9 @@ export async function index(): Promise<Array<App>> {
   }))
 
   const response = await fetch(`${apiEndpoint}/app`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'authorization': `Bearer ${jwt}`
+      "authorization": `Bearer ${jwt}`
     }
   })
 
@@ -70,9 +70,9 @@ export async function create(
     : `${apiEndpoint}/app`
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'authorization': `Bearer ${jwt}`
+      "authorization": `Bearer ${jwt}`
     }
   })
   const data = await response.json()
@@ -102,9 +102,9 @@ export async function deleteByDomain(
   }))
 
   const appIndexResponse = await fetch(`${apiEndpoint}/app`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'authorization': `Bearer ${jwt}`
+      "authorization": `Bearer ${jwt}`
     }
   })
 
@@ -115,9 +115,9 @@ export async function deleteByDomain(
   }
 
   await fetch(`${apiEndpoint}/app/${encodeURIComponent(appToDelete[0])}`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'authorization': `Bearer ${jwt}`
+      "authorization": `Bearer ${jwt}`
     }
   })
 }
@@ -148,9 +148,9 @@ export async function publish(
   const url = `${apiEndpoint}/app/${domain}/${cid}`
 
   await fetch(url, {
-    method: 'PATCH',
+    method: "PATCH",
     headers: {
-      'authorization': `Bearer ${jwt}`
+      "authorization": `Bearer ${jwt}`
     }
   })
 }
