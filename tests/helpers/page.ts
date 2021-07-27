@@ -1,7 +1,8 @@
 import path from 'path'
 import { promises as fs } from 'fs'
+import { Page } from 'playwright'
 
-export async function loadWebnativePage(): Promise<void> {
+export async function loadWebnativePage(page: Page): Promise<void> {
   const htmlPath = path.join(__dirname, '../fixtures/index.html')
   page.on("console", async event => {
     const t = event.type()

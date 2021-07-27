@@ -16,7 +16,7 @@ import { publicFileContent as fileContent, publicDecode as decode } from '../hel
 let ipfs: IPFS | null = null
 
 before(async function () {
-  this.timeout(10000)
+  this.timeout(120000)
   ipfs = await createInMemoryIPFS()
   ipfsConfig.set(ipfs)
 })
@@ -28,8 +28,9 @@ after(async () => {
 
 fc.configureGlobal(process.env.TEST_ENV === 'gh-action' ? { numRuns: 50 } : { numRuns: 10 })
 
-describe('the filesystem api', function () {
-  this.timeout(120000)
+describe('the public filesystem api', function () {
+  this.timeout(300000)
+
   it('writes files', async () => {
     const fs = await emptyFilesystem()
 

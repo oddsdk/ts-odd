@@ -1,9 +1,13 @@
-import { expect } from "@playwright/test"
-import * as wn from "../../src/index"
+import { test, expect } from "@playwright/test"
+import { loadWebnativePage } from "../helpers/page"
 
 
-describe("FS", () => {
-  it("can use appPath", async () => {
+test("the filesystem provides appPath", async ({ page }) => {
+  await loadWebnativePage(page)
+
+  const string = await page.evaluate(async () => {
+    const wn = webnative
+
     const fs = await wn.fs.empty({
       localOnly: true,
       permissions: {
@@ -17,10 +21,10 @@ describe("FS", () => {
     await fs.mkdir(fs.appPath())
     await fs.write(fs.appPath(wn.path.file("foo")), "bar")
 
-    const string = [
+    return [
       await fs.read(fs.appPath(wn.path.file("foo")))
     ].join("/")
-
-    expect(string).toEqual("bar")
   })
+
+  expect(string).toEqual("bar")
 })

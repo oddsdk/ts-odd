@@ -1,41 +1,21 @@
-import * as cbor from 'cborg'
-import * as aes from 'keystore-idb/aes/index.js'
-import { SymmKeyLength } from 'keystore-idb/types.js'
-import { NODE_IMPLEMENTATION } from '../src/setup/node.js'
-import { loadWebnativePage } from './helpers/page.js'
+import { test, expect } from "@playwright/test"
+import { loadWebnativePage } from './helpers/page'
 
 
-describe("cbor encoding", () => {
-    it("works in node with encryption in between", async () => {
-        const key = await aes.makeKey({ length: SymmKeyLength.B256 })
-        const keyStr = await aes.exportKey(key)
+test("cbor encoding works in the browser with encryption in between", async ({ page }) => {
+  await loadWebnativePage(page)
 
-        const message = {
-            hello: "world!"
-        }
-        const encoded = cbor.encode(message)
-        const cipher = await NODE_IMPLEMENTATION.aes.encrypt(encoded, keyStr)
-        const decipher = await NODE_IMPLEMENTATION.aes.decrypt(cipher, keyStr)
-        const decoded = cbor.decode(decipher)
+  async function runRoundTrip(message) {
+    const keyStr = await webnative.crypto.aes.genKeyStr()
 
-        expect(decoded).toEqual(message)
-    })
+    const encoded = webnative.cbor.encode(message)
+    const cipher = await webnative.crypto.aes.encrypt(encoded, keyStr)
+    const decipher = await webnative.crypto.aes.decrypt(cipher, keyStr)
+    const decoded = webnative.cbor.decode(decipher)
 
-    it("works in the browser with encryption in between", async () => {
-        await loadWebnativePage()
+    return decoded
+  }
 
-        async function runRoundTrip(message) {
-            const keyStr = await webnative.crypto.aes.genKeyStr()
-
-            const encoded = webnative.cbor.encode(message)
-            const cipher = await webnative.crypto.aes.encrypt(encoded, keyStr)
-            const decipher = await webnative.crypto.aes.decrypt(cipher, keyStr)
-            const decoded = webnative.cbor.decode(decipher)
-
-            return decoded
-        }
-
-        const message = { hello: "world!" }
-        expect(await page.evaluate(runRoundTrip, message)).toEqual(message)
-    })
+  const message = { hello: "world!" }
+  expect(await page.evaluate(runRoundTrip, message)).toEqual(message)
 })

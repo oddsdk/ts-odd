@@ -1,3 +1,4 @@
+import expect from "expect"
 import * as fc from "fast-check"
 import * as check from "./type-checks.js"
 

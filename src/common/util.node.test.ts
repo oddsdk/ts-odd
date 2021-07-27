@@ -1,3 +1,4 @@
+import expect from "expect"
 import * as util from "./util.js"
 
 describe("removes a key from an object", () => {
@@ -64,25 +65,25 @@ describe("maps over an object", () => {
 describe("async maps over an object", () => {
   it("adds one to each entry in an object", async () => {
     const obj = { a: 1, b: 2, c: 3 }
-    async function addOne(val, key) { return val + 1 }
+    async function addOne(val: number, key: string) { return val + 1 }
     expect(util.mapObjAsync(obj, addOne)).resolves.toEqual({ a: 2, b: 3, c: 4 })
   })
 
   it("nullifies each entry in an object", async () => {
     const obj = { a: 1, b: 2, c: 3 }
-    async function nullify(val, key) { return null }
+    async function nullify(val: number, key: string) { return null }
     expect(util.mapObjAsync(obj, nullify)).resolves.toEqual({ a: null, b: null, c: null })
   })
 
   it("has no effect on an empty object", async () => {
     const obj = {}
-    async function nullify(val, key) { return null }
+    async function nullify(val: number, key: string) { return null }
     expect(util.mapObjAsync(obj, nullify)).resolves.toEqual({})
   })
 
   it("sets each entries value to its key", async () => {
     const obj = { a: 1, b: 2 }
-    async function setToKey(val, key) { return key }
+    async function setToKey(val: number, key: string) { return key }
     expect(util.mapObjAsync(obj, setToKey)).resolves.toEqual({ a: "a", b: "b" })
   })
 })
@@ -99,23 +100,23 @@ describe("array contains", () => {
   })
 
   it("returns false when an array is empty", () => {
-    const arr = []
+    const arr: number[] = []
     expect(util.arrContains(arr, 1)).toBe(false)
   })
 })
 
 describe("async waterfall", () => {
   it("accumulates values returned from async calls", async () => {
-    async function addOne(val) { return val + 1 }
-    async function addTwo(val) { return val + 2 }
-    async function addThree(val) { return val + 3 }
+    async function addOne(val: number) { return val + 1 }
+    async function addTwo(val: number) { return val + 2 }
+    async function addThree(val: number) { return val + 3 }
     expect(util.asyncWaterfall(0, [addOne, addTwo, addThree])).resolves.toEqual(6)
   })
 
   it("concatenates characters returned from async calls", async () => {
-    async function concatB(val) { return val + "b" }
-    async function concatC(val) { return val + "c" }
-    async function concatD(val) { return val + "d" }
+    async function concatB(val: string) { return val + "b" }
+    async function concatC(val: string) { return val + "c" }
+    async function concatD(val: string) { return val + "d" }
     expect(util.asyncWaterfall("a", [concatB, concatC, concatD])).resolves.toEqual("abcd")
   })
 

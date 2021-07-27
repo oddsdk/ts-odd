@@ -16,7 +16,7 @@ import * as crypto from "../../src/crypto/index.js"
 let ipfs: IPFS | null = null
 
 before(async function () {
-  this.timeout(10000)
+  this.timeout(120000)
   ipfs = await createInMemoryIPFS()
   ipfsConfig.set(ipfs)
 })

@@ -1,3 +1,4 @@
+import expect from "expect"
 import { isUsernameValid } from "./username.js"
 
 describe("isUsernameValid", () => {
