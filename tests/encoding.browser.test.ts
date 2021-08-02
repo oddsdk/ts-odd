@@ -9,7 +9,7 @@ describe("cbor encoding in the browser", () => {
     const page = pageFromContext(this)
     await loadWebnativePage(page)
 
-    async function runRoundTrip(message) {
+    async function runRoundTrip(message: any) {
       // @ts-ignore
       const wn = webnative
       const keyStr = await wn.crypto.aes.genKeyStr()

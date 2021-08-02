@@ -1,6 +1,6 @@
-import * as fs from 'fs'
-import { CID, IPFS } from 'ipfs-core'
-import { CarBlockIterator } from '@ipld/car'
+import * as fs from "fs"
+import { CID, IPFS } from "ipfs-core"
+import { CarBlockIterator } from "@ipld/car"
 
 export async function loadCAR(filepath: string, ipfs: IPFS): Promise<CID[]> {
   const inStream = fs.createReadStream(filepath)

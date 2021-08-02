@@ -5,7 +5,7 @@ import { Page } from "puppeteer"
 
 export async function loadWebnativePage(page: Page): Promise<void> {
   const dirname = path.dirname(url.fileURLToPath(import.meta.url))
-  const htmlPath = path.join(dirname, '../fixtures/index.html')
+  const htmlPath = path.join(dirname, "../fixtures/index.html")
   page.on("console", async event => {
     const t = event.type()
     switch (t) {
