@@ -1,6 +1,4 @@
 /** @internal */
-
-/** @internal */
 import { isString, isObject, isNum, isBool } from '../../common/index.js'
 import { CID } from '../../ipfs/index.js'
 import { Tree, File, Link, Links, BaseLink } from '../types.js'

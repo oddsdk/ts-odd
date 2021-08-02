@@ -1,12 +1,9 @@
 /** @internal */
-
-/** @internal */
 import { Link, Links } from '../../types.js'
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from './types.js'
 import { Metadata } from '../../metadata.js'
 import { isString } from '../../../common/type-checks.js'
 import * as check from '../../types/check.js'
-
 import { isValue, Maybe, blob } from '../../../common/index.js'
 import * as ipfs from '../../../ipfs/index.js'
 import { CID, FileContent } from '../../../ipfs/index.js'
