@@ -1,6 +1,4 @@
 /** @internal */
-
-/** @internal */
 import { Link, Links } from '../../types'
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from './types'
 import { Metadata } from '../../metadata'

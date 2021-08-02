@@ -1,6 +1,4 @@
 /** @internal */
-
-/** @internal */
 import { isString, isObject, isNum, isBool } from '../../common/index'
 import { CID } from '../../ipfs/index'
 import { Tree, File, Link, Links, BaseLink } from '../types'
