@@ -1,21 +1,29 @@
-import { test, expect } from "@playwright/test"
-import { loadWebnativePage } from './helpers/page'
+import expect from "expect"
+import { loadWebnativePage } from "./helpers/page.js"
+import { pageFromContext } from "./mocha-hook.js"
 
 
-test("cbor encoding works in the browser with encryption in between", async ({ page }) => {
-  await loadWebnativePage(page)
+describe("cbor encoding in the browser", () => {
 
-  async function runRoundTrip(message) {
-    const keyStr = await webnative.crypto.aes.genKeyStr()
+  it("works with encryption in between", async function() {
+    const page = pageFromContext(this)
+    await loadWebnativePage(page)
 
-    const encoded = webnative.cbor.encode(message)
-    const cipher = await webnative.crypto.aes.encrypt(encoded, keyStr)
-    const decipher = await webnative.crypto.aes.decrypt(cipher, keyStr)
-    const decoded = webnative.cbor.decode(decipher)
+    async function runRoundTrip(message) {
+      // @ts-ignore
+      const wn = webnative
+      const keyStr = await wn.crypto.aes.genKeyStr()
 
-    return decoded
-  }
+      const encoded = wn.cbor.encode(message)
+      const cipher = await wn.crypto.aes.encrypt(encoded, keyStr)
+      const decipher = await wn.crypto.aes.decrypt(cipher, keyStr)
+      const decoded = wn.cbor.decode(decipher)
 
-  const message = { hello: "world!" }
-  expect(await page.evaluate(runRoundTrip, message)).toEqual(message)
+      return decoded
+    }
+
+    const message = { hello: "world!" }
+    expect(await page.evaluate(runRoundTrip, message)).toEqual(message)
+  })
+
 })
