@@ -184,7 +184,7 @@ yarn build
 
 # test
 yarn test:prod
-yarn test:watch
+yarn test:unit
 
 # generate docs
 yarn docs

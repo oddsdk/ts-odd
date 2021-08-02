@@ -1,11 +1,11 @@
 import expect from "expect"
 import * as mocha from "mocha"
-import * as playwright from "playwright"
+import puppeteer from "puppeteer"
 
 declare module "mocha" {
   export interface Context {
-    browser: playwright.Browser,
-    page: playwright.Page
+    browser: puppeteer.Browser
+    page: puppeteer.Page
   }
 }
 
@@ -14,7 +14,7 @@ export const mochaHooks = {
   // All
 
   beforeAll: async function(this: mocha.Context) {
-    this.browser = await playwright.chromium.launch()
+    this.browser = await puppeteer.launch()
   },
 
   afterAll: async function(this: mocha.Context) {
@@ -33,10 +33,10 @@ export const mochaHooks = {
 
 }
 
-export const pageFromContext = (that: mocha.Context): playwright.Page => {
+export const pageFromContext = (that: mocha.Context): puppeteer.Page => {
   const page = that?.test?.ctx?.page
   if (page == null) {
     expect(page).not.toBe(null)
   }
-  return page as unknown as playwright.Page
+  return page as unknown as puppeteer.Page
 }

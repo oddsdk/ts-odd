@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.26.1",
+  "version": "0.26.1-alpha-4",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -81,7 +81,7 @@
     "ipfs-repo": "^9.1.6",
     "mocha": "^9.0.2",
     "multihashing-async": "^2.1.2",
-    "playwright": "^1.13.0",
+    "puppeteer": "^10.1.0",
     "rimraf": "^3.0.2",
     "ts-node": "^10.1.0",
     "tslib": "^2.2.0",

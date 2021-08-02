@@ -1,7 +1,7 @@
-import * as path from 'path'
-import * as url from 'url'
-import { promises as fs } from 'fs'
-import { Page } from 'playwright'
+import * as path from "path"
+import * as url from "url"
+import { promises as fs } from "fs"
+import { Page } from "puppeteer"
 
 export async function loadWebnativePage(page: Page): Promise<void> {
   const dirname = path.dirname(url.fileURLToPath(import.meta.url))
