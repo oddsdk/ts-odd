@@ -48,7 +48,7 @@
   },
   "scripts": {
     "docs": "rimraf docs && typedoc",
-    "lint": "yarn eslint src/**/*.ts",
+    "lint": "yarn eslint src/**/*.ts src/*.ts tests/**/*.ts tests/*.ts",
     "prebuild": "rimraf lib dist && node scripts/gen-version.js",
     "build": "tsc && yarn run build:minified",
     "build:minified": "node scripts/build-minified.js",
