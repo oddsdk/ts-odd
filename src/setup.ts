@@ -1,10 +1,6 @@
 import { Endpoints, setup as internalSetup } from "./setup/internal.js"
 
 
-type UnknownObject =
-  { [key: string]: unknown }
-
-
 /**
  * Toggle debug mode.
  *

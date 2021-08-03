@@ -53,7 +53,7 @@
     "build": "tsc && yarn run build:minified",
     "build:minified": "node scripts/build-minified.js",
     "start": "tsc -w",
-    "test": "mocha --timeout 120000 --require tests/mocha-hook.ts tests/**/*.test.ts tests/*.test.ts src/**/*.test.ts src/*.test.ts",
+    "test": "mocha",
     "test:prod": "yarn run build && yarn run lint && yarn run test:gh-action",
     "test:types": "cp -RT tests/types/ lib/ && yarn run tsd",
     "test:unit": "mocha --watch --testPathPattern=src/",
