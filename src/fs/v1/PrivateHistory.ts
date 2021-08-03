@@ -1,21 +1,21 @@
 import MMPT from "../protocol/private/mmpt.js"
-import { BareNameFilter } from '../protocol/private/namefilter.js'
+import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { DecryptedNode, Revision } from "../protocol/private/types.js"
-import { Maybe } from '../../common/index.js'
-import { Metadata } from '../metadata.js'
-import * as protocol from '../protocol/index.js'
+import { Maybe } from "../../common/index.js"
+import { Metadata } from "../metadata.js"
+import * as protocol from "../protocol/index.js"
 
 
 export type Node = {
   constructor: {
     fromInfo: (mmpt: MMPT, key: string, info: DecryptedNode) => Node
-  },
+  }
   header: {
-    bareNameFilter: BareNameFilter,
-    metadata: Metadata,
+    bareNameFilter: BareNameFilter
+    metadata: Metadata
     revision: number
-  },
-  key: string,
+  }
+  key: string
   mmpt: MMPT
 }
 
@@ -29,7 +29,7 @@ export default class PrivateHistory {
    *
    * @param delta Optional negative number to specify how far to go back
    */
-  async back(delta: number = -1): Promise<Maybe<Node>> {
+  async back(delta = -1): Promise<Maybe<Node>> {
     const n = Math.min(delta, -1)
     const revision = this.node.header?.revision
     return (revision && await this._getRevision(revision + n)) || null
@@ -57,7 +57,7 @@ export default class PrivateHistory {
   /**
    * List earlier versions along with the timestamp they were created.
    */
-  async list(amount: number = 5): Promise<Array<{ delta: number, timestamp: number }>> {
+  async list(amount = 5): Promise<Array<{ delta: number; timestamp: number }>> {
     const max = this.node.header.revision
 
     return Promise.all(
@@ -69,7 +69,7 @@ export default class PrivateHistory {
         }))
       })
     ).then(
-      list => list.filter(a => !!a.revisionInfo) as Array<{ revisionInfo: DecryptedNode, delta: number }>
+      list => list.filter(a => !!a.revisionInfo) as Array<{ revisionInfo: DecryptedNode; delta: number }>
     ).then(
       list => list.map(a => {
         const mtime = a.revisionInfo.metadata.unixMeta.mtime

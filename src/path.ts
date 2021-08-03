@@ -2,11 +2,11 @@ import { Maybe } from "./common/types.js"
 
 
 export enum Branch {
-  Public = 'public',
-  Pretty = 'p',
-  Private = 'private',
-  PrivateLog = 'privateLog',
-  Version = 'version'
+  Public = "public",
+  Pretty = "p",
+  Private = "private",
+  PrivateLog = "privateLog",
+  Version = "version"
 }
 
 export enum Kind {

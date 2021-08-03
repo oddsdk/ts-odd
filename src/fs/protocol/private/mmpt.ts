@@ -1,7 +1,7 @@
 import { AddResult, CID } from "../../../ipfs/index.js"
-import * as basic from '../basic.js'
-import * as link from '../../link.js'
-import { Puttable, SimpleLinks } from '../../types.js'
+import * as basic from "../basic.js"
+import * as link from "../../link.js"
+import { Puttable, SimpleLinks } from "../../types.js"
 
 const nibbles = {
   "0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true, "7": true,

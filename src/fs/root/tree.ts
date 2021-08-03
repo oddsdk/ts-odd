@@ -1,27 +1,26 @@
-import { AddResult, CID } from '../../ipfs/index.js'
-import { BareNameFilter } from '../protocol/private/namefilter.js'
-import { Links, Puttable, SimpleLink } from '../types.js'
-import { Branch, DistinctivePath } from '../../path.js'
-import { Maybe } from '../../common/index.js'
-import { Permissions } from '../../ucan/permissions.js'
-import { SemVer } from '../semver.js'
+import { AddResult, CID } from "../../ipfs/index.js"
+import { BareNameFilter } from "../protocol/private/namefilter.js"
+import { Links, Puttable, SimpleLink } from "../types.js"
+import { Branch, DistinctivePath } from "../../path.js"
+import { Maybe } from "../../common/index.js"
+import { Permissions } from "../../ucan/permissions.js"
+import { SemVer } from "../semver.js"
 
-import * as crypto from '../../crypto/index.js'
-import * as identifiers from '../../common/identifiers.js'
-import * as ipfs from '../../ipfs/index.js'
-import * as link from '../link.js'
-import * as pathing from '../../path.js'
-import * as protocol from '../protocol/index.js'
-import * as semver from '../semver.js'
-import * as storage from '../../storage/index.js'
-import * as ucanPermissions from '../../ucan/permissions.js'
-import * as check from '../protocol/private/types/check.js'
+import * as crypto from "../../crypto/index.js"
+import * as identifiers from "../../common/identifiers.js"
+import * as ipfs from "../../ipfs/index.js"
+import * as link from "../link.js"
+import * as pathing from "../../path.js"
+import * as protocol from "../protocol/index.js"
+import * as semver from "../semver.js"
+import * as storage from "../../storage/index.js"
+import * as ucanPermissions from "../../ucan/permissions.js"
 
-import BareTree from '../bare/tree.js'
-import MMPT from '../protocol/private/mmpt.js'
-import PublicTree from '../v1/PublicTree.js'
-import PrivateTree from '../v1/PrivateTree.js'
-import PrivateFile from '../v1/PrivateFile.js'
+import BareTree from "../bare/tree.js"
+import MMPT from "../protocol/private/mmpt.js"
+import PublicTree from "../v1/PublicTree.js"
+import PrivateTree from "../v1/PrivateTree.js"
+import PrivateFile from "../v1/PrivateFile.js"
 
 
 type PrivateNode = PrivateTree | PrivateFile
@@ -38,13 +37,13 @@ export default class RootTree implements Puttable {
   privateNodes: Record<string, PrivateNode>
 
   constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateNodes }: {
-    links: Links,
-    mmpt: MMPT,
-    privateLog: Array<SimpleLink>,
+    links: Links
+    mmpt: MMPT
+    privateLog: Array<SimpleLink>
 
-    publicTree: PublicTree,
-    prettyTree: BareTree,
-    privateNodes: Record<string, PrivateNode>,
+    publicTree: PublicTree
+    prettyTree: BareTree
+    privateNodes: Record<string, PrivateNode>
   }) {
     this.links = links
     this.mmpt = mmpt
@@ -99,7 +98,7 @@ export default class RootTree implements Puttable {
   }
 
   static async fromCID(
-    { cid, permissions }: { cid: CID, permissions?: Permissions }
+    { cid, permissions }: { cid: CID; permissions?: Permissions }
   ): Promise<RootTree> {
     const links = await protocol.basic.getLinks(cid)
     const keys = permissions ? await permissionKeys(permissions) : []
@@ -257,7 +256,7 @@ export default class RootTree implements Puttable {
 // ㊙️
 
 
-type PathKey = { path: DistinctivePath, key: string }
+type PathKey = { path: DistinctivePath; key: string }
 
 
 async function findBareNameFilter(

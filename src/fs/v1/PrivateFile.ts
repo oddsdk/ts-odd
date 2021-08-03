@@ -1,17 +1,17 @@
-import BaseFile from '../base/file.js'
-import MMPT from '../protocol/private/mmpt.js'
-import PrivateHistory from './PrivateHistory.js'
-import { FileContent } from '../../ipfs/index.js'
-import { PrivateName, BareNameFilter } from '../protocol/private/namefilter.js'
-import { DecryptedNode, PrivateAddResult, PrivateFileInfo } from '../protocol/private/types.js'
-import { isObject } from '../../common/type-checks.js'
-import { Maybe } from '../../common/index.js'
-import * as crypto from '../../crypto/index.js'
-import * as check from '../protocol/private/types/check.js'
-import * as history from './PrivateHistory.js'
-import * as metadata from '../metadata.js'
-import * as protocol from '../protocol/index.js'
-import * as namefilter from '../protocol/private/namefilter.js'
+import BaseFile from "../base/file.js"
+import MMPT from "../protocol/private/mmpt.js"
+import PrivateHistory from "./PrivateHistory.js"
+import { FileContent } from "../../ipfs/index.js"
+import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
+import { DecryptedNode, PrivateAddResult, PrivateFileInfo } from "../protocol/private/types.js"
+import { isObject } from "../../common/type-checks.js"
+import { Maybe } from "../../common/index.js"
+import * as crypto from "../../crypto/index.js"
+import * as check from "../protocol/private/types/check.js"
+import * as history from "./PrivateHistory.js"
+import * as metadata from "../metadata.js"
+import * as protocol from "../protocol/index.js"
+import * as namefilter from "../protocol/private/namefilter.js"
 
 
 type ConstructorParams = {

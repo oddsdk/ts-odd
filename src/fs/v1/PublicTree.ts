@@ -1,20 +1,20 @@
-import { CID, FileContent } from '../../ipfs/index.js'
-import { Links, NonEmptyPath, UpdateCallback } from '../types.js'
-import { Maybe } from '../../common/index.js'
-import { Path } from '../../path.js'
-import { TreeInfo, TreeHeader, PutDetails } from '../protocol/public/types.js'
+import { CID, FileContent } from "../../ipfs/index.js"
+import { Links, NonEmptyPath, UpdateCallback } from "../types.js"
+import { Maybe } from "../../common/index.js"
+import { Path } from "../../path.js"
+import { TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
 
-import BaseTree from '../base/tree.js'
-import BareTree from '../bare/tree.js'
-import PublicFile from './PublicFile.js'
-import PublicHistory from './PublicHistory.js'
+import BaseTree from "../base/tree.js"
+import BareTree from "../bare/tree.js"
+import PublicFile from "./PublicFile.js"
+import PublicHistory from "./PublicHistory.js"
 
-import * as check from '../types/check.js'
-import * as history from './PublicHistory.js'
-import * as link from '../link.js'
-import * as metadata from '../metadata.js'
-import * as protocol from '../protocol/index.js'
-import * as skeleton from '../protocol/public/skeleton.js'
+import * as check from "../types/check.js"
+import * as history from "./PublicHistory.js"
+import * as link from "../link.js"
+import * as metadata from "../metadata.js"
+import * as protocol from "../protocol/index.js"
+import * as skeleton from "../protocol/public/skeleton.js"
 
 
 type ConstructorParams = {

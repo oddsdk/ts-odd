@@ -1,15 +1,15 @@
-import * as check from '../types/check.js'
-import * as protocol from '../protocol/index.js'
-import * as link from '../link.js'
-import * as semver from '../semver.js'
+import * as check from "../types/check.js"
+import * as protocol from "../protocol/index.js"
+import * as link from "../link.js"
+import * as semver from "../semver.js"
 
-import { AddResult, CID, FileContent } from '../../ipfs/index.js'
-import { Links, BaseLinks, Tree, File, Puttable, UpdateCallback } from '../types.js'
-import { Maybe } from '../../common/index.js'
-import { Path } from '../../path.js'
+import { AddResult, CID, FileContent } from "../../ipfs/index.js"
+import { Links, BaseLinks, Tree, File, Puttable, UpdateCallback } from "../types.js"
+import { Maybe } from "../../common/index.js"
+import { Path } from "../../path.js"
 
-import BareFile from '../bare/file.js'
-import BaseTree from '../base/tree.js'
+import BareFile from "../bare/file.js"
+import BaseTree from "../base/tree.js"
 
 
 class BareTree extends BaseTree {

@@ -1,21 +1,21 @@
-import BaseTree from '../base/tree.js'
-import MMPT from '../protocol/private/mmpt.js'
-import PrivateFile from './PrivateFile.js'
-import PrivateHistory from './PrivateHistory.js'
+import BaseTree from "../base/tree.js"
+import MMPT from "../protocol/private/mmpt.js"
+import PrivateFile from "./PrivateFile.js"
+import PrivateHistory from "./PrivateHistory.js"
 
-import { BaseLinks, UpdateCallback } from '../types.js'
-import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult } from '../protocol/private/types.js'
-import { FileContent } from '../../ipfs/index.js'
-import { Path } from '../../path.js'
-import { PrivateName, BareNameFilter } from '../protocol/private/namefilter.js'
-import { isObject, mapObj, Maybe, removeKeyFromObj } from '../../common/index.js'
-import * as crypto from '../../crypto/index.js'
-import * as check from '../protocol/private/types/check.js'
-import * as history from './PrivateHistory.js'
-import * as metadata from '../metadata.js'
-import * as namefilter from '../protocol/private/namefilter.js'
-import * as protocol from '../protocol/index.js'
-import * as semver from '../semver.js'
+import { BaseLinks, UpdateCallback } from "../types.js"
+import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult } from "../protocol/private/types.js"
+import { FileContent } from "../../ipfs/index.js"
+import { Path } from "../../path.js"
+import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
+import { isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
+import * as crypto from "../../crypto/index.js"
+import * as check from "../protocol/private/types/check.js"
+import * as history from "./PrivateHistory.js"
+import * as metadata from "../metadata.js"
+import * as namefilter from "../protocol/private/namefilter.js"
+import * as protocol from "../protocol/index.js"
+import * as semver from "../semver.js"
 
 
 type ConstructorParams = {
@@ -201,7 +201,7 @@ export default class PrivateTree extends BaseTree {
       : PrivateTree.fromInfo(this.mmpt, result.key, result.node)
   }
 
-  async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<{ key: string, node: DecryptedNode }>> {
+  async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<{ key: string; node: DecryptedNode }>> {
     const [head, ...rest] = parts
     if (head === undefined) return {
       key: nodeInfo.key,

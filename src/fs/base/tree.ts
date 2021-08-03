@@ -1,11 +1,11 @@
-import * as check from '../types/check.js'
-import * as pathing from '../../path.js'
+import * as check from "../types/check.js"
+import * as pathing from "../../path.js"
 
-import { AddResult, CID, FileContent } from '../../ipfs/index.js'
-import { Maybe } from '../../common/index.js'
-import { Path } from '../../path.js'
-import { SemVer } from '../semver.js'
-import { Tree, File, UnixTree, BaseLinks, UpdateCallback } from '../types.js'
+import { AddResult, CID, FileContent } from "../../ipfs/index.js"
+import { Maybe } from "../../common/index.js"
+import { Path } from "../../path.js"
+import { SemVer } from "../semver.js"
+import { Tree, File, UnixTree, BaseLinks, UpdateCallback } from "../types.js"
 
 
 abstract class BaseTree implements Tree, UnixTree {
@@ -26,7 +26,7 @@ abstract class BaseTree implements Tree, UnixTree {
     if (dir === null) {
       throw new Error("Path does not exist")
     } else if (check.isFile(dir)) {
-      throw new Error('Can not `ls` a file')
+      throw new Error("Can not `ls` a file")
     }
     return dir.getLinks()
   }
@@ -36,7 +36,7 @@ abstract class BaseTree implements Tree, UnixTree {
     if (file === null) {
       throw new Error("Path does not exist")
     } else if (!check.isFile(file)) {
-      throw new Error('Can not `cat` a directory')
+      throw new Error("Can not `cat` a directory")
     }
     return file.content
   }

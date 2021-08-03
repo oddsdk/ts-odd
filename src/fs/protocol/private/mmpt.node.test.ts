@@ -7,7 +7,7 @@ import * as ipfsConfig from "../../../ipfs/config.js"
 import { createInMemoryIPFS } from "../../../../tests/helpers/in-memory-ipfs.js"
 
 function sha256Str(str: string): string {
-  return crypto.createHash('sha256').update(str).digest('hex')
+  return crypto.createHash("sha256").update(str).digest("hex")
 }
 
 function encode(str: string): Uint8Array {
@@ -86,7 +86,7 @@ describe("the mmpt", function () {
     const entries = await generateExampleEntries(amount)
 
     const slice_size = 5
-    let soFar: { name: string, cid: string }[] = []
+    let soFar: { name: string; cid: string }[] = []
     let missing = []
 
     for (let i = 0; i < entries.length; i += slice_size) {

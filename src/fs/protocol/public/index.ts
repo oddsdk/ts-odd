@@ -1,15 +1,15 @@
 /** @internal */
-import { Link, Links } from '../../types.js'
-import { TreeInfo, FileInfo, Skeleton, PutDetails } from './types.js'
-import { Metadata } from '../../metadata.js'
-import { isString } from '../../../common/type-checks.js'
-import * as check from '../../types/check.js'
-import { isValue, Maybe, blob } from '../../../common/index.js'
-import * as ipfs from '../../../ipfs/index.js'
-import { CID, FileContent } from '../../../ipfs/index.js'
-import * as link from '../../link.js'
+import { Link, Links } from "../../types.js"
+import { TreeInfo, FileInfo, Skeleton, PutDetails } from "./types.js"
+import { Metadata } from "../../metadata.js"
+import { isString } from "../../../common/type-checks.js"
+import * as check from "../../types/check.js"
+import { isValue, Maybe, blob } from "../../../common/index.js"
+import * as ipfs from "../../../ipfs/index.js"
+import { CID, FileContent } from "../../../ipfs/index.js"
+import * as link from "../../link.js"
 
-import * as basic from '../basic.js'
+import * as basic from "../basic.js"
 
 export const putTree = async (
     links: Links,
@@ -18,13 +18,13 @@ export const putTree = async (
     previousCID: Maybe<CID>
   ): Promise<PutDetails> => {
   const userlandInfo = await basic.putLinks(links)
-  const userland = link.make('userland', userlandInfo.cid, true, userlandInfo.size)
+  const userland = link.make("userland", userlandInfo.cid, true, userlandInfo.size)
   const [metadata, skeleton] = await Promise.all([
-    putAndMakeLink('metadata', metadataVal),
-    putAndMakeLink('skeleton', skeletonVal),
+    putAndMakeLink("metadata", metadataVal),
+    putAndMakeLink("skeleton", skeletonVal),
   ])
   const previous = previousCID != null
-    ? link.make('previous', previousCID, false, await ipfs.size(previousCID))
+    ? link.make("previous", previousCID, false, await ipfs.size(previousCID))
     : undefined
 
   const internalLinks = { metadata, skeleton, userland, previous } as Links
@@ -45,10 +45,10 @@ export const putFile = async (
     previousCID: Maybe<CID>
   ): Promise<PutDetails> => {
   const userlandInfo = await basic.putFile(await normalizeFileContent(content))
-  const userland = link.make('userland', userlandInfo.cid, true, userlandInfo.size)
-  const metadata = await putAndMakeLink('metadata', metadataVal)
+  const userland = link.make("userland", userlandInfo.cid, true, userlandInfo.size)
+  const metadata = await putAndMakeLink("metadata", metadataVal)
   const previous = previousCID != null
-    ? link.make('previous', previousCID, false, await ipfs.size(previousCID))
+    ? link.make("previous", previousCID, false, await ipfs.size(previousCID))
     : undefined
 
   const internalLinks = { metadata, userland, previous } as Links
@@ -70,15 +70,15 @@ export const putAndMakeLink = async (name: string, val: FileContent): Promise<Li
 
 export const get = async (cid: CID): Promise<TreeInfo | FileInfo> => {
   const links = await basic.getLinks(cid)
-  const metadata = await getAndCheckValue(links, 'metadata', check.isMetadata)
+  const metadata = await getAndCheckValue(links, "metadata", check.isMetadata)
   const skeleton = metadata.isFile
     ? undefined
-    : await getAndCheckValue(links, 'skeleton', check.isSkeleton)
+    : await getAndCheckValue(links, "skeleton", check.isSkeleton)
 
-  const userland = links['userland']?.cid || null
+  const userland = links["userland"]?.cid || null
   if (!check.isCID(userland)) throw new Error("Could not find userland")
 
-  const previous = links['previous']?.cid || undefined
+  const previous = links["previous"]?.cid || undefined
   return { userland, metadata, previous, skeleton }
 }
 

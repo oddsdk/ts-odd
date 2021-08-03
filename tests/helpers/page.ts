@@ -21,7 +21,7 @@ export async function loadWebnativePage(page: Page): Promise<void> {
   page.on("pageerror", async error => {
     console.error("Error in puppeteer: " + error.name, error.message, error.stack)
   })
-  await page.goto(`file://${htmlPath}`, { waitUntil: 'domcontentloaded' })
+  await page.goto(`file://${htmlPath}`, { waitUntil: "domcontentloaded" })
   const { isWebnativeLoaded } = await page.evaluate(async function () {
     return {
       // @ts-ignore
