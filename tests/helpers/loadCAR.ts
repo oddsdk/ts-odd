@@ -1,16 +1,24 @@
 import * as fs from "fs"
-import { CID, IPFS } from "ipfs-core"
+import { IPFS } from "ipfs-core"
+import { CID } from "multiformats"
 import { CarBlockIterator } from "@ipld/car"
 
-export async function loadCAR(filepath: string, ipfs: IPFS): Promise<CID[]> {
+/**
+ * @returns the roots defined in the CAR file
+ */
+export async function loadCAR(filepath: string, ipfs: IPFS): Promise<{ roots: CID[]; cids: CID[] }> {
   const inStream = fs.createReadStream(filepath)
   try {
     const cids: CID[] = []
-    for await (const block of await CarBlockIterator.fromIterable(inStream)) {
-      cids.push(block.cid as unknown as CID)
+    const blockIterator = await CarBlockIterator.fromIterable(inStream)
+    for await (const block of blockIterator) {
+      cids.push(block.cid)
       await ipfs.block.put(block.bytes, { cid: block.cid })
     }
-    return cids as CID[]
+    return {
+      roots: await blockIterator.getRoots(),
+      cids,
+    }
   } finally {
     inStream.close()
   }

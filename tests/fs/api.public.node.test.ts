@@ -13,23 +13,22 @@ import { emptyFilesystem } from "../helpers/filesystem.js"
 import { publicFileContent as fileContent, publicDecode as decode } from "../helpers/fileContent.js"
 
 
-let ipfs: IPFS | null = null
-
-before(async function () {
-  this.timeout(120000)
-  ipfs = await createInMemoryIPFS()
-  ipfsConfig.set(ipfs)
-})
-
-after(async () => {
-  if (ipfs === null) return
-  await ipfs.stop()
-})
-
 fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 50 } : { numRuns: 10 })
 
 describe("the public filesystem api", function () {
-  this.timeout(300000)
+
+  let ipfs: IPFS | null = null
+
+  before(async function () {
+    ipfs = await createInMemoryIPFS()
+    ipfsConfig.set(ipfs)
+  })
+
+  after(async () => {
+    if (ipfs === null) return
+    await ipfs.stop()
+  })
+
 
   it("writes files", async () => {
     const fs = await emptyFilesystem()

@@ -17,17 +17,6 @@ function encode(str: string): Uint8Array {
 
 let ipfs: IPFS | null = null
 
-before(async function () {
-  this.timeout(120000)
-  ipfs = await createInMemoryIPFS()
-  ipfsConfig.set(ipfs)
-})
-
-after(async () => {
-  if (ipfs == null) return
-  await ipfs.stop()
-})
-
 
 /*
 Generates lots of entries for insertion into the MMPT.
@@ -57,7 +46,17 @@ async function generateExampleEntries(amount: number): Promise<{ name: string; c
 
 
 describe("the mmpt", function () {
-  this.timeout(300000)
+
+  before(async function () {
+    ipfs = await createInMemoryIPFS()
+    ipfsConfig.set(ipfs)
+  })
+
+  after(async () => {
+    if (ipfs == null) return
+    await ipfs.stop()
+  })
+
 
   it("can handle concurrent adds", async () => {
     const mmpt = MMPT.create()
