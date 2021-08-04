@@ -1,6 +1,6 @@
-const esbuild = require('esbuild')
-const fs = require('fs')
-const zlib = require('zlib')
+import esbuild from "esbuild"
+import fs from "fs"
+import zlib from "zlib"
 
 
 const globalName = "webnative"

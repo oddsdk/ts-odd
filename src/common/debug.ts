@@ -1,4 +1,4 @@
-import { setup } from '../setup/internal'
+import { setup } from "../setup/internal.js"
 
 
 export function log(...args: unknown[]): void {

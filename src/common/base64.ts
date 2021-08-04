@@ -1,11 +1,11 @@
-import { Buffer } from 'buffer'
+import * as uint8arrays from "uint8arrays"
 
 export function decode(base64: string): string {
-  return Buffer.from(base64, 'base64').toString('binary')
+  return uint8arrays.toString(uint8arrays.fromString(base64, "base64pad"))
 }
 
 export function encode(str: string): string {
-  return Buffer.from(str, 'binary').toString('base64')
+  return uint8arrays.toString(uint8arrays.fromString(str), "base64pad")
 }
 
 export function urlDecode(base64: string): string {

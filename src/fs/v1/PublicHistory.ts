@@ -1,14 +1,14 @@
-import { CID } from '../../ipfs/index'
-import { Maybe } from '../../common/index'
-import { Metadata } from '../metadata'
+import { CID } from "../../ipfs/index.js"
+import { Maybe } from "../../common/index.js"
+import { Metadata } from "../metadata.js"
 
 
 export type Node = {
   constructor: {
     fromCID: (cid: CID) => Node
-  },
+  }
   header: {
-    metadata: Metadata,
+    metadata: Metadata
     previous: CID
   }
 }
@@ -23,7 +23,7 @@ export default class PublicHistory {
    *
    * @param delta Optional negative number to specify how far to go back
    */
-  back(delta: number = -1): Promise<Maybe<Node>> {
+  back(delta = -1): Promise<Maybe<Node>> {
     const length = Math.abs(Math.min(delta, -1))
 
     return Array.from({ length }, (_, i) => i).reduce(
@@ -48,7 +48,7 @@ export default class PublicHistory {
   /**
    * List earlier versions along with the timestamp they were created.
    */
-  async list(amount: number = 5): Promise<Array<{ delta: number, timestamp: number }>> {
+  async list(amount = 5): Promise<Array<{ delta: number; timestamp: number }>> {
     const { acc } = await Array.from({ length: amount }, (_, i) => i).reduce(
       (promise, i) => promise.then(({ node, acc }) => {
         if (!node) return Promise.resolve({ node: null, acc })
@@ -67,8 +67,8 @@ export default class PublicHistory {
         ._getPreviousVersion(this.node)
         .then(n => (
           { node: n, acc: [] } as {
-            node: Maybe<Node>,
-            acc: Array<{ delta: number, timestamp: number }>
+            node: Maybe<Node>
+            acc: Array<{ delta: number; timestamp: number }>
           }
         ))
     )

@@ -1,6 +1,6 @@
-import { strToArrBuf } from 'keystore-idb/utils'
-import * as hex from '../common/hex'
-import { impl } from '../setup/dependencies'
+import { strToArrBuf } from "keystore-idb/utils.js"
+import * as hex from "../common/hex.js"
+import { impl } from "../setup/dependencies.js"
 
 export const sha256Str = async(str: string): Promise<string> => {
   const buf = strToArrBuf(str, 8)

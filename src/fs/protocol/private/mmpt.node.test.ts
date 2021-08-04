@@ -1,12 +1,13 @@
+import expect from "expect"
 import crypto from "crypto"
 import { IPFS } from "ipfs-core"
 
-import MMPT from "./mmpt"
-import * as ipfsConfig from "../../../ipfs/config"
-import { createInMemoryIPFS } from "../../../../tests/helpers/in-memory-ipfs"
+import MMPT from "./mmpt.js"
+import * as ipfsConfig from "../../../ipfs/config.js"
+import { createInMemoryIPFS } from "../../../../tests/helpers/in-memory-ipfs.js"
 
 function sha256Str(str: string): string {
-  return crypto.createHash('sha256').update(str).digest('hex')
+  return crypto.createHash("sha256").update(str).digest("hex")
 }
 
 function encode(str: string): Uint8Array {
@@ -16,15 +17,6 @@ function encode(str: string): Uint8Array {
 
 let ipfs: IPFS | null = null
 
-beforeAll(async () => {
-  ipfs = await createInMemoryIPFS()
-  ipfsConfig.set(ipfs)
-})
-
-afterAll(async () => {
-  if (ipfs == null) return
-  await ipfs.stop()
-})
 
 /*
 Generates lots of entries for insertion into the MMPT.
@@ -35,6 +27,8 @@ This returns an array of key-values sorted by the key,
 so that key collisions are more likely to be tested.
 */
 async function generateExampleEntries(amount: number): Promise<{ name: string; cid: string }[]> {
+  if (ipfs == null) throw new Error("IPFS not loaded")
+
   const entries: { name: string; cid: string }[] = []
 
   for (const i of Array(amount).keys()) {
@@ -51,7 +45,19 @@ async function generateExampleEntries(amount: number): Promise<{ name: string; c
 
 
 
-describe("the mmpt", () => {
+describe("the mmpt", function () {
+
+  before(async function () {
+    ipfs = await createInMemoryIPFS()
+    ipfsConfig.set(ipfs)
+  })
+
+  after(async () => {
+    if (ipfs == null) return
+    await ipfs.stop()
+  })
+
+
   it("can handle concurrent adds", async () => {
     const mmpt = MMPT.create()
 
@@ -79,7 +85,7 @@ describe("the mmpt", () => {
     const entries = await generateExampleEntries(amount)
 
     const slice_size = 5
-    let soFar = []
+    let soFar: { name: string; cid: string }[] = []
     let missing = []
 
     for (let i = 0; i < entries.length; i += slice_size) {

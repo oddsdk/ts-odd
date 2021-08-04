@@ -1,18 +1,23 @@
-import { loadWebnativePage } from "../helpers/page"
+import expect from "expect"
+import { loadWebnativePage } from "../helpers/page.js"
+import { pageFromContext } from "../mocha-hook.js"
 
 
-describe("FS", () => {
-  it("creates the parent directories automatically", async () => {
-    await loadWebnativePage()
+describe("the filesystem", () => {
+
+  it("creates parent directories automatically", async function() {
+    const page = pageFromContext(this)
+    await loadWebnativePage(page)
 
     const string = await page.evaluate(async () => {
       const expected = "content"
+      // @ts-ignore
       const wn = webnative
 
       const fs = await wn.fs.empty({
         localOnly: true,
         permissions: {
-          fs: { private: [ wn.path.root() ] }
+          fs: { private: [wn.path.root()] }
         }
       })
 
@@ -24,10 +29,11 @@ describe("FS", () => {
 
       return [
         await fs.read(privatePath),
-        await fs.read(publicPath)
+        new TextDecoder().decode(await fs.read(publicPath))
       ].join("/")
     })
 
     expect(string).toEqual("content/content")
   })
-});
+
+})

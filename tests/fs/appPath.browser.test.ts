@@ -1,11 +1,16 @@
-import { loadWebnativePage } from "../helpers/page"
+import expect from "expect"
+import { loadWebnativePage } from "../helpers/page.js"
+import { pageFromContext } from "../mocha-hook.js"
 
 
-describe("FS", () => {
-  it("can use appPath", async () => {
-    await loadWebnativePage()
+describe("the filesystem", () => {
+
+  it("provides an appPath", async function() {
+    const page = pageFromContext(this)
+    await loadWebnativePage(page)
 
     const string = await page.evaluate(async () => {
+      // @ts-ignore
       const wn = webnative
 
       const fs = await wn.fs.empty({
@@ -28,4 +33,5 @@ describe("FS", () => {
 
     expect(string).toEqual("bar")
   })
-});
+
+})

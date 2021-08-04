@@ -1,16 +1,16 @@
-import type { Mtime } from 'ipfs-unixfs'
-import * as semver from './semver'
-import { SemVer } from './semver'
+import type { Mtime } from "ipfs-unixfs"
+import * as semver from "./semver.js"
+import { SemVer } from "./semver.js"
 
 export type UnixFileMode = number
 
 export enum UnixNodeType {
-  Raw = 'raw',
-  Directory = 'dir',
-  File = 'file',
-  Metadata = 'metadata',
-  Symlink = 'symlink',
-  HAMTShard = 'hamtShard',
+  Raw = "raw",
+  Directory = "dir",
+  File = "file",
+  Metadata = "metadata",
+  Symlink = "symlink",
+  HAMTShard = "hamtShard",
 }
 
 export type UnixMeta = { 

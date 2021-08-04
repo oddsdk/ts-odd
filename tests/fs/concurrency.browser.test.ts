@@ -1,17 +1,22 @@
-import { loadWebnativePage } from "../helpers/page"
+import expect from "expect"
+import { loadWebnativePage } from "../helpers/page.js"
+import { pageFromContext } from "../mocha-hook.js"
 
 
-describe("FS", () => {
-  it("perform actions concurrently", async () => {
-    await loadWebnativePage()
+describe("the filesystem", () => {
+
+  it("performs actions concurrently", async function() {
+    const page = pageFromContext(this)
+    await loadWebnativePage(page)
 
     const string = await page.evaluate(async () => {
+      // @ts-ignore
       const wn = webnative
 
       const fs = await wn.fs.empty({
         localOnly: true,
         permissions: {
-          fs: { private: [ wn.path.root() ] }
+          fs: { private: [wn.path.root()] }
         }
       })
 
@@ -21,11 +26,11 @@ describe("FS", () => {
 
       await Promise.all([
         fs.write(pathA, "x")
-          .then(_ => fs.write(pathA, "y"))
-          .then(_ => fs.write(pathA, "z")),
+          .then(() => fs.write(pathA, "y"))
+          .then(() => fs.write(pathA, "z")),
 
         fs.write(pathB, "1")
-          .then(_ => fs.write(pathB, "2")),
+          .then(() => fs.write(pathB, "2")),
 
         fs.write(pathC, "bar"),
       ])
@@ -37,6 +42,7 @@ describe("FS", () => {
       ].join("")
     })
 
-    expect(string).toEqual([ "z", "2", "bar" ].join(""))
+    expect(string).toEqual(["z", "2", "bar"].join(""))
   })
-});
+
+})

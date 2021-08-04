@@ -1,21 +1,21 @@
-import localforage from 'localforage'
+import localforage from "localforage"
 
-import * as common from './common/index'
-import * as identifiers from './common/identifiers'
-import * as ipfs from './ipfs/index'
-import * as pathing from './path'
-import * as crypto from './crypto/index'
-import * as storage from './storage/index'
-import * as ucan from './ucan/internal'
-import * as ucanPermissions from './ucan/permissions'
-import { setup } from './setup/internal'
-import * as did from './did/index'
+import * as common from "./common/index.js"
+import * as identifiers from "./common/identifiers.js"
+import * as ipfs from "./ipfs/index.js"
+import * as pathing from "./path.js"
+import * as crypto from "./crypto/index.js"
+import * as storage from "./storage/index.js"
+import * as ucan from "./ucan/internal.js"
+import * as ucanPermissions from "./ucan/permissions.js"
+import { setup } from "./setup/internal.js"
+import * as did from "./did/index.js"
 
-import { USERNAME_STORAGE_KEY, Maybe } from './common/index'
-import { Permissions } from './ucan/permissions'
-import { loadFileSystem } from './filesystem'
+import { USERNAME_STORAGE_KEY, Maybe } from "./common/index.js"
+import { Permissions } from "./ucan/permissions.js"
+import { loadFileSystem } from "./filesystem.js"
 
-import FileSystem from './fs/index'
+import FileSystem from "./fs/index.js"
 
 
 // SCENARIO
@@ -236,27 +236,27 @@ export async function isSupported(): Promise<boolean> {
 // EXPORT
 
 
-export * from './auth'
-export * from './filesystem'
-export * from './common/version'
+export * from "./auth.js"
+export * from "./filesystem.js"
+export * from "./common/version.js"
 
 export const fs = FileSystem
 
-export * as apps from './apps/index'
-export * as dataRoot from './data-root'
-export * as did from './did/index'
-export * as errors from './errors'
-export * as lobby from './lobby/index'
-export * as path from './path'
-export * as setup from './setup'
-export * as ucan from './ucan/index'
+export * as apps from "./apps/index.js"
+export * as dataRoot from "./data-root.js"
+export * as did from "./did/index.js"
+export * as errors from "./errors.js"
+export * as lobby from "./lobby/index.js"
+export * as path from "./path.js"
+export * as setup from "./setup.js"
+export * as ucan from "./ucan/index.js"
 
-export * as dns from './dns/index'
-export * as ipfs from './ipfs/index'
-export * as keystore from './keystore'
-export * as machinery from './common/index'
-export * as crypto from './crypto/index'
-export * as cbor from 'cborg'
+export * as dns from "./dns/index.js"
+export * as ipfs from "./ipfs/index.js"
+export * as keystore from "./keystore.js"
+export * as machinery from "./common/index.js"
+export * as crypto from "./crypto/index.js"
+export * as cbor from "cborg"
 
 
 

@@ -1,6 +1,6 @@
-import { isNum, isObject, isString } from '../../../../common/index'
-import * as check  from '../../../types/check'
-import { PrivateFileInfo, PrivateTreeInfo, PrivateLink, PrivateLinks, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from '../types'
+import { isNum, isObject, isString } from "../../../../common/index.js"
+import * as check  from "../../../types/check.js"
+import { PrivateFileInfo, PrivateTreeInfo, PrivateLink, PrivateLinks, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from "../types.js"
 
 export const isDecryptedNode = (obj: any): obj is DecryptedNode => {
   return isPrivateTreeInfo(obj) || isPrivateFileInfo(obj)

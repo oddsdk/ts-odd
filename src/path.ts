@@ -1,12 +1,12 @@
-import { Maybe } from './common/types'
+import { Maybe } from "./common/types.js"
 
 
 export enum Branch {
-  Public = 'public',
-  Pretty = 'p',
-  Private = 'private',
-  PrivateLog = 'privateLog',
-  Version = 'version'
+  Public = "public",
+  Pretty = "p",
+  Private = "private",
+  PrivateLog = "privateLog",
+  Version = "version"
 }
 
 export enum Kind {
@@ -100,7 +100,10 @@ export function toPosix(
 /**
  * Combine two `DistinctivePath`s.
  */
-export function combine(a: DirectoryPath, b: DistinctivePath): DistinctivePath {
+export function combine(a: DirectoryPath, b: FilePath): FilePath
+export function combine(a: DirectoryPath, b: DirectoryPath): DirectoryPath
+export function combine(a: DirectoryPath, b: DistinctivePath): DistinctivePath
+export function combine(a: any, b: any): any {
   return map(p => unwrap(a).concat(p), b)
 }
 

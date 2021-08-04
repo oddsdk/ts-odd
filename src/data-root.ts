@@ -1,18 +1,18 @@
-import * as check from './fs/types/check'
-import * as debug from './common/debug'
-import * as did from './did/index'
-import * as dns from './dns/index'
-import * as ucan from './ucan/index'
-import { CID } from './ipfs/index'
-import { api } from './common/index'
-import { Ucan } from './ucan/index'
-import { setup } from './setup/internal'
+import * as check from "./fs/types/check.js"
+import * as debug from "./common/debug.js"
+import * as did from "./did/index.js"
+import * as dns from "./dns/index.js"
+import * as ucan from "./ucan/index.js"
+import { CID } from "./ipfs/index.js"
+import { api } from "./common/index.js"
+import { Ucan } from "./ucan/index.js"
+import { setup } from "./setup/internal.js"
 
 /**
  * CID representing an empty string. We use to to speed up DNS propagation
  * However, we treat that as a null value in the code
  */
-const EMPTY_CID = 'Qmc5m94Gu7z62RC8waSKkZUrCCBJPyHbkpmGzEePxy2oXJ'
+const EMPTY_CID = "Qmc5m94Gu7z62RC8waSKkZUrCCBJPyHbkpmGzEePxy2oXJ"
 
 /**
  * Get the CID of a user's data root.
@@ -28,11 +28,11 @@ export async function lookup(
   if(maybeRoot !== null) return maybeRoot
 
   try {
-    const cid = await dns.lookupDnsLink(username + '.files.' + setup.endpoints.user)
+    const cid = await dns.lookupDnsLink(username + ".files." + setup.endpoints.user)
     return cid === EMPTY_CID ? null : cid
   } catch(err) {
     console.error(err)
-    throw new Error('Could not locate user root in dns')
+    throw new Error("Could not locate user root in dns")
   }
 }
 
@@ -47,7 +47,7 @@ export async function lookupOnFisson(
   try {
     const resp = await fetch(
       `${setup.endpoints.api}/user/data/${username}`,
-      { cache: 'reload' } // don't use cache
+      { cache: "reload" } // don't use cache
     )
     const cid = await resp.json()
     if (!check.isCID(cid)) {
@@ -56,7 +56,7 @@ export async function lookupOnFisson(
     return cid
 
   } catch(err) {
-    debug.log('Could not locate user root on Fission server: ', err.toString())
+    debug.log("Could not locate user root on Fission server: ", err.toString())
     return null
 
   }
@@ -91,14 +91,14 @@ export async function update(
         resource: ucan.decode(proof).payload.rsc
       }))
 
-      return { 'authorization': `Bearer ${jwt}` }
+      return { "authorization": `Bearer ${jwt}` }
     },
     retries: 100,
     retryDelay: 5000,
     retryOn: [ 502, 503, 504 ],
 
   }, {
-    method: 'PATCH'
+    method: "PATCH"
 
   }).then((response: Response) => {
     if (response.status < 300) debug.log("🪴 DNSLink updated:", cid)
@@ -130,7 +130,7 @@ async function fetchWithRetry(
   url: string,
   retryOptions: RetryOptions,
   fetchOptions: RequestInit,
-  retry: number = 0
+  retry = 0
 ): Promise<Response> {
   const headers = await retryOptions.headers()
   const response = await fetch(url, {

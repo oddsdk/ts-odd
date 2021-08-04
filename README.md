@@ -31,7 +31,7 @@ The Fission webnative SDK offers tools for:
 // ES6
 import * as wn from 'webnative'
 
-// Browser/IIFE build
+// Browser/UMD build
 const wn = globalThis.webnative
 ```
 
@@ -184,7 +184,7 @@ yarn build
 
 # test
 yarn test:prod
-yarn test:watch
+yarn test:unit
 
 # generate docs
 yarn docs

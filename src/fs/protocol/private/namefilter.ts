@@ -1,7 +1,7 @@
-import { BloomFilter } from 'fission-bloom-filters'
-import * as hex from '../../../common/hex'
-import { Opaque } from '../../../common/types'
-import * as crypto from '../../../crypto/index'
+import { BloomFilter } from "fission-bloom-filters"
+import * as hex from "../../../common/hex.js"
+import { Opaque } from "../../../common/types.js"
+import * as crypto from "../../../crypto/index.js"
 
 // CONSTANTS
 

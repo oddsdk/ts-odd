@@ -1,8 +1,4 @@
-import { Endpoints, setup as internalSetup } from './setup/internal'
-
-
-type UnknownObject =
-  { [key: string]: unknown }
+import { Endpoints, setup as internalSetup } from "./setup/internal.js"
 
 
 /**
@@ -13,6 +9,15 @@ type UnknownObject =
 export function debug({ enabled }: { enabled: boolean }): boolean {
   internalSetup.debug = enabled
   return internalSetup.debug
+}
+
+/**
+ * Configure whether webnative should aggressively pin
+ * everything, or pin nothing at all.
+ */
+export function shouldPin({ enabled }: { enabled: boolean }): boolean {
+  internalSetup.shouldPin = enabled
+  return internalSetup.shouldPin
 }
 
 
@@ -34,4 +39,4 @@ export function endpoints(e: Partial<Endpoints>): Endpoints {
   return { ...internalSetup.endpoints }
 }
 
-export { setDependencies } from './setup/dependencies'
+export { setDependencies } from "./setup/dependencies.js"

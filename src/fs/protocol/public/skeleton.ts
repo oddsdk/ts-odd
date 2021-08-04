@@ -1,5 +1,5 @@
-import { Skeleton, SkeletonInfo } from "./types"
-import { NonEmptyPath } from '../../types'
+import { Skeleton, SkeletonInfo } from "./types.js"
+import { NonEmptyPath } from "../../types.js"
 
 
 export const getPath = (skeleton: Skeleton, path: NonEmptyPath): SkeletonInfo | null => {
