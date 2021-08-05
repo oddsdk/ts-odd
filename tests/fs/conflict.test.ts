@@ -105,11 +105,56 @@ describe("conflict detection", () => {
     const divPoint = await divergencePoint(localFs.root.publicTree, remoteFs.root.publicTree)
     expect(divPoint).toBe(null)
   })
+
+  it("provides correct metadata on the divergence point", async () => {
+    const commonFs = await FileSystem.empty({ localOnly: true })
+    await writeFiles(commonFs, setupFiles)
+    const commonCID = await commonFs.root.put()
+    const commonPublicCID = commonFs.root.publicTree.cid
+
+    const remoteFs = await FileSystem.fromCID(commonCID, { localOnly: true })
+    await writeFiles(remoteFs, remoteFiles)
+    const localFs = await FileSystem.fromCID(commonCID, { localOnly: true })
+    await writeFiles(localFs, localFiles)
+
+    // Diverging case: Changes both locally & remotely
+    const divPoint = await divergencePoint(localFs.root.publicTree, remoteFs.root.publicTree)
+    if (divPoint == null) {
+      expect(divPoint).not.toBe(null)
+      return
+    }
+
+    const lastLocalCID = divPoint.futureLocal[0]?.cid
+    const lastRemoteCID = divPoint.futureRemote[0]?.cid
+
+    const beforeFirstLocalCID = divPoint.futureLocal[divPoint.futureLocal.length - 1]?.header?.previous
+    const beforeFirstRemoteCID = divPoint.futureRemote[divPoint.futureRemote.length - 1]?.header?.previous
+
+    if (beforeFirstLocalCID == null) {
+      expect(beforeFirstLocalCID).not.toBe(null)
+      return
+    }
+
+    if (beforeFirstRemoteCID == null) {
+      expect(beforeFirstRemoteCID).not.toBe(null)
+      return
+    }
+
+    expect(divPoint.common.cid).toEqual(commonPublicCID)
+    expect(lastLocalCID).toEqual(localFs.root.publicTree.cid)
+    expect(lastRemoteCID).toEqual(remoteFs.root.publicTree.cid)
+
+    expect(beforeFirstLocalCID).toEqual(commonPublicCID)
+    expect(beforeFirstRemoteCID).toEqual(commonPublicCID)
+  })
 })
 
 interface DivergencePoint {
+  /** the local (replica 1) changes from newest to oldest */
   futureLocal: PublicTree[]
+  /** the remote (replica 2) changes from newest to oldest */
   futureRemote: PublicTree[]
+  /** the very last moment both replicas shared the same state */
   common: PublicTree
 }
 
