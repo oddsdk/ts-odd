@@ -94,6 +94,17 @@ describe("conflict detection", () => {
     const divPoint = await divergencePoint(localFs.root.publicTree, remoteFs.root.publicTree)
     expect(divPoint?.common?.cid).toEqual(commonPublicCID)
   })
+
+  it("detects completely unrelated filesystems", async () => {
+    const remoteFs = await FileSystem.empty({ localOnly: true })
+    await writeFiles(remoteFs, remoteFiles)
+
+    const localFs = await FileSystem.empty({ localOnly: true })
+    await writeFiles(localFs, localFiles)
+
+    const divPoint = await divergencePoint(localFs.root.publicTree, remoteFs.root.publicTree)
+    expect(divPoint).toBe(null)
+  })
 })
 
 interface DivergencePoint {
