@@ -91,7 +91,6 @@ describe("conflict detection", () => {
     await writeFiles(localFs, repeat(localFiles, 20))
 
     // Diverging case: Changes both locally & remotely
-    debugger;
     const divPoint = await divergencePoint(localFs.root.publicTree, remoteFs.root.publicTree)
     expect(divPoint?.common?.cid).toEqual(commonPublicCID)
   })
@@ -136,21 +135,23 @@ async function divergencePoint(local: PublicTree, remote: PublicTree): Promise<D
       }
     }
 
+    // There's nothing more for us to iterate
+    if (currentLocal.header.previous == null && currentRemote.header.previous == null) {
+      // we have completely divergent trees
+      return null
+    }
+
     // Add the 'previous' history entries to historyLocal and historyRemote
 
-    if (currentLocal.header.previous == null) {
-      console.log("hit local history limit", historyLocal.length)
-      return null
+    if (currentLocal.header.previous != null) {
+      const nextLocal = await PublicTree.fromCID(currentLocal.header.previous)
+      historyLocal.push(nextLocal)
     }
-    const nextLocal = await PublicTree.fromCID(currentLocal.header.previous)
-    historyLocal.push(nextLocal)
 
-    if (currentRemote.header.previous == null) {
-      console.log("hit remote history limit", historyRemote.length)
-      return null
+    if (currentRemote.header.previous != null) {
+      const nextRemote = await PublicTree.fromCID(currentRemote.header.previous)
+      historyRemote.push(nextRemote)
     }
-    const nextRemote = await PublicTree.fromCID(currentRemote.header.previous)
-    historyRemote.push(nextRemote)
   }
 }
 
