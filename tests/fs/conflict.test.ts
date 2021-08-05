@@ -1,5 +1,6 @@
 import expect from "expect"
 import { IPFS } from "ipfs-core"
+import * as perfHooks from "perf_hooks"
 
 import { createInMemoryIPFS } from "../helpers/in-memory-ipfs.js"
 
@@ -91,8 +92,11 @@ describe("conflict detection", () => {
     await writeFiles(localFs, repeat(localFiles, 20))
 
     // Diverging case: Changes both locally & remotely
+    // const before = perfHooks.performance.now()
     const divPoint = await divergencePoint(localFs.root.publicTree, remoteFs.root.publicTree)
+    // const timeInMs = perfHooks.performance.now() - before
     expect(divPoint?.common?.cid).toEqual(commonPublicCID)
+    // expect(timeInMs).toBeLessThan(1000) // TODO: Let's be more ambitious that that
   })
 
   it("detects completely unrelated filesystems", async () => {
@@ -158,6 +162,10 @@ interface DivergencePoint {
   common: PublicTree
 }
 
+// TODO: Performance: Constructing the whole `PublicTree` from a cid every time and storing all of them
+// takes (1) a long time (doing a lot of unneccessary fetching) and (2) unneccessary memory.
+// Instead, we should base it all on CIDs, and for going from CID -> previous CID,
+// just resolve <cid>/previous using IPFS.
 async function divergencePoint(local: PublicTree, remote: PublicTree): Promise<DivergencePoint | null> {
   const historyLocal = [local]
   const historyRemote = [remote]
