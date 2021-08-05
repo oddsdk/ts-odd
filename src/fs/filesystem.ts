@@ -151,7 +151,7 @@ export class FileSystem {
   /**
    * Loads an existing file system from a CID.
    */
-  static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
+  static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem> {
     const { permissions, localOnly } = opts
     const root = await RootTree.fromCID({ cid, permissions })
 
