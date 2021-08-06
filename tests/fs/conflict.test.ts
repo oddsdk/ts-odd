@@ -1,6 +1,8 @@
 import expect from "expect"
 import { IPFS } from "ipfs-core"
-import * as perfHooks from "perf_hooks"
+// import mergeWith from "lodash/mergeWith"
+// import cloneDeep from "lodash/cloneDeep"
+// import * as perfHooks from "perf_hooks"
 
 import { createInMemoryIPFS } from "../helpers/in-memory-ipfs.js"
 
@@ -8,6 +10,8 @@ import * as ipfsConfig from "../../src/ipfs/index.js"
 import FileSystem from "../../src/fs/filesystem.js"
 import * as path from "../../src/path.js"
 import { PublicTree } from "../../src/fs/v1/PublicTree.js"
+import { Link } from "../../src/fs/types.js"
+import * as check from "../../src/fs/types/check.js"
 
 
 type Files = { path: path.FilePath; content: string }[]
@@ -218,6 +222,46 @@ async function divergencePoint(local: PublicTree, remote: PublicTree): Promise<D
     }
   }
 }
+
+/** associative, but not commutative. `local` is preferred */
+// async function merge(local: PublicTree, remote: PublicTree): Promise<PublicTree> {
+//   const localLinks = local.getLinks()
+//   const remoteLinks = remote.getLinks()
+
+//   const mergedLinks = mergeWith(cloneDeep(localLinks), remoteLinks, (localLink: Link, remoteLink: Link) => {
+//     if (localLink.cid === remoteLink.cid) {
+//       return localLink
+//     }
+
+//     if (localLink.isFile && remoteLink.isFile) {
+//       return localLink
+//     }
+
+//     if (!localLink.isFile && !remoteLink.isFile) {
+//       return {
+//         needsMerging: true,
+//         localLink,
+//         remoteLink
+//       }
+//     }
+
+//     // If one is a directory and the other a file, prefer the directory
+//     // TODO Talk about this and write this into the spec
+//     return localLink.isFile ? remoteLink : localLink
+//   })
+
+//   for (const entry of Object.entries(mergedLinks)) {
+//     const name = entry[0]
+//     const link = entry[1] as Link | { needsMerging: true; localLink: Link; remoteLink: Link }
+    
+//     if (!check.isLink(link)) {
+//       const localSubTree = await PublicTree.fromCID(link.localLink.cid)
+//       const remoteSubTree = await PublicTree.fromCID(link.remoteLink.cid)
+//       mergedLinks[name] = await merge(localSubTree, remoteSubTree)
+//     }
+//   }
+
+// }
 
 function repeat<T>(array: T[], n: number): T[] {
   const arr = []
