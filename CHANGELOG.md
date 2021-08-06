@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.26.2
+
+- Add `extraLobbyParams` to `redirectToLobby`. Extra lobby params are transformed into query params that may be read by the auth lobby. (#273)
+
+
 ### v0.26.1
 
 - Bring back the [UMD](https://github.com/umdjs/umd) build (#261)

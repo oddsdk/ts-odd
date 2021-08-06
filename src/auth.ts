@@ -50,10 +50,14 @@ export async function leave({ withoutRedirect }: { withoutRedirect?: boolean } =
  *                    Pass `null` if working without permissions.
  * @param redirectTo Specify the URL you want users to return to.
  *                   Uses the current url by default.
+ * @param extraLobbyParams Extra parameters object. Properties on the
+ *                         object are converted to query params and sent
+ *                         to the auth lobby.
  */
 export async function redirectToLobby(
   permissions: Maybe<Permissions>,
-  redirectTo?: string
+  redirectTo?: string,
+  extraLobbyParams?: Record<string, string>
 ): Promise<void> {
   const app = permissions?.app
   const fs = permissions?.fs
@@ -75,10 +79,11 @@ export async function redirectToLobby(
     [ "sharedRepo", sharedRepo ? "t" : "f" ]
 
   ].concat(
-    app           ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
-    fs?.private   ? fs.private.map(p => [ "privatePath", path.toPosix(p, { absolute: true }) ]) : [],
-    fs?.public    ? fs.public.map(p => [ "publicPath", path.toPosix(p, { absolute: true }) ]) : [],
-    raw           ? [["raw", base64.urlEncode(JSON.stringify(raw))]]  : []
+    app              ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
+    fs?.private      ? fs.private.map(p => [ "privatePath", path.toPosix(p, { absolute: true }) ]) : [],
+    fs?.public       ? fs.public.map(p => [ "publicPath", path.toPosix(p, { absolute: true }) ]) : [],
+    raw              ? [["raw", base64.urlEncode(JSON.stringify(raw))]]  : [],
+    extraLobbyParams ? Object.entries(extraLobbyParams)  : []
 
   ).concat((() => {
     const apps = platform?.apps
