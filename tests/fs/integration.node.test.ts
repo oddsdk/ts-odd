@@ -1,6 +1,5 @@
 import expect from "expect"
-import { CID, IPFS } from "ipfs-core"
-import * as uint8arrays from "uint8arrays"
+import { IPFS } from "ipfs-core"
 
 import { loadCAR } from "../helpers/loadCAR.js"
 import { createInMemoryIPFS } from "../helpers/in-memory-ipfs.js"

@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.26.1-alpha-4",
+  "version": "0.27.0",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -96,8 +96,10 @@
     "ipfs-message-port-client": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-client.tar.gz",
     "ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz",
     "ipld-dag-pb": "^0.22.2",
+    "it-all": "^1.0.5",
     "keystore-idb": "0.14.2",
     "localforage": "^1.9.0",
+    "lodash": "^4.17.21",
     "noble-ed25519": "^1.2.4",
     "throttle-debounce": "^3.0.1",
     "uint8arrays": "^2.1.7"
