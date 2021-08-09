@@ -1,29 +1,14 @@
 import expect from "expect"
-import { CID, IPFS } from "ipfs-core"
-
-import { createInMemoryIPFS } from "../../../tests/helpers/in-memory-ipfs.js"
+import { CID } from "ipfs-core"
+import { ipfsFromContext } from "../../../tests/mocha-hook.js"
 
 import * as links from "./links.js"
 
 
 describe("the data links module", () => {
 
-  let ipfs: IPFS | null = null
-
-  before(async function () {
-    ipfs = await createInMemoryIPFS()
-  })
-
-  after(async () => {
-    if (ipfs == null) return
-    await ipfs.stop()
-  })
-
-  it("round trips to/from IPFS", async () => {
-    if (ipfs == null) {
-      expect(ipfs).not.toBe(null)
-      return
-    }
+  it("round trips to/from IPFS", async function () {
+    const ipfs = ipfsFromContext(this)
 
     const exampleLinks: links.Links<null> = {
       "Apps": {

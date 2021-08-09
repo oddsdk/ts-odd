@@ -1,31 +1,16 @@
 import expect from "expect"
-import { CID, IPFS } from "ipfs-core"
+import { CID } from "ipfs-core"
 
 import { loadCAR } from "../../../tests/helpers/loadCAR.js"
-import { createInMemoryIPFS } from "../../../tests/helpers/in-memory-ipfs.js"
 
 import * as metadata from "./metadata.js"
+import { ipfsFromContext } from "../../../tests/mocha-hook.js"
 
 
 describe("metadata", () => {
 
-  let ipfs: IPFS | null = null
-
-  before(async function () {
-    ipfs = await createInMemoryIPFS()
-  })
-
-  after(async () => {
-    if (ipfs == null) return
-    await ipfs.stop()
-  })
-
-
-  it("round trips to/from IPFS", async () => {
-    if (ipfs == null) {
-      expect(ipfs).not.toBe(null)
-      return
-    }
+  it("round trips to/from IPFS", async function () {
+    const ipfs = ipfsFromContext(this)
 
     const original: metadata.Metadata = {
       "isFile": false,
@@ -46,11 +31,8 @@ describe("metadata", () => {
     expect(decoded).toEqual(original)
   })
 
-  it("successfully reads existing metadata", async () => {
-    if (ipfs == null) {
-      expect(ipfs).not.toBe(null)
-      return
-    }
+  it("successfully reads existing metadata", async function () {
+    const ipfs = ipfsFromContext(this)
 
     const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
     const [root] = car.roots

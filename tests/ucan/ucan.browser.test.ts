@@ -6,7 +6,7 @@ import { pageFromContext } from "../mocha-hook.js"
 describe("UCAN", () => {
 
   it("can be built", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const isValid = await page.evaluate(async () => {
@@ -25,7 +25,7 @@ describe("UCAN", () => {
   })
 
   it("can validate a UCAN with a valid proof", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const isValid = await page.evaluate(async () => {
@@ -62,7 +62,7 @@ describe("UCAN", () => {
   })
 
   it("can validate a UCAN with a sessionKey fact", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const isValid = await page.evaluate(async () => {
@@ -84,7 +84,7 @@ describe("UCAN", () => {
   })
 
   it("decodes and reencodes UCAN to the same value", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const isSame = await page.evaluate(async () => {

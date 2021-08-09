@@ -6,7 +6,7 @@ import { pageFromContext } from "../mocha-hook.js"
 describe("publicKeyToDid", () => {
 
   it("handles RSA Keys", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const expectedDid = "did:key:z13V3Sog2YaUKhdGCmgx9UZuW1o1ShFJYc6DvGYe7NTt689NoL2RtpVs65Zw899YrTN9WuxdEEDm54YxWuQHQvcKfkZwa8HTgokHxGDPEmNLhvh69zUMEP4zjuARQ3T8bMUumkSLGpxNe1bfQX624ef45GhWb3S9HM3gvAJ7Qftm8iqnDQVcxwKHjmkV4hveKMTix4bTRhieVHi1oqU4QCVy4QPWpAAympuCP9dAoJFxSP6TNBLY9vPKLazsg7XcFov6UuLWsEaxJ5SomCpDx181mEgW2qTug5oQbrJwExbD9CMgXHLVDE2QgLoQMmgsrPevX57dH715NXC2uY6vo2mYCzRY4KuDRUsrkuYCkewL8q2oK1BEDVvi3Sg8pbC9QYQ5mMiHf8uxiHxTAmPedv8"
@@ -21,7 +21,7 @@ describe("publicKeyToDid", () => {
   })
 
   it("handles Ed25519 Keys", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const expectedDid = "did:key:z6MkgYGF3thn8k1Fv4p4dWXKtsXCnLH7q9yw4QgNPULDmDKB"
@@ -36,7 +36,7 @@ describe("publicKeyToDid", () => {
   })
 
   it("handles BLS12-381 Keys", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const expectedDid = "did:key:z6HpYD1br5P4QVh5rjRGAkBfKMWes44uhKmKdJ6dN2Nm9gHK"

@@ -1,35 +1,21 @@
 import expect from "expect"
-import { IPFS } from "ipfs-core"
 
 import { loadCAR } from "../helpers/loadCAR.js"
-import { createInMemoryIPFS } from "../helpers/in-memory-ipfs.js"
 
 import "../../src/setup/node.js"
 import FileSystem from "../../src/fs/filesystem.js"
 import { File } from "../../src/fs/types.js"
-import * as ipfsConfig from "../../src/ipfs/index.js"
 import * as path from "../../src/path.js"
 import * as identifiers from "../../src/common/identifiers.js"
 import * as crypto from "../../src/crypto/index.js"
+import { ipfsFromContext } from "../mocha-hook.js"
 
 
 describe("the filesystem", () => {
 
-  let ipfs: IPFS | null = null
-
-  before(async function () {
-    ipfs = await createInMemoryIPFS()
-    ipfsConfig.set(ipfs)
-  })
-
-  after(async () => {
-    if (ipfs == null) return
-    await ipfs.stop()
-  })
-
-
-  it("can load filesystem fixtures", async () => {
-    const { roots } = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs as IPFS)
+  it("can load filesystem fixtures", async function () {
+    const ipfs = ipfsFromContext(this)
+    const { roots } = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
     const [rootCID] = roots
     expect(rootCID).toBeDefined()
 

@@ -1,17 +1,11 @@
 import expect from "expect"
-import { IPFS } from "ipfs-core"
 // import mergeWith from "lodash/mergeWith"
 // import cloneDeep from "lodash/cloneDeep"
 // import * as perfHooks from "perf_hooks"
 
-import { createInMemoryIPFS } from "../helpers/in-memory-ipfs.js"
-
-import * as ipfsConfig from "../../src/ipfs/index.js"
 import FileSystem from "../../src/fs/filesystem.js"
 import * as path from "../../src/path.js"
 import { PublicTree } from "../../src/fs/v1/PublicTree.js"
-import { Link } from "../../src/fs/types.js"
-import * as check from "../../src/fs/types/check.js"
 
 
 type Files = { path: path.FilePath; content: string }[]
@@ -42,19 +36,6 @@ async function writeFiles(fs: FileSystem, files: Files) {
 }
 
 describe("conflict detection", () => {
-
-  let ipfs: IPFS | null = null
-
-  before(async () => {
-    ipfs = await createInMemoryIPFS()
-    ipfsConfig.set(ipfs)
-  })
-
-  after(async () => {
-    if (ipfs == null) return
-    await ipfs.stop()
-  })
-
 
   it("detects a conflict", async () => {
     const commonFs = await FileSystem.empty({ localOnly: true })
