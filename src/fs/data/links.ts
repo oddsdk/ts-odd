@@ -17,7 +17,7 @@ export interface Links<T> {
 export async function toCID<T>(links: Links<T>, { ipfs }: PersistenceOptions): Promise<IpfsRef<Links<T>>> {
   const dagLinks = Object.values(links).map(link => new dagPb.DAGLink(link.name, link.size, link.cid))
   const dagNode = new dagPb.DAGNode(DAG_NODE_DATA, dagLinks)
-  return await ipfs.dag.put(dagNode, { format: "dag-pb", hashAlg: "sha2-256", pin: false })
+  return await ipfs.dag.put(dagNode, { version: 1, format: "dag-pb", hashAlg: "sha2-256", pin: false })
 }
 
 export async function fromCID<T>(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<Links<T>> {

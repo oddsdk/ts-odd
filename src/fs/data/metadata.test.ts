@@ -7,7 +7,7 @@ import * as metadata from "./metadata.js"
 import { ipfsFromContext } from "../../../tests/mocha-hook.js"
 
 
-describe("metadata", () => {
+describe("the data metadata module", () => {
 
   it("round trips to/from IPFS", async function () {
     const ipfs = ipfsFromContext(this)
@@ -26,12 +26,12 @@ describe("metadata", () => {
         "mtime": 1627992355220
       }
     }
-    const metadataCID = await metadata.persistence.toCID(original, { ipfs })
-    const decoded = await metadata.persistence.fromCID(metadataCID, { ipfs })
+    const metadataCID = await metadata.toCID(original, { ipfs })
+    const decoded = await metadata.fromCID(metadataCID, { ipfs })
     expect(decoded).toEqual(original)
   })
 
-  it("successfully reads existing metadata", async function () {
+  it("round trips from/to IPFS", async function () {
     const ipfs = ipfsFromContext(this)
 
     const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
@@ -44,10 +44,11 @@ describe("metadata", () => {
 
     // Fails for some reason??? Works on the command line
     // const metadataPath = `/ipfs/${root.toString()}/public/metadata`
-    // const metadataCID = await ipfs.resolve(metadataPath)
-    const metadataCID = new CID("bafkreifn7hwfiuvb2kuff4cv4yeqlbnoux7mfyhhu634l7nikrpzegvyhm")
-    const decoded = await metadata.persistence.fromCID(metadataCID, { ipfs })
-    expect(metadata.isMetadata(decoded)).toBe(true)
+    // const exampleCID = await ipfs.resolve(metadataPath)
+    const exampleCID = new CID("bafkreifn7hwfiuvb2kuff4cv4yeqlbnoux7mfyhhu634l7nikrpzegvyhm")
+    const decoded = await metadata.fromCID(exampleCID, { ipfs })
+    const decodedCID = await metadata.toCID(decoded, { ipfs })
+    expect(exampleCID.toString()).toEqual(decodedCID.toString())
   })
 
 })

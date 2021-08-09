@@ -10,7 +10,7 @@ describe("the data links module", () => {
   it("round trips to/from IPFS", async function () {
     const ipfs = ipfsFromContext(this)
 
-    const exampleLinks: links.Links<null> = {
+    const exampleLinks: links.Links<unknown> = {
       "Apps": {
         cid: new CID("bafybeihpi5x4nkga6cudm3rbbdemzwgfek3acf6znxki7upqbdue7rah7q"),
         name: "Apps",
@@ -28,10 +28,19 @@ describe("the data links module", () => {
     expect(canonicalize(decodedLinks)).toEqual(canonicalize(exampleLinks))
   })
 
+  it("round trips from/to IPFS", async function () {
+    const ipfs = ipfsFromContext(this)
+
+    const exampleCID = new CID("bafybeiet7qvca6hqzwfbzm5w6qzg3deucm7lsob2nuum7nohgu67e64z4u")
+    const decodedLinks = await links.fromCID(exampleCID, { ipfs })
+    const cid = await links.toCID(decodedLinks, { ipfs })
+    expect(cid.toString()).toEqual(exampleCID.toString())
+  })
+
 })
 
-function canonicalize<T>(links: links.Links<T>): unknown {
-  return JSON.parse(JSON.stringify(links, (key, value) => {
+export function canonicalize(object: unknown): unknown {
+  return JSON.parse(JSON.stringify(object, (key, value) => {
     if (key === "cid") {
       return new CID(value.version, value.codec, value.hash).toBaseEncodedString()
     }

@@ -1,5 +1,6 @@
+import type { CID } from "ipfs-core"
 import * as cbor from "cborg"
-import { IpfsPersistence } from "./ipfsRef"
+import { PersistenceOptions } from "./ipfsRef"
 
 export type SemVer = {
   major: number
@@ -31,29 +32,26 @@ export type Metadata = {
   version: SemVer
 }
 
-export const persistence: IpfsPersistence<Metadata> = {
+export async function toCID(metadata: Metadata, { ipfs, signal }: PersistenceOptions): Promise<CID> {
+  const data = cbor.encode(metadata)
 
-  async toCID(metadata, { ipfs, signal }) {
-    const data = cbor.encode(metadata)
+  if (signal?.aborted) throw new Error("Operation aborted")
 
-    if (signal?.aborted) throw new Error("Operation aborted")
+  const { cid } = await ipfs.block.put(data, { version: 1, format: "raw" }) // cid version 1
+  return cid
+}
 
-    const { cid } = await ipfs.block.put(data, { version: 1 }) // cid version 1
-    return cid
-  },
 
-  async fromCID(cid, { ipfs, signal }) {
-    const block = await ipfs.block.get(cid, { signal })
+export async function fromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<Metadata> {
+  const block = await ipfs.block.get(cid, { signal })
 
-    const metadata = cbor.decode(block.data)
+  const metadata = cbor.decode(block.data)
 
-    if (!isMetadata(metadata)) {
-      throw new Error(`Couldn't parse metadata at ${cid.toString()}`)
-    }
+  if (!isMetadata(metadata)) {
+    throw new Error(`Couldn't parse metadata at ${cid.toString()}`)
+  }
 
-    return metadata
-  },
-
+  return metadata
 }
 
 
