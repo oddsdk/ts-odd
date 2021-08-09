@@ -5,7 +5,7 @@ import { pageFromContext } from "../mocha-hook.js"
 describe("Ed25519 Signatures", () => {
 
   it("can verify a UCAN signature", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const isValid = await page.evaluate(async () => {
@@ -28,7 +28,7 @@ describe("Ed25519 Signatures", () => {
   })
 
   it("can verify a JWT signature", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const isValid = await page.evaluate(async () => {
