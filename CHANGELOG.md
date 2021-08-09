@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.26.2
+
+- Transpile everything in `lib/` down to ES2018 instead of ES2020.
+
 ### v0.26.1
 
 - Bring back the [UMD](https://github.com/umdjs/umd) build (#261)
