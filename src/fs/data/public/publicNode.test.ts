@@ -1,12 +1,12 @@
 import expect from "expect"
-import { CID } from "ipfs-core"
+import { CID, IPFS } from "ipfs-core"
 
 import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { canonicalize } from "../links.test.js"
 import { lazyRefFromCID } from "../ref.js"
 
-import * as publicNode from "./publicNode.js"
+import { directoryFromCID, directoryToCID, fileFromCID, fileToCID, isPublicFile, nodeFromCID, PublicDirectory } from "./publicNode.js"
 
 
 describe("the data public node module", () => {
@@ -24,8 +24,8 @@ describe("the data public node module", () => {
       return
     }
 
-    const fileHeader = await publicNode.fileFromCID(fileHeaderCID, { ipfs })
-    const decodedCID = await publicNode.fileToCID(fileHeader, { ipfs })
+    const fileHeader = await fileFromCID(fileHeaderCID, { ipfs })
+    const decodedCID = await fileToCID(fileHeader, { ipfs })
     expect(decodedCID.toString()).toEqual(fileHeaderCID.toString())
   })
 
@@ -52,7 +52,7 @@ describe("the data public node module", () => {
       },
       previous: {
         size: 206,
-        data: lazyRefFromCID(new CID("bafybeid7uclpcql4aj7rx4lo32gjqbghyrvyvqfjvwwlgky7jdpi32xjra"), publicNode.fileFromCID),
+        data: lazyRefFromCID(new CID("bafybeid7uclpcql4aj7rx4lo32gjqbghyrvyvqfjvwwlgky7jdpi32xjra"), fileFromCID),
       },
       userland: {
         size: 5,
@@ -60,8 +60,8 @@ describe("the data public node module", () => {
       },
     }
 
-    const cid = await publicNode.fileToCID(fileHeader, { ipfs })
-    const decoded = await publicNode.fileFromCID(cid, { ipfs })
+    const cid = await fileToCID(fileHeader, { ipfs })
+    const decoded = await fileFromCID(cid, { ipfs })
     expect(canonicalize(decoded)).toEqual(canonicalize(fileHeader))
   })
 
@@ -78,8 +78,8 @@ describe("the data public node module", () => {
       return
     }
 
-    const directory = await publicNode.directoryFromCID(directoryCID, { ipfs })
-    const decodedCID = await publicNode.directoryToCID(directory, { ipfs })
+    const directory = await directoryFromCID(directoryCID, { ipfs })
+    const decodedCID = await directoryToCID(directory, { ipfs })
     expect(decodedCID.toString()).toEqual(directoryCID.toString())
   })
 
@@ -106,7 +106,7 @@ describe("the data public node module", () => {
       },
       previous: {
         size: 27960,
-        data: lazyRefFromCID(new CID("bafybeib4hqxwnfdh453qwvvog6fzdrph36zad5dvexcphj7yjb6mwktyla"), publicNode.directoryFromCID),
+        data: lazyRefFromCID(new CID("bafybeib4hqxwnfdh453qwvvog6fzdrph36zad5dvexcphj7yjb6mwktyla"), directoryFromCID),
       },
       skeleton: {
         size: 1174,
@@ -117,19 +117,56 @@ describe("the data public node module", () => {
         data: {
           "Apps": {
             size: 12043,
-            data: lazyRefFromCID(new CID("bafybeiflfmrx2crvdl2su4zrrj5ps7yudmmamokxfk5l35fwajyqsbhjpq"), publicNode.nodeFromCID),
+            data: lazyRefFromCID(new CID("bafybeiflfmrx2crvdl2su4zrrj5ps7yudmmamokxfk5l35fwajyqsbhjpq"), nodeFromCID),
           },
           "index.html": {
             size: 559,
-            data: lazyRefFromCID(new CID("bafybeiaezxgxy2i2cq2phszwj3zspn5yrrbg2rvbqzs7y63i4cjlnpoxlq"), publicNode.nodeFromCID),
+            data: lazyRefFromCID(new CID("bafybeiaezxgxy2i2cq2phszwj3zspn5yrrbg2rvbqzs7y63i4cjlnpoxlq"), nodeFromCID),
           },
         },
       },
     }
 
-    const cid = await publicNode.directoryToCID(directory, { ipfs })
-    const decoded = await publicNode.directoryFromCID(cid, { ipfs })
+    const cid = await directoryToCID(directory, { ipfs })
+    const decoded = await directoryFromCID(cid, { ipfs })
     expect(canonicalize(decoded)).toEqual(canonicalize(directory))
   })
 
+  it("loads existing filesystems just fine", async function () {
+    const ipfs = ipfsFromContext(this)
+
+    const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
+    const [root] = car.roots
+
+    if (root == null) {
+      expect(root).toBeDefined()
+      return
+    }
+
+    // /ipfs/<root>/public resolves to this
+    const publicRootCID = new CID("bafybeiacqgd7tous6mbq3dony547vb3p2jzq36feiu7jut636jt7tiiy7i")
+
+    const rootDirectory = await directoryFromCID(publicRootCID, { ipfs })
+    const files = await listFiles(rootDirectory, ipfs)
+    expect(files).toEqual([
+      ["Apps", "Fission", "Lobby", "Session"],
+      ["index.html"],
+    ])
+  })
+
 })
+
+async function listFiles(directory: PublicDirectory, ipfs: IPFS, pathSoFar: string[] = []): Promise<string[][]> {
+  let filePaths: string[][] = []
+  for (const [name, entry] of Object.entries(directory.userland.data)) {
+    const path = [...pathSoFar, name]
+    const fileOrDirectory = await entry.data.get({ ipfs })
+    if (isPublicFile(fileOrDirectory)) {
+      filePaths.push(path)
+    } else {
+      const additionalPaths = await listFiles(fileOrDirectory, ipfs, path)
+      filePaths = [...filePaths, ...additionalPaths]
+    }
+  }
+  return filePaths
+}

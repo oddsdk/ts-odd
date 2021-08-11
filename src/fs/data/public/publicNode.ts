@@ -21,6 +21,27 @@ export interface PublicFile {
 }
 
 
+
+//--------------------------------------
+// Operations
+//--------------------------------------
+
+
+export function isPublicFile(fileOrDirectory: PublicFile | PublicDirectory): fileOrDirectory is PublicFile {
+  return fileOrDirectory.metadata.data.isFile
+}
+
+export function isPublicDirectory(fileOrDirectory: PublicFile | PublicDirectory): fileOrDirectory is PublicDirectory {
+  return !fileOrDirectory.metadata.data.isFile
+}
+
+
+
+//--------------------------------------
+// Persistence
+//--------------------------------------
+
+
 export async function directoryToCID(dir: PublicDirectory, options: PersistenceOptions): Promise<CID> {
   const links: Record<string, UnixFSLink<CID>> = {
     metadata: await storeLink(dir.metadata, metadataToCID, options),
