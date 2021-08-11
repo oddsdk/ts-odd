@@ -1,6 +1,6 @@
 import type { CID } from "ipfs-core"
 import * as cbor from "cborg"
-import { PersistenceOptions } from "./ipfsRef"
+import { PersistenceOptions } from "./ref.js"
 
 export type SemVer = {
   major: number
@@ -32,7 +32,7 @@ export type Metadata = {
   version: SemVer
 }
 
-export async function toCID(metadata: Metadata, { ipfs, signal }: PersistenceOptions): Promise<CID> {
+export async function metadataToCID(metadata: Metadata, { ipfs, signal }: PersistenceOptions): Promise<CID> {
   const data = cbor.encode(metadata)
 
   if (signal?.aborted) throw new Error("Operation aborted")
@@ -42,7 +42,7 @@ export async function toCID(metadata: Metadata, { ipfs, signal }: PersistenceOpt
 }
 
 
-export async function fromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<Metadata> {
+export async function metadataFromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<Metadata> {
   const block = await ipfs.block.get(cid, { signal })
 
   const metadata = cbor.decode(block.data)

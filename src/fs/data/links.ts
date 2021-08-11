@@ -2,38 +2,66 @@ import { CID } from "ipfs-core"
 import dagPb from "ipld-dag-pb"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
-import { IpfsRef, PersistenceOptions } from "./ipfsRef.js"
+import { FromCID, LazyCIDRef, lazyRefFromCID, PersistenceOptions, ToCID } from "./ref.js"
 
-export interface Link<T> {
-  name: string
+
+export interface UnixFSLink<T> {
   size: number
-  cid: IpfsRef<T>
+  link: T
 }
 
-export interface Links<T> {
-  [key: string]: Link<T>
+
+export async function linkFromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<UnixFSLink<CID>> {
+  const stat = await ipfs.files.stat(cid, { signal })
+  return {
+    size: stat.cumulativeSize,
+    link: cid
+  }
 }
 
-export async function toCID<T>(links: Links<T>, { ipfs }: PersistenceOptions): Promise<IpfsRef<Links<T>>> {
-  const dagLinks = Object.values(links).map(link => new dagPb.DAGLink(link.name, link.size, link.cid))
-  const dagNode = new dagPb.DAGNode(DAG_NODE_DATA, dagLinks)
-  return await ipfs.dag.put(dagNode, { version: 1, format: "dag-pb", hashAlg: "sha2-256", pin: false })
+function linksToDAG(links: Record<string, UnixFSLink<CID>>): dagPb.DAGNode {
+  const dagNode = new dagPb.DAGNode(DAG_NODE_DATA)
+
+  for (const [name, link] of Object.entries(links)) {
+    dagNode.addLink(new dagPb.DAGLink(name, link.size, link.link))
+  }
+
+  return dagNode
 }
 
-export async function fromCID<T>(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<Links<T>> {
+
+export async function linksToCID(links: Record<string, UnixFSLink<CID>>, { ipfs, signal }: PersistenceOptions): Promise<CID> {
+  const dagNode = linksToDAG(links)
+  return await ipfs.dag.put(dagNode, { version: 1, format: "dag-pb", hashAlg: "sha2-256", pin: false, signal })
+}
+
+
+export async function lazyLinksToCID(links: Record<string, UnixFSLink<LazyCIDRef<unknown>>>, options: PersistenceOptions): Promise<CID> {
+  const linksModified: Record<string, UnixFSLink<CID>> = {}
+  for (const [name, link] of Object.entries(links)) {
+    linksModified[name] = await linkFromCID(await link.link.ref(options), options)
+  }
+  return await linksToCID(linksModified, options)
+}
+
+
+export async function linksFromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<Record<string, UnixFSLink<CID>>> {
   const getResult = await ipfs.dag.get(cid, { signal })
   const dagNode: dagPb.DAGNode = getResult.value
-  return dagNode.Links.reduce((acc: Links<T>, dagLink: dagPb.DAGLink) => {
-    try {
-      CID.validateCID(dagLink.Hash)
-    } catch (e) {
-      throw new Error(`Couldn't validate cid ${dagLink.Hash} in link ${dagLink.Name}`)
-    }
-    acc[dagLink.Name] = {
-      name: dagLink.Name,
-      size: dagLink.Tsize,
-      cid: dagLink.Hash
-    }
-    return acc
-  }, {})
+
+  const links: Record<string, UnixFSLink<CID>> = {}
+  for (const dagLink of dagNode.Links) {
+    links[dagLink.Name] = await linkFromCID(cid, { ipfs, signal })
+  }
+  return links
+}
+
+export async function lazyLinksFromCID<T>(cid: CID, loader: FromCID<T>, options: PersistenceOptions): Promise<Record<string, UnixFSLink<LazyCIDRef<T>>>> {
+  const cidLinks = await linksFromCID(cid, options)
+
+  const lazyCIDLinks: Record<string, UnixFSLink<LazyCIDRef<T>>> = {}
+  for (const [name, link] of Object.entries(cidLinks)) {
+    lazyCIDLinks[name] = { ...link, link: lazyRefFromCID(link.link, loader) }
+  }
+  return lazyCIDLinks
 }

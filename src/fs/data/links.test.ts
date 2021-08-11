@@ -10,7 +10,7 @@ describe("the data links module", () => {
   it("round trips to/from IPFS", async function () {
     const ipfs = ipfsFromContext(this)
 
-    const exampleLinks: links.Links<unknown> = {
+    const exampleLinks: links.UnixFSLinks<unknown> = {
       "Apps": {
         cid: new CID("bafybeihpi5x4nkga6cudm3rbbdemzwgfek3acf6znxki7upqbdue7rah7q"),
         name: "Apps",
