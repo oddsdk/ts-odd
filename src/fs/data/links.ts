@@ -2,7 +2,7 @@ import { CID } from "ipfs-core"
 import dagPb from "ipld-dag-pb"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
-import { FromCID, LazyCIDRef, lazyRefFromCID, PersistenceOptions } from "./ref.js"
+import { FromCID, LazyCIDRef, lazyRefFromCID, PersistenceOptions, ToCID } from "./ref.js"
 
 
 export interface UnixFSLink<T> {
@@ -12,14 +12,34 @@ export interface UnixFSLink<T> {
 
 
 export async function linkFromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<UnixFSLink<CID>> {
-  // TODO: (philipp) In my testing this takes ~2ms in the median. Might be worth *not* doing, if it can be avoided.
-  // e.g. when we're just converting a UnixFSLink<Something> into UnixFSLink<CID>.
   const stat = await ipfs.files.stat(cid, { signal })
   return {
     size: stat.cumulativeSize,
     data: cid
   }
 }
+
+export async function storeLink<T>(link: UnixFSLink<T>, store: ToCID<T>, options: PersistenceOptions): Promise<UnixFSLink<CID>> {
+  return {
+    ...link,
+    data: await store(link.data, options)
+  }
+}
+
+export async function loadLink<T>(link: UnixFSLink<CID>, load: FromCID<T>, options: PersistenceOptions): Promise<UnixFSLink<T>> {
+  return {
+    ...link,
+    data: await load(link.data, options)
+  }
+}
+
+export function loadLinkLazy<T>(link: UnixFSLink<CID>, loader: FromCID<T>): UnixFSLink<LazyCIDRef<T>> {
+  return {
+    ...link,
+    data: lazyRefFromCID(link.data, loader)
+  }
+}
+
 
 function linksToDAG(links: Record<string, UnixFSLink<CID>>): dagPb.DAGNode {
   const dagNode = new dagPb.DAGNode(DAG_NODE_DATA)
@@ -63,7 +83,7 @@ export async function lazyLinksFromCID<T>(cid: CID, loader: FromCID<T>, options:
 
   const lazyCIDLinks: Record<string, UnixFSLink<LazyCIDRef<T>>> = {}
   for (const [name, link] of Object.entries(cidLinks)) {
-    lazyCIDLinks[name] = { ...link, data: lazyRefFromCID(link.data, loader) }
+    lazyCIDLinks[name] = loadLinkLazy(link, loader)
   }
   return lazyCIDLinks
 }
