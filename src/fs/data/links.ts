@@ -2,24 +2,42 @@ import { CID } from "ipfs-core"
 import dagPb from "ipld-dag-pb"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
-import { FromCID, LazyCIDRef, lazyRefFromCID, PersistenceOptions } from "./ref.js"
+import { FromCID, LazyCIDRef, lazyRefFromCID, PersistenceOptions, ToCID } from "./ref.js"
 
 
-export interface UnixFSLink<T> {
-  size: number
-  data: T
-}
+export class UnixFSLink<T> {
+  readonly size: number
+  readonly data: T
 
+  constructor({ size, data }: { size: number; data: T }) {
+    this.size = size
+    this.data = data
+  }
 
-export async function linkFromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<UnixFSLink<CID>> {
-  // TODO: (philipp) In my testing this takes ~2ms in the median. Might be worth *not* doing, if it can be avoided.
-  // e.g. when we're just converting a UnixFSLink<Something> into UnixFSLink<CID>.
-  const stat = await ipfs.files.stat(cid, { signal })
-  return {
-    size: stat.cumulativeSize,
-    data: cid
+  /** Will run a call to `ipfs.files.stat`, taking ~2ms on average in nodejs. Try to avoid if possible */
+  static async fromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<UnixFSLink<CID>> {
+    const stat = await ipfs.files.stat(cid, { signal })
+    return new UnixFSLink({
+      size: stat.cumulativeSize,
+      data: cid
+    })
+  }
+
+  async finalize(store: ToCID<T>, options: PersistenceOptions): Promise<UnixFSLink<CID>> {
+    return new UnixFSLink({
+      size: this.size,
+      data: await store(this.data, options)
+    })
+  }
+
+  transform<S>(f: (data: T) => S): UnixFSLink<S> {
+    return new UnixFSLink({
+      size: this.size,
+      data: f(this.data)
+    })
   }
 }
+
 
 function linksToDAG(links: Record<string, UnixFSLink<CID>>): dagPb.DAGNode {
   const dagNode = new dagPb.DAGNode(DAG_NODE_DATA)
@@ -41,7 +59,7 @@ export async function linksToCID(links: Record<string, UnixFSLink<CID>>, { ipfs,
 export async function lazyLinksToCID(links: Record<string, UnixFSLink<LazyCIDRef<unknown>>>, options: PersistenceOptions): Promise<CID> {
   const linksModified: Record<string, UnixFSLink<CID>> = {}
   for (const [name, link] of Object.entries(links)) {
-    linksModified[name] = await linkFromCID(await link.data.ref(options), options)
+    linksModified[name] = await UnixFSLink.fromCID(await link.data.ref(options), options)
   }
   return await linksToCID(linksModified, options)
 }
@@ -53,7 +71,7 @@ export async function linksFromCID(cid: CID, { ipfs, signal }: PersistenceOption
 
   const links: Record<string, UnixFSLink<CID>> = {}
   for (const dagLink of dagNode.Links) {
-    links[dagLink.Name] = await linkFromCID(dagLink.Hash, { ipfs, signal })
+    links[dagLink.Name] = await UnixFSLink.fromCID(dagLink.Hash, { ipfs, signal })
   }
   return links
 }
@@ -63,7 +81,7 @@ export async function lazyLinksFromCID<T>(cid: CID, loader: FromCID<T>, options:
 
   const lazyCIDLinks: Record<string, UnixFSLink<LazyCIDRef<T>>> = {}
   for (const [name, link] of Object.entries(cidLinks)) {
-    lazyCIDLinks[name] = { ...link, data: lazyRefFromCID(link.data, loader) }
+    lazyCIDLinks[name] = link.transform(data => lazyRefFromCID(data, loader))
   }
   return lazyCIDLinks
 }
