@@ -26,8 +26,8 @@ describe("the data metadata module", () => {
         "mtime": 1627992355220
       }
     }
-    const metadataCID = await metadata.toCID(original, { ipfs })
-    const decoded = await metadata.fromCID(metadataCID, { ipfs })
+    const metadataCID = await metadata.metadataToCID(original, { ipfs })
+    const decoded = await metadata.metadataFromCID(metadataCID, { ipfs })
     expect(decoded).toEqual(original)
   })
 
@@ -46,8 +46,8 @@ describe("the data metadata module", () => {
     // const metadataPath = `/ipfs/${root.toString()}/public/metadata`
     // const exampleCID = await ipfs.resolve(metadataPath)
     const exampleCID = new CID("bafkreifn7hwfiuvb2kuff4cv4yeqlbnoux7mfyhhu634l7nikrpzegvyhm")
-    const decoded = await metadata.fromCID(exampleCID, { ipfs })
-    const decodedCID = await metadata.toCID(decoded, { ipfs })
+    const decoded = await metadata.metadataFromCID(exampleCID, { ipfs })
+    const decodedCID = await metadata.metadataToCID(decoded, { ipfs })
     expect(exampleCID.toString()).toEqual(decodedCID.toString())
   })
 
