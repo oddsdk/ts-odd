@@ -5,8 +5,9 @@ import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { canonicalize } from "../links.test.js"
 import { lazyRefFromCID } from "../ref.js"
+import * as metadata from "../metadata.js"
 
-import { directoryFromCID, directoryToCID, fileFromCID, fileToCID, isPublicFile, nodeFromCID, PublicDirectory } from "./publicNode.js"
+import { directoryFromCID, directoryToCID, fileFromCID, fileToCID, isPublicFile, nodeFromCID, PublicDirectory, PublicFile, write } from "./publicNode.js"
 
 
 describe("the data public node module", () => {
@@ -41,7 +42,7 @@ describe("the data public node module", () => {
           "patch": 0
         },
         "unixMeta": {
-          "mode": 755,
+          "mode": 644,
           "_type": "file",
           "ctime": 1621259349710,
           "mtime": 1627992355220
@@ -124,6 +125,28 @@ describe("the data public node module", () => {
     expect(files).toEqual([
       ["Apps", "Fission", "Lobby", "Session"],
       ["index.html"],
+    ])
+  })
+
+  it("adds directories when write is used", async function() {
+    const ipfs = ipfsFromContext(this)
+
+    const emptyDirectory: PublicDirectory = {
+      metadata: metadata.emptyFile(1621259349710),
+      userland: {}
+    }
+
+    expect(await listFiles(emptyDirectory, ipfs)).toEqual([])
+
+    const emptyFile: PublicFile = {
+      metadata: metadata.emptyFile(1621259349711),
+      userland: new CID("bafkqaaa") // CID representing an empty bitstring using the identity hash
+    }
+
+    const nonEmptyDir: PublicDirectory = await write(["file.txt"], emptyFile, emptyDirectory, { ipfs })
+
+    expect(await listFiles(nonEmptyDir, ipfs)).toEqual([
+      ["file.txt"]
     ])
   })
 

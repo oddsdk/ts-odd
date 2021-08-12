@@ -1,12 +1,7 @@
 import type { CID } from "ipfs-core"
 import * as cbor from "cborg"
 import { OperationContext } from "./ref.js"
-
-export type SemVer = {
-  major: number
-  minor: number
-  patch: number
-}
+import { SemVer, v1 } from "./semver.js"
 
 export type UnixFileMode = number
 
@@ -31,6 +26,32 @@ export type Metadata = {
   isFile: boolean
   version: SemVer
 }
+
+
+export const emptyUnix = (isFile: boolean, now: number): UnixMeta => ({
+  mtime: now,
+  ctime: now,
+  mode: isFile ? 644 : 755,
+  _type: isFile ? UnixNodeType.File : UnixNodeType.Directory,
+})
+
+export const empty = (isFile: boolean, now: number): Metadata => ({
+  isFile,
+  version: v1,
+  unixMeta: emptyUnix(isFile, now)
+})
+
+export const updateMtime = (metadata: Metadata, mtime: number): Metadata => ({
+  ...metadata,
+  unixMeta: {
+    ...metadata.unixMeta,
+    mtime
+  }
+})
+
+export const emptyFile = (now: number): Metadata => empty(true, now)
+export const emptyDirectory = (now: number): Metadata => empty(false, now)
+
 
 export async function metadataToCID(metadata: Metadata, { ipfs, signal }: OperationContext): Promise<CID> {
   const data = cbor.encode(metadata)

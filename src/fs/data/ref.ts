@@ -1,9 +1,9 @@
 import { IPFS, CID } from "ipfs-core"
 
 
-export interface Ref<T, R, Options> {
-  get(options: Options): Promise<T>
-  ref(options: Options): Promise<R>
+export interface Ref<T, R, Ctx> {
+  get(ctx: Ctx): Promise<T>
+  ref(ctx: Ctx): Promise<R>
   /** Convenience function to make JSON.serialize work better with a custom replacer */
   toObject(): T | string
 }

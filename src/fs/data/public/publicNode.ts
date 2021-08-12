@@ -1,20 +1,21 @@
 import { CID } from "ipfs-core"
 import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
 import { metadataToCID, metadataFromCID, Metadata } from "../metadata.js"
-import { LazyCIDRef, lazyRefFromCID, OperationContext } from "../ref.js"
+import { LazyCIDRef, lazyRefFromCID, lazyRefFromObj, OperationContext } from "../ref.js"
 
 
 /**
  * Possible todo-s:
  * - A reconciliation algorithm on PublicDirectory
+ * - A diffing algorithm which adds the correct "previous" links
  * - An algorithm for "write file"/"write directory", then possibly abstract to "run on tree"
  * - Modeling MMPT with LazyCIDRef, possibly moving on to modeling data behind encryption
  */
 
 export interface PublicDirectory {
   metadata: Metadata
-  skeleton: CID
   userland: { [name: string]: LazyCIDRef<PublicNode> }
+  skeleton?: CID
   previous?: LazyCIDRef<PublicDirectory>
 }
 
@@ -44,10 +45,35 @@ export function isPublicDirectory(node: PublicNode): node is PublicDirectory {
 }
 
 
-export async function write(path: [string, ...string[]], content: PublicFile, directory: PublicDirectory, ctx: OperationContext) {
+export async function write(path: [string, ...string[]], content: PublicFile, directory: PublicDirectory, ctx: OperationContext): Promise<PublicDirectory> {
   const [head, ...rest] = path
   if (rest.length === 0) {
-    directory.userland
+    return {
+      ...directory,
+      userland: {
+        ...directory.userland,
+        [head]: lazyRefFromObj(content, fileToCID)
+      }
+    }
+  }
+
+  const nextDirectoryRef = directory.userland[head]
+  if (nextDirectoryRef == null) {
+    throw new Error("Path does not exist")
+  }
+
+  const nextDirectory = await nextDirectoryRef.get(ctx)
+  if (isPublicFile(nextDirectory)) {
+    throw new Error("Path does not exist")
+  }
+
+  const changedDirectory = await write(rest as [string, ...string[]], content, nextDirectory, ctx)
+  return {
+    ...directory,
+    userland: {
+      ...directory.userland,
+      [head]: lazyRefFromObj(changedDirectory, directoryToCID)
+    }
   }
 }
 
@@ -57,12 +83,22 @@ export async function write(path: [string, ...string[]], content: PublicFile, di
 //--------------------------------------
 
 
+export async function nodeToCID(node: PublicNode, ctx: OperationContext): Promise<CID> {
+  if (isPublicDirectory(node)) {
+    return await directoryToCID(node, ctx)
+  } else {
+    return await fileToCID(node, ctx)
+  }
+}
+
 export async function directoryToCID(dir: PublicDirectory, ctx: OperationContext): Promise<CID> {
   const links: Record<string, CID> = {
     metadata: await metadataToCID(dir.metadata, ctx),
-    skeleton: dir.skeleton,
     userland: await lazyLinksToCID(dir.userland, ctx),
   }
+  if (dir.skeleton != null) [
+    links.skeleton = dir.skeleton
+  ]
   if (dir.previous != null) {
     links.previous = await dir.previous.ref(ctx)
   }
@@ -116,12 +152,14 @@ export async function fileFromCID(cid: CID, ctx: OperationContext): Promise<Publ
 
 async function directoryFromLinksHelper(cid: CID, dirLinks: Record<string, CID>, metadata: Metadata, ctx: OperationContext): Promise<PublicDirectory> {
   if (dirLinks.userland == null) throw new Error(`Missing link "userland" for PublicDirectory at ${cid.toString()}`)
-  if (dirLinks.skeleton == null) throw new Error(`Missing link "skeleton" for PublicDirectory at ${cid.toString()}`)
 
   const result: PublicDirectory = {
-    skeleton: dirLinks.skeleton,
     metadata: metadata,
     userland: await lazyLinksFromCID(dirLinks.userland, nodeFromCID, ctx)
+  }
+
+  if (dirLinks.skeleton != null) {
+    result.skeleton = dirLinks.skeleton
   }
 
   if (dirLinks.previous != null) {
