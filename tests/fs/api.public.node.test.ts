@@ -193,7 +193,7 @@ describe("the public filesystem api", function () {
     const dirpath = path.directory("public", "testDir")
     await fs.mkdir(dirpath)
 
-    await await fc.assert(
+    await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {

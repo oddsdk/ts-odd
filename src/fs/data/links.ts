@@ -2,88 +2,82 @@ import { CID } from "ipfs-core"
 import dagPb from "ipld-dag-pb"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
-import { FromCID, LazyCIDRef, lazyRefFromCID, PersistenceOptions, ToCID } from "./ref.js"
+import { FromCID, LazyCIDRef, lazyRefFromCID, PersistenceOptions } from "./ref.js"
 
 
-export interface UnixFSLink<T> {
-  size: number
-  data: T
-}
 
-
-export async function linkFromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<UnixFSLink<CID>> {
-  const stat = await ipfs.files.stat(cid, { signal })
-  return {
-    size: stat.cumulativeSize,
-    data: cid
-  }
-}
-
-export async function storeLink<T>(link: UnixFSLink<T>, store: ToCID<T>, options: PersistenceOptions): Promise<UnixFSLink<CID>> {
-  return {
-    ...link,
-    data: await store(link.data, options)
-  }
-}
-
-export async function loadLink<T>(link: UnixFSLink<CID>, load: FromCID<T>, options: PersistenceOptions): Promise<UnixFSLink<T>> {
-  return {
-    ...link,
-    data: await load(link.data, options)
-  }
-}
-
-export function loadLinkLazy<T>(link: UnixFSLink<CID>, loader: FromCID<T>): UnixFSLink<LazyCIDRef<T>> {
-  return {
-    ...link,
-    data: lazyRefFromCID(link.data, loader)
-  }
-}
-
-
-function linksToDAG(links: Record<string, UnixFSLink<CID>>): dagPb.DAGNode {
+export async function linksToCID(links: Record<string, CID>, { ipfs, signal }: PersistenceOptions): Promise<CID> {
   const dagNode = new dagPb.DAGNode(DAG_NODE_DATA)
 
-  for (const [name, link] of Object.entries(links)) {
-    dagNode.addLink(new dagPb.DAGLink(name, link.size, link.data))
+  for (const [name, cid] of Object.entries(links)) {
+    // TODO: We can Probably use Promise.all here to make this concurrent.
+    const stat = await ipfs.files.stat(cid, { signal })
+    // TODO: This should actually be equivalent to: (await ipfs.dag.get(cid, { signal })).value.Size
+    // FIXME: Write a size cache. .stat calls take ~2ms in the median. We'll duplicate a lot of these calls
+    dagNode.addLink(new dagPb.DAGLink(name, stat.cumulativeSize, cid))
   }
 
-  return dagNode
-}
-
-
-export async function linksToCID(links: Record<string, UnixFSLink<CID>>, { ipfs, signal }: PersistenceOptions): Promise<CID> {
-  const dagNode = linksToDAG(links)
   return await ipfs.dag.put(dagNode, { version: 1, format: "dag-pb", hashAlg: "sha2-256", pin: false, signal })
 }
 
 
-export async function lazyLinksToCID(links: Record<string, UnixFSLink<LazyCIDRef<unknown>>>, options: PersistenceOptions): Promise<CID> {
-  const linksModified: Record<string, UnixFSLink<CID>> = {}
+export async function lazyLinksToCID(links: Record<string, LazyCIDRef<unknown>>, options: PersistenceOptions): Promise<CID> {
+  const linksModified: Record<string, CID> = {}
   for (const [name, link] of Object.entries(links)) {
-    linksModified[name] = await linkFromCID(await link.data.ref(options), options)
+    linksModified[name] = await link.ref(options)
   }
   return await linksToCID(linksModified, options)
 }
 
 
-export async function linksFromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<Record<string, UnixFSLink<CID>>> {
+export async function linksFromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<Record<string, CID>> {
   const getResult = await ipfs.dag.get(cid, { signal })
   const dagNode: dagPb.DAGNode = getResult.value
 
-  const links: Record<string, UnixFSLink<CID>> = {}
+  const links: Record<string, CID> = {}
   for (const dagLink of dagNode.Links) {
-    links[dagLink.Name] = await linkFromCID(dagLink.Hash, { ipfs, signal })
+    links[dagLink.Name] = dagLink.Hash
   }
   return links
 }
 
-export async function lazyLinksFromCID<T>(cid: CID, loader: FromCID<T>, options: PersistenceOptions): Promise<Record<string, UnixFSLink<LazyCIDRef<T>>>> {
+export async function lazyLinksFromCID<T>(cid: CID, load: FromCID<T>, options: PersistenceOptions): Promise<Record<string, LazyCIDRef<T>>> {
   const cidLinks = await linksFromCID(cid, options)
 
-  const lazyCIDLinks: Record<string, UnixFSLink<LazyCIDRef<T>>> = {}
-  for (const [name, link] of Object.entries(cidLinks)) {
-    lazyCIDLinks[name] = loadLinkLazy(link, loader)
+  const lazyCIDLinks: Record<string, LazyCIDRef<T>> = {}
+  for (const [name, cid] of Object.entries(cidLinks)) {
+    lazyCIDLinks[name] = lazyRefFromCID(cid, load)
   }
+
   return lazyCIDLinks
+}
+
+
+
+//--------------------------------------
+// Utilities
+//--------------------------------------
+
+// TODO Unused for now. At some point maybe experiment with mapRecordPar
+
+export async function mapRecord<S, T>(record: Record<string, S>, f: (key: string, value: S) => Promise<T>): Promise<Record<string, T>> {
+  const newRecord: Record<string, T> = {}
+  for (const [key, value] of Object.entries(record)) {
+    newRecord[key] = await f(key, value)
+  }
+  return newRecord
+}
+
+export function mapRecordSync<S, T>(record: Record<string, S>, f: (key: string, value: S) => T): Record<string, T> {
+  const newRecord: Record<string, T> = {}
+  for (const [key, value] of Object.entries(record)) {
+    newRecord[key] = f(key, value)
+  }
+  return newRecord
+}
+
+export async function mapRecordPar<S, T>(record: Record<string, S>, f: (key: string, value: S) => Promise<T>): Promise<Record<string, T>> {
+  const newRecord: Record<string, T> = {}
+  await Promise.all(Object.entries(record).map(([key, value]) => f(key, value).then(result => newRecord[key] = result)))
+  return newRecord
 }

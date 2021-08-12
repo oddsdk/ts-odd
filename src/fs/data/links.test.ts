@@ -2,7 +2,7 @@ import expect from "expect"
 import { CID } from "ipfs-core"
 import { ipfsFromContext } from "../../../tests/mocha-hook.js"
 
-import { UnixFSLink, linksFromCID, linksToCID } from "./links.js"
+import { linksFromCID, linksToCID } from "./links.js"
 
 
 describe("the data links module", () => {
@@ -10,15 +10,9 @@ describe("the data links module", () => {
   it("round trips links to/from IPFS", async function () {
     const ipfs = ipfsFromContext(this)
 
-    const exampleLinks: Record<string, UnixFSLink<CID>> = {
-      "Apps": {
-        data: new CID("bafybeihpi5x4nkga6cudm3rbbdemzwgfek3acf6znxki7upqbdue7rah7q"),
-        size: 4691136110695
-      },
-      "Documents": {
-        data: new CID("bafybeicoshytteexlk46wsp6irzq4666z5fulzjppifaligke2d3lu6wsq"),
-        size: 421198445
-      }
+    const exampleLinks: Record<string, CID> = {
+      "Apps": new CID("bafybeihpi5x4nkga6cudm3rbbdemzwgfek3acf6znxki7upqbdue7rah7q"),
+      "Documents": new CID("bafybeicoshytteexlk46wsp6irzq4666z5fulzjppifaligke2d3lu6wsq"),
     }
 
     const cid = await linksToCID(exampleLinks, { ipfs })

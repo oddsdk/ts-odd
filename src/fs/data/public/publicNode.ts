@@ -1,24 +1,32 @@
 import { CID } from "ipfs-core"
-import { linksToCID, linksFromCID, UnixFSLink, lazyLinksToCID, lazyLinksFromCID, loadLinkLazy, loadLink, storeLink } from "../links.js"
+import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
 import { metadataToCID, metadataFromCID, Metadata } from "../metadata.js"
-import { LazyCIDRef, PersistenceOptions } from "../ref.js"
+import { LazyCIDRef, lazyRefFromCID, PersistenceOptions } from "../ref.js"
 
+
+/**
+ * Possible todo-s:
+ * - A reconciliation algorithm on PublicDirectory
+ * - An algorithm for "write file"/"write directory", then possibly abstract to "run on tree"
+ * - Modeling MMPT with LazyCIDRef, possibly moving on to modeling data behind encryption
+ */
 
 export interface PublicDirectory {
-  metadata: UnixFSLink<Metadata>
-  skeleton: UnixFSLink<CID>
-  userland: UnixFSLink<{
-    [key: string]: UnixFSLink<LazyCIDRef<PublicDirectory | PublicFile>>
-  }>
-  previous?: UnixFSLink<LazyCIDRef<PublicDirectory>>
+  metadata: Metadata
+  skeleton: CID
+  userland: { [name: string]: LazyCIDRef<PublicNode> }
+  previous?: LazyCIDRef<PublicDirectory>
 }
 
 
 export interface PublicFile {
-  metadata: UnixFSLink<Metadata>
-  userland: UnixFSLink<CID> // TODO: Decide whether this should become something like LazyCIDRef<Uint8Array> at some point maybe?
-  previous?: UnixFSLink<LazyCIDRef<PublicFile>>
+  metadata: Metadata
+  userland: CID
+  previous?: LazyCIDRef<PublicFile>
 }
+
+
+export type PublicNode = PublicFile | PublicDirectory
 
 
 
@@ -27,14 +35,21 @@ export interface PublicFile {
 //--------------------------------------
 
 
-export function isPublicFile(fileOrDirectory: PublicFile | PublicDirectory): fileOrDirectory is PublicFile {
-  return fileOrDirectory.metadata.data.isFile
+export function isPublicFile(node: PublicNode): node is PublicFile {
+  return node.metadata.isFile
 }
 
-export function isPublicDirectory(fileOrDirectory: PublicFile | PublicDirectory): fileOrDirectory is PublicDirectory {
-  return !fileOrDirectory.metadata.data.isFile
+export function isPublicDirectory(node: PublicNode): node is PublicDirectory {
+  return !node.metadata.isFile
 }
 
+
+export async function write(path: [string, ...string[]], content: PublicFile, directory: PublicDirectory, options: PersistenceOptions) {
+  const [head, ...rest] = path
+  if (rest.length === 0) {
+    directory.userland
+  }
+}
 
 
 //--------------------------------------
@@ -43,35 +58,36 @@ export function isPublicDirectory(fileOrDirectory: PublicFile | PublicDirectory)
 
 
 export async function directoryToCID(dir: PublicDirectory, options: PersistenceOptions): Promise<CID> {
-  const links: Record<string, UnixFSLink<CID>> = {
-    metadata: await storeLink(dir.metadata, metadataToCID, options),
+  const links: Record<string, CID> = {
+    metadata: await metadataToCID(dir.metadata, options),
     skeleton: dir.skeleton,
-    userland: await storeLink(dir.userland, lazyLinksToCID, options)
+    userland: await lazyLinksToCID(dir.userland, options),
   }
   if (dir.previous != null) {
-    links.previous = await storeLink(dir.previous, (data, options) => data.ref(options), options)
+    links.previous = await dir.previous.ref(options)
   }
   return await linksToCID(links, options)
 }
 
 export async function fileToCID(file: PublicFile, options: PersistenceOptions): Promise<CID> {
-  const links: Record<string, UnixFSLink<CID>> = {
-    metadata: await storeLink(file.metadata, metadataToCID, options),
+  const links: Record<string, CID> = {
+    metadata: await metadataToCID(file.metadata, options),
     userland: file.userland,
   }
   if (file.previous != null) {
-    links.previous = await storeLink(file.previous, (data, options) => data.ref(options), options)
+    links.previous = await file.previous.ref(options)
   }
   return await linksToCID(links, options)
 }
 
-export async function nodeFromCID(cid: CID, options: PersistenceOptions): Promise<PublicDirectory | PublicFile> {
+
+export async function nodeFromCID(cid: CID, options: PersistenceOptions): Promise<PublicNode> {
   const dirLinks = await linksFromCID(cid, options)
   if (dirLinks.metadata == null) throw new Error(`Missing link "metadata" for PublicDirectory or PublicFile at ${cid.toString()}`)
 
-  const metadata = await loadLink(dirLinks.metadata, metadataFromCID, options)
+  const metadata = await metadataFromCID(dirLinks.metadata, options)
 
-  if (metadata.data.isFile) {
+  if (metadata.isFile) {
     return await fileFromLinksHelper(cid, dirLinks, metadata)
   } else {
     return await directoryFromLinksHelper(cid, dirLinks, metadata, options)
@@ -83,7 +99,7 @@ export async function nodeFromCID(cid: CID, options: PersistenceOptions): Promis
 
 export async function directoryFromCID(cid: CID, options: PersistenceOptions): Promise<PublicDirectory> {
   const node = await nodeFromCID(cid, options)
-  if (node.metadata.data.isFile) {
+  if (node.metadata.isFile) {
     throw new Error(`Expected a PublicDirectory at ${cid.toString()}, but got a PublicFile instead.`)
   }
   return node as PublicDirectory
@@ -91,31 +107,31 @@ export async function directoryFromCID(cid: CID, options: PersistenceOptions): P
 
 export async function fileFromCID(cid: CID, options: PersistenceOptions): Promise<PublicFile> {
   const node = await nodeFromCID(cid, options)
-  if (!node.metadata.data.isFile) {
+  if (!node.metadata.isFile) {
     throw new Error(`Expected a PublicFile at ${cid.toString()}, but got a PublicDirectory instead.`)
   }
   return node as PublicFile
 }
 
 
-async function directoryFromLinksHelper(cid: CID, dirLinks: Record<string, UnixFSLink<CID>>, metadata: UnixFSLink<Metadata>, options: PersistenceOptions): Promise<PublicDirectory> {
+async function directoryFromLinksHelper(cid: CID, dirLinks: Record<string, CID>, metadata: Metadata, options: PersistenceOptions): Promise<PublicDirectory> {
   if (dirLinks.userland == null) throw new Error(`Missing link "userland" for PublicDirectory at ${cid.toString()}`)
   if (dirLinks.skeleton == null) throw new Error(`Missing link "skeleton" for PublicDirectory at ${cid.toString()}`)
 
   const result: PublicDirectory = {
     skeleton: dirLinks.skeleton,
     metadata: metadata,
-    userland: await loadLink(dirLinks.userland, (data, options) => lazyLinksFromCID(data, nodeFromCID, options), options),
+    userland: await lazyLinksFromCID(dirLinks.userland, nodeFromCID, options)
   }
 
   if (dirLinks.previous != null) {
-    result.previous = loadLinkLazy(dirLinks.previous, directoryFromCID)
+    result.previous = lazyRefFromCID(dirLinks.previous, directoryFromCID)
   }
 
   return result
 }
 
-async function fileFromLinksHelper(cid: CID, fileLinks: Record<string, UnixFSLink<CID>>, metadata: UnixFSLink<Metadata>): Promise<PublicFile> {
+async function fileFromLinksHelper(cid: CID, fileLinks: Record<string, CID>, metadata: Metadata): Promise<PublicFile> {
   if (fileLinks.userland == null) throw new Error(`Missing link "userland" for PublicFile at ${cid.toString()}`)
 
   const result: PublicFile = {
@@ -124,7 +140,7 @@ async function fileFromLinksHelper(cid: CID, fileLinks: Record<string, UnixFSLin
   }
 
   if (fileLinks.previous != null) {
-    result.previous = loadLinkLazy(fileLinks.previous, fileFromCID)
+    result.previous = lazyRefFromCID(fileLinks.previous, fileFromCID)
   }
 
   return result
