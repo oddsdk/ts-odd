@@ -9,17 +9,17 @@ export interface Ref<T, R, Options> {
 }
 
 
-export type LazyCIDRef<T> = Ref<T, CID, PersistenceOptions>
+export type LazyCIDRef<T> = Ref<T, CID, OperationContext>
 
 
-export interface PersistenceOptions {
+export interface OperationContext {
   signal?: AbortSignal
   ipfs: IPFS
 }
 
 
-export type FromCID<T> = (cid: CID, options: PersistenceOptions) => Promise<T>
-export type ToCID<T> = (obj: T, options: PersistenceOptions) => Promise<CID>
+export type FromCID<T> = (cid: CID, ctx: OperationContext) => Promise<T>
+export type ToCID<T> = (obj: T, ctx: OperationContext) => Promise<CID>
 
 
 export const lazyRefFromCID = <T>(cid: CID, load: FromCID<T>): LazyCIDRef<T> => {
@@ -32,9 +32,9 @@ export const lazyRefFromCID = <T>(cid: CID, load: FromCID<T>): LazyCIDRef<T> => 
 
   return {
 
-    async get(options: PersistenceOptions) {
+    async get(ctx: OperationContext) {
       if (obj == null) {
-        obj = load(cid, options).then(loaded => loadedObj = loaded)
+        obj = load(cid, ctx).then(loaded => loadedObj = loaded)
       }
       return await obj
     },
@@ -65,9 +65,9 @@ export const lazyRefFromObj = <T>(obj: T, store: ToCID<T>): LazyCIDRef<T> => {
       return obj
     },
 
-    async ref(options: PersistenceOptions) {
+    async ref(ctx: OperationContext) {
       if (cid == null) {
-        cid = store(obj, options)
+        cid = store(obj, ctx)
       }
       return await cid
     },

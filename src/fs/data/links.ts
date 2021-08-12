@@ -2,11 +2,11 @@ import { CID } from "ipfs-core"
 import dagPb from "ipld-dag-pb"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
-import { FromCID, LazyCIDRef, lazyRefFromCID, PersistenceOptions } from "./ref.js"
+import { FromCID, LazyCIDRef, lazyRefFromCID, OperationContext } from "./ref.js"
 
 
 
-export async function linksToCID(links: Record<string, CID>, { ipfs, signal }: PersistenceOptions): Promise<CID> {
+export async function linksToCID(links: Record<string, CID>, { ipfs, signal }: OperationContext): Promise<CID> {
   const dagNode = new dagPb.DAGNode(DAG_NODE_DATA)
 
   for (const [name, cid] of Object.entries(links)) {
@@ -21,16 +21,16 @@ export async function linksToCID(links: Record<string, CID>, { ipfs, signal }: P
 }
 
 
-export async function lazyLinksToCID(links: Record<string, LazyCIDRef<unknown>>, options: PersistenceOptions): Promise<CID> {
+export async function lazyLinksToCID(links: Record<string, LazyCIDRef<unknown>>, ctx: OperationContext): Promise<CID> {
   const linksModified: Record<string, CID> = {}
   for (const [name, link] of Object.entries(links)) {
-    linksModified[name] = await link.ref(options)
+    linksModified[name] = await link.ref(ctx)
   }
-  return await linksToCID(linksModified, options)
+  return await linksToCID(linksModified, ctx)
 }
 
 
-export async function linksFromCID(cid: CID, { ipfs, signal }: PersistenceOptions): Promise<Record<string, CID>> {
+export async function linksFromCID(cid: CID, { ipfs, signal }: OperationContext): Promise<Record<string, CID>> {
   const getResult = await ipfs.dag.get(cid, { signal })
   const dagNode: dagPb.DAGNode = getResult.value
 
@@ -41,8 +41,8 @@ export async function linksFromCID(cid: CID, { ipfs, signal }: PersistenceOption
   return links
 }
 
-export async function lazyLinksFromCID<T>(cid: CID, load: FromCID<T>, options: PersistenceOptions): Promise<Record<string, LazyCIDRef<T>>> {
-  const cidLinks = await linksFromCID(cid, options)
+export async function lazyLinksFromCID<T>(cid: CID, load: FromCID<T>, ctx: OperationContext): Promise<Record<string, LazyCIDRef<T>>> {
+  const cidLinks = await linksFromCID(cid, ctx)
 
   const lazyCIDLinks: Record<string, LazyCIDRef<T>> = {}
   for (const [name, cid] of Object.entries(cidLinks)) {

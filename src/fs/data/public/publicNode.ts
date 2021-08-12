@@ -1,7 +1,7 @@
 import { CID } from "ipfs-core"
 import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
 import { metadataToCID, metadataFromCID, Metadata } from "../metadata.js"
-import { LazyCIDRef, lazyRefFromCID, PersistenceOptions } from "../ref.js"
+import { LazyCIDRef, lazyRefFromCID, OperationContext } from "../ref.js"
 
 
 /**
@@ -44,7 +44,7 @@ export function isPublicDirectory(node: PublicNode): node is PublicDirectory {
 }
 
 
-export async function write(path: [string, ...string[]], content: PublicFile, directory: PublicDirectory, options: PersistenceOptions) {
+export async function write(path: [string, ...string[]], content: PublicFile, directory: PublicDirectory, ctx: OperationContext) {
   const [head, ...rest] = path
   if (rest.length === 0) {
     directory.userland
@@ -57,56 +57,56 @@ export async function write(path: [string, ...string[]], content: PublicFile, di
 //--------------------------------------
 
 
-export async function directoryToCID(dir: PublicDirectory, options: PersistenceOptions): Promise<CID> {
+export async function directoryToCID(dir: PublicDirectory, ctx: OperationContext): Promise<CID> {
   const links: Record<string, CID> = {
-    metadata: await metadataToCID(dir.metadata, options),
+    metadata: await metadataToCID(dir.metadata, ctx),
     skeleton: dir.skeleton,
-    userland: await lazyLinksToCID(dir.userland, options),
+    userland: await lazyLinksToCID(dir.userland, ctx),
   }
   if (dir.previous != null) {
-    links.previous = await dir.previous.ref(options)
+    links.previous = await dir.previous.ref(ctx)
   }
-  return await linksToCID(links, options)
+  return await linksToCID(links, ctx)
 }
 
-export async function fileToCID(file: PublicFile, options: PersistenceOptions): Promise<CID> {
+export async function fileToCID(file: PublicFile, ctx: OperationContext): Promise<CID> {
   const links: Record<string, CID> = {
-    metadata: await metadataToCID(file.metadata, options),
+    metadata: await metadataToCID(file.metadata, ctx),
     userland: file.userland,
   }
   if (file.previous != null) {
-    links.previous = await file.previous.ref(options)
+    links.previous = await file.previous.ref(ctx)
   }
-  return await linksToCID(links, options)
+  return await linksToCID(links, ctx)
 }
 
 
-export async function nodeFromCID(cid: CID, options: PersistenceOptions): Promise<PublicNode> {
-  const dirLinks = await linksFromCID(cid, options)
+export async function nodeFromCID(cid: CID, ctx: OperationContext): Promise<PublicNode> {
+  const dirLinks = await linksFromCID(cid, ctx)
   if (dirLinks.metadata == null) throw new Error(`Missing link "metadata" for PublicDirectory or PublicFile at ${cid.toString()}`)
 
-  const metadata = await metadataFromCID(dirLinks.metadata, options)
+  const metadata = await metadataFromCID(dirLinks.metadata, ctx)
 
   if (metadata.isFile) {
     return await fileFromLinksHelper(cid, dirLinks, metadata)
   } else {
-    return await directoryFromLinksHelper(cid, dirLinks, metadata, options)
+    return await directoryFromLinksHelper(cid, dirLinks, metadata, ctx)
   }
 }
 
 // The following two functions *could* be faster by checking the metadata.isFile beforehand,
 // but that'd only be faster in the failing case, so I don't think it's something worth optimizing for
 
-export async function directoryFromCID(cid: CID, options: PersistenceOptions): Promise<PublicDirectory> {
-  const node = await nodeFromCID(cid, options)
+export async function directoryFromCID(cid: CID, ctx: OperationContext): Promise<PublicDirectory> {
+  const node = await nodeFromCID(cid, ctx)
   if (node.metadata.isFile) {
     throw new Error(`Expected a PublicDirectory at ${cid.toString()}, but got a PublicFile instead.`)
   }
   return node as PublicDirectory
 }
 
-export async function fileFromCID(cid: CID, options: PersistenceOptions): Promise<PublicFile> {
-  const node = await nodeFromCID(cid, options)
+export async function fileFromCID(cid: CID, ctx: OperationContext): Promise<PublicFile> {
+  const node = await nodeFromCID(cid, ctx)
   if (!node.metadata.isFile) {
     throw new Error(`Expected a PublicFile at ${cid.toString()}, but got a PublicDirectory instead.`)
   }
@@ -114,14 +114,14 @@ export async function fileFromCID(cid: CID, options: PersistenceOptions): Promis
 }
 
 
-async function directoryFromLinksHelper(cid: CID, dirLinks: Record<string, CID>, metadata: Metadata, options: PersistenceOptions): Promise<PublicDirectory> {
+async function directoryFromLinksHelper(cid: CID, dirLinks: Record<string, CID>, metadata: Metadata, ctx: OperationContext): Promise<PublicDirectory> {
   if (dirLinks.userland == null) throw new Error(`Missing link "userland" for PublicDirectory at ${cid.toString()}`)
   if (dirLinks.skeleton == null) throw new Error(`Missing link "skeleton" for PublicDirectory at ${cid.toString()}`)
 
   const result: PublicDirectory = {
     skeleton: dirLinks.skeleton,
     metadata: metadata,
-    userland: await lazyLinksFromCID(dirLinks.userland, nodeFromCID, options)
+    userland: await lazyLinksFromCID(dirLinks.userland, nodeFromCID, ctx)
   }
 
   if (dirLinks.previous != null) {
