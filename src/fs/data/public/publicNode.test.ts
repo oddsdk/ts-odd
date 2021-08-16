@@ -4,10 +4,10 @@ import { CID, IPFS } from "ipfs-core"
 import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { canonicalize } from "../links.test.js"
-import { lazyRefFromCID, lazyRefFromObj } from "../ref.js"
+import { lazyRefFromCID } from "../ref.js"
 import * as metadata from "../metadata.js"
 
-import { directoryFromCID, directoryToCID, fileFromCID, fileToCID, isPublicFile, nodeFromCID, PublicDirectory, PublicFile, write } from "./publicNode.js"
+import { baseHistoryOn, directoryFromCID, directoryToCID, fileFromCID, fileToCID, isPublicFile, nodeFromCID, PublicDirectory, PublicFile, write } from "./publicNode.js"
 
 
 describe("the data public node module", () => {
@@ -138,16 +138,29 @@ describe("the data public node module", () => {
 
     expect(await listFiles(emptyDirectory, ipfs)).toEqual([])
 
-    const emptyFile: PublicFile = {
-      metadata: metadata.emptyFile(1621259349711),
-      userland: new CID("bafkqaaa") // CID representing an empty bitstring using the identity hash
-    }
+    const nonEmptyDir = await baseHistoryOn(await write(
+      ["Apps", "matheus23", "Flatmate", "file.txt"],
+      new CID("bafkqaaa"),
+      emptyDirectory,
+      { ipfs, now: 1621259349711 }
+    ), emptyDirectory, { ipfs })
 
-    const nonEmptyDir = await write(["file.txt"], emptyFile, emptyDirectory, emptyDirectory, { ipfs })
+    const evenLessEmptyDir = await baseHistoryOn(await write(
+      ["Apps", "matheus23", "appinator", "state.json"],
+      new CID("bafkqaaa"),
+      nonEmptyDir,
+      { ipfs, now: 1621259349712 }
+    ), nonEmptyDir, { ipfs })
 
     expect(await listFiles(nonEmptyDir, ipfs)).toEqual([
-      ["file.txt"]
+      ["Apps", "matheus23", "Flatmate", "file.txt"]
     ])
+    expect(await listFiles(evenLessEmptyDir, ipfs)).toEqual([
+      ["Apps", "matheus23", "Flatmate", "file.txt"],
+      ["Apps", "matheus23", "appinator", "state.json"]
+    ])
+
+    // TODO: Check history
   })
 
 })
