@@ -1,6 +1,6 @@
 import { CID } from "ipfs-core"
 import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
-import { metadataToCID, metadataFromCID, Metadata } from "../metadata.js"
+import { metadataToCID, metadataFromCID, Metadata, emptyDirectory } from "../metadata.js"
 import { LazyCIDRef, lazyRefFromCID, lazyRefFromObj, OperationContext } from "../ref.js"
 
 
@@ -44,39 +44,196 @@ export function isPublicDirectory(node: PublicNode): node is PublicDirectory {
   return !node.metadata.isFile
 }
 
+function isNonEmpty(paths: string[]): paths is [string, ...string[]] {
+  return paths.length > 0
+}
 
-export async function write(path: [string, ...string[]], content: PublicFile, directory: PublicDirectory, ctx: OperationContext): Promise<PublicDirectory> {
+
+export async function getNode(
+  path: [string, ...string[]],
+  directory: PublicDirectory,
+  ctx: OperationContext
+): Promise<PublicNode | null> {
   const [head, ...rest] = path
-  if (rest.length === 0) {
-    return {
+  if (!isNonEmpty(rest)) {
+    return await lookupNode(head, directory, ctx)
+  }
+
+  const nextDirectory = await lookupDirectory(head, directory, ctx)
+  if (nextDirectory == null) return null
+
+  return await getNode(rest, nextDirectory, ctx)
+}
+
+export interface Timestamp {
+  now: number
+}
+
+// TODO: Split out the "create previous entries" thingie into its own recursive thing.
+// and don't call it from within mkdir/write/etc.
+// This is cool because (1) it won't have to iterate the whole tree, it can look for CID changes
+// and (2) it's not complicating the mkdir functions anymore and
+// (3) there's no duplicate effort when comparing the previous pointer _every time_
+export async function mkdir(
+  path: [string, ...string[]],
+  directory: PublicDirectory,
+  referenceForHistory: PublicDirectory | null,
+  ctx: OperationContext & Timestamp
+): Promise<PublicDirectory> {
+
+  const [head, ...rest] = path
+
+  const existing = await lookupNode(head, directory, ctx)
+
+  if (existing != null && isPublicFile(existing)) {
+    throw new Error("mkdir: There is already a file at this position")
+  }
+
+  if (!isNonEmpty(rest)) {
+    if (existing != null) {
+      // There already exists a directory with this name
+      return directory
+    }
+
+    return await updatePreviousPointer(
+      {
+        ...directory,
+        userland: {
+          ...directory.userland,
+          [head]: lazyRefFromObj({
+            metadata: emptyDirectory(ctx.now),
+            userland: {}
+          }, directoryToCID)
+        }
+      },
+      referenceForHistory,
+      ctx
+    )
+  }
+
+  const nextDirectory = existing == null ?
+    {
+      metadata: emptyDirectory(ctx.now),
+      userland: {}
+    } :
+    existing
+
+  const referenceNextDirectory = referenceForHistory == null ? null : await lookupDirectory(head, referenceForHistory, ctx)
+
+  const changedDirectory = await mkdir(rest, nextDirectory, referenceNextDirectory, ctx)
+
+  return await updatePreviousPointer(
+    {
       ...directory,
       userland: {
         ...directory.userland,
-        [head]: lazyRefFromObj(content, fileToCID)
+        [head]: lazyRefFromObj(changedDirectory, directoryToCID)
       }
-    }
-  }
-
-  const nextDirectoryRef = directory.userland[head]
-  if (nextDirectoryRef == null) {
-    throw new Error("Path does not exist")
-  }
-
-  const nextDirectory = await nextDirectoryRef.get(ctx)
-  if (isPublicFile(nextDirectory)) {
-    throw new Error("Path does not exist")
-  }
-
-  const changedDirectory = await write(rest as [string, ...string[]], content, nextDirectory, ctx)
-  return {
-    ...directory,
-    userland: {
-      ...directory.userland,
-      [head]: lazyRefFromObj(changedDirectory, directoryToCID)
-    }
-  }
+    },
+    referenceForHistory,
+    ctx
+  )
 }
 
+export async function write(
+  path: [string, ...string[]],
+  content: PublicFile,
+  directory: PublicDirectory,
+  referenceForHistory: PublicDirectory | null,
+  ctx: OperationContext
+): Promise<PublicDirectory> {
+  const [head, ...rest] = path
+  if (!isNonEmpty(rest)) {
+    return await updatePreviousPointer(
+      {
+        ...directory,
+        userland: {
+          ...directory.userland,
+          [head]: lazyRefFromObj(content, fileToCID)
+        }
+      },
+      referenceForHistory,
+      ctx
+    )
+  }
+
+  const nextDirectory = await lookupDirectory(head, directory, ctx)
+  if (nextDirectory == null) {
+    throw new Error("Path does not exist")
+  }
+
+  const referenceNextDirectory = referenceForHistory == null ? null : await lookupDirectory(head, referenceForHistory, ctx)
+
+  const changedDirectory = await write(rest, content, nextDirectory, referenceNextDirectory, ctx)
+
+  return await updatePreviousPointer(
+    {
+      ...directory,
+      userland: {
+        ...directory.userland,
+        [head]: lazyRefFromObj(changedDirectory, directoryToCID)
+      }
+    },
+    referenceForHistory,
+    ctx
+  )
+}
+
+/**
+ * This function implements a crucial part of building history:
+ * Updating the 'previous' pointer on a PublicDirectory that was
+ * recently created with updated contents ('mutated' in immutable data).
+ * For that, we keep around the original, unmodified directory (reference)
+ * and compare the reference to the current state of the directory.
+ * If we see that directory.previous equals reference.previous, then
+ * we have to update directory's previous pointer to point to reference.
+ * Otherwise we've already made that connection.
+ */
+async function updatePreviousPointer(directory: PublicDirectory, reference: PublicDirectory | null, ctx: OperationContext): Promise<PublicDirectory> {
+  if (reference == null) return directory
+
+  const previous = directory.previous
+
+  if (previous == null) {
+    // We create the first history entry for this node
+    return {
+      ...directory,
+      previous: lazyRefFromObj(reference, directoryToCID)
+    }
+  }
+
+  const refPrevious = reference.previous
+  if (refPrevious == null) return directory // an argument where this is happens is actually not supposed to be provided
+
+  const previousCID = await previous.ref(ctx)
+  const refPreviousCID = await refPrevious.ref(ctx)
+
+  if (previousCID.equals(refPreviousCID)) {
+    return {
+      ...directory,
+      previous: lazyRefFromObj(reference, directoryToCID)
+    }
+  }
+
+  // we already created the history entry
+  return directory
+}
+
+async function lookupNode(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicNode | null> {
+  return await dir.userland[path]?.get(ctx)
+}
+
+async function lookupDirectory(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicDirectory | null> {
+  const node = await lookupNode(path, dir, ctx)
+  if (node == null || isPublicFile(node)) return null
+  return node
+}
+
+async function lookupFile(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicFile | null> {
+  const node = await lookupNode(path, dir, ctx)
+  if (node == null || isPublicDirectory(node)) return null
+  return node
+}
 
 //--------------------------------------
 // Persistence

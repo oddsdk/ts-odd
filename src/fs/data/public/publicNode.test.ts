@@ -4,7 +4,7 @@ import { CID, IPFS } from "ipfs-core"
 import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { canonicalize } from "../links.test.js"
-import { lazyRefFromCID } from "../ref.js"
+import { lazyRefFromCID, lazyRefFromObj } from "../ref.js"
 import * as metadata from "../metadata.js"
 
 import { directoryFromCID, directoryToCID, fileFromCID, fileToCID, isPublicFile, nodeFromCID, PublicDirectory, PublicFile, write } from "./publicNode.js"
@@ -132,7 +132,7 @@ describe("the data public node module", () => {
     const ipfs = ipfsFromContext(this)
 
     const emptyDirectory: PublicDirectory = {
-      metadata: metadata.emptyFile(1621259349710),
+      metadata: metadata.emptyDirectory(1621259349710),
       userland: {}
     }
 
@@ -143,7 +143,7 @@ describe("the data public node module", () => {
       userland: new CID("bafkqaaa") // CID representing an empty bitstring using the identity hash
     }
 
-    const nonEmptyDir: PublicDirectory = await write(["file.txt"], emptyFile, emptyDirectory, { ipfs })
+    const nonEmptyDir = await write(["file.txt"], emptyFile, emptyDirectory, emptyDirectory, { ipfs })
 
     expect(await listFiles(nonEmptyDir, ipfs)).toEqual([
       ["file.txt"]
