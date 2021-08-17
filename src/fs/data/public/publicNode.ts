@@ -49,20 +49,35 @@ export function isPublicDirectory(node: PublicNode): node is PublicDirectory {
 //--------------------------------------
 
 
-export async function getNode(
+export async function read(
   path: [string, ...string[]],
   directory: PublicDirectory,
   ctx: OperationContext
-): Promise<PublicNode | null> {
-  const [head, ...rest] = path
-  if (!isNonEmpty(rest)) {
-    return await lookupNode(head, directory, ctx)
+): Promise<CID> {
+  const node = await getNode(path, directory, ctx)
+
+  if (node == null) throw new Error(`Couldn't read. No such file ${path}.`)
+  if (isPublicDirectory(node)) throw new Error(`Couldn't read ${path}, it's a directory.`)
+
+  return node.userland
+}
+
+export async function ls(
+  path: [string, ...string[]],
+  directory: PublicDirectory,
+  ctx: OperationContext
+): Promise<Record<string, Metadata>> {
+  const node = await getNode(path, directory, ctx)
+
+  if (node == null) throw new Error(`Couldn't ls. No such path ${path}.`)
+  if (isPublicFile(node)) throw new Error(`Couldn't ls ${path}, it's a file.`)
+
+  const result: Record<string, Metadata> = {}
+  for (const [name, entry] of Object.entries(node.userland)) {
+    result[name] = (await entry.get(ctx)).metadata
   }
 
-  const nextDirectory = await lookupDirectory(head, directory, ctx)
-  if (nextDirectory == null) return null
-
-  return await getNode(rest, nextDirectory, ctx)
+  return result
 }
 
 export async function write(
@@ -159,7 +174,7 @@ export async function mkdir(
   }
 }
 
-async function upsert(
+export async function upsert(
   path: [string, ...string[]],
   update: (entry: LazyCIDRef<PublicNode> | null) => Promise<LazyCIDRef<PublicNode> | null>,
   directory: PublicDirectory,
@@ -200,6 +215,23 @@ async function upsert(
     }
   }
 }
+
+export async function getNode(
+  path: [string, ...string[]],
+  directory: PublicDirectory,
+  ctx: OperationContext
+): Promise<PublicNode | null> {
+  const [head, ...rest] = path
+  if (!isNonEmpty(rest)) {
+    return await lookupNode(head, directory, ctx)
+  }
+
+  const nextDirectory = await lookupDirectory(head, directory, ctx)
+  if (nextDirectory == null) return null
+
+  return await getNode(rest, nextDirectory, ctx)
+}
+
 
 export async function lookupNode(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicNode | null> {
   return await dir.userland[path]?.get(ctx)
