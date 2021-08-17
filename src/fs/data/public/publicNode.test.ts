@@ -4,10 +4,10 @@ import { CID, IPFS } from "ipfs-core"
 import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { canonicalize } from "../links.test.js"
-import { lazyRefFromCID } from "../ref.js"
+import { lazyRefFromCID, lazyRefFromObj } from "../ref.js"
 import * as metadata from "../metadata.js"
 
-import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, getNode, isPublicFile, nodeFromCID, PublicDirectory, PublicFile, write } from "./publicNode.js"
+import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, getNode, isPublicFile, nodeFromCID, nodeToCID, PublicDirectory, PublicFile, write } from "./publicNode.js"
 
 
 describe("the data public node module", () => {
@@ -34,22 +34,12 @@ describe("the data public node module", () => {
     const ipfs = ipfsFromContext(this)
 
     const fileHeader = {
-      metadata: {
-        "isFile": true,
-        "version": {
-          "major": 1,
-          "minor": 0,
-          "patch": 0
-        },
-        "unixMeta": {
-          "mode": 644,
-          "_type": "file",
-          "ctime": 1621259349710,
-          "mtime": 1627992355220
-        }
-      },
-      previous: lazyRefFromCID(new CID("bafybeid7uclpcql4aj7rx4lo32gjqbghyrvyvqfjvwwlgky7jdpi32xjra"), fileFromCID),
-      userland: new CID("bafkreiayl6g3gitr7ys7kyng7sjywlrgimdoymco3jiyab6rozecmoazne"),
+      metadata: metadata.updateMtime(metadata.newFile(1621259349710), 1627992355220),
+      previous: lazyRefFromCID(await fileToCID({
+        metadata: metadata.updateMtime(metadata.newFile(1621259349710), 1627992355220),
+        userland: new CID("bafkqaaa")
+      }, { ipfs }), fileFromCID),
+      userland: new CID("bafkqaaa"),
     }
 
     const cid = await fileToCID(fileHeader, { ipfs })
@@ -79,25 +69,21 @@ describe("the data public node module", () => {
     const ipfs = ipfsFromContext(this)
 
     const directory = {
-      metadata: {
-        "isFile": false,
-        "version": {
-          "major": 1,
-          "minor": 0,
-          "patch": 0
-        },
-        "unixMeta": {
-          "mode": 755,
-          "_type": "dir",
-          "ctime": 1621508308152,
-          "mtime": 1621887292742
-        }
-      },
-      previous: lazyRefFromCID(new CID("bafybeib4hqxwnfdh453qwvvog6fzdrph36zad5dvexcphj7yjb6mwktyla"), directoryFromCID),
-      skeleton: new CID("bafkreie2w6qrq2xia4nefs4hxw2qpjgbzhdo6uwgngj5lgbou77tev5omq"),
+      metadata: metadata.updateMtime(metadata.newDirectory(1621508308152), 1621887292742),
+      previous: lazyRefFromCID(await directoryToCID({
+        metadata: metadata.newDirectory(1621508308152),
+        userland: {}
+      }, { ipfs }), directoryFromCID),
+      skeleton: new CID("bafkqaaa"),
       userland: {
-        "Apps": lazyRefFromCID(new CID("bafybeiflfmrx2crvdl2su4zrrj5ps7yudmmamokxfk5l35fwajyqsbhjpq"), nodeFromCID),
-        "index.html": lazyRefFromCID(new CID("bafybeiaezxgxy2i2cq2phszwj3zspn5yrrbg2rvbqzs7y63i4cjlnpoxlq"), nodeFromCID),
+        "Apps": lazyRefFromCID(await nodeToCID({
+          metadata: metadata.newDirectory(1621887292742),
+          userland: {}
+        }, { ipfs }), nodeFromCID),
+        "index.html": lazyRefFromCID(await nodeToCID({
+          metadata: metadata.newFile(1621887292742),
+          userland: new CID("bafkqaaa"),
+        }, { ipfs }), nodeFromCID),
       }
     }
 
@@ -128,7 +114,7 @@ describe("the data public node module", () => {
     ])
   })
 
-  it("adds directories when write is used", async function() {
+  it("adds directories when write is used", async function () {
     const ipfs = ipfsFromContext(this)
 
     const emptyDirectory: PublicDirectory = {

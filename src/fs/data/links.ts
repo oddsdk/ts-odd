@@ -1,5 +1,6 @@
 import { CID } from "ipfs-core"
 import dagPb from "ipld-dag-pb"
+import { getNameFromCode } from "multicodec"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
 import { FromCID, LazyCIDRef, lazyRefFromCID, OperationContext } from "./ref.js"
@@ -32,13 +33,17 @@ export async function lazyLinksToCID(links: Record<string, LazyCIDRef<unknown>>,
 
 export async function linksFromCID(cid: CID, { ipfs, signal }: OperationContext): Promise<Record<string, CID>> {
   const getResult = await ipfs.dag.get(cid, { signal })
+  // we only support DAG-PB
+  if (!(getResult.value instanceof dagPb.DAGNode)) {
+    throw new Error(`Can't read links from ${cid.toString()} (${getResult.value}), probably due to it not being in expected dag-pb format. Actual format: ${getNameFromCode(cid.code)}`)
+  }
   const dagNode: dagPb.DAGNode = getResult.value
 
   const links: Record<string, CID> = {}
   for (const dagLink of dagNode.Links) {
     links[dagLink.Name] = dagLink.Hash
   }
-  return links
+  return Object.freeze(links)
 }
 
 export async function lazyLinksFromCID<T>(cid: CID, load: FromCID<T>, ctx: OperationContext): Promise<Record<string, LazyCIDRef<T>>> {
@@ -49,7 +54,7 @@ export async function lazyLinksFromCID<T>(cid: CID, load: FromCID<T>, ctx: Opera
     lazyCIDLinks[name] = lazyRefFromCID(cid, load)
   }
 
-  return lazyCIDLinks
+  return Object.freeze(lazyCIDLinks)
 }
 
 

@@ -30,7 +30,7 @@ export const lazyRefFromCID = <T>(cid: CID, load: FromCID<T>): LazyCIDRef<T> => 
   // It's just used for the `toObject` method for convenience
   let loadedObj: T | null = null
 
-  return {
+  return Object.freeze({
 
     async get(ctx: OperationContext) {
       if (obj == null) {
@@ -50,7 +50,7 @@ export const lazyRefFromCID = <T>(cid: CID, load: FromCID<T>): LazyCIDRef<T> => 
       return cid.toString()
     },
 
-  }
+  })
 }
 
 
@@ -59,7 +59,7 @@ export const lazyRefFromObj = <T>(obj: T, store: ToCID<T>): LazyCIDRef<T> => {
   // We store a promise so that multiple concurrent `ref` calls will all await the same promise.
   let cid: Promise<CID> | null = null
 
-  return {
+  return Object.freeze({
 
     async get() {
       return obj
@@ -76,7 +76,7 @@ export const lazyRefFromObj = <T>(obj: T, store: ToCID<T>): LazyCIDRef<T> => {
       return obj
     },
 
-  }
+  })
 }
 
 

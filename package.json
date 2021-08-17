@@ -100,6 +100,7 @@
     "keystore-idb": "0.14.2",
     "localforage": "^1.9.0",
     "lodash": "^4.17.21",
+    "multicodec": "^3.0.1",
     "noble-ed25519": "^1.2.4",
     "throttle-debounce": "^3.0.1",
     "uint8arrays": "^2.1.7"

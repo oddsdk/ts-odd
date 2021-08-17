@@ -80,6 +80,10 @@ export async function ls(
   return result
 }
 
+export async function exists(path: [string, ...string[]],directory: PublicDirectory,ctx: OperationContext): Promise<boolean> {
+  return await getNode(path, directory, ctx) != null
+}
+
 export async function write(
   path: [string, ...string[]],
   content: CID,
@@ -419,7 +423,7 @@ async function directoryFromLinksHelper(cid: CID, dirLinks: Record<string, CID>,
     result.previous = lazyRefFromCID(dirLinks.previous, directoryFromCID)
   }
 
-  return result
+  return Object.freeze(result)
 }
 
 async function fileFromLinksHelper(cid: CID, fileLinks: Record<string, CID>, metadata: Metadata): Promise<PublicFile> {
@@ -434,7 +438,7 @@ async function fileFromLinksHelper(cid: CID, fileLinks: Record<string, CID>, met
     result.previous = lazyRefFromCID(fileLinks.previous, fileFromCID)
   }
 
-  return result
+  return Object.freeze(result)
 }
 
 

@@ -1,5 +1,6 @@
 import expect from "expect"
 import { CID } from "ipfs-core"
+import { loadCAR } from "../../../tests/helpers/loadCAR.js"
 import { ipfsFromContext } from "../../../tests/mocha-hook.js"
 
 import { linksFromCID, linksToCID } from "./links.js"
@@ -11,8 +12,8 @@ describe("the data links module", () => {
     const ipfs = ipfsFromContext(this)
 
     const exampleLinks: Record<string, CID> = {
-      "Apps": new CID("bafybeihpi5x4nkga6cudm3rbbdemzwgfek3acf6znxki7upqbdue7rah7q"),
-      "Documents": new CID("bafybeicoshytteexlk46wsp6irzq4666z5fulzjppifaligke2d3lu6wsq"),
+      "Apps": new CID("bafkqaaa"),
+      "Documents": new CID("bafkqaaa"),
     }
 
     const cid = await linksToCID(exampleLinks, { ipfs })
@@ -23,7 +24,10 @@ describe("the data links module", () => {
   it("round trips links from/to IPFS", async function () {
     const ipfs = ipfsFromContext(this)
 
-    const exampleCID = new CID("bafybeiet7qvca6hqzwfbzm5w6qzg3deucm7lsob2nuum7nohgu67e64z4u")
+    await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
+
+    // ^ root/public/userland
+    const exampleCID = new CID("bafybeig6m5w57qpp7pj3kcrban74bhbjittr46nkxqgpuqx2o4ymieysem")
     const decodedLinks = await linksFromCID(exampleCID, { ipfs })
     const cid = await linksToCID(decodedLinks, { ipfs })
     expect(cid.toString()).toEqual(exampleCID.toString())

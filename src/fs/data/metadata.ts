@@ -28,7 +28,7 @@ export type Metadata = {
 }
 
 
-export const newUnix = (isFile: boolean, now: number): UnixMeta => ({
+export const newUnix = (isFile: boolean, now: number): UnixMeta => Object.freeze({
   mtime: now,
   ctime: now,
   mode: isFile ? 644 : 755,
@@ -41,7 +41,7 @@ export const newMeta = (isFile: boolean, now: number): Metadata => ({
   unixMeta: newUnix(isFile, now)
 })
 
-export const updateMtime = (metadata: Metadata, mtime: number): Metadata => ({
+export const updateMtime = (metadata: Metadata, mtime: number): Metadata => Object.freeze({
   ...metadata,
   unixMeta: {
     ...metadata.unixMeta,
@@ -72,7 +72,9 @@ export async function metadataFromCID(cid: CID, { ipfs, signal }: OperationConte
     throw new Error(`Couldn't parse metadata at ${cid.toString()}`)
   }
 
-  return metadata
+  Object.freeze(metadata.unixMeta)
+  Object.freeze(metadata.version)
+  return Object.freeze(metadata)
 }
 
 
