@@ -28,17 +28,17 @@ export type Metadata = {
 }
 
 
-export const emptyUnix = (isFile: boolean, now: number): UnixMeta => ({
+export const newUnix = (isFile: boolean, now: number): UnixMeta => ({
   mtime: now,
   ctime: now,
   mode: isFile ? 644 : 755,
   _type: isFile ? UnixNodeType.File : UnixNodeType.Directory,
 })
 
-export const empty = (isFile: boolean, now: number): Metadata => ({
+export const newMeta = (isFile: boolean, now: number): Metadata => ({
   isFile,
   version: v1,
-  unixMeta: emptyUnix(isFile, now)
+  unixMeta: newUnix(isFile, now)
 })
 
 export const updateMtime = (metadata: Metadata, mtime: number): Metadata => ({
@@ -49,8 +49,8 @@ export const updateMtime = (metadata: Metadata, mtime: number): Metadata => ({
   }
 })
 
-export const emptyFile = (now: number): Metadata => empty(true, now)
-export const emptyDirectory = (now: number): Metadata => empty(false, now)
+export const newFile = (now: number): Metadata => newMeta(true, now)
+export const newDirectory = (now: number): Metadata => newMeta(false, now)
 
 
 export async function metadataToCID(metadata: Metadata, { ipfs, signal }: OperationContext): Promise<CID> {

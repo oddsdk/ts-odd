@@ -1,6 +1,6 @@
 import { CID } from "ipfs-core"
 import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
-import { metadataToCID, metadataFromCID, Metadata, emptyDirectory, updateMtime, emptyFile } from "../metadata.js"
+import { metadataToCID, metadataFromCID, Metadata, newDirectory, updateMtime, newFile } from "../metadata.js"
 import { LazyCIDRef, lazyRefFromCID, lazyRefFromObj, OperationContext } from "../ref.js"
 
 
@@ -82,7 +82,7 @@ export async function write(
         throw new Error(`Can't write file to ${path}: There already exists a directory.`)
       }
       return lazyRefFromObj({
-        metadata: emptyFile(ctx.now),
+        metadata: newFile(ctx.now),
         userland: content
       }, fileToCID)
     },
@@ -134,7 +134,7 @@ export async function mkdir(
       userland: {
         ...directory.userland,
         [name]: lazyRefFromObj({
-          metadata: emptyDirectory(ctx.now),
+          metadata: newDirectory(ctx.now),
           userland: {}
         }, directoryToCID)
       }
@@ -143,7 +143,7 @@ export async function mkdir(
 
   const nextDirectory = existing == null ?
     {
-      metadata: emptyDirectory(ctx.now),
+      metadata: newDirectory(ctx.now),
       userland: {}
     } :
     existing

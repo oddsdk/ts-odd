@@ -132,7 +132,7 @@ describe("the data public node module", () => {
     const ipfs = ipfsFromContext(this)
 
     const emptyDirectory: PublicDirectory = {
-      metadata: metadata.emptyDirectory(1621259349710),
+      metadata: metadata.newDirectory(1621259349710),
       userland: {}
     }
 
