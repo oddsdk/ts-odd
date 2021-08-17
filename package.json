@@ -98,8 +98,8 @@
     "ipld-dag-pb": "^0.22.2",
     "keystore-idb": "0.14.2",
     "localforage": "^1.9.0",
-    "noble-ed25519": "^1.2.4",
     "throttle-debounce": "^3.0.1",
+    "tweetnacl": "^0.14.5",
     "uint8arrays": "^2.1.7"
   },
   "resolutions": {
