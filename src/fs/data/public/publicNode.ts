@@ -29,11 +29,9 @@ export interface PublicFile {
 
 export type PublicNode = PublicFile | PublicDirectory
 
-
-
-//--------------------------------------
-// Operations
-//--------------------------------------
+export interface Timestamp {
+  now: number
+}
 
 
 export function isPublicFile(node: PublicNode): node is PublicFile {
@@ -44,9 +42,11 @@ export function isPublicDirectory(node: PublicNode): node is PublicDirectory {
   return !node.metadata.isFile
 }
 
-function isNonEmpty(paths: string[]): paths is [string, ...string[]] {
-  return paths.length > 0
-}
+
+
+//--------------------------------------
+// Operations
+//--------------------------------------
 
 
 export async function getNode(
@@ -63,68 +63,6 @@ export async function getNode(
   if (nextDirectory == null) return null
 
   return await getNode(rest, nextDirectory, ctx)
-}
-
-export async function baseHistoryOn(
-  directory: PublicDirectory,
-  historyBase: PublicDirectory,
-  ctx: OperationContext
-): Promise<PublicDirectory> {
-  const userland: Record<string, LazyCIDRef<PublicNode>> = {}
-
-  for (const [name, entry] of Object.entries(directory.userland)) {
-    const baseEntry = historyBase.userland[name]
-    userland[name] = baseEntry == null ? entry : await baseHistoryOnHelper(entry, baseEntry, ctx)
-  }
-
-  return {
-    ...directory,
-    userland,
-    previous: lazyRefFromObj(historyBase, directoryToCID)
-  }
-}
-
-async function baseHistoryOnHelper(
-  nodeRef: LazyCIDRef<PublicNode>,
-  historyBaseRef: LazyCIDRef<PublicNode>,
-  ctx: OperationContext
-): Promise<LazyCIDRef<PublicNode>> {
-  const nodeCID = await nodeRef.ref(ctx)
-  const baseCID = await historyBaseRef.ref(ctx)
-  if (nodeCID.equals(baseCID)) {
-    return nodeRef
-  }
-
-  const node = await nodeRef.get(ctx)
-  const base = await historyBaseRef.get(ctx)
-
-  if (isPublicFile(node)) {
-    if (!isPublicFile(base)) return nodeRef
-
-    return lazyRefFromObj({
-      ...node,
-      previous: lazyRefFromObj(base, fileToCID)
-    }, fileToCID)
-  }
-
-  if (!isPublicDirectory(base)) return nodeRef
-
-  const userland: Record<string, LazyCIDRef<PublicNode>> = {}
-
-  for (const [name, entry] of Object.entries(node.userland)) {
-    const baseEntry = base.userland[name]
-    userland[name] = baseEntry == null ? entry : await baseHistoryOnHelper(entry, baseEntry, ctx)
-  }
-
-  return lazyRefFromObj({
-    ...node,
-    userland,
-    previous: historyBaseRef as LazyCIDRef<PublicDirectory> // we've checked it's a directory above
-  }, directoryToCID)
-}
-
-export interface Timestamp {
-  now: number
 }
 
 export async function write(
@@ -263,21 +201,103 @@ async function upsert(
   }
 }
 
-async function lookupNode(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicNode | null> {
+export async function lookupNode(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicNode | null> {
   return await dir.userland[path]?.get(ctx)
 }
 
-async function lookupDirectory(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicDirectory | null> {
+export async function lookupDirectory(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicDirectory | null> {
   const node = await lookupNode(path, dir, ctx)
   if (node == null || isPublicFile(node)) return null
   return node
 }
 
-async function lookupFile(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicFile | null> {
+export async function lookupFile(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicFile | null> {
   const node = await lookupNode(path, dir, ctx)
   if (node == null || isPublicDirectory(node)) return null
   return node
 }
+
+
+
+//--------------------------------------
+// History
+//--------------------------------------
+
+
+export async function enumerateHistory(file: PublicFile, ctx: OperationContext): Promise<PublicFile[]>
+export async function enumerateHistory(directory: PublicDirectory, ctx: OperationContext): Promise<PublicDirectory[]>
+export async function enumerateHistory(node: PublicNode, ctx: OperationContext): Promise<PublicNode[]>
+export async function enumerateHistory(node: PublicNode, ctx: OperationContext): Promise<PublicNode[]> {
+  if (isPublicFile(node)) {
+    const previous = await node.previous?.get(ctx)
+    if (previous == null) return [node]
+    return [node, ...await enumerateHistory(previous, ctx)]
+  } else { // *sigh*
+    const previous = await node.previous?.get(ctx)
+    if (previous == null) return [node]
+    return [node, ...await enumerateHistory(previous, ctx)]
+  }
+}
+
+export async function baseHistoryOn(
+  directory: PublicDirectory,
+  historyBase: PublicDirectory,
+  ctx: OperationContext
+): Promise<PublicDirectory> {
+  const userland: Record<string, LazyCIDRef<PublicNode>> = {}
+
+  for (const [name, entry] of Object.entries(directory.userland)) {
+    const baseEntry = historyBase.userland[name]
+    userland[name] = baseEntry == null ? entry : await baseHistoryOnHelper(entry, baseEntry, ctx)
+  }
+
+  return {
+    ...directory,
+    userland,
+    previous: lazyRefFromObj(historyBase, directoryToCID)
+  }
+}
+
+async function baseHistoryOnHelper(
+  nodeRef: LazyCIDRef<PublicNode>,
+  historyBaseRef: LazyCIDRef<PublicNode>,
+  ctx: OperationContext
+): Promise<LazyCIDRef<PublicNode>> {
+  const nodeCID = await nodeRef.ref(ctx)
+  const baseCID = await historyBaseRef.ref(ctx)
+  if (nodeCID.equals(baseCID)) {
+    return nodeRef
+  }
+
+  const node = await nodeRef.get(ctx)
+  const base = await historyBaseRef.get(ctx)
+
+  if (isPublicFile(node)) {
+    if (!isPublicFile(base)) return nodeRef
+
+    return lazyRefFromObj({
+      ...node,
+      previous: lazyRefFromObj(base, fileToCID)
+    }, fileToCID)
+  }
+
+  if (!isPublicDirectory(base)) return nodeRef
+
+  const userland: Record<string, LazyCIDRef<PublicNode>> = {}
+
+  for (const [name, entry] of Object.entries(node.userland)) {
+    const baseEntry = base.userland[name]
+    userland[name] = baseEntry == null ? entry : await baseHistoryOnHelper(entry, baseEntry, ctx)
+  }
+
+  return lazyRefFromObj({
+    ...node,
+    userland,
+    previous: historyBaseRef as LazyCIDRef<PublicDirectory> // we've checked it's a directory above
+  }, directoryToCID)
+}
+
+
 
 //--------------------------------------
 // Persistence
@@ -383,4 +403,15 @@ async function fileFromLinksHelper(cid: CID, fileLinks: Record<string, CID>, met
   }
 
   return result
+}
+
+
+
+//--------------------------------------
+// Utilities
+//--------------------------------------
+
+
+function isNonEmpty(paths: string[]): paths is [string, ...string[]] {
+  return paths.length > 0
 }

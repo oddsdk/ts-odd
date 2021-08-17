@@ -7,7 +7,7 @@ import { canonicalize } from "../links.test.js"
 import { lazyRefFromCID } from "../ref.js"
 import * as metadata from "../metadata.js"
 
-import { baseHistoryOn, directoryFromCID, directoryToCID, fileFromCID, fileToCID, isPublicFile, nodeFromCID, PublicDirectory, PublicFile, write } from "./publicNode.js"
+import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, getNode, isPublicFile, nodeFromCID, PublicDirectory, PublicFile, write } from "./publicNode.js"
 
 
 describe("the data public node module", () => {
@@ -159,8 +159,21 @@ describe("the data public node module", () => {
       ["Apps", "matheus23", "Flatmate", "file.txt"],
       ["Apps", "matheus23", "appinator", "state.json"]
     ])
+    const emptyDirHistory = await enumerateHistory(emptyDirectory, { ipfs })
+    const nonEmptyDirHistory = await enumerateHistory(nonEmptyDir, { ipfs })
+    const evenLessEmptyDirHistory = await enumerateHistory(evenLessEmptyDir, { ipfs })
+    expect(emptyDirHistory.length).toEqual(1)
+    expect(nonEmptyDirHistory.length).toEqual(2)
+    expect(evenLessEmptyDirHistory.length).toEqual(3)
 
-    // TODO: Check history
+    const appsDir = await getNode(["Apps"], evenLessEmptyDir, { ipfs })
+    if (appsDir == null) {
+      expect(appsDir).not.toBe(null)
+      expect(appsDir).toBeDefined()
+      return
+    }
+    const appsDirHistory = await enumerateHistory(appsDir, { ipfs })
+    expect(appsDirHistory.length).toEqual(2)
   })
 
 })
