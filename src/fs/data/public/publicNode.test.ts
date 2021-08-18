@@ -102,7 +102,7 @@ describe("the data public node module", () => {
     expect(canonicalize(decoded)).toEqual(canonicalize(directory))
   })
 
-  it("loads existing filesystems just fine", async function () {
+  it("loads existing filesystems fixture", async function () {
     const ipfs = ipfsFromContext(this)
 
     const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
@@ -122,54 +122,6 @@ describe("the data public node module", () => {
       ["Apps", "Fission", "Lobby", "Session"],
       ["index.html"],
     ])
-  })
-
-  it("adds directories when write is used", async function () {
-    const ipfs = ipfsFromContext(this)
-
-    const emptyDirectory: PublicDirectory = {
-      metadata: metadata.newDirectory(1621259349710),
-      userland: {}
-    }
-
-    expect(await listFiles(emptyDirectory, ipfs)).toEqual([])
-
-    const nonEmptyDir = await baseHistoryOn(await write(
-      ["Apps", "matheus23", "Flatmate", "file.txt"],
-      new CID("bafkqaaa"),
-      emptyDirectory,
-      { ipfs, now: 1621259349711 }
-    ), emptyDirectory, { ipfs })
-
-    const evenLessEmptyDir = await baseHistoryOn(await write(
-      ["Apps", "matheus23", "appinator", "state.json"],
-      new CID("bafkqaaa"),
-      nonEmptyDir,
-      { ipfs, now: 1621259349712 }
-    ), nonEmptyDir, { ipfs })
-
-    expect(await listFiles(nonEmptyDir, ipfs)).toEqual([
-      ["Apps", "matheus23", "Flatmate", "file.txt"]
-    ])
-    expect(await listFiles(evenLessEmptyDir, ipfs)).toEqual([
-      ["Apps", "matheus23", "Flatmate", "file.txt"],
-      ["Apps", "matheus23", "appinator", "state.json"]
-    ])
-    const emptyDirHistory = await enumerateHistory(emptyDirectory, { ipfs })
-    const nonEmptyDirHistory = await enumerateHistory(nonEmptyDir, { ipfs })
-    const evenLessEmptyDirHistory = await enumerateHistory(evenLessEmptyDir, { ipfs })
-    expect(emptyDirHistory.length).toEqual(1)
-    expect(nonEmptyDirHistory.length).toEqual(2)
-    expect(evenLessEmptyDirHistory.length).toEqual(3)
-
-    const appsDir = await getNode(["Apps"], evenLessEmptyDir, { ipfs })
-    if (appsDir == null) {
-      expect(appsDir).not.toBe(null)
-      expect(appsDir).toBeDefined()
-      return
-    }
-    const appsDirHistory = await enumerateHistory(appsDir, { ipfs })
-    expect(appsDirHistory.length).toEqual(2)
   })
 
   it("creates histories as modeled", async function() {
