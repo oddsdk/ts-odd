@@ -9,7 +9,7 @@ import { lazyRefFromCID, OperationContext } from "../ref.js"
 import * as metadata from "../metadata.js"
 
 import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, exists, fileFromCID, fileToCID, getNode, isPublicFile, mkdir, nodeFromCID, nodeToCID, PublicDirectory, PublicFile, read, rm, Timestamp, write } from "./publicNode.js"
-import { arbitraryFileSystemModel, FileSystemOperation, fromPosix } from "../../../../tests/helpers/modelFileSystem.js"
+import { arbitraryFileSystemModel, FileSystemOperation, FileSystemState, fromPosix, initialFileSystemState, runOperations } from "../../../../tests/helpers/modelFileSystem.js"
 
 
 describe("the data public node module", () => {
@@ -172,6 +172,43 @@ describe("the data public node module", () => {
     expect(appsDirHistory.length).toEqual(2)
   })
 
+  it("creates expected histories", async function() {
+    const ipfs = ipfsFromContext(this)
+
+    await fc.assert(
+      fc.asyncProperty(
+        arbitraryFileSystemModel({ numOperations: 10 }),
+        async ({ ops }) => {
+          let fs: PublicDirectory = {
+            metadata: metadata.newDirectory(0),
+            userland: {}
+          }
+
+          // run modeled operations on the 'real' system
+          let i = 1
+          for (const operation of ops) {
+            // add a history step for each operation
+            fs = await baseHistoryOn(
+              await interpretOperation(fs, operation, { ipfs, now: i }), 
+              fs, 
+              { ipfs }
+            )
+            i++
+          }
+
+          const history = await enumerateHistory(fs, { ipfs })
+          let stepsBackInTime = 0
+          for (const historyEntry of history) {
+            // simulate in what state the filesystem must have been at that point
+            const simulatedHistoricalState = runOperations(initialFileSystemState(), ops.slice(0, ops.length - stepsBackInTime))
+            await verifyModelMatch(historyEntry, simulatedHistoricalState, { ipfs })
+            stepsBackInTime++
+          }
+        }
+      )
+    )
+  })
+
   it("adds and removes files as modeled", async function () {
     const ipfs = ipfsFromContext(this)
 
@@ -187,45 +224,32 @@ describe("the data public node module", () => {
           // run modeled operations on the 'real' system
           let i = 1
           for (const operation of ops) {
-            const before = fs
             fs = await interpretOperation(fs, operation, { ipfs, now: i })
-            if (i % 2 == 0) {
-              // Add a history entry for every other operation
-              fs = await baseHistoryOn(fs, before, { ipfs })
-            }
             i++
           }
 
           // expect all files to be in the modeled state
-          for (const [path, content] of state.files.entries()) {
-            const actualPath = fromPosix(path)
-            const node = await getNode(actualPath, fs, { ipfs })
-            expect(node).toBeDefined()
-            expect(node).not.toBe(null)
-            if (node == null) return
-
-            const history = await enumerateHistory(node, { ipfs })
-            expect(history.length).toBeLessThanOrEqual(ops.length / 2)
-
-            const cid = await read(actualPath, fs, { ipfs })
-            const block = await ipfs.block.get(cid)
-            expect(new TextDecoder().decode(block.data)).toEqual(content)
-          }
-          for (const path of state.directories.values()) {
-            const node = await getNode(fromPosix(path), fs, { ipfs })
-            expect(node).toBeDefined()
-            expect(node).not.toBe(null)
-            if (node == null) return
-
-            const history = await enumerateHistory(node, { ipfs })
-            expect(history.length).toBeLessThanOrEqual(ops.length / 2)
-          }
+          await verifyModelMatch(fs, state, { ipfs })
         }
       )
     )
   })
 
 })
+
+async function verifyModelMatch(directory: PublicDirectory, state: FileSystemState, ctx: OperationContext): Promise<void> {
+  for (const [path, content] of state.files.entries()) {
+    const actualPath = fromPosix(path)
+    expect(await exists(actualPath, directory, ctx)).toBe(true)
+
+    const cid = await read(actualPath, directory, ctx)
+    const block = await ctx.ipfs.block.get(cid)
+    expect(new TextDecoder().decode(block.data)).toEqual(content)
+  }
+  for (const path of state.directories.values()) {
+    expect(await exists(fromPosix(path), directory, ctx)).toBe(true)
+  }
+}
 
 async function interpretOperation(directory: PublicDirectory, operation: FileSystemOperation, ctx: OperationContext & Timestamp): Promise<PublicDirectory> {
   if (operation.op === "write") {

@@ -55,6 +55,13 @@ export function runOperation(state: FileSystemState, operation: FileSystemOperat
   }
 }
 
+export function runOperations(state: FileSystemState, operations: FileSystemOperation[]): FileSystemState {
+  for (const op of operations) {
+    state = runOperation(state, op)
+  }
+  return state
+}
+
 export function toPosix(path: Path): string {
   return path.join("/")
 }
