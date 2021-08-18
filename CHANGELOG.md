@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.27.0
+
+Fixed `webnative.apps.index()`, and now returns a list of domains, along with their `insertedAt` and `modifiedAt` ISO8601 timestamps.
+
+
+
 ### v0.26.2
 
 - Add `extraLobbyParams` to `redirectToLobby`. Extra lobby params are transformed into query params that may be read by the auth lobby. (#273)
