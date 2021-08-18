@@ -1,16 +1,26 @@
 import expect from "expect"
+import * as fc from "fast-check"
 import { CID, IPFS } from "ipfs-core"
 
 import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { canonicalize } from "../links.test.js"
-import { lazyRefFromCID, lazyRefFromObj } from "../ref.js"
+import { lazyRefFromCID } from "../ref.js"
 import * as metadata from "../metadata.js"
 
-import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, getNode, isPublicFile, nodeFromCID, nodeToCID, PublicDirectory, PublicFile, write } from "./publicNode.js"
+import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, exists, fileFromCID, fileToCID, getNode, isPublicFile, mkdir, nodeFromCID, nodeToCID, PublicDirectory, PublicFile, read, rm, write } from "./publicNode.js"
+import { arbitraryFileSystemModel, fromPosix } from "../../../../tests/helpers/modelFileSystem.js"
 
 
 describe("the data public node module", () => {
+
+  before(async function () {
+    fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 50 } : { numRuns: 10 })
+  })
+
+  after(async () => {
+    fc.resetConfigureGlobal()
+  })
 
   it("round trips files from/to IPFS", async function () {
     const ipfs = ipfsFromContext(this)
@@ -160,6 +170,48 @@ describe("the data public node module", () => {
     }
     const appsDirHistory = await enumerateHistory(appsDir, { ipfs })
     expect(appsDirHistory.length).toEqual(2)
+  })
+
+  it("works as modeled", async function () {
+    const ipfs = ipfsFromContext(this)
+
+    await fc.assert(
+      fc.asyncProperty(
+        arbitraryFileSystemModel({ numOperations: 8 }),
+        async ({ state, ops }) => {
+          let fs: PublicDirectory = {
+            metadata: metadata.newDirectory(0),
+            userland: {}
+          }
+
+          // run modeled operations on the 'real' system
+          let i = 1
+          for (const operation of ops) {
+            if (operation.op === "write") {
+              const block = await ipfs.block.put(new TextEncoder().encode(operation.content))
+              fs = await write(operation.path, block.cid, fs, { ipfs, now: i })
+            } else if (operation.op === "mkdir") {
+              fs = await mkdir(operation.path, fs, { ipfs, now: i })
+            } else {
+              fs = await rm(operation.path, fs, { ipfs, now: i })
+            }
+            i++
+          }
+
+          // expect all files to be in the modeled state
+          for (const [path, content] of state.files.entries()) {
+            const actualPath = fromPosix(path)
+            expect(await exists(actualPath, fs, { ipfs })).toBe(true)
+            const cid = await read(actualPath, fs, { ipfs })
+            const block = await ipfs.block.get(cid)
+            expect(new TextDecoder().decode(block.data)).toEqual(content)
+          }
+          for (const path of state.directories.values()) {
+            expect(await exists(fromPosix(path), fs, { ipfs })).toBe(true)
+          }
+        }
+      )
+    )
   })
 
 })

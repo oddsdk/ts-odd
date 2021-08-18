@@ -97,7 +97,7 @@ export async function write(
   return await upsert(
     path,
     async entry => {
-      if (entry != null && isPublicFile(await entry.get(ctx))) {
+      if (entry != null && isPublicDirectory(await entry.get(ctx))) {
         throw new Error(`Can't write file to ${path}: There already exists a directory.`)
       }
       return lazyRefFromObj({
