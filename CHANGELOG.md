@@ -1,6 +1,6 @@
 # Changelog
 
-### v0.27
+### v0.27.0
 
 Fixed `webnative.apps.index()`, and now returns a list of domains, along with their `insertedAt` and `modifiedAt` ISO8601 timestamps.
 
