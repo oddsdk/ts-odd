@@ -6,8 +6,8 @@ import { CID } from "../ipfs/index.js"
 
 
 export type App = {
-  domains: string[],
-  insertedAt: string,
+  domains: string[]
+  insertedAt: string
   modifiedAt: string
 }
 
@@ -40,8 +40,8 @@ export async function index(): Promise<Array<App>> {
 
   const data: {
     [k: number]: {
-      insertedAt: string,
-      modifiedAt: string,
+      insertedAt: string
+      modifiedAt: string
       urls: string[]
     }
   } = await response.json()
