@@ -9,7 +9,7 @@ import { lazyRefFromCID, OperationContext } from "../ref.js"
 import * as metadata from "../metadata.js"
 
 import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, exists, fileFromCID, fileToCID, getNode, isPublicFile, mkdir, nodeFromCID, nodeToCID, PublicDirectory, PublicFile, read, rm, Timestamp, write } from "./publicNode.js"
-import { arbitraryFileSystemModel, FileSystemOperation, FileSystemState, fromPosix, initialFileSystemState, runOperations } from "../../../../tests/helpers/modelFileSystem.js"
+import { arbitraryFileSystemUsage, FileSystemOperation, FileSystemModel, fromPosix, initialFileSystemState, runOperations } from "../../../../tests/helpers/fileSystemModel.js"
 
 
 describe("the data public node module", () => {
@@ -177,7 +177,7 @@ describe("the data public node module", () => {
 
     await fc.assert(
       fc.asyncProperty(
-        arbitraryFileSystemModel({ numOperations: 10 }),
+        arbitraryFileSystemUsage({ numOperations: 10 }),
         async ({ ops }) => {
           let fs: PublicDirectory = {
             metadata: metadata.newDirectory(0),
@@ -214,7 +214,7 @@ describe("the data public node module", () => {
 
     await fc.assert(
       fc.asyncProperty(
-        arbitraryFileSystemModel({ numOperations: 10 }),
+        arbitraryFileSystemUsage({ numOperations: 10 }),
         async ({ state, ops }) => {
           let fs: PublicDirectory = {
             metadata: metadata.newDirectory(0),
@@ -237,7 +237,18 @@ describe("the data public node module", () => {
 
 })
 
-async function verifyModelMatch(directory: PublicDirectory, state: FileSystemState, ctx: OperationContext): Promise<void> {
+/*
+
+TODOs
+
+* make verifyModelMatch work with something like "toModel :: PublicDir -> FileSystemState"
+* add some func that filter-maps operations to subdirectories
+* then test subdirectories' histories
+* move some path stuff from fileSystemModel.ts into the path module/create a v2 path module?
+
+*/
+
+async function verifyModelMatch(directory: PublicDirectory, state: FileSystemModel, ctx: OperationContext): Promise<void> {
   for (const [path, content] of state.files.entries()) {
     const actualPath = fromPosix(path)
     expect(await exists(actualPath, directory, ctx)).toBe(true)

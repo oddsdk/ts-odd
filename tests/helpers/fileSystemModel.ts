@@ -2,12 +2,12 @@ import * as fc from "fast-check"
 
 export type Path = [string, ...string[]]
 
-export interface FileSystemState {
+export interface FileSystemModel {
   files: Map<string, string>
   directories: Set<string>
 }
 
-export function initialFileSystemState(): FileSystemState {
+export function initialFileSystemState(): FileSystemModel {
   return {
     files: new Map(),
     directories: new Set()
@@ -19,8 +19,14 @@ export type FileSystemOperation
   | { op: "mkdir"; path: Path }
   | { op: "remove"; path: Path }
 
+export interface FileSystemUsage {
+  state: FileSystemModel
+  ops: FileSystemOperation[]
+}
 
-export function runOperation(state: FileSystemState, operation: FileSystemOperation): FileSystemState {
+
+
+export function runOperation(state: FileSystemModel, operation: FileSystemOperation): FileSystemModel {
   switch (operation.op) {
     case "write": {
       const parents = pathParents(operation.path)
@@ -55,7 +61,7 @@ export function runOperation(state: FileSystemState, operation: FileSystemOperat
   }
 }
 
-export function runOperations(state: FileSystemState, operations: FileSystemOperation[]): FileSystemState {
+export function runOperations(state: FileSystemModel, operations: FileSystemOperation[]): FileSystemModel {
   for (const op of operations) {
     state = runOperation(state, op)
   }
@@ -91,14 +97,8 @@ function pathParents(path: Path): Path[] {
 }
 
 
-
-interface FileSystemModel {
-  state: FileSystemState
-  ops: FileSystemOperation[]
-}
-
-export function arbitraryFileSystemModel({ numOperations }: { numOperations: number }): fc.Arbitrary<FileSystemModel> {
-  let arbitrary: fc.Arbitrary<FileSystemModel> = fc.constant({
+export function arbitraryFileSystemUsage({ numOperations }: { numOperations: number }): fc.Arbitrary<FileSystemUsage> {
+  let arbitrary: fc.Arbitrary<FileSystemUsage> = fc.constant({
     state: initialFileSystemState(),
     ops: []
   })
@@ -108,21 +108,21 @@ export function arbitraryFileSystemModel({ numOperations }: { numOperations: num
   return arbitrary
 }
 
-function arbitraryFileSystemModelStep(model: FileSystemModel): fc.Arbitrary<FileSystemModel> {
+function arbitraryFileSystemModelStep(model: FileSystemUsage): fc.Arbitrary<FileSystemUsage> {
   return arbitraryOperation(model.state).map(operation => ({
     state: runOperation(model.state, operation),
     ops: [...model.ops, operation],
   }))
 }
 
-function arbitraryOperation(state: FileSystemState): fc.Arbitrary<FileSystemOperation> {
+function arbitraryOperation(state: FileSystemModel): fc.Arbitrary<FileSystemOperation> {
   if (state.files.size > 0 || state.directories.size > 0) {
     return fc.oneof(arbitraryWrite(state), arbitraryMkdir(state), arbitraryRemove(state))
   }
   return fc.oneof(arbitraryWrite(state), arbitraryMkdir(state))
 }
 
-function arbitraryWrite(state: FileSystemState): fc.Arbitrary<FileSystemOperation> {
+function arbitraryWrite(state: FileSystemModel): fc.Arbitrary<FileSystemOperation> {
   // write new
   const possiblePaths = [arbitraryPath().filter(path => pathCanBeTaken(path, state))]
   if (state.files.size > 0) {
@@ -137,14 +137,14 @@ function arbitraryWrite(state: FileSystemState): fc.Arbitrary<FileSystemOperatio
   })
 }
 
-function arbitraryMkdir(state: FileSystemState): fc.Arbitrary<FileSystemOperation> {
+function arbitraryMkdir(state: FileSystemModel): fc.Arbitrary<FileSystemOperation> {
   return fc.record({
     op: fc.constant("mkdir"),
     path: arbitraryPath().filter(path => pathCanBeTaken(path, state))
   })
 }
 
-function arbitraryRemove(state: FileSystemState): fc.Arbitrary<FileSystemOperation> {
+function arbitraryRemove(state: FileSystemModel): fc.Arbitrary<FileSystemOperation> {
   const possiblePaths: fc.Arbitrary<Path>[] = []
   if (state.files.size > 0) {
     // remove file
@@ -170,7 +170,7 @@ function arbitraryPath(): fc.Arbitrary<Path> {
   ) as fc.Arbitrary<Path>
 }
 
-export function pathCanBeTaken(path: Path, state: FileSystemState): boolean {
+export function pathCanBeTaken(path: Path, state: FileSystemModel): boolean {
   const posix = toPosix(path)
   if (state.files.has(posix)) return false
   if (state.directories.has(posix)) return false
