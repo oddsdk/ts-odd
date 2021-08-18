@@ -6,7 +6,9 @@ import { CID } from "../ipfs/index.js"
 
 
 export type App = {
-  domain: string
+  domains: string[],
+  insertedAt: string,
+  modifiedAt: string
 }
 
 
@@ -36,11 +38,18 @@ export async function index(): Promise<Array<App>> {
     }
   })
 
-  const data = await response.json()
+  const data: {
+    [k: number]: {
+      insertedAt: string,
+      modifiedAt: string,
+      urls: string[]
+    }
+  } = await response.json()
+
   return Object
     .values(data)
-    .filter(v => (v as Array<string>).length > 0)
-    .map(v => ({ domain: (v as Array<string>)[0] }))
+    .filter(v => v.urls.length > 0)
+    .map(({ urls, insertedAt, modifiedAt }) => ({ domains: urls, insertedAt, modifiedAt }))
 }
 
 /**
@@ -75,8 +84,15 @@ export async function create(
       "authorization": `Bearer ${jwt}`
     }
   })
+
   const data = await response.json()
-  return { domain: data }
+  const nowIso = (new Date()).toISOString()
+
+  return {
+    domains: [ data ],
+    insertedAt: nowIso,
+    modifiedAt: nowIso
+  }
 }
 
 /**
@@ -141,7 +157,7 @@ export async function publish(
   const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: localUcan, 
+    proof: localUcan,
     potency: null
   }))
 
