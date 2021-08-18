@@ -35,6 +35,7 @@ export function runOperation(state: FileSystemState, operation: FileSystemOperat
       const parents = pathParents(operation.path)
       const directories = new Set(state.directories)
       parents.forEach(parent => directories.add(toPosix(parent)))
+      directories.add(toPosix(operation.path))
       return {
         ...state,
         directories
@@ -116,7 +117,7 @@ function arbitraryOperation(state: FileSystemState): fc.Arbitrary<FileSystemOper
 
 function arbitraryWrite(state: FileSystemState): fc.Arbitrary<FileSystemOperation> {
   // write new
-  const possiblePaths = [arbitraryPath().filter(path => !pathExistsInState(path, state))]
+  const possiblePaths = [arbitraryPath().filter(path => pathCanBeTaken(path, state))]
   if (state.files.size > 0) {
     // write exiting (only files)
     possiblePaths.push(fc.constantFrom(...Array.from(state.files.keys()).map(fromPosix)))
@@ -132,7 +133,7 @@ function arbitraryWrite(state: FileSystemState): fc.Arbitrary<FileSystemOperatio
 function arbitraryMkdir(state: FileSystemState): fc.Arbitrary<FileSystemOperation> {
   return fc.record({
     op: fc.constant("mkdir"),
-    path: arbitraryPath().filter(path => !pathExistsInState(path, state))
+    path: arbitraryPath().filter(path => pathCanBeTaken(path, state))
   })
 }
 
@@ -153,12 +154,20 @@ function arbitraryRemove(state: FileSystemState): fc.Arbitrary<FileSystemOperati
 }
 
 function arbitraryPath(): fc.Arbitrary<Path> {
-  return fc.array(fc.webSegment().filter(segment => segment.length > 0), { minLength: 1, maxLength: 8 }) as fc.Arbitrary<Path>
+  return fc.array(
+    fc.oneof(
+      fc.webSegment().filter(segment => segment.length > 0),
+      fc.constantFrom("a", "b", "c") // to generate more 'collisions'
+    ),
+    { minLength: 1, maxLength: 8 }
+  ) as fc.Arbitrary<Path>
 }
 
-function pathExistsInState(path: Path, state: FileSystemState): boolean {
+export function pathCanBeTaken(path: Path, state: FileSystemState): boolean {
   const posix = toPosix(path)
-  if (state.files.has(posix)) return true
-  if (state.directories.has(posix)) return true
-  return false
+  if (state.files.has(posix)) return false
+  if (state.directories.has(posix)) return false
+  // if there's a file at a/b, we can't allocate the path a/b/c.
+  if (Array.from(state.files.keys()).find(filePath => pathStartsWith(fromPosix(filePath), path))) return false
+  return true
 }
