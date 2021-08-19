@@ -18,7 +18,7 @@ export type FileSystemOperation
   = { op: "write"; path: Path; content: string }
   | { op: "mkdir"; path: Path }
   | { op: "remove"; path: Path }
-  | { op: "copy"; from: Path; to: Path }
+  // | { op: "copy"; from: Path; to: Path }
 
 export interface FileSystemUsage {
   state: FileSystemModel
@@ -55,11 +55,11 @@ export function runOperation(model: FileSystemModel, operation: FileSystemOperat
     case "remove": {
       return removeFrom(model, operation.path).remaining
     }
-    case "copy": {
-      const { remaining, removed } = removeFrom(model, operation.from)
-      const moved = move(removed, operation.from, operation.to)
-      return merge(remaining, moved, (_, movedFile) => movedFile)
-    }
+    // case "copy": {
+    //   const { remaining, removed } = removeFrom(model, operation.from)
+    //   const moved = move(removed, operation.from, operation.to)
+    //   return merge(remaining, moved, (_, movedFile) => movedFile)
+    // }
   }
 }
 
