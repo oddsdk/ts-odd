@@ -18,7 +18,7 @@ export type FileSystemOperation
   = { op: "write"; path: Path; content: string }
   | { op: "mkdir"; path: Path }
   | { op: "remove"; path: Path }
-  // | { op: "copy"; from: Path; to: Path }
+  | { op: "copy"; from: Path; to: Path }
 
 export interface FileSystemUsage {
   state: FileSystemModel
@@ -53,15 +53,12 @@ export function runOperation(model: FileSystemModel, operation: FileSystemOperat
       }
     }
     case "remove": {
-      const files = new Map(model.files)
-      const directories = new Set(model.directories)
-      for (const path of files.keys()) {
-        if (pathStartsWith(operation.path, fromPosix(path))) files.delete(path)
-      }
-      for (const dir of directories.values()) {
-        if (pathStartsWith(operation.path, fromPosix(dir))) directories.delete(dir)
-      }
-      return { files, directories }
+      return removeFrom(model, operation.path).remaining
+    }
+    case "copy": {
+      const { remaining, removed } = removeFrom(model, operation.from)
+      const moved = move(removed, operation.from, operation.to)
+      return merge(remaining, moved, (_, movedFile) => movedFile)
     }
   }
 }
@@ -85,6 +82,75 @@ export function runOperationsHistory(operations: FileSystemOperation[]): FileSys
 
 export function isEmptyFileSystem(model: FileSystemModel): boolean {
   return model.directories.size === 0 && model.files.size === 0
+}
+
+export function removeFrom(model: FileSystemModel, path: Path): { remaining: FileSystemModel; removed: FileSystemModel } {
+  const remainingFiles = new Map(model.files)
+  const remainingDirectories = new Set(model.directories)
+  const removedFiles = new Map(model.files)
+  const removedDirectories = new Set(model.directories)
+  for (const [file, content] of model.files.entries()) {
+    if (pathStartsWith(path, fromPosix(file))) {
+      remainingFiles.delete(file)
+      removedFiles.set(file, content)
+    }
+  }
+  for (const dir of model.directories.values()) {
+    if (pathStartsWith(path, fromPosix(dir))) {
+      remainingDirectories.delete(dir)
+      removedDirectories.add(dir)
+    }
+  }
+  return {
+    remaining: { files: remainingFiles, directories: remainingDirectories },
+    removed: { files: removedFiles, directories: removedDirectories }
+  }
+}
+
+function move(model: FileSystemModel, from: Path, to: Path): FileSystemModel {
+  const files = new Map(model.files)
+  const directories = new Set(model.directories)
+  for (const [fileName, content] of model.files.entries()) {
+    const filePath = fromPosix(fileName)
+    if (pathStartsWith(from, filePath)) {
+      const rest = filePath.slice(from.length)
+      const newFilepath = [...to, ...rest]
+      if (!isNonEmpty(newFilepath)) continue // should never happen. Satisfies ts (maybe build `concat` operator for filepaths at some point with correct types)
+      files.delete(fileName)
+      files.set(toPosix(newFilepath), content)
+    }
+  }
+  for (const directoryName of model.directories.values()) {
+    const directoryPath = fromPosix(directoryName)
+    if (pathStartsWith(from, directoryPath)) {
+      const rest = directoryPath.slice(from.length)
+      const newDirectoryPath = [...to, ...rest]
+      if (!isNonEmpty(newDirectoryPath)) continue // should never happen. Satisfies ts (maybe build `concat` operator for filepaths at some point with correct types)
+      directories.delete(directoryName)
+      directories.add(toPosix(newDirectoryPath))
+    }
+  }
+  return { files, directories }
+}
+
+export function merge(left: FileSystemModel, right: FileSystemModel, tieBreaker: (left: string, right: string) => string): FileSystemModel {
+  const files = new Map<string, string>()
+  const directories = new Set([...left.directories.values(), ...right.directories.values()])
+  const allFiles = new Set([...left.files.keys(), ...right.files.keys()])
+  for (const filepath of allFiles) {
+    const leftFile = left.files.get(filepath)
+    const rightFile = right.files.get(filepath)
+
+    if (leftFile == null) {
+      if (rightFile == null) continue // shouldn't happen
+      files.set(filepath, rightFile)
+    } else if (rightFile == null) {
+      files.set(filepath, leftFile)
+    } else {
+      files.set(filepath, tieBreaker(leftFile, rightFile))
+    }
+  }
+  return { files, directories }
 }
 
 
