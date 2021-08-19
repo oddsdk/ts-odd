@@ -1,15 +1,17 @@
+import type { IPFS } from "ipfs-core"
+
 import expect from "expect"
 import * as fc from "fast-check"
-import { CID, IPFS } from "ipfs-core"
+import CID from "cids"
 
 import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
+import { arbitraryFileSystemUsage, FileSystemOperation, FileSystemModel, fromPosix, initialFileSystemModel, runOperations, runOperation } from "../../../../tests/helpers/fileSystemModel.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { canonicalize } from "../links.test.js"
 import { lazyRefFromCID, OperationContext } from "../ref.js"
 import * as metadata from "../metadata.js"
 
 import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, exists, fileFromCID, fileToCID, getNode, isPublicFile, ls, mkdir, nodeFromCID, nodeToCID, PublicDirectory, PublicFile, read, rm, Timestamp, write } from "./publicNode.js"
-import { arbitraryFileSystemUsage, FileSystemOperation, FileSystemModel, fromPosix, initialFileSystemModel, runOperations, runOperation } from "../../../../tests/helpers/fileSystemModel.js"
 
 
 describe("the data public node module", () => {
@@ -195,9 +197,13 @@ describe("the data public node module", () => {
 
 TODOs
 
-* add some func that filter-maps operations to subdirectories
-* then test subdirectories' histories
+* test subdirectories' histories
 * move some path stuff from fileSystemModel.ts into the path module/create a v2 path module?
+* add mv and cp operations (and figure out what that means for mapping the model to subdirectories)
+* implement reconciliation
+* test it in different cases (diverging, fast-forward)
+* test mmpt
+* start private fs implementation
 
 */
 

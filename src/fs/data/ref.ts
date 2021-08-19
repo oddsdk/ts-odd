@@ -1,4 +1,5 @@
-import { IPFS, CID } from "ipfs-core"
+import type { IPFS } from "ipfs-core"
+import CID from "cids"
 
 
 export interface Ref<T, R, Ctx> {

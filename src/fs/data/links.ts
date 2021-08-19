@@ -1,8 +1,9 @@
-import { CID } from "ipfs-core"
+import CID from "cids"
 import dagPb from "ipld-dag-pb"
 import { getNameFromCode } from "multicodec"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
+import { hasProp } from "./checks.js"
 import { FromCID, LazyCIDRef, lazyRefFromCID, OperationContext } from "./ref.js"
 
 
@@ -34,13 +35,14 @@ export async function lazyLinksToCID(links: Record<string, LazyCIDRef<unknown>>,
 export async function linksFromCID(cid: CID, { ipfs, signal }: OperationContext): Promise<Record<string, CID>> {
   const getResult = await ipfs.dag.get(cid, { signal })
   // we only support DAG-PB
-  if (!(getResult.value instanceof dagPb.DAGNode)) {
+  if (!isDAGNodeLike(getResult.value)) {
+    console.log("its not?", getResult.value)
     throw new Error(`Can't read links from ${cid.toString()} (${getResult.value}), probably due to it not being in expected dag-pb format. Actual format: ${getNameFromCode(cid.code)}`)
   }
-  const dagNode: dagPb.DAGNode = getResult.value
+  const dagNode: dagPb.DAGNodeLike = getResult.value
 
   const links: Record<string, CID> = {}
-  for (const dagLink of dagNode.Links) {
+  for (const dagLink of dagNode.Links || []) {
     links[dagLink.Name] = dagLink.Hash
   }
   return Object.freeze(links)
@@ -85,4 +87,19 @@ export async function mapRecordPar<S, T>(record: Record<string, S>, f: (key: str
   const newRecord: Record<string, T> = {}
   await Promise.all(Object.entries(record).map(([key, value]) => f(key, value).then(result => newRecord[key] = result)))
   return newRecord
+}
+
+
+///
+
+function isDAGNodeLike(dagNode: unknown): dagNode is dagPb.DAGNodeLike {
+  return hasProp(dagNode, "Data") && dagNode.Data instanceof Uint8Array
+    && hasProp(dagNode, "Links") && dagNode.Links instanceof Array
+    && dagNode.Links.every(isDAGLinkLike)
+}
+
+function isDAGLinkLike(dagLink: unknown): dagLink is dagPb.DAGLinkLike {
+  return hasProp(dagLink, "Name") && typeof dagLink.Name === "string"
+    && hasProp(dagLink, "Tsize") && typeof dagLink.Tsize === "number"
+    && hasProp(dagLink, "Hash") && CID.isCID(dagLink.Hash)
 }

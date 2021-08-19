@@ -1,4 +1,4 @@
-import { CID } from "ipfs-core"
+import CID from "cids"
 import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
 import { metadataToCID, metadataFromCID, Metadata, newDirectory, updateMtime, newFile } from "../metadata.js"
 import { LazyCIDRef, lazyRefFromCID, lazyRefFromObj, OperationContext } from "../ref.js"

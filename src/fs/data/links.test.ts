@@ -1,5 +1,5 @@
 import expect from "expect"
-import { CID } from "ipfs-core"
+import CID from "cids"
 import { loadCAR } from "../../../tests/helpers/loadCAR.js"
 import { ipfsFromContext } from "../../../tests/mocha-hook.js"
 

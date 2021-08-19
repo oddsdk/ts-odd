@@ -1,7 +1,8 @@
-import type { CID } from "ipfs-core"
+import CID from "cids"
 import * as cbor from "cborg"
 import { OperationContext } from "./ref.js"
 import { SemVer, v1 } from "./semver.js"
+import { hasProp } from "./checks.js"
 
 export type UnixFileMode = number
 
@@ -54,11 +55,7 @@ export const newDirectory = (now: number): Metadata => newMeta(false, now)
 
 
 export async function metadataToCID(metadata: Metadata, { ipfs, signal }: OperationContext): Promise<CID> {
-  const data = cbor.encode(metadata)
-
-  if (signal?.aborted) throw new Error("Operation aborted")
-
-  const { cid } = await ipfs.block.put(data, { version: 1, format: "raw" }) // cid version 1
+  const { cid } = await ipfs.block.put(cbor.encode(metadata), { version: 1, format: "raw", pin: false, signal }) // cid version 1
   return cid
 }
 
@@ -95,8 +92,4 @@ export function isSemVer(object: unknown): object is SemVer {
   return hasProp(object, "major") && typeof object.major === "number"
     && hasProp(object, "minor") && typeof object.minor === "number"
     && hasProp(object, "patch") && typeof object.patch === "number"
-}
-
-function hasProp<K extends PropertyKey>(data: unknown, prop: K): data is Record<K, unknown> {
-  return typeof data === "object" && data != null && prop in data
 }
