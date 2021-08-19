@@ -1,6 +1,6 @@
 import expect from "expect"
 import * as fc from "fast-check"
-import { arbitraryFileSystemUsage, arbitraryPathSegment, asOperationOnSubdirectory, asSubdirectoryModel, FileSystemOperation, asSubdirectoryOperations, initialFileSystemModel, removesSubdirectory, runOperation, runOperations } from "./fileSystemModel.js"
+import { initialFileSystemModel, runOperation } from "./fileSystemModel.js"
 
 
 describe("the file system model", () => {
@@ -13,22 +13,6 @@ describe("the file system model", () => {
     fc.resetConfigureGlobal()
   })
 
-
-  it("has consistent semantics when filtering down to subdirectories", () => {
-    fc.assert(
-      fc.property(
-        fc.record({
-          usage : arbitraryFileSystemUsage({ numOperations: 10 }),
-          subdirectory : arbitraryPathSegment(),
-        }),
-        ({ usage, subdirectory }) => {
-          const subdirectoryModel = asSubdirectoryModel(usage.state, subdirectory)
-          const subdirectoryOperations = asSubdirectoryOperations(usage.ops, subdirectory)
-          expect(runOperations(initialFileSystemModel(), subdirectoryOperations)).toEqual(subdirectoryModel)
-        }
-      )
-    )
-  })
 
   it("creates files and directories for write", () => {
     expect(runOperation(initialFileSystemModel(), {
@@ -76,5 +60,19 @@ describe("the file system model", () => {
       directories: new Set()
     })
   })
+
+  // it("copies files", () => {
+  //   expect(runOperation({
+  //     files: new Map([["a/b/c", "abc"]]),
+  //     directories: new Set(["a", "a/b"])
+  //   }, {
+  //     op: "copy",
+  //     from: ["a", "b", "c"],
+  //     to: ["x", "y"]
+  //   })).toEqual({
+  //     file: new Map([["a/b/c", "abc"], ["x/y", "abc"]]),
+  //     directories: new Set(["a", "a/b", "x"])
+  //   })
+  // })
 
 })

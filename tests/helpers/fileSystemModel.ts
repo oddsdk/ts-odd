@@ -18,6 +18,7 @@ export type FileSystemOperation
   = { op: "write"; path: Path; content: string }
   | { op: "mkdir"; path: Path }
   | { op: "remove"; path: Path }
+  // | { op: "copy"; from: Path; to: Path }
 
 export interface FileSystemUsage {
   state: FileSystemModel
@@ -74,69 +75,12 @@ export function runOperations(model: FileSystemModel, operations: FileSystemOper
 
 export function runOperationsHistory(operations: FileSystemOperation[]): FileSystemModel[] {
   let model = initialFileSystemModel()
-  const models: FileSystemModel[] = []
+  const models = [model]
   for (const op of operations) {
     model = runOperation(model, op)
     models.push(model)
   }
   return models
-}
-
-
-
-//--------------------------------------
-// Subdirectories
-//--------------------------------------
-
-export function asOperationOnSubdirectory(operation: FileSystemOperation, subdirectory: string): FileSystemOperation | null {
-  if (operation.path[0] === subdirectory) {
-    const sliced = operation.path.slice(1)
-    if (isNonEmpty(sliced)) {
-      return { ...operation, path: sliced }
-    }
-  }
-  return null
-}
-
-export function asSubdirectoryModel(model: FileSystemModel, subdirectory: string): FileSystemModel {
-  const files = new Map<string, string>()
-  const directories = new Set<string>()
-  
-  for (const [posixPath, content] of model.files.entries()) {
-    const path = fromPosix(posixPath)
-    const sliced = path.slice(1)
-    if (path[0] === subdirectory && isNonEmpty(sliced)) {
-      files.set(toPosix(sliced), content)
-    }
-  }
-
-  for (const dir of model.directories.values()) {
-    const path = fromPosix(dir)
-    const sliced = path.slice(1)
-    if (path[0] === subdirectory && isNonEmpty(sliced)) {
-      directories.add(toPosix(sliced))
-    }
-  }
-
-  return { files, directories }
-}
-
-export function asSubdirectoryOperations(operations: FileSystemOperation[], subdirectory: string): FileSystemOperation[] {
-  let filteredOps: FileSystemOperation[] = []
-  for (const op of operations) {
-    const subdirectoryOp = asOperationOnSubdirectory(op, subdirectory)
-    if (subdirectoryOp != null) {
-      filteredOps.push(subdirectoryOp)
-    }
-    if (removesSubdirectory(op, subdirectory)) {
-      filteredOps = []
-    }
-  }
-  return filteredOps
-}
-
-export function removesSubdirectory(operation: FileSystemOperation, subdirectory: string): boolean {
-  return operation.op === "remove" && operation.path.length === 1 && operation.path[0] === subdirectory
 }
 
 export function isEmptyFileSystem(model: FileSystemModel): boolean {
