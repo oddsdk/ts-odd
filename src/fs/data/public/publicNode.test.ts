@@ -24,6 +24,7 @@ describe("the data public node module", () => {
     fc.resetConfigureGlobal()
   })
 
+
   it("round trips files from/to IPFS", async function () {
     const ipfs = ipfsFromContext(this)
 
@@ -104,7 +105,7 @@ describe("the data public node module", () => {
     expect(canonicalize(decoded)).toEqual(canonicalize(directory))
   })
 
-  it("loads existing filesystems fixture", async function () {
+  it("loads an existing filesystems fixture", async function () {
     const ipfs = ipfsFromContext(this)
 
     const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
@@ -126,7 +127,7 @@ describe("the data public node module", () => {
     ])
   })
 
-  it("creates histories as modeled", async function() {
+  it("creates histories as modeled", async function () {
     const ipfs = ipfsFromContext(this)
 
     await fc.assert(
@@ -143,8 +144,8 @@ describe("the data public node module", () => {
           for (const operation of ops) {
             // add a history step for each operation
             fs = await baseHistoryOn(
-              await interpretOperation(fs, operation, { ipfs, now: i }), 
-              fs, 
+              await interpretOperation(fs, operation, { ipfs, now: i }),
+              fs,
               { ipfs }
             )
             i++

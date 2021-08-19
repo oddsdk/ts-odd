@@ -111,6 +111,24 @@ export function asSubdirectoryModel(model: FileSystemModel, subdirectory: string
   return { files, directories }
 }
 
+export function historyForSubdirectory(operations: FileSystemOperation[], subdirectory: string): FileSystemOperation[] {
+  let filteredOps: FileSystemOperation[] = []
+  for (const op of operations) {
+    const subdirectoryOp = asOperationOnSubdirectory(op, subdirectory)
+    if (subdirectoryOp != null) {
+      filteredOps.push(subdirectoryOp)
+    }
+    if (removesSubdirectory(op, subdirectory)) {
+      filteredOps = []
+    }
+  }
+  return filteredOps
+}
+
+export function removesSubdirectory(operation: FileSystemOperation, subdirectory: string): boolean {
+  return operation.op === "remove" && operation.path.length === 1 && operation.path[0] === subdirectory
+}
+
 
 
 //--------------------------------------

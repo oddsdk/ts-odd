@@ -1,6 +1,6 @@
 import expect from "expect"
 import * as fc from "fast-check"
-import { arbitraryFileSystemUsage, arbitraryPathSegment, asOperationOnSubdirectory, asSubdirectoryModel, FileSystemOperation, initialFileSystemModel, runOperation, runOperations } from "./fileSystemModel.js"
+import { arbitraryFileSystemUsage, arbitraryPathSegment, asOperationOnSubdirectory, asSubdirectoryModel, FileSystemOperation, historyForSubdirectory, initialFileSystemModel, removesSubdirectory, runOperation, runOperations } from "./fileSystemModel.js"
 
 
 describe("the file system model", () => {
@@ -20,28 +20,10 @@ describe("the file system model", () => {
         fc.record({
           usage : arbitraryFileSystemUsage({ numOperations: 10 }),
           subdirectory : arbitraryPathSegment(),
-        }).filter(({ usage, subdirectory }) =>
-          null == usage.ops.find(op =>
-            // can't check this case. It's a hard edge-case
-            // Let say 'subdirectory' is "b"
-            // then a remove of path "b" would remove everything
-            // but also the remove would be filtered, because it's path is not seen
-            // as 'acting' on files in the subdirectory.
-            // The cleaner option would be to make it actually do that, but then
-            // we'd need a representation for remove on ... the root?
-            op.op === "remove" && op.path.length === 1 && op.path[0] === subdirectory
-          )
-        ),
+        }),
         ({ usage, subdirectory }) => {
-          const filteredOps: FileSystemOperation[] = []
-          for (const op of usage.ops) {
-            const subdirectoryOp = asOperationOnSubdirectory(op, subdirectory)
-            if (subdirectoryOp != null) {
-              filteredOps.push(subdirectoryOp)
-            }
-          }
           const subdirectoryModel = asSubdirectoryModel(usage.state, subdirectory)
-          const subdirectoryModeled = runOperations(initialFileSystemModel(), filteredOps)
+          const subdirectoryModeled = runOperations(initialFileSystemModel(), historyForSubdirectory(usage.ops, subdirectory))
           expect(subdirectoryModeled).toEqual(subdirectoryModel)
         }
       )
