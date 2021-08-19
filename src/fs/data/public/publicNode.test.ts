@@ -17,7 +17,7 @@ import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, file
 describe("the data public node module", () => {
 
   before(async function () {
-    fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 50 } : { numRuns: 10 })
+    fc.configureGlobal({ numRuns: 100 })
   })
 
   after(async () => {

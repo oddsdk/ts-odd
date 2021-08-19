@@ -134,6 +134,9 @@ function move(model: FileSystemModel, from: Path, to: Path): FileSystemModel {
       directories.add(toPosix(newDirectoryPath))
     }
   }
+  for (const parentDir of pathParents(to)) {
+    directories.add(toPosix(parentDir))
+  }
   return { files, directories }
 }
 
@@ -238,13 +241,10 @@ function arbitraryMove(model: FileSystemModel): fc.Arbitrary<FileSystemOperation
     possiblePaths.push(fc.constantFrom(...Array.from(model.directories).map(fromPosix)))
   }
   return fc.record({
-    op: fc.constant("move") as fc.Arbitrary<"move">,
+    op: fc.constant("move"),
     from: fc.oneof(...possiblePaths),
-    to: arbitraryPathSegment().chain(segment => {
-      // Only move into existing directories (or the root)
-      return fc.constantFrom([], ...Array.from(model.directories).map(fromPosix)).map(dir => [...(dir), segment] as Path)
-    }).filter(path => pathCanBeTaken(path, model)) // ensure we don't move to a taken path
-  }).filter(({ from, to }) => !pathStartsWith(from, to)) // ensure we don't move e.g. a/b/* into a/b/c/
+    to: arbitraryPath().filter(path => pathCanBeTaken(path, model)) // ensure we don't move to a taken path
+  })
 }
 
 export function arbitraryPath(): fc.Arbitrary<Path> {

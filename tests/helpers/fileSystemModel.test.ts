@@ -82,10 +82,10 @@ describe("the file system model", () => {
     }, {
       op: "move",
       from: ["a", "b"],
-      to: ["a", "d"]
+      to: ["g", "e", "f"]
     })).toEqual({
-      files: new Map([["a/d/c", "abc"]]),
-      directories: new Set(["a", "a/d"])
+      files: new Map([["g/e/f/c", "abc"]]),
+      directories: new Set(["a", "g", "g/e", "g/e/f"])
     })
   })
 

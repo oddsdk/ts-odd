@@ -185,7 +185,7 @@ export async function mv(
   ctx: OperationContext & Timestamp
 ): Promise<PublicDirectory> {
   let nodeToInsert: null | PublicNode = null
-  const directoryWithoutNode = await upsert(from, async entry => {
+  directory = await upsert(from, async entry => {
     if (entry == null) {
       throw new Error(`Can't mv from ${from} to ${to}. ${from} doesn't exist.`)
     }
@@ -193,14 +193,21 @@ export async function mv(
     return null
   }, directory, ctx)
 
+  const toDir = to.slice(0, -1)
+  if (isNonEmpty(toDir)) {
+    if (!await exists(toDir, directory, ctx)) {
+      directory = await mkdir(toDir, directory, ctx)
+    }
+  }
+
   return await upsert(to, async entry => {
     // alternative implementation: Unix behavior?
     // I.e. if entry is a directory, add it under that directory using last(from) as name?
     if (entry != null) {
-      throw new Error(`Can't mv from ${from} to ${to}. ${to} already exists.`)
+      throw new Error(`Can't mv from ${from} to ${to}. ${to} already exists. ${toDir}`)
     }
     return lazyRefFromObj(nodeToInsert as PublicNode, nodeToCID)
-  }, directoryWithoutNode, ctx)
+  }, directory, ctx)
 }
 
 export async function upsert(
