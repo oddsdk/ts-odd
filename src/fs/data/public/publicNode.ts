@@ -63,11 +63,11 @@ export async function read(
 }
 
 export async function ls(
-  path: [string, ...string[]],
+  path: string[],
   directory: PublicDirectory,
   ctx: OperationContext
 ): Promise<Record<string, Metadata>> {
-  const node = await getNode(path, directory, ctx)
+  const node = isNonEmpty(path) ? await getNode(path, directory, ctx) : directory
 
   if (node == null) throw new Error(`Couldn't ls. No such path ${path}.`)
   if (isPublicFile(node)) throw new Error(`Couldn't ls ${path}, it's a file.`)
@@ -80,7 +80,7 @@ export async function ls(
   return result
 }
 
-export async function exists(path: [string, ...string[]],directory: PublicDirectory,ctx: OperationContext): Promise<boolean> {
+export async function exists(path: [string, ...string[]], directory: PublicDirectory, ctx: OperationContext): Promise<boolean> {
   return await getNode(path, directory, ctx) != null
 }
 
@@ -176,6 +176,31 @@ export async function mkdir(
       [name]: lazyRefFromObj(changedDirectory, directoryToCID)
     }
   }
+}
+
+export async function mv(
+  from: [string, ...string[]],
+  to: [string, ...string[]],
+  directory: PublicDirectory,
+  ctx: OperationContext & Timestamp
+): Promise<PublicDirectory> {
+  let nodeToInsert: null | PublicNode = null
+  const directoryWithoutNode = await upsert(from, async entry => {
+    if (entry == null) {
+      throw new Error(`Can't mv from ${from} to ${to}. ${from} doesn't exist.`)
+    }
+    nodeToInsert = await entry.get(ctx)
+    return null
+  }, directory, ctx)
+
+  return await upsert(to, async entry => {
+    // alternative implementation: Unix behavior?
+    // I.e. if entry is a directory, add it under that directory using last(from) as name?
+    if (entry != null) {
+      throw new Error(`Can't mv from ${from} to ${to}. ${to} already exists.`)
+    }
+    return lazyRefFromObj(nodeToInsert as PublicNode, nodeToCID)
+  }, directoryWithoutNode, ctx)
 }
 
 export async function upsert(

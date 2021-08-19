@@ -19,6 +19,7 @@ export type FileSystemOperation
   | { op: "mkdir"; path: Path }
   | { op: "remove"; path: Path }
   // | { op: "copy"; from: Path; to: Path }
+  | { op: "move"; from: Path; to: Path }
 
 export interface FileSystemUsage {
   state: FileSystemModel
@@ -60,6 +61,9 @@ export function runOperation(model: FileSystemModel, operation: FileSystemOperat
     //   const moved = move(removed, operation.from, operation.to)
     //   return merge(remaining, moved, (_, movedFile) => movedFile)
     // }
+    case "move": {
+      return move(model, operation.from, operation.to)
+    }
   }
 }
 
@@ -180,7 +184,7 @@ function arbitraryFileSystemModelStep(usage: FileSystemUsage): fc.Arbitrary<File
 
 function arbitraryOperation(model: FileSystemModel): fc.Arbitrary<FileSystemOperation> {
   if (model.files.size > 0 || model.directories.size > 0) {
-    return fc.oneof(arbitraryWrite(model), arbitraryMkdir(model), arbitraryRemove(model))
+    return fc.oneof(arbitraryWrite(model), arbitraryMkdir(model), arbitraryRemove(model), arbitraryMove(model))
   }
   return fc.oneof(arbitraryWrite(model), arbitraryMkdir(model))
 }
@@ -221,6 +225,26 @@ function arbitraryRemove(model: FileSystemModel): fc.Arbitrary<FileSystemOperati
     op: fc.constant("remove"),
     path: fc.oneof(...possiblePaths)
   })
+}
+
+function arbitraryMove(model: FileSystemModel): fc.Arbitrary<FileSystemOperation> {
+  const possiblePaths: fc.Arbitrary<Path>[] = []
+  if (model.files.size > 0) {
+    // move file
+    possiblePaths.push(fc.constantFrom(...Array.from(model.files.keys()).map(fromPosix)))
+  }
+  if (model.directories.size > 0) {
+    // move directory
+    possiblePaths.push(fc.constantFrom(...Array.from(model.directories).map(fromPosix)))
+  }
+  return fc.record({
+    op: fc.constant("move") as fc.Arbitrary<"move">,
+    from: fc.oneof(...possiblePaths),
+    to: arbitraryPathSegment().chain(segment => {
+      // Only move into existing directories (or the root)
+      return fc.constantFrom([], ...Array.from(model.directories).map(fromPosix)).map(dir => [...(dir), segment] as Path)
+    }).filter(path => pathCanBeTaken(path, model)) // ensure we don't move to a taken path
+  }).filter(({ from, to }) => !pathStartsWith(from, to)) // ensure we don't move e.g. a/b/* into a/b/c/
 }
 
 export function arbitraryPath(): fc.Arbitrary<Path> {

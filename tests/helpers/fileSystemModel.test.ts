@@ -75,4 +75,18 @@ describe("the file system model", () => {
   //   })
   // })
 
+  it("moves files and directories", () => {
+    expect(runOperation({
+      files: new Map([["a/b/c", "abc"]]),
+      directories: new Set(["a", "a/b"])
+    }, {
+      op: "move",
+      from: ["a", "b"],
+      to: ["a", "d"]
+    })).toEqual({
+      files: new Map([["a/d/c", "abc"]]),
+      directories: new Set(["a", "a/d"])
+    })
+  })
+
 })

@@ -11,7 +11,7 @@ import { canonicalize } from "../links.test.js"
 import { lazyRefFromCID, OperationContext } from "../ref.js"
 import * as metadata from "../metadata.js"
 
-import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, isPublicFile, mkdir, nodeFromCID, nodeToCID, PublicDirectory, rm, Timestamp, write } from "./publicNode.js"
+import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, isPublicFile, mkdir, mv, nodeFromCID, nodeToCID, PublicDirectory, rm, Timestamp, write } from "./publicNode.js"
 
 
 describe("the data public node module", () => {
@@ -191,7 +191,6 @@ describe("the data public node module", () => {
 TODOs
 
 * move some path stuff from fileSystemModel.ts into the path module/create a v2 path module?
-* add mv and cp operations (and figure out what that means for mapping the model to subdirectories)
 * implement reconciliation
 * test it in different cases (diverging, fast-forward)
 * test mmpt
@@ -238,8 +237,10 @@ async function interpretOperation(directory: PublicDirectory, operation: FileSys
     return await write(operation.path, block.cid, directory, ctx)
   } else if (operation.op === "mkdir") {
     return await mkdir(operation.path, directory, ctx)
-  } else {
+  } else if (operation.op === "remove") {
     return await rm(operation.path, directory, ctx)
+  } else { // move
+    return await mv(operation.from, operation.to, directory, ctx)
   }
 }
 
