@@ -72,6 +72,16 @@ export function runOperations(model: FileSystemModel, operations: FileSystemOper
   return model
 }
 
+export function runOperationsHistory(operations: FileSystemOperation[]): FileSystemModel[] {
+  let model = initialFileSystemModel()
+  const models: FileSystemModel[] = []
+  for (const op of operations) {
+    model = runOperation(model, op)
+    models.push(model)
+  }
+  return models
+}
+
 
 
 //--------------------------------------
@@ -111,7 +121,7 @@ export function asSubdirectoryModel(model: FileSystemModel, subdirectory: string
   return { files, directories }
 }
 
-export function historyForSubdirectory(operations: FileSystemOperation[], subdirectory: string): FileSystemOperation[] {
+export function asSubdirectoryOperations(operations: FileSystemOperation[], subdirectory: string): FileSystemOperation[] {
   let filteredOps: FileSystemOperation[] = []
   for (const op of operations) {
     const subdirectoryOp = asOperationOnSubdirectory(op, subdirectory)
@@ -127,6 +137,10 @@ export function historyForSubdirectory(operations: FileSystemOperation[], subdir
 
 export function removesSubdirectory(operation: FileSystemOperation, subdirectory: string): boolean {
   return operation.op === "remove" && operation.path.length === 1 && operation.path[0] === subdirectory
+}
+
+export function isEmptyFileSystem(model: FileSystemModel): boolean {
+  return model.directories.size === 0 && model.files.size === 0
 }
 
 

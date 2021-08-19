@@ -5,7 +5,7 @@ import * as fc from "fast-check"
 import CID from "cids"
 
 import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
-import { arbitraryFileSystemUsage, FileSystemOperation, FileSystemModel, fromPosix, initialFileSystemModel, runOperations, runOperation } from "../../../../tests/helpers/fileSystemModel.js"
+import { arbitraryFileSystemUsage, FileSystemOperation, FileSystemModel, fromPosix, initialFileSystemModel, runOperations, runOperation, FileSystemUsage, asSubdirectoryOperations, runOperationsHistory, isEmptyFileSystem } from "../../../../tests/helpers/fileSystemModel.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { canonicalize } from "../links.test.js"
 import { lazyRefFromCID, OperationContext } from "../ref.js"
@@ -151,15 +151,20 @@ describe("the data public node module", () => {
             i++
           }
 
-          const history = await enumerateHistory(fs, { ipfs })
-          let stepsBackInTime = 0
-          for (const historyEntry of history) {
-            // simulate in what state the filesystem must have been at that point
-            const simulatedHistoricalState = runOperations(initialFileSystemModel(), ops.slice(0, ops.length - stepsBackInTime))
-            const actualState = await directoryToModel(historyEntry, { ipfs })
-            expect(actualState).toEqual(simulatedHistoricalState)
-            stepsBackInTime++
+          // recursively verify that the histories are working as modeled
+          // only checks directory histories though.
+          async function verify(dir: PublicDirectory, operations: FileSystemOperation[], path: string[]) {
+            await verifyDirectoryHistory(dir, operations, path, { ipfs })
+
+            for (const [name, entryRef] of Object.entries(dir.userland)) {
+              const entry = await entryRef.get({ ipfs })
+              if (isPublicFile(entry)) continue
+
+              await verify(entry, asSubdirectoryOperations(operations, name), [...path, name])
+            }
           }
+
+          await verify(fs, ops, [])
         }
       )
     )
@@ -207,6 +212,27 @@ TODOs
 * start private fs implementation
 
 */
+
+async function verifyDirectoryHistory(directory: PublicDirectory, operations: FileSystemOperation[], path: string[], ctx: OperationContext): Promise<void> {
+  const history = await enumerateHistory(directory, ctx)
+  const historyModeled = runOperationsHistory(operations).reverse() // modeled is past to present, actual is present to past
+
+  const actualHistory: FileSystemModel[] = []
+  for (const historyEntry of history) {
+    actualHistory.push(await directoryToModel(historyEntry, ctx))
+  }
+  
+  // edge-cases are hard
+  // There is no corresponding "FileSystemOperation" for initialising an empty FS. There's no mkdir [].
+  // But there *is* e.g. the initial file system state of the root filesystem or one of it's subirectories
+  // when there's an mkdir, even though that mkdir might get filtered because it's seen as only affecting the
+  // parent directory.
+  if (isEmptyFileSystem(actualHistory[actualHistory.length - 1])) {
+    actualHistory.splice(actualHistory.length - 1)
+  }
+
+  expect({ path, history: actualHistory }).toEqual({ path, history: historyModeled })
+}
 
 async function directoryToModel(
   directory: PublicDirectory,

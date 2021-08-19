@@ -1,6 +1,6 @@
 import expect from "expect"
 import * as fc from "fast-check"
-import { arbitraryFileSystemUsage, arbitraryPathSegment, asOperationOnSubdirectory, asSubdirectoryModel, FileSystemOperation, historyForSubdirectory, initialFileSystemModel, removesSubdirectory, runOperation, runOperations } from "./fileSystemModel.js"
+import { arbitraryFileSystemUsage, arbitraryPathSegment, asOperationOnSubdirectory, asSubdirectoryModel, FileSystemOperation, asSubdirectoryOperations, initialFileSystemModel, removesSubdirectory, runOperation, runOperations } from "./fileSystemModel.js"
 
 
 describe("the file system model", () => {
@@ -23,8 +23,8 @@ describe("the file system model", () => {
         }),
         ({ usage, subdirectory }) => {
           const subdirectoryModel = asSubdirectoryModel(usage.state, subdirectory)
-          const subdirectoryModeled = runOperations(initialFileSystemModel(), historyForSubdirectory(usage.ops, subdirectory))
-          expect(subdirectoryModeled).toEqual(subdirectoryModel)
+          const subdirectoryOperations = asSubdirectoryOperations(usage.ops, subdirectory)
+          expect(runOperations(initialFileSystemModel(), subdirectoryOperations)).toEqual(subdirectoryModel)
         }
       )
     )
