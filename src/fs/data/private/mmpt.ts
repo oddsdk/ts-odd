@@ -1,6 +1,6 @@
 import CID from "cids"
-import { linksFromCID, linksToCID, mapRecord, mapRecordSync } from "./links.js"
-import { LazyCIDRef, lazyRefFromCID, lazyRefFromObj, OperationContext } from "./ref.js"
+import { linksFromCID, linksToCID, mapRecord, mapRecordSync } from "../links.js"
+import { LazyCIDRef, lazyRefFromCID, lazyRefFromObj, OperationContext } from "../ref.js"
 
 
 /**

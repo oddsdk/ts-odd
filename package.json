@@ -101,9 +101,11 @@
     "localforage": "^1.9.0",
     "lodash": "^4.17.21",
     "multicodec": "^3.0.1",
+    "murmurhash3.js": "https://github.com/karanlyons/murmurHash3.js",
     "noble-ed25519": "^1.2.4",
     "throttle-debounce": "^3.0.1",
-    "uint8arrays": "^2.1.7"
+    "uint8arrays": "^2.1.7",
+    "xxhashjs": "^0.2.2"
   },
   "resolutions": {
     "**/ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz"

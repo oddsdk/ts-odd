@@ -4338,6 +4338,10 @@ multistream-select@^2.0.0:
     p-defer "^3.0.0"
     uint8arrays "^2.1.4"
 
+"murmurhash3.js@https://github.com/karanlyons/murmurHash3.js":
+  version "3.0.0"
+  resolved "https://github.com/karanlyons/murmurHash3.js#f53c3dd0791026c17d6af6b4b3c368853c4503e9"
+
 murmurhash3js-revisited@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/murmurhash3js-revisited/-/murmurhash3js-revisited-3.0.0.tgz#6bd36e25de8f73394222adc6e41fa3fac08a5869"
