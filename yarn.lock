@@ -706,6 +706,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/xxhashjs@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@types/xxhashjs/-/xxhashjs-0.2.2.tgz#f72d9398e94b3cb59f53b784186a70b472e61376"
+  integrity sha512-+hlk/W1kgnZn0vR22XNhxHk/qIRQYF54i0UTF2MwBAPd0e7xSy+jKOJwSwTdRQrNnOMRVv+vsh8ITV0uyhp2yg==
+  dependencies:
+    "@types/node" "*"
+
 "@types/yargs-parser@*":
   version "20.2.0"
   resolved "https://registry.yarnpkg.com/@types/yargs-parser/-/yargs-parser-20.2.0.tgz#dd3e6699ba3237f0348cd085e4698780204842f9"
