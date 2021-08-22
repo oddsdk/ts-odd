@@ -63,7 +63,6 @@ describe("the bloom filter module", () => {
         ({ toAdd, notToAdd }) => {
           const filter = bloom.empty(bloom.wnfsParameters)
           const hashesToAdd = toAdd.map(str => hashToUint8Array(xxhash.h64(str, 0)))
-          const hashesNotToAdd = notToAdd.filter(str => !toAdd.includes(str)).map(str => hashToUint8Array(xxhash.h64(str, 0)))
 
           for (const hash of hashesToAdd) {
             bloom.add(hash.buffer, filter, bloom.wnfsParameters)
@@ -72,8 +71,10 @@ describe("the bloom filter module", () => {
             expect(bloom.has(hash.buffer, filter, bloom.wnfsParameters)).toBe(true)
           }
 
-          const falsePositives = hashesNotToAdd.filter(hash => bloom.has(hash.buffer, filter, bloom.wnfsParameters)).length
-          expect(falsePositives).toBe(0)
+          const falsePositives = notToAdd.filter(str =>
+            !toAdd.includes(str) && bloom.has(hashToUint8Array(xxhash.h64(str, 0)).buffer, filter, bloom.wnfsParameters)
+          )
+          expect(falsePositives).toEqual([])
         }
       )
     )
