@@ -1,24 +1,24 @@
 import expect from "expect"
 import * as fc from "fast-check"
 
-// @ts-ignore
 import xxhash from "xxhashjs"
 import * as uint8arrays from "uint8arrays"
 import * as bloom from "./bloomfilter.js"
 
 
-function hashToUint8Array(uint64: any): Uint8Array {
+function hashToUint8Array(uint64: xxhash.UINT): Uint8Array {
   const asHex = uint64.toString(16)
   return uint8arrays.fromString("0".repeat(16 - asHex.length) + asHex, "hex")
 }
 
-function hashToUint8Array2(uint64: any): Uint8Array {
+function hashToUint8Array2(uint64: xxhash.UINT): Uint8Array {
   const asArray = new Uint8Array(8)
   const view = new DataView(asArray.buffer)
   // big endian
-  view.setUint16(6, uint64._a00, false)
-  view.setUint16(4, uint64._a16, false)
-  view.setUint16(2, uint64._a32, false)
+  // @ts-ignore
+  view.setUint16(6, uint64._a00, false) // @ts-ignore
+  view.setUint16(4, uint64._a16, false) // @ts-ignore
+  view.setUint16(2, uint64._a32, false) // @ts-ignore
   view.setUint16(0, uint64._a48, false)
   return asArray
 }
@@ -63,7 +63,7 @@ describe("the bloom filter module", () => {
         ({ toAdd, notToAdd }) => {
           const filter = bloom.empty(bloom.wnfsParameters)
           const hashesToAdd = toAdd.map(str => hashToUint8Array(xxhash.h64(str, 0)))
-          const hashesNotToAdd = notToAdd.map(str => hashToUint8Array(xxhash.h64(str, 0)))
+          const hashesNotToAdd = notToAdd.filter(str => !toAdd.includes(str)).map(str => hashToUint8Array(xxhash.h64(str, 0)))
 
           for (const hash of hashesToAdd) {
             bloom.add(hash.buffer, filter, bloom.wnfsParameters)
