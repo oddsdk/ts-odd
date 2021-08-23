@@ -15,11 +15,11 @@ const byteArrayBasedImpl: BloomFilterImpl<bloom.BloomFilter> = {
     return bloom.empty(bloom.wnfsParameters)
   },
   add(str, filter) {
-    bloom.add(new TextEncoder().encode(str).buffer, filter, bloom.wnfsParameters)
+    bloom.add(new TextEncoder().encode(str), filter, bloom.wnfsParameters)
     return filter
   },
   has(str, filter) {
-    return bloom.has(new TextEncoder().encode(str).buffer, filter, bloom.wnfsParameters)
+    return bloom.has(new TextEncoder().encode(str), filter, bloom.wnfsParameters)
   }
 }
 
@@ -67,8 +67,12 @@ export function falsePositiveRate<T>(toAdd: string[], notToAdd: string[], impl: 
   return falsePositiveRates
 }
 
+function randomString(): fc.Arbitrary<string> {
+  return fc.string({ minLength: 10, maxLength: 10 })
+}
+
 export function randomStrings(amount: number): fc.Arbitrary<string[]> {
-  return fc.array(fc.string({ minLength: 10, maxLength: 10 }), { minLength: amount, maxLength: amount })
+  return fc.array(randomString(), { minLength: amount, maxLength: amount })
 }
 
 export function randomDisjointStringSets(amount: number): fc.Arbitrary<{ toAdd: string[]; notToAdd: string[] }> {
@@ -79,7 +83,7 @@ export function randomDisjointStringSets(amount: number): fc.Arbitrary<{ toAdd: 
     )
 }
 
-export function run(amount: number): void {
+export function falsePositiveRateCheck(amount: number): void {
   console.log("generating samples")
   const testData = fc.sample(randomDisjointStringSets(amount), 10)
   console.log("starting")
@@ -88,4 +92,16 @@ export function run(amount: number): void {
     console.log(`${i};${fprs.map(fpr => fpr[i].toFixed(6).replace(".", ",")).join(";")}`)
   }
   console.log("done")
+}
+
+export function runBenchmark(amount: number): void {
+  console.log("generating samples")
+  const testData = fc.sample(randomString(), amount)
+  const runBench = () => bloomFilterOps(testData, byteArrayBasedImpl)
+  console.log("warming up")
+  runBench()
+  console.log("starting")
+  const before = performance.now()
+  runBench()
+  console.log("time (ms):", performance.now() - before)
 }

@@ -90,7 +90,6 @@
     "yarn": "^1.22.4"
   },
   "dependencies": {
-    "@types/xxhashjs": "^0.2.2",
     "cborg": "^1.3.4",
     "cids": "^1.1.6",
     "fission-bloom-filters": "1.7.1",
@@ -98,6 +97,7 @@
     "ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz",
     "ipld-dag-pb": "^0.22.2",
     "it-all": "^1.0.5",
+    "js-xxhash": "^1.0.4",
     "keystore-idb": "0.14.2",
     "localforage": "^1.9.0",
     "lodash": "^4.17.21",
@@ -105,8 +105,7 @@
     "murmurhash3.js": "https://github.com/karanlyons/murmurHash3.js",
     "noble-ed25519": "^1.2.4",
     "throttle-debounce": "^3.0.1",
-    "uint8arrays": "^2.1.7",
-    "xxhashjs": "^0.2.2"
+    "uint8arrays": "^2.1.7"
   },
   "resolutions": {
     "**/ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz"

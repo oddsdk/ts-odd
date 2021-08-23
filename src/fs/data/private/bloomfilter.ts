@@ -1,4 +1,4 @@
-import xxhash from "xxhashjs"
+import xxhash from "js-xxhash"
 
 export type BloomFilter = Uint8Array
 
@@ -16,14 +16,14 @@ export function empty(parameters: BloomParameters): BloomFilter {
   return new Uint8Array(Array.from(new Array(parameters.mBytes)))
 }
 
-export function has(element: ArrayBuffer, filter: BloomFilter, parameters: BloomParameters): boolean {
+export function has(element: Uint8Array, filter: BloomFilter, parameters: BloomParameters): boolean {
   for (const index of indicesFor(element, parameters)) {
     if (!getBit(filter, index)) return false
   }
   return true
 }
 
-export function add(element: ArrayBuffer, filter: BloomFilter, parameters: BloomParameters): void {
+export function add(element: Uint8Array, filter: BloomFilter, parameters: BloomParameters): void {
   for (const index of indicesFor(element, parameters)) {
     setBit(filter, index)
   }
@@ -41,9 +41,9 @@ function getBit(filter: BloomFilter, bitIndex: number): boolean {
   return (filter[byteIndex] & (1 << indexWithinByte)) !== 0
 }
 
-function* indicesFor(element: ArrayBuffer, parameters: BloomParameters): Generator<number, void, unknown> {
+function* indicesFor(element: Uint8Array, parameters: BloomParameters): Generator<number, void, unknown> {
   for (let i = 0; i < parameters.kHashes; i++) {
-    yield xxhash.h32(i).update(element).digest().toNumber() % (parameters.mBytes * 8)
+    yield xxhash.xxHash32(element, i) % (parameters.mBytes * 8)
   }
 }
 
