@@ -56,23 +56,36 @@ function bloomFilterCreations<T>(amount: number, exampleElems: string[], impl: B
   }
 }
 
-export function run(amount: number, amountStrings: number): void {
+export function falsePositiveRate<T>(toAdd: string[], notToAdd: string[], impl: BloomFilterImpl<T>): number[] {
+  let filter = impl.create()
+  const falsePositiveRates: number[] = []
+  for (const elem of toAdd) {
+    filter = impl.add(elem, filter)
+    const falsePositiveCount = notToAdd.filter(str => impl.has(str, filter)).length
+    falsePositiveRates.push(falsePositiveCount / notToAdd.length)
+  }
+  return falsePositiveRates
+}
+
+export function randomStrings(amount: number): fc.Arbitrary<string[]> {
+  return fc.array(fc.string({ minLength: 10, maxLength: 10 }), { minLength: amount, maxLength: amount })
+}
+
+export function randomDisjointStringSets(amount: number): fc.Arbitrary<{ toAdd: string[]; notToAdd: string[] }> {
+  return randomStrings(amount)
+    .chain(toAdd => randomStrings(amount)
+      .filter(notToAdd => !notToAdd.find(str => toAdd.includes(str)))
+      .map(notToAdd => ({ toAdd, notToAdd }))
+    )
+}
+
+export function run(amount: number): void {
   console.log("generating samples")
-  const randomStrings = fc.sample(fc.string(), amountStrings)
-  const runByte = () => bloomFilterCreations(amount, randomStrings, byteArrayBasedImpl)
-  const runArray = () => bloomFilterCreations(amount, randomStrings, arrayBasedImpl)
-  // warmup
-  console.log("warming up")
-  runArray()
-  runByte()
-  
-  // actual
+  const testData = fc.sample(randomDisjointStringSets(amount), 10)
   console.log("starting")
-  const before1 = performance.now()
-  runByte()
-  console.log("custom impl: ", performance.now() - before1)
-  const before2 = performance.now()
-  runArray()
-  console.log("foreign impl:", performance.now() - before2)
+  const fprs = testData.map(data => falsePositiveRate(data.toAdd, data.notToAdd, byteArrayBasedImpl))
+  for (let i = 0; i < amount; i++) {
+    console.log(`${i};${fprs.map(fpr => fpr[i].toFixed(6).replace(".", ",")).join(";")}`)
+  }
   console.log("done")
 }
