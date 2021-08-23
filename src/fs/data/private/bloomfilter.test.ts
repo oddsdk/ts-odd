@@ -23,10 +23,10 @@ describe("the bloom filter module", () => {
         randomByteArrays => {
           const filter = bloom.empty(bloom.wnfsParameters)
           for (const byteArray of randomByteArrays) {
-            bloom.add(byteArray.buffer, filter, bloom.wnfsParameters)
+            bloom.add(byteArray, filter, bloom.wnfsParameters)
           }
           for (const byteArray of randomByteArrays) {
-            expect(bloom.has(byteArray.buffer, filter, bloom.wnfsParameters)).toBe(true)
+            expect(bloom.has(byteArray, filter, bloom.wnfsParameters)).toBe(true)
           }
         }
       )
@@ -45,17 +45,17 @@ describe("the bloom filter module", () => {
           const filter = bloom.empty(bloom.wnfsParameters)
 
           for (const byteArrayToAdd of toAdd) {
-            bloom.add(byteArrayToAdd.buffer, filter, bloom.wnfsParameters)
+            bloom.add(byteArrayToAdd, filter, bloom.wnfsParameters)
           }
           for (const byteArrayToAdd of toAdd) {
-            expect(bloom.has(byteArrayToAdd.buffer, filter, bloom.wnfsParameters)).toBe(true)
+            expect(bloom.has(byteArrayToAdd, filter, bloom.wnfsParameters)).toBe(true)
           }
 
           const falsePositives = notToAdd.filter(byteArray =>
             // we didn't add it already
             !toAdd.find(arr => uint8arrays.equals(arr, byteArray))
             // but it's included
-              && bloom.has(byteArray.buffer, filter, bloom.wnfsParameters)
+              && bloom.has(byteArray, filter, bloom.wnfsParameters)
           )
           // The false positive rate should be at 0.0000001%
           expect(falsePositives).toEqual([])
