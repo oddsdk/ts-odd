@@ -29,17 +29,6 @@ export function add(element: ArrayBuffer, filter: BloomFilter, parameters: Bloom
   }
 }
 
-const bitcount = (n: number) => n.toString(2).replace(/0/g,"").length
-const LUT = Array.from(new Array(256)).map((_, i) => bitcount(i))
-
-export function countBits(filter: BloomFilter): number {
-  let count = 0
-  for (const byte of filter) {
-    count += LUT[byte] // 0 <= byte <= 255
-  }
-  return count
-}
-
 function setBit(filter: BloomFilter, bitIndex: number): void {
   const byteIndex = (bitIndex / 8) | 0
   const indexWithinByte = bitIndex % 8
@@ -56,4 +45,15 @@ function* indicesFor(element: ArrayBuffer, parameters: BloomParameters): Generat
   for (let i = 0; i < parameters.kHashes; i++) {
     yield xxhash.h32(i).update(element).digest().toNumber() % (parameters.mBytes * 8)
   }
+}
+
+const bitcount = (n: number) => n.toString(2).replace(/0/g,"").length
+const LUT = Array.from(new Array(256)).map((_, i) => bitcount(i))
+
+export function countBits(filter: BloomFilter): number {
+  let count = 0
+  for (const byte of filter) {
+    count += LUT[byte] // 0 <= byte <= 255
+  }
+  return count
 }
