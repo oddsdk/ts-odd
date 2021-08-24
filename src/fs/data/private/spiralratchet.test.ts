@@ -47,19 +47,39 @@ describe("the spiral ratchet module", () => {
   })
 
   describe("incBy", async () => {
-    const test = (iters: number) =>  {
+    const test = (iters: number, smallOffset: number, mediumOffset: number) =>  {
       it(`has the property incBy ${iters} = ${iters} * inc`, async () => {
-        const spiral = await ratchet.setup(ctx) // , str2ab("hello world"), 255, 255)
+        const spiral = await ratchet.setup(ctx, str2ab("hello world"), smallOffset, mediumOffset)
         const positional = await ratchet.incBy(spiral, ctx, iters)
         const unary = await iterateAsync(spiral, s => ratchet.inc(s, ctx), iters)
         check(positional, unary)
       })
     }
 
-    context("no change", async () => test(0))
-    context("small change", async () => test(8))
-    context("medium change", async () => test(450))
-    context("large change", async () => test(123456))
+    context("not along rollover point", async () => {
+      context("no change", async () => test(0, 0, 0))
+      context("small change", async () => test(8, 0, 0))
+      context("medium change", async () => test(450, 0 ,0))
+      context("large change", async () => test(123456, 0, 0))
+    })
+
+    context("near rollover point", async () => {
+      context("no change", async () => test(0, 255, 255))
+      context("small change c", async () => test(8, 255, 255))
+      context("medium change", async () => test(450, 255, 255))
+      context("large change", async () => test(123456, 255, 255))
+    })
+
+    context("prop change", async () => {
+      it("works with any number of iterations", async () => {
+        fc.assert(fc.asyncProperty(fc.nat(), fc.string(), async (iters: number, seed: string): Promise<void> => {
+          const spiral = await ratchet.setup(ctx, str2ab(seed))
+          const positional = await ratchet.incBy(spiral, ctx, iters)
+          const unary = await iterateAsync(spiral, s => ratchet.inc(s, ctx), iters)
+          check(positional, unary)
+        }))
+      })
+    })
   })
 })
 

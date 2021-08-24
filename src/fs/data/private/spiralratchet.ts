@@ -84,7 +84,7 @@ export async function incBy(ratchet: SpiralRatchet, ctx: EncryptionContext, n: n
   const { smallCounter, mediumCounter } = ratchet
   if (n <= 0) return ratchet
   if (n < 256 - ratchet.smallCounter) return await incBySmall(ratchet, ctx, n)
-  if (n < 65536 - ratchet.mediumCounter * 256 - ratchet.smallCounter) return await incByMedium(ratchet, ctx, n)
+  if (n < 65536 - 256 * ratchet.mediumCounter) return await incByMedium(ratchet, ctx, n)
   return await incByLarge(ratchet, ctx, n)
 }
 
