@@ -27,22 +27,22 @@ describe("the spiral ratchet module", () => {
     )
   })
 
-  it("has the property add65536 = 256 * add256", async () => {
+  it("has the property incAt65536 = 256 * incAt256", async () => {
     const spiral = await ratchet.setup(ctx)
-    expect(await ratchet.add65536(spiral, ctx))
-      .toEqual(await iterateAsync(spiral, s => ratchet.add256(s, ctx), 256))
+    expect(await ratchet.incAt65536(spiral, ctx))
+      .toEqual(await iterateAsync(spiral, s => ratchet.incAt256(s, ctx), 256))
   })
 
-  it("has the property add256 = 256 * add1", async () => {
+  it("has the property incAt256 = 256 * incAt1", async () => {
     const spiral = await ratchet.setup(ctx)
-    expect(await ratchet.add256(spiral, ctx))
-      .toEqual(await iterateAsync(spiral, s => ratchet.add1(s, ctx), 256))
+    expect(await ratchet.incAt256(spiral, ctx))
+      .toEqual(await iterateAsync(spiral, s => ratchet.incAt1(s, ctx), 256))
   })
 
-  it("has the property add65536 = 65536 * add1", async () => {
+  it("has the property incAt65536 = 65536 * incAt1", async () => {
     const spiral = await ratchet.setup(ctx)
-    expect(await ratchet.add65536(spiral, ctx))
-      .toEqual(await iterateAsync(spiral, s => ratchet.add1(s, ctx), 65536))
+    expect(await ratchet.incAt65536(spiral, ctx))
+      .toEqual(await iterateAsync(spiral, s => ratchet.incAt1(s, ctx), 65536))
   })
 
 })
