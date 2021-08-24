@@ -14,8 +14,8 @@ interface SpiralRatchet {
 export async function setup(ctx: EncryptionContext): Promise<SpiralRatchet> {
   const { webcrypto, crypto } = ctx
   let [mediumSkip, smallSkip] = crypto.getRandomValues(new Uint32Array(2))
-  mediumSkip = mediumSkip % 255
-  smallSkip = smallSkip % 255
+  mediumSkip = mediumSkip % 256
+  smallSkip = smallSkip % 256
 
   const ratchet = await zero(ctx)
 
@@ -44,11 +44,11 @@ async function zero({ webcrypto, crypto }: EncryptionContext, seed?: ArrayBuffer
 }
 
 
-export async function incAt1(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
+export async function inc(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
   const { webcrypto } = ctx
 
   if (ratchet.smallCounter >= 255) {
-    return await incAt256(ratchet, ctx)
+    return await next256Epoch(ratchet, ctx)
   }
 
   return Object.freeze({
@@ -58,11 +58,11 @@ export async function incAt1(ratchet: SpiralRatchet, ctx: EncryptionContext): Pr
   })
 }
 
-export async function incAt256(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
+export async function next256Epoch(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
   const { webcrypto } = ctx
 
   if (ratchet.mediumCounter >= 255) {
-    return await incAt65536(ratchet, ctx)
+    return await next65536Epoch(ratchet, ctx)
   }
 
   return Object.freeze({
@@ -71,47 +71,65 @@ export async function incAt256(ratchet: SpiralRatchet, ctx: EncryptionContext): 
     medium: await sha(webcrypto, ratchet.medium), // NOTE: this uses the input ratchet
     mediumCounter: ratchet.mediumCounter + 1,
 
-    small: await sha(webcrypto, complement(ratchet.medium)),
+    small: await sha(webcrypto, complement(ratchet.medium)), // NOTE: this uses the input ratchet
     smallCounter: 0
   })
 }
 
-export async function incAt65536(ratchet: SpiralRatchet, cryptoCtx: EncryptionContext): Promise<SpiralRatchet> {
-  return await zero(cryptoCtx, ratchet.large)
+export async function next65536Epoch(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
+  return await zero(ctx, ratchet.large)
 }
 
-export async function incBy(ratchet: SpiralRatchet, cryptoCtx: EncryptionContext, n: number): Promise<SpiralRatchet> {
-  const { webcrypto } = cryptoCtx
+export async function incBy(ratchet: SpiralRatchet, ctx: EncryptionContext, n: number, smCarry?: number): Promise<SpiralRatchet> {
   const { smallCounter, mediumCounter } = ratchet
+  if (n <= 0) return ratchet
 
-  const currentInEpoch = mediumCounter * 256 + smallCounter
-  const movingTo = n + currentInEpoch
+  const target = ratchet.mediumCounter * 256 + ratchet.smallCounter + n
 
-  if (movingTo === 0) {
-    return ratchet
-  }
+  if (target < 256) return await incBySmall(ratchet, ctx, n)
+  if (target < 65536) return await incByMedium(ratchet, ctx, n)
+  return await incByLarge(ratchet, ctx, n)
+}
 
-  if (movingTo < 256) {
-    const small = await shaN(webcrypto, ratchet.small, n)
-    return Object.freeze({
-      ...ratchet,
-      small,
-      smallCount: n
-    })
-  }
-
-  if (movingTo < 65536) {
-    const mediumSteps = Math.floor(n / 256)
-    const mediumPre = await shaN(webcrypto, ratchet.medium, mediumSteps)
-    const zeroedMedium = await incAt256({ ...ratchet, medium: mediumPre }, cryptoCtx)
-    return await incBy(zeroedMedium, cryptoCtx, n % 256) // TODO Fix extra freezing
-  }
+async function incByLarge(ratchet: SpiralRatchet, ctx: EncryptionContext, n: number): Promise<SpiralRatchet> {
+  const { webcrypto } = ctx
 
   const largeSteps = Math.floor(n / 65536)
   const largePre = await shaN(webcrypto, ratchet.large, largeSteps - 1)
 
-  const zeroedLarge = await incAt65536({...ratchet, large: largePre}, cryptoCtx) // TODO Fix extra freezing
-  return await incBy(zeroedLarge, cryptoCtx, n % 65536)
+  const zeroedLarge = await next65536Epoch({...ratchet, large: largePre}, ctx) // TODO Remove extra freezing
+  const remaining = n % 65536 - (65536 - 256 * (ratchet.mediumCounter + 1)) - (256 - ratchet.smallCounter)
+
+  if (remaining < 256) {
+    return await incBySmall(ratchet, ctx, remaining)
+  }
+
+  return await incByMedium(zeroedLarge, ctx, remaining)
+}
+
+async function incByMedium(ratchet: SpiralRatchet, ctx: EncryptionContext, n: number): Promise<SpiralRatchet> {
+  const { webcrypto } = ctx
+
+  const mediumSteps = Math.floor(n / 256)
+  const mediumPre = await shaN(webcrypto, ratchet.medium, mediumSteps - 1)
+
+  const zeroedMedium = await next256Epoch({
+    ...ratchet,
+    medium: mediumPre,
+    mediumCounter: ratchet.mediumCounter + mediumSteps - 1
+  }, ctx)
+
+  const newN = n - (256 * (mediumSteps - 1)) - (256 - ratchet.smallCounter)
+  return await incBySmall(zeroedMedium, ctx, newN) // TODO Fix extra freezing
+}
+
+async function incBySmall(ratchet: SpiralRatchet, { webcrypto }: EncryptionContext, n: number): Promise<SpiralRatchet> {
+  const small = await shaN(webcrypto, ratchet.small, n)
+  return Object.freeze({
+    ...ratchet,
+    small,
+    smallCounter: ratchet.smallCounter + n
+  })
 }
 
 async function sha(webcrypto: SubtleCrypto, buffer: ArrayBuffer): Promise<ArrayBuffer> {
