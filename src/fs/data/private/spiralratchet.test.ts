@@ -61,6 +61,7 @@ describe("the spiral ratchet module", () => {
       context("small change", async () => test(8, 0, 0))
       context("medium change", async () => test(450, 0 ,0))
       context("large change", async () => test(70000, 0, 0))
+      context("huge change", async () => test(999999, 0, 0))
     })
 
     context("near rollover point", async () => {
@@ -68,6 +69,7 @@ describe("the spiral ratchet module", () => {
       context("small change c", async () => test(8, 255, 255))
       context("medium change", async () => test(450, 255, 255))
       context("large change", async () => test(70000, 255, 255))
+      context("huge change", async () => test(999999, 255, 255))
     })
 
     context("prop change", async () => {
