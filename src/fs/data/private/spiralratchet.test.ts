@@ -33,8 +33,8 @@ describe("the spiral ratchet module", () => {
   describe("next65536Epoch", () => {
     it("has the property that next65536Epoch rounds up to the next large zero", async () => {
       const spiral = await ratchet.setup(ctx)
-      const slow = await iterateAsync(spiral, s => ratchet.next256Epoch(s, ctx), 256 - spiral.mediumCounter)
-      const fast = await ratchet.next65536Epoch(spiral, ctx)
+      const slow = await iterateAsync(spiral, s => ratchet.nextMediumEpoch(s, ctx), 256 - spiral.mediumCounter)
+      const fast = await ratchet.nextLargeEpoch(spiral, ctx)
       expect(canonicalize(slow)).toEqual(canonicalize(fast))
     })
   })
@@ -42,7 +42,7 @@ describe("the spiral ratchet module", () => {
   describe("next256Epoch", () => {
     it("rounds up to the next medium zero", async () => {
       const spiral = await ratchet.setup(ctx)
-      const fast = await ratchet.next256Epoch(spiral, ctx)
+      const fast = await ratchet.nextMediumEpoch(spiral, ctx)
       const slow = await iterateAsync(spiral, s => ratchet.inc(s, ctx), 256 - spiral.smallCounter)
       expect(canonicalize(fast)).toEqual(canonicalize(slow))
     })
@@ -51,18 +51,23 @@ describe("the spiral ratchet module", () => {
   describe("incBy", () => {
 
     it("has the property incBy n != identity for any n >= 1", async () => {
-      await fc.assert(fc.asyncProperty(fc.nat({ max: 1000000 }), arbitraryRatchetOptions(), async (iterations, options) => {
-        iterations++ // iterations might be 0
-        const initial = await ratchet.setup({ ...ctx, ...options })
-        const increased = await ratchet.incBy(initial, iterations, ctx)
-        if (canonicalize(increased.large) === canonicalize(initial.large)) {
-          if (canonicalize(increased.medium) === canonicalize(increased.medium)) {
-            expect(canonicalize(initial.small)).not.toEqual(canonicalize(increased.small))
+      await fc.assert(fc.asyncProperty(
+        fc.nat({ max: 999999 }).map(n => n + 1),
+        arbitraryRatchetOptions(),
+        async (iterations, options) => {
+          const initial = await ratchet.setup({ ...ctx, ...options })
+          const increased = await ratchet.incBy(initial, iterations, ctx)
+          if (canonicalize(increased.large) === canonicalize(initial.large)) {
+            if (canonicalize(increased.medium) === canonicalize(increased.medium)) {
+              expect(canonicalize(initial.small)).not.toEqual(canonicalize(increased.small))
+              return
+            }
+            expect(canonicalize(initial.medium)).not.toEqual(canonicalize(increased.medium))
+            return
           }
-          expect(canonicalize(initial.medium)).not.toEqual(canonicalize(increased.medium))
+          expect(canonicalize(initial.large)).not.toEqual(canonicalize(increased.large))
         }
-        expect(canonicalize(initial.large)).not.toEqual(canonicalize(increased.large))
-      }))
+      ))
     })
 
     const test = (iters: number, smallOffset: number, mediumOffset: number) => {
@@ -91,7 +96,7 @@ describe("the spiral ratchet module", () => {
 
     context("near rollover point", () => {
       context("no change", () => test(0, 255, 255))
-      context("small change c", () => test(8, 255, 255))
+      context("small change", () => test(8, 255, 255))
       context("medium change", () => test(450, 255, 255))
       context("large change", () => test(70000, 255, 255))
       if (isCI()) {
@@ -101,12 +106,16 @@ describe("the spiral ratchet module", () => {
 
     context("prop change", () => {
       it("works with any number of iterations", async () => {
-        await fc.assert(fc.asyncProperty(fc.nat({ max: 100000 }), arbitraryRatchetOptions(), async (iters, options) => {
-          const spiral = await ratchet.setup({ ...ctx, ...options })
-          const positional = await ratchet.incBy(spiral, iters, ctx)
-          const unary = await iterateAsync(spiral, s => ratchet.inc(s, ctx), iters)
-          expect(canonicalize(positional)).toEqual(canonicalize(unary))
-        }), { numRuns: 10 }) // running 70k iterations takes ~3 seconds
+        await fc.assert(fc.asyncProperty(
+          fc.nat({ max: 100000 }),
+          arbitraryRatchetOptions(),
+          async (iters, options) => {
+            const spiral = await ratchet.setup({ ...ctx, ...options })
+            const positional = await ratchet.incBy(spiral, iters, ctx)
+            const unary = await iterateAsync(spiral, s => ratchet.inc(s, ctx), iters)
+            expect(canonicalize(positional)).toEqual(canonicalize(unary))
+          }
+        ), { numRuns: 10 }) // running 70k iterations takes ~3 seconds
       })
 
       it("works with any combinations of incBy that sum to the same value", async () => {

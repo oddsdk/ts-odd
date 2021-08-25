@@ -50,11 +50,16 @@ async function zero({ webcrypto, crypto, seed }: EncryptionContext & { seed?: Ar
 }
 
 
+export function combinedCounter(ratchet: SpiralRatchet): number {
+  return 256 * ratchet.mediumCounter + ratchet.smallCounter
+}
+
+
 export async function inc(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
   const { webcrypto } = ctx
 
   if (ratchet.smallCounter >= 255) {
-    return await next256Epoch(ratchet, ctx)
+    return await nextMediumEpoch(ratchet, ctx)
   }
 
   return Object.freeze({
@@ -64,14 +69,18 @@ export async function inc(ratchet: SpiralRatchet, ctx: EncryptionContext): Promi
   })
 }
 
-export async function next256Epoch(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
+export async function nextMediumEpoch(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
+  return Object.freeze((await nextMediumEpochJump(ratchet, ctx)).ratchet)
+}
+
+async function nextMediumEpochJump(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<{ ratchet: SpiralRatchet; stepsJumped: number }> {
   const { webcrypto } = ctx
 
   if (ratchet.mediumCounter >= 255) {
-    return await next65536Epoch(ratchet, ctx)
+    return await nextLargeEpochJump(ratchet, ctx)
   }
 
-  return Object.freeze({
+  const nextRatchet = {
     ...ratchet,
 
     medium: await sha(webcrypto, ratchet.medium), // NOTE: this uses the input ratchet
@@ -79,53 +88,36 @@ export async function next256Epoch(ratchet: SpiralRatchet, ctx: EncryptionContex
 
     small: await sha(webcrypto, complement(ratchet.medium)), // NOTE: this uses the input ratchet
     smallCounter: 0
-  })
+  }
+
+  return {
+    ratchet: nextRatchet,
+    stepsJumped: combinedCounter(nextRatchet) - combinedCounter(ratchet) // they're in the same large epoch, so we can rely on combinedCounter
+  }
 }
 
-export async function next65536Epoch(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
-  return await zero({ ...ctx, seed: ratchet.large })
+export async function nextLargeEpoch(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
+  return (await nextLargeEpochJump(ratchet, ctx)).ratchet // already frozen
+}
+
+async function nextLargeEpochJump(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<{ ratchet: SpiralRatchet; stepsJumped: number }> {
+  return {
+    ratchet: await zero({ ...ctx, seed: ratchet.large }),
+    stepsJumped: 256 * 256 - combinedCounter(ratchet)
+  }
 }
 
 export async function incBy(ratchet: SpiralRatchet, n: number, ctx: EncryptionContext): Promise<SpiralRatchet> {
   if (n <= 0) return ratchet
-  if (n < 256 - ratchet.smallCounter) return await incBySmall(ratchet, n, ctx)
-  if (n < 65536 - 256 * ratchet.mediumCounter) return await incByMedium(ratchet, n, ctx)
-  return await incByLarge(ratchet, n, ctx)
-}
-
-async function incByLarge(ratchet: SpiralRatchet, n: number, ctx: EncryptionContext): Promise<SpiralRatchet> {
-  const { webcrypto } = ctx
-
-  const target = n + 256 * ratchet.mediumCounter + ratchet.smallCounter
-
-  const largeSteps = Math.floor(target / 65536)
-  const largePre = await shaN(webcrypto, ratchet.large, largeSteps - 1)
-
-  const zeroedLarge = await next65536Epoch({ ...ratchet, large: largePre }, ctx) // TODO Remove extra freezing
-  const newN = n - (65536 * (largeSteps - 1)) - (65536 - 256 * (ratchet.mediumCounter + 1)) - (256 - ratchet.smallCounter)
-
-  if (newN < 256) {
-    return await incBySmall(ratchet, newN, ctx)
+  if (n > 256 * 256 - combinedCounter(ratchet)) { // i.e. there *will* be a large epoch jump if we used `inc`s
+    const jumped = await nextLargeEpochJump(ratchet, ctx)
+    return await incBy(jumped.ratchet, n - jumped.stepsJumped, ctx)
   }
-
-  return await incByMedium(zeroedLarge, newN, ctx)
-}
-
-async function incByMedium(ratchet: SpiralRatchet, n: number, ctx: EncryptionContext): Promise<SpiralRatchet> {
-  const { webcrypto } = ctx
-
-  const target = n + ratchet.smallCounter
-  const mediumSteps = Math.floor(target / 256)
-
-  const mediumPre = await shaN(webcrypto, ratchet.medium, mediumSteps - 1)
-  const zeroedMedium = await next256Epoch({
-    ...ratchet,
-    medium: mediumPre,
-    mediumCounter: ratchet.mediumCounter + mediumSteps - 1
-  }, ctx)
-
-  const newN = n - (256 * (mediumSteps - 1)) - (256 - ratchet.smallCounter)
-  return await incBySmall(zeroedMedium, newN, ctx) // TODO Fix extra freezing
+  if (n > 256 - ratchet.smallCounter) { // i.e. there *will* be a medium epoch jump if we used `inc`s
+    const jumped = await nextMediumEpochJump(ratchet, ctx)
+    return await incBy(jumped.ratchet, n - jumped.stepsJumped, ctx)
+  }
+  return await incBySmall(ratchet, n, ctx)
 }
 
 async function incBySmall(ratchet: SpiralRatchet, n: number, { webcrypto }: EncryptionContext): Promise<SpiralRatchet> {
