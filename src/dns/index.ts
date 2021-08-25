@@ -1,5 +1,3 @@
-import { race } from "../common/async.js"
-
 /**
  * Lookup a DNS TXT record.
  *
@@ -9,7 +7,7 @@ import { race } from "../common/async.js"
  * @returns Contents of the TXT record.
  */
 export async function lookupTxtRecord(domain: string): Promise<string | null> {
-  return race([
+  return Promise.any([
     googleLookup(domain),
     cloudflareLookup(domain)
   ])
