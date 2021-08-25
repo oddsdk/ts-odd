@@ -1,5 +1,6 @@
 import expect from "expect"
 import * as fc from "fast-check"
+import * as uint8arrays from "uint8arrays"
 
 import * as ratchet from "./spiralratchet.js"
 import { getCrypto } from "./context.js"
@@ -50,22 +51,23 @@ describe("the spiral ratchet module", () => {
 
   describe("incBy", () => {
 
-    it("has the property incBy n != identity for any n >= 1", async () => {
+    it("is backwards secret by always changing (appropriate) digits when increasing", async () => {
       await fc.assert(fc.asyncProperty(
         fc.nat({ max: 999999 }).map(n => n + 1),
         arbitraryRatchetOptions(),
         async (iterations, options) => {
           const initial = await ratchet.setup({ ...ctx, ...options })
           const increased = await ratchet.incBy(initial, iterations, ctx)
-          if (canonicalize(increased.large) === canonicalize(initial.large)) {
-            if (canonicalize(increased.medium) === canonicalize(increased.medium)) {
-              expect(canonicalize(initial.small)).not.toEqual(canonicalize(increased.small))
-              return
-            }
-            expect(canonicalize(initial.medium)).not.toEqual(canonicalize(increased.medium))
-            return
-          }
-          expect(canonicalize(initial.large)).not.toEqual(canonicalize(increased.large))
+
+          // the small digit must always change
+          // (it doesn't work like 123 + 20 = 143, where 1 and 3 didn't change)
+          expect(canonicalize(increased.small)).not.toEqual(canonicalize(initial.small))
+
+          if (iterations < 256) return
+          expect(canonicalize(increased.medium)).not.toEqual(canonicalize(initial.medium))
+
+          if (iterations < 256*256) return
+          expect(canonicalize(increased.large)).not.toEqual(canonicalize(initial.large))
         }
       ))
     })
