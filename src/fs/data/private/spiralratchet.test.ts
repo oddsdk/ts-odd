@@ -20,7 +20,7 @@ describe("the spiral ratchet module", () => {
       )
     })
 
-    it("has the property complement(x) != x", () => {
+    it("has the property complement(x) != x, except empty x", () => {
       fc.assert(
         fc.property(fc.uint8Array({ minLength: 1 }), arr => {
           expect(new Uint8Array(ratchet.complement(arr.buffer)))
@@ -51,9 +51,9 @@ describe("the spiral ratchet module", () => {
   describe("incBy", () => {
 
     it("has the property incBy n != identity for any n >= 1", async () => {
-      await fc.assert(fc.asyncProperty(fc.nat({ max: 1000000 }), arbitrarySeed(), async (iterations, seed) => {
+      await fc.assert(fc.asyncProperty(fc.nat({ max: 1000000 }), arbitraryRatchetOptions(), async (iterations, options) => {
         iterations++ // iterations might be 0
-        const initial = await ratchet.setup({ ...ctx, seed })
+        const initial = await ratchet.setup({ ...ctx, ...options })
         const increased = await ratchet.incBy(initial, iterations, ctx)
         if (canonicalize(increased.large) === canonicalize(initial.large)) {
           if (canonicalize(increased.medium) === canonicalize(increased.medium)) {
@@ -101,8 +101,8 @@ describe("the spiral ratchet module", () => {
 
     context("prop change", () => {
       it("works with any number of iterations", async () => {
-        await fc.assert(fc.asyncProperty(fc.nat({ max: 100000 }), arbitrarySeed(), async (iters, seed) => {
-          const spiral = await ratchet.setup({ ...ctx, seed })
+        await fc.assert(fc.asyncProperty(fc.nat({ max: 100000 }), arbitraryRatchetOptions(), async (iters, options) => {
+          const spiral = await ratchet.setup({ ...ctx, ...options })
           const positional = await ratchet.incBy(spiral, iters, ctx)
           const unary = await iterateAsync(spiral, s => ratchet.inc(s, ctx), iters)
           expect(canonicalize(positional)).toEqual(canonicalize(unary))
@@ -115,9 +115,9 @@ describe("the spiral ratchet module", () => {
             array: iterationsArray,
             total: iterationsArray.reduce((a, b) => a + b, 0)
           })),
-          arbitrarySeed(),
-          async (iterations, seed) => {
-            const initial = await ratchet.setup({ ...ctx, seed })
+          arbitraryRatchetOptions(),
+          async (iterations, options) => {
+            const initial = await ratchet.setup({ ...ctx, ...options })
             let stepped = initial
             for (const iters of iterations.array) {
               stepped = await ratchet.incBy(stepped, iters, ctx)
@@ -139,6 +139,10 @@ async function iterateAsync<T>(initial: T, f: (obj: T) => Promise<T>, n: number)
   return obj
 }
 
-function arbitrarySeed(): fc.Arbitrary<ArrayBuffer> {
-  return fc.uint8Array().map(arr => arr.buffer)
+function arbitraryRatchetOptions(): fc.Arbitrary<ratchet.RatchetOptions> {
+  return fc.record({
+    seed: fc.uint8Array().map(arr => arr.buffer),
+    ffMedium: fc.nat({ max: 255 }),
+    ffSmall: fc.nat({ max: 255 }),
+  })
 }

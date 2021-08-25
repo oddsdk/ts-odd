@@ -10,8 +10,14 @@ export interface SpiralRatchet {
   smallCounter: number
 }
 
+export interface RatchetOptions {
+  seed: ArrayBuffer
+  ffSmall: number
+  ffMedium: number
+}
 
-export async function setup(options: EncryptionContext & { seed?: ArrayBuffer; ffSmall?: number; ffMedium?: number }): Promise<SpiralRatchet> {
+
+export async function setup(options: EncryptionContext & Partial<RatchetOptions>): Promise<SpiralRatchet> {
   const { webcrypto, crypto, ffMedium, ffSmall } = options
   let [mediumSkip, smallSkip] = crypto.getRandomValues(new Uint8Array(2))
   mediumSkip = ffMedium == null ? mediumSkip : ffMedium
@@ -95,7 +101,7 @@ async function incByLarge(ratchet: SpiralRatchet, n: number, ctx: EncryptionCont
   const largeSteps = Math.floor(target / 65536)
   const largePre = await shaN(webcrypto, ratchet.large, largeSteps - 1)
 
-  const zeroedLarge = await next65536Epoch({...ratchet, large: largePre}, ctx) // TODO Remove extra freezing
+  const zeroedLarge = await next65536Epoch({ ...ratchet, large: largePre }, ctx) // TODO Remove extra freezing
   const newN = n - (65536 * (largeSteps - 1)) - (65536 - 256 * (ratchet.mediumCounter + 1)) - (256 - ratchet.smallCounter)
 
   if (newN < 256) {
