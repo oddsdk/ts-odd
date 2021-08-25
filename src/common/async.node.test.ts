@@ -4,8 +4,8 @@ import { race } from "./async.js"
 
 describe("async race", () => {
 
-  it("returns a promise that was passed into it", () => {
-    fc.assert(
+  it("returns a promise that was passed into it", async () => {
+    await fc.assert(
       fc.asyncProperty(
         fc.array(fc.integer()), async data => {
           const asyncFuncs = data.map(async num => {
