@@ -96,8 +96,8 @@ export class FileSystem {
 
     // Add the root CID of the file system to the CID log
     // (reverse list, newest cid first)
-    const logCid = (cid: CID) => {
-      cidLog.add(cid)
+    const logCid = async (cid: CID) => {
+      await cidLog.add(cid)
       debug.log("📓 Adding to the CID ledger:", cid)
     }
 
