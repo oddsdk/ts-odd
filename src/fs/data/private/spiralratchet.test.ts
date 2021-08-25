@@ -1,6 +1,5 @@
 import expect from "expect"
 import * as fc from "fast-check"
-import * as uint8arrays from "uint8arrays"
 
 import * as ratchet from "./spiralratchet.js"
 import { getCrypto } from "./context.js"
@@ -11,25 +10,6 @@ describe("the spiral ratchet module", () => {
 
   const ctx = getCrypto()
 
-  describe("complement", () => {
-    it("has the property complement(complement(x)) = x", () => {
-      fc.assert(
-        fc.property(fc.uint8Array(), arr => {
-          expect(new Uint8Array(ratchet.complement(ratchet.complement(arr.buffer))))
-            .toEqual(arr)
-        })
-      )
-    })
-
-    it("has the property complement(x) != x, except empty x", () => {
-      fc.assert(
-        fc.property(fc.uint8Array({ minLength: 1 }), arr => {
-          expect(new Uint8Array(ratchet.complement(arr.buffer)))
-            .not.toEqual(arr)
-        })
-      )
-    })
-  })
 
   describe("next65536Epoch", () => {
     it("has the property that next65536Epoch rounds up to the next large zero", async () => {
@@ -52,6 +32,11 @@ describe("the spiral ratchet module", () => {
   describe("incBy", () => {
 
     it("is backwards secret by always changing (appropriate) digits when increasing", async () => {
+      const exampleOptions = {
+        seed: new TextEncoder().encode("hello world").buffer,
+        ffSmall: 0,
+        ffMedium: 0,
+      }
       await fc.assert(fc.asyncProperty(
         fc.nat({ max: 999999 }).map(n => n + 1),
         arbitraryRatchetOptions(),
@@ -66,10 +51,18 @@ describe("the spiral ratchet module", () => {
           if (iterations < 256) return
           expect(canonicalize(increased.medium)).not.toEqual(canonicalize(initial.medium))
 
-          if (iterations < 256*256) return
+          if (iterations < 256 * 256) return
           expect(canonicalize(increased.large)).not.toEqual(canonicalize(initial.large))
         }
-      ))
+      ), {
+        examples: [ // Especially test the boundaries
+          [1, exampleOptions],
+          [256, exampleOptions],
+          [256*2, exampleOptions],
+          [256*256, exampleOptions],
+          [256*256*2, exampleOptions],
+        ]
+      })
     })
 
     const test = (iters: number, smallOffset: number, mediumOffset: number) => {

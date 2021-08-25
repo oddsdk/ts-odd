@@ -17,6 +17,10 @@ export interface RatchetOptions {
 }
 
 
+export async function toKey(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<ArrayBuffer> {
+  return sha(ctx.webcrypto, xor(ratchet.large, xor(ratchet.medium, ratchet.small)))
+}
+
 export async function setup(options: EncryptionContext & Partial<RatchetOptions>): Promise<SpiralRatchet> {
   const { webcrypto, crypto, ffMedium, ffSmall } = options
   let [mediumSkip, smallSkip] = crypto.getRandomValues(new Uint8Array(2))
@@ -50,11 +54,6 @@ async function zero({ webcrypto, crypto, seed }: EncryptionContext & { seed?: Ar
 }
 
 
-export function combinedCounter(ratchet: SpiralRatchet): number {
-  return 256 * ratchet.mediumCounter + ratchet.smallCounter
-}
-
-
 export async function inc(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
   const { webcrypto } = ctx
 
@@ -67,6 +66,21 @@ export async function inc(ratchet: SpiralRatchet, ctx: EncryptionContext): Promi
     small: await sha(webcrypto, ratchet.small), // NOTE: this uses the input ratchet
     smallCounter: ratchet.smallCounter + 1,
   })
+}
+
+export async function incBy(ratchet: SpiralRatchet, n: number, ctx: EncryptionContext): Promise<SpiralRatchet> {
+  if (n <= 0) return ratchet
+  if (n >= 256 * 256 - combinedCounter(ratchet)) { // i.e. there *will* be a large epoch jump if we used `inc`s
+    const jumped = await nextLargeEpoch(ratchet, ctx)
+    const stepsDone = 256 * 256 - combinedCounter(ratchet) // steps to the next large epoch
+    return await incBy(jumped, n - stepsDone, ctx)
+  }
+  if (n >= 256 - ratchet.smallCounter) { // i.e. there *will* be a medium epoch jump if we used `inc`s
+    const jumped = await nextMediumEpoch(ratchet, ctx)
+    const stepsDone = combinedCounter(jumped) - combinedCounter(ratchet)
+    return await incBy(jumped, n - stepsDone, ctx)
+  }
+  return await incBySmall(ratchet, n, ctx)
 }
 
 export async function nextMediumEpoch(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
@@ -91,20 +105,12 @@ export async function nextLargeEpoch(ratchet: SpiralRatchet, ctx: EncryptionCont
   return await zero({ ...ctx, seed: ratchet.large })
 }
 
-export async function incBy(ratchet: SpiralRatchet, n: number, ctx: EncryptionContext): Promise<SpiralRatchet> {
-  if (n <= 0) return ratchet
-  if (n > 256 * 256 - combinedCounter(ratchet)) { // i.e. there *will* be a large epoch jump if we used `inc`s
-    const jumped = await nextLargeEpoch(ratchet, ctx)
-    const stepsDone = 256 * 256 - combinedCounter(ratchet) // steps to the next large epoch
-    return await incBy(jumped, n - stepsDone, ctx)
-  }
-  if (n > 256 - ratchet.smallCounter) { // i.e. there *will* be a medium epoch jump if we used `inc`s
-    const jumped = await nextMediumEpoch(ratchet, ctx)
-    const stepsDone = combinedCounter(jumped) - combinedCounter(ratchet)
-    return await incBy(jumped, n - stepsDone, ctx)
-  }
-  return await incBySmall(ratchet, n, ctx)
-}
+
+
+//--------------------------------------
+// Private ㊙️
+//--------------------------------------
+
 
 async function incBySmall(ratchet: SpiralRatchet, n: number, { webcrypto }: EncryptionContext): Promise<SpiralRatchet> {
   const small = await shaN(webcrypto, ratchet.small, n)
@@ -126,6 +132,16 @@ async function shaN(webcrypto: SubtleCrypto, buffer: ArrayBuffer, n: number): Pr
   return buffer
 }
 
-export function complement(array: ArrayBuffer): ArrayBuffer {
+function combinedCounter(ratchet: SpiralRatchet): number {
+  return 256 * ratchet.mediumCounter + ratchet.smallCounter
+}
+
+function complement(array: ArrayBuffer): ArrayBuffer {
   return new Uint8Array(array).map(n => n ^ 0xFF).buffer
+}
+
+function xor(l: ArrayBuffer, r: ArrayBuffer): ArrayBuffer {
+  if (l.byteLength != r.byteLength) throw new Error("Can't xor two array buffers with different lengths")
+  const rBytes = new Uint8Array(r)
+  return new Uint8Array(l).map((value, i) => value ^ rBytes[i])
 }
