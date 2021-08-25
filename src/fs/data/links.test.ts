@@ -1,6 +1,7 @@
 import expect from "expect"
 import CID from "cids"
 import { loadCAR } from "../../../tests/helpers/loadCAR.js"
+import { canonicalize } from "../../../tests/helpers/common.js"
 import { ipfsFromContext } from "../../../tests/mocha-hook.js"
 
 import { linksFromCID, linksToCID } from "./links.js"
@@ -35,14 +36,3 @@ describe("the data links module", () => {
 
 })
 
-export function canonicalize(object: unknown): unknown {
-  return JSON.parse(JSON.stringify(object, (key, value) => {
-    if (value && value.version && value.codec && value.hash) {
-      return new CID(value.version, value.codec, value.hash).toString()
-    }
-    if (value && value.toObject) {
-      return value.toObject()
-    }
-    return value
-  }))
-}

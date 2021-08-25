@@ -7,12 +7,13 @@ import * as path from "../../src/path.js"
 import { pathSegment, pathSegmentPair } from "../helpers/paths.js"
 import { emptyFilesystem } from "../helpers/filesystem.js"
 import { publicFileContent as fileContent, publicDecode as decode } from "../helpers/fileContent.js"
+import { isCI } from "../helpers/common.js"
 
 
 describe("the public filesystem api", function () {
 
   before(async function () {
-    fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 50 } : { numRuns: 10 })
+    fc.configureGlobal(isCI() ? { numRuns: 50 } : { numRuns: 10 })
   })
 
   after(async () => {

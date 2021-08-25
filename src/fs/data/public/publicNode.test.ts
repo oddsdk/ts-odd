@@ -5,9 +5,9 @@ import * as fc from "fast-check"
 import CID from "cids"
 
 import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
+import { canonicalize } from "../../../../tests/helpers/common.js"
 import { arbitraryFileSystemUsage, FileSystemOperation, FileSystemModel, initialFileSystemModel, runOperation, runOperationsHistory } from "../../../../tests/helpers/fileSystemModel.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
-import { canonicalize } from "../links.test.js"
 import { lazyRefFromCID, OperationContext } from "../ref.js"
 import * as metadata from "../metadata.js"
 
