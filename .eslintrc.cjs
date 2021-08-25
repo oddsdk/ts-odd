@@ -1,6 +1,9 @@
 module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project: `./tsconfig.eslint.json`
+  },
   plugins: [
     "@typescript-eslint",
   ],
@@ -21,6 +24,8 @@ module.exports = {
     "@typescript-eslint/ban-ts-comment": 1,
     "@typescript-eslint/quotes": ["error", "double", {
       allowTemplateLiterals: true
-    }]
+    }],
+    // If you want to *intentionally* run a promise without awaiting, prepend it with "void " instead of "await "
+    "@typescript-eslint/no-floating-promises": ["error"],
   }
 }
