@@ -65,6 +65,32 @@ describe("the spiral ratchet module", () => {
       })
     })
 
+    it("is backwards secret by always producing a different key when increasing", async () => {
+      const exampleOptions = {
+        seed: new TextEncoder().encode("hello world").buffer,
+        ffSmall: 0,
+        ffMedium: 0,
+      }
+      await fc.assert(fc.asyncProperty(
+        fc.nat({ max: 999999 }).map(n => n + 1),
+        arbitraryRatchetOptions(),
+        async (iterations, options) => {
+          const initial = await ratchet.setup({ ...ctx, ...options })
+          const increased = await ratchet.incBy(initial, iterations, ctx)
+          expect(canonicalize(await ratchet.toKey(increased, ctx)))
+            .not.toEqual(canonicalize(await ratchet.toKey(initial, ctx)))
+        }
+      ), {
+        examples: [ // Especially test the boundaries
+          [1, exampleOptions],
+          [256, exampleOptions],
+          [256*2, exampleOptions],
+          [256*256, exampleOptions],
+          [256*256*2, exampleOptions],
+        ]
+      })
+    })
+
     const test = (iters: number, smallOffset: number, mediumOffset: number) => {
       it(`has the property incBy ${iters} = ${iters} * inc`, async () => {
         const spiral = await ratchet.setup({
