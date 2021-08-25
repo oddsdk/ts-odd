@@ -70,17 +70,13 @@ export async function inc(ratchet: SpiralRatchet, ctx: EncryptionContext): Promi
 }
 
 export async function nextMediumEpoch(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
-  return Object.freeze((await nextMediumEpochJump(ratchet, ctx)).ratchet)
-}
-
-async function nextMediumEpochJump(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<{ ratchet: SpiralRatchet; stepsJumped: number }> {
   const { webcrypto } = ctx
 
   if (ratchet.mediumCounter >= 255) {
-    return await nextLargeEpochJump(ratchet, ctx)
+    return await nextLargeEpoch(ratchet, ctx)
   }
 
-  const nextRatchet = {
+  return {
     ...ratchet,
 
     medium: await sha(webcrypto, ratchet.medium), // NOTE: this uses the input ratchet
@@ -89,33 +85,23 @@ async function nextMediumEpochJump(ratchet: SpiralRatchet, ctx: EncryptionContex
     small: await sha(webcrypto, complement(ratchet.medium)), // NOTE: this uses the input ratchet
     smallCounter: 0
   }
-
-  return {
-    ratchet: nextRatchet,
-    stepsJumped: combinedCounter(nextRatchet) - combinedCounter(ratchet) // they're in the same large epoch, so we can rely on combinedCounter
-  }
 }
 
 export async function nextLargeEpoch(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<SpiralRatchet> {
-  return (await nextLargeEpochJump(ratchet, ctx)).ratchet // already frozen
-}
-
-async function nextLargeEpochJump(ratchet: SpiralRatchet, ctx: EncryptionContext): Promise<{ ratchet: SpiralRatchet; stepsJumped: number }> {
-  return {
-    ratchet: await zero({ ...ctx, seed: ratchet.large }),
-    stepsJumped: 256 * 256 - combinedCounter(ratchet)
-  }
+  return await zero({ ...ctx, seed: ratchet.large })
 }
 
 export async function incBy(ratchet: SpiralRatchet, n: number, ctx: EncryptionContext): Promise<SpiralRatchet> {
   if (n <= 0) return ratchet
   if (n > 256 * 256 - combinedCounter(ratchet)) { // i.e. there *will* be a large epoch jump if we used `inc`s
-    const jumped = await nextLargeEpochJump(ratchet, ctx)
-    return await incBy(jumped.ratchet, n - jumped.stepsJumped, ctx)
+    const jumped = await nextLargeEpoch(ratchet, ctx)
+    const stepsDone = 256 * 256 - combinedCounter(ratchet) // steps to the next large epoch
+    return await incBy(jumped, n - stepsDone, ctx)
   }
   if (n > 256 - ratchet.smallCounter) { // i.e. there *will* be a medium epoch jump if we used `inc`s
-    const jumped = await nextMediumEpochJump(ratchet, ctx)
-    return await incBy(jumped.ratchet, n - jumped.stepsJumped, ctx)
+    const jumped = await nextMediumEpoch(ratchet, ctx)
+    const stepsDone = combinedCounter(jumped) - combinedCounter(ratchet)
+    return await incBy(jumped, n - stepsDone, ctx)
   }
   return await incBySmall(ratchet, n, ctx)
 }
