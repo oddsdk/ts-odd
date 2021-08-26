@@ -6,7 +6,7 @@ import { pageFromContext } from "./mocha-hook.js"
 describe("cbor encoding in the browser", () => {
 
   it("works with encryption in between", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     async function runRoundTrip(message: any) {

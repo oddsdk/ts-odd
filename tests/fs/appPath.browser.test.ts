@@ -6,7 +6,7 @@ import { pageFromContext } from "../mocha-hook.js"
 describe("the filesystem", () => {
 
   it("provides an appPath", async function() {
-    const page = pageFromContext(this)
+    const page = await pageFromContext(this)
     await loadWebnativePage(page)
 
     const string = await page.evaluate(async () => {

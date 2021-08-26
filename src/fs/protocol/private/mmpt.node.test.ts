@@ -3,8 +3,8 @@ import crypto from "crypto"
 import { IPFS } from "ipfs-core"
 
 import MMPT from "./mmpt.js"
-import * as ipfsConfig from "../../../ipfs/config.js"
-import { createInMemoryIPFS } from "../../../../tests/helpers/in-memory-ipfs.js"
+import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
+
 
 function sha256Str(str: string): string {
   return crypto.createHash("sha256").update(str).digest("hex")
@@ -15,9 +15,6 @@ function encode(str: string): Uint8Array {
 }
 
 
-let ipfs: IPFS | null = null
-
-
 /*
 Generates lots of entries for insertion into the MMPT.
 
@@ -26,9 +23,7 @@ The MMPT is a glorified key-value store.
 This returns an array of key-values sorted by the key,
 so that key collisions are more likely to be tested.
 */
-async function generateExampleEntries(amount: number): Promise<{ name: string; cid: string }[]> {
-  if (ipfs == null) throw new Error("IPFS not loaded")
-
+async function generateExampleEntries(ipfs: IPFS, amount: number): Promise<{ name: string; cid: string }[]> {
   const entries: { name: string; cid: string }[] = []
 
   for (const i of Array(amount).keys()) {
@@ -47,23 +42,14 @@ async function generateExampleEntries(amount: number): Promise<{ name: string; c
 
 describe("the mmpt", function () {
 
-  before(async function () {
-    ipfs = await createInMemoryIPFS()
-    ipfsConfig.set(ipfs)
-  })
+  it("can handle concurrent adds", async function() {
+    const ipfs = ipfsFromContext(this)
 
-  after(async () => {
-    if (ipfs == null) return
-    await ipfs.stop()
-  })
-
-
-  it("can handle concurrent adds", async () => {
     const mmpt = MMPT.create()
 
     // Generate lots of entries
     const amount = 500
-    const entries = await generateExampleEntries(amount)
+    const entries = await generateExampleEntries(ipfs, amount)
 
     // Concurrently add all those entries to the MMPT
     await Promise.all(entries.map(entry => mmpt.add(entry.name, entry.cid)))
@@ -77,12 +63,14 @@ describe("the mmpt", function () {
   })
 
   // This test used to generate even more data races
-  it("can handle concurrent adds in batches", async () => {
+  it("can handle concurrent adds in batches", async function() {
+    const ipfs = ipfsFromContext(this)
+
     const mmpt = MMPT.create()
 
     // Generate lots of entries
     const amount = 500
-    const entries = await generateExampleEntries(amount)
+    const entries = await generateExampleEntries(ipfs, amount)
 
     const slice_size = 5
     let soFar: { name: string; cid: string }[] = []
@@ -114,9 +102,11 @@ describe("the mmpt", function () {
   // reconstructing from CID causes the MMPT to be in a weird
   // half-in-memory half-in-ipfs state where not all branches are fetched
   // that's worth testing for sure
-  it("can handle concurrent adds when reconstructed from CID", async () => {
+  it("can handle concurrent adds when reconstructed from CID", async function() {
+    const ipfs = ipfsFromContext(this)
+
     const firstMMPT = MMPT.create()
-    for (const entry of await generateExampleEntries(500)) {
+    for (const entry of await generateExampleEntries(ipfs, 500)) {
       await firstMMPT.add(entry.name, entry.cid)
     }
 
@@ -124,7 +114,7 @@ describe("the mmpt", function () {
     const reconstructedMMPT = await MMPT.fromCID(await firstMMPT.put())
 
     // Test asynchronous adds
-    const entries = await generateExampleEntries(500)
+    const entries = await generateExampleEntries(ipfs, 500)
     await Promise.all(entries.map(entry => reconstructedMMPT.add(entry.name, entry.cid)))
 
     // Check that the MMPT contains all entries we added
@@ -134,4 +124,5 @@ describe("the mmpt", function () {
 
     expect(keys).toStrictEqual(intputKeys)
   })
+
 })

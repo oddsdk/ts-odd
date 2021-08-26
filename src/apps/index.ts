@@ -11,6 +11,13 @@ export type App = {
   modifiedAt: string
 }
 
+type AppIndexResponseJson = {
+  [k: number]: {
+    insertedAt: string
+    modifiedAt: string
+    urls: string[]
+  }
+}
 
 
 /**
@@ -38,13 +45,7 @@ export async function index(): Promise<Array<App>> {
     }
   })
 
-  const data: {
-    [k: number]: {
-      insertedAt: string
-      modifiedAt: string
-      urls: string[]
-    }
-  } = await response.json()
+  const data: AppIndexResponseJson = await response.json()
 
   return Object
     .values(data)
@@ -124,8 +125,8 @@ export async function deleteByDomain(
     }
   })
 
-  const index = await appIndexResponse.json() as { [_: string]: string[] }
-  const appToDelete = Object.entries(index).find(([_, domains]) => domains.includes(domain))
+  const index: AppIndexResponseJson = await appIndexResponse.json()
+  const appToDelete = Object.entries(index).find(([_, app]) => app.urls.includes(domain))
   if (appToDelete == null) {
     throw new Error(`Couldn't find an app with domain ${domain}`)
   }

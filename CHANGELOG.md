@@ -2,8 +2,8 @@
 
 ### v0.27.0
 
-Fixed `webnative.apps.index()`, and now returns a list of domains, along with their `insertedAt` and `modifiedAt` ISO8601 timestamps.
-
+- Fixed `webnative.apps.index()`, and now returns a list of domains, along with their `insertedAt` and `modifiedAt` ISO8601 timestamps.
+- Fixed `webnative.apps.deleteByDomain()` so it aligns with backend changes.
 
 
 ### v0.26.2

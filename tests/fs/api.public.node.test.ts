@@ -1,11 +1,7 @@
 import expect from "expect"
 import * as fc from "fast-check"
 
-import { IPFS } from "ipfs-core"
-import { createInMemoryIPFS } from "../helpers/in-memory-ipfs.js"
-
 import "../../src/setup/node.js"
-import * as ipfsConfig from "../../src/ipfs/index.js"
 import * as path from "../../src/path.js"
 
 import { pathSegment, pathSegmentPair } from "../helpers/paths.js"
@@ -15,18 +11,12 @@ import { publicFileContent as fileContent, publicDecode as decode } from "../hel
 
 describe("the public filesystem api", function () {
 
-  let ipfs: IPFS | null = null
-
   before(async function () {
     fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 50 } : { numRuns: 10 })
-    ipfs = await createInMemoryIPFS()
-    ipfsConfig.set(ipfs)
   })
 
   after(async () => {
     fc.resetConfigureGlobal()
-    if (ipfs === null) return
-    await ipfs.stop()
   })
 
 
