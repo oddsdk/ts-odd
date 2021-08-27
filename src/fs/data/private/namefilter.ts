@@ -4,7 +4,7 @@ import { EncryptionContext } from "./context.js"
 
 export const SATURATION_THRESHOLD = 1019
 
-export async function saturate(bareFilter: bloom.BloomFilter, key: ArrayBuffer, ctx: EncryptionContext): Promise<bloom.BloomFilter> {
+export async function saturate(bareFilter: bloom.BloomFilter, ctx: EncryptionContext): Promise<bloom.BloomFilter> {
   // The point of saturation is to have as close to SATURATION_THRESHOLD bits set as possible, ideally exactly that number
   // We can't hit that number exactly every time, because we can't know how many *new* bits will be set with the next add.
 
@@ -17,12 +17,10 @@ export async function saturate(bareFilter: bloom.BloomFilter, key: ArrayBuffer, 
   // because *at maxium* we get 30 bits set (assuming kHashes == 30).
   // Thus, this is an optimization to reduce the amount of bloom.countOnes calls
   let remainingStepsAtLeast = Math.floor((SATURATION_THRESHOLD - ones) / bloom.wnfsParameters.kHashes)
-  let workingHash = key // hashed in the next step, never added directly
 
   while (remainingStepsAtLeast >= 1) {
     for (let i = 0; i < remainingStepsAtLeast; i++) {
-      workingHash = await ctx.webcrypto.digest("sha-256", workingHash)
-      bloom.add(new Uint8Array(workingHash), workingFilter, bloom.wnfsParameters)
+      await saturationStep(workingFilter, ctx)
     }
     // Now that we've done e.g. 10 iterations, we might have ended up at, say 430 bits set
     // Assuming we want to end up at 600, there's still 170 more bits to go, so at least
@@ -35,20 +33,20 @@ export async function saturate(bareFilter: bloom.BloomFilter, key: ArrayBuffer, 
   // With that function we're adding more elements until we step *over* the limit
   // for the first time, always being carful to remember the last iteration, so we
   // can return it
-  return slowStepSaturate(workingFilter, workingHash, ctx)
+  return slowStepSaturate(workingFilter, ctx)
 }
 
-export async function slowStepSaturate(filter: bloom.BloomFilter, currentHash: ArrayBuffer, ctx: EncryptionContext): Promise<bloom.BloomFilter> {
+export async function slowStepSaturate(filter: bloom.BloomFilter, ctx: EncryptionContext): Promise<bloom.BloomFilter> {
   const nextFilter = new Uint8Array(filter)
-  const nextHash = await ctx.webcrypto.digest("sha-256", currentHash)
-  bloom.add(new Uint8Array(nextHash), nextFilter, bloom.wnfsParameters)
+  await saturationStep(nextFilter, ctx)
 
   const onesAfter = bloom.countOnes(nextFilter)
   if (onesAfter > SATURATION_THRESHOLD) return filter
-  return await slowStepSaturate(nextFilter, nextHash, ctx)
+
+  return await slowStepSaturate(nextFilter, ctx)
 }
 
-// modified the bloom filter in place
+// modifies the bloom filter in place
 async function saturationStep(filter: bloom.BloomFilter, ctx: EncryptionContext): Promise<void> {
   const hash = await ctx.webcrypto.digest("sha-256", filter)
   bloom.add(new Uint8Array(hash), filter, bloom.wnfsParameters)

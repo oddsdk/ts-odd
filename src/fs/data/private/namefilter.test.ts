@@ -16,9 +16,9 @@ describe("the namefilter module", () => {
 
   it(`has the property ${min} < countOnes(saturate(filter)) <= ${max}`, async () => {
     await fc.assert(fc.asyncProperty(
-      fc.uint8Array({ minLength: 32, maxLength: 32 }),
-      async seed => {
-        const saturated = await namefilter.saturate(bloom.empty(bloom.wnfsParameters), seed.buffer, ctx)
+      arbitraryAlmostEmptyBloomFilter(),
+      async initialFilter => {
+        const saturated = await namefilter.saturate(initialFilter, ctx)
         const ones = bloom.countOnes(saturated)
         expect(ones).toBeGreaterThan(min)
         expect(ones).toBeLessThanOrEqual(max)
@@ -28,13 +28,21 @@ describe("the namefilter module", () => {
 
   it("has the property saturate(x) == slowStepSaturate(x)", async () => {
     await fc.assert(fc.asyncProperty(
-      fc.uint8Array({ minLength: 32, maxLength: 32 }),
-      async seed => {
-        const saturatedFast = await namefilter.saturate(bloom.empty(bloom.wnfsParameters), seed.buffer, ctx)
-        const saturatedSlow = await namefilter.slowStepSaturate(bloom.empty(bloom.wnfsParameters), seed.buffer, ctx)
+      arbitraryAlmostEmptyBloomFilter(),
+      async initialFilter => {
+        const saturatedFast = await namefilter.saturate(initialFilter, ctx)
+        const saturatedSlow = await namefilter.slowStepSaturate(initialFilter, ctx)
         expect(saturatedFast).toEqual(saturatedSlow)
       }
     ))
   })
 
 })
+
+function arbitraryAlmostEmptyBloomFilter(): fc.Arbitrary<bloom.BloomFilter> {
+  return fc.uint8Array({ minLength: 32, maxLength: 32 }).map(seed => {
+    const filter = bloom.empty(bloom.wnfsParameters)
+    bloom.add(seed, filter, bloom.wnfsParameters)
+    return filter
+  })
+}
