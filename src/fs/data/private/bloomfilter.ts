@@ -50,7 +50,7 @@ function* indicesFor(element: Uint8Array, parameters: BloomParameters): Generato
 const bitcount = (n: number) => n.toString(2).replace(/0/g,"").length
 const LUT = Array.from(new Array(256)).map((_, i) => bitcount(i))
 
-export function countBits(filter: BloomFilter): number {
+export function countOnes(filter: BloomFilter): number {
   let count = 0
   for (const byte of filter) {
     count += LUT[byte] // 0 <= byte <= 255
