@@ -44,7 +44,7 @@ function getBit(filter: BloomFilter, bitIndex: number): boolean {
 function* indicesFor(element: Uint8Array, parameters: BloomParameters): Generator<number, void, unknown> {
   // enhanced double hashing (https://www.ccs.neu.edu/home/pete/pub/bloom-filters-verification.pdf, Section 5.2, Algorithm 2)
   const m = parameters.mBytes * 8
-  const uint32Limit = 0xFFFF_FFFF
+  const uint32Limit = 0x1_0000_0000
   let x = xxhash.xxHash32(element, 0)
   let y = xxhash.xxHash32(element, 1)
   yield x % m
