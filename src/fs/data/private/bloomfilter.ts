@@ -42,12 +42,20 @@ function getBit(filter: BloomFilter, bitIndex: number): boolean {
 }
 
 function* indicesFor(element: Uint8Array, parameters: BloomParameters): Generator<number, void, unknown> {
-  for (let i = 0; i < parameters.kHashes; i++) {
-    yield xxhash.xxHash32(element, i) % (parameters.mBytes * 8)
+  // enhanced double hashing (https://www.ccs.neu.edu/home/pete/pub/bloom-filters-verification.pdf, Section 5.2, Algorithm 2)
+  const m = parameters.mBytes * 8
+  const uint32Limit = 0xFFFF_FFFF
+  let x = xxhash.xxHash32(element, 0)
+  let y = xxhash.xxHash32(element, 1)
+  yield x % m
+  for (let i = 1; i < parameters.kHashes; i++) {
+    x = (x + y) % uint32Limit
+    y = (y + i) % uint32Limit
+    yield x % m
   }
 }
 
-const bitcount = (n: number) => n.toString(2).replace(/0/g,"").length
+const bitcount = (n: number) => n.toString(2).replace(/0/g, "").length
 const LUT = Array.from(new Array(256)).map((_, i) => bitcount(i))
 
 export function countOnes(filter: BloomFilter): number {
