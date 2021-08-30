@@ -17,10 +17,11 @@ export async function saturate(bareFilter: bloom.BloomFilter, ctx: EncryptionCon
   // because *at maxium* we get 30 bits set (assuming kHashes == 30).
   // Thus, this is an optimization to reduce the amount of bloom.countOnes calls
   let remainingStepsAtLeast = Math.floor((SATURATION_THRESHOLD - ones) / bloom.wnfsParameters.kHashes)
+  let workingHash = bareFilter.buffer
 
   while (remainingStepsAtLeast >= 1) {
     for (let i = 0; i < remainingStepsAtLeast; i++) {
-      await saturationStep(workingFilter, ctx)
+      workingHash = await saturationStep(workingFilter, workingHash, ctx)
     }
     // Now that we've done e.g. 10 iterations, we might have ended up at, say 430 bits set
     // Assuming we want to end up at 600, there's still 170 more bits to go, so at least
@@ -33,23 +34,25 @@ export async function saturate(bareFilter: bloom.BloomFilter, ctx: EncryptionCon
   // With that function we're adding more elements until we step *over* the limit
   // for the first time, always being carful to remember the last iteration, so we
   // can return it
-  return slowStepSaturate(workingFilter, ctx)
+  return slowStepSaturate(workingFilter, workingHash, ctx)
 }
 
-export async function slowStepSaturate(filter: bloom.BloomFilter, ctx: EncryptionContext): Promise<bloom.BloomFilter> {
+export async function slowStepSaturate(filter: bloom.BloomFilter, currentHash: ArrayBuffer, ctx: EncryptionContext): Promise<bloom.BloomFilter> {
   const nextFilter = new Uint8Array(filter)
-  await saturationStep(nextFilter, ctx)
+  const nextHash = await saturationStep(nextFilter, currentHash, ctx)
 
   const onesAfter = bloom.countOnes(nextFilter)
   if (onesAfter > SATURATION_THRESHOLD) return filter
 
-  return await slowStepSaturate(nextFilter, ctx)
+  return await slowStepSaturate(nextFilter, nextHash, ctx)
 }
 
 // modifies the bloom filter in place
-async function saturationStep(filter: bloom.BloomFilter, ctx: EncryptionContext): Promise<void> {
-  const hash = await ctx.webcrypto.digest("sha-256", filter)
+// returns the hash
+async function saturationStep(filter: bloom.BloomFilter, hashSource: ArrayBuffer, ctx: EncryptionContext): Promise<ArrayBuffer> {
+  const hash = await ctx.webcrypto.digest("sha-256", hashSource)
   bloom.add(new Uint8Array(hash), filter, bloom.wnfsParameters)
+  return hash
 }
 
 
