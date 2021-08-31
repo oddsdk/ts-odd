@@ -1,13 +1,13 @@
-import CID from "cids"
 import * as cbor from "cborg"
+import * as uint8arrays from "uint8arrays"
 
 import { Metadata } from "../metadata.js"
+import { mapRecord } from "../links.js"
+import { isNonEmpty } from "../common.js"
+import { Ref } from "../ref.js"
 import * as bloom from "./bloomfilter.js"
 import * as namefilter from "./namefilter.js"
-import { getCrypto } from "./context.js"
 import * as ratchet from "./spiralratchet.js"
-import { CborForm } from "../serialization.js"
-import { mapRecordSync } from "../links.js"
 
 
 type PrivateNode = PrivateDirectory | PrivateFile
@@ -16,23 +16,71 @@ interface PrivateDirectory {
   metadata: Metadata
   bareName: bloom.BloomFilter
   revision: ratchet.SpiralRatchet
-  links: { [path: string]: Unlock & INumber }
+  links: { [path: string]: LazyPrivateRef<PrivateNode> }
 }
 
 interface PrivateFile {
   metadata: Metadata
   bareName: bloom.BloomFilter
   revision: ratchet.SpiralRatchet // so anyone reading this can fetch newer versions
-  content: Unlock & { cid: CID }
+  content: PrivateRef
 }
 
-interface Unlock {
-  key: ArrayBuffer // 32bit AES key
-  // algorithm: "AES-256-GCM" // only supported algorithm right now
+interface PrivateRef {
+  key: Uint8Array // 32bit AES key
+  algorithm: "AES-256-GCM" // only supported algorithm right now
+  hash: Uint8Array // sha-256 hash of saturated namefilter
 }
 
-interface INumber {
-  inumber: Uint8Array // length 32
+interface ParentBareName {
+  parentBareName: bloom.BloomFilter
+}
+
+interface PrivateStoreContext {
+  getBlock(ref: PrivateRef, ctx: AbortContext): Promise<Uint8Array | null>
+  putBlock(ref: PrivateRef, block: Uint8Array, ctx: AbortContext): Promise<void>
+}
+
+interface AbortContext {
+  signal?: AbortSignal
+}
+
+type PrivateOperationContext = PrivateStoreContext & AbortContext
+
+
+type LazyPrivateRef<T> = Ref<T, PrivateRef, PrivateOperationContext>
+
+
+const privateRef = <T>(ref: PrivateRef, deserialize: (bytes: Uint8Array) => T): LazyPrivateRef<T> => {
+  let obj: Promise<T> | null = null
+  let loadedObj: T | null = null
+
+  return Object.freeze({
+
+    async get({ getBlock, signal }: PrivateOperationContext) {
+      if (obj == null) {
+        obj = getBlock(ref, { signal }).then(block => {
+          if (block == null) throw new Error(`Couldn't find block with name hash ${uint8arrays.toString(ref.hash, "base64url")}`)
+          return deserialize(block)
+        }).then(loaded => loadedObj = loaded)
+      }
+      return await obj
+    },
+
+    async ref() {
+      return ref
+    },
+
+    toObject() {
+      if (loadedObj != null) loadedObj
+      return {
+        key: uint8arrays.toString(ref.key, "base64url"),
+        algorithm: ref.algorithm,
+        hash: uint8arrays.toString(ref.hash, "base64url"),
+      }
+    }
+
+  })
 }
 
 
@@ -50,54 +98,52 @@ export function isPrivateDirectory(node: PrivateNode): node is PrivateDirectory 
 //--------------------------------------
 
 
-export function nodeToCborForm(node: PrivateNode): CborForm {
-  return isPrivateFile(node) ? fileToCborForm(node) : directoryToCborForm(node)
+export async function nodeToCbor(node: PrivateNode, ctx: PrivateOperationContext): Promise<Uint8Array> {
+  return isPrivateFile(node) ? fileToCbor(node) : await directoryToCbor(node, ctx)
 }
 
-export function fileToCborForm(file: PrivateFile): CborForm {
-  return {
+export function fileToCbor(file: PrivateFile): Uint8Array {
+  return cbor.encode({
     metadata: file.metadata,
     bareName: file.bareName,
     revision: ratchet.toCborForm(file.revision),
-    content: {
-      cid: file.content.cid,
-      key: new Uint8Array(file.content.key)
-    }
-  }
+    content: file.content
+  })
 }
 
-export function directoryToCborForm(directory: PrivateDirectory): CborForm {
-  return {
+export async function directoryToCbor(directory: PrivateDirectory, ctx: PrivateOperationContext): Promise<Uint8Array> {
+  return cbor.encode({
     metadata: directory.metadata,
     bareName: directory.bareName,
     revision: ratchet.toCborForm(directory.revision),
-    links: mapRecordSync(directory.links, (_, link) => ({
-      ...link,
-      key: new Uint8Array(link.key)
-    }))
+    links: await mapRecord(directory.links, async (_, link) => await link.ref(ctx))
+  })
+}
+
+// export async function loadPrivateNode(ref: PrivateRef, ctx: PrivateOperationContext)
+
+
+
+//--------------------------------------
+// Operations
+//--------------------------------------
+
+
+export async function getNode(path: [string, ...string[]], directory: PrivateDirectory, ctx: PrivateOperationContext): Promise<PrivateNode | null> {
+  const [head, ...rest] = path
+  const nextNode = await lookupNode(head, directory, ctx)
+
+  if (!isNonEmpty(rest)) {
+    return nextNode
   }
+
+  if (nextNode == null || isPrivateFile(nextNode)) {
+    return null
+  }
+
+  return getNode(rest, nextNode, ctx)
 }
 
-export async function encryptNode(node: PrivateNode): Promise<ArrayBuffer> {
-  const { crypto, webcrypto } = getCrypto()
-  const serialized = cbor.encode(nodeToCborForm(node))
-  const key = await webcrypto.importKey(
-    "raw",
-    await ratchet.toKey(node.revision),
-    { name: "AES-GCM", length: 256 },
-    true,
-    ["encrypt", "decrypt"]
-  )
-  const iv = crypto.getRandomValues(new Uint8Array(16))
-  return await webcrypto.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    serialized
-  )
-}
-
-export async function privateStoreNameForNode(file: PrivateNode): Promise<bloom.BloomFilter> {
-  const key = await ratchet.toKey(file.revision)
-  const bareWithKey = await namefilter.addToBare(file.bareName, key)
-  return await namefilter.saturate(bareWithKey)
+export async function lookupNode(path: string, directory: PrivateDirectory, ctx: PrivateOperationContext): Promise<PrivateNode | null> {
+  return directory.links[path]?.get(ctx)
 }

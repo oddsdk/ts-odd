@@ -12,7 +12,7 @@ export interface Ref<T, R, Ctx> {
   get(ctx: Ctx): Promise<T>
   ref(ctx: Ctx): Promise<R>
   /** Convenience function to make JSON.serialize work better with a custom replacer */
-  toObject(): T | string
+  toObject(): T | unknown
 }
 
 
@@ -85,14 +85,3 @@ export const lazyRefFromObj = <T>(obj: T, store: ToCID<T>): LazyCIDRef<T> => {
 
   })
 }
-
-
-// Just an example to illustrate why the abstractness
-/*
-export interface PrivateOptions {
-  mmpt: MMPT
-}
-
-export type LazyPrivateNameRef<T> = Ref<T, PrivateName, PersistenceOptions & PrivateOptions>
-
-*/

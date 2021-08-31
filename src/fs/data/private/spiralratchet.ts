@@ -1,4 +1,4 @@
-import { CborForm, hasProp } from "../serialization.js"
+import { CborForm, hasProp } from "../common.js"
 import { getCrypto } from "./context.js"
 
 export interface SpiralRatchet {

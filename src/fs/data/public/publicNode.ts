@@ -1,4 +1,5 @@
 import CID from "cids"
+import { isNonEmpty } from "../common.js"
 import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
 import { metadataToCID, metadataFromCID, Metadata, newDirectory, updateMtime, newFile } from "../metadata.js"
 import { LazyCIDRef, lazyRefFromCID, lazyRefFromObj, OperationContext } from "../ref.js"
@@ -258,14 +259,17 @@ export async function getNode(
   ctx: OperationContext
 ): Promise<PublicNode | null> {
   const [head, ...rest] = path
+  const nextNode = await lookupNode(head, directory, ctx)
+
   if (!isNonEmpty(rest)) {
-    return await lookupNode(head, directory, ctx)
+    return nextNode
   }
 
-  const nextDirectory = await lookupDirectory(head, directory, ctx)
-  if (nextDirectory == null) return null
+  if (nextNode == null || isPublicFile(nextNode)) {
+    return null
+  }
 
-  return await getNode(rest, nextDirectory, ctx)
+  return await getNode(rest, nextNode, ctx)
 }
 
 
@@ -471,15 +475,4 @@ async function fileFromLinksHelper(cid: CID, fileLinks: Record<string, CID>, met
   }
 
   return Object.freeze(result)
-}
-
-
-
-//--------------------------------------
-// Utilities
-//--------------------------------------
-
-
-function isNonEmpty(paths: string[]): paths is [string, ...string[]] {
-  return paths.length > 0
 }

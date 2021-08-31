@@ -3,7 +3,7 @@ import dagPb from "ipld-dag-pb"
 import { getNameFromCode } from "multicodec"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
-import { hasProp } from "./serialization.js"
+import { hasProp } from "./common.js"
 import { FromCID, LazyCIDRef, lazyRefFromCID, OperationContext } from "./ref.js"
 
 
