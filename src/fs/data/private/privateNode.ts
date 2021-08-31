@@ -2,11 +2,12 @@ import CID from "cids"
 import * as cbor from "cborg"
 
 import { Metadata } from "../metadata.js"
-import { Ref } from "../ref.js"
 import * as bloom from "./bloomfilter.js"
+import * as namefilter from "./namefilter.js"
 import { getCrypto } from "./context.js"
 import * as ratchet from "./spiralratchet.js"
 import { CborForm } from "../serialization.js"
+import { mapRecordSync } from "../links.js"
 
 
 type PrivateNode = PrivateDirectory | PrivateFile
@@ -15,7 +16,7 @@ interface PrivateDirectory {
   metadata: Metadata
   bareName: bloom.BloomFilter
   revision: ratchet.SpiralRatchet
-  links: { [path: string]: LazyPrivateStoreRef<PrivateNode> }
+  links: { [path: string]: Unlock & INumber }
 }
 
 interface PrivateFile {
@@ -30,24 +31,28 @@ interface Unlock {
   // algorithm: "AES-256-GCM" // only supported algorithm right now
 }
 
-/** always *saturated* name filters (i.e. a bare namefilter + key from ratchet and then saturated) */
-type PrivateStoreName = bloom.BloomFilter
-
-interface PrivateStoreContext {
-  getEncryptedBlock(privateStoreName: PrivateStoreName): Promise<Uint8Array | null>
-  putEncryptedBlock(privateStoreName: PrivateStoreName, encryptedBlock: Uint8Array): Promise<void>
-  hasEncryptedBlock(privateStoreName: PrivateStoreName): Promise<boolean>
+interface INumber {
+  inumber: Uint8Array // length 32
 }
 
-type PrivateOperationContext = PrivateStoreContext
 
-type LazyPrivateStoreRef<T> = Ref<T, PrivateStoreName, Unlock & PrivateOperationContext>
+export function isPrivateFile(node: PrivateNode): node is PrivateFile {
+  return node.metadata.isFile
+}
+
+export function isPrivateDirectory(node: PrivateNode): node is PrivateDirectory {
+  return !node.metadata.isFile
+}
 
 
 //--------------------------------------
 // Persistence
 //--------------------------------------
 
+
+export function nodeToCborForm(node: PrivateNode): CborForm {
+  return isPrivateFile(node) ? fileToCborForm(node) : directoryToCborForm(node)
+}
 
 export function fileToCborForm(file: PrivateFile): CborForm {
   return {
@@ -61,12 +66,24 @@ export function fileToCborForm(file: PrivateFile): CborForm {
   }
 }
 
-export async function encryptFile(file: PrivateFile): Promise<ArrayBuffer> {
+export function directoryToCborForm(directory: PrivateDirectory): CborForm {
+  return {
+    metadata: directory.metadata,
+    bareName: directory.bareName,
+    revision: ratchet.toCborForm(directory.revision),
+    links: mapRecordSync(directory.links, (_, link) => ({
+      ...link,
+      key: new Uint8Array(link.key)
+    }))
+  }
+}
+
+export async function encryptNode(node: PrivateNode): Promise<ArrayBuffer> {
   const { crypto, webcrypto } = getCrypto()
-  const serialized = cbor.encode(fileToCborForm(file))
+  const serialized = cbor.encode(nodeToCborForm(node))
   const key = await webcrypto.importKey(
     "raw",
-    await ratchet.toKey(file.revision),
+    await ratchet.toKey(node.revision),
     { name: "AES-GCM", length: 256 },
     true,
     ["encrypt", "decrypt"]
@@ -79,6 +96,8 @@ export async function encryptFile(file: PrivateFile): Promise<ArrayBuffer> {
   )
 }
 
-export async function storeFile(file: PrivateFile, ctx: PrivateOperationContext): Promise<PrivateStoreName> {
-  throw "unimplemented"
+export async function privateStoreNameForNode(file: PrivateNode): Promise<bloom.BloomFilter> {
+  const key = await ratchet.toKey(file.revision)
+  const bareWithKey = await namefilter.addToBare(file.bareName, key)
+  return await namefilter.saturate(bareWithKey)
 }
