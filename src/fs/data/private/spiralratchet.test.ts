@@ -8,23 +8,20 @@ import { isCI, canonicalize } from "../../../../tests/helpers/common.js"
 
 describe("the spiral ratchet module", () => {
 
-  const ctx = getCrypto()
-
-
   describe("next65536Epoch", () => {
     it("has the property that next65536Epoch rounds up to the next large zero", async () => {
-      const spiral = await ratchet.setup(ctx)
-      const slow = await iterateAsync(spiral, s => ratchet.nextMediumEpoch(s, ctx), 256 - spiral.mediumCounter)
-      const fast = await ratchet.nextLargeEpoch(spiral, ctx)
+      const spiral = await ratchet.setup()
+      const slow = await iterateAsync(spiral, s => ratchet.nextMediumEpoch(s), 256 - spiral.mediumCounter)
+      const fast = await ratchet.nextLargeEpoch(spiral)
       expect(canonicalize(slow)).toEqual(canonicalize(fast))
     })
   })
 
   describe("next256Epoch", () => {
     it("rounds up to the next medium zero", async () => {
-      const spiral = await ratchet.setup(ctx)
-      const fast = await ratchet.nextMediumEpoch(spiral, ctx)
-      const slow = await iterateAsync(spiral, s => ratchet.inc(s, ctx), 256 - spiral.smallCounter)
+      const spiral = await ratchet.setup()
+      const fast = await ratchet.nextMediumEpoch(spiral)
+      const slow = await iterateAsync(spiral, s => ratchet.inc(s), 256 - spiral.smallCounter)
       expect(canonicalize(fast)).toEqual(canonicalize(slow))
     })
   })
@@ -34,15 +31,15 @@ describe("the spiral ratchet module", () => {
     it("is backwards secret by always changing (appropriate) digits when increasing", async () => {
       const exampleOptions = {
         seed: new TextEncoder().encode("hello world").buffer,
-        ffSmall: 0,
-        ffMedium: 0,
+        preIncrementSmall: 0,
+        preIncrementMedium: 0,
       }
       await fc.assert(fc.asyncProperty(
         fc.nat({ max: 999999 }).map(n => n + 1),
         arbitraryRatchetOptions(),
         async (iterations, options) => {
-          const initial = await ratchet.setup({ ...ctx, ...options })
-          const increased = await ratchet.incBy(initial, iterations, ctx)
+          const initial = await ratchet.setup(options)
+          const increased = await ratchet.incBy(initial, iterations)
 
           // the small digit must always change
           // (it doesn't work like 123 + 20 = 143, where 1 and 3 didn't change)
@@ -68,17 +65,17 @@ describe("the spiral ratchet module", () => {
     it("is backwards secret by always producing a different key when increasing", async () => {
       const exampleOptions = {
         seed: new TextEncoder().encode("hello world").buffer,
-        ffSmall: 0,
-        ffMedium: 0,
+        preIncrementSmall: 0,
+        preIncrementMedium: 0,
       }
       await fc.assert(fc.asyncProperty(
         fc.nat({ max: 999999 }).map(n => n + 1),
         arbitraryRatchetOptions(),
         async (iterations, options) => {
-          const initial = await ratchet.setup({ ...ctx, ...options })
-          const increased = await ratchet.incBy(initial, iterations, ctx)
-          expect(canonicalize(await ratchet.toKey(increased, ctx)))
-            .not.toEqual(canonicalize(await ratchet.toKey(initial, ctx)))
+          const initial = await ratchet.setup(options)
+          const increased = await ratchet.incBy(initial, iterations)
+          expect(canonicalize(await ratchet.toKey(increased)))
+            .not.toEqual(canonicalize(await ratchet.toKey(initial)))
         }
       ), {
         examples: [ // Especially test the boundaries
@@ -91,16 +88,15 @@ describe("the spiral ratchet module", () => {
       })
     })
 
-    const test = (iters: number, smallOffset: number, mediumOffset: number) => {
+    const test = (iters: number, preIncrementSmall: number, preIncrementMedium: number) => {
       it(`has the property incBy ${iters} = ${iters} * inc`, async () => {
         const spiral = await ratchet.setup({
-          ...ctx,
           seed: new TextEncoder().encode("hello world").buffer,
-          ffSmall: smallOffset,
-          ffMedium: mediumOffset
+          preIncrementSmall,
+          preIncrementMedium, 
         })
-        const positional = await ratchet.incBy(spiral, iters, ctx)
-        const unary = await iterateAsync(spiral, s => ratchet.inc(s, ctx), iters)
+        const positional = await ratchet.incBy(spiral, iters)
+        const unary = await iterateAsync(spiral, s => ratchet.inc(s), iters)
         expect(canonicalize(positional)).toEqual(canonicalize(unary))
       })
     }
@@ -131,9 +127,9 @@ describe("the spiral ratchet module", () => {
           fc.nat({ max: 100000 }),
           arbitraryRatchetOptions(),
           async (iters, options) => {
-            const spiral = await ratchet.setup({ ...ctx, ...options })
-            const positional = await ratchet.incBy(spiral, iters, ctx)
-            const unary = await iterateAsync(spiral, s => ratchet.inc(s, ctx), iters)
+            const spiral = await ratchet.setup(options)
+            const positional = await ratchet.incBy(spiral, iters)
+            const unary = await iterateAsync(spiral, s => ratchet.inc(s), iters)
             expect(canonicalize(positional)).toEqual(canonicalize(unary))
           }
         ), { numRuns: 10 }) // running 70k iterations takes ~3 seconds
@@ -147,12 +143,12 @@ describe("the spiral ratchet module", () => {
           })),
           arbitraryRatchetOptions(),
           async (iterations, options) => {
-            const initial = await ratchet.setup({ ...ctx, ...options })
+            const initial = await ratchet.setup(options)
             let stepped = initial
             for (const iters of iterations.array) {
-              stepped = await ratchet.incBy(stepped, iters, ctx)
+              stepped = await ratchet.incBy(stepped, iters)
             }
-            const jumped = await ratchet.incBy(initial, iterations.total, ctx)
+            const jumped = await ratchet.incBy(initial, iterations.total)
             expect(canonicalize(stepped)).toEqual(canonicalize(jumped))
           })
         )
@@ -172,7 +168,7 @@ async function iterateAsync<T>(initial: T, f: (obj: T) => Promise<T>, n: number)
 function arbitraryRatchetOptions(): fc.Arbitrary<ratchet.RatchetOptions> {
   return fc.record({
     seed: fc.uint8Array().map(arr => arr.buffer),
-    ffMedium: fc.nat({ max: 255 }),
-    ffSmall: fc.nat({ max: 255 }),
+    preIncrementMedium: fc.nat({ max: 255 }),
+    preIncrementSmall: fc.nat({ max: 255 }),
   })
 }

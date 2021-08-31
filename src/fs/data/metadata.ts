@@ -2,7 +2,7 @@ import CID from "cids"
 import * as cbor from "cborg"
 import { OperationContext } from "./ref.js"
 import { SemVer, v1 } from "./semver.js"
-import { hasProp } from "./checks.js"
+import { hasProp } from "./serialization.js"
 
 export type UnixFileMode = number
 

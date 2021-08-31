@@ -1,9 +1,13 @@
-export interface EncryptionContext {
+export interface CryptoAPIs {
   webcrypto: SubtleCrypto
   crypto: Crypto
 }
 
-export function getCrypto(): EncryptionContext {
+let memoized: null | CryptoAPIs = null
+
+export function getCrypto(): CryptoAPIs {
+  if (memoized != null) return memoized
+
   const crypto: Crypto | undefined | null =
       // nodejs v15+
       (globalThis.crypto as any).webcrypto
@@ -14,5 +18,6 @@ export function getCrypto(): EncryptionContext {
       throw new Error("Couldn't find access to the WebCrypto API on this platform.")
   }
 
-  return { webcrypto: crypto.subtle, crypto }
+  memoized = { webcrypto: crypto.subtle, crypto }
+  return memoized
 }

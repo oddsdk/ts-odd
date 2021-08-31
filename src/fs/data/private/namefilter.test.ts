@@ -2,13 +2,11 @@ import expect from "expect"
 import * as fc from "fast-check"
 
 import * as bloom from "./bloomfilter.js"
-import { getCrypto } from "./context.js"
 import * as namefilter from "./namefilter.js"
 
 
 describe("the namefilter module", () => {
 
-  const ctx = getCrypto()
   const limit = namefilter.SATURATION_THRESHOLD
   const k = bloom.wnfsParameters.kHashes
   const min = limit - k
@@ -18,7 +16,7 @@ describe("the namefilter module", () => {
     await fc.assert(fc.asyncProperty(
       arbitraryAlmostEmptyBloomFilter(),
       async initialFilter => {
-        const saturated = await namefilter.saturate(initialFilter, ctx)
+        const saturated = await namefilter.saturate(initialFilter)
         const ones = bloom.countOnes(saturated)
         expect(ones).toBeGreaterThan(min)
         expect(ones).toBeLessThanOrEqual(max)
@@ -30,8 +28,8 @@ describe("the namefilter module", () => {
     await fc.assert(fc.asyncProperty(
       arbitraryAlmostEmptyBloomFilter(),
       async initialFilter => {
-        const saturatedFast = await namefilter.saturate(initialFilter, ctx)
-        const saturatedSlow = await namefilter.slowStepSaturate(initialFilter, ctx)
+        const saturatedFast = await namefilter.saturate(initialFilter)
+        const saturatedSlow = await namefilter.slowStepSaturate(initialFilter)
         expect(saturatedFast).toEqual(saturatedSlow)
       }
     ))

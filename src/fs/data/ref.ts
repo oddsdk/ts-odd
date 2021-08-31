@@ -2,6 +2,12 @@ import type { IPFS } from "ipfs-core"
 import CID from "cids"
 
 
+/**
+ * An abstraction over a mechanism that creates *immutable* references to data.
+ * I.e. if the data changes - the reference changes.
+ * One concrete example of this is content addressing.
+ * Another example is the namefilters for private names in WNFS.
+ */
 export interface Ref<T, R, Ctx> {
   get(ctx: Ctx): Promise<T>
   ref(ctx: Ctx): Promise<R>
