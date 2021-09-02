@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.27.1
+
+- Made the login low more resilient. Should work better with extensions triggering `postMessage`s now.
+
+
 ### v0.27.0
 
 - Fixed `webnative.apps.index()`, and now returns a list of domains, along with their `insertedAt` and `modifiedAt` ISO8601 timestamps.
