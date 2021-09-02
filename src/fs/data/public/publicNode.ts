@@ -1,5 +1,5 @@
 import CID from "cids"
-import { isNonEmpty } from "../common.js"
+import { isNonEmpty, Timestamp } from "../common.js"
 import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
 import { metadataToCID, metadataFromCID, Metadata, newDirectory, updateMtime, newFile } from "../metadata.js"
 import { LazyCIDRef, lazyRefFromCID, lazyRefFromObj, OperationContext } from "../ref.js"
@@ -30,10 +30,6 @@ export interface PublicFile {
 
 export type PublicNode = PublicFile | PublicDirectory
 
-export interface Timestamp {
-  now: number
-}
-
 
 export function isPublicFile(node: PublicNode): node is PublicFile {
   return node.metadata.isFile
@@ -58,7 +54,7 @@ export async function read(
   const node = await getNode(path, directory, ctx)
 
   if (node == null) throw new Error(`Couldn't read. No such file ${path}.`)
-  if (isPublicDirectory(node)) throw new Error(`Couldn't read ${path}, it's a directory.`)
+  if (!isPublicFile(node)) throw new Error(`Couldn't read ${path}, it's not a file.`)
 
   return node.userland
 }
@@ -279,13 +275,13 @@ export async function lookupNode(path: string, dir: PublicDirectory, ctx: Operat
 
 export async function lookupDirectory(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicDirectory | null> {
   const node = await lookupNode(path, dir, ctx)
-  if (node == null || isPublicFile(node)) return null
+  if (node == null || !isPublicDirectory(node)) return null
   return node
 }
 
 export async function lookupFile(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicFile | null> {
   const node = await lookupNode(path, dir, ctx)
-  if (node == null || isPublicDirectory(node)) return null
+  if (node == null || !isPublicFile(node)) return null
   return node
 }
 

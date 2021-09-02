@@ -11,7 +11,8 @@ import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { lazyRefFromCID, OperationContext } from "../ref.js"
 import * as metadata from "../metadata.js"
 
-import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, isPublicFile, mkdir, mv, nodeFromCID, nodeToCID, PublicDirectory, rm, Timestamp, write } from "./publicNode.js"
+import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, isPublicFile, mkdir, mv, nodeFromCID, nodeToCID, PublicDirectory, rm, write } from "./publicNode.js"
+import { Timestamp } from "../common.js"
 
 
 describe("the data public node module", () => {

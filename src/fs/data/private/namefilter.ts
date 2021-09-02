@@ -1,6 +1,10 @@
 import * as bloom from "./bloomfilter.js"
-import { getCrypto } from "./context.js"
+import { webcrypto } from "./webcrypto.js"
 
+
+export function empty(): bloom.BloomFilter {
+  return bloom.empty(bloom.wnfsParameters)
+}
 
 export const SATURATION_THRESHOLD = 1019
 
@@ -48,13 +52,13 @@ export async function slowStepSaturate(filter: bloom.BloomFilter): Promise<bloom
 
 // modifies the bloom filter in place
 async function saturationStep(filter: bloom.BloomFilter): Promise<void> {
-  const hash = await getCrypto().webcrypto.digest("sha-256", filter)
+  const hash = await webcrypto.digest("sha-256", filter)
   bloom.add(new Uint8Array(hash), filter, bloom.wnfsParameters)
 }
 
 
-export async function addToBare(bareFilter: bloom.BloomFilter, key: ArrayBuffer): Promise<bloom.BloomFilter> {
-  const hash = await getCrypto().webcrypto.digest("sha-256", key)
+export async function addToBare(bareFilter: bloom.BloomFilter, keyOrINumber: ArrayBuffer): Promise<bloom.BloomFilter> {
+  const hash = await webcrypto.digest("sha-256", keyOrINumber)
   const added = new Uint8Array(bareFilter)
   bloom.add(new Uint8Array(hash), added, bloom.wnfsParameters)
   return added

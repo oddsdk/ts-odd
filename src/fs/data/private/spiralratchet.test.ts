@@ -2,7 +2,6 @@ import expect from "expect"
 import * as fc from "fast-check"
 
 import * as ratchet from "./spiralratchet.js"
-import { getCrypto } from "./context.js"
 import { isCI, canonicalize } from "../../../../tests/helpers/common.js"
 
 

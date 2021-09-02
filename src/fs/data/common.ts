@@ -17,3 +17,12 @@ export function hasProp<K extends PropertyKey>(data: unknown, prop: K): data is 
 export function isNonEmpty(path: string[]): path is [string, ...string[]] {
   return path.length > 0
 }
+
+export interface Timestamp {
+  now: number
+}
+
+export interface AbortContext {
+  signal?: AbortSignal
+}
+
