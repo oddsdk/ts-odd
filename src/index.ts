@@ -139,11 +139,11 @@ export async function initialise(
     const newUser = url.searchParams.get("newUser") === "t"
     const username = url.searchParams.get("username") || ""
 
-    await importClassifiedInfo(
+    await retry(async () => importClassifiedInfo(
       authorised === "via-postmessage"
         ? await getClassifiedViaPostMessage()
         : await ipfs.cat(authorised) // in any other case we expect it to be a CID
-    )
+    ), { tries: 10, timeout: 10000, timeoutMessage: "Trying to retrieve authentication secrets from the auth lobby timed out after 10 seconds." })
 
     await storage.setItem(USERNAME_STORAGE_KEY, username)
 
@@ -388,6 +388,10 @@ async function getClassifiedViaPostMessage(): Promise<string> {
       window.addEventListener("message", listen)
 
       function listen(event: MessageEvent<string>) {
+        if (new URL(event.origin).host !== new URL(setup.endpoints.lobby).host) {
+          console.log(`Got a message from ${event.origin} while waiting for login credentials. Ignoring.`)
+          return
+        }
         window.removeEventListener("message", listen)
         if (event.data) {
           resolve(event.data)
@@ -422,4 +426,24 @@ async function validateSecrets(permissions: Permissions): Promise<boolean> {
     }),
     Promise.resolve(true)
   )
+}
+
+async function retry(action: () => Promise<void>, options: { tries: number; timeout: number; timeoutMessage: string }): Promise<void> {
+  return await Promise.race([
+    (async () => {
+      let tryNum = 1
+      while (tryNum <= options.tries) {
+        try {
+          await action()
+          return
+        } catch (e) {
+          if (tryNum == options.tries) {
+            throw e
+          }
+        }
+        tryNum++
+      }
+    })(),
+    new Promise<void>((resolve, reject) => setTimeout(() => reject(new Error(options.timeoutMessage)), options.timeout))
+  ])
 }
