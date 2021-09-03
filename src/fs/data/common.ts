@@ -14,6 +14,10 @@ export function hasProp<K extends PropertyKey>(data: unknown, prop: K): data is 
   return typeof data === "object" && data != null && prop in data
 }
 
+export function isRecord(data: unknown): data is Record<PropertyKey, unknown> {
+  return typeof data === "object" && data != null
+}
+
 export function isNonEmpty(path: string[]): path is [string, ...string[]] {
   return path.length > 0
 }

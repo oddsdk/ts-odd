@@ -2,9 +2,7 @@ import * as cbor from "cborg"
 import * as uint8arrays from "uint8arrays"
 
 import * as metadata from "../metadata.js"
-import { mapRecord, mapRecordSync } from "../links.js"
-import { AbortContext, CborForm, hasProp, isNonEmpty, Timestamp } from "../common.js"
-import { Ref } from "../ref.js"
+import { AbortContext, hasProp, isNonEmpty, isRecord, Timestamp } from "../common.js"
 import * as bloom from "./bloomfilter.js"
 import * as namefilter from "./namefilter.js"
 import * as ratchet from "./spiralratchet.js"
@@ -13,11 +11,23 @@ import { crypto } from "./webcrypto.js"
 
 export type PrivateNode = PrivateDirectory | PrivateFile
 
-export interface PrivateDirectory {
+export type PrivateDirectory = PrivateDirectorySchema<PrivateNode | PrivateRef>
+
+export type PrivateNodePersisted = PrivateDirectoryPersisted | PrivateFile
+
+export type PrivateDirectoryPersisted = PrivateDirectorySchema<PrivateRef>
+
+export interface PrivateDirectorySchema<Links> {
   metadata: metadata.Metadata
   bareName: bloom.BloomFilter
   revision: ratchet.SpiralRatchet
-  links: { [path: string]: LazyPrivateRef<PrivateNode> }
+  links: {
+    // we support storing `PrivateNode`s here directly so
+    // we can quickly construct private filesystem structures
+    // without side effects like polluting the ipfs blockstore or
+    // having to advance ratchets/do encryption, etc.
+    [path: string]: Links
+  }
 }
 
 export interface PrivateFile {
@@ -41,67 +51,6 @@ export interface PrivateStore {
 export type PrivateOperationContext = PrivateStore & AbortContext
 
 
-export type LazyPrivateRef<T> = Ref<T, PrivateRef, PrivateOperationContext>
-
-
-export const privateRef = <T>(ref: PrivateRef, deserialize: (bytes: Uint8Array) => T): LazyPrivateRef<T> => {
-  let obj: Promise<T> | null = null
-  let loadedObj: T | null = null
-
-  return Object.freeze({
-
-    async get({ getBlock, signal }: PrivateOperationContext) {
-      if (obj == null) {
-        obj = getBlock(ref, { signal }).then(block => {
-          if (block == null) throw new Error(`Couldn't find block with namefilter ${uint8arrays.toString(ref.namefilter, "base64url")}`)
-          return deserialize(block)
-        }).then(loaded => loadedObj = loaded)
-      }
-      return await obj
-    },
-
-    async ref() {
-      return ref
-    },
-
-    toObject() {
-      if (loadedObj != null) loadedObj
-      return {
-        key: uint8arrays.toString(ref.key, "base64url"),
-        algorithm: ref.algorithm,
-        hash: uint8arrays.toString(ref.namefilter, "base64url"),
-      }
-    }
-
-  })
-}
-
-
-export const privateRefFromObj = <T>(obj: T, put: (obj: T, ctx: PrivateOperationContext) => Promise<PrivateRef>): LazyPrivateRef<T> => {
-
-  let ref: Promise<PrivateRef> | null = null
-
-  return Object.freeze({
-
-    async get() {
-      return obj
-    },
-
-    async ref(ctx: PrivateOperationContext) {
-      if (ref == null) {
-        ref = put(obj, ctx)
-      }
-      return await ref
-    },
-
-    toObject() {
-      return obj
-    }
-
-  })
-}
-
-
 export function isPrivateFile(node: PrivateNode): node is PrivateFile {
   return node.metadata.isFile
 }
@@ -110,14 +59,21 @@ export function isPrivateDirectory(node: PrivateNode): node is PrivateDirectory 
   return !node.metadata.isFile
 }
 
+export function isPrivateRef(ref: unknown): ref is PrivateRef {
+  if (!hasProp(ref, "key") || !(ref.key instanceof Uint8Array)) return false
+  if (!hasProp(ref, "algorithm") || ref.algorithm !== "AES-GCM") return false
+  if (!hasProp(ref, "namefilter") || !(ref.namefilter instanceof Uint8Array)) return false
+  return true
+}
+
 
 //--------------------------------------
 // Persistence
 //--------------------------------------
 
 
-async function nodeToCbor(node: PrivateNode, ctx: PrivateOperationContext): Promise<Uint8Array> {
-  return isPrivateFile(node) ? fileToCbor(node) : await directoryToCbor(node, ctx)
+async function nodeToCbor(node: PrivateDirectoryPersisted): Promise<Uint8Array> {
+  return isPrivateFile(node) ? fileToCbor(node) : await directoryToCbor(node)
 }
 
 function fileToCbor(file: PrivateFile): Uint8Array {
@@ -129,16 +85,16 @@ function fileToCbor(file: PrivateFile): Uint8Array {
   })
 }
 
-async function directoryToCbor(directory: PrivateDirectory, ctx: PrivateOperationContext): Promise<Uint8Array> {
+async function directoryToCbor(directory: PrivateDirectoryPersisted): Promise<Uint8Array> {
   return cbor.encode({
     metadata: directory.metadata,
     bareName: directory.bareName,
     revision: ratchet.toCborForm(directory.revision),
-    links: await mapRecord(directory.links, async (_, link) => await link.ref(ctx))
+    links: directory.links,
   })
 }
 
-function nodeFromCbor(bytes: Uint8Array): PrivateNode {
+function nodeFromCbor(bytes: Uint8Array): PrivateNodePersisted {
   const node = cbor.decode(bytes)
 
   const error = (msg: string) => new Error(`Couldn't parse private node. ${msg}. Got ${JSON.stringify(node, null, 2)}`)
@@ -157,11 +113,17 @@ function nodeFromCbor(bytes: Uint8Array): PrivateNode {
     if (!hasProp(node, "content")) throw error("Missing key 'content' for file")
     if (!(node.content instanceof Uint8Array)) throw error("Expected 'content' to be a byte array")
 
-    return node as PrivateNode
+    return node as PrivateFile
   } else {
     if (!hasProp(node, "links")) throw error("Missing key 'links' for directory")
-    node.links = mapRecordSync(node.links as Record<string, PrivateRef>, (_, link) => privateRef(link, nodeFromCbor))
-    return node as PrivateDirectory
+    if (!isRecord(node.links)) throw error("Expected key 'links' to be a record")
+    const links: Record<string, PrivateRef> = {}
+    for (const [name, ref] of Object.entries(node.links)) {
+      if (!isPrivateRef(ref)) throw error(`Expected key 'links.${name}' to be a privateRef but got ${JSON.stringify(ref, null, 2)} (possibly an unsupported encryption algorithm?)`)
+      links[name] = ref
+    }
+    node.links = links
+    return node as PrivateDirectoryPersisted
   }
 }
 
@@ -172,20 +134,6 @@ async function privateRefFor(node: PrivateNode): Promise<PrivateRef> {
     algorithm: "AES-GCM",
     namefilter: await namefilter.saturate(await namefilter.addToBare(node.bareName, key))
   }
-}
-
-export async function storeNode(node: PrivateNode, ctx: PrivateOperationContext): Promise<PrivateRef> {
-  const ref = await privateRefFor(node)
-  await ctx.putBlock(ref, await nodeToCbor(node, ctx), { signal: ctx.signal })
-  return ref
-}
-
-export async function loadNode(ref: PrivateRef, ctx: PrivateOperationContext): Promise<PrivateNode> {
-  const block = await ctx.getBlock(ref, { signal: ctx.signal })
-  
-  if (block == null) throw new Error(`Couldn't find a node at reference ${uint8arrays.toString(ref.namefilter, "base64url")}`)
-
-  return nodeFromCbor(block)
 }
 
 
@@ -234,8 +182,20 @@ export async function getNode(path: [string, ...string[]], directory: PrivateDir
   return getNode(rest, nextNode, ctx)
 }
 
+async function lookupPrivateRef(ref: PrivateRef, ctx: PrivateOperationContext): Promise<PrivateNode | null> {
+  const fetched = await ctx.getBlock(ref, { signal: ctx.signal })
+  
+  if (fetched == null) return null
+
+  return nodeFromCbor(fetched)
+}
+
 export async function lookupNode(name: string, directory: PrivateDirectory, ctx: PrivateOperationContext): Promise<PrivateNode | null> {
-  return directory.links[name]?.get(ctx)
+  const link = directory.links[name]
+  
+  if (link == null) return null
+
+  return isPrivateRef(link) ? await lookupPrivateRef(link, ctx) : link
 }
 
 export async function lookupDirectory(name: string, directory: PrivateDirectory, ctx: PrivateOperationContext): Promise<PrivateDirectory | null> {
@@ -246,7 +206,7 @@ export async function lookupDirectory(name: string, directory: PrivateDirectory,
 
 export async function upsert(
   path: [string, ...string[]],
-  update: (parentBareName: bloom.BloomFilter, entry: LazyPrivateRef<PrivateNode> | null) => Promise<LazyPrivateRef<PrivateNode> | null>,
+  update: (parentBareName: bloom.BloomFilter, entry: PrivateNode | PrivateRef | null) => Promise<PrivateNode | PrivateRef | null>,
   directory: PrivateDirectory,
   ctx: PrivateOperationContext & Timestamp
 ): Promise<PrivateDirectory> {
@@ -281,7 +241,7 @@ export async function upsert(
     metadata: metadata.updateMtime(directory.metadata, ctx.now),
     links: {
       ...directory.links,
-      [name]: privateRefFromObj(changedDirectory, storeNode)
+      [name]: changedDirectory
     }
   }
 
@@ -313,15 +273,18 @@ export async function write(
   return await upsert(
     path,
     async (parentBareName, entry) => {
+      entry = isPrivateRef(entry) ? await lookupPrivateRef(entry, ctx) : entry
+
       if (entry == null) {
         const file = await newFile(parentBareName, ctx)
-        return privateRefFromObj({ ...file, content }, storeNode)
+        return { ...file, content }
       }
-      const node = await entry.get(ctx)
-      if (isPrivateDirectory(node)) {
+
+      if (isPrivateDirectory(entry)) {
         throw new Error(`Can't write file to ${path}: There already exists a directory.`)
       }
-      return privateRefFromObj({ ...node, content }, storeNode)
+
+      return { ...entry, content }
     },
     directory,
     ctx
@@ -352,7 +315,7 @@ export async function mkdir(
       ...directory,
       links: {
         ...directory.links,
-        [name]: privateRefFromObj(await newDirectory(directory.bareName, ctx), storeNode)
+        [name]: await newDirectory(directory.bareName, ctx)
       }
     }
   }
@@ -365,7 +328,7 @@ export async function mkdir(
     ...directory,
     links: {
       ...directory.links,
-      [name]: privateRefFromObj(changedDirectory, storeNode)
+      [name]: changedDirectory
     }
   }
 }
