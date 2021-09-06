@@ -144,7 +144,7 @@ export async function seekLarge(ratchet: SpiralRatchet, step: (seek: SpiralSeek)
     seekBefore = currentSeek
     currentSeek = {
       ratchet: await nextLargeEpoch(currentSeek.ratchet),
-      increasedBy: currentSeek.increasedBy + 256*256 - combinedCounter(currentSeek.ratchet)
+      increasedBy: currentSeek.increasedBy + 256 * 256 - combinedCounter(currentSeek.ratchet)
     }
   } while (await step(currentSeek))
 
@@ -166,21 +166,18 @@ export async function seekSubLarge(currentSeek: SpiralSeek, increaser: (ratchet:
   return seekBefore
 }
 
-export type RatchetOrder
-  = "equal"
-  | "unknown"
-  | "biggerThan"
-  | "smallerThan"
+export async function compare(left: SpiralRatchet, right: SpiralRatchet, maxSteps: number): Promise<number | "unknown"> {
+  const leftLargeInitial = new Uint8Array(left.large)
+  const rightLargeInitial = new Uint8Array(right.large)
 
+  const leftCounter = combinedCounter(left)
+  const rightCounter = combinedCounter(right)
 
-export async function compare(left: SpiralRatchet, right: SpiralRatchet, maxSteps: number): Promise<RatchetOrder> {
-  if (uint8arrays.equals(new Uint8Array(left.large), new Uint8Array(right.large))) {
-    const leftCounter = combinedCounter(left)
-    const rightCounter = combinedCounter(right)
+  if (uint8arrays.equals(leftLargeInitial, rightLargeInitial)) {
     if (leftCounter === rightCounter) {
-      return "equal"
+      return 0
     }
-    return leftCounter > rightCounter ? "biggerThan" : "smallerThan"
+    return leftCounter - rightCounter
   }
 
   // here, the large digit always differs. So one of the ratchets will always be bigger,
@@ -189,11 +186,10 @@ export async function compare(left: SpiralRatchet, right: SpiralRatchet, maxStep
   // when one created the same digit as the other, essentially racing the large digit's
   // recursive hashes.
 
-  const toKey = (hash: ArrayBuffer) => uint8arrays.toString(new Uint8Array(hash), "base64")
   let leftLarge = left.large
+  let leftLargeCounter = 0
   let rightLarge = right.large
-  const leftDigits = new Set([toKey(leftLarge)])
-  const rightDigits = new Set([toKey(rightLarge)])
+  let rightLargeCounter = 0
 
   // Since the two ratchets might just be generated from a totally different setup, we
   // can never _really_ know which one is the bigger one. They might be unrelated.
@@ -201,20 +197,24 @@ export async function compare(left: SpiralRatchet, right: SpiralRatchet, maxStep
   while (maxSteps--) {
     leftLarge = await sha(leftLarge)
     rightLarge = await sha(rightLarge)
+    leftLargeCounter++
+    rightLargeCounter++
 
-    const leftKey = toKey(leftLarge)
-    const rightKey = toKey(rightLarge)
-
-    // while racing, we notice that right hangs behind left. Thus left is bigger
-    if (leftDigits.has(rightKey)) {
-      return "biggerThan"
+    // largerCountAhead is how many `inc`s the larger one is head of the smaller one
+    if (uint8arrays.equals(new Uint8Array(rightLarge), leftLargeInitial)) {
+      // rightLargeCounter * 256*256 is the count of `inc`s applied via advancing the large digit continually
+      // -rightCounter is the difference between `right` and its next large epoch.
+      // leftCounter is just what's left to add because of the count at which `left` is.
+      const largerCountAhead = rightLargeCounter * 256 * 256 - rightCounter + leftCounter
+      return largerCountAhead
     }
-    if (rightDigits.has(leftKey)) {
-      return "smallerThan"
-    }
 
-    leftDigits.add(leftKey)
-    rightDigits.add(rightKey)
+    if (uint8arrays.equals(new Uint8Array(leftLarge), rightLargeInitial)) {
+      // In this case, we compute the same difference, but return the negative to indicate
+      // that `right` is bigger than `left` rather than the other way around.
+      const largerCountAhead = leftLargeCounter * 256 * 256 - leftCounter + rightCounter
+      return -largerCountAhead
+    }
   }
 
   return "unknown"

@@ -218,24 +218,33 @@ describe("the spiral ratchet module", () => {
   })
 
   describe("compare", () => {
+    
+    const max = 100000
+    // maximum number of large digit steps needed to compare 0 and 100k plus some padding
+    const maxSteps = max / 256 / 256 + 2
 
-    function compare(n: number, m: number): ratchet.RatchetOrder {
-      if (n === m) return "equal"
-      return n > m ? "biggerThan" : "smallerThan"
-    }
-
-    it("has the property compare(incBy(ratchet, n), incBy(ratchet, m)) == compare(n, m)", async () => {
+    it("has the property compare(incBy(ratchet, n), incBy(ratchet, m)) == n - m", async () => {
       await fc.assert(fc.asyncProperty(
-        fc.nat({ max: 100000 }),
-        fc.nat({ max: 100000 }),
+        fc.nat({ max }),
+        fc.nat({ max }),
         arbitraryRatchetOptions(),
         async (n, m, options) => {
           const spiral = await ratchet.setup(options)
           const increasedN = await ratchet.incBy(spiral, n)
           const increasedM = await ratchet.incBy(spiral, m)
-          // maximum number of large digit steps needed to compare 0 and 100k plus some padding
-          const maxSteps = 100000 / 256 / 256 + 2
-          expect(await ratchet.compare(increasedN, increasedM, maxSteps)).toEqual(compare(n, m))
+          expect(await ratchet.compare(increasedN, increasedM, maxSteps)).toEqual(n - m)
+        }
+      ))
+    })
+
+    it("will report unknown when the ratchets are unrelated", async () => {
+      await fc.assert(fc.asyncProperty(
+        arbitraryRatchetOptions(),
+        arbitraryRatchetOptions(),
+        async (ratchet1, ratchet2) => {
+          const spiral1 = await ratchet.setup(ratchet1)
+          const spiral2 = await ratchet.setup(ratchet2)
+          expect(await ratchet.compare(spiral1, spiral2, 100)).toEqual("unknown")
         }
       ))
     })
