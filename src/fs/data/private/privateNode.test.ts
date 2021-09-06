@@ -14,14 +14,15 @@ function createMemoryPrivateStore(): privateNode.PrivateStore {
     async getBlock(ref) {
       // No need to decrypt if you never encrypt <insert tapping head meme>
       const key = keyForRef(ref)
-      console.log(`Accessing ${key}`)
       return memoryMap.get(key) || null
     },
 
     async putBlock(ref, block) {
       // Don't encrypt
       const key = keyForRef(ref)
-      console.log(`writing to ${key}`)
+      if (memoryMap.has(key)) {
+        throw new Error("Can't overwrite key! Append-only!")
+      }
       memoryMap.set(key, block)
     }
 
@@ -40,11 +41,14 @@ describe("the private node module", () => {
     }))
 
     let directory = await privateNode.newDirectory(namefilter.empty(), ctx)
+    const emptyFsRef = await privateNode.storeNode(directory, ctx)
+    directory = await privateNode.loadNode(emptyFsRef, ctx) as privateNode.PrivateDirectoryPersisted
+
     directory = await privateNode.write(path, content, directory, ctx)
-    
-    const ref = await privateNode.storeNode(directory, ctx)
+
+    const ref = await privateNode.storeNodeAndAdvance(directory, ctx)
     const reconstructed = await privateNode.loadNode(ref, ctx) as privateNode.PrivateDirectory
-    
+
     const contentRead = await privateNode.read(path, reconstructed, ctx)
     expect(contentRead).toEqual(content)
   })

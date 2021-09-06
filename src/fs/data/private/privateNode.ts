@@ -43,12 +43,15 @@ export interface PrivateRef {
   namefilter: bloom.BloomFilter
 }
 
-export interface PrivateStore {
+export interface PrivateStoreLookup {
   getBlock(ref: PrivateRef, ctx: AbortContext): Promise<Uint8Array | null>
+}
+
+export interface PrivateStore extends PrivateStoreLookup {
   putBlock(ref: PrivateRef, block: Uint8Array, ctx: AbortContext): Promise<void>
 }
 
-export type PrivateOperationContext = PrivateStore & AbortContext
+export type PrivateOperationContext = PrivateStoreLookup & AbortContext
 
 
 export function isPrivateFile(node: PrivateNode): node is PrivateFile {
@@ -72,8 +75,8 @@ export function isPrivateRef(ref: unknown): ref is PrivateRef {
 //--------------------------------------
 
 
-async function nodeToCbor(node: PrivateDirectoryPersisted): Promise<Uint8Array> {
-  return isPrivateFile(node) ? fileToCbor(node) : await directoryToCbor(node)
+function nodeToCbor(node: PrivateNodePersisted): Uint8Array {
+  return isPrivateFile(node) ? fileToCbor(node) : directoryToCbor(node)
 }
 
 function fileToCbor(file: PrivateFile): Uint8Array {
@@ -85,7 +88,7 @@ function fileToCbor(file: PrivateFile): Uint8Array {
   })
 }
 
-async function directoryToCbor(directory: PrivateDirectoryPersisted): Promise<Uint8Array> {
+function directoryToCbor(directory: PrivateDirectoryPersisted): Uint8Array {
   return cbor.encode({
     metadata: directory.metadata,
     bareName: directory.bareName,
@@ -134,6 +137,39 @@ async function privateRefFor(node: PrivateNode): Promise<PrivateRef> {
     algorithm: "AES-GCM",
     namefilter: await namefilter.saturate(await namefilter.addToBare(node.bareName, key))
   }
+}
+
+async function storedDirectoryWith(directory: PrivateDirectory, advanceNode: (node: PrivateNode) => Promise<PrivateNode>, ctx: PrivateStore & PrivateOperationContext): Promise<PrivateDirectoryPersisted> {
+  const links: Record<string, PrivateRef> = {}
+  for (const [name, link] of Object.entries(directory.links)) {
+    links[name] = isPrivateRef(link) ? link : await storeNodeWith(link, advanceNode, ctx)
+  }
+  return { ...directory, links }
+}
+
+export async function storeNodeWith(node: PrivateNode, advanceNode: (node: PrivateNode) => Promise<PrivateNode>, ctx: PrivateStore & PrivateOperationContext): Promise<PrivateRef> {
+  const advancedNode = await advanceNode(node)
+  const storedNode = isPrivateDirectory(advancedNode) ? await storedDirectoryWith(advancedNode, advanceNode, ctx) : advancedNode
+  const ref = await privateRefFor(storedNode)
+  await ctx.putBlock(ref, nodeToCbor(storedNode), { signal: ctx.signal })
+  return ref
+}
+
+export async function storeNodeAndAdvance(node: PrivateNode, ctx: PrivateStore & PrivateOperationContext): Promise<PrivateRef> {
+  return await storeNodeWith(node, async node => ({
+    ...node,
+    revision: await ratchet.inc(node.revision)
+  }), ctx)
+}
+
+export async function storeNode(node: PrivateNode, ctx: PrivateStore & PrivateOperationContext): Promise<PrivateRef> {
+  return await storeNodeWith(node, async node => node, ctx)
+}
+
+export async function loadNode(ref: PrivateRef, ctx: PrivateOperationContext): Promise<PrivateNodePersisted> {
+  const block = await ctx.getBlock(ref, { signal: ctx.signal })
+  if (block == null) throw new Error(`No private block found at namefilter ${uint8arrays.toString(ref.namefilter, "base64url")}`)
+  return nodeFromCbor(block)
 }
 
 
