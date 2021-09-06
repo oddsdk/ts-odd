@@ -6,13 +6,20 @@ module.exports = {
   },
   plugins: [
     "@typescript-eslint",
+    "import"
   ],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:import/typescript",
   ],
   rules: {
+    // We force all non-package imports (i.e. relative imports like "./spiralratchet.js")
+    // to contain file extensions, e.g. ".js", because many tools will need these extensions
+    // to resolve javascript files. In other words: Because extensionless imports aren't
+    // supported in all environments.
+    "import/extensions": ["error", "ignorePackages"],
     "@typescript-eslint/member-delimiter-style": ["error", {
       "multiline": {
         "delimiter": "none",
