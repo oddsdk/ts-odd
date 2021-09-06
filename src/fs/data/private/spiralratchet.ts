@@ -1,3 +1,5 @@
+import * as uint8arrays from "uint8arrays"
+
 import { CborForm, hasProp } from "../common.js"
 import { crypto, webcrypto } from "./webcrypto.js"
 
@@ -105,6 +107,123 @@ export async function nextMediumEpoch(ratchet: SpiralRatchet): Promise<SpiralRat
 
 export async function nextLargeEpoch(ratchet: SpiralRatchet): Promise<SpiralRatchet> {
   return await zero({ seed: ratchet.large })
+}
+
+
+export type SpiralSeek = {
+  ratchet: SpiralRatchet
+  increasedBy: number
+}
+
+/**
+ * Assumes that the function `step` is monotonous, starting from `true` and ending in `false` with
+ * increasing ratchets.
+ *
+ * I.e. step(ratchet) >= seek(incBy(ratchet, n))
+ * where true >= false and true >= true
+ *
+ * This function will then find the number `n` where the increasing the spiral by one will make
+ * `step` become false.
+ *
+ * I.e. it finds the number n such that
+ * step(incBy(ratchet, n)) == true && step(incBy(ratchet, n+1)) == false
+ */
+export async function seek(ratchet: SpiralRatchet, step: (seek: SpiralSeek) => Promise<boolean>): Promise<SpiralSeek> {
+  // TODO: Incorporate seek randomness. I.e. add some offsets here and such that the seek isn't completely predictable by an attacker.
+  let seekState = { ratchet, increasedBy: 0 }
+  seekState = await seekLarge(seekState.ratchet, step)
+  seekState = await seekSubLarge(seekState, nextMediumEpoch, step)
+  return await seekSubLarge(seekState, inc, step)
+}
+
+export async function seekLarge(ratchet: SpiralRatchet, step: (seek: SpiralSeek) => Promise<boolean>): Promise<SpiralSeek> {
+  let currentSeek = { ratchet, increasedBy: 0 }
+  let seekBefore = currentSeek
+
+  do {
+    seekBefore = currentSeek
+    currentSeek = {
+      ratchet: await nextLargeEpoch(currentSeek.ratchet),
+      increasedBy: currentSeek.increasedBy + 256*256 - combinedCounter(currentSeek.ratchet)
+    }
+  } while (await step(currentSeek))
+
+  return seekBefore
+}
+
+export async function seekSubLarge(currentSeek: SpiralSeek, increaser: (ratchet: SpiralRatchet) => Promise<SpiralRatchet>, step: (seek: SpiralSeek) => Promise<boolean>): Promise<SpiralSeek> {
+  let seekBefore = currentSeek
+
+  do {
+    seekBefore = currentSeek
+    const nextRatchet = await increaser(currentSeek.ratchet)
+    currentSeek = {
+      ratchet: nextRatchet,
+      increasedBy: currentSeek.increasedBy + combinedCounter(nextRatchet) - combinedCounter(currentSeek.ratchet)
+    }
+  } while (await step(currentSeek))
+
+  return seekBefore
+}
+
+export type RatchetOrder
+  = "equal"
+  | "unknown"
+  | "biggerThan"
+  | "smallerThan"
+
+
+export async function compare(left: SpiralRatchet, right: SpiralRatchet, maxSteps: number): Promise<RatchetOrder> {
+  if (uint8arrays.equals(new Uint8Array(left.large), new Uint8Array(right.large))) {
+    const leftCounter = combinedCounter(left)
+    const rightCounter = combinedCounter(right)
+    if (leftCounter === rightCounter) {
+      return "equal"
+    }
+    return leftCounter > rightCounter ? "biggerThan" : "smallerThan"
+  }
+
+  // here, the large digit always differs. So one of the ratchets will always be bigger,
+  // they can't be equal.
+  // We can find out which one is bigger by hashing both at the same time and looking at
+  // when one created the same digit as the other, essentially racing the large digit's
+  // recursive hashes.
+
+  const toKey = (hash: ArrayBuffer) => uint8arrays.toString(new Uint8Array(hash), "base64")
+  let leftLarge = left.large
+  let rightLarge = right.large
+  const leftDigits = new Set([toKey(leftLarge)])
+  const rightDigits = new Set([toKey(rightLarge)])
+
+  // Since the two ratchets might just be generated from a totally different setup, we
+  // can never _really_ know which one is the bigger one. They might be unrelated.
+
+  while (maxSteps--) {
+    leftLarge = await sha(leftLarge)
+    rightLarge = await sha(rightLarge)
+
+    const leftKey = toKey(leftLarge)
+    const rightKey = toKey(rightLarge)
+
+    // while racing, we notice that right hangs behind left. Thus left is bigger
+    if (leftDigits.has(rightKey)) {
+      return "biggerThan"
+    }
+    if (rightDigits.has(leftKey)) {
+      return "smallerThan"
+    }
+
+    leftDigits.add(leftKey)
+    rightDigits.add(rightKey)
+  }
+
+  return "unknown"
+}
+
+export function equal(left: SpiralRatchet, right: SpiralRatchet): boolean {
+  return uint8arrays.equals(new Uint8Array(left.large), new Uint8Array(right.large))
+    && uint8arrays.equals(new Uint8Array(left.medium), new Uint8Array(right.medium))
+    && uint8arrays.equals(new Uint8Array(left.small), new Uint8Array(right.small))
 }
 
 

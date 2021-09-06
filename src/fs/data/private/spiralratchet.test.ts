@@ -54,9 +54,9 @@ describe("the spiral ratchet module", () => {
         examples: [ // Especially test the boundaries
           [1, exampleOptions],
           [256, exampleOptions],
-          [256*2, exampleOptions],
-          [256*256, exampleOptions],
-          [256*256*2, exampleOptions],
+          [256 * 2, exampleOptions],
+          [256 * 256, exampleOptions],
+          [256 * 256 * 2, exampleOptions],
         ]
       })
     })
@@ -80,9 +80,9 @@ describe("the spiral ratchet module", () => {
         examples: [ // Especially test the boundaries
           [1, exampleOptions],
           [256, exampleOptions],
-          [256*2, exampleOptions],
-          [256*256, exampleOptions],
-          [256*256*2, exampleOptions],
+          [256 * 2, exampleOptions],
+          [256 * 256, exampleOptions],
+          [256 * 256 * 2, exampleOptions],
         ]
       })
     })
@@ -92,7 +92,7 @@ describe("the spiral ratchet module", () => {
         const spiral = await ratchet.setup({
           seed: new TextEncoder().encode("hello world").buffer,
           preIncrementSmall,
-          preIncrementMedium, 
+          preIncrementMedium,
         })
         const positional = await ratchet.incBy(spiral, iters)
         const unary = await iterateAsync(spiral, s => ratchet.inc(s), iters)
@@ -153,6 +153,93 @@ describe("the spiral ratchet module", () => {
         )
       })
     })
+  })
+
+  describe("seek", () => {
+
+    it("has the property seek(ratchet, i => i <= n).increasedBy == n", async () => {
+      await fc.assert(fc.asyncProperty(
+        fc.nat({ max: 1000000 }),
+        arbitraryRatchetOptions(),
+        async (n, options) => {
+          const spiral = await ratchet.setup(options)
+          const seeked = await ratchet.seek(spiral, async ({ increasedBy }) => increasedBy <= n)
+          expect(seeked.increasedBy).toEqual(n)
+        }
+      ), { numRuns: 20 })
+    })
+
+    it("has the property seek(ratchet, i => i <= n).ratchet == incBy(ratchet, n)", async () => {
+      await fc.assert(fc.asyncProperty(
+        fc.nat({ max: 1000000 }),
+        arbitraryRatchetOptions(),
+        async (n, options) => {
+          const spiral = await ratchet.setup(options)
+          const positional = await ratchet.incBy(spiral, n)
+          const seeked = await ratchet.seek(spiral, async ({ increasedBy }) => increasedBy <= n)
+          expect(canonicalize(seeked.ratchet)).toEqual(canonicalize(positional))
+        }
+      ), { numRuns: 20 })
+    })
+
+    it("generates valid ratchet and increasedBy combinations on seek", async () => {
+      await fc.assert(fc.asyncProperty(
+        fc.nat({ max: 10000 }),
+        arbitraryRatchetOptions(),
+        async (n, options) => {
+          const spiral = await ratchet.setup(options)
+
+          // build next n ratchets
+          const spirals = new Array(n)
+          let current = spiral
+          for (let i = 0; i < n; i++) {
+            spirals[i] = current
+            current = await ratchet.inc(current)
+          }
+
+          // check that a seek actually generated the expected ratchet
+          async function checkSeek(seek: ratchet.SpiralSeek) {
+            if (spirals[seek.increasedBy] == null) return
+            expect(canonicalize(seek)).toEqual(canonicalize({
+              ratchet: spirals[seek.increasedBy],
+              increasedBy: seek.increasedBy
+            }))
+          }
+
+          // check all seeks we can get our hands on
+          await checkSeek(await ratchet.seek(spiral, async seek => {
+            await checkSeek(seek)
+            return seek.increasedBy <= n
+          }))
+        }
+      ), { numRuns: 20 })
+    })
+
+  })
+
+  describe("compare", () => {
+
+    function compare(n: number, m: number): ratchet.RatchetOrder {
+      if (n === m) return "equal"
+      return n > m ? "biggerThan" : "smallerThan"
+    }
+
+    it("has the property compare(incBy(ratchet, n), incBy(ratchet, m)) == compare(n, m)", async () => {
+      await fc.assert(fc.asyncProperty(
+        fc.nat({ max: 100000 }),
+        fc.nat({ max: 100000 }),
+        arbitraryRatchetOptions(),
+        async (n, m, options) => {
+          const spiral = await ratchet.setup(options)
+          const increasedN = await ratchet.incBy(spiral, n)
+          const increasedM = await ratchet.incBy(spiral, m)
+          // maximum number of large digit steps needed to compare 0 and 100k plus some padding
+          const maxSteps = 100000 / 256 / 256 + 2
+          expect(await ratchet.compare(increasedN, increasedM, maxSteps)).toEqual(compare(n, m))
+        }
+      ))
+    })
+
   })
 })
 
