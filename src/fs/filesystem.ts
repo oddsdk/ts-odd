@@ -351,8 +351,6 @@ export class FileSystem {
   async addPublicExchangeKey(): Promise<void> {
     const publicDid = await did.exchange()
 
-    console.log(publicDid)
-
     await this.write(
       pathing.combine(EXCHANGE_PATH, pathing.file(publicDid)),
       publicDid
