@@ -237,27 +237,35 @@ export function equalSmall(left: SpiralRatchet, right: SpiralRatchet): boolean {
 }
 
 export async function* previous(recent: SpiralRatchet, old: SpiralRatchet): AsyncGenerator<SpiralRatchet, void, unknown> {
+  if (equal(recent, old)) return
+  yield* previousHelper(recent, old)
+}
+
+async function* previousHelper(recent: SpiralRatchet, old: SpiralRatchet): AsyncGenerator<SpiralRatchet, void, unknown> {
   const oldNextLarge = await nextLargeEpoch(old)
 
   if (equalLarge(recent, old) || equalLarge(recent, oldNextLarge)) {
     const oldNextMedium = await nextMediumEpoch(old)
 
     if (equalMedium(recent, old) || equalMedium(recent, oldNextMedium)) {
-      const oldNextSmall = await inc(old)
-
-      if (equal(recent, oldNextSmall)) {
-        yield old
-      } else {
-        yield* previous(recent, oldNextSmall)
-        yield* previous(oldNextSmall, old)
+      // we break out of the recursive pattern at this point
+      // because going through sequentially is faster
+      let revision = old
+      const revisions: SpiralRatchet[] = []
+      while (!equal(revision, recent)) {
+        revisions.push(revision)
+        revision = await inc(revision)
+      }
+      for (const revision of revisions.reverse()) {
+        yield revision
       }
     } else {
-      yield* previous(recent, oldNextMedium)
-      yield* previous(oldNextMedium, old)
+      yield* previousHelper(recent, oldNextMedium)
+      yield* previousHelper(oldNextMedium, old)
     }
   } else {
-    yield* previous(recent, oldNextLarge)
-    yield* previous(oldNextLarge, old)
+    yield* previousHelper(recent, oldNextLarge)
+    yield* previousHelper(oldNextLarge, old)
   }
 }
 
