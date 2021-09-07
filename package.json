@@ -80,6 +80,7 @@
     "ipfs-core": "0.8.0",
     "ipfs-core-types": "0.5.2",
     "ipfs-repo": "^9.1.6",
+    "it-take": "^1.0.1",
     "mocha": "^9.0.2",
     "multihashing-async": "^2.1.2",
     "puppeteer": "^10.1.0",

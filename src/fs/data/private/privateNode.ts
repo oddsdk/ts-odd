@@ -51,7 +51,11 @@ export interface PrivateStore extends PrivateStoreLookup {
   putBlock(ref: PrivateRef, block: Uint8Array, ctx: AbortContext): Promise<void>
 }
 
-export type PrivateOperationContext = PrivateStoreLookup & AbortContext
+export interface RatchetStore {
+  getOldestKnownRatchet(bareName: bloom.BloomFilter): ratchet.SpiralRatchet
+}
+
+export type PrivateOperationContext = PrivateStoreLookup & RatchetStore & AbortContext
 
 
 export function isPrivateFile(node: PrivateNode): node is PrivateFile {
@@ -130,7 +134,7 @@ function nodeFromCbor(bytes: Uint8Array): PrivateNodePersisted {
   }
 }
 
-async function privateRefFor(node: PrivateNode): Promise<PrivateRef> {
+async function privateRefFor(node: { revision: ratchet.SpiralRatchet; bareName: bloom.BloomFilter }): Promise<PrivateRef> {
   const key = await ratchet.toKey(node.revision)
   return {
     key: new Uint8Array(key),
@@ -365,6 +369,26 @@ export async function mkdir(
     links: {
       ...directory.links,
       [name]: changedDirectory
+    }
+  }
+}
+
+type HistoryIteratorError = { error: unknown }
+
+export function enumerateHistory(file: PrivateFile, skip: number, ctx: PrivateOperationContext): AsyncIterator<PrivateFile | HistoryIteratorError>
+export function enumerateHistory(directory: PrivateDirectory, skip: number, ctx: PrivateOperationContext): AsyncIterator<PrivateDirectory | HistoryIteratorError>
+export function enumerateHistory(node: PrivateNode, skip: number, ctx: PrivateOperationContext): AsyncIterator<PrivateNode | HistoryIteratorError>
+export async function* enumerateHistory(node: PrivateNode, skip: number, ctx: PrivateOperationContext): AsyncIterator<PrivateNode | HistoryIteratorError> {
+  // TODO skip
+  const firstKnownRatchet = ctx.getOldestKnownRatchet(node.bareName)
+  for await (const olderRevision of ratchet.previous(node.revision, firstKnownRatchet)) {
+    try {
+      yield await loadNode(await privateRefFor({
+        bareName: node.bareName,
+        revision: olderRevision
+      }), ctx)
+    } catch (e) {
+      yield { error: e }
     }
   }
 }

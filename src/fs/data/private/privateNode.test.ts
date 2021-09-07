@@ -4,6 +4,8 @@ import * as uint8arrays from "uint8arrays"
 
 import * as privateNode from "./privateNode.js"
 import * as namefilter from "./namefilter.js"
+import * as ratchet from "./spiralratchet.js"
+import * as bloom from "./bloomfilter.js"
 
 
 function createMemoryPrivateStore(): privateNode.PrivateStore {
@@ -29,11 +31,26 @@ function createMemoryPrivateStore(): privateNode.PrivateStore {
   }
 }
 
+function createMemoryRatchetStore(): privateNode.RatchetStore {
+  const memoryMap = new Map<string, ratchet.SpiralRatchet>()
+  const keyForName = (bareName: bloom.BloomFilter) => uint8arrays.toString(bareName, "base64url")
+
+  return {
+
+    getOldestKnownRatchet(bareName) {
+      throw "todo"
+      // return memoryMap.get(keyForName(bareName))
+    }
+
+  }
+}
+
 describe("the private node module", () => {
 
   it("", async () => {
     const store = createMemoryPrivateStore()
-    const ctx = { ...store, now: 0 }
+    const ratchetStore = createMemoryRatchetStore()
+    const ctx = { ...store, ...ratchetStore, now: 0 }
 
     const path: [string, ...string[]] = ["Apps", "Flatmate", "state.json"]
     const content = new TextEncoder().encode(JSON.stringify({

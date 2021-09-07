@@ -1,5 +1,7 @@
 import expect from "expect"
 import * as fc from "fast-check"
+import take from "it-take"
+import all from "it-all"
 
 import * as ratchet from "./spiralratchet.js"
 import { isCI, canonicalize } from "../../../../tests/helpers/common.js"
@@ -28,11 +30,6 @@ describe("the spiral ratchet module", () => {
   describe("incBy", () => {
 
     it("is backwards secret by always changing (appropriate) digits when increasing", async () => {
-      const exampleOptions = {
-        seed: new TextEncoder().encode("hello world").buffer,
-        preIncrementSmall: 0,
-        preIncrementMedium: 0,
-      }
       await fc.assert(fc.asyncProperty(
         fc.nat({ max: 999999 }).map(n => n + 1),
         arbitraryRatchetOptions(),
@@ -52,21 +49,16 @@ describe("the spiral ratchet module", () => {
         }
       ), {
         examples: [ // Especially test the boundaries
-          [1, exampleOptions],
-          [256, exampleOptions],
-          [256 * 2, exampleOptions],
-          [256 * 256, exampleOptions],
-          [256 * 256 * 2, exampleOptions],
+          [1, seededRatchet("hello world")],
+          [256, seededRatchet("hello world")],
+          [256 * 2, seededRatchet("hello world")],
+          [256 * 256, seededRatchet("hello world")],
+          [256 * 256 * 2, seededRatchet("hello world")],
         ]
       })
     })
 
     it("is backwards secret by always producing a different key when increasing", async () => {
-      const exampleOptions = {
-        seed: new TextEncoder().encode("hello world").buffer,
-        preIncrementSmall: 0,
-        preIncrementMedium: 0,
-      }
       await fc.assert(fc.asyncProperty(
         fc.nat({ max: 999999 }).map(n => n + 1),
         arbitraryRatchetOptions(),
@@ -78,11 +70,11 @@ describe("the spiral ratchet module", () => {
         }
       ), {
         examples: [ // Especially test the boundaries
-          [1, exampleOptions],
-          [256, exampleOptions],
-          [256 * 2, exampleOptions],
-          [256 * 256, exampleOptions],
-          [256 * 256 * 2, exampleOptions],
+          [1, seededRatchet("hello world")],
+          [256, seededRatchet("hello world")],
+          [256 * 2, seededRatchet("hello world")],
+          [256 * 256, seededRatchet("hello world")],
+          [256 * 256 * 2, seededRatchet("hello world")],
         ]
       })
     })
@@ -250,6 +242,54 @@ describe("the spiral ratchet module", () => {
     })
 
   })
+
+  describe("ratchet previous", () => {
+
+    it("first returns the second to most recent ratchet", async () => {
+      const times: {n: number; time: number}[] = []
+      await fc.assert(fc.asyncProperty(
+        fc.nat({ max: 1000000 }),
+        arbitraryRatchetOptions(),
+        async (n, options) => {
+          const initial = await ratchet.setup(options)
+          const increasedN = await ratchet.incBy(initial, n)
+          const increasedNPlusOne = await ratchet.inc(increasedN)
+          const before = performance.now()
+          const previous = await ratchet.previous(increasedNPlusOne, initial).next()
+          times.push({n, time: performance.now() - before})
+          expect(previous.done || false).toEqual(false)
+          expect(canonicalize(previous.value)).toEqual(canonicalize(increasedN))
+        }
+      ))
+      console.log(times)
+      console.log(times.reduce((a, b) => a + b.time, 0) / times.length)
+    })
+
+    it("has the property previous(incBy(n, ratchet), ratchet) == ratchet+n-1,ratchet+n-2,...,ratchet", async () => {
+      const times: number[] = []
+      await fc.assert(fc.asyncProperty(
+        fc.nat({ max: 1000 }).map(m => m + 1),
+        arbitraryRatchetOptions(),
+        async (n, options) => {
+          const initial = await ratchet.setup(options)
+          const nextRatchets = await ratchet.nextN(initial, n)
+          const increasedN = nextRatchets[nextRatchets.length - 1]
+          const expectedPrevious = [initial, ...nextRatchets.slice(0, -1)].reverse()
+          const before = performance.now()
+          const previous = await all(ratchet.previous(increasedN, initial))
+          times.push(performance.now() - before)
+          expect(previous.length).toEqual(expectedPrevious.length)
+          expect(canonicalize(previous)).toEqual(canonicalize(expectedPrevious))
+        }
+      ), {
+        examples: [
+        ]
+      })
+      console.log(times)
+      console.log(times.reduce((a, b) => a + b, 0) / times.length)
+    })
+
+  })
 })
 
 async function iterateAsync<T>(initial: T, f: (obj: T) => Promise<T>, n: number): Promise<T> {
@@ -266,4 +306,12 @@ function arbitraryRatchetOptions(): fc.Arbitrary<ratchet.RatchetOptions> {
     preIncrementMedium: fc.nat({ max: 255 }),
     preIncrementSmall: fc.nat({ max: 255 }),
   })
+}
+
+function seededRatchet(seed: string, preIncrementSmall = 0, preIncrementMedium = 0): ratchet.RatchetOptions {
+  return {
+    seed: new TextEncoder().encode(seed).buffer,
+    preIncrementSmall,
+    preIncrementMedium,
+  }
 }

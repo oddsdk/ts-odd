@@ -221,12 +221,55 @@ export async function compare(left: SpiralRatchet, right: SpiralRatchet, maxStep
 }
 
 export function equal(left: SpiralRatchet, right: SpiralRatchet): boolean {
-  return uint8arrays.equals(new Uint8Array(left.large), new Uint8Array(right.large))
-    && uint8arrays.equals(new Uint8Array(left.medium), new Uint8Array(right.medium))
-    && uint8arrays.equals(new Uint8Array(left.small), new Uint8Array(right.small))
+  return equalLarge(left, right) && equalMedium(left, right) && equalSmall(left, right)
 }
 
+export function equalLarge(left: SpiralRatchet, right: SpiralRatchet): boolean {
+  return uint8arrays.equals(new Uint8Array(left.large), new Uint8Array(right.large))
+}
 
+export function equalMedium(left: SpiralRatchet, right: SpiralRatchet): boolean {
+  return left.mediumCounter === right.mediumCounter && uint8arrays.equals(new Uint8Array(left.medium), new Uint8Array(right.medium))
+}
+
+export function equalSmall(left: SpiralRatchet, right: SpiralRatchet): boolean {
+  return left.smallCounter === right.smallCounter && uint8arrays.equals(new Uint8Array(left.small), new Uint8Array(right.small))
+}
+
+export async function* previous(recent: SpiralRatchet, old: SpiralRatchet): AsyncGenerator<SpiralRatchet, void, unknown> {
+  const oldNextLarge = await nextLargeEpoch(old)
+
+  if (equalLarge(recent, old) || equalLarge(recent, oldNextLarge)) {
+    const oldNextMedium = await nextMediumEpoch(old)
+
+    if (equalMedium(recent, old) || equalMedium(recent, oldNextMedium)) {
+      const oldNextSmall = await inc(old)
+
+      if (equal(recent, oldNextSmall)) {
+        yield old
+      } else {
+        yield* previous(recent, oldNextSmall)
+        yield* previous(oldNextSmall, old)
+      }
+    } else {
+      yield* previous(recent, oldNextMedium)
+      yield* previous(oldNextMedium, old)
+    }
+  } else {
+    yield* previous(recent, oldNextLarge)
+    yield* previous(oldNextLarge, old)
+  }
+}
+
+export async function nextN(spiral: SpiralRatchet, n: number): Promise<SpiralRatchet[]> {
+  const ratchets: SpiralRatchet[] = []
+  let workingRatchet = spiral
+  for (let i = 0; i < n; i++) {
+    workingRatchet = await inc(workingRatchet)
+    ratchets.push(workingRatchet)
+  }
+  return ratchets
+}
 
 //--------------------------------------
 // Serialization
