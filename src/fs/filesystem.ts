@@ -353,7 +353,7 @@ export class FileSystem {
 
     await this.write(
       pathing.combine(EXCHANGE_PATH, pathing.file(publicDid)),
-      publicDid
+      "{}"
     )
   }
 
