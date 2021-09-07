@@ -58,9 +58,9 @@ type MutationOptions = {
 
 
 export const EXCHANGE_PATH: DirectoryPath = pathing.directory(
-    pathing.Branch.Public,
-    ".well-known",
-    "exchange"
+  pathing.Branch.Public,
+  ".well-known",
+  "exchange"
 )
 
 
@@ -350,6 +350,8 @@ export class FileSystem {
    */
   async addPublicExchangeKey(): Promise<void> {
     const publicDid = await did.exchange()
+
+    console.log(publicDid)
 
     await this.write(
       pathing.combine(EXCHANGE_PATH, pathing.file(publicDid)),
