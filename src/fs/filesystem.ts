@@ -223,6 +223,7 @@ export class FileSystem {
     return this
   }
 
+
   // POSIX INTERFACE (FILES)
   // -----------------------
 
@@ -257,6 +258,7 @@ export class FileSystem {
     if (pathing.isDirectory(path)) throw new Error("`write` only accepts file paths")
     return this.add(path, content, options)
   }
+
 
   // POSIX INTERFACE (GENERAL)
   // -------------------------
@@ -346,14 +348,13 @@ export class FileSystem {
 
   /**
    * Stores the public part of the exchange key in the DID format,
-   * in the `/public/.well-known/exchange/*` location.
+   * in the `/public/.well-known/exchange/DID_GOES_HERE/` directory.
    */
   async addPublicExchangeKey(): Promise<void> {
     const publicDid = await did.exchange()
 
-    await this.write(
-      pathing.combine(EXCHANGE_PATH, pathing.file(publicDid)),
-      "{}"
+    await this.mkdir(
+      pathing.combine(EXCHANGE_PATH, pathing.directory(publicDid))
     )
   }
 
@@ -365,7 +366,7 @@ export class FileSystem {
     const publicDid = await did.exchange()
 
     return this.exists(
-      pathing.combine(EXCHANGE_PATH, pathing.file(publicDid))
+      pathing.combine(EXCHANGE_PATH, pathing.directory(publicDid))
     )
   }
 
