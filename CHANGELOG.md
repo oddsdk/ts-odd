@@ -1,5 +1,12 @@
 # Changelog
 
+
+### v0.28.0
+
+Added the `fs.addPublicExchangeKey()` function which adds the public exchange key of that domain/browser/device to your filesystem at `/public/.well-known/exchange/DID_KEY`.
+
+
+
 ### v0.27.0
 
 - Fixed `webnative.apps.index()`, and now returns a list of domains, along with their `insertedAt` and `modifiedAt` ISO8601 timestamps.
