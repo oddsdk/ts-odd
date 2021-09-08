@@ -250,6 +250,58 @@ export async function* previous(recent: SpiralRatchet, old: SpiralRatchet, discr
   }
 }
 
+/**
+ * The best way to explain this algorithm is with a simpler form of it, using 3-digit numbers instead of ratchets:
+ *
+ *   function* previous(end, start) {
+ *       if (start >= end) {
+ *           throw ["invalid input", end, start]
+ *       }
+ *       const endL = (end / 100) | 0
+ *       const startL = (start / 100) | 0
+ *       const startLPlus = (startL + 1) * 100
+ *  
+ *       if (endL === startL || end === startLPlus) {
+ *           const endM = (end / 10) | 0
+ *           const startM = (start / 10) | 0
+ *           const startMPlus = (startM + 1) * 10
+ *  
+ *           if (endM === startM || end === startMPlus) {
+ *               const startPlus = start + 1
+ *  
+ *               if (end === startPlus) {
+ *                   yield start
+ *               } else {
+ *                   yield* previous(end, startPlus)
+ *                   yield* previous(startPlus, start)
+ *               }
+ *           } else {
+ *               yield* previous(end, startMPlus)
+ *               yield* previous(startMPlus, start)
+ *           }
+ *       } else {
+ *           yield* previous(end, startLPlus)
+ *           yield* previous(startLPlus, start)
+ *       }
+ *   }
+ * 
+ * startLPlus transforms a number like 12 into 100, or 133 into 200, similar to what `nextLargeEpoch` does for ratchets.
+ * startMPlus transforms a number like 12 into 20, or 133 into 140, similar to what `nextMediumEpoch` does for ratchets.
+ * 
+ * A naive version of generating the previous values of `old` would be to increment `recent` by one until it
+ * becomes equal to `old`, remembering the in-between values and yielding these values in reverse.
+ * 
+ * This is what this algorithm does when the ratchets are close (i.e. maximum 1 medium epoch apart, a maximum difference of 511).
+ * 
+ * However, we can do better than that: We can search ahead bigger digits first if we notice that the ratchets are far apart.
+ * For example, if the old ratchet is at revision 0, and the new ratchet at revision 256*256*2, and the user is only interested in
+ * the previous values between revision 256*256 and 256*256*2, then we skip all of the work of incrementing by skipping
+ * the old value to revision 256*256.
+ * Thus we can just recurse with `previousHelper(<256*256*2>, <256*256>)`
+ * Because the user might request even older revisions, we just recurse with `previousHelper(<256*256>, <0>)`
+ * 
+ * The same can be done with the medium digit.
+ */
 async function* previousHelper(recent: SpiralRatchet, old: SpiralRatchet, discrepancyBudget?: number): AsyncGenerator<SpiralRatchet, void, unknown> {
   // If the ratchets are actually unrelated, we need to stop the inifnite recursion
   if (discrepancyBudget != null && discrepancyBudget <= 0) {
