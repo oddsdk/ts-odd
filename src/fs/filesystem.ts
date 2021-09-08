@@ -357,6 +357,18 @@ export class FileSystem {
     )
   }
 
+  /**
+   * Checks if the public exchange key was added in the well-known location.
+   * See `addPublicExchangeKey()` for the exact details.
+   */
+  async hasPublicExchangeKey(): Promise<boolean> {
+    const publicDid = await did.exchange()
+
+    return this.exists(
+      pathing.combine(EXCHANGE_PATH, pathing.file(publicDid))
+    )
+  }
+
 
   // INTERNAL
   // --------
