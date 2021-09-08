@@ -14,6 +14,7 @@ import * as cidLog from "../common/cid-log.js"
 import * as dataRoot from "../data-root.js"
 import * as debug from "../common/debug.js"
 import * as crypto from "../crypto/index.js"
+import * as did from "../did/index.js"
 import * as pathing from "../path.js"
 import * as typeCheck from "./types/check.js"
 import * as ucan from "../ucan/index.js"
@@ -51,6 +52,16 @@ type NewFileSystemOptions = FileSystemOptions & {
 type MutationOptions = {
   publish?: boolean
 }
+
+
+// CONSTANTS
+
+
+export const EXCHANGE_PATH: DirectoryPath = pathing.directory(
+  pathing.Branch.Public,
+  ".well-known",
+  "exchange"
+)
 
 
 // CLASS
@@ -121,7 +132,7 @@ export class FileSystem {
     if (!this.localOnly) {
       // Publish when coming back online
       globalThis.addEventListener("online", this._whenOnline)
-      
+
       // Show an alert when leaving the page while updating the data root
       globalThis.addEventListener("beforeunload", this._beforeLeaving)
     }
@@ -212,6 +223,7 @@ export class FileSystem {
     return this
   }
 
+
   // POSIX INTERFACE (FILES)
   // -----------------------
 
@@ -246,6 +258,7 @@ export class FileSystem {
     if (pathing.isDirectory(path)) throw new Error("`write` only accepts file paths")
     return this.add(path, content, options)
   }
+
 
   // POSIX INTERFACE (GENERAL)
   // -------------------------
@@ -329,6 +342,33 @@ export class FileSystem {
     return cid
   }
 
+
+  // COMMON
+  // ------
+
+  /**
+   * Stores the public part of the exchange key in the DID format,
+   * in the `/public/.well-known/exchange/DID_GOES_HERE/` directory.
+   */
+  async addPublicExchangeKey(): Promise<void> {
+    const publicDid = await did.exchange()
+
+    await this.mkdir(
+      pathing.combine(EXCHANGE_PATH, pathing.directory(publicDid))
+    )
+  }
+
+  /**
+   * Checks if the public exchange key was added in the well-known location.
+   * See `addPublicExchangeKey()` for the exact details.
+   */
+  async hasPublicExchangeKey(): Promise<boolean> {
+    const publicDid = await did.exchange()
+
+    return this.exists(
+      pathing.combine(EXCHANGE_PATH, pathing.directory(publicDid))
+    )
+  }
 
 
   // INTERNAL
