@@ -64,7 +64,7 @@ async function zero({ seed }: { seed?: ArrayBuffer }): Promise<SpiralRatchet> {
 
 export async function inc(ratchet: SpiralRatchet): Promise<SpiralRatchet> {
   if (ratchet.smallCounter >= 255) {
-    return await nextMediumEpoch(ratchet)
+    return (await nextMediumEpoch(ratchet)).jumped
   }
 
   return Object.freeze({
@@ -77,24 +77,22 @@ export async function inc(ratchet: SpiralRatchet): Promise<SpiralRatchet> {
 export async function incBy(ratchet: SpiralRatchet, n: number): Promise<SpiralRatchet> {
   if (n <= 0) return ratchet
   if (n >= 256 * 256 - combinedCounter(ratchet)) { // i.e. there *will* be a large epoch jump if we used `inc`s
-    const jumped = await nextLargeEpoch(ratchet)
-    const stepsDone = 256 * 256 - combinedCounter(ratchet) // steps to the next large epoch
+    const { jumped, stepsDone } = await nextLargeEpoch(ratchet)
     return await incBy(jumped, n - stepsDone)
   }
   if (n >= 256 - ratchet.smallCounter) { // i.e. there *will* be a medium epoch jump if we used `inc`s
-    const jumped = await nextMediumEpoch(ratchet)
-    const stepsDone = combinedCounter(jumped) - combinedCounter(ratchet)
+    const { jumped, stepsDone } = await nextMediumEpoch(ratchet)
     return await incBy(jumped, n - stepsDone)
   }
   return await incBySmall(ratchet, n)
 }
 
-export async function nextMediumEpoch(ratchet: SpiralRatchet): Promise<SpiralRatchet> {
+export async function nextMediumEpoch(ratchet: SpiralRatchet): Promise<{ jumped: SpiralRatchet; stepsDone: number }> {
   if (ratchet.mediumCounter >= 255) {
     return await nextLargeEpoch(ratchet)
   }
 
-  return {
+  const jumped = {
     ...ratchet,
 
     medium: await sha(ratchet.medium), // NOTE: this uses the input ratchet
@@ -103,10 +101,14 @@ export async function nextMediumEpoch(ratchet: SpiralRatchet): Promise<SpiralRat
     small: await sha(complement(ratchet.medium)), // NOTE: this uses the input ratchet
     smallCounter: 0
   }
+  const stepsDone = combinedCounter(jumped) - combinedCounter(ratchet)
+  return { jumped, stepsDone }
 }
 
-export async function nextLargeEpoch(ratchet: SpiralRatchet): Promise<SpiralRatchet> {
-  return await zero({ seed: ratchet.large })
+export async function nextLargeEpoch(ratchet: SpiralRatchet): Promise<{ jumped: SpiralRatchet; stepsDone: number }> {
+  const jumped = await zero({ seed: ratchet.large })
+  const stepsDone = 256 * 256 - combinedCounter(ratchet)
+  return { jumped, stepsDone }
 }
 
 
@@ -129,10 +131,11 @@ export type SpiralSeek = {
  * step(incBy(ratchet, n)) == true && step(incBy(ratchet, n+1)) == false
  */
 export async function seek(ratchet: SpiralRatchet, step: (seek: SpiralSeek) => Promise<boolean>): Promise<SpiralSeek> {
-  // TODO: Incorporate seek randomness. I.e. add some offsets here and such that the seek isn't completely predictable by an attacker.
+  // TODO: Incorporate seek randomness. I.e. add some offsets here and there such that the seek isn't completely predictable by an attacker.
+  // TODO: Make seek start with a small step, then a medium step, then a large step, and go backwards after that
   let seekState = { ratchet, increasedBy: 0 }
   seekState = await seekLarge(seekState.ratchet, step)
-  seekState = await seekSubLarge(seekState, nextMediumEpoch, step)
+  seekState = await seekSubLarge(seekState, async r => (await nextMediumEpoch(r)).jumped, step)
   return await seekSubLarge(seekState, inc, step)
 }
 
@@ -143,7 +146,7 @@ export async function seekLarge(ratchet: SpiralRatchet, step: (seek: SpiralSeek)
   do {
     seekBefore = currentSeek
     currentSeek = {
-      ratchet: await nextLargeEpoch(currentSeek.ratchet),
+      ratchet: (await nextLargeEpoch(currentSeek.ratchet)).jumped,
       increasedBy: currentSeek.increasedBy + 256 * 256 - combinedCounter(currentSeek.ratchet)
     }
   } while (await step(currentSeek))
@@ -236,18 +239,29 @@ export function equalSmall(left: SpiralRatchet, right: SpiralRatchet): boolean {
   return left.smallCounter === right.smallCounter && uint8arrays.equals(new Uint8Array(left.small), new Uint8Array(right.small))
 }
 
-export async function* previous(recent: SpiralRatchet, old: SpiralRatchet): AsyncGenerator<SpiralRatchet, void, unknown> {
+export async function* previous(recent: SpiralRatchet, old: SpiralRatchet, discrepancyBudget: number): AsyncGenerator<SpiralRatchet, void, unknown> {
   if (equal(recent, old)) return
-  yield* previousHelper(recent, old)
+  try {
+    yield* previousHelper(recent, old, discrepancyBudget)
+  } catch (e) {
+    if (e === "used up discrepancy budget") {
+      throw new Error(`Couldn't generate previous rachets. Recent ratchet is more than ${discrepancyBudget} increments above old, or recent is older than old or they're unrelated.`)
+    }
+  }
 }
 
-async function* previousHelper(recent: SpiralRatchet, old: SpiralRatchet): AsyncGenerator<SpiralRatchet, void, unknown> {
+async function* previousHelper(recent: SpiralRatchet, old: SpiralRatchet, discrepancyBudget?: number): AsyncGenerator<SpiralRatchet, void, unknown> {
+  // If the ratchets are actually unrelated, we need to stop the inifnite recursion
+  if (discrepancyBudget != null && discrepancyBudget <= 0) {
+    throw "used up discrepancy budget"
+  }
+
   const oldNextLarge = await nextLargeEpoch(old)
 
-  if (equalLarge(recent, old) || equalLarge(recent, oldNextLarge)) {
+  if (equalLarge(recent, old) || equalLarge(recent, oldNextLarge.jumped)) {
     const oldNextMedium = await nextMediumEpoch(old)
 
-    if (equalMedium(recent, old) || equalMedium(recent, oldNextMedium)) {
+    if (equalMedium(recent, old) || equalMedium(recent, oldNextMedium.jumped)) {
       // we break out of the recursive pattern at this point
       // because going through sequentially is faster
       let revision = old
@@ -260,12 +274,12 @@ async function* previousHelper(recent: SpiralRatchet, old: SpiralRatchet): Async
         yield revision
       }
     } else {
-      yield* previousHelper(recent, oldNextMedium)
-      yield* previousHelper(oldNextMedium, old)
+      yield* previousHelper(recent, oldNextMedium.jumped, discrepancyBudget == null ? undefined : discrepancyBudget - oldNextMedium.stepsDone)
+      yield* previousHelper(oldNextMedium.jumped, old)
     }
   } else {
-    yield* previousHelper(recent, oldNextLarge)
-    yield* previousHelper(oldNextLarge, old)
+    yield* previousHelper(recent, oldNextLarge.jumped, discrepancyBudget == null ? undefined : discrepancyBudget - oldNextLarge.stepsDone)
+    yield* previousHelper(oldNextLarge.jumped, old)
   }
 }
 

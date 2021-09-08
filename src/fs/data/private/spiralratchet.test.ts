@@ -1,5 +1,6 @@
 import expect from "expect"
 import * as fc from "fast-check"
+import * as uint8arrays from "uint8arrays"
 import take from "it-take"
 import all from "it-all"
 
@@ -12,7 +13,7 @@ describe("the spiral ratchet module", () => {
   describe("next65536Epoch", () => {
     it("has the property that next65536Epoch rounds up to the next large zero", async () => {
       const spiral = await ratchet.setup()
-      const slow = await iterateAsync(spiral, s => ratchet.nextMediumEpoch(s), 256 - spiral.mediumCounter)
+      const slow = await iterateAsync(spiral, s => ratchet.nextMediumEpoch(s).then(r => r.jumped), 256 - spiral.mediumCounter)
       const fast = await ratchet.nextLargeEpoch(spiral)
       expect(canonicalize(slow)).toEqual(canonicalize(fast))
     })
@@ -210,7 +211,7 @@ describe("the spiral ratchet module", () => {
   })
 
   describe("compare", () => {
-    
+
     const max = 100000
     // maximum number of large digit steps needed to compare 0 and 100k plus some padding
     const maxSteps = max / 256 / 256 + 2
@@ -246,14 +247,16 @@ describe("the spiral ratchet module", () => {
   describe("ratchet previous", () => {
 
     it("first returns the second to most recent ratchet", async () => {
+      const max = 1000000
+
       await fc.assert(fc.asyncProperty(
-        fc.nat({ max: 1000000 }),
+        fc.nat({ max }),
         arbitraryRatchetOptions(),
         async (n, options) => {
           const initial = await ratchet.setup(options)
           const increasedN = await ratchet.incBy(initial, n)
           const increasedNPlusOne = await ratchet.inc(increasedN)
-          const previous = await ratchet.previous(increasedNPlusOne, initial).next()
+          const previous = await ratchet.previous(increasedNPlusOne, initial, max + 2).next()
           expect(previous.done || false).toEqual(false)
           expect(canonicalize(previous.value)).toEqual(canonicalize(increasedN))
         }
@@ -261,21 +264,57 @@ describe("the spiral ratchet module", () => {
     })
 
     it("has the property previous(incBy(n, ratchet), ratchet) == ratchet+n-1,ratchet+n-2,...,ratchet", async () => {
+      const max = 10000
+
       await fc.assert(fc.asyncProperty(
-        fc.nat({ max: 10000 }).map(m => m + 1),
+        fc.nat({ max }).map(m => m + 1),
         arbitraryRatchetOptions(),
         async (n, options) => {
           const initial = await ratchet.setup(options)
           const nextRatchets = await ratchet.nextN(initial, n)
           const increasedN = nextRatchets[nextRatchets.length - 1]
           const expectedPrevious = [initial, ...nextRatchets.slice(0, -1)].reverse()
-          const previous = await all(ratchet.previous(increasedN, initial))
+          const previous = await all(ratchet.previous(increasedN, initial, max + 2))
           expect(previous.length).toEqual(expectedPrevious.length)
           expect(canonicalize(previous)).toEqual(canonicalize(expectedPrevious))
         }
-      ), {
-        numRuns: isCI() ? 100 : 10
-      })
+      ), { numRuns: isCI() ? 100 : 10 })
+    })
+
+    it("will eventually terminate if the ratchets are unrelated", async () => {
+      const discrepancyBudget = 100000
+
+      await fc.assert(fc.asyncProperty(
+        arbitraryRatchetOptions(),
+        async (options) => {
+          // make sure to always generate an unrelated ratchet
+          const options2 = { ...options, seed: uint8arrays.concat([new Uint8Array([123]), new Uint8Array(options.seed)]).buffer }
+          const spiral1 = await ratchet.setup(options)
+          const spiral2 = await ratchet.setup(options2)
+          await expect(all(take(ratchet.previous(spiral1, spiral2, discrepancyBudget), 1)))
+            .rejects.toEqual(
+              new Error(`Couldn't generate previous rachets. Recent ratchet is more than ${discrepancyBudget} increments above old, or recent is older than old or they're unrelated.`)
+            )
+        }
+      ))
+    })
+
+    it("will terminate with ratchets further apart than the discrepancy budget", async () => {
+      await fc.assert(fc.asyncProperty(
+        fc.nat({ max: 100000 }).map(n => n + 1),
+        fc.nat({ max: 100000 }).map(n => n + 512), // discrepancy budgets below 512 aren't really enforced.
+        arbitraryRatchetOptions(),
+        async (n, discrepancyBudget, options) => {
+          const old = await ratchet.setup(options)
+          const recent = await ratchet.incBy(old, n)
+          const run = async () => await all(take(ratchet.previous(recent, old, discrepancyBudget), 1))
+          if (n > discrepancyBudget) {
+            await expect(run()).rejects.toBeDefined()
+          } else {
+            await expect(run()).resolves.toBeDefined()
+          }
+        }
+      ))
     })
 
   })

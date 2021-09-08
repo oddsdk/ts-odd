@@ -381,7 +381,7 @@ export function enumerateHistory(node: PrivateNode, skip: number, ctx: PrivateOp
 export async function* enumerateHistory(node: PrivateNode, skip: number, ctx: PrivateOperationContext): AsyncIterator<PrivateNode | HistoryIteratorError> {
   // TODO skip
   const firstKnownRatchet = ctx.getOldestKnownRatchet(node.bareName)
-  for await (const olderRevision of ratchet.previous(node.revision, firstKnownRatchet)) {
+  for await (const olderRevision of ratchet.previous(node.revision, firstKnownRatchet, 10_000_000)) {
     try {
       yield await loadNode(await privateRefFor({
         bareName: node.bareName,
