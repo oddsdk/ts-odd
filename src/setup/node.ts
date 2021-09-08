@@ -75,7 +75,7 @@ const rsaVerify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8A
 }
 
 const ed25519Verify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> => {
-  return new Promise(resolve => resolve(tweetnacl.sign.detached.verify(signature, message, publicKey)))
+  return new Promise(resolve => resolve(tweetnacl.sign.detached.verify(message, signature, publicKey)))
 }
 
 
