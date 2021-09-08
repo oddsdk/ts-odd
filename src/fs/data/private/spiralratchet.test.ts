@@ -246,7 +246,6 @@ describe("the spiral ratchet module", () => {
   describe("ratchet previous", () => {
 
     it("first returns the second to most recent ratchet", async () => {
-      const times: {n: number; time: number}[] = []
       await fc.assert(fc.asyncProperty(
         fc.nat({ max: 1000000 }),
         arbitraryRatchetOptions(),
@@ -254,39 +253,29 @@ describe("the spiral ratchet module", () => {
           const initial = await ratchet.setup(options)
           const increasedN = await ratchet.incBy(initial, n)
           const increasedNPlusOne = await ratchet.inc(increasedN)
-          const before = performance.now()
           const previous = await ratchet.previous(increasedNPlusOne, initial).next()
-          times.push({n, time: performance.now() - before})
           expect(previous.done || false).toEqual(false)
           expect(canonicalize(previous.value)).toEqual(canonicalize(increasedN))
         }
       ))
-      console.log(times)
-      console.log(times.reduce((a, b) => a + b.time, 0) / times.length)
     })
 
     it("has the property previous(incBy(n, ratchet), ratchet) == ratchet+n-1,ratchet+n-2,...,ratchet", async () => {
-      const times: number[] = []
       await fc.assert(fc.asyncProperty(
-        fc.nat({ max: 1000 }).map(m => m + 1),
+        fc.nat({ max: 10000 }).map(m => m + 1),
         arbitraryRatchetOptions(),
         async (n, options) => {
           const initial = await ratchet.setup(options)
           const nextRatchets = await ratchet.nextN(initial, n)
           const increasedN = nextRatchets[nextRatchets.length - 1]
           const expectedPrevious = [initial, ...nextRatchets.slice(0, -1)].reverse()
-          const before = performance.now()
           const previous = await all(ratchet.previous(increasedN, initial))
-          times.push(performance.now() - before)
           expect(previous.length).toEqual(expectedPrevious.length)
           expect(canonicalize(previous)).toEqual(canonicalize(expectedPrevious))
         }
       ), {
-        examples: [
-        ]
+        numRuns: isCI() ? 100 : 10
       })
-      console.log(times)
-      console.log(times.reduce((a, b) => a + b, 0) / times.length)
     })
 
   })
