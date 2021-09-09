@@ -37,9 +37,19 @@ function createMemoryRatchetStore(): privateNode.RatchetStore {
 
   return {
 
+    observedRatchet(bareName, spiral) {
+      const key = keyForName(bareName)
+      if (!memoryMap.has(key)) {
+        memoryMap.set(key, spiral)
+      }
+    },
+
     getOldestKnownRatchet(bareName) {
-      throw "todo"
-      // return memoryMap.get(keyForName(bareName))
+      const spiral = memoryMap.get(keyForName(bareName))
+      if (spiral == null) {
+        throw new Error(`Couldn't find a ratchet for this name ${bareName}`)
+      }
+      return spiral
     }
 
   }
@@ -47,10 +57,15 @@ function createMemoryRatchetStore(): privateNode.RatchetStore {
 
 describe("the private node module", () => {
 
-  it("", async () => {
+  it("loads what it stored after write", async () => {
     const store = createMemoryPrivateStore()
     const ratchetStore = createMemoryRatchetStore()
-    const ctx = { ...store, ...ratchetStore, now: 0 }
+    const ctx = {
+      ...store,
+      ...ratchetStore,
+      now: 0,
+      ratchetDisparityBudget: () => 1_000_000
+    }
 
     const path: [string, ...string[]] = ["Apps", "Flatmate", "state.json"]
     const content = new TextEncoder().encode(JSON.stringify({
@@ -69,4 +84,5 @@ describe("the private node module", () => {
     const contentRead = await privateNode.read(path, reconstructed, ctx)
     expect(contentRead).toEqual(content)
   })
+
 })

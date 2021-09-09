@@ -51,11 +51,19 @@ export interface PrivateStore extends PrivateStoreLookup {
   putBlock(ref: PrivateRef, block: Uint8Array, ctx: AbortContext): Promise<void>
 }
 
-export interface RatchetStore {
+export interface RatchetStoreLookup {
   getOldestKnownRatchet(bareName: bloom.BloomFilter): ratchet.SpiralRatchet
 }
 
-export type PrivateOperationContext = PrivateStoreLookup & RatchetStore & AbortContext
+export interface RatchetStore extends RatchetStoreLookup {
+  observedRatchet(bareName: bloom.BloomFilter, ratchet: ratchet.SpiralRatchet): void
+}
+
+export interface PrivateConfig {
+  ratchetDisparityBudget(): number
+}
+
+export type PrivateOperationContext = PrivateConfig & PrivateStoreLookup & RatchetStoreLookup & AbortContext
 
 
 export function isPrivateFile(node: PrivateNode): node is PrivateFile {
@@ -108,14 +116,14 @@ function nodeFromCbor(bytes: Uint8Array): PrivateNodePersisted {
 
   if (!hasProp(node, "metadata")) throw error("Missing key 'metadata'")
   if (!metadata.isMetadata(node.metadata)) throw error("Key 'metadata' invalid")
-  
+
   if (!hasProp(node, "bareName")) throw error("Missing key 'bareName'")
   if (!(node.bareName instanceof Uint8Array)) throw error("Expected 'bareName' to be a byte array")
   if (node.bareName.length != bloom.wnfsParameters.mBytes) throw error(`'bareName' has invalid length (${node.bareName.length})`)
 
   if (!hasProp(node, "revision")) throw error("Missing key 'revision'")
   node.revision = ratchet.fromCborForm(node.revision)
-  
+
   if (node.metadata.isFile) {
     if (!hasProp(node, "content")) throw error("Missing key 'content' for file")
     if (!(node.content instanceof Uint8Array)) throw error("Expected 'content' to be a byte array")
@@ -215,16 +223,41 @@ export async function getNode(path: [string, ...string[]], directory: PrivateDir
     return nextNode
   }
 
-  if (nextNode == null || isPrivateFile(nextNode)) {
+  if (nextNode == null || !isPrivateDirectory(nextNode)) {
     return null
   }
 
-  return getNode(rest, nextNode, ctx)
+  return await getNode(rest, nextNode, ctx)
+}
+
+export async function getNodeSeeking(
+  path: [string, ...string[]],
+  directory: PrivateDirectory,
+  ctx: PrivateOperationContext
+): Promise<{ updated: PrivateDirectory; result: PrivateNode | null}> {
+  const [head, ...rest] = path
+  const nextNode = await lookupNodeSeeking(head, directory, ctx)
+
+  if (nextNode == null) {
+    return { updated: directory, result: null }
+  }
+
+  const updated = { ...directory, links: { ...directory.links, [head]: nextNode } }
+
+  if (!isNonEmpty(rest)) {
+    return { updated, result: nextNode }
+  }
+
+  if (!isPrivateDirectory(nextNode)) {
+    return { updated, result: null }
+  }
+
+  return await getNodeSeeking(rest, nextNode, ctx)
 }
 
 async function lookupPrivateRef(ref: PrivateRef, ctx: PrivateOperationContext): Promise<PrivateNode | null> {
   const fetched = await ctx.getBlock(ref, { signal: ctx.signal })
-  
+
   if (fetched == null) return null
 
   return nodeFromCbor(fetched)
@@ -232,14 +265,36 @@ async function lookupPrivateRef(ref: PrivateRef, ctx: PrivateOperationContext): 
 
 export async function lookupNode(name: string, directory: PrivateDirectory, ctx: PrivateOperationContext): Promise<PrivateNode | null> {
   const link = directory.links[name]
-  
+
   if (link == null) return null
 
   return isPrivateRef(link) ? await lookupPrivateRef(link, ctx) : link
 }
 
-export async function lookupDirectory(name: string, directory: PrivateDirectory, ctx: PrivateOperationContext): Promise<PrivateDirectory | null> {
+export async function lookupNodeSeeking(name: string, directory: PrivateDirectory, ctx: PrivateOperationContext): Promise<PrivateNode | null> {
   const node = await lookupNode(name, directory, ctx)
+  if (node == null) return null
+  return await seekNode(node, ctx)
+}
+
+export async function seekNode(node: PrivateNode, ctx: PrivateOperationContext): Promise<PrivateNode> {
+  const recent = await ratchet.seek(node.revision, async seek => await ctx.getBlock(await privateRefFor({
+    revision: seek.ratchet,
+    bareName: node.bareName,
+  }), ctx) != null)
+
+  if (recent.increasedBy === 0) {
+    return node
+  }
+
+  // TODO: There's duplicate work here. E.g. we're saturating the bloom filter twice. We're looking up the same private ref twice.
+  return loadNode(await privateRefFor({
+    revision: recent.ratchet,
+    bareName: node.bareName
+  }), ctx)
+}
+
+export function ensureDirectory(node: PrivateNode | null): PrivateDirectory | null {
   if (node == null || !isPrivateDirectory(node)) return null
   return node
 }
@@ -269,7 +324,7 @@ export async function upsert(
     }
   }
 
-  const nextDirectory = await lookupDirectory(name, directory, ctx)
+  const nextDirectory = ensureDirectory(await lookupNodeSeeking(name, directory, ctx))
   if (nextDirectory == null) {
     throw new Error("Path does not exist")
   }
@@ -298,6 +353,19 @@ export async function read(
   if (!isPrivateFile(node)) throw new Error(`Couldn't read ${path}, it's not a file.`)
 
   return node.content
+}
+
+export async function readSeeking(
+  path: [string, ...string[]],
+  directory: PrivateDirectory,
+  ctx: PrivateOperationContext
+): Promise<{ updated: PrivateDirectory; result: Uint8Array }> {
+  const { updated, result } = await getNodeSeeking(path, directory, ctx)
+
+  if (result == null) throw new Error(`Couldn't read. No such file ${path}.`)
+  if (!isPrivateFile(result)) throw new Error(`Couldn't read ${path}, it's not a file.`)
+
+  return { updated, result: result.content }
 }
 
 export async function write(
@@ -375,13 +443,12 @@ export async function mkdir(
 
 type HistoryIteratorError = { error: unknown }
 
-export function enumerateHistory(file: PrivateFile, skip: number, ctx: PrivateOperationContext): AsyncIterator<PrivateFile | HistoryIteratorError>
-export function enumerateHistory(directory: PrivateDirectory, skip: number, ctx: PrivateOperationContext): AsyncIterator<PrivateDirectory | HistoryIteratorError>
-export function enumerateHistory(node: PrivateNode, skip: number, ctx: PrivateOperationContext): AsyncIterator<PrivateNode | HistoryIteratorError>
-export async function* enumerateHistory(node: PrivateNode, skip: number, ctx: PrivateOperationContext): AsyncIterator<PrivateNode | HistoryIteratorError> {
-  // TODO skip
+export function enumerateHistory(file: PrivateFile, ctx: PrivateOperationContext): AsyncIterator<PrivateFile | HistoryIteratorError>
+export function enumerateHistory(directory: PrivateDirectory, ctx: PrivateOperationContext): AsyncIterator<PrivateDirectory | HistoryIteratorError>
+export function enumerateHistory(node: PrivateNode, ctx: PrivateOperationContext): AsyncIterator<PrivateNode | HistoryIteratorError>
+export async function* enumerateHistory(node: PrivateNode, ctx: PrivateOperationContext): AsyncIterator<PrivateNode | HistoryIteratorError> {
   const firstKnownRatchet = ctx.getOldestKnownRatchet(node.bareName)
-  for await (const olderRevision of ratchet.previous(node.revision, firstKnownRatchet, 10_000_000)) {
+  for await (const olderRevision of ratchet.previous(node.revision, firstKnownRatchet, ctx.ratchetDisparityBudget())) {
     try {
       yield await loadNode(await privateRefFor({
         bareName: node.bareName,

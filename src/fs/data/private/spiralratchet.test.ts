@@ -148,6 +148,20 @@ describe("the spiral ratchet module", () => {
     })
   })
 
+  describe("serialization", () => {
+
+    it("has the property fromCborForm(toCborForm(ratchet)) == ratchet", async () => {
+      await fc.assert(fc.asyncProperty(
+        arbitraryRatchetOptions(),
+        async options => {
+          const spiral = await ratchet.setup(options)
+          expect(canonicalize(ratchet.fromCborForm(ratchet.toCborForm(spiral)))).toEqual(canonicalize(spiral))
+        }
+      ))
+    })
+
+  })
+
   describe("seek", () => {
 
     it("has the property seek(ratchet, i => i <= n).increasedBy == n", async () => {
@@ -206,6 +220,18 @@ describe("the spiral ratchet module", () => {
           }))
         }
       ), { numRuns: 20 })
+    })
+
+    it("returns the initial ratchet when seek is consistently false", async () => {
+      await fc.assert(fc.asyncProperty(
+        arbitraryRatchetOptions(),
+        async options => {
+          const spiral = await ratchet.setup(options)
+          const seek = await ratchet.seek(spiral, async () => false)
+
+          expect(canonicalize(seek.ratchet)).toEqual(canonicalize(spiral))
+        }
+      ))
     })
 
   })
