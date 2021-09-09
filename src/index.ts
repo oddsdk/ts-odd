@@ -142,7 +142,7 @@ export async function initialise(
     await retry(async () => importClassifiedInfo(
       authorised === "via-postmessage"
         ? await getClassifiedViaPostMessage()
-        : await ipfs.cat(authorised) // in any other case we expect it to be a CID
+        : JSON.parse(await ipfs.cat(authorised)) // in any other case we expect it to be a CID
     ), { tries: 10, timeout: 10000, timeoutMessage: "Trying to retrieve authentication secrets from the auth lobby timed out after 10 seconds." })
 
     await storage.setItem(USERNAME_STORAGE_KEY, username)
@@ -335,15 +335,13 @@ interface AuthLobbyClassifiedInfo {
 
 
 async function importClassifiedInfo(
-  classified : string
+  classifiedInfo: AuthLobbyClassifiedInfo
 ): Promise<void> {
-  const info: AuthLobbyClassifiedInfo = JSON.parse(classified)
-
   // Extract session key and its iv
-  const rawSessionKey = await crypto.keystore.decrypt(info.sessionKey)
+  const rawSessionKey = await crypto.keystore.decrypt(classifiedInfo.sessionKey)
 
   // Decrypt secrets
-  const secretsStr = await crypto.aes.decryptGCM(info.secrets, rawSessionKey, info.iv)
+  const secretsStr = await crypto.aes.decryptGCM(classifiedInfo.secrets, rawSessionKey, classifiedInfo.iv)
   const secrets = JSON.parse(secretsStr)
 
   const fsSecrets: Record<string, { key: string; bareNameFilter: string }> = secrets.fs
@@ -365,7 +363,7 @@ async function importClassifiedInfo(
   await ucan.store(ucans)
 }
 
-async function getClassifiedViaPostMessage(): Promise<string> {
+async function getClassifiedViaPostMessage(): Promise<AuthLobbyClassifiedInfo> {
   const iframe: HTMLIFrameElement = await new Promise(resolve => {
     const iframe = document.createElement("iframe")
     iframe.id = "webnative-secret-exchange"
@@ -384,7 +382,7 @@ async function getClassifiedViaPostMessage(): Promise<string> {
 
   try {
 
-    const answer: Promise<string> = new Promise((resolve, reject) => {
+    const answer: Promise<AuthLobbyClassifiedInfo> = new Promise((resolve, reject) => {
       window.addEventListener("message", listen)
 
       function listen(event: MessageEvent<string>) {
@@ -392,12 +390,29 @@ async function getClassifiedViaPostMessage(): Promise<string> {
           console.log(`Got a message from ${event.origin} while waiting for login credentials. Ignoring.`)
           return
         }
-        window.removeEventListener("message", listen)
-        if (event.data) {
-          resolve(event.data)
-        } else {
-          reject(new Error("Can't import UCANs & readKey(s): Missing data"))
+
+        if (event.data == null) {
+          // Might be an extension sending a message without data
+          return
         }
+
+        // At this point we either resolve or reject
+        window.removeEventListener("message", listen)
+
+        let classifiedInfo: unknown = null
+        try {
+          classifiedInfo = JSON.parse(event.data)
+        } catch {
+          reject(new Error(`Can't import UCANs & readKey(s): Can't parse: ${event.data}`))
+          return
+        }
+
+        if (!isAuthLobbyClassifiedInfo(classifiedInfo)) {
+          reject(new Error(`Can't import UCANs & readKey(s): Malformed data: ${event.data}`))
+          return
+        }
+
+        resolve(classifiedInfo)
       }
     })
 
@@ -446,4 +461,18 @@ async function retry(action: () => Promise<void>, options: { tries: number; time
     })(),
     new Promise<void>((resolve, reject) => setTimeout(() => reject(new Error(options.timeoutMessage)), options.timeout))
   ])
+}
+
+
+interface AuthLobbyClassifiedInfo {
+  sessionKey: string
+  secrets: string
+  iv: string
+}
+
+function isAuthLobbyClassifiedInfo(obj: unknown): obj is AuthLobbyClassifiedInfo {
+  return common.isObject(obj)
+    && common.isString(obj.sessionKey)
+    && common.isString(obj.secrets)
+    && common.isString(obj.iv)
 }
