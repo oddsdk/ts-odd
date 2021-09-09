@@ -143,7 +143,7 @@ export async function initialise(
       authorised === "via-postmessage"
         ? await getClassifiedViaPostMessage()
         : JSON.parse(await ipfs.cat(authorised)) // in any other case we expect it to be a CID
-    ), { tries: 10, timeout: 10000, timeoutMessage: "Trying to retrieve authentication secrets from the auth lobby timed out after 10 seconds." })
+    ), { tries: 10, timeout: 10000, timeoutMessage: "Trying to retrieve UCAN(s) and readKey(s) from the auth lobby timed out after 10 seconds." })
 
     await storage.setItem(USERNAME_STORAGE_KEY, username)
 
@@ -383,7 +383,16 @@ async function getClassifiedViaPostMessage(): Promise<AuthLobbyClassifiedInfo> {
   try {
 
     const answer: Promise<AuthLobbyClassifiedInfo> = new Promise((resolve, reject) => {
+      let tries = 10
       window.addEventListener("message", listen)
+
+      function retryOrReject(eventData?: string) {
+        console.warn(`When importing UCANs & readKey(s): Can't parse: ${eventData}. Might be due to extensions.`)
+        if (--tries === 0) {
+          window.removeEventListener("message", listen)
+          reject(new Error("Couldn't parse message from auth lobby after 10 tries. See warnings above."))
+        }
+      }
 
       function listen(event: MessageEvent<string>) {
         if (new URL(event.origin).host !== new URL(setup.endpoints.lobby).host) {
@@ -396,22 +405,20 @@ async function getClassifiedViaPostMessage(): Promise<AuthLobbyClassifiedInfo> {
           return
         }
 
-        // At this point we either resolve or reject
-        window.removeEventListener("message", listen)
-
         let classifiedInfo: unknown = null
         try {
           classifiedInfo = JSON.parse(event.data)
         } catch {
-          reject(new Error(`Can't import UCANs & readKey(s): Can't parse: ${event.data}`))
+          retryOrReject(event.data)
           return
         }
 
         if (!isAuthLobbyClassifiedInfo(classifiedInfo)) {
-          reject(new Error(`Can't import UCANs & readKey(s): Malformed data: ${event.data}`))
+          retryOrReject(event.data)
           return
         }
 
+        window.removeEventListener("message", listen)
         resolve(classifiedInfo)
       }
     })
