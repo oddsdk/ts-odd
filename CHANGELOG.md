@@ -1,7 +1,8 @@
 # Changelog
 
-### v0.27.1
+### v0.28.0
 
+- Added the `fs.addPublicExchangeKey()` function which adds the public exchange key of that domain/browser/device to your filesystem at `/public/.well-known/exchange/DID_KEY`. Along with the `fs.hasPublicExchangeKey()` to check if it's there.
 - Made the login low more resilient. Should work better with extensions triggering `postMessage`s now.
 
 
