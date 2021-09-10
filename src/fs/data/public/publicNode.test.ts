@@ -194,8 +194,6 @@ TODOs
 * move some path stuff from fileSystemModel.ts into the path module/create a v2 path module?
 * implement reconciliation
 * test it in different cases (diverging, fast-forward)
-* test mmpt
-* start private fs implementation
 
 */
 

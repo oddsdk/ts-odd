@@ -282,7 +282,9 @@ export async function seekNode(node: PrivateNode, ctx: PrivateOperationContext):
     revision: seek.ratchet,
     bareName: node.bareName,
   }), ctx) != null)
-
+  // It's possible that the node we're seeking isn't actually persisted yet
+  // because it might be from an intermediary state within a transaction.
+  // If we tried to `loadNode` directly, then we'd fail finding such a node in the PrivateStore
   if (recent.increasedBy === 0) {
     return node
   }
@@ -441,21 +443,109 @@ export async function mkdir(
   }
 }
 
-type HistoryIteratorError = { error: unknown }
 
-export function enumerateHistory(file: PrivateFile, ctx: PrivateOperationContext): AsyncIterator<PrivateFile | HistoryIteratorError>
-export function enumerateHistory(directory: PrivateDirectory, ctx: PrivateOperationContext): AsyncIterator<PrivateDirectory | HistoryIteratorError>
-export function enumerateHistory(node: PrivateNode, ctx: PrivateOperationContext): AsyncIterator<PrivateNode | HistoryIteratorError>
-export async function* enumerateHistory(node: PrivateNode, ctx: PrivateOperationContext): AsyncIterator<PrivateNode | HistoryIteratorError> {
-  const firstKnownRatchet = ctx.getOldestKnownRatchet(node.bareName)
-  for await (const olderRevision of ratchet.previous(node.revision, firstKnownRatchet, ctx.ratchetDisparityBudget())) {
-    try {
-      yield await loadNode(await privateRefFor({
-        bareName: node.bareName,
-        revision: olderRevision
-      }), ctx)
-    } catch (e) {
-      yield { error: e }
+export async function* historyFor(
+  path: string[],
+  directory: PrivateDirectory,
+  ctx: PrivateOperationContext
+): AsyncGenerator<PrivateNode, void> {
+  const oldestKnownRatchet = ctx.getOldestKnownRatchet(directory.bareName)
+  // It's technically possible that we know older ratchets than what's in "getOldestKnownRatchet".
+  // But we ignore this, because in most cases the stored ratchet is the oldest known ratchet.
+  const rootPrevious = yieldBetween(directory.bareName, directory.revision, oldestKnownRatchet, ctx)
+
+  if (!isNonEmpty(path)) {
+    yield* rootPrevious
+    return
+  }
+
+  yield* historyForHelper(path, rootPrevious, directory, ctx)
+}
+
+
+async function* historyForHelper(
+  path: [string, ...string[]],
+  previousViaParent: AsyncGenerator<PrivateNode, void>,
+  directory: PrivateDirectory,
+  ctx: PrivateOperationContext
+): AsyncGenerator<PrivateNode, void> {
+  const [head, ...rest] = path
+
+  const next = await lookupNode(head, directory, ctx)
+
+  if (next == null) {
+    throw new Error(`Couldn't find file or directory ${head} at ${uint8arrays.toString(directory.bareName, "base64url")} when trying to list history.`)
+  }
+
+  const directoryEntryPrevious = previousOfDirectoryEntry(directory, head, previousViaParent, ctx)
+
+  if (!isNonEmpty(rest)) {
+    yield* previousFor(next, directoryEntryPrevious, ctx)
+    return
+  }
+
+  if (!isPrivateDirectory(next)) {
+    throw new Error(`Couldn't find a directory with name ${head} at ${uint8arrays.toString(directory.bareName, "base64url")} when trying to list history.`)
+  }
+
+  yield* historyForHelper(rest, directoryEntryPrevious, next, ctx)
+}
+
+async function* previousOfDirectoryEntry(
+  directory: PrivateDirectory,
+  entryName: string,
+  previousViaParent: AsyncGenerator<PrivateNode, void>,
+  ctx: PrivateOperationContext
+) {
+  for await (const node of previousFor(directory, previousViaParent, ctx)) {
+    if (!isPrivateDirectory(node)) {
+      throw new Error(`Encountered a private node while iterating the history that can't be interpreted as a directory anymore, at node ${uint8arrays.toString(directory.bareName, "base64url")}`)
     }
+    const subNode = await lookupNode(entryName, node, ctx)
+    if (subNode == null) {
+      return
+    }
+    yield subNode
+  }
+}
+
+async function* previousFor(
+  node: PrivateNode,
+  previousViaParent: AsyncGenerator<PrivateNode, void>,
+  ctx: PrivateOperationContext
+): AsyncGenerator<PrivateNode, void> {
+  let alreadyYieldedCeiling = node.revision
+  for await (const versionBefore of previousViaParent) {
+    // It's possible that we get a node from the parent
+    // with a different inumber, because the node got deleted
+    // and immediately recreated (both under e.g. "Apps").
+    if (!uint8arrays.equals(versionBefore.bareName, node.bareName)) {
+      return
+    }
+    yield* yieldBetween(node.bareName, alreadyYieldedCeiling, versionBefore.revision, ctx)
+    alreadyYieldedCeiling = versionBefore.revision
+  }
+}
+
+async function* yieldBetween(
+  bareName: bloom.BloomFilter,
+  current: ratchet.SpiralRatchet,
+  older: ratchet.SpiralRatchet,
+  ctx: PrivateOperationContext
+): AsyncGenerator<PrivateNode, void> {
+  for await (const revisionInBetween of ratchet.previous(current, older, ctx.ratchetDisparityBudget())) {
+    const ref = await privateRefFor({
+      bareName: bareName,
+      revision: revisionInBetween
+    })
+    const block = await ctx.getBlock(ref, ctx)
+    if (block == null) {
+      return
+    }
+    const node = nodeFromCbor(block)
+    if (!uint8arrays.equals(bareName, node.bareName)) {
+      return
+    }
+    yield node
   }
 }

@@ -6,6 +6,7 @@ import * as privateNode from "./privateNode.js"
 import * as namefilter from "./namefilter.js"
 import * as ratchet from "./spiralratchet.js"
 import * as bloom from "./bloomfilter.js"
+import all from "it-all"
 
 
 function createMemoryPrivateStore(): privateNode.PrivateStore {
@@ -73,13 +74,21 @@ describe("the private node module", () => {
     }))
 
     let directory = await privateNode.newDirectory(namefilter.empty(), ctx)
+    ratchetStore.observedRatchet(directory.bareName, directory.revision)
     const emptyFsRef = await privateNode.storeNode(directory, ctx)
     directory = await privateNode.loadNode(emptyFsRef, ctx) as privateNode.PrivateDirectoryPersisted
 
     directory = await privateNode.write(path, content, directory, ctx)
 
     const ref = await privateNode.storeNodeAndAdvance(directory, ctx)
-    const reconstructed = await privateNode.loadNode(ref, ctx) as privateNode.PrivateDirectory
+    let reconstructed = await privateNode.loadNode(ref, ctx) as privateNode.PrivateDirectory
+
+    console.log(await all(privateNode.historyFor([], reconstructed, ctx)))
+
+    reconstructed = await privateNode.write(path, content, reconstructed, ctx)
+    reconstructed = await privateNode.loadNode(await privateNode.storeNodeAndAdvance(directory, ctx), ctx) as privateNode.PrivateDirectory
+
+    console.log(await all(privateNode.historyFor(path, reconstructed, ctx)))
 
     const contentRead = await privateNode.read(path, reconstructed, ctx)
     expect(contentRead).toEqual(content)
