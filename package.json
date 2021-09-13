@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.27.1",
+  "version": "0.28.0",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -64,7 +64,7 @@
     "publish-latest": "npm publish --tag latest"
   },
   "devDependencies": {
-    "@ipld/car": "^3.1.8",
+    "@ipld/car": "^3.1.16",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.4.1",
@@ -96,8 +96,9 @@
     "ipfs-message-port-client": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-client.tar.gz",
     "ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz",
     "ipld-dag-pb": "^0.22.2",
-    "keystore-idb": "0.14.2",
+    "keystore-idb": "0.15.0-alpha-6",
     "localforage": "^1.9.0",
+    "multiformats": "^9.0.0",
     "noble-ed25519": "^1.2.4",
     "throttle-debounce": "^3.0.1",
     "uint8arrays": "^2.1.7"
