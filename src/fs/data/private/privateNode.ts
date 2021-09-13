@@ -56,7 +56,7 @@ export interface RatchetStoreLookup {
 }
 
 export interface RatchetStore extends RatchetStoreLookup {
-  observedRatchet(bareName: bloom.BloomFilter, ratchet: ratchet.SpiralRatchet): void
+  storeRatchet(bareName: bloom.BloomFilter, ratchet: ratchet.SpiralRatchet): void
 }
 
 export interface PrivateConfig {

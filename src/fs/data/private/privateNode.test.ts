@@ -1,4 +1,5 @@
 import expect from "expect"
+import all from "it-all"
 import * as fc from "fast-check"
 import * as uint8arrays from "uint8arrays"
 
@@ -6,7 +7,6 @@ import * as privateNode from "./privateNode.js"
 import * as namefilter from "./namefilter.js"
 import * as ratchet from "./spiralratchet.js"
 import * as bloom from "./bloomfilter.js"
-import all from "it-all"
 
 
 function createMemoryPrivateStore(): privateNode.PrivateStore {
@@ -38,7 +38,7 @@ function createMemoryRatchetStore(): privateNode.RatchetStore {
 
   return {
 
-    observedRatchet(bareName, spiral) {
+    storeRatchet(bareName, spiral) {
       const key = keyForName(bareName)
       if (!memoryMap.has(key)) {
         memoryMap.set(key, spiral)
@@ -74,7 +74,7 @@ describe("the private node module", () => {
     }))
 
     let directory = await privateNode.newDirectory(namefilter.empty(), ctx)
-    ratchetStore.observedRatchet(directory.bareName, directory.revision)
+    ratchetStore.storeRatchet(directory.bareName, directory.revision)
     const emptyFsRef = await privateNode.storeNode(directory, ctx)
     directory = await privateNode.loadNode(emptyFsRef, ctx) as privateNode.PrivateDirectoryPersisted
 
