@@ -80,13 +80,12 @@ describe("the private node module", () => {
 
     directory = await privateNode.write(path, content, directory, ctx)
 
-    const ref = await privateNode.storeNodeAndAdvance(directory, ctx)
-    let reconstructed = await privateNode.loadNode(ref, ctx) as privateNode.PrivateDirectory
+    let reconstructed = await privateNode.loadNode(await privateNode.storeNodeAndAdvance(directory, ctx), ctx) as privateNode.PrivateDirectory
 
     console.log(await all(privateNode.historyFor([], reconstructed, ctx)))
 
     reconstructed = await privateNode.write(path, content, reconstructed, ctx)
-    reconstructed = await privateNode.loadNode(await privateNode.storeNodeAndAdvance(directory, ctx), ctx) as privateNode.PrivateDirectory
+    reconstructed = await privateNode.loadNode(await privateNode.storeNodeAndAdvance(reconstructed, ctx), ctx) as privateNode.PrivateDirectory
 
     console.log(await all(privateNode.historyFor(path, reconstructed, ctx)))
 

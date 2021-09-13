@@ -109,7 +109,7 @@ function directoryToCbor(directory: PrivateDirectoryPersisted): Uint8Array {
   })
 }
 
-function nodeFromCbor(bytes: Uint8Array): PrivateNodePersisted {
+export function nodeFromCbor(bytes: Uint8Array): PrivateNodePersisted {
   const node = cbor.decode(bytes)
 
   const error = (msg: string) => new Error(`Couldn't parse private node. ${msg}. Got ${JSON.stringify(node, null, 2)}`)
