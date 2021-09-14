@@ -68,10 +68,10 @@ export const ed25519Verify = (message: Uint8Array, signature: Uint8Array, public
   return new Promise(resolve => resolve(tweetnacl.sign.detached.verify(message, signature, publicKey)))
 }
 
-export const ksPublicReadKey = async (): Promise<string> => {
-  assertBrowser("keystore.publicReadKey")
+export const ksPublicExchangeKey = async (): Promise<string> => {
+  assertBrowser("keystore.publicExchangeKey")
   const ks = await keystore.get()
-  return ks.publicReadKey()
+  return ks.publicExchangeKey()
 }
 
 export const ksPublicWriteKey = async (): Promise<string> => {
