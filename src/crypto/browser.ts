@@ -68,10 +68,10 @@ export const ed25519Verify = (message: Uint8Array, signature: Uint8Array, public
   return ed25519.verify(signature, message, publicKey)
 }
 
-export const ksPublicReadKey = async (): Promise<string> => {
-  assertBrowser("keystore.publicReadKey")
+export const ksPublicExchangeKey = async (): Promise<string> => {
+  assertBrowser("keystore.publicExchangeKey")
   const ks = await keystore.get()
-  return ks.publicReadKey()
+  return ks.publicExchangeKey()
 }
 
 export const ksPublicWriteKey = async (): Promise<string> => {
