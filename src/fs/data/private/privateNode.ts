@@ -51,19 +51,15 @@ export interface PrivateStore extends PrivateStoreLookup {
   putBlock(ref: PrivateRef, block: Uint8Array, ctx: AbortContext): Promise<void>
 }
 
-export interface RatchetStoreLookup {
+export interface RatchetStore {
   getOldestKnownRatchet(bareName: bloom.BloomFilter): ratchet.SpiralRatchet
-}
-
-export interface RatchetStore extends RatchetStoreLookup {
-  storeRatchet(bareName: bloom.BloomFilter, ratchet: ratchet.SpiralRatchet): void
 }
 
 export interface PrivateConfig {
   ratchetDisparityBudget(): number
 }
 
-export type PrivateOperationContext = PrivateConfig & PrivateStoreLookup & RatchetStoreLookup & AbortContext
+export type PrivateOperationContext = PrivateConfig & PrivateStoreLookup & RatchetStore & AbortContext
 
 
 export function isPrivateFile(node: PrivateNode): node is PrivateFile {

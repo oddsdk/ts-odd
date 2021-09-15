@@ -330,6 +330,14 @@
     cborg "^1.2.1"
     multiformats "^9.0.0"
 
+"@ipld/dag-cbor@^6.0.10":
+  version "6.0.10"
+  resolved "https://registry.yarnpkg.com/@ipld/dag-cbor/-/dag-cbor-6.0.10.tgz#b757579bd497483932bd291779cea80caa693a5b"
+  integrity sha512-dGinQkyDKQ5vkgX8JxbXBX2fl2GB+cn6u6a6cm/pTub1WeB/PMoDJ9pU7VSBvHUtGO+ZoueeQ06TgEnO+t9esg==
+  dependencies:
+    cborg "^1.2.1"
+    multiformats "^9.0.0"
+
 "@jest/types@^27.0.6":
   version "27.0.6"
   resolved "https://registry.yarnpkg.com/@jest/types/-/types-27.0.6.tgz#9a992bc517e0c49f035938b8549719c2de40706b"
@@ -1120,6 +1128,11 @@ bintrees@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/bintrees/-/bintrees-1.0.1.tgz#0e655c9b9c2435eaab68bf4027226d2b55a34524"
   integrity sha1-DmVcm5wkNeqraL9AJyJtK1WjRSQ=
+
+bit-sequence@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/bit-sequence/-/bit-sequence-1.1.0.tgz#a7f2769050153b2b695146031151bd6b40d7dc0b"
+  integrity sha512-xi8Zql4GyDj+31c1P4/okMx1TlcH8km0F3HuKEihePUEUzMcCBQTFdfXxoUTSrDWXy8tKB7iVGv6ppVeOYrG1w==
 
 bl@^4.0.3:
   version "4.1.0"
@@ -2612,6 +2625,13 @@ human-signals@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/human-signals/-/human-signals-2.1.0.tgz#dc91fcba42e4d06e4abaed33b3e7a3c02f514ea0"
   integrity sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==
+
+iamap@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/iamap/-/iamap-2.0.5.tgz#23005aebf927d62fe4c7b7b2a7e664477a01c2bc"
+  integrity sha512-6A9+2lQVr56HSWXEgUutJWT3HVnhX3MjBY/nAdJ3nRnTBKHecRGsjLqcWKEOhUX5UH6ds/tlvzL4b+xONA0xPg==
+  dependencies:
+    bit-sequence "^1.1.0"
 
 iconv-lite@^0.6.2:
   version "0.6.3"
@@ -4486,6 +4506,11 @@ multiformats@^9.4.2:
   version "9.4.2"
   resolved "https://registry.yarnpkg.com/multiformats/-/multiformats-9.4.2.tgz#3995a0b23072657d7a2fa56b2afc745e0ce8e5bd"
   integrity sha512-GXsulAzqA+EI/iObKWsg9n4PKNVpUTsWdA+Ijn3hJMaVHQ/+dJaClSZ55g8sVKniBjQkouGaVCKCu9c/wwMXQQ==
+
+multiformats@^9.4.7:
+  version "9.4.7"
+  resolved "https://registry.yarnpkg.com/multiformats/-/multiformats-9.4.7.tgz#df2caa6ccd975218bbbacd69e45bb76cc2a53654"
+  integrity sha512-fZbcdf7LnvokPAZYkv4TLXe7PAg9sQ5qLXcwrAmZOloEb2+5FtFiAY+l3/9wsu4oTJXTV3JSggFQQ2dJLS01vA==
 
 multihashes@^4.0.1, multihashes@^4.0.2:
   version "4.0.2"
