@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.28.1
+
+- Switch from noble-ed25519 to tweetnacl. Tweetnacl has been audited and can be used in a wider range of environments.
+
 ### v0.28.0
 
 - Added the `fs.addPublicExchangeKey()` function which adds the public exchange key of that domain/browser/device to your filesystem at `/public/.well-known/exchange/DID_KEY`. Along with the `fs.hasPublicExchangeKey()` to check if it's there.
