@@ -1,25 +1,36 @@
-import CID from "cids"
-import dagPb from "ipld-dag-pb"
-import { getNameFromCode } from "multicodec"
+import { CID } from "multiformats/cid"
+import * as dagPB from "@ipld/dag-pb"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
-import { hasProp } from "./common.js"
 import { FromCID, LazyCIDRef, lazyRefFromCID, OperationContext } from "./ref.js"
 
 
 
 export async function linksToCID(links: Record<string, CID>, { ipfs, signal }: OperationContext): Promise<CID> {
-  const dagNode = new dagPb.DAGNode(DAG_NODE_DATA)
+  const Links: dagPB.PBLink[] = []
 
-  for (const [name, cid] of Object.entries(links)) {
+  for (const [Name, cid] of Object.entries(links)) {
     // TODO: We can Probably use Promise.all here to make this concurrent.
     const stat = await ipfs.files.stat(cid, { signal })
     // TODO: This should actually be equivalent to: (await ipfs.dag.get(cid, { signal })).value.Size
     // FIXME: Write a size cache. .stat calls take ~2ms in the median. We'll duplicate a lot of these calls
-    dagNode.addLink(new dagPb.DAGLink(name, stat.cumulativeSize, cid))
+    Links.push({
+      Name,
+      Tsize: stat.cumulativeSize,
+      Hash: cid
+    })
   }
 
-  return await ipfs.dag.put(dagNode, { version: 1, format: "dag-pb", hashAlg: "sha2-256", pin: false, signal })
+  const bytes = dagPB.encode(dagPB.prepare({
+    Data: DAG_NODE_DATA,
+    Links
+  }))
+
+  // TODO for the switch towards a BlockStore abstraction
+  // const hash = await sha256.digest(bytes)
+  // const cid = CID.create(1, dagPB.code, hash)
+
+  return await ipfs.block.put(bytes, { version: 1, format: "dag-pb", mhtype: "sha2-256", pin: false, signal })
 }
 
 
@@ -33,17 +44,11 @@ export async function lazyLinksToCID(links: Record<string, LazyCIDRef<unknown>>,
 
 
 export async function linksFromCID(cid: CID, { ipfs, signal }: OperationContext): Promise<Record<string, CID>> {
-  const getResult = await ipfs.dag.get(cid, { signal })
-  // we only support DAG-PB
-  if (!isDAGNodeLike(getResult.value)) {
-    console.log("its not?", getResult.value)
-    throw new Error(`Can't read links from ${cid.toString()} (${getResult.value}), probably due to it not being in expected dag-pb format. Actual format: ${getNameFromCode(cid.code)}`)
-  }
-  const dagNode: dagPb.DAGNodeLike = getResult.value
-
+  const bytes = await ipfs.block.get(cid, { signal })
+  const dagNode = dagPB.decode(bytes)
   const links: Record<string, CID> = {}
   for (const dagLink of dagNode.Links || []) {
-    links[dagLink.Name] = dagLink.Hash
+    links[dagLink.Name || ""] = dagLink.Hash
   }
   return Object.freeze(links)
 }
@@ -87,19 +92,4 @@ export async function mapRecordPar<S, T>(record: Record<string, S>, f: (key: str
   const newRecord: Record<string, T> = {}
   await Promise.all(Object.entries(record).map(([key, value]) => f(key, value).then(result => newRecord[key] = result)))
   return newRecord
-}
-
-
-///
-
-function isDAGNodeLike(dagNode: unknown): dagNode is dagPb.DAGNodeLike {
-  return hasProp(dagNode, "Data") && dagNode.Data instanceof Uint8Array
-    && hasProp(dagNode, "Links") && dagNode.Links instanceof Array
-    && dagNode.Links.every(isDAGLinkLike)
-}
-
-function isDAGLinkLike(dagLink: unknown): dagLink is dagPb.DAGLinkLike {
-  return hasProp(dagLink, "Name") && typeof dagLink.Name === "string"
-    && hasProp(dagLink, "Tsize") && typeof dagLink.Tsize === "number"
-    && hasProp(dagLink, "Hash") && CID.isCID(dagLink.Hash)
 }

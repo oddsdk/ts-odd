@@ -1,5 +1,5 @@
 import expect from "expect"
-import CID from "cids"
+import { CID } from "multiformats/cid"
 
 import { loadCAR } from "../../../tests/helpers/loadCAR.js"
 
@@ -45,7 +45,7 @@ describe("the data metadata module", () => {
     // Fails for some reason??? Works on the command line
     // const metadataPath = `/ipfs/${root.toString()}/public/metadata`
     // const exampleCID = await ipfs.resolve(metadataPath)
-    const exampleCID = new CID("bafkreifn7hwfiuvb2kuff4cv4yeqlbnoux7mfyhhu634l7nikrpzegvyhm")
+    const exampleCID = CID.parse("bafkreifn7hwfiuvb2kuff4cv4yeqlbnoux7mfyhhu634l7nikrpzegvyhm")
     const decoded = await metadata.metadataFromCID(exampleCID, { ipfs })
     const decodedCID = await metadata.metadataToCID(decoded, { ipfs })
     expect(exampleCID.toString()).toEqual(decodedCID.toString())

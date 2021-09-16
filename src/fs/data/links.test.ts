@@ -1,5 +1,5 @@
 import expect from "expect"
-import CID from "cids"
+import { CID } from "multiformats/cid"
 import { loadCAR } from "../../../tests/helpers/loadCAR.js"
 import { canonicalize } from "../../../tests/helpers/common.js"
 import { ipfsFromContext } from "../../../tests/mocha-hook.js"
@@ -13,8 +13,8 @@ describe("the data links module", () => {
     const ipfs = ipfsFromContext(this)
 
     const exampleLinks: Record<string, CID> = {
-      "Apps": new CID("bafkqaaa"),
-      "Documents": new CID("bafkqaaa"),
+      "Apps": CID.parse("bafkqaaa"),
+      "Documents": CID.parse("bafkqaaa"),
     }
 
     const cid = await linksToCID(exampleLinks, { ipfs })
@@ -28,7 +28,7 @@ describe("the data links module", () => {
     await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
 
     // ^ root/public/userland
-    const exampleCID = new CID("bafybeig6m5w57qpp7pj3kcrban74bhbjittr46nkxqgpuqx2o4ymieysem")
+    const exampleCID = CID.parse("bafybeig6m5w57qpp7pj3kcrban74bhbjittr46nkxqgpuqx2o4ymieysem")
     const decodedLinks = await linksFromCID(exampleCID, { ipfs })
     const cid = await linksToCID(decodedLinks, { ipfs })
     expect(cid.toString()).toEqual(exampleCID.toString())

@@ -94,10 +94,13 @@ describe("the private node module", () => {
     const ref = await privateNode.storeNodeAndAdvance(directory, ctx)
     
     const iamap = await store.getBackingIAMap()
+    console.log(iamap)
     console.log(privateNode.nodeFromCbor(await iamap.get(ref.namefilter)))
   })
 
 })
+
+
 
 
 

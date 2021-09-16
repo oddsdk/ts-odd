@@ -2,7 +2,7 @@ import type { IPFS } from "ipfs-core"
 
 import expect from "expect"
 import * as fc from "fast-check"
-import CID from "cids"
+import { CID } from "multiformats/cid"
 
 import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
 import { canonicalize } from "../../../../tests/helpers/common.js"
@@ -29,7 +29,7 @@ describe("the data public node module", () => {
   it("round trips files from/to IPFS", async function () {
     const ipfs = ipfsFromContext(this)
 
-    const fileHeaderCID = new CID("bafybeiaezxgxy2i2cq2phszwj3zspn5yrrbg2rvbqzs7y63i4cjlnpoxlq")
+    const fileHeaderCID = CID.parse("bafybeiaezxgxy2i2cq2phszwj3zspn5yrrbg2rvbqzs7y63i4cjlnpoxlq")
 
     const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
     const [root] = car.roots
@@ -51,9 +51,9 @@ describe("the data public node module", () => {
       metadata: metadata.updateMtime(metadata.newFile(1621259349710), 1627992355220),
       previous: lazyRefFromCID(await fileToCID({
         metadata: metadata.updateMtime(metadata.newFile(1621259349710), 1627992355220),
-        userland: new CID("bafkqaaa")
+        userland: CID.parse("bafkqaaa")
       }, { ipfs }), fileFromCID),
-      userland: new CID("bafkqaaa"),
+      userland: CID.parse("bafkqaaa"),
     }
 
     const cid = await fileToCID(fileHeader, { ipfs })
@@ -64,7 +64,7 @@ describe("the data public node module", () => {
   it("round trips directories from/to IPFS", async function () {
     const ipfs = ipfsFromContext(this)
 
-    const directoryCID = new CID("bafybeiacqgd7tous6mbq3dony547vb3p2jzq36feiu7jut636jt7tiiy7i")
+    const directoryCID = CID.parse("bafybeiacqgd7tous6mbq3dony547vb3p2jzq36feiu7jut636jt7tiiy7i")
 
     const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
     const [root] = car.roots
@@ -88,7 +88,7 @@ describe("the data public node module", () => {
         metadata: metadata.newDirectory(1621508308152),
         userland: {}
       }, { ipfs }), directoryFromCID),
-      skeleton: new CID("bafkqaaa"),
+      skeleton: CID.parse("bafkqaaa"),
       userland: {
         "Apps": lazyRefFromCID(await nodeToCID({
           metadata: metadata.newDirectory(1621887292742),
@@ -96,7 +96,7 @@ describe("the data public node module", () => {
         }, { ipfs }), nodeFromCID),
         "index.html": lazyRefFromCID(await nodeToCID({
           metadata: metadata.newFile(1621887292742),
-          userland: new CID("bafkqaaa"),
+          userland: CID.parse("bafkqaaa"),
         }, { ipfs }), nodeFromCID),
       }
     }
@@ -118,7 +118,7 @@ describe("the data public node module", () => {
     }
 
     // /ipfs/<root>/public resolves to this
-    const publicRootCID = new CID("bafybeiacqgd7tous6mbq3dony547vb3p2jzq36feiu7jut636jt7tiiy7i")
+    const publicRootCID = CID.parse("bafybeiacqgd7tous6mbq3dony547vb3p2jzq36feiu7jut636jt7tiiy7i")
 
     const rootDirectory = await directoryFromCID(publicRootCID, { ipfs })
     const files = await listFiles(rootDirectory, ipfs)
@@ -220,7 +220,7 @@ async function directoryToModel(
     const path = [...atPath, name] as unknown as [string, ...string[]]
     if (isPublicFile(entry)) {
       const block = await ctx.ipfs.block.get(entry.userland)
-      const content = new TextDecoder().decode(block.data)
+      const content = new TextDecoder().decode(block)
       model = runOperation(model, { op: "write", path, content })
     } else {
       model = runOperation(model, { op: "mkdir", path })
@@ -232,8 +232,8 @@ async function directoryToModel(
 
 async function interpretOperation(directory: PublicDirectory, operation: FileSystemOperation, ctx: OperationContext & Timestamp): Promise<PublicDirectory> {
   if (operation.op === "write") {
-    const block = await ctx.ipfs.block.put(new TextEncoder().encode(operation.content), { format: "raw", version: 1 })
-    return await write(operation.path, block.cid, directory, ctx)
+    const cid = await ctx.ipfs.block.put(new TextEncoder().encode(operation.content), { format: "raw", version: 1 })
+    return await write(operation.path, cid, directory, ctx)
   } else if (operation.op === "mkdir") {
     return await mkdir(operation.path, directory, ctx)
   } else if (operation.op === "remove") {

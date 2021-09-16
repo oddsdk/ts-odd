@@ -1,7 +1,7 @@
-import CIDObj from "cids"
 import dagPb, { DAGLink, DAGNode } from "ipld-dag-pb"
 import type { IPFSEntry } from "ipfs-core-types/src/root"
 import type { ImportCandidate } from "ipfs-core-types/src/utils"
+import * as multiformats from "multiformats"
 
 import { get as getIpfs } from "./config.js"
 import { CID, AddResult } from "./types.js"
@@ -9,6 +9,7 @@ import * as util from "./util.js"
 import { DAG_NODE_DATA } from "./constants.js"
 import * as uint8arrays from "uint8arrays"
 import { setup } from "../setup/internal.js"
+import { isObject, isString } from "../common/type-checks.js"
 
 
 export const add = async (content: ImportCandidate): Promise<AddResult> => {
@@ -54,7 +55,7 @@ export const ls = async (cid: CID): Promise<IPFSEntry[]> => {
 export const dagGet = async (cid: CID): Promise<DAGNode> => {
   const ipfs = await getIpfs()
   await attemptPin(cid)
-  const raw = await ipfs.dag.get(new CIDObj(cid))
+  const raw = await ipfs.dag.get(multiformats.CID.parse(cid))
   const node = util.rawToDAGNode(raw)
   return node
 }
@@ -92,8 +93,11 @@ export const attemptPin = async (cid: CID): Promise<void> => {
   try {
     await ipfs.pin.add(cid, { recursive: false })
   } catch (err) {
+    if (!isObject(err) || !isString(err.message)) {
+      throw new Error("couldn't pin")
+    }
     if (!err.message || !err.message.includes("already pinned recursively")) {
-      throw new Error(err)
+      throw err
     }
   }
 }

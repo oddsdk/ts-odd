@@ -1,5 +1,5 @@
 import type { IPFS } from "ipfs-core"
-import CID from "cids"
+import { CID } from "multiformats/cid"
 
 
 /**

@@ -64,7 +64,7 @@
     "publish-latest": "npm publish --tag latest"
   },
   "devDependencies": {
-    "@ipld/car": "^3.1.8",
+    "@ipld/car": "^3.1.16",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.4.1",
@@ -76,10 +76,9 @@
     "eslint-plugin-import": "^2.24.2",
     "expect": "^27.0.6",
     "fast-check": "^2.14.0",
-    "interface-datastore": "^4.0.1",
-    "ipfs-core": "0.8.0",
-    "ipfs-core-types": "0.5.2",
-    "ipfs-repo": "^9.1.6",
+    "ipfs-core": "^0.10.6",
+    "ipfs-core-types": "^0.7.1",
+    "ipfs-repo": "^12.0.0",
     "it-take": "^1.0.1",
     "mocha": "^9.0.2",
     "multihashing-async": "^2.1.2",
@@ -93,8 +92,10 @@
   },
   "dependencies": {
     "@ipld/dag-cbor": "^6.0.10",
+    "@ipld/dag-pb": "^2.1.9",
+    "blockstore-core": "^1.0.2",
     "cborg": "^1.3.4",
-    "cids": "^1.1.6",
+    "datastore-core": "^6.0.7",
     "fission-bloom-filters": "1.7.1",
     "iamap": "^2.0.5",
     "ipfs-message-port-client": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-client.tar.gz",
@@ -106,13 +107,14 @@
     "localforage": "^1.9.0",
     "lodash": "^4.17.21",
     "multicodec": "^3.0.1",
-    "multiformats": "^9.4.7",
+    "multiformats": "9.4.7",
     "murmurhash3.js": "https://github.com/karanlyons/murmurHash3.js",
     "noble-ed25519": "^1.2.4",
     "throttle-debounce": "^3.0.1",
     "uint8arrays": "^2.1.7"
   },
   "resolutions": {
+    "multiformats": "9.4.7",
     "**/ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz"
   },
   "tsd": {

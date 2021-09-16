@@ -1,4 +1,4 @@
-import CID from "cids"
+import { CID } from "multiformats/cid"
 import { isNonEmpty, Timestamp } from "../common.js"
 import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
 import { metadataToCID, metadataFromCID, Metadata, newDirectory, updateMtime, newFile } from "../metadata.js"

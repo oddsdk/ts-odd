@@ -1,4 +1,4 @@
-import CID from "cids"
+import { CID } from "multiformats/cid"
 import * as cbor from "cborg"
 import { OperationContext } from "./ref.js"
 import { SemVer, v1 } from "./semver.js"
@@ -55,15 +55,15 @@ export const newDirectory = (now: number): Metadata => newMeta(false, now)
 
 
 export async function metadataToCID(metadata: Metadata, { ipfs, signal }: OperationContext): Promise<CID> {
-  const { cid } = await ipfs.block.put(cbor.encode(metadata), { version: 1, format: "raw", pin: false, signal }) // cid version 1
+  const cid = await ipfs.block.put(cbor.encode(metadata), { version: 1, format: "raw", pin: false, signal }) // cid version 1
   return cid
 }
 
 
 export async function metadataFromCID(cid: CID, { ipfs, signal }: OperationContext): Promise<Metadata> {
-  const block = await ipfs.block.get(cid, { signal })
+  const bytes = await ipfs.block.get(cid, { signal })
 
-  const metadata = cbor.decode(block.data)
+  const metadata = cbor.decode(bytes)
 
   if (!isMetadata(metadata)) {
     throw new Error(`Couldn't parse metadata at ${cid.toString()}`)

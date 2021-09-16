@@ -12,12 +12,10 @@ export async function loadCAR(filepath: string, ipfs: IPFS): Promise<{ roots: CI
     const cids: CID[] = []
     const blockIterator = await CarBlockIterator.fromIterable(inStream)
     for await (const block of blockIterator) {
-      // @ts-ignore
       cids.push(block.cid)
-      await ipfs.block.put(block.bytes, { cid: block.cid })
+      await ipfs.block.put(block.bytes, { version: 1, mhtype: "sha2-256" })
     }
     return {
-      // @ts-ignore
       roots: await blockIterator.getRoots(),
       cids,
     }

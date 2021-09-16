@@ -6,6 +6,7 @@ import { CID } from "multiformats/cid"
 import * as Block from "multiformats/block"
 import { sha256 } from "multiformats/hashes/sha2"
 import * as codec from "@ipld/dag-cbor" // encode blocks using the DAG-CBOR format
+import { crypto, webcrypto } from "./webcrypto.js"
 
 import { PrivateStore, PrivateStoreLookup, PrivateRef } from "./privateNode.js"
 
@@ -14,8 +15,8 @@ export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<
 
   let currentMap = iamap.create<CID>({
     async load(cid) {
-      const bytes = await ipfs.block.get(cid.toString())
-      const block = await Block.decode({ bytes: bytes.data, codec, hasher: sha256 })
+      const bytes = await ipfs.block.get(cid)
+      const block = await Block.decode({ bytes: bytes, codec, hasher: sha256 })
       return block.value
     },
 
@@ -33,7 +34,7 @@ export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<
     isLink(obj) {
       return CID.asCID(obj) != null
     }
-  }, { hashAlg: sha256.code, bitWidth: 8, bucketSize: 2 })
+  }, { hashAlg: sha256.code, bitWidth: 5, bucketSize: 2 })
 
   return {
 

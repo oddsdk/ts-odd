@@ -15,7 +15,7 @@ describe("the spiral ratchet module", () => {
       const spiral = await ratchet.setup()
       const slow = await iterateAsync(spiral, s => ratchet.nextMediumEpoch(s).then(r => r.jumped), 256 - spiral.mediumCounter)
       const fast = await ratchet.nextLargeEpoch(spiral)
-      expect(canonicalize(slow)).toEqual(canonicalize(fast))
+      expect(canonicalize(fast.jumped)).toEqual(canonicalize(slow))
     })
   })
 
@@ -24,7 +24,7 @@ describe("the spiral ratchet module", () => {
       const spiral = await ratchet.setup()
       const fast = await ratchet.nextMediumEpoch(spiral)
       const slow = await iterateAsync(spiral, s => ratchet.inc(s), 256 - spiral.smallCounter)
-      expect(canonicalize(fast)).toEqual(canonicalize(slow))
+      expect(canonicalize(fast.jumped)).toEqual(canonicalize(slow))
     })
   })
 
