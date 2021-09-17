@@ -17,7 +17,7 @@ export type PrivateNodePersisted = PrivateDirectoryPersisted | PrivateFile
 
 export type PrivateDirectoryPersisted = PrivateDirectorySchema<PrivateRef>
 
-export interface PrivateDirectorySchema<Links> {
+export interface PrivateDirectorySchema<Link> {
   metadata: metadata.Metadata
   bareName: bloom.BloomFilter
   revision: ratchet.SpiralRatchet
@@ -26,7 +26,7 @@ export interface PrivateDirectorySchema<Links> {
     // we can quickly construct private filesystem structures
     // without side effects like polluting the ipfs blockstore or
     // having to advance ratchets/do encryption, etc.
-    [path: string]: Links
+    [path: string]: Link
   }
 }
 

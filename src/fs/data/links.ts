@@ -2,11 +2,11 @@ import { CID } from "multiformats/cid"
 import * as dagPB from "@ipld/dag-pb"
 
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
-import { FromCID, LazyCIDRef, lazyRefFromCID, OperationContext } from "./ref.js"
+import { OperationContext } from "./public/publicNode.js"
 
 
 
-export async function linksToCID(links: Record<string, CID>, { ipfs, signal }: OperationContext): Promise<CID> {
+export async function linksToCID(links: Record<string, CID>, { getBlock, putBlock, signal }: OperationContext): Promise<CID> {
   const Links: dagPB.PBLink[] = []
 
   for (const [Name, cid] of Object.entries(links)) {
@@ -34,17 +34,9 @@ export async function linksToCID(links: Record<string, CID>, { ipfs, signal }: O
 }
 
 
-export async function lazyLinksToCID(links: Record<string, LazyCIDRef<unknown>>, ctx: OperationContext): Promise<CID> {
-  const linksModified: Record<string, CID> = {}
-  for (const [name, link] of Object.entries(links)) {
-    linksModified[name] = await link.ref(ctx)
-  }
-  return await linksToCID(linksModified, ctx)
-}
 
-
-export async function linksFromCID(cid: CID, { ipfs, signal }: OperationContext): Promise<Record<string, CID>> {
-  const bytes = await ipfs.block.get(cid, { signal })
+export async function linksFromCID(cid: CID, ctx: OperationContext): Promise<Record<string, CID>> {
+  const bytes = await ctx.getBlock(cid, ctx)
   const dagNode = dagPB.decode(bytes)
   const links: Record<string, CID> = {}
   for (const dagLink of dagNode.Links || []) {
@@ -52,18 +44,6 @@ export async function linksFromCID(cid: CID, { ipfs, signal }: OperationContext)
   }
   return Object.freeze(links)
 }
-
-export async function lazyLinksFromCID<T>(cid: CID, load: FromCID<T>, ctx: OperationContext): Promise<Record<string, LazyCIDRef<T>>> {
-  const cidLinks = await linksFromCID(cid, ctx)
-
-  const lazyCIDLinks: Record<string, LazyCIDRef<T>> = {}
-  for (const [name, cid] of Object.entries(cidLinks)) {
-    lazyCIDLinks[name] = lazyRefFromCID(cid, load)
-  }
-
-  return Object.freeze(lazyCIDLinks)
-}
-
 
 
 //--------------------------------------

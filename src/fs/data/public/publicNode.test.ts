@@ -1,5 +1,3 @@
-import type { IPFS } from "ipfs-core"
-
 import expect from "expect"
 import * as fc from "fast-check"
 import { CID } from "multiformats/cid"
@@ -8,11 +6,11 @@ import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
 import { canonicalize } from "../../../../tests/helpers/common.js"
 import { arbitraryFileSystemUsage, FileSystemOperation, FileSystemModel, initialFileSystemModel, runOperation, runOperationsHistory } from "../../../../tests/helpers/fileSystemModel.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
-import { lazyRefFromCID, OperationContext } from "../ref.js"
 import * as metadata from "../metadata.js"
 
-import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, isPublicFile, mkdir, mv, nodeFromCID, nodeToCID, PublicDirectory, rm, write } from "./publicNode.js"
+import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, isPublicFile, mkdir, mv, nodeFromCID, nodeToCID, OperationContext, PublicDirectory, resolveLink, rm, write } from "./publicNode.js"
 import { Timestamp } from "../common.js"
+import { createMemoryBlockStore, createIPFSBlockStore } from "../blockStore.js"
 
 
 describe("the data public node module", () => {
@@ -28,6 +26,7 @@ describe("the data public node module", () => {
 
   it("round trips files from/to IPFS", async function () {
     const ipfs = ipfsFromContext(this)
+    const ctx = createIPFSBlockStore(ipfs)
 
     const fileHeaderCID = CID.parse("bafybeiaezxgxy2i2cq2phszwj3zspn5yrrbg2rvbqzs7y63i4cjlnpoxlq")
 
@@ -39,30 +38,32 @@ describe("the data public node module", () => {
       return
     }
 
-    const fileHeader = await fileFromCID(fileHeaderCID, { ipfs })
-    const decodedCID = await fileToCID(fileHeader, { ipfs })
+    const fileHeader = await fileFromCID(fileHeaderCID, ctx)
+    const decodedCID = await fileToCID(fileHeader, ctx)
     expect(decodedCID.toString()).toEqual(fileHeaderCID.toString())
   })
 
   it("round trips files to/from IPFS", async function () {
     const ipfs = ipfsFromContext(this)
+    const ctx = createIPFSBlockStore(ipfs)
 
     const fileHeader = {
       metadata: metadata.updateMtime(metadata.newFile(1621259349710), 1627992355220),
-      previous: lazyRefFromCID(await fileToCID({
+      previous: await fileToCID({
         metadata: metadata.updateMtime(metadata.newFile(1621259349710), 1627992355220),
         userland: CID.parse("bafkqaaa")
-      }, { ipfs }), fileFromCID),
+      }, ctx),
       userland: CID.parse("bafkqaaa"),
     }
 
-    const cid = await fileToCID(fileHeader, { ipfs })
-    const decoded = await fileFromCID(cid, { ipfs })
+    const cid = await fileToCID(fileHeader, ctx)
+    const decoded = await fileFromCID(cid, ctx)
     expect(canonicalize(decoded)).toEqual(canonicalize(fileHeader))
   })
 
   it("round trips directories from/to IPFS", async function () {
     const ipfs = ipfsFromContext(this)
+    const ctx = createIPFSBlockStore(ipfs)
 
     const directoryCID = CID.parse("bafybeiacqgd7tous6mbq3dony547vb3p2jzq36feiu7jut636jt7tiiy7i")
 
@@ -74,40 +75,42 @@ describe("the data public node module", () => {
       return
     }
 
-    const directory = await directoryFromCID(directoryCID, { ipfs })
-    const decodedCID = await directoryToCID(directory, { ipfs })
+    const directory = await directoryFromCID(directoryCID, ctx)
+    const decodedCID = await directoryToCID(directory, ctx)
     expect(decodedCID.toString()).toEqual(directoryCID.toString())
   })
 
   it("round trips directories to/from IPFS", async function () {
     const ipfs = ipfsFromContext(this)
+    const ctx = createIPFSBlockStore(ipfs)
 
     const directory = {
       metadata: metadata.updateMtime(metadata.newDirectory(1621508308152), 1621887292742),
-      previous: lazyRefFromCID(await directoryToCID({
+      previous: await directoryToCID({
         metadata: metadata.newDirectory(1621508308152),
         userland: {}
-      }, { ipfs }), directoryFromCID),
+      }, ctx),
       skeleton: CID.parse("bafkqaaa"),
       userland: {
-        "Apps": lazyRefFromCID(await nodeToCID({
+        "Apps": await nodeToCID({
           metadata: metadata.newDirectory(1621887292742),
           userland: {}
-        }, { ipfs }), nodeFromCID),
-        "index.html": lazyRefFromCID(await nodeToCID({
+        }, ctx),
+        "index.html": await nodeToCID({
           metadata: metadata.newFile(1621887292742),
           userland: CID.parse("bafkqaaa"),
-        }, { ipfs }), nodeFromCID),
+        }, ctx),
       }
     }
 
-    const cid = await directoryToCID(directory, { ipfs })
-    const decoded = await directoryFromCID(cid, { ipfs })
+    const cid = await directoryToCID(directory, ctx)
+    const decoded = await directoryFromCID(cid, ctx)
     expect(canonicalize(decoded)).toEqual(canonicalize(directory))
   })
 
   it("loads an existing filesystems fixture", async function () {
     const ipfs = ipfsFromContext(this)
+    const ctx = createIPFSBlockStore(ipfs)
 
     const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
     const [root] = car.roots
@@ -120,8 +123,8 @@ describe("the data public node module", () => {
     // /ipfs/<root>/public resolves to this
     const publicRootCID = CID.parse("bafybeiacqgd7tous6mbq3dony547vb3p2jzq36feiu7jut636jt7tiiy7i")
 
-    const rootDirectory = await directoryFromCID(publicRootCID, { ipfs })
-    const files = await listFiles(rootDirectory, ipfs)
+    const rootDirectory = await directoryFromCID(publicRootCID, ctx)
+    const files = await listFiles(rootDirectory, ctx)
     expect(files).toEqual([
       ["Apps", "Fission", "Lobby", "Session"],
       ["index.html"],
@@ -129,7 +132,7 @@ describe("the data public node module", () => {
   })
 
   it("creates histories as modeled", async function () {
-    const ipfs = ipfsFromContext(this)
+    const ctx = createMemoryBlockStore()
 
     await fc.assert(
       fc.asyncProperty(
@@ -145,21 +148,21 @@ describe("the data public node module", () => {
           for (const operation of ops) {
             // add a history step for each operation
             fs = await baseHistoryOn(
-              await interpretOperation(fs, operation, { ipfs, now: i }),
+              await interpretOperation(fs, operation, { ...ctx, now: i }),
               fs,
-              { ipfs }
+              ctx
             )
             i++
           }
 
-          await verifyDirectoryHistory(fs, ops, { ipfs })
+          await verifyDirectoryHistory(fs, ops, ctx)
         }
       )
     )
   })
 
   it("adds and removes files as modeled", async function () {
-    const ipfs = ipfsFromContext(this)
+    const ctx = createMemoryBlockStore()
 
     await fc.assert(
       fc.asyncProperty(
@@ -173,12 +176,12 @@ describe("the data public node module", () => {
           // run modeled operations on the 'real' system
           let i = 1
           for (const operation of ops) {
-            fs = await interpretOperation(fs, operation, { ipfs, now: i })
+            fs = await interpretOperation(fs, operation, { ...ctx, now: i })
             i++
           }
 
           // expect all files to be in the modeled state
-          const result = await directoryToModel(fs, { ipfs })
+          const result = await directoryToModel(fs, ctx)
           expect(result).toEqual(state)
         }
       )
@@ -216,10 +219,10 @@ async function directoryToModel(
   model: FileSystemModel = initialFileSystemModel()
 ): Promise<FileSystemModel> {
   for (const [name, entryRef] of Object.entries(directory.userland)) {
-    const entry = await entryRef.get(ctx)
+    const entry = await resolveLink(entryRef, ctx)
     const path = [...atPath, name] as unknown as [string, ...string[]]
     if (isPublicFile(entry)) {
-      const block = await ctx.ipfs.block.get(entry.userland)
+      const block = await ctx.getBlock(entry.userland, ctx)
       const content = new TextDecoder().decode(block)
       model = runOperation(model, { op: "write", path, content })
     } else {
@@ -232,7 +235,7 @@ async function directoryToModel(
 
 async function interpretOperation(directory: PublicDirectory, operation: FileSystemOperation, ctx: OperationContext & Timestamp): Promise<PublicDirectory> {
   if (operation.op === "write") {
-    const cid = await ctx.ipfs.block.put(new TextEncoder().encode(operation.content), { format: "raw", version: 1 })
+    const cid = await ctx.putBlock(new TextEncoder().encode(operation.content), { signal: ctx.signal })
     return await write(operation.path, cid, directory, ctx)
   } else if (operation.op === "mkdir") {
     return await mkdir(operation.path, directory, ctx)
@@ -243,15 +246,15 @@ async function interpretOperation(directory: PublicDirectory, operation: FileSys
   }
 }
 
-async function listFiles(directory: PublicDirectory, ipfs: IPFS, pathSoFar: string[] = []): Promise<string[][]> {
+async function listFiles(directory: PublicDirectory, ctx: OperationContext, pathSoFar: string[] = []): Promise<string[][]> {
   let filePaths: string[][] = []
   for (const [name, entry] of Object.entries(directory.userland)) {
     const path = [...pathSoFar, name]
-    const fileOrDirectory = await entry.get({ ipfs })
+    const fileOrDirectory = await resolveLink(entry, ctx)
     if (isPublicFile(fileOrDirectory)) {
       filePaths.push(path)
     } else {
-      const additionalPaths = await listFiles(fileOrDirectory, ipfs, path)
+      const additionalPaths = await listFiles(fileOrDirectory, ctx, path)
       filePaths = [...filePaths, ...additionalPaths]
     }
   }

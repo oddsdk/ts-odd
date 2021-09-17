@@ -1,34 +1,34 @@
 import { CID } from "multiformats/cid"
-import { isNonEmpty, Timestamp } from "../common.js"
-import { linksToCID, linksFromCID, lazyLinksToCID, lazyLinksFromCID } from "../links.js"
+import { BlockStore } from "../blockStore.js"
+import { AbortContext, isNonEmpty, Timestamp } from "../common.js"
+import { linksToCID, linksFromCID, mapRecord } from "../links.js"
 import { metadataToCID, metadataFromCID, Metadata, newDirectory, updateMtime, newFile } from "../metadata.js"
-import { LazyCIDRef, lazyRefFromCID, lazyRefFromObj, OperationContext } from "../ref.js"
 
 
-/**
- * Possible todo-s:
- * - A reconciliation algorithm on PublicDirectory
- * - A diffing algorithm which adds the correct "previous" links
- * - An algorithm for "write file"/"write directory", then possibly abstract to "run on tree"
- * - Modeling MMPT with LazyCIDRef, possibly moving on to modeling data behind encryption
- */
+export type PublicNode = PublicFile | PublicDirectory
 
-export interface PublicDirectory {
+export type PublicDirectory = PublicDirectorySchema<PublicNode | CID>
+
+export type PublicDirectoryPersisted = PublicDirectorySchema<CID>
+
+export type PublicNodePersisted = PublicFile | PublicDirectoryPersisted
+
+export interface PublicDirectorySchema<Link> {
   metadata: Metadata
-  userland: { [name: string]: LazyCIDRef<PublicNode> }
+  userland: { [name: string]: Link }
   skeleton?: CID
-  previous?: LazyCIDRef<PublicDirectory>
+  previous?: CID
 }
 
 
 export interface PublicFile {
   metadata: Metadata
   userland: CID
-  previous?: LazyCIDRef<PublicFile>
+  previous?: CID
 }
 
 
-export type PublicNode = PublicFile | PublicDirectory
+export type OperationContext = AbortContext & BlockStore
 
 
 export function isPublicFile(node: PublicNode): node is PublicFile {
@@ -39,6 +39,21 @@ export function isPublicDirectory(node: PublicNode): node is PublicDirectory {
   return !node.metadata.isFile
 }
 
+
+
+export async function resolveLink(link: PublicNode | CID, ctx: OperationContext): Promise<PublicNode> {
+  if (CID.isCID(link)) {
+    return await nodeFromCID(link, ctx)
+  }
+  return link
+}
+
+export async function sealLink(link: PublicNode | CID, ctx: OperationContext): Promise<CID> {
+  if (CID.isCID(link)) {
+    return link
+  }
+  return await nodeToCID(link, ctx)
+}
 
 
 //--------------------------------------
@@ -71,7 +86,7 @@ export async function ls(
 
   const result: Record<string, Metadata> = {}
   for (const [name, entry] of Object.entries(node.userland)) {
-    result[name] = (await entry.get(ctx)).metadata
+    result[name] = (await resolveLink(entry, ctx)).metadata
   }
 
   return result
@@ -94,13 +109,21 @@ export async function write(
   return await upsert(
     path,
     async entry => {
-      if (entry != null && isPublicDirectory(await entry.get(ctx))) {
-        throw new Error(`Can't write file to ${path}: There already exists a directory.`)
+      if (entry != null) {
+        const file = await resolveLink(entry, ctx)
+        if (isPublicDirectory(file)) {
+          throw new Error(`Can't write file to ${path}: There already exists a directory.`)
+        }
+        return {
+          ...file,
+          metadata: updateMtime(file.metadata, ctx.now),
+          userland: content
+        }
       }
-      return lazyRefFromObj({
+      return {
         metadata: newFile(ctx.now),
         userland: content
-      }, fileToCID)
+      }
     },
     directory,
     ctx
@@ -149,10 +172,10 @@ export async function mkdir(
       ...directory,
       userland: {
         ...directory.userland,
-        [name]: lazyRefFromObj({
+        [name]: {
           metadata: newDirectory(ctx.now),
           userland: {}
-        }, directoryToCID)
+        }
       }
     }
   }
@@ -170,7 +193,7 @@ export async function mkdir(
     ...directory,
     userland: {
       ...directory.userland,
-      [name]: lazyRefFromObj(changedDirectory, directoryToCID)
+      [name]: changedDirectory
     }
   }
 }
@@ -186,7 +209,7 @@ export async function mv(
     if (entry == null) {
       throw new Error(`Can't mv from ${from} to ${to}. ${from} doesn't exist.`)
     }
-    nodeToInsert = await entry.get(ctx)
+    nodeToInsert = await resolveLink(entry, ctx)
     return null
   }, directory, ctx)
 
@@ -203,13 +226,13 @@ export async function mv(
     if (entry != null) {
       throw new Error(`Can't mv from ${from} to ${to}. ${to} already exists. ${toDir}`)
     }
-    return lazyRefFromObj(nodeToInsert as PublicNode, nodeToCID)
+    return nodeToInsert
   }, directory, ctx)
 }
 
 export async function upsert(
   path: [string, ...string[]],
-  update: (entry: LazyCIDRef<PublicNode> | null) => Promise<LazyCIDRef<PublicNode> | null>,
+  update: (entry: PublicNode | CID | null) => Promise<PublicNode | CID | null>,
   directory: PublicDirectory,
   ctx: OperationContext & Timestamp
 ): Promise<PublicDirectory> {
@@ -244,7 +267,7 @@ export async function upsert(
     metadata: updateMtime(directory.metadata, ctx.now),
     userland: {
       ...directory.userland,
-      [name]: lazyRefFromObj(changedDirectory, directoryToCID)
+      [name]: changedDirectory
     }
   }
 }
@@ -270,7 +293,7 @@ export async function getNode(
 
 
 export async function lookupNode(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicNode | null> {
-  return await dir.userland[path]?.get(ctx)
+  return dir.userland[path] != null ? await resolveLink(dir.userland[path], ctx) : null
 }
 
 export async function lookupDirectory(path: string, dir: PublicDirectory, ctx: OperationContext): Promise<PublicDirectory | null> {
@@ -296,15 +319,8 @@ export async function enumerateHistory(file: PublicFile, ctx: OperationContext):
 export async function enumerateHistory(directory: PublicDirectory, ctx: OperationContext): Promise<PublicDirectory[]>
 export async function enumerateHistory(node: PublicNode, ctx: OperationContext): Promise<PublicNode[]>
 export async function enumerateHistory(node: PublicNode, ctx: OperationContext): Promise<PublicNode[]> {
-  if (isPublicFile(node)) {
-    const previous = await node.previous?.get(ctx)
-    if (previous == null) return [node]
-    return [node, ...await enumerateHistory(previous, ctx)]
-  } else { // *sigh*
-    const previous = await node.previous?.get(ctx)
-    if (previous == null) return [node]
-    return [node, ...await enumerateHistory(previous, ctx)]
-  }
+  if (node.previous == null) return [node]
+  return [node, ...await enumerateHistory(await nodeFromCID(node.previous, ctx), ctx)]
 }
 
 export async function baseHistoryOn(
@@ -312,7 +328,7 @@ export async function baseHistoryOn(
   historyBase: PublicDirectory,
   ctx: OperationContext
 ): Promise<PublicDirectory> {
-  const userland: Record<string, LazyCIDRef<PublicNode>> = {}
+  const userland: Record<string, PublicNode | CID> = {}
 
   for (const [name, entry] of Object.entries(directory.userland)) {
     const baseEntry = historyBase.userland[name]
@@ -322,47 +338,47 @@ export async function baseHistoryOn(
   return {
     ...directory,
     userland,
-    previous: lazyRefFromObj(historyBase, directoryToCID)
+    previous: await nodeToCID(historyBase, ctx)
   }
 }
 
 async function baseHistoryOnHelper(
-  nodeRef: LazyCIDRef<PublicNode>,
-  historyBaseRef: LazyCIDRef<PublicNode>,
+  nodeRef: PublicNode | CID,
+  historyBaseRef: PublicNode | CID,
   ctx: OperationContext
-): Promise<LazyCIDRef<PublicNode>> {
-  const nodeCID = await nodeRef.ref(ctx)
-  const baseCID = await historyBaseRef.ref(ctx)
+): Promise<PublicNode | CID> {
+  const nodeCID = CID.isCID(nodeRef) ? nodeRef : await nodeToCID(nodeRef, ctx)
+  const baseCID = CID.isCID(historyBaseRef) ? historyBaseRef : await nodeToCID(historyBaseRef, ctx)
   if (nodeCID.equals(baseCID)) {
     return nodeRef
   }
 
-  const node = await nodeRef.get(ctx)
-  const base = await historyBaseRef.get(ctx)
+  const node = await resolveLink(nodeRef, ctx)
+  const base = await resolveLink(historyBaseRef, ctx)
 
   if (isPublicFile(node)) {
     if (!isPublicFile(base)) return nodeRef
 
-    return lazyRefFromObj({
+    return {
       ...node,
-      previous: lazyRefFromObj(base, fileToCID)
-    }, fileToCID)
+      previous: await nodeToCID(base, ctx)
+    }
   }
 
   if (!isPublicDirectory(base)) return nodeRef
 
-  const userland: Record<string, LazyCIDRef<PublicNode>> = {}
+  const userland: Record<string, PublicNode | CID> = {}
 
   for (const [name, entry] of Object.entries(node.userland)) {
     const baseEntry = base.userland[name]
     userland[name] = baseEntry == null ? entry : await baseHistoryOnHelper(entry, baseEntry, ctx)
   }
 
-  return lazyRefFromObj({
+  return {
     ...node,
     userland,
-    previous: historyBaseRef as LazyCIDRef<PublicDirectory> // we've checked it's a directory above
-  }, directoryToCID)
+    previous: baseCID
+  }
 }
 
 
@@ -383,13 +399,13 @@ export async function nodeToCID(node: PublicNode, ctx: OperationContext): Promis
 export async function directoryToCID(dir: PublicDirectory, ctx: OperationContext): Promise<CID> {
   const links: Record<string, CID> = {
     metadata: await metadataToCID(dir.metadata, ctx),
-    userland: await lazyLinksToCID(dir.userland, ctx),
+    userland: await linksToCID(await mapRecord(dir.userland, (_, link) => sealLink(link, ctx)), ctx),
   }
   if (dir.skeleton != null) [
     links.skeleton = dir.skeleton
   ]
   if (dir.previous != null) {
-    links.previous = await dir.previous.ref(ctx)
+    links.previous = dir.previous
   }
   return await linksToCID(links, ctx)
 }
@@ -400,7 +416,7 @@ export async function fileToCID(file: PublicFile, ctx: OperationContext): Promis
     userland: file.userland,
   }
   if (file.previous != null) {
-    links.previous = await file.previous.ref(ctx)
+    links.previous = file.previous
   }
   return await linksToCID(links, ctx)
 }
@@ -444,7 +460,7 @@ async function directoryFromLinksHelper(cid: CID, dirLinks: Record<string, CID>,
 
   const result: PublicDirectory = {
     metadata: metadata,
-    userland: await lazyLinksFromCID(dirLinks.userland, nodeFromCID, ctx)
+    userland: await linksFromCID(dirLinks.userland, ctx)
   }
 
   if (dirLinks.skeleton != null) {
@@ -452,7 +468,7 @@ async function directoryFromLinksHelper(cid: CID, dirLinks: Record<string, CID>,
   }
 
   if (dirLinks.previous != null) {
-    result.previous = lazyRefFromCID(dirLinks.previous, directoryFromCID)
+    result.previous = dirLinks.previous
   }
 
   return Object.freeze(result)
@@ -467,7 +483,7 @@ async function fileFromLinksHelper(cid: CID, fileLinks: Record<string, CID>, met
   }
 
   if (fileLinks.previous != null) {
-    result.previous = lazyRefFromCID(fileLinks.previous, fileFromCID)
+    result.previous = fileLinks.previous
   }
 
   return Object.freeze(result)
