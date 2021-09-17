@@ -1,6 +1,6 @@
 import dagPb, { DAGLink, DAGNode } from "ipld-dag-pb"
 import type { GetResult } from "ipfs-core-types/src/dag"
-import { CID } from "ipfs-message-port-client/src/block"
+import CID from "cids"
 
 type RawDAGLink = {
   Name: string
