@@ -15,6 +15,7 @@ import * as debug from "../common/debug.js"
 import * as crypto from "../crypto/index.js"
 import * as did from "../did/index.js"
 import * as pathing from "../path.js"
+import * as sharing from "./share.js"
 import * as typeCheck from "./types/check.js"
 import * as ucan from "../ucan/index.js"
 
@@ -51,16 +52,6 @@ type NewFileSystemOptions = FileSystemOptions & {
 type MutationOptions = {
   publish?: boolean
 }
-
-
-// CONSTANTS
-
-
-export const EXCHANGE_PATH: DirectoryPath = pathing.directory(
-  pathing.Branch.Public,
-  ".well-known",
-  "exchange"
-)
 
 
 // CLASS
@@ -422,7 +413,7 @@ export class FileSystem {
     const publicDid = await did.exchange()
 
     await this.mkdir(
-      pathing.combine(EXCHANGE_PATH, pathing.directory(publicDid))
+      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
     )
   }
 
@@ -434,8 +425,50 @@ export class FileSystem {
     const publicDid = await did.exchange()
 
     return this.exists(
-      pathing.combine(EXCHANGE_PATH, pathing.directory(publicDid))
+      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
     )
+  }
+
+  /**
+   * Share a private file with a user.
+   */
+  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: { did: string, username: string }, shareWith: string | string[] }): Promise<{ shareId: string }> {
+    const verifiedPaths = paths.filter(path => {
+      return pathing.isBranch(pathing.Branch.Private, path)
+    })
+
+    // Our username
+    if (!sharedBy) {
+      const username = await authenticatedUsername()
+      if (!username) throw new Error("I need a username in order to use this method")
+      sharedBy = { did: await did.ownRoot(), username }
+    }
+
+    // Get the items to share
+    const items = await verifiedPaths.reduce(async (promise: Promise<[string, PrivateFile | PrivateTree][]>, path) => {
+      const acc = await promise
+      const name = pathing.terminus(path)
+      const item = await this.get(path)
+      return name && (PrivateFile.instanceOf(item) || PrivateTree.instanceOf(item))
+        ? [ ...acc, [ name, item ] as [string, PrivateFile | PrivateTree] ]
+        : acc
+    }, Promise.resolve([]))
+
+    // No items?
+    if (!items.length) throw new Error("Didn't find any items to share")
+
+    // Share the items
+    const shareDetails = await sharing.privateNode(
+      this.root,
+      items,
+      { shareWith, sharedBy }
+    )
+
+    // Bump the counter
+    await this.root.bumpSharedCounter()
+
+    // Fin
+    return shareDetails
   }
 
 

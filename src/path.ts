@@ -6,6 +6,8 @@ export enum Branch {
   Pretty = "p",
   Private = "private",
   PrivateLog = "privateLog",
+  Shared = "shared",
+  SharedCounter = "sharedCounter",
   Version = "version"
 }
 
