@@ -1,5 +1,5 @@
 import crypto from "crypto"
-import * as ed25519 from "noble-ed25519"
+import tweetnacl from "tweetnacl"
 import utils from "keystore-idb/utils.js"
 import { CharSize, Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey, SymmKeyLength } from "keystore-idb/types.js"
 import config from "keystore-idb/config.js"
@@ -75,7 +75,7 @@ const rsaVerify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8A
 }
 
 const ed25519Verify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> => {
-  return ed25519.verify(signature, message, publicKey)
+  return new Promise(resolve => resolve(tweetnacl.sign.detached.verify(message, signature, publicKey)))
 }
 
 

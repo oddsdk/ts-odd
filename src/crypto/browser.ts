@@ -1,4 +1,4 @@
-import * as ed25519 from "noble-ed25519"
+import tweetnacl from "tweetnacl"
 import rsaOperations from "keystore-idb/rsa/index.js"
 import utils from "keystore-idb/utils.js"
 import aes from "keystore-idb/aes/index.js"
@@ -65,7 +65,7 @@ export const rsaVerify = (message: Uint8Array, signature: Uint8Array, publicKey:
 }
 
 export const ed25519Verify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> => {
-  return ed25519.verify(signature, message, publicKey)
+  return new Promise(resolve => resolve(tweetnacl.sign.detached.verify(message, signature, publicKey)))
 }
 
 export const ksPublicExchangeKey = async (): Promise<string> => {

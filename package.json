@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.28.0",
+  "version": "0.28.1",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -99,8 +99,8 @@
     "keystore-idb": "0.15.0",
     "localforage": "^1.9.0",
     "multiformats": "^9.0.0",
-    "noble-ed25519": "^1.2.4",
     "throttle-debounce": "^3.0.1",
+    "tweetnacl": "^0.14.5",
     "uint8arrays": "^2.1.7"
   },
   "resolutions": {
