@@ -1,8 +1,8 @@
 import tweetnacl from "tweetnacl"
-import rsaOperations from "keystore-idb/rsa/index.js"
-import utils from "keystore-idb/utils.js"
-import aes from "keystore-idb/aes/index.js"
-import { CharSize, SymmKeyLength } from "keystore-idb/types.js"
+import rsaOperations from "keystore-idb/lib/rsa/index.js"
+import utils from "keystore-idb/lib/utils.js"
+import aes from "keystore-idb/lib/aes/index.js"
+import { CharSize, SymmKeyLength } from "keystore-idb/lib/types.js"
 
 import { assertBrowser } from "../common/browser.js"
 import * as keystore from "../keystore.js"

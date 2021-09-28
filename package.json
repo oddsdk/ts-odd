@@ -12,7 +12,8 @@
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
-    "./*": "./lib/*.js",
+    "./lib/*": "./lib/*",
+    "./*": "./lib/*",
     "./package.json": "./package.json"
   },
   "types": "lib/index.d.ts",
@@ -96,7 +97,7 @@
     "ipfs-message-port-client": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-client.tar.gz",
     "ipfs-message-port-protocol": "https://ipfs.runfission.com/ipfs/bafybeigx6q4aezve7my76s5vvfuiinbxtepapqvmjf2jbgrozrut6cjape/p/ipfs-message-port-protocol.tar.gz",
     "ipld-dag-pb": "^0.22.2",
-    "keystore-idb": "0.15.0",
+    "keystore-idb": "^0.15.1",
     "localforage": "^1.9.0",
     "multiformats": "^9.0.0",
     "throttle-debounce": "^3.0.1",
