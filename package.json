@@ -12,6 +12,7 @@
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./lib/*": "./lib/*",
     "./*": "./lib/*",
     "./package.json": "./package.json"
   },
