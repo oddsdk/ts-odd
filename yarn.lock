@@ -3518,10 +3518,10 @@ keypair@^1.0.1:
   resolved "https://registry.yarnpkg.com/keypair/-/keypair-1.0.3.tgz#4314109d94052a0acfd6b885695026ad29529c80"
   integrity sha512-0wjZ2z/SfZZq01+3/8jYLd8aEShSa+aat1zyPGQY3IuKoEAp6DJGvu2zt6snELrQU9jbCkIlCyNOD7RdQbHhkQ==
 
-keystore-idb@0.15.0:
-  version "0.15.0"
-  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.15.0.tgz#87897f2bafa9ebe42d52970d59034e22e8652df3"
-  integrity sha512-CSUCwdSR/gv/ydyv0m4DiTVdtHw0WPKmiw1frMh0jI3Ri9eGwtLBnYefppb2zgC6xLk4aBrPpojpjrRCEaL0/A==
+keystore-idb@^0.15.1:
+  version "0.15.1"
+  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.15.1.tgz#31236e3dc5c566170a9ce761de018e85ddf811d3"
+  integrity sha512-NspQIQjRrUk6iYHWtmu9TLP0rQDSBDv0cQbB/Phf0gM/lfOXP0DiPc51kpoK5/nTWOdDceCtTfrwBCJY7UcxkQ==
   dependencies:
     "@ungap/global-this" "^0.4.4"
     localforage "^1.10.0"
