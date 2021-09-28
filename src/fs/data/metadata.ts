@@ -1,9 +1,5 @@
-import { CID } from "multiformats/cid"
-import * as dagPB from "@ipld/dag-pb"
-import * as cbor from "cborg"
 import { SemVer, v1 } from "./semver.js"
 import { hasProp } from "./common.js"
-import { OperationContext } from "./public/publicNode.js"
 
 export type UnixFileMode = number
 
@@ -51,31 +47,9 @@ export const updateMtime = (metadata: Metadata, mtime: number): Metadata => Obje
   }
 })
 
+
 export const newFile = (now: number): Metadata => newMeta(true, now)
 export const newDirectory = (now: number): Metadata => newMeta(false, now)
-
-
-export async function metadataToCID(metadata: Metadata, { putBlock, signal }: OperationContext): Promise<CID> {
-  return await putBlock(dagPB.encode(dagPB.prepare(cbor.encode(metadata))), { signal })
-}
-
-
-export async function metadataFromCID(cid: CID, { getBlock, signal }: OperationContext): Promise<Metadata> {
-  const block = dagPB.decode(await getBlock(cid, { signal }))
-  if (block.Data == null) {
-    throw new Error(`No data provided for metadata at CID ${cid.toString()}`)
-  }
-
-  const metadata = cbor.decode(block.Data)
-
-  if (!isMetadata(metadata)) {
-    throw new Error(`Couldn't parse metadata at ${cid.toString()}`)
-  }
-
-  Object.freeze(metadata.unixMeta)
-  Object.freeze(metadata.version)
-  return Object.freeze(metadata)
-}
 
 
 export function isMetadata(object: unknown): object is Metadata {

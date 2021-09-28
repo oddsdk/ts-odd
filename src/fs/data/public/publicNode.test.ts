@@ -1,135 +1,15 @@
 import expect from "expect"
 import * as fc from "fast-check"
-import { CID } from "multiformats/cid"
 
-import { loadCAR } from "../../../../tests/helpers/loadCAR.js"
-import { canonicalize } from "../../../../tests/helpers/common.js"
 import { arbitraryFileSystemUsage, FileSystemOperation, FileSystemModel, initialFileSystemModel, runOperation, runOperationsHistory } from "../../../../tests/helpers/fileSystemModel.js"
-import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import * as metadata from "../metadata.js"
 
-import { baseHistoryOn, directoryFromCID, directoryToCID, enumerateHistory, fileFromCID, fileToCID, isPublicFile, mkdir, mv, nodeFromCID, nodeToCID, OperationContext, PublicDirectory, resolveLink, rm, write } from "./publicNode.js"
+import { baseHistoryOn, enumerateHistory, isPublicFile, mkdir, mv, OperationContext, PublicDirectory, resolveLink, rm, write } from "./publicNode.js"
 import { Timestamp } from "../common.js"
-import { createMemoryBlockStore, createIPFSBlockStore } from "../blockStore.js"
+import { createMemoryBlockStore } from "../blockStore.js"
 
 
 describe("the data public node module", () => {
-
-  before(async function () {
-    fc.configureGlobal({ numRuns: 100 })
-  })
-
-  after(async () => {
-    fc.resetConfigureGlobal()
-  })
-
-
-  it("round trips files from/to IPFS", async function () {
-    const ipfs = ipfsFromContext(this)
-    const ctx = createIPFSBlockStore(ipfs)
-
-    const fileHeaderCID = CID.parse("bafybeiaezxgxy2i2cq2phszwj3zspn5yrrbg2rvbqzs7y63i4cjlnpoxlq")
-
-    const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
-    const [root] = car.roots
-
-    if (root == null) {
-      expect(root).toBeDefined()
-      return
-    }
-
-    const fileHeader = await fileFromCID(fileHeaderCID, ctx)
-    const decodedCID = await fileToCID(fileHeader, ctx)
-    expect(decodedCID.toString()).toEqual(fileHeaderCID.toString())
-  })
-
-  it("round trips files to/from IPFS", async function () {
-    const ipfs = ipfsFromContext(this)
-    const ctx = createIPFSBlockStore(ipfs)
-
-    const fileHeader = {
-      metadata: metadata.updateMtime(metadata.newFile(1621259349710), 1627992355220),
-      previous: await fileToCID({
-        metadata: metadata.updateMtime(metadata.newFile(1621259349710), 1627992355220),
-        userland: CID.parse("bafkqaaa")
-      }, ctx),
-      userland: CID.parse("bafkqaaa"),
-    }
-
-    const cid = await fileToCID(fileHeader, ctx)
-    const decoded = await fileFromCID(cid, ctx)
-    expect(canonicalize(decoded)).toEqual(canonicalize(fileHeader))
-  })
-
-  it("round trips directories from/to IPFS", async function () {
-    const ipfs = ipfsFromContext(this)
-    const ctx = createIPFSBlockStore(ipfs)
-
-    const directoryCID = CID.parse("bafybeiacqgd7tous6mbq3dony547vb3p2jzq36feiu7jut636jt7tiiy7i")
-
-    const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
-    const [root] = car.roots
-
-    if (root == null) {
-      expect(root).toBeDefined()
-      return
-    }
-
-    const directory = await directoryFromCID(directoryCID, ctx)
-    const decodedCID = await directoryToCID(directory, ctx)
-    expect(decodedCID.toString()).toEqual(directoryCID.toString())
-  })
-
-  it("round trips directories to/from IPFS", async function () {
-    const ipfs = ipfsFromContext(this)
-    const ctx = createIPFSBlockStore(ipfs)
-
-    const directory = {
-      metadata: metadata.updateMtime(metadata.newDirectory(1621508308152), 1621887292742),
-      previous: await directoryToCID({
-        metadata: metadata.newDirectory(1621508308152),
-        userland: {}
-      }, ctx),
-      skeleton: CID.parse("bafkqaaa"),
-      userland: {
-        "Apps": await nodeToCID({
-          metadata: metadata.newDirectory(1621887292742),
-          userland: {}
-        }, ctx),
-        "index.html": await nodeToCID({
-          metadata: metadata.newFile(1621887292742),
-          userland: CID.parse("bafkqaaa"),
-        }, ctx),
-      }
-    }
-
-    const cid = await directoryToCID(directory, ctx)
-    const decoded = await directoryFromCID(cid, ctx)
-    expect(canonicalize(decoded)).toEqual(canonicalize(directory))
-  })
-
-  it("loads an existing filesystems fixture", async function () {
-    const ipfs = ipfsFromContext(this)
-    const ctx = createIPFSBlockStore(ipfs)
-
-    const car = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
-    const [root] = car.roots
-
-    if (root == null) {
-      expect(root).toBeDefined()
-      return
-    }
-
-    // /ipfs/<root>/public resolves to this
-    const publicRootCID = CID.parse("bafybeiacqgd7tous6mbq3dony547vb3p2jzq36feiu7jut636jt7tiiy7i")
-
-    const rootDirectory = await directoryFromCID(publicRootCID, ctx)
-    const files = await listFiles(rootDirectory, ctx)
-    expect(files).toEqual([
-      ["Apps", "Fission", "Lobby", "Session"],
-      ["index.html"],
-    ])
-  })
 
   it("creates histories as modeled", async function () {
     const ctx = createMemoryBlockStore()
@@ -235,7 +115,7 @@ async function directoryToModel(
 
 async function interpretOperation(directory: PublicDirectory, operation: FileSystemOperation, ctx: OperationContext & Timestamp): Promise<PublicDirectory> {
   if (operation.op === "write") {
-    const cid = await ctx.putBlock(new TextEncoder().encode(operation.content), { signal: ctx.signal })
+    const cid = await ctx.putBlock(new TextEncoder().encode(operation.content), { code: 0x55, name: "raw" }, { signal: ctx.signal })
     return await write(operation.path, cid, directory, ctx)
   } else if (operation.op === "mkdir") {
     return await mkdir(operation.path, directory, ctx)
@@ -246,17 +126,17 @@ async function interpretOperation(directory: PublicDirectory, operation: FileSys
   }
 }
 
-async function listFiles(directory: PublicDirectory, ctx: OperationContext, pathSoFar: string[] = []): Promise<string[][]> {
-  let filePaths: string[][] = []
-  for (const [name, entry] of Object.entries(directory.userland)) {
-    const path = [...pathSoFar, name]
-    const fileOrDirectory = await resolveLink(entry, ctx)
-    if (isPublicFile(fileOrDirectory)) {
-      filePaths.push(path)
-    } else {
-      const additionalPaths = await listFiles(fileOrDirectory, ctx, path)
-      filePaths = [...filePaths, ...additionalPaths]
-    }
-  }
-  return filePaths
-}
+// async function listFiles(directory: PublicDirectory, ctx: OperationContext, pathSoFar: string[] = []): Promise<string[][]> {
+//   let filePaths: string[][] = []
+//   for (const [name, entry] of Object.entries(directory.userland)) {
+//     const path = [...pathSoFar, name]
+//     const fileOrDirectory = await resolveLink(entry, ctx)
+//     if (isPublicFile(fileOrDirectory)) {
+//       filePaths.push(path)
+//     } else {
+//       const additionalPaths = await listFiles(fileOrDirectory, ctx, path)
+//       filePaths = [...filePaths, ...additionalPaths]
+//     }
+//   }
+//   return filePaths
+// }

@@ -1,8 +1,8 @@
 import { CID } from "multiformats/cid"
+import * as dagCbor from "@ipld/dag-cbor"
 import { BlockStore } from "../blockStore.js"
-import { AbortContext, isCID, isNonEmpty, Timestamp } from "../common.js"
-import { linksToCID, linksFromCID, mapRecord } from "../links.js"
-import { metadataToCID, metadataFromCID, Metadata, newDirectory, updateMtime, newFile } from "../metadata.js"
+import { AbortContext, hasProp, isCID, isNonEmpty, isRecord, isRecordOf, mapRecord, Timestamp } from "../common.js"
+import { Metadata, newDirectory, updateMtime, newFile, isMetadata } from "../metadata.js"
 
 
 export type PublicNode = PublicFile | PublicDirectory
@@ -13,10 +13,11 @@ export type PublicDirectoryPersisted = PublicDirectorySchema<CID>
 
 export type PublicNodePersisted = PublicFile | PublicDirectoryPersisted
 
+export type PublicNodeSchema<Link> = PublicFile | PublicDirectorySchema<Link>
+
 export interface PublicDirectorySchema<Link> {
   metadata: Metadata
   userland: { [name: string]: Link }
-  skeleton?: CID
   previous?: CID
 }
 
@@ -31,6 +32,32 @@ export interface PublicFile {
 export type OperationContext = AbortContext & BlockStore
 
 
+export function isPublicNodePersisted(data: unknown): data is PublicNodePersisted {
+  return isPublicNodeSchema(data, isCID)
+}
+
+export function isLink(data: unknown): data is PublicNode | CID {
+  return isCID(data) || isPublicNode(data)
+}
+
+export function isPublicNode(data: unknown): data is PublicNode {
+  return isPublicNodeSchema(data, isLink)
+}
+
+export function isPublicNodeSchema<Link>(data: unknown, isLink: (value: unknown) => value is Link): data is PublicNodeSchema<Link> {
+  if (!isRecord(data) || !hasProp(data, "metadata") || !isMetadata(data.metadata) || !hasProp(data, "userland")) {
+    return false
+  }
+  if (hasProp(data, "previous") && !isCID(data.previous)) {
+    return false
+  }
+  if (data.metadata.isFile) {
+    return isCID(data.userland)
+  } else {
+    return isRecordOf(data.userland, isLink)
+  }
+}
+
 export function isPublicFile(node: PublicNode): node is PublicFile {
   return node.metadata.isFile
 }
@@ -43,7 +70,7 @@ export function isPublicDirectory(node: PublicNode): node is PublicDirectory {
 
 export async function resolveLink(link: PublicNode | CID, ctx: OperationContext): Promise<PublicNode> {
   if (isCID(link)) {
-    return await nodeFromCID(link, ctx)
+    return await load(link, ctx)
   }
   return link
 }
@@ -52,7 +79,7 @@ export async function sealLink(link: PublicNode | CID, ctx: OperationContext): P
   if (isCID(link)) {
     return link
   }
-  return await nodeToCID(link, ctx)
+  return await store(link, ctx)
 }
 
 
@@ -320,7 +347,7 @@ export async function enumerateHistory(directory: PublicDirectory, ctx: Operatio
 export async function enumerateHistory(node: PublicNode, ctx: OperationContext): Promise<PublicNode[]>
 export async function enumerateHistory(node: PublicNode, ctx: OperationContext): Promise<PublicNode[]> {
   if (node.previous == null) return [node]
-  return [node, ...await enumerateHistory(await nodeFromCID(node.previous, ctx), ctx)]
+  return [node, ...await enumerateHistory(await load(node.previous, ctx), ctx)]
 }
 
 export async function baseHistoryOn(
@@ -338,7 +365,7 @@ export async function baseHistoryOn(
   return {
     ...directory,
     userland,
-    previous: await nodeToCID(historyBase, ctx)
+    previous: await store(historyBase, ctx)
   }
 }
 
@@ -347,8 +374,8 @@ async function baseHistoryOnHelper(
   historyBaseRef: PublicNode | CID,
   ctx: OperationContext
 ): Promise<PublicNode | CID> {
-  const nodeCID = isCID(nodeRef) ? nodeRef : await nodeToCID(nodeRef, ctx)
-  const baseCID = isCID(historyBaseRef) ? historyBaseRef : await nodeToCID(historyBaseRef, ctx)
+  const nodeCID = await sealLink(nodeRef, ctx)
+  const baseCID = await sealLink(historyBaseRef, ctx)
   if (nodeCID.equals(baseCID)) {
     return nodeRef
   }
@@ -361,7 +388,7 @@ async function baseHistoryOnHelper(
 
     return {
       ...node,
-      previous: await nodeToCID(base, ctx)
+      previous: await sealLink(base, ctx)
     }
   }
 
@@ -388,103 +415,51 @@ async function baseHistoryOnHelper(
 //--------------------------------------
 
 
-export async function nodeToCID(node: PublicNode, ctx: OperationContext): Promise<CID> {
+export async function store(node: PublicNode, ctx: OperationContext): Promise<CID> {
   if (isPublicDirectory(node)) {
-    return await directoryToCID(node, ctx)
+    return await storeDirectory(node, ctx)
   } else {
-    return await fileToCID(node, ctx)
+    return await storeFile(node, ctx)
   }
 }
 
-export async function directoryToCID(dir: PublicDirectory, ctx: OperationContext): Promise<CID> {
-  const links: Record<string, CID> = {
-    metadata: await metadataToCID(dir.metadata, ctx),
-    userland: await linksToCID(await mapRecord(dir.userland, (_, link) => sealLink(link, ctx)), ctx),
+export async function storeDirectory(dir: PublicDirectory, ctx: OperationContext): Promise<CID> {
+  const { putBlock, signal } = ctx
+  const dirCbor: PublicDirectoryPersisted = {
+    ...dir,
+    userland: await mapRecord(dir.userland, async (_, link) => await sealLink(link, ctx)),
   }
-  if (dir.skeleton != null) [
-    links.skeleton = dir.skeleton
-  ]
-  if (dir.previous != null) {
-    links.previous = dir.previous
-  }
-  return await linksToCID(links, ctx)
+  return await putBlock(dagCbor.encode(dirCbor), dagCbor, { signal })
 }
 
-export async function fileToCID(file: PublicFile, ctx: OperationContext): Promise<CID> {
-  const links: Record<string, CID> = {
-    metadata: await metadataToCID(file.metadata, ctx),
-    userland: file.userland,
-  }
-  if (file.previous != null) {
-    links.previous = file.previous
-  }
-  return await linksToCID(links, ctx)
+export async function storeFile(file: PublicFile, ctx: OperationContext): Promise<CID> {
+  const { putBlock, signal } = ctx
+  return await putBlock(dagCbor.encode(file), dagCbor, { signal })
 }
 
 
-export async function nodeFromCID(cid: CID, ctx: OperationContext): Promise<PublicNode> {
-  const dirLinks = await linksFromCID(cid, ctx)
-  if (dirLinks.metadata == null) throw new Error(`Missing link "metadata" for PublicDirectory or PublicFile at ${cid.toString()}`)
-
-  const metadata = await metadataFromCID(dirLinks.metadata, ctx)
-
-  if (metadata.isFile) {
-    return await fileFromLinksHelper(cid, dirLinks, metadata)
-  } else {
-    return await directoryFromLinksHelper(cid, dirLinks, metadata, ctx)
+export async function load(cid: CID, ctx: OperationContext): Promise<PublicNodePersisted> {
+  const { getBlock, signal } = ctx
+  const bytes = await getBlock(cid, { signal })
+  const cbor = dagCbor.decode(bytes)
+  if (!isPublicNodePersisted(cbor)) {
+    throw new Error(`Invalid public node format at ${cid.toString()}: ${JSON.stringify(cbor)}`)
   }
+  return cbor
 }
 
-// The following two functions *could* be faster by checking the metadata.isFile beforehand,
-// but that'd only be faster in the failing case, so I don't think it's something worth optimizing for
-
-export async function directoryFromCID(cid: CID, ctx: OperationContext): Promise<PublicDirectory> {
-  const node = await nodeFromCID(cid, ctx)
-  if (node.metadata.isFile) {
+export async function loadDirectory(cid: CID, ctx: OperationContext): Promise<PublicDirectory> {
+  const node = await load(cid, ctx)
+  if (!isPublicDirectory(node)) {
     throw new Error(`Expected a PublicDirectory at ${cid.toString()}, but got a PublicFile instead.`)
   }
-  return node as PublicDirectory
+  return node
 }
 
-export async function fileFromCID(cid: CID, ctx: OperationContext): Promise<PublicFile> {
-  const node = await nodeFromCID(cid, ctx)
-  if (!node.metadata.isFile) {
+export async function loadFile(cid: CID, ctx: OperationContext): Promise<PublicFile> {
+  const node = await load(cid, ctx)
+  if (!isPublicFile(node)) {
     throw new Error(`Expected a PublicFile at ${cid.toString()}, but got a PublicDirectory instead.`)
   }
-  return node as PublicFile
-}
-
-
-async function directoryFromLinksHelper(cid: CID, dirLinks: Record<string, CID>, metadata: Metadata, ctx: OperationContext): Promise<PublicDirectory> {
-  if (dirLinks.userland == null) throw new Error(`Missing link "userland" for PublicDirectory at ${cid.toString()}`)
-
-  const result: PublicDirectory = {
-    metadata: metadata,
-    userland: await linksFromCID(dirLinks.userland, ctx)
-  }
-
-  if (dirLinks.skeleton != null) {
-    result.skeleton = dirLinks.skeleton
-  }
-
-  if (dirLinks.previous != null) {
-    result.previous = dirLinks.previous
-  }
-
-  return Object.freeze(result)
-}
-
-async function fileFromLinksHelper(cid: CID, fileLinks: Record<string, CID>, metadata: Metadata): Promise<PublicFile> {
-  if (fileLinks.userland == null) throw new Error(`Missing link "userland" for PublicFile at ${cid.toString()}`)
-
-  const result: PublicFile = {
-    metadata: metadata,
-    userland: fileLinks.userland
-  }
-
-  if (fileLinks.previous != null) {
-    result.previous = fileLinks.previous
-  }
-
-  return Object.freeze(result)
+  return node
 }
