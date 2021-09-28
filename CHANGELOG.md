@@ -2,7 +2,9 @@
 
 ### v0.28.1
 
+- Fixed bundling issues with older bundlers, ie. bundlers that did not yet support the `exports` map in `package.json`.
 - Switch from noble-ed25519 to tweetnacl. Tweetnacl has been audited and can be used in a wider range of environments.
+
 
 ### v0.28.0
 
