@@ -1,6 +1,6 @@
 import { CID } from "multiformats/cid"
 import { BlockStore } from "../blockStore.js"
-import { AbortContext, isNonEmpty, Timestamp } from "../common.js"
+import { AbortContext, isCID, isNonEmpty, Timestamp } from "../common.js"
 import { linksToCID, linksFromCID, mapRecord } from "../links.js"
 import { metadataToCID, metadataFromCID, Metadata, newDirectory, updateMtime, newFile } from "../metadata.js"
 
@@ -42,14 +42,14 @@ export function isPublicDirectory(node: PublicNode): node is PublicDirectory {
 
 
 export async function resolveLink(link: PublicNode | CID, ctx: OperationContext): Promise<PublicNode> {
-  if (CID.isCID(link)) {
+  if (isCID(link)) {
     return await nodeFromCID(link, ctx)
   }
   return link
 }
 
 export async function sealLink(link: PublicNode | CID, ctx: OperationContext): Promise<CID> {
-  if (CID.isCID(link)) {
+  if (isCID(link)) {
     return link
   }
   return await nodeToCID(link, ctx)
@@ -347,8 +347,8 @@ async function baseHistoryOnHelper(
   historyBaseRef: PublicNode | CID,
   ctx: OperationContext
 ): Promise<PublicNode | CID> {
-  const nodeCID = CID.isCID(nodeRef) ? nodeRef : await nodeToCID(nodeRef, ctx)
-  const baseCID = CID.isCID(historyBaseRef) ? historyBaseRef : await nodeToCID(historyBaseRef, ctx)
+  const nodeCID = isCID(nodeRef) ? nodeRef : await nodeToCID(nodeRef, ctx)
+  const baseCID = isCID(historyBaseRef) ? historyBaseRef : await nodeToCID(historyBaseRef, ctx)
   if (nodeCID.equals(baseCID)) {
     return nodeRef
   }

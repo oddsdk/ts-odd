@@ -6,17 +6,16 @@ import { OperationContext } from "./public/publicNode.js"
 
 
 
-export async function linksToCID(links: Record<string, CID>, { getBlock, putBlock, signal }: OperationContext): Promise<CID> {
+export async function linksToCID(links: Record<string, CID>, { putBlock, blockSize, signal }: OperationContext): Promise<CID> {
   const Links: dagPB.PBLink[] = []
 
   for (const [Name, cid] of Object.entries(links)) {
     // TODO: We can Probably use Promise.all here to make this concurrent.
-    const stat = await ipfs.files.stat(cid, { signal })
-    // TODO: This should actually be equivalent to: (await ipfs.dag.get(cid, { signal })).value.Size
+    const size = await blockSize(cid, { signal })
     // FIXME: Write a size cache. .stat calls take ~2ms in the median. We'll duplicate a lot of these calls
     Links.push({
       Name,
-      Tsize: stat.cumulativeSize,
+      Tsize: size,
       Hash: cid
     })
   }
@@ -26,11 +25,7 @@ export async function linksToCID(links: Record<string, CID>, { getBlock, putBloc
     Links
   }))
 
-  // TODO for the switch towards a BlockStore abstraction
-  // const hash = await sha256.digest(bytes)
-  // const cid = CID.create(1, dagPB.code, hash)
-
-  return await ipfs.block.put(bytes, { version: 1, format: "dag-pb", mhtype: "sha2-256", pin: false, signal })
+  return await putBlock(bytes, { signal })
 }
 
 

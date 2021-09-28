@@ -1,4 +1,4 @@
-import CID from "cids"
+import { CID } from "multiformats/cid"
 
 export type CborForm
   = string
@@ -30,3 +30,6 @@ export interface AbortContext {
   signal?: AbortSignal
 }
 
+export function isCID(something: unknown): something is CID {
+  return CID.asCID(something) != null
+}

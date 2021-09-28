@@ -161,7 +161,7 @@ describe("the data public node module", () => {
     )
   })
 
-  it("adds and removes files as modeled", async function () {
+  it("runs filesystem operations as modeled", async function () {
     const ctx = createMemoryBlockStore()
 
     await fc.assert(
