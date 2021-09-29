@@ -26,10 +26,17 @@ export async function saturate(bareFilter: bloom.BloomFilter): Promise<bloom.Blo
     for (let i = 0; i < remainingStepsAtLeast; i++) {
       await saturationStep(workingFilter)
     }
+
+    // theres a chance that the hash will collide with the existing filter and this gets stuck in an infinite loop
+    // in that case keep re-hashing the hash & adding to the filter until there is no collision
+    const onesAfter = bloom.countOnes(workingFilter)
+    if (onesAfter === ones) {
+      await saturationStepEnsure(workingFilter)
+    }
+    ones = onesAfter
     // Now that we've done e.g. 10 iterations, we might have ended up at, say 430 bits set
     // Assuming we want to end up at 600, there's still 170 more bits to go, so at least
     // floor(170 / 30) = 5 more iterations, and then etc.
-    ones = bloom.countOnes(workingFilter)
     remainingStepsAtLeast = Math.floor((SATURATION_THRESHOLD - ones) / bloom.wnfsParameters.kHashes)
   }
 
@@ -54,6 +61,16 @@ export async function slowStepSaturate(filter: bloom.BloomFilter): Promise<bloom
 async function saturationStep(filter: bloom.BloomFilter): Promise<void> {
   const hash = await webcrypto.digest("sha-256", filter)
   bloom.add(new Uint8Array(hash), filter, bloom.wnfsParameters)
+}
+
+async function saturationStepEnsure(filter: bloom.BloomFilter): Promise<void> {
+  const ones = bloom.countOnes(filter)
+  let hash = await webcrypto.digest("sha-256", filter)
+  do {
+    // re-hash the hash (& we assume at least hashing twice in this situation)
+    hash = await webcrypto.digest("sha-256", hash)
+    bloom.add(new Uint8Array(hash), filter, bloom.wnfsParameters)
+  } while (bloom.countOnes(filter) === ones)
 }
 
 
