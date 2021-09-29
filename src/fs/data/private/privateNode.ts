@@ -397,6 +397,24 @@ export async function write(
   )
 }
 
+export async function rm(
+  path: [string, ...string[]],
+  directory: PrivateDirectory,
+  ctx: PrivateOperationContext & Timestamp
+): Promise<PrivateDirectory> {
+  return await upsert(
+    path,
+    async (_, entry) => {
+      if (entry == null) {
+        throw new Error(`Can't remove file or directory at ${path}: There is neither.`)
+      }
+      return null
+    },
+    directory,
+    ctx
+  )
+}
+
 export async function mkdir(
   path: [string, ...string[]],
   directory: PrivateDirectory,
@@ -438,6 +456,39 @@ export async function mkdir(
     }
   }
 }
+
+export async function mv(
+  from: [string, ...string[]],
+  to: [string, ...string[]],
+  directory: PrivateDirectory,
+  ctx: PrivateOperationContext & Timestamp
+): Promise<PrivateDirectory> {
+  let nodeToInsert: null | PrivateNode = null
+  directory = await upsert(from, async (_, entry) => {
+    if (entry == null) {
+      throw new Error(`Can't mv from ${from} to ${to}. ${from} doesn't exist.`)
+    }
+    nodeToInsert = isPrivateRef(entry) ? await lookupPrivateRef(entry, ctx) : entry
+    return null
+  }, directory, ctx)
+
+  const toDir = to.slice(0, -1)
+  if (isNonEmpty(toDir)) {
+    if (await getNode(toDir, directory, ctx) == null) {
+      directory = await mkdir(toDir, directory, ctx)
+    }
+  }
+
+  return await upsert(to, async (_, entry) => {
+    // alternative implementation: Unix behavior?
+    // I.e. if entry is a directory, add it under that directory using last(from) as name?
+    if (entry != null) {
+      throw new Error(`Can't mv from ${from} to ${to}. ${to} already exists. ${toDir}`)
+    }
+    return nodeToInsert
+  }, directory, ctx)
+}
+
 
 
 export async function* historyFor(
