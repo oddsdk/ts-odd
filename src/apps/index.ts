@@ -24,7 +24,7 @@ type AppIndexResponseJson = {
  * Get A list of all of your apps and their associated domain names
  */
 export async function index(): Promise<Array<App>> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   const localUcan = await ucan.dictionary.lookupAppUcan("*")
   if (localUcan === null) {
@@ -61,7 +61,7 @@ export async function index(): Promise<Array<App>> {
 export async function create(
   subdomain: Maybe<string>
 ): Promise<App> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   const localUcan = await ucan.dictionary.lookupAppUcan("*")
   if (localUcan === null) {
@@ -104,7 +104,7 @@ export async function create(
 export async function deleteByDomain(
   domain: string
 ): Promise<void> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   const localUcan = await ucan.dictionary.lookupAppUcan(domain)
   if (localUcan === null) {
@@ -148,7 +148,7 @@ export async function publish(
   domain: string,
   cid: CID,
 ): Promise<void> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   const localUcan = await ucan.dictionary.lookupAppUcan(domain)
   if (localUcan === null) {
@@ -165,7 +165,7 @@ export async function publish(
   const url = `${apiEndpoint}/app/${domain}/${cid}`
 
   await fetch(url, {
-    method: "PATCH",
+    method: "PUT",
     headers: {
       "authorization": `Bearer ${jwt}`
     }
