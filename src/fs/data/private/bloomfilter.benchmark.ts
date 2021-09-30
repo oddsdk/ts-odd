@@ -75,17 +75,21 @@ export function randomStrings(amount: number): fc.Arbitrary<string[]> {
   return fc.array(randomString(), { minLength: amount, maxLength: amount })
 }
 
-export function randomDisjointStringSets(amount: number): fc.Arbitrary<{ toAdd: string[]; notToAdd: string[] }> {
+export function randomDisjointStringSets(amount: number, notToAddAmount: number): fc.Arbitrary<{ toAdd: string[]; notToAdd: string[] }> {
   return randomStrings(amount)
-    .chain(toAdd => randomStrings(amount)
+    .chain(toAdd => randomStrings(notToAddAmount)
       .filter(notToAdd => !notToAdd.find(str => toAdd.includes(str)))
       .map(notToAdd => ({ toAdd, notToAdd }))
     )
 }
 
-export function falsePositiveRateCheck(amount: number): void {
+
+// tested parameters:
+// falsePositiveRateCheck(50, 1000000) (~10min)
+// falsePositiveRateCheck(600, 10000) (~1min)
+export function falsePositiveRateCheck(amount: number, notToAddAmount: number): void {
   console.log("generating samples")
-  const testData = fc.sample(randomDisjointStringSets(amount), 10)
+  const testData = fc.sample(randomDisjointStringSets(amount, notToAddAmount), 10)
   console.log("starting")
   const fprs = testData.map(data => falsePositiveRate(data.toAdd, data.notToAdd, byteArrayBasedImpl))
   for (let i = 0; i < amount; i++) {
