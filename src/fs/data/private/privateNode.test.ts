@@ -39,7 +39,7 @@ function createMemoryRatchetStore(): privateNode.RatchetStore & { storeRatchet(b
 describe("the private node module", () => {
 
   it("loads what it stored after write", async () => {
-    const store = privateStore.createInMemory(privateStore.empty())
+    const store = privateStore.createInMemoryUnencrypted(privateStore.empty())
     const ratchetStore = createMemoryRatchetStore()
     const ctx = {
       ...store,
@@ -98,7 +98,39 @@ describe("the private node module", () => {
   })
 
   it("runs filesystem operations as modeled", async function () {
-    const store = privateStore.createInMemory(privateStore.empty())
+    const store = privateStore.createInMemoryUnencrypted(privateStore.empty())
+    const ratchetStore = createMemoryRatchetStore()
+    const ctx = {
+      ...store,
+      ...ratchetStore,
+      now: 0,
+      ratchetDisparityBudget: () => 1_000_000
+    }
+
+    await fc.assert(
+      fc.asyncProperty(
+        arbitraryFileSystemUsage({ numOperations: 10 }),
+        async ({ state: state, ops }) => {
+          let fs = await privateNode.newDirectory(namefilter.empty(), ctx)
+
+          // run modeled operations on the 'real' system
+          let i = 1
+          for (const operation of ops) {
+            fs = await interpretOperation(fs, operation, { ...ctx, now: i })
+            i++
+          }
+
+          // expect all files to be in the modeled state
+          const result = await directoryToModel(fs, ctx)
+          expect(result).toEqual(state)
+        }
+      )
+    )
+  })
+
+  it("runs filesystem operations as modeled on ipfs", async function () {
+    const ipfs = ipfsFromContext(this)
+    const store = privateStore.create(ipfs)
     const ratchetStore = createMemoryRatchetStore()
     const ctx = {
       ...store,

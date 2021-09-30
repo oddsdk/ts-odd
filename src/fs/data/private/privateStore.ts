@@ -20,7 +20,6 @@ export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<
       return block.value
     },
 
-    // @ts-ignore (incorrectly specified type)
     async save(node) {
       const block = await Block.encode({ value: node, codec, hasher: sha256 })
       await ipfs.block.put(block.bytes)
@@ -39,15 +38,23 @@ export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<
   return {
 
     async getBlock(ref) {
-      const value = await (await currentMap).get(ref.namefilter)
-      return value || null
+      const ciphertext: Uint8Array = await (await currentMap).get(ref.namefilter)
+
+      if (ciphertext == null) {
+        return null
+      }
+
+      const cleartext: ArrayBuffer = await webcrypto.decrypt(ref.algorithm, await keyFromRef(ref), ciphertext)
+      return new Uint8Array(cleartext)
     },
 
     async putBlock(ref, block) {
+      const ciphertext: ArrayBuffer = await webcrypto.encrypt(ref.algorithm, await keyFromRef(ref), block)
+
       const mapBefore = currentMap
       currentMap = (async () => {
         const map = await mapBefore
-        return await map.set(ref.namefilter, block)
+        return await map.set(ref.namefilter, new Uint8Array(ciphertext))
       })()
       await currentMap
     },
@@ -68,7 +75,7 @@ export function empty(): PrivateStoreLookup {
 }
 
 
-export function createInMemory(base: PrivateStoreLookup): PrivateStore {
+export function createInMemoryUnencrypted(base: PrivateStoreLookup): PrivateStore {
   const memoryMap = new Map<string, { ref: PrivateRef; block: Uint8Array }>()
   const keyForRef = (ref: PrivateRef) => uint8arrays.toString(ref.namefilter, "base64url")
   return {
@@ -93,4 +100,9 @@ export function createInMemory(base: PrivateStoreLookup): PrivateStore {
     }
 
   }
+}
+
+async function keyFromRef(ref: PrivateRef): Promise<CryptoKey> {
+  // TODO: Detect when ref.algorithm is not AES-GCM and error out fittingly!
+  return await webcrypto.importKey("raw", ref.key, { name: ref.algorithm }, true, ["encrypt", "decrypt"])
 }

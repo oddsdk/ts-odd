@@ -1,7 +1,6 @@
 import { performance } from "perf_hooks"
 import * as fc from "fast-check"
 import * as arrayBloom from "fission-bloom-filters"
-import * as uint8arrays from "uint8arrays"
 import * as bloom from "./bloomfilter.js"
 
 interface BloomFilterImpl<T> {
@@ -10,7 +9,7 @@ interface BloomFilterImpl<T> {
   has(str: string, filter: T): boolean
 }
 
-const byteArrayBasedImpl: BloomFilterImpl<bloom.BloomFilter> = {
+export const byteArrayBasedImpl: BloomFilterImpl<bloom.BloomFilter> = {
   create() {
     return bloom.empty(bloom.wnfsParameters)
   },
@@ -23,7 +22,7 @@ const byteArrayBasedImpl: BloomFilterImpl<bloom.BloomFilter> = {
   }
 }
 
-const arrayBasedImpl: BloomFilterImpl<arrayBloom.BloomFilter> = {
+export const arrayBasedImpl: BloomFilterImpl<arrayBloom.BloomFilter> = {
   create() {
     return new arrayBloom.BloomFilter(bloom.wnfsParameters.mBytes * 8, bloom.wnfsParameters.kHashes)
   },
@@ -57,6 +56,7 @@ function bloomFilterCreations<T>(amount: number, exampleElems: string[], impl: B
 }
 
 export function falsePositiveRate<T>(toAdd: string[], notToAdd: string[], impl: BloomFilterImpl<T>): number[] {
+  console.log("notToAdd.length", notToAdd.length)
   let filter = impl.create()
   const falsePositiveRates: number[] = []
   for (const elem of toAdd) {
@@ -86,22 +86,22 @@ export function randomDisjointStringSets(amount: number, notToAddAmount: number)
 
 // tested parameters:
 // falsePositiveRateCheck(50, 1000000) (~10min)
-// falsePositiveRateCheck(600, 10000) (~1min)
-export function falsePositiveRateCheck(amount: number, notToAddAmount: number): void {
+// falsePositiveRateCheck(600, 10000) (~5min)
+export function falsePositiveRateCheck(amount: number, notToAddAmount: number, impl = byteArrayBasedImpl): void {
   console.log("generating samples")
   const testData = fc.sample(randomDisjointStringSets(amount, notToAddAmount), 10)
   console.log("starting")
-  const fprs = testData.map(data => falsePositiveRate(data.toAdd, data.notToAdd, byteArrayBasedImpl))
+  const fprs = testData.map(data => falsePositiveRate(data.toAdd, data.notToAdd, impl))
   for (let i = 0; i < amount; i++) {
     console.log(`${i};${fprs.map(fpr => fpr[i].toFixed(6).replace(".", ",")).join(";")}`)
   }
   console.log("done")
 }
 
-export function runBenchmark(amount: number): void {
+export function runBenchmark(amount: number, impl = byteArrayBasedImpl): void {
   console.log("generating samples")
   const testData = fc.sample(randomString(), amount)
-  const runBench = () => bloomFilterOps(testData, byteArrayBasedImpl)
+  const runBench = () => bloomFilterOps(testData, impl)
   console.log("warming up")
   runBench()
   console.log("starting")

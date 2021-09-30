@@ -2497,10 +2497,10 @@ human-signals@^2.1.0:
   resolved "https://registry.yarnpkg.com/human-signals/-/human-signals-2.1.0.tgz#dc91fcba42e4d06e4abaed33b3e7a3c02f514ea0"
   integrity sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==
 
-iamap@^2.0.5:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/iamap/-/iamap-2.0.5.tgz#23005aebf927d62fe4c7b7b2a7e664477a01c2bc"
-  integrity sha512-6A9+2lQVr56HSWXEgUutJWT3HVnhX3MjBY/nAdJ3nRnTBKHecRGsjLqcWKEOhUX5UH6ds/tlvzL4b+xONA0xPg==
+iamap@^2.0.7:
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/iamap/-/iamap-2.0.7.tgz#d5fb460a96cb799c148c9d02089290f608a91f85"
+  integrity sha512-NnupVkY99hjuOovb9TzRbvHLxqjO98jASkaBCtcLrF76qHDTaAS1N0uK7t1h5mnJSUo6elj4eYGs/6N0J8MlKQ==
   dependencies:
     bit-sequence "^1.1.0"
 

@@ -28,9 +28,9 @@ export async function saturate(bareFilter: bloom.BloomFilter): Promise<bloom.Blo
     }
 
     // theres a chance that the hash will collide with the existing filter and this gets stuck in an infinite loop
-    // in that case keep re-hashing the hash & adding to the filter until there is no collision
     const onesAfter = bloom.countOnes(workingFilter)
     if (onesAfter === ones) {
+      // in that case keep re-hashing the hash & adding to the filter until there is no collision
       await saturationStepEnsure(workingFilter)
     }
     ones = onesAfter
@@ -63,6 +63,7 @@ async function saturationStep(filter: bloom.BloomFilter): Promise<void> {
   bloom.add(new Uint8Array(hash), filter, bloom.wnfsParameters)
 }
 
+// also modifies in place
 async function saturationStepEnsure(filter: bloom.BloomFilter): Promise<void> {
   const ones = bloom.countOnes(filter)
   let hash = await webcrypto.digest("sha-256", filter)
