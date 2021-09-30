@@ -58,7 +58,7 @@ export async function slowStepSaturate(filter: bloom.BloomFilter): Promise<bloom
 }
 
 // modifies the bloom filter in place
-export async function saturationStep(filter: bloom.BloomFilter): Promise<void> {
+async function saturationStep(filter: bloom.BloomFilter): Promise<void> {
   const hash = await webcrypto.digest("sha-256", filter)
   bloom.add(new Uint8Array(hash), filter, bloom.wnfsParameters)
 }
