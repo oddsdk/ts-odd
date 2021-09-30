@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.28.2
+
+- Update API endpoints to v2 and add setup parameter to specify API version
+
+
 ### v0.28.1
 
 - Fixed bundling issues with older bundlers, ie. bundlers that did not yet support the `exports` map in `package.json`.

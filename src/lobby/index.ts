@@ -17,7 +17,7 @@ export async function createAccount(
     username: string
   }
 ): Promise<{ success: boolean }> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
@@ -46,7 +46,7 @@ export async function createAccount(
  * Throws if the user is not logged in.
  */
 export async function resendVerificationEmail(): Promise<{ success: boolean }> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   // We've not implemented an "administer account" resource/ucan, so authenticating
   // with any kind of ucan will work server-side

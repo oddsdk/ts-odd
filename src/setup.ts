@@ -29,6 +29,8 @@ export function shouldPin({ enabled }: { enabled: boolean }): boolean {
  *
  * `api` Location of the Fission API
  *       (default `https://runfission.com`)
+ * `apiVersion` Vesion of the Fission API
+ *       (defaults to the latest version)
  * `lobby` Location of the authentication lobby.
  *         (default `https://auth.fission.codes`)
  * `user`  User's domain to use, will be prefixed by username.

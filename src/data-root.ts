@@ -44,9 +44,11 @@ export async function lookup(
 export async function lookupOnFisson(
   username: string
 ): Promise<CID | null> {
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
+
   try {
     const resp = await fetch(
-      `${setup.endpoints.api}/user/data/${username}`,
+      `${apiEndpoint}/user/data/${username}`,
       { cache: "reload" } // don't use cache
     )
     const cid = await resp.json()
@@ -72,7 +74,7 @@ export async function update(
   cid: CID | string,
   proof: string
 ): Promise<{ success: boolean }> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   // Debug
   debug.log("🌊 Updating your DNSLink:", cid)
@@ -98,7 +100,7 @@ export async function update(
     retryOn: [ 502, 503, 504 ],
 
   }, {
-    method: "PATCH"
+    method: "PUT"
 
   }).then((response: Response) => {
     if (response.status < 300) debug.log("🪴 DNSLink updated:", cid)

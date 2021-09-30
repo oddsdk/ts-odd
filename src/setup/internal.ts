@@ -1,5 +1,6 @@
 export type Endpoints = {
   api: string
+  apiVersion: string
   lobby: string
   user: string
 }
@@ -13,6 +14,7 @@ export const setup = {
 
   endpoints: {
     api: "https://runfission.com",
+    apiVersion: "v2",
     lobby: "https://auth.fission.codes",
     user: "fission.name"
   },
