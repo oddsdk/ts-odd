@@ -1,5 +1,6 @@
-import IpfsMessagePortClient from "ipfs-message-port-client"
+import { IPFSClient } from "ipfs-message-port-client"
 import type { IPFS } from "ipfs-core"
+
 import { setup } from "../setup/internal.js"
 
 
@@ -13,7 +14,7 @@ export const set = (userIpfs: unknown): void => {
 export const get = async (): Promise<IPFS> => {
   if (!ipfs) {
     const port = await iframe()
-    ipfs = IpfsMessagePortClient.from(port) as unknown as IPFS
+    ipfs = IPFSClient.from(port) as unknown as IPFS
   }
   return ipfs
 }
