@@ -1,3 +1,4 @@
+import { SymmAlg } from "keystore-idb/lib/types.js"
 import BaseFile from "../base/file.js"
 import MMPT from "../protocol/private/mmpt.js"
 import PrivateHistory from "./PrivateHistory.js"
@@ -17,6 +18,7 @@ import * as namefilter from "../protocol/private/namefilter.js"
 type ConstructorParams = {
   content: FileContent
   key: string
+  algorithm: SymmAlg
   header: PrivateFileInfo
   mmpt: MMPT
 }
@@ -27,14 +29,16 @@ export class PrivateFile extends BaseFile {
   header: PrivateFileInfo
   history: PrivateHistory
   key: string
+  algorithm: SymmAlg
   mmpt: MMPT
 
-  constructor({ content, mmpt, key, header }: ConstructorParams) {
+  constructor({ content, mmpt, key, algorithm, header }: ConstructorParams) {
     super(content)
 
     this.header = header
     this.history = new PrivateHistory(this as unknown as history.Node)
     this.key = key
+    this.algorithm = algorithm
     this.mmpt = mmpt
   }
 
@@ -45,17 +49,19 @@ export class PrivateFile extends BaseFile {
       && check.isPrivateFileInfo(obj.header)
   }
 
-  static async create(mmpt: MMPT, content: FileContent, parentNameFilter: BareNameFilter,  key: string): Promise<PrivateFile> {
+  static async create(mmpt: MMPT, content: FileContent, parentNameFilter: BareNameFilter,  key: string, alg: SymmAlg): Promise<PrivateFile> {
     const bareNameFilter = await namefilter.addToBare(parentNameFilter, key)
-    const contentKey = await crypto.aes.genKeyStr()
-    const contentInfo = await protocol.basic.putEncryptedFile(content, contentKey)
+    const contentKey = await crypto.aes.genKeyStr(alg)
+    const contentInfo = await protocol.basic.putEncryptedFile(content, contentKey, alg)
     return new PrivateFile({
       content,
       mmpt,
       key,
+      algorithm: alg,
       header: {
         bareNameFilter,
         key: contentKey,
+        algorithm: alg,
         revision: 1,
         metadata: metadata.empty(true),
         content: contentInfo.cid
@@ -63,18 +69,18 @@ export class PrivateFile extends BaseFile {
     })
   }
 
-  static async fromBareNameFilter(mmpt: MMPT, bareNameFilter: BareNameFilter, key: string): Promise<PrivateFile> {
-    const info = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key)
+  static async fromBareNameFilter(mmpt: MMPT, bareNameFilter: BareNameFilter, key: string, alg: SymmAlg): Promise<PrivateFile> {
+    const info = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key, alg)
     return this.fromInfo(mmpt, key, info)
   }
 
-  static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
-    const info = await protocol.priv.getByLatestName(mmpt, name, key)
+  static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string, alg: SymmAlg): Promise<PrivateFile> {
+    const info = await protocol.priv.getByLatestName(mmpt, name, key, alg)
     return PrivateFile.fromInfo(mmpt, key, info)
   }
 
-  static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
-    const info = await protocol.priv.getByName(mmpt, name, key)
+  static async fromName(mmpt: MMPT, name: PrivateName, key: string, alg: SymmAlg): Promise<PrivateFile> {
+    const info = await protocol.priv.getByName(mmpt, name, key, alg)
     return PrivateFile.fromInfo(mmpt, key, info)
   }
 
@@ -83,10 +89,13 @@ export class PrivateFile extends BaseFile {
       throw new Error(`Could not parse a valid private file using the given key`)
     }
 
-    const content = await protocol.basic.getEncryptedFile(info.content, info.key)
+    const algorithm = info.algorithm || SymmAlg.AES_CTR
+
+    const content = await protocol.basic.getEncryptedFile(info.content, info.key, algorithm)
     return new PrivateFile({
       content,
       key,
+      algorithm,
       mmpt,
       header: info
     })
@@ -104,7 +113,7 @@ export class PrivateFile extends BaseFile {
   }
 
   async updateContent(content: FileContent): Promise<this> {
-    const contentInfo = await protocol.basic.putEncryptedFile(content, this.header.key)
+    const contentInfo = await protocol.basic.putEncryptedFile(content, this.header.key, this.header.algorithm || SymmAlg.AES_CTR)
     this.content = content
     this.header = {
       ...this.header,

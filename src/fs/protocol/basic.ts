@@ -1,6 +1,8 @@
 /** @internal */
 import type { ImportCandidate } from "ipfs-core-types/src/utils"
 
+import { SymmAlg } from "keystore-idb/lib/types.js"
+
 import * as ipfs from "../../ipfs/index.js"
 import { CID, FileContent, AddResult } from "../../ipfs/index.js"
 
@@ -12,16 +14,16 @@ export const getFile = async (cid: CID): Promise<Uint8Array> => {
   return ipfs.catBuf(cid)
 }
 
-export const getEncryptedFile = async (cid: CID, key: string): Promise<FileContent> => {
-  return ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent>
+export const getEncryptedFile = async (cid: CID, key: string, alg: SymmAlg): Promise<FileContent> => {
+  return ipfs.encoded.catAndDecode(cid, key, alg) as Promise<FileContent>
 }
 
 export const putFile = async (content: ImportCandidate): Promise<AddResult> => {
   return ipfs.add(content)
 }
 
-export const putEncryptedFile = async (content: FileContent, key: string): Promise<AddResult> => {
-  return ipfs.encoded.add(content, key)
+export const putEncryptedFile = async (content: FileContent, key: string, alg: SymmAlg): Promise<AddResult> => {
+  return ipfs.encoded.add(content, key, alg)
 }
 
 export const getSimpleLinks = async (cid: CID): Promise<SimpleLinks> => {

@@ -1,8 +1,9 @@
 import { throttle } from "throttle-debounce"
 
-import { BaseLinks } from "./types.js"
+import { SymmAlg } from "keystore-idb/lib/types.js"
+
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
-import { PublishHook, UnixTree, Tree, File } from "./types.js"
+import { BaseLinks, PublishHook, UnixTree, Tree, File } from "./types.js"
 import { SemVer } from "./semver.js"
 import BareTree from "./bare/tree.js"
 import RootTree from "./root/tree.js"
@@ -147,8 +148,8 @@ export class FileSystem {
    */
   static async empty(opts: NewFileSystemOptions = {}): Promise<FileSystem> {
     const { permissions, localOnly } = opts
-    const rootKey = opts.rootKey || await crypto.aes.genKeyStr()
-    const root = await RootTree.empty({ rootKey })
+    const rootKey = opts.rootKey || await crypto.aes.genKeyStr(SymmAlg.AES_CTR)
+    const root = await RootTree.empty({ rootKey, algorithm: SymmAlg.AES_CTR })
 
     const fs = new FileSystem({
       root,

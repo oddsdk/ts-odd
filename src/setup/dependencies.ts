@@ -1,3 +1,5 @@
+import type { SymmAlg } from "keystore-idb/lib/types.js"
+
 import * as browserCrypto from "../crypto/browser.js"
 import * as browserStorage from "../storage/browser.js"
 
@@ -62,9 +64,9 @@ export interface Dependencies {
     sha256: (bytes: Uint8Array) => Promise<Uint8Array>
   }
   aes: {
-    encrypt: (bytes: Uint8Array, key: string) => Promise<Uint8Array>
-    decrypt: (bytes: Uint8Array, key: string) => Promise<Uint8Array>
-    genKeyStr: () => Promise<string>
+    encrypt: (bytes: Uint8Array, key: string, alg: SymmAlg) => Promise<Uint8Array>
+    decrypt: (bytes: Uint8Array, key: string, alg: SymmAlg) => Promise<Uint8Array>
+    genKeyStr: (alg: SymmAlg) => Promise<string>
     decryptGCM: (encrypted: string, keyStr: string, ivStr: string) => Promise<string>
   }
   rsa: {

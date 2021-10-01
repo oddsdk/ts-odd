@@ -1,3 +1,5 @@
+import { SymmAlg } from "keystore-idb/lib/types.js"
+
 import MMPT from "../protocol/private/mmpt.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { DecryptedNode, Revision } from "../protocol/private/types.js"
@@ -16,6 +18,7 @@ export type Node = {
     revision: number
   }
   key: string
+  algorithm: SymmAlg
   mmpt: MMPT
 }
 
@@ -94,7 +97,7 @@ export default class PrivateHistory {
    * @internal
    */
   _getRevisionInfo(revision: Revision): Promise<DecryptedNode> {
-    return protocol.priv.readNode(revision.cid, this.node.key)
+    return protocol.priv.readNode(revision.cid, this.node.key, this.node.algorithm)
   }
 
   /**

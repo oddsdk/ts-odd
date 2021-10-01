@@ -1,4 +1,4 @@
-import { isNum, isObject, isString } from "../../../../common/index.js"
+import { isNum, isObject, isString, isDefined } from "../../../../common/index.js"
 import * as check  from "../../../types/check.js"
 import { PrivateFileInfo, PrivateTreeInfo, PrivateLink, PrivateLinks, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from "../types.js"
 
@@ -11,6 +11,7 @@ export const isPrivateFileInfo = (obj: any): obj is PrivateFileInfo => {
     && check.isMetadata(obj.metadata)
     && obj.metadata.isFile
     && isString(obj.key)
+    && (!isDefined(obj.algorithm) || isString(obj.algorithm))
     && check.isCID(obj.content)
 }
 
@@ -24,9 +25,11 @@ export const isPrivateTreeInfo = (obj: any): obj is PrivateTreeInfo => {
 }
 
 export const isPrivateLink = (obj: any): obj is PrivateLink => {
-  return check.isBaseLink(obj)
-    && isString((obj as any).key)
-    && isString((obj as any).pointer)
+  return isObject(obj)
+    && check.isBaseLink(obj)
+    && isString(obj.key)
+    && isString(obj.pointer)
+    && (!isDefined(obj.algorithm) || isString(obj.algorithm))
 }
 
 export const isPrivateLinks = (obj: any): obj is PrivateLinks => {
@@ -43,5 +46,6 @@ export const isPrivateSkeletonInfo = (obj: any): obj is PrivateSkeletonInfo => {
   return isObject(obj)
     && check.isCID(obj.cid)
     && isString(obj.key)
+    && (!isDefined(obj.algorithm) || isString(obj.algorithm))
     && isPrivateSkeleton(obj.subSkeleton)
 }

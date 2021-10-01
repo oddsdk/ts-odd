@@ -1,3 +1,5 @@
+import { SymmAlg } from "keystore-idb/lib/types.js"
+
 import { AddResult, CID } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Links, Puttable, SimpleLink } from "../types.js"
@@ -58,14 +60,14 @@ export default class RootTree implements Puttable {
   // INITIALISATION
   // --------------
 
-  static async empty({ rootKey }: { rootKey: string }): Promise<RootTree> {
+  static async empty({ rootKey, algorithm }: { rootKey: string; algorithm: SymmAlg }): Promise<RootTree> {
     const publicTree = await PublicTree.empty()
     const prettyTree = await BareTree.empty()
     const mmpt = MMPT.create()
 
     // Private tree
     const rootPath = pathing.toPosix(pathing.directory(pathing.Branch.Private))
-    const rootTree = await PrivateTree.create(mmpt, rootKey, null)
+    const rootTree = await PrivateTree.create(mmpt, rootKey, algorithm, null)
     await rootTree.put()
 
     // Construct tree
@@ -85,7 +87,7 @@ export default class RootTree implements Puttable {
     await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
-    tree.setVersion(semver.v1)
+    await tree.setVersion(semver.v1)
 
     await Promise.all([
       tree.updatePuttable(Branch.Public, publicTree),
@@ -311,15 +313,15 @@ function loadPrivateNodes(
 
       // if root, no need for bare name filter
       if (unwrappedPath.length === 1 && unwrappedPath[0] === pathing.Branch.Private) {
-        privateNode = await PrivateTree.fromBaseKey(mmpt, key)
+        privateNode = await PrivateTree.fromBaseKey(mmpt, key, SymmAlg.AES_CTR)
 
       } else {
         const bareNameFilter = await findBareNameFilter(map, path)
         if (!bareNameFilter) throw new Error(`Was trying to load the PrivateTree for the path \`${path}\`, but couldn't find the bare name filter for it.`)
         if (pathing.isDirectory(path)) {
-          privateNode = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key)
+          privateNode = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key, SymmAlg.AES_CTR)
         } else {
-          privateNode = await PrivateFile.fromBareNameFilter(mmpt, bareNameFilter, key)
+          privateNode = await PrivateFile.fromBareNameFilter(mmpt, bareNameFilter, key, SymmAlg.AES_CTR)
         }
       }
 

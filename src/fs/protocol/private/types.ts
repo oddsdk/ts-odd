@@ -1,5 +1,7 @@
+import { SymmAlg } from "keystore-idb/lib/types.js"
+
 import { BaseLink } from "../../types.js"
-import  { Metadata } from "../../metadata.js"
+import { Metadata } from "../../metadata.js"
 import { AddResult, CID } from "../../../ipfs/index.js"
 import { BareNameFilter, PrivateName } from "./namefilter.js"
 
@@ -11,10 +13,12 @@ export type PrivateFileInfo = {
   bareNameFilter: BareNameFilter
   revision: number
   key: string
+  algorithm?: SymmAlg
 }
 
 export type PrivateLink = BaseLink & {
   key: string
+  algorithm?: SymmAlg
   pointer: PrivateName
 }
 
@@ -33,12 +37,14 @@ export type PrivateSkeleton = { [name: string]: PrivateSkeletonInfo}
 export type PrivateSkeletonInfo = {
   cid: CID
   key: string
+  algorithm?: SymmAlg
   subSkeleton: PrivateSkeleton
 }
 
 export type PrivateAddResult = AddResult & {
   name: PrivateName
   key: string
+  algorithm?: SymmAlg
   skeleton: PrivateSkeleton
 }
 

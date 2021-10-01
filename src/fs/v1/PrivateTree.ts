@@ -1,3 +1,5 @@
+import { SymmAlg } from "keystore-idb/lib/types.js"
+
 import BaseTree from "../base/tree.js"
 import MMPT from "../protocol/private/mmpt.js"
 import PrivateFile from "./PrivateFile.js"
@@ -21,6 +23,7 @@ import * as semver from "../semver.js"
 type ConstructorParams = {
   header: PrivateTreeInfo
   key: string
+  algorithm: SymmAlg
   mmpt: MMPT
 }
 
@@ -31,15 +34,17 @@ export default class PrivateTree extends BaseTree {
   header: PrivateTreeInfo
   history: PrivateHistory
   key: string
+  algorithm: SymmAlg
   mmpt: MMPT
 
-  constructor({ mmpt, key, header }: ConstructorParams) {
+  constructor({ mmpt, key, algorithm, header }: ConstructorParams) {
     super(semver.v1)
 
     this.children = {}
     this.header = header
     this.history = new PrivateHistory(this as unknown as history.Node)
     this.key = key
+    this.algorithm = algorithm
     this.mmpt = mmpt
   }
 
@@ -49,13 +54,14 @@ export default class PrivateTree extends BaseTree {
       && check.isPrivateTreeInfo(obj.header)
   }
 
-  static async create(mmpt: MMPT, key: string, parentNameFilter: Maybe<BareNameFilter>): Promise<PrivateTree> {
+  static async create(mmpt: MMPT, key: string, alg: SymmAlg, parentNameFilter: Maybe<BareNameFilter>): Promise<PrivateTree> {
     const bareNameFilter = parentNameFilter
       ? await namefilter.addToBare(parentNameFilter, key)
       : await namefilter.createBare(key)
     return new PrivateTree({
       mmpt,
       key,
+      algorithm: alg,
       header: {
         metadata: metadata.empty(false),
         bareNameFilter,
@@ -66,37 +72,37 @@ export default class PrivateTree extends BaseTree {
     })
   }
 
-  static async fromBaseKey(mmpt: MMPT, key: string): Promise<PrivateTree> {
+  static async fromBaseKey(mmpt: MMPT, key: string, alg: SymmAlg): Promise<PrivateTree> {
     const bareNameFilter = await namefilter.createBare(key)
-    return this.fromBareNameFilter(mmpt, bareNameFilter, key)
+    return this.fromBareNameFilter(mmpt, bareNameFilter, key, alg)
   }
 
-  static async fromBareNameFilter(mmpt: MMPT, bareNameFilter: BareNameFilter, key: string): Promise<PrivateTree> {
-    const info = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key)
-    return this.fromInfo(mmpt, key, info)
+  static async fromBareNameFilter(mmpt: MMPT, bareNameFilter: BareNameFilter, key: string, alg: SymmAlg): Promise<PrivateTree> {
+    const info = await protocol.priv.getLatestByBareNameFilter(mmpt, bareNameFilter, key, alg)
+    return this.fromInfo(mmpt, key, alg, info)
   }
 
-  static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
-    const info = await protocol.priv.getByLatestName(mmpt, name, key)
-    return this.fromInfo(mmpt, key, info)
+  static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string, alg: SymmAlg): Promise<PrivateTree> {
+    const info = await protocol.priv.getByLatestName(mmpt, name, key, alg)
+    return this.fromInfo(mmpt, key, alg, info)
   }
 
-  static async fromName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
-    const info = await protocol.priv.getByName(mmpt, name, key)
-    return this.fromInfo(mmpt, key, info)
+  static async fromName(mmpt: MMPT, name: PrivateName, key: string, alg: SymmAlg): Promise<PrivateTree> {
+    const info = await protocol.priv.getByName(mmpt, name, key, alg)
+    return this.fromInfo(mmpt, key, alg, info)
   }
 
-  static async fromInfo(mmpt: MMPT, key: string, info: Maybe<DecryptedNode>): Promise<PrivateTree> {
+  static async fromInfo(mmpt: MMPT, key: string, alg: SymmAlg, info: Maybe<DecryptedNode>): Promise<PrivateTree> {
     if (!check.isPrivateTreeInfo(info)) {
       throw new Error(`Could not parse a valid private tree using the given key`)
     }
 
-    return new PrivateTree({ mmpt, key, header: info })
+    return new PrivateTree({ mmpt, key, algorithm: alg, header: info })
   }
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateTree> {
-    const key = await crypto.aes.genKeyStr()
-    const child = await PrivateTree.create(this.mmpt, key, this.header.bareNameFilter)
+    const key = await crypto.aes.genKeyStr(SymmAlg.AES_CTR)
+    const child = await PrivateTree.create(this.mmpt, key, SymmAlg.AES_CTR, this.header.bareNameFilter)
 
     const existing = this.children[name]
     if (existing) {
@@ -115,8 +121,8 @@ export default class PrivateTree extends BaseTree {
 
     let file: PrivateFile
     if (existing === null) {
-      const key = await crypto.aes.genKeyStr()
-      file = await PrivateFile.create(this.mmpt, content, this.header.bareNameFilter, key)
+      const key = await crypto.aes.genKeyStr(SymmAlg.AES_CTR)
+      file = await PrivateFile.create(this.mmpt, content, this.header.bareNameFilter, key, SymmAlg.AES_CTR)
     } else if (PrivateFile.instanceOf(existing)) {
       file = await existing.updateContent(content)
     } else {
@@ -154,7 +160,7 @@ export default class PrivateTree extends BaseTree {
     return this
   }
 
-  async getDirectChild(name: string): Promise<PrivateTree | PrivateFile | null>{
+  async getDirectChild(name: string): Promise<PrivateTree | PrivateFile | null> {
     if(this.children[name]) {
       return this.children[name]
     }
@@ -162,8 +168,8 @@ export default class PrivateTree extends BaseTree {
     const childInfo = this.header.links[name]
     if(childInfo === undefined) return null
     const child = childInfo.isFile
-      ? await PrivateFile.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
-      : await PrivateTree.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
+      ? await PrivateFile.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key, childInfo.algorithm || SymmAlg.AES_CTR)
+      : await PrivateTree.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key, childInfo.algorithm || SymmAlg.AES_CTR)
 
     // check that the child wasn't added while retrieving the content from the network
     if(this.children[name]) {
@@ -198,14 +204,16 @@ export default class PrivateTree extends BaseTree {
 
     return check.isPrivateFileInfo(result.node)
       ? PrivateFile.fromInfo(this.mmpt, result.key, result.node)
-      : PrivateTree.fromInfo(this.mmpt, result.key, result.node)
+      : PrivateTree.fromInfo(this.mmpt, result.key, result.alg, result.node)
   }
 
-  async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<{ key: string; node: DecryptedNode }>> {
+  async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<{ key: string; alg: SymmAlg; node: DecryptedNode }>> {
     const [head, ...rest] = parts
+    const alg = nodeInfo.algorithm || SymmAlg.AES_CTR
     if (head === undefined) return {
       key: nodeInfo.key,
-      node: await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
+      alg,
+      node: await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key, alg)
     }
 
     const nextChild = nodeInfo.subSkeleton[head]
@@ -213,7 +221,7 @@ export default class PrivateTree extends BaseTree {
       return this.getRecurse(nextChild, rest)
     }
 
-    const reloadedNode = await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
+    const reloadedNode = await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key, alg)
     if (!check.isPrivateTreeInfo(reloadedNode)) {
       return null
     }
@@ -231,9 +239,9 @@ export default class PrivateTree extends BaseTree {
 
   updateLink(name: string, result: PrivateAddResult): this {
     const now = Date.now()
-    const { cid, size, key, isFile, skeleton } = result
+    const { cid, size, key, algorithm, isFile, skeleton } = result
     const pointer = result.name
-    this.header.links[name] = { name, key, pointer, size, isFile: isFile, mtime: metadata.mtimeFromMs(now) }
+    this.header.links[name] = { name, key, algorithm, pointer, size, isFile: isFile, mtime: metadata.mtimeFromMs(now) }
     this.header.skeleton[name] = { cid, key, subSkeleton: skeleton }
     this.header.revision = this.header.revision + 1
     this.header.metadata.unixMeta.mtime = now

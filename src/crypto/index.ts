@@ -1,3 +1,4 @@
+import { SymmAlg } from "keystore-idb/lib/types.js"
 import { strToArrBuf } from "keystore-idb/lib/utils.js"
 import * as hex from "../common/hex.js"
 import { impl } from "../setup/dependencies.js"
@@ -15,12 +16,12 @@ export const hash = {
   sha256Str: sha256Str
 }
 export const aes = {
-  encrypt: (bytes: Uint8Array, key: string): Promise<Uint8Array> =>
-    impl.aes.encrypt(bytes, key),
-  decrypt: (bytes: Uint8Array, key: string): Promise<Uint8Array> =>
-    impl.aes.decrypt(bytes, key),
-  genKeyStr: (): Promise<string> =>
-    impl.aes.genKeyStr(),
+  encrypt: (bytes: Uint8Array, key: string, alg: SymmAlg): Promise<Uint8Array> =>
+    impl.aes.encrypt(bytes, key, alg),
+  decrypt: (bytes: Uint8Array, key: string, alg: SymmAlg): Promise<Uint8Array> =>
+    impl.aes.decrypt(bytes, key, alg),
+  genKeyStr: (alg: SymmAlg): Promise<string> =>
+    impl.aes.genKeyStr(alg),
   decryptGCM: (encrypted: string, keyStr: string, ivStr: string): Promise<string>  =>
     impl.aes.decryptGCM(encrypted, keyStr, ivStr)
 }
