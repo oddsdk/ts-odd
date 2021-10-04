@@ -37,6 +37,6 @@ export function iframe(): Promise<MessagePort> {
         : reject(new Error("Don't have access to iframe.contentWindow"))
     }
 
-    iframe.src = `${setup.endpoints.lobby}/ipfs.html`
+    iframe.src = `${setup.endpoints.lobby}/ipfs/v2.html`
   })
 }
