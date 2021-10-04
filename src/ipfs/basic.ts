@@ -1,6 +1,6 @@
 import { CID as CIDObj } from "multiformats/cid"
 import dagPb, { DAGLink, DAGNode } from "ipld-dag-pb"
-import * as dagPB from '@ipld/dag-pb'
+import * as dagPB from "@ipld/dag-pb"
 import type { IPFSEntry } from "ipfs-core-types/src/root"
 import type { ImportCandidate } from "ipfs-core-types/src/utils"
 

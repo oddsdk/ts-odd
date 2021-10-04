@@ -13,7 +13,7 @@ export async function loadCAR(filepath: string, ipfs: IPFS): Promise<{ roots: CI
     const blockIterator = await CarBlockIterator.fromIterable(inStream)
     for await (const block of blockIterator) {
       cids.push(block.cid)
-      await ipfs.block.put(block.bytes, { cid: block.cid })
+      await ipfs.block.put(block.bytes, { version: 1, mhtype: "sha2-256" })
     }
     return {
       roots: await blockIterator.getRoots(),
@@ -23,4 +23,3 @@ export async function loadCAR(filepath: string, ipfs: IPFS): Promise<{ roots: CI
     inStream.close()
   }
 }
-

@@ -1,8 +1,23 @@
-import Ipfs, { IPFS } from "ipfs-core"
-import Repo from "ipfs-repo"
-import { MemoryDatastore } from "interface-datastore"
+import * as fs from "fs"
+import * as dagPB from "@ipld/dag-pb"
+import * as Ipfs from "ipfs-core"
+
+import { createRepo } from "ipfs-repo"
+import { BlockCodec } from "multiformats/codecs/interface"
+import { MemoryDatastore } from "datastore-core/memory"
+import { MemoryBlockstore } from "blockstore-core/memory"
+
+import tempDir from "ipfs-utils/src/temp-dir.js"
+import type { IPFS } from "ipfs-core"
+
 
 export async function createInMemoryIPFS(): Promise<IPFS> {
+  const dir = tempDir()
+  fs.mkdirSync(dir)
+
+  const memoryDs = new MemoryDatastore()
+  const memoryBs = new MemoryBlockstore()
+
   return await Ipfs.create({
     offline: true,
     silent: true,
@@ -14,19 +29,28 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
         Swarm: []
       },
     },
-    repo: new Repo("inmem", {
-      lock: {
-        lock: async () => ({ close: async () => { return } }),
-        locked: async () => false
-      },
-      autoMigrate: false,
-      storageBackends: {
-        root: MemoryDatastore,
-        blocks: MemoryDatastore,
-        keys: MemoryDatastore,
-        datastore: MemoryDatastore,
-        pins: MemoryDatastore,
-      },
-    })
+    repo: createRepo(
+      dir,
+      codeOrName => {
+        const lookup: Record<string, BlockCodec<number, unknown>> = {
+          [dagPB.code]: dagPB,
+          [dagPB.name]: dagPB
+        }
+
+        return Promise.resolve(lookup[codeOrName])
+      }, {
+        root: memoryDs,
+        blocks: memoryBs,
+        keys: memoryDs,
+        datastore: memoryDs,
+        pins: memoryDs
+      }, {
+        repoLock: {
+          lock: async () => ({ close: async () => { return } }),
+          locked: async () => false
+        },
+        autoMigrate: false,
+      }
+    )
   })
 }
