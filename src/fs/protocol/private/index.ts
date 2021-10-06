@@ -12,7 +12,7 @@ import * as basic from "../basic.js"
 
 
 export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Promise<PrivateAddResult> => {
-  const { cid, size } = await basic.putEncryptedFile(node, key, SymmAlg.AES_CTR)
+  const { cid, size } = await basic.putEncryptedFile(node, key, SymmAlg.AES_GCM)
   const filter = await namefilter.addRevision(node.bareNameFilter, key, node.revision)
   const name = await namefilter.toPrivateName(filter)
   await mmpt.add(name, cid)
@@ -26,7 +26,7 @@ export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Pro
   }
 
   const [skeleton, isFile] = check.isPrivateFileInfo(node) ? [{}, true] : [node.skeleton, false]
-  return { cid, name, key, algorithm: SymmAlg.AES_CTR, size, isFile, skeleton }
+  return { cid, name, key, algorithm: SymmAlg.AES_GCM, size, isFile, skeleton }
 }
 
 export const readNode = async (cid: CID, key: string, alg: SymmAlg): Promise<DecryptedNode> => {
