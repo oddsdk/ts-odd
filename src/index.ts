@@ -1,5 +1,7 @@
 import localforage from "localforage"
 
+import { SymmAlg } from "keystore-idb/lib/types.js"
+
 import * as common from "./common/index.js"
 import * as identifiers from "./common/identifiers.js"
 import * as ipfs from "./ipfs/index.js"
@@ -344,18 +346,20 @@ async function importClassifiedInfo(
   const secretsStr = await crypto.aes.decryptGCM(classifiedInfo.secrets, rawSessionKey, classifiedInfo.iv)
   const secrets = JSON.parse(secretsStr)
 
-  const fsSecrets: Record<string, { key: string; bareNameFilter: string }> = secrets.fs
+  const fsSecrets: Record<string, { key: string; algorithm?: SymmAlg; bareNameFilter: string }> = secrets.fs
   const ucans = secrets.ucans
 
   // Import read keys and bare name filters
   await Promise.all(
-    Object.entries(fsSecrets).map(async ([posixPath, { bareNameFilter, key }]) => {
+    Object.entries(fsSecrets).map(async ([posixPath, { bareNameFilter, key, algorithm }]) => {
       const path = pathing.fromPosix(posixPath)
       const readKeyId = await identifiers.readKey({ path })
+      const readKeyAlgorithmId = await identifiers.readKeyAlgorithm({ path })
       const bareNameFilterId = await identifiers.bareNameFilter({ path })
 
       await crypto.keystore.importSymmKey(key, readKeyId)
       await storage.setItem(bareNameFilterId, bareNameFilter)
+      await storage.setItem(readKeyAlgorithmId, algorithm)
     })
   )
 

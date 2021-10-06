@@ -14,6 +14,11 @@ export async function readKey({ path }: { path: DistinctivePath }): Promise<stri
   return `wnfs__readKey__${hash}`
 }
 
+export async function readKeyAlgorithm({ path }: { path: DistinctivePath }): Promise<string> {
+  const hash = await crypto.hash.sha256Str(pathToString(path))
+  return `wnfs__readKeyAlgorithm__${hash}`
+}
+
 
 /**
  * This bit needs to backwards compatible.

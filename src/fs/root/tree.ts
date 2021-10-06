@@ -258,7 +258,7 @@ export default class RootTree implements Puttable {
 // ㊙️
 
 
-type PathKey = { path: DistinctivePath; key: string }
+type PathKey = { path: DistinctivePath; key: string; algorithm: SymmAlg }
 
 
 async function findBareNameFilter(
@@ -305,7 +305,7 @@ function loadPrivateNodes(
   pathKeys: PathKey[],
   mmpt: MMPT
 ): Promise<Record<string, PrivateNode>> {
-  return sortedPathKeys(pathKeys).reduce((acc, { path, key }) => {
+  return sortedPathKeys(pathKeys).reduce((acc, { path, key, algorithm }) => {
     return acc.then(async map => {
       let privateNode
 
@@ -313,15 +313,15 @@ function loadPrivateNodes(
 
       // if root, no need for bare name filter
       if (unwrappedPath.length === 1 && unwrappedPath[0] === pathing.Branch.Private) {
-        privateNode = await PrivateTree.fromBaseKey(mmpt, key, SymmAlg.AES_CTR)
+        privateNode = await PrivateTree.fromBaseKey(mmpt, key, algorithm)
 
       } else {
         const bareNameFilter = await findBareNameFilter(map, path)
         if (!bareNameFilter) throw new Error(`Was trying to load the PrivateTree for the path \`${path}\`, but couldn't find the bare name filter for it.`)
         if (pathing.isDirectory(path)) {
-          privateNode = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key, SymmAlg.AES_CTR)
+          privateNode = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key, algorithm)
         } else {
-          privateNode = await PrivateFile.fromBareNameFilter(mmpt, bareNameFilter, key, SymmAlg.AES_CTR)
+          privateNode = await PrivateFile.fromBareNameFilter(mmpt, bareNameFilter, key, algorithm)
         }
       }
 
@@ -342,7 +342,14 @@ async function permissionKeys(
 
     const name = await identifiers.readKey({ path })
     const key = await crypto.keystore.exportSymmKey(name)
-    const pk: PathKey = { path: path, key: key }
+    const algorithm = await identifiers.readKeyAlgorithm({ path }) || SymmAlg.AES_CTR // backwards compatibility
+
+    if (!isSymmAlg(algorithm)) {
+      console.error(`Unsupported encryption algorithm "${algorithm}" for the file(s) at ${path}`)
+      return acc
+    }
+
+    const pk: PathKey = { path, key, algorithm }
 
     return acc.then(
       list => [ ...list, pk ]
@@ -360,4 +367,9 @@ function sortedPathKeys(list: PathKey[]): PathKey[] {
   return list.sort(
     (a, b) => pathing.toPosix(a.path).localeCompare(pathing.toPosix(b.path))
   )
+}
+
+function isSymmAlg(algorithm: string): algorithm is SymmAlg {
+  const valid: string[] = Object.values(SymmAlg)
+  return valid.includes(algorithm)
 }
