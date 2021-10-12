@@ -149,7 +149,8 @@ export class FileSystem {
    */
   static async empty(opts: NewFileSystemOptions = {}): Promise<FileSystem> {
     const { permissions, localOnly } = opts
-    const algorithm = opts.algorithm || SymmAlg.AES_CTR
+    // default new filesystems to AES-GCM
+    const algorithm = opts.algorithm || SymmAlg.AES_GCM
     const rootKey = opts.rootKey || await crypto.aes.genKeyStr(algorithm)
     const root = await RootTree.empty({ rootKey, algorithm })
 

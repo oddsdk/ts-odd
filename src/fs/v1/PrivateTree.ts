@@ -101,8 +101,9 @@ export default class PrivateTree extends BaseTree {
   }
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateTree> {
-    const key = await crypto.aes.genKeyStr(SymmAlg.AES_CTR)
-    const child = await PrivateTree.create(this.mmpt, key, SymmAlg.AES_CTR, this.header.bareNameFilter)
+    // create new directories as AES-GCM
+    const key = await crypto.aes.genKeyStr(SymmAlg.AES_GCM)
+    const child = await PrivateTree.create(this.mmpt, key, SymmAlg.AES_GCM, this.header.bareNameFilter)
 
     const existing = this.children[name]
     if (existing) {
@@ -121,8 +122,9 @@ export default class PrivateTree extends BaseTree {
 
     let file: PrivateFile
     if (existing === null) {
-      const key = await crypto.aes.genKeyStr(SymmAlg.AES_CTR)
-      file = await PrivateFile.create(this.mmpt, content, this.header.bareNameFilter, key, SymmAlg.AES_CTR)
+      // create new files as AES-GCM
+      const key = await crypto.aes.genKeyStr(SymmAlg.AES_GCM)
+      file = await PrivateFile.create(this.mmpt, content, this.header.bareNameFilter, key, SymmAlg.AES_GCM)
     } else if (PrivateFile.instanceOf(existing)) {
       file = await existing.updateContent(content)
     } else {
