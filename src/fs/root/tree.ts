@@ -4,7 +4,7 @@ import { AddResult, CID } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Links, Puttable, SimpleLink } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
-import { Maybe } from "../../common/index.js"
+import { Maybe, isString } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
 import { SemVer } from "../semver.js"
 
@@ -342,9 +342,10 @@ async function permissionKeys(
 
     const name = await identifiers.readKey({ path })
     const key = await crypto.keystore.exportSymmKey(name)
-    const algorithm = await identifiers.readKeyAlgorithm({ path }) || SymmAlg.AES_CTR // backwards compatibility
+    const algorithmId = await identifiers.readKeyAlgorithm({ path })
+    const algorithm = algorithmId != null ? await storage.getItem(algorithmId) : SymmAlg.AES_CTR // backwards compatibility
 
-    if (!isSymmAlg(algorithm)) {
+    if (!isString(algorithm) || !isSymmAlg(algorithm)) {
       console.error(`Unsupported encryption algorithm "${algorithm}" for the file(s) at ${path}`)
       return acc
     }

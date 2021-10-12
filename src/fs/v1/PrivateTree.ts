@@ -135,7 +135,7 @@ export default class PrivateTree extends BaseTree {
   async putDetailed(): Promise<PrivateAddResult> {
     // copy the object, so we're putting the current version & don't include any revisions
     const nodeCopy = Object.assign({}, this.header)
-    return protocol.priv.addNode(this.mmpt, nodeCopy, this.key)
+    return protocol.priv.addNode(this.mmpt, nodeCopy, this.key, this.algorithm)
   }
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {

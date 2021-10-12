@@ -48,6 +48,7 @@ type FileSystemOptions = {
 
 type NewFileSystemOptions = FileSystemOptions & {
   rootKey?: string
+  algorithm?: SymmAlg
 }
 
 type MutationOptions = {
@@ -148,8 +149,9 @@ export class FileSystem {
    */
   static async empty(opts: NewFileSystemOptions = {}): Promise<FileSystem> {
     const { permissions, localOnly } = opts
-    const rootKey = opts.rootKey || await crypto.aes.genKeyStr(SymmAlg.AES_CTR)
-    const root = await RootTree.empty({ rootKey, algorithm: SymmAlg.AES_CTR })
+    const algorithm = opts.algorithm || SymmAlg.AES_CTR
+    const rootKey = opts.rootKey || await crypto.aes.genKeyStr(algorithm)
+    const root = await RootTree.empty({ rootKey, algorithm })
 
     const fs = new FileSystem({
       root,

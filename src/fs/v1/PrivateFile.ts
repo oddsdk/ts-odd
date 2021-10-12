@@ -127,7 +127,7 @@ export class PrivateFile extends BaseFile {
     return protocol.priv.addNode(this.mmpt, {
       ...this.header,
       metadata: metadata.updateMtime(this.header.metadata)
-    }, this.key)
+    }, this.key, this.algorithm)
   }
 
 }
