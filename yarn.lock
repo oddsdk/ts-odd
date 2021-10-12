@@ -332,10 +332,20 @@
     "@hapi/bourne" "2.x.x"
     "@hapi/hoek" "9.x.x"
 
-"@ipld/car@^3.1.0", "@ipld/car@^3.1.16":
+"@ipld/car@^3.1.0":
   version "3.1.16"
   resolved "https://registry.yarnpkg.com/@ipld/car/-/car-3.1.16.tgz#8b0acfef0e9a74fa285731486ab2d3a1b7c12236"
   integrity sha512-LvIXl7BYmy8em1PFB1l2Iu3/bFHYHy3h3x7HcDi9veoGSYi70dAIthJsXgkoYoGfRSLONR1FDjaoFjbbXk87Qw==
+  dependencies:
+    "@ipld/dag-cbor" "^6.0.0"
+    "@types/varint" "^6.0.0"
+    multiformats "^9.0.0"
+    varint "^6.0.0"
+
+"@ipld/car@^3.1.18":
+  version "3.1.18"
+  resolved "https://registry.yarnpkg.com/@ipld/car/-/car-3.1.18.tgz#0ccb6edfc4785ce3bbf6a17911aa940540eb3e17"
+  integrity sha512-THOv4aYVojfcFNnhMvS1acRTMGIshnBeoLqms1a+jjKx6Z+3CM/y8BhJeLq4jNBKijxHApus7+ikHkC5UbfEHA==
   dependencies:
     "@ipld/dag-cbor" "^6.0.0"
     "@types/varint" "^6.0.0"

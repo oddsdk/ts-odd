@@ -6,8 +6,8 @@ import { CID } from "multiformats/cid"
 import * as Block from "multiformats/block"
 import { sha256 } from "multiformats/hashes/sha2"
 import * as codec from "@ipld/dag-cbor" // encode blocks using the DAG-CBOR format
-import { crypto, webcrypto } from "./webcrypto.js"
 
+import { crypto, webcrypto } from "./webcrypto.js"
 import { PrivateStore, PrivateStoreLookup, PrivateRef } from "./privateNode.js"
 
 export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<iamap.IAMap<CID>> } {
@@ -38,23 +38,41 @@ export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<
   return {
 
     async getBlock(ref) {
-      const ciphertext: Uint8Array = await (await currentMap).get(ref.namefilter)
+      if (ref.algorithm !== "AES-GCM") {
+        throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
+      }
 
-      if (ciphertext == null) {
+      const encryptedBlock: Uint8Array = await (await currentMap).get(ref.namefilter)
+
+      if (encryptedBlock == null) {
         return null
       }
 
-      const cleartext: ArrayBuffer = await webcrypto.decrypt(ref.algorithm, await keyFromRef(ref), ciphertext)
+      if (encryptedBlock.byteLength < 16) {
+        throw new Error(`Can't decrypt private block: Must be at least 16 bytes long to contain an iv. Instead got length ${encryptedBlock.byteLength}`)
+      }
+
+      const iv = encryptedBlock.slice(0, 16)
+      const ciphertext = encryptedBlock.slice(16)
+
+      const cleartext: ArrayBuffer = await webcrypto.decrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), ciphertext)
       return new Uint8Array(cleartext)
     },
 
     async putBlock(ref, block) {
-      const ciphertext: ArrayBuffer = await webcrypto.encrypt(ref.algorithm, await keyFromRef(ref), block)
+      if (ref.algorithm !== "AES-GCM") {
+        throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
+      }
+
+      const iv = crypto.getRandomValues(new Uint8Array(16))
+      const ciphertext: ArrayBuffer = await webcrypto.encrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), block)
+
+      const encryptedBlock = uint8arrays.concat([iv, new Uint8Array(ciphertext)])
 
       const mapBefore = currentMap
       currentMap = (async () => {
         const map = await mapBefore
-        return await map.set(ref.namefilter, new Uint8Array(ciphertext))
+        return await map.set(ref.namefilter, encryptedBlock)
       })()
       await currentMap
     },

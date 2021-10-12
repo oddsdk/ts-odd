@@ -144,11 +144,14 @@ describe("the private node module", () => {
         arbitraryFileSystemUsage({ numOperations: 10 }),
         async ({ state: state, ops }) => {
           let fs = await privateNode.newDirectory(namefilter.empty(), ctx)
+          ratchetStore.storeRatchet(fs.bareName, fs.revision)
 
           // run modeled operations on the 'real' system
           let i = 1
           for (const operation of ops) {
             fs = await interpretOperation(fs, operation, { ...ctx, now: i })
+            const ref = await privateNode.storeNodeAndAdvance(fs, ctx)
+            fs = await privateNode.loadNode(ref, ctx) as any
             i++
           }
 
@@ -156,7 +159,7 @@ describe("the private node module", () => {
           const result = await directoryToModel(fs, ctx)
           expect(result).toEqual(state)
         }
-      )
+      ), { numRuns: 10 }
     )
   })
 

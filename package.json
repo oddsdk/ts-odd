@@ -64,7 +64,7 @@
     "publish-latest": "npm publish --tag latest"
   },
   "devDependencies": {
-    "@ipld/car": "^3.1.16",
+    "@ipld/car": "^3.1.18",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.4.1",
