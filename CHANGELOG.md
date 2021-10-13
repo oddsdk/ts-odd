@@ -1,8 +1,10 @@
 # Changelog
 
-### v0.28.2
+### v0.29.0
 
-- Update API endpoints to v2 and add setup parameter to specify API version
+- Upgrade js-ipfs libraries to the versions corresponding to the 0.58 release.
+- Update API endpoints to v2 and add setup parameter to specify API version.
+- No longer uses `ipfs-message-port-client` and `ipfs-message-port-protocol` forks which sometimes caused weird dependency conflicts.
 
 
 ### v0.28.1

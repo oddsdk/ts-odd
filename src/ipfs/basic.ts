@@ -1,8 +1,8 @@
-import dagPbOld, { DAGLink, DAGNode } from "ipld-dag-pb"
+import { CID as CIDObj } from "multiformats/cid"
+import dagPb, { DAGLink, DAGNode } from "ipld-dag-pb"
 import * as dagPB from "@ipld/dag-pb"
 import type { IPFSEntry } from "ipfs-core-types/src/root"
 import type { ImportCandidate } from "ipfs-core-types/src/utils"
-import * as multiformats from "multiformats"
 
 import { get as getIpfs } from "./config.js"
 import { CID, AddResult } from "./types.js"
@@ -28,7 +28,7 @@ export const catRaw = async (cid: CID): Promise<Uint8Array[]> => {
   const ipfs = await getIpfs()
   const chunks = []
   await attemptPin(cid)
-  for await (const chunk of ipfs.cat(cid)) {
+  for await (const chunk of ipfs.cat(CIDObj.parse(cid))) {
     chunks.push(chunk)
   }
   return chunks
@@ -47,7 +47,7 @@ export const cat = async (cid: CID): Promise<string> => {
 export const ls = async (cid: CID): Promise<IPFSEntry[]> => {
   const ipfs = await getIpfs()
   const links = []
-  for await (const link of ipfs.ls(cid)) {
+  for await (const link of ipfs.ls(CIDObj.parse(cid))) {
     links.push(link)
   }
   return links
@@ -56,16 +56,24 @@ export const ls = async (cid: CID): Promise<IPFSEntry[]> => {
 export const dagGet = async (cid: CID): Promise<DAGNode> => {
   const ipfs = await getIpfs()
   await attemptPin(cid)
-  const raw = await ipfs.block.get(multiformats.CID.parse(cid))
-  return dagPbOld.util.deserialize(raw)
+  const raw = await ipfs.dag.get(CIDObj.parse(cid))
+  const node = util.rawToDAGNode(raw)
+  return node
 }
 
 export const dagPut = async (node: DAGNode): Promise<AddResult> => {
   const ipfs = await getIpfs()
+  const newNode = dagPB.createNode(
+    node.Data,
+    node.Links.map(link => dagPB.createLink(
+      link.Name,
+      link.Tsize,
+      CIDObj.decode(link.Hash.bytes)
+    ))
+  )
   // using this format because Gateway doesn't like `dag-cbor` nodes.
   // I think this is because UnixFS requires `dag-pb` & the gateway requires UnixFS for directory traversal
-
-  const cidObj = await ipfs.block.put(dagPbOld.util.serialize(node), { format: "dag-pb", mhtype: "sha2-256" })
+  const cidObj = await ipfs.dag.put(newNode, { format: "dag-pb", hashAlg: "sha2-256" })
   const cid = cidObj.toV1().toString()
   await attemptPin(cid)
   const nodeSize = await size(cid)
@@ -77,7 +85,7 @@ export const dagPut = async (node: DAGNode): Promise<AddResult> => {
 }
 
 export const dagPutLinks = async (links: DAGLink[]): Promise<AddResult> => {
-  const node = new dagPbOld.DAGNode(DAG_NODE_DATA, links)
+  const node = new dagPb.DAGNode(DAG_NODE_DATA, links)
   return dagPut(node)
 }
 
