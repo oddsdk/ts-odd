@@ -85,7 +85,7 @@ export default class RootTree implements Puttable {
     await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
-    tree.setVersion(semver.v1)
+    tree.setVersion(semver.latest)
 
     await Promise.all([
       tree.updatePuttable(Branch.Public, publicTree),
@@ -101,6 +101,8 @@ export default class RootTree implements Puttable {
     { cid, permissions }: { cid: CID; permissions?: Permissions }
   ): Promise<RootTree> {
     const links = await protocol.basic.getLinks(cid)
+    await RootTree.checkVersion(links)
+
     const keys = permissions ? await permissionKeys(permissions) : []
 
     // Load public parts
@@ -149,6 +151,25 @@ export default class RootTree implements Puttable {
     return tree
   }
 
+  static async checkVersion(links: Links) {
+    const versionStr = new TextDecoder().decode(await protocol.basic.getFile(links[Branch.Version].cid))
+    
+    if (versionStr !== semver.toString(semver.latest)) {
+      const version = semver.fromString(versionStr)
+      
+      if (version == null || semver.isSmallerThan(semver.latest, version)) {
+        if (globalThis.alert != null) {
+          globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem was upgraded to or created at a newer version. Please let this app's developer know.`)
+        }
+        throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${semver.toString(semver.latest)}). Please upgrade this app's webnative version.`)
+      }
+
+      if (globalThis.alert != null) {
+        globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fisison support.`)
+      }
+      throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${semver.toString(semver.latest)}). The user should migrate their filesystem.`)
+    }
+  }
 
   // MUTATIONS
   // ---------

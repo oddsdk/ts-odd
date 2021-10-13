@@ -35,6 +35,10 @@ export const toString = (version: SemVer): string => {
   return `${major}.${minor}.${patch}`
 }
 
+export const isSmallerThan = (a: SemVer, b: SemVer): boolean => {
+  return a.major < b.major || a.minor < b.major || a.patch < b.patch
+}
+
 
 // VERSIONS
 export const v0 = encode(0, 0, 0)

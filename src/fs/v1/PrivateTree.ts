@@ -34,7 +34,7 @@ export default class PrivateTree extends BaseTree {
   mmpt: MMPT
 
   constructor({ mmpt, key, header }: ConstructorParams) {
-    super(semver.v1)
+    super(semver.latest)
 
     this.children = {}
     this.header = header

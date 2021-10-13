@@ -66,6 +66,8 @@ export async function loadFileSystem(
     await cidLog.add(cid)
     debug.log("📓 DNSLink is newer:", cid)
 
+    // TODO: We could test the filesystem version at this DNSLink at this point to figure out whether to continue locally.
+
   }
 
   // If a file system exists, load it and return it
