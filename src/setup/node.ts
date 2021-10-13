@@ -1,10 +1,10 @@
 import crypto from "crypto"
-import * as ed25519 from "noble-ed25519"
-import utils from "keystore-idb/utils.js"
-import { CharSize, Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey, SymmKeyLength } from "keystore-idb/types.js"
-import config from "keystore-idb/config.js"
-import aes from "keystore-idb/aes/index.js"
-import rsa from "keystore-idb/rsa/index.js"
+import tweetnacl from "tweetnacl"
+import utils from "keystore-idb/lib/utils.js"
+import { CharSize, Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey, SymmKeyLength } from "keystore-idb/lib/types.js"
+import config from "keystore-idb/lib/config.js"
+import aes from "keystore-idb/lib/aes/index.js"
+import rsa from "keystore-idb/lib/rsa/index.js"
 
 import { Storage } from "../../tests/storage/inMemory.js"
 import { setDependencies } from "./dependencies.js"
@@ -75,7 +75,7 @@ const rsaVerify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8A
 }
 
 const ed25519Verify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> => {
-  return ed25519.verify(signature, message, publicKey)
+  return new Promise(resolve => resolve(tweetnacl.sign.detached.verify(message, signature, publicKey)))
 }
 
 
@@ -89,14 +89,14 @@ const ed25519Verify = (message: Uint8Array, signature: Uint8Array, publicKey: Ui
 class InMemoryRSAKeyStore implements KeyStore {
 
   cfg: Config
-  readKeyPair: CryptoKeyPair
+  exchangeKeyPair: CryptoKeyPair
   writeKeyPair: CryptoKeyPair
   inMemoryStore: Record<string, CryptoKey>
 
-  constructor(cfg: Config, readKeyPair: CryptoKeyPair, writeKeyPair: CryptoKeyPair) {
+  constructor(cfg: Config, exchangeKeyPair: CryptoKeyPair, writeKeyPair: CryptoKeyPair) {
     this.cfg = cfg
     this.inMemoryStore = {}
-    this.readKeyPair = readKeyPair
+    this.exchangeKeyPair = exchangeKeyPair
     this.writeKeyPair = writeKeyPair
   }
 
@@ -108,14 +108,14 @@ class InMemoryRSAKeyStore implements KeyStore {
 
     const { rsaSize, hashAlg } = cfg
 
-    const readKeyPair = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Read)
+    const exchangeKeyPair = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Exchange)
     const writeKeyPair = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Write)
 
-    return new InMemoryRSAKeyStore(cfg, readKeyPair, writeKeyPair)
+    return new InMemoryRSAKeyStore(cfg, exchangeKeyPair, writeKeyPair)
   }
 
-  async readKey() {
-    return this.readKeyPair
+  async exchangeKey() {
+    return this.exchangeKeyPair
   }
 
   async writeKey() {
@@ -229,21 +229,21 @@ class InMemoryRSAKeyStore implements KeyStore {
     publicKey?: string | PublicKey, // unused param so that keystore interfaces match
     cfg?: Partial<Config>
   ): Promise<string> {
-    const readKey = await this.readKey()
+    const exchangeKey = await this.exchangeKey()
     const mergedCfg = config.merge(this.cfg, cfg)
 
     return utils.arrBufToStr(
       await rsa.decrypt(
         cipherText,
-        readKey.privateKey,
+        exchangeKey.privateKey,
       ),
       mergedCfg.charSize
     )
   }
 
-  async publicReadKey(): Promise<string> {
-    const readKey = await this.readKey()
-    return rsa.getPublicKey(readKey)
+  async publicExchangeKey(): Promise<string> {
+    const exchangeKey = await this.exchangeKey()
+    return rsa.getPublicKey(exchangeKey)
   }
 
   async publicWriteKey(): Promise<string> {
@@ -287,9 +287,9 @@ export const NODE_IMPLEMENTATION = {
     verify: ed25519Verify
   },
   keystore: {
-    async publicReadKey(): Promise<string> {
+    async publicExchangeKey(): Promise<string> {
       const ks = await getKeystore()
-      return ks.publicReadKey()
+      return ks.publicExchangeKey()
     },
     async publicWriteKey(): Promise<string> {
       const ks = await getKeystore()

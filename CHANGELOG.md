@@ -1,5 +1,35 @@
 # Changelog
 
+### v0.28.2
+
+- Update API endpoints to v2 and add setup parameter to specify API version
+
+
+### v0.28.1
+
+- Fixed bundling issues with older bundlers, ie. bundlers that did not yet support the `exports` map in `package.json`.
+- Switch from noble-ed25519 to tweetnacl. Tweetnacl has been audited and can be used in a wider range of environments.
+
+
+### v0.28.0
+
+- Added the `fs.addPublicExchangeKey()` function which adds the public exchange key of that domain/browser/device to your filesystem at `/public/.well-known/exchange/DID_KEY`. Along with the `fs.hasPublicExchangeKey()` to check if it's there.
+- Made the login low more resilient. Should work better with extensions triggering `postMessage`s now.
+- Updated keystore-idb to v0.15.0, which renamed `publicReadKey()` to `publicExchangeKey()` (among other functions). The read key-pair is now properly named the exchange key-pair.
+
+
+
+### v0.27.0
+
+- Fixed `webnative.apps.index()`, and now returns a list of domains, along with their `insertedAt` and `modifiedAt` ISO8601 timestamps.
+- Fixed `webnative.apps.deleteByDomain()` so it aligns with backend changes.
+
+
+### v0.26.2
+
+- Add `extraLobbyParams` to `redirectToLobby`. Extra lobby params are transformed into query params that may be read by the auth lobby. (#273)
+
+
 ### v0.26.1
 
 - Bring back the [UMD](https://github.com/umdjs/umd) build (#261)

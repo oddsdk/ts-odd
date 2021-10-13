@@ -1,7 +1,7 @@
 import * as browserCrypto from "../crypto/browser.js"
 import * as browserStorage from "../storage/browser.js"
 
-export const DEFAULT_IMPLEMENTATION: Dependencies = { 
+export const DEFAULT_IMPLEMENTATION: Dependencies = {
   hash: {
     sha256: browserCrypto.sha256
   },
@@ -18,7 +18,7 @@ export const DEFAULT_IMPLEMENTATION: Dependencies = {
     verify: browserCrypto.ed25519Verify
   },
   keystore: {
-    publicReadKey: browserCrypto.ksPublicReadKey,
+    publicExchangeKey: browserCrypto.ksPublicExchangeKey,
     publicWriteKey: browserCrypto.ksPublicWriteKey,
     decrypt: browserCrypto.ksDecrypt,
     sign: browserCrypto.ksSign,
@@ -65,7 +65,7 @@ export interface Dependencies {
     encrypt: (bytes: Uint8Array, key: string) => Promise<Uint8Array>
     decrypt: (bytes: Uint8Array, key: string) => Promise<Uint8Array>
     genKeyStr: () => Promise<string>
-    decryptGCM: (encrypted: string, keyStr: string, ivStr: string) => Promise<string> 
+    decryptGCM: (encrypted: string, keyStr: string, ivStr: string) => Promise<string>
   }
   rsa: {
     verify: (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => Promise<boolean>
@@ -74,7 +74,7 @@ export interface Dependencies {
     verify: (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => Promise<boolean>
   }
   keystore: {
-    publicReadKey: () => Promise<string>
+    publicExchangeKey: () => Promise<string>
     publicWriteKey: () => Promise<string>
     decrypt: (encrypted: string) => Promise<string>
     sign: (message: string, charSize: number) => Promise<string>

@@ -6,16 +6,25 @@ import { CID } from "../ipfs/index.js"
 
 
 export type App = {
-  domain: string
+  domains: string[]
+  insertedAt: string
+  modifiedAt: string
 }
 
+type AppIndexResponseJson = {
+  [k: number]: {
+    insertedAt: string
+    modifiedAt: string
+    urls: string[]
+  }
+}
 
 
 /**
  * Get A list of all of your apps and their associated domain names
  */
 export async function index(): Promise<Array<App>> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   const localUcan = await ucan.dictionary.lookupAppUcan("*")
   if (localUcan === null) {
@@ -36,11 +45,12 @@ export async function index(): Promise<Array<App>> {
     }
   })
 
-  const data = await response.json()
+  const data: AppIndexResponseJson = await response.json()
+
   return Object
     .values(data)
-    .filter(v => (v as Array<string>).length > 0)
-    .map(v => ({ domain: (v as Array<string>)[0] }))
+    .filter(v => v.urls.length > 0)
+    .map(({ urls, insertedAt, modifiedAt }) => ({ domains: urls, insertedAt, modifiedAt }))
 }
 
 /**
@@ -51,7 +61,7 @@ export async function index(): Promise<Array<App>> {
 export async function create(
   subdomain: Maybe<string>
 ): Promise<App> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   const localUcan = await ucan.dictionary.lookupAppUcan("*")
   if (localUcan === null) {
@@ -75,8 +85,15 @@ export async function create(
       "authorization": `Bearer ${jwt}`
     }
   })
+
   const data = await response.json()
-  return { domain: data }
+  const nowIso = (new Date()).toISOString()
+
+  return {
+    domains: [ data ],
+    insertedAt: nowIso,
+    modifiedAt: nowIso
+  }
 }
 
 /**
@@ -87,7 +104,7 @@ export async function create(
 export async function deleteByDomain(
   domain: string
 ): Promise<void> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   const localUcan = await ucan.dictionary.lookupAppUcan(domain)
   if (localUcan === null) {
@@ -108,8 +125,8 @@ export async function deleteByDomain(
     }
   })
 
-  const index = await appIndexResponse.json() as { [_: string]: string[] }
-  const appToDelete = Object.entries(index).find(([_, domains]) => domains.includes(domain))
+  const index: AppIndexResponseJson = await appIndexResponse.json()
+  const appToDelete = Object.entries(index).find(([_, app]) => app.urls.includes(domain))
   if (appToDelete == null) {
     throw new Error(`Couldn't find an app with domain ${domain}`)
   }
@@ -131,7 +148,7 @@ export async function publish(
   domain: string,
   cid: CID,
 ): Promise<void> {
-  const apiEndpoint = setup.endpoints.api
+  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
 
   const localUcan = await ucan.dictionary.lookupAppUcan(domain)
   if (localUcan === null) {
@@ -141,14 +158,14 @@ export async function publish(
   const jwt = ucan.encode(await ucan.build({
     audience: await api.did(),
     issuer: await did.ucan(),
-    proof: localUcan, 
+    proof: localUcan,
     potency: null
   }))
 
   const url = `${apiEndpoint}/app/${domain}/${cid}`
 
   await fetch(url, {
-    method: "PATCH",
+    method: "PUT",
     headers: {
       "authorization": `Bearer ${jwt}`
     }

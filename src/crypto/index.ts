@@ -1,4 +1,4 @@
-import { strToArrBuf } from "keystore-idb/utils.js"
+import { strToArrBuf } from "keystore-idb/lib/utils.js"
 import * as hex from "../common/hex.js"
 import { impl } from "../setup/dependencies.js"
 
@@ -15,9 +15,9 @@ export const hash = {
   sha256Str: sha256Str
 }
 export const aes = {
-  encrypt: (bytes: Uint8Array, key: string): Promise<Uint8Array> => 
+  encrypt: (bytes: Uint8Array, key: string): Promise<Uint8Array> =>
     impl.aes.encrypt(bytes, key),
-  decrypt: (bytes: Uint8Array, key: string): Promise<Uint8Array> => 
+  decrypt: (bytes: Uint8Array, key: string): Promise<Uint8Array> =>
     impl.aes.decrypt(bytes, key),
   genKeyStr: (): Promise<string> =>
     impl.aes.genKeyStr(),
@@ -35,8 +35,8 @@ export const ed25519 = {
 }
 
 export const keystore = {
-  publicReadKey: (): Promise<string> =>
-    impl.keystore.publicReadKey(),
+  publicExchangeKey: (): Promise<string> =>
+    impl.keystore.publicExchangeKey(),
   publicWriteKey: (): Promise<string> =>
     impl.keystore.publicWriteKey(),
   decrypt: (encrypted: string): Promise<string> =>

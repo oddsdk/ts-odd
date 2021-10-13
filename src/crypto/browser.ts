@@ -1,8 +1,8 @@
-import * as ed25519 from "noble-ed25519"
-import rsaOperations from "keystore-idb/rsa/index.js"
-import utils from "keystore-idb/utils.js"
-import aes from "keystore-idb/aes/index.js"
-import { CharSize, SymmKeyLength } from "keystore-idb/types.js"
+import tweetnacl from "tweetnacl"
+import rsaOperations from "keystore-idb/lib/rsa/index.js"
+import utils from "keystore-idb/lib/utils.js"
+import aes from "keystore-idb/lib/aes/index.js"
+import { CharSize, SymmKeyLength } from "keystore-idb/lib/types.js"
 
 import { assertBrowser } from "../common/browser.js"
 import * as keystore from "../keystore.js"
@@ -65,13 +65,13 @@ export const rsaVerify = (message: Uint8Array, signature: Uint8Array, publicKey:
 }
 
 export const ed25519Verify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> => {
-  return ed25519.verify(signature, message, publicKey)
+  return new Promise(resolve => resolve(tweetnacl.sign.detached.verify(message, signature, publicKey)))
 }
 
-export const ksPublicReadKey = async (): Promise<string> => {
-  assertBrowser("keystore.publicReadKey")
+export const ksPublicExchangeKey = async (): Promise<string> => {
+  assertBrowser("keystore.publicExchangeKey")
   const ks = await keystore.get()
-  return ks.publicReadKey()
+  return ks.publicExchangeKey()
 }
 
 export const ksPublicWriteKey = async (): Promise<string> => {

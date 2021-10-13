@@ -7,7 +7,7 @@ import { toKeyType } from "./util.js"
  * Create a DID based on the exchange key-pair.
  */
 export async function exchange(): Promise<string> {
-  const pubKeyB64 = await crypto.keystore.publicReadKey()
+  const pubKeyB64 = await crypto.keystore.publicExchangeKey()
   const ksAlg = await crypto.keystore.getAlg()
 
   return publicKeyToDid(

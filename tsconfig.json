@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
-    "target": "ES2020",
+    "target": "ES2018",
     "module":"ESNext",
-    "lib": ["dom"],
+    "lib": ["dom", "es2021"],
     "strict": true,
     "sourceMap": true,
     "declaration": true,
