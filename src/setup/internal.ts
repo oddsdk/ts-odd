@@ -19,5 +19,5 @@ export const setup = {
     user: "fission.name"
   },
 
-  shouldPin: true,
+  shouldPin: false,
 }

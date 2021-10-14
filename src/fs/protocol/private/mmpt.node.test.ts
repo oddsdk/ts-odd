@@ -31,7 +31,7 @@ async function generateExampleEntries(ipfs: IPFS, amount: number): Promise<{ nam
     const cid = await ipfs.object.put({ Data: encode(hash), Links: [] })
     entries.push({
       name: hash,
-      cid: cid.toBaseEncodedString(),
+      cid: cid.toString(),
     })
   }
 
