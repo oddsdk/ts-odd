@@ -84,7 +84,7 @@ export default class RootTree implements Puttable {
     })
 
     // Store root key
-    await RootTree.storeRootKey(rootKey)
+    await RootTree.storeRootKey(rootKey, algorithm)
 
     // Set version and store new sub trees
     await tree.setVersion(semver.v1)
@@ -178,10 +178,12 @@ export default class RootTree implements Puttable {
   // PRIVATE TREES
   // -------------
 
-  static async storeRootKey(rootKey: string): Promise<void> {
+  static async storeRootKey(rootKey: string, algorithm: SymmAlg): Promise<void> {
     const path = pathing.directory(pathing.Branch.Private)
     const rootKeyId = await identifiers.readKey({ path })
     await crypto.keystore.importSymmKey(rootKey, rootKeyId)
+    const algorithmId = await identifiers.readKeyAlgorithm({ path })
+    await storage.setItem(algorithmId, algorithm)
   }
 
   findPrivateNode(path: DistinctivePath): [DistinctivePath, PrivateNode | null] {

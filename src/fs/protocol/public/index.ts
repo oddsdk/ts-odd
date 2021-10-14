@@ -64,7 +64,7 @@ export const putFile = async (
 }
 
 export const putAndMakeLink = async (name: string, val: FileContent): Promise<Link> => {
-  const { cid, size } = await ipfs.encoded.add(val, null, null)
+  const { cid, size } = await ipfs.encoded.add(val)
   return link.make(name, cid, true, size)
 }
 
@@ -101,7 +101,7 @@ export const getValueFromLinks = async (
   const linkCID = links[name]?.cid
   if (!linkCID) return null
 
-  return ipfs.encoded.catAndDecode(linkCID, null, null)
+  return ipfs.encoded.catAndDecode(linkCID)
 }
 export const getAndCheckValue = async <T>(
   linksOrCid: Links | CID,

@@ -15,7 +15,7 @@ export const getFile = async (cid: CID): Promise<Uint8Array> => {
 }
 
 export const getEncryptedFile = async (cid: CID, key: string, alg: SymmAlg): Promise<FileContent> => {
-  return ipfs.encoded.catAndDecode(cid, key, alg) as Promise<FileContent>
+  return ipfs.encoded.catAndDecode(cid, { key, alg }) as Promise<FileContent>
 }
 
 export const putFile = async (content: ImportCandidate): Promise<AddResult> => {
@@ -23,7 +23,7 @@ export const putFile = async (content: ImportCandidate): Promise<AddResult> => {
 }
 
 export const putEncryptedFile = async (content: FileContent, key: string, alg: SymmAlg): Promise<AddResult> => {
-  return ipfs.encoded.add(content, key, alg)
+  return ipfs.encoded.add(content, { key, alg })
 }
 
 export const getSimpleLinks = async (cid: CID): Promise<SimpleLinks> => {

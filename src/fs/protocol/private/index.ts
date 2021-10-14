@@ -30,7 +30,7 @@ export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string, algo
 }
 
 export const readNode = async (cid: CID, key: string, alg: SymmAlg): Promise<DecryptedNode> => {
-  const content = await ipfs.encoded.catAndDecode(cid, key, alg)
+  const content = await ipfs.encoded.catAndDecode(cid, { key, alg })
   if (!check.isDecryptedNode(content)) {
     throw new Error(`Could not parse a valid filesystem object, ${cid}`)
   }

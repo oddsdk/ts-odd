@@ -1,3 +1,5 @@
+import { SymmAlg } from "keystore-idb/lib/types.js"
+
 import * as did from "../did/index.js"
 import * as ucan from "../ucan/index.js"
 import * as ucanStore from "../ucan/store.js"
@@ -77,6 +79,6 @@ export async function resendVerificationEmail(): Promise<{ success: boolean }> {
 /**
  * Store the read key for the root `PrivateTree` (ie. `/private`)
  */
-export function storeFileSystemRootKey(key: string): Promise<void> {
-  return RootTree.storeRootKey(key)
+export function storeFileSystemRootKey(key: string, algorithm: SymmAlg): Promise<void> {
+  return RootTree.storeRootKey(key, algorithm)
 }
