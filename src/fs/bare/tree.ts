@@ -1,9 +1,10 @@
 import * as check from "../types/check.js"
 import * as protocol from "../protocol/index.js"
+import * as ipfs from "../../ipfs/index.js"
 import * as link from "../link.js"
 
 import { AddResult, CID, FileContent } from "../../ipfs/index.js"
-import { Links, BaseLinks, Tree, File, Puttable, UpdateCallback } from "../types.js"
+import { HardLinks, BaseLinks, Tree, File, Puttable, UpdateCallback } from "../types.js"
 import { Maybe } from "../../common/index.js"
 import { Path } from "../../path.js"
 
@@ -13,10 +14,10 @@ import BaseTree from "../base/tree.js"
 
 class BareTree extends BaseTree {
 
-  links: Links
+  links: HardLinks
   children: { [name: string]: Tree | File }
 
-  constructor(links: Links) {
+  constructor(links: HardLinks) {
     super()
     this.links = links
     this.children = {}
@@ -27,11 +28,13 @@ class BareTree extends BaseTree {
   }
 
   static async fromCID(cid: CID): Promise<BareTree> {
-    const links = await protocol.basic.getLinks(cid)
+    const links = link.arrToMap(
+      (await ipfs.ls(cid)).map(link.fromFSFile)
+    )
     return new BareTree(links)
   }
 
-  static fromLinks(links: Links): BareTree {
+  static fromLinks(links: HardLinks): BareTree {
     return new BareTree(links)
   }
 
@@ -39,8 +42,8 @@ class BareTree extends BaseTree {
     const child = await BareTree.empty()
 
     const existing = this.children[name]
-    if(existing) {
-      if(BareFile.instanceOf(existing)) {
+    if (existing) {
+      if (check.isFile(existing)) {
         throw new Error(`There is a file at the given path: ${name}`)
       }
       return existing

@@ -1,5 +1,5 @@
 /** @internal */
-import { Link, Links } from "../../types.js"
+import { Links, HardLink, HardLinks, SimpleLinks } from "../../types.js"
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from "./types.js"
 import { Metadata } from "../../metadata.js"
 import { isString } from "../../../common/type-checks.js"
@@ -63,13 +63,13 @@ export const putFile = async (
   }
 }
 
-export const putAndMakeLink = async (name: string, val: FileContent): Promise<Link> => {
+export const putAndMakeLink = async (name: string, val: FileContent): Promise<HardLink> => {
   const { cid, size } = await ipfs.encoded.add(val, null)
   return link.make(name, cid, true, size)
 }
 
 export const get = async (cid: CID): Promise<TreeInfo | FileInfo> => {
-  const links = await basic.getLinks(cid)
+  const links = await basic.getSimpleLinks(cid)
   const metadata = await getAndCheckValue(links, "metadata", check.isMetadata)
   const skeleton = metadata.isFile
     ? undefined
@@ -83,11 +83,11 @@ export const get = async (cid: CID): Promise<TreeInfo | FileInfo> => {
 }
 
 export const getValue = async (
-  linksOrCID: Links | CID,
+  linksOrCID: SimpleLinks | CID,
   name: string,
 ): Promise<unknown> => {
   if (isString(linksOrCID)) {
-    const links = await basic.getLinks(linksOrCID)
+    const links = await basic.getSimpleLinks(linksOrCID)
     return getValueFromLinks(links, name)
   }
 
@@ -95,7 +95,7 @@ export const getValue = async (
 }
 
 export const getValueFromLinks = async (
-  links: Links,
+  links: SimpleLinks,
   name: string,
 ): Promise<unknown> => {
   const linkCID = links[name]?.cid
@@ -104,7 +104,7 @@ export const getValueFromLinks = async (
   return ipfs.encoded.catAndDecode(linkCID, null)
 }
 export const getAndCheckValue = async <T>(
-  linksOrCid: Links | CID,
+  linksOrCid: SimpleLinks | CID,
   name: string,
   checkFn: (val: any) => val is T,
   canBeNull = false

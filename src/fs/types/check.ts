@@ -1,7 +1,7 @@
 /** @internal */
 import { isString, isObject, isNum, isBool } from "../../common/index.js"
 import { CID } from "../../ipfs/index.js"
-import { Tree, File, Link, Links, BaseLink } from "../types.js"
+import { Tree, File, HardLink, SoftLink, Links, BaseLink } from "../types.js"
 import { Skeleton, TreeInfo, FileInfo, TreeHeader, FileHeader } from "../protocol/public/types.js"
 import { SemVer } from "../versions.js"
 import { Metadata, UnixMeta } from "../metadata.js"
@@ -22,18 +22,24 @@ export const isBaseLink = (obj: any): obj is BaseLink => {
     && isBool(obj.isFile)
 }
 
-export const isLink = (obj: any): obj is Link => {
-  return isBaseLink(obj)
+export const isSoftLink = (obj: any): obj is SoftLink => {
+  return isObject(obj)
+    && isString(obj.name)
+    && isString(obj.ipns)
+}
+
+export const isHardLink = (obj: any): obj is HardLink => {
+  return isObject(obj)
     && isCID((obj as any).cid)
 }
 
 export const isLinks = (obj: any): obj is Links => {
   return isObject(obj)
-      && Object.values(obj).every(isLink)
+      && Object.values(obj).every(a => isHardLink(a) || isSoftLink(a))
 }
 
 export const isUnixMeta = (obj: any): obj is UnixMeta => {
-  return isObject(obj) 
+  return isObject(obj)
       && isNum(obj.mtime)
       && isNum(obj.ctime)
       && isNum(obj.mode)
@@ -41,21 +47,23 @@ export const isUnixMeta = (obj: any): obj is UnixMeta => {
 }
 
 export const isMetadata = (obj: any): obj is Metadata => {
-  return isObject(obj) 
+  return isObject(obj)
       && isUnixMeta(obj.unixMeta)
       && isBool(obj.isFile)
       && isSemVer(obj.version)
 }
 
 export const isSkeleton = (obj: any): obj is Skeleton => {
-  return isObject(obj) 
-      && Object.values(obj).every(val => (
-        isObject(val)
-        && isCID(val.cid)
-        && isCID(val.userland)
-        && isCID(val.metadata)
-        && isSkeleton(val.subSkeleton)
-      ))
+  return isObject(obj)
+      && Object.values(obj).every(val => {
+        const isNode = isObject(val)
+          && isCID(val.cid)
+          && isCID(val.userland)
+          && isCID(val.metadata)
+          && isSkeleton(val.subSkeleton)
+
+        return isNode || isSoftLink(val)
+      })
 }
 
 export const isTreeHeader = (obj: any): obj is TreeHeader => {

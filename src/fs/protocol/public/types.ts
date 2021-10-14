@@ -1,5 +1,7 @@
 import { Metadata } from "../../metadata.js"
 import { AddResult, CID } from "../../../ipfs/index.js"
+import { SoftLink } from "../../types.js"
+
 
 export type PutDetails = AddResult & {
   userland: CID
@@ -16,7 +18,7 @@ export type SkeletonInfo = {
   isFile: boolean
 }
 
-export type Skeleton = { [name: string]: SkeletonInfo }
+export type Skeleton = { [name: string]: SkeletonInfo | SoftLink }
 
 export type TreeHeader = {
   metadata: Metadata

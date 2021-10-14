@@ -96,9 +96,14 @@ export async function loadFileSystem(
 
 
 export async function checkVersion(filesystemCID: CID): Promise<void> {
-  const links = await protocol.basic.getLinks(filesystemCID)
-  // if there's no version link, we assume it's from a 1.0.0-comatible version (from before ~ November 2020)
-  const versionStr = links[Branch.Version] == null ? "1.0.0" : new TextDecoder().decode(await protocol.basic.getFile(links[Branch.Version].cid))
+  const links = await protocol.basic.getSimpleLinks(filesystemCID)
+  // if there's no version link, we assume it's from a 1.0.0-compatible version
+  // (from before ~ November 2020)
+  const versionStr = links[Branch.Version] == null
+    ? "1.0.0"
+    : new TextDecoder().decode(
+        await protocol.basic.getFile(links[Branch.Version].cid)
+      )
 
   if (versionStr !== versions.toString(versions.latest)) {
     const versionParsed = versions.fromString(versionStr)

@@ -3,7 +3,7 @@ import * as check  from "../../../types/check.js"
 import { PrivateFileInfo, PrivateTreeInfo, PrivateLink, PrivateLinks, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from "../types.js"
 
 export const isDecryptedNode = (obj: any): obj is DecryptedNode => {
-  return isPrivateTreeInfo(obj) || isPrivateFileInfo(obj)
+  return isPrivateTreeInfo(obj) || isPrivateFileInfo(obj) || check.isSoftLink(obj)
 }
 
 export const isPrivateFileInfo = (obj: any): obj is PrivateFileInfo => {
@@ -31,12 +31,12 @@ export const isPrivateLink = (obj: any): obj is PrivateLink => {
 
 export const isPrivateLinks = (obj: any): obj is PrivateLinks => {
   return isObject(obj)
-    && Object.values(obj).every(isPrivateLink)
+    && Object.values(obj).every(a => isPrivateLink(a) || check.isSoftLink(a))
 }
 
 export const isPrivateSkeleton = (obj: any): obj is PrivateSkeleton => {
   return isObject(obj)
-    && Object.values(obj).every(isPrivateSkeletonInfo)
+    && Object.values(obj).every(a => isPrivateSkeletonInfo(a) || check.isSoftLink(a))
 }
 
 export const isPrivateSkeletonInfo = (obj: any): obj is PrivateSkeletonInfo => {

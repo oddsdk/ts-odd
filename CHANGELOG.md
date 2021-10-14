@@ -11,6 +11,12 @@
 - Make full API URL configurable (not just API host).
 - Fix version checking failing on old filesystems which are missing a `version` tag.
 
+### v0.30.0
+
+Adds soft/symbolic links.
+
+
+
 ### v0.29.1
 
 - Check the wnfs version field when initialising a filesystem and alert users about outdated filesystems or outdated apps.
@@ -22,6 +28,7 @@
 - Upgrade js-ipfs libraries to the versions corresponding to the 0.58 release.
 - Update API endpoints to v2 and add setup parameter to specify API version.
 - No longer uses `ipfs-message-port-client` and `ipfs-message-port-protocol` forks which sometimes caused weird dependency conflicts.
+
 
 
 ### v0.28.1

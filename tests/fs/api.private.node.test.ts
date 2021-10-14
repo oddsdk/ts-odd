@@ -2,6 +2,7 @@ import expect from "expect"
 import * as fc from "fast-check"
 
 import "../../src/setup/node.js"
+import * as check from "../../src/fs/types/check.js"
 import * as path from "../../src/path.js"
 
 import { pathSegment, pathSegmentPair } from "../helpers/paths.js"
@@ -18,6 +19,7 @@ describe("the private filesystem api", function () {
   after(async () => {
     fc.resetConfigureGlobal()
   })
+
 
   it("writes files", async () => {
     const fs = await emptyFilesystem()
@@ -202,6 +204,62 @@ describe("the private filesystem api", function () {
           const toExists = await fs.exists(toPath)
 
           expect(toExists && !fromExists).toEqual(true)
+        })
+    )
+  })
+
+  it("makes soft links to directories", async () => {
+    const fs = await emptyFilesystem()
+
+    await fc.assert(
+      fc.asyncProperty(
+        fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
+        async ({ pathSegmentPair, fileContent }) => {
+          const atPath = path.directory("private", pathSegmentPair.first)
+          const destinationPath = path.directory("private", pathSegmentPair.second)
+          const name = path.terminus(destinationPath) || "Symlink"
+
+          await fs.mkdir(destinationPath)
+          await fs.symlink({
+            at: atPath,
+            referringTo: destinationPath,
+            name,
+            username: "test"
+          })
+
+          const at = await fs.get(atPath)
+          const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+
+          expect(!!symlink).toEqual(true)
+          expect(check.isSoftLink(symlink)).toEqual(true)
+        })
+    )
+  })
+
+  it("makes soft links to files", async () => {
+    const fs = await emptyFilesystem()
+
+    await fc.assert(
+      fc.asyncProperty(
+        fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
+        async ({ pathSegmentPair, fileContent }) => {
+          const atPath = path.directory("private", pathSegmentPair.first)
+          const destinationPath = path.file("private", pathSegmentPair.second)
+          const name = path.terminus(destinationPath) || "Symlink"
+
+          await fs.write(destinationPath, "")
+          await fs.symlink({
+            at: atPath,
+            referringTo: destinationPath,
+            name,
+            username: "test"
+          })
+
+          const at = await fs.get(atPath)
+          const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+
+          expect(!!symlink).toEqual(true)
+          expect(check.isSoftLink(symlink)).toEqual(true)
         })
     )
   })

@@ -9,6 +9,7 @@ import * as path from "../../src/path.js"
 
 import { ipfsFromContext } from "../mocha-hook.js"
 import { loadFilesystem } from "../helpers/filesystem.js"
+import { isSoftLink } from "../../src/fs/types/check.js"
 
 
 describe("the filesystem", () => {
@@ -30,6 +31,7 @@ describe("the filesystem", () => {
 async function listFiles(fs: FileSystem, searchPath: path.DirectoryPath): Promise<File[]> {
   let files: File[] = []
   for (const [subName, sub] of Object.entries(await fs.ls(searchPath))) {
+    if (isSoftLink(sub)) continue
     if (sub.isFile) {
       const file = await fs.get(path.combine(searchPath, path.file(subName))) as File
       files.push(file)

@@ -1,4 +1,3 @@
-import type { Mtime } from "ipfs-unixfs"
 import { Maybe } from "../common/index.js"
 import { FileContent, CID, AddResult } from "../ipfs/index.js"
 import { Path } from "../path.js"
@@ -26,14 +25,22 @@ export interface SimpleLink {
 export interface BaseLink {
   name: string
   size: number
-  mtime?: Mtime
   isFile: boolean
 }
 
-export interface Link extends SimpleLink, BaseLink {}
+export interface SoftLink {
+  ipns: string
+  name: string
+  key?: string
+  privateName?: string
+}
+
+export interface HardLink extends SimpleLink, BaseLink {}
+export type Link = HardLink | SoftLink | BaseLink
 
 export interface SimpleLinks { [name: string]: SimpleLink }
 export interface BaseLinks { [name: string]: BaseLink }
+export interface HardLinks { [name: string]: HardLink }
 export interface Links { [name: string]: Link }
 
 
@@ -58,7 +65,9 @@ export type PublishHook = (result: CID, proof: string) => unknown
 // ----
 
 export interface UnixTree {
-  ls(path: Path): Promise<BaseLinks>
+  readOnly: boolean
+
+  ls(path: Path): Promise<Links>
   mkdir(path: Path, onUpdate?: UpdateCallback): Promise<this>
   cat(path: Path): Promise<FileContent>
   add(path: Path, content: FileContent): Promise<this>
@@ -76,11 +85,12 @@ export interface Tree extends UnixTree, Puttable {
   addRecurse(path: Path, content: FileContent, onUpdate: Maybe<UpdateCallback>): Promise<this>
   rmRecurse(path: Path, onUpdate: Maybe<UpdateCallback>): Promise<this>
 
+  updateChild(child: Tree | File, path: Path): Promise<this>
   updateDirectChild(child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
   removeDirectChild(name: string): this
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree | File>
 
   updateLink(name: string, result: AddResult): this
-  getLinks(): BaseLinks
+  getLinks(): Links
 }

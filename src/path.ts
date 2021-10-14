@@ -188,6 +188,15 @@ export function removeBranch(path: DistinctivePath): DistinctivePath {
 }
 
 /**
+ * Get the last part of the path.
+ */
+export function terminus(path: DistinctivePath): Maybe<string> {
+  const u = unwrap(path)
+  if (u.length < 1) return null
+  return u[u.length - 1]
+}
+
+/**
  * Unwrap a `DistinctivePath`.
  */
 export function unwrap(path: DistinctivePath): Path {

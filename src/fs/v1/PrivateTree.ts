@@ -3,14 +3,18 @@ import MMPT from "../protocol/private/mmpt.js"
 import PrivateFile from "./PrivateFile.js"
 import PrivateHistory from "./PrivateHistory.js"
 
-import { BaseLinks, UpdateCallback } from "../types.js"
+import { Links, SoftLink, UpdateCallback } from "../types.js"
 import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult } from "../protocol/private/types.js"
 import { FileContent } from "../../ipfs/index.js"
-import { Path } from "../../path.js"
+import { DistinctivePath, Path } from "../../path.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
+import { setup } from "../../setup/internal.js"
+
 import * as crypto from "../../crypto/index.js"
 import * as check from "../protocol/private/types/check.js"
+import * as checkNormie from "../types/check.js"
+import * as dns from "../../dns/index.js"
 import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
 import * as namefilter from "../protocol/private/namefilter.js"
@@ -77,7 +81,7 @@ export default class PrivateTree extends BaseTree {
   }
 
   static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateTree> {
-    const info = await protocol.priv.getByLatestName(mmpt, name, key)
+    const info = await protocol.priv.getLatestByName(mmpt, name, key)
     return this.fromInfo(mmpt, key, info)
   }
 
@@ -133,6 +137,7 @@ export default class PrivateTree extends BaseTree {
   }
 
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
+    if (this.readOnly) throw new Error("Tree is read-only")
     await child.updateParentNameFilter(this.header.bareNameFilter)
     this.children[name] = child
     const details = await child.putDetailed()
@@ -154,23 +159,34 @@ export default class PrivateTree extends BaseTree {
     return this
   }
 
-  async getDirectChild(name: string): Promise<PrivateTree | PrivateFile | null>{
-    if(this.children[name]) {
+  async getDirectChild(name: string): Promise<PrivateTree | PrivateFile | null> {
+    let child = null
+
+    if (this.children[name]) {
       return this.children[name]
     }
 
     const childInfo = this.header.links[name]
-    if(childInfo === undefined) return null
-    const child = childInfo.isFile
-      ? await PrivateFile.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
-      : await PrivateTree.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
+    if (childInfo === undefined) return null
 
-    // check that the child wasn't added while retrieving the content from the network
-    if(this.children[name]) {
+    // Hard link
+    if (check.isPrivateLink(childInfo)) {
+      child = childInfo.isFile
+        ? await PrivateFile.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
+        : await PrivateTree.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
+
+    // Soft link
+    } else if (checkNormie.isSoftLink(childInfo)) {
+      return PrivateTree.resolveSoftLink(childInfo)
+
+    }
+
+    // Check that the child wasn't added while retrieving the content from the network
+    if (this.children[name]) {
       return this.children[name]
     }
 
-    this.children[name] = child
+    if (child) this.children[name] = child
     return child
   }
 
@@ -196,12 +212,22 @@ export default class PrivateTree extends BaseTree {
     const result = await this.getRecurse(next, rest)
     if (result === null) return null
 
-    return check.isPrivateFileInfo(result.node)
-      ? PrivateFile.fromInfo(this.mmpt, result.key, result.node)
-      : PrivateTree.fromInfo(this.mmpt, result.key, result.node)
+    // Soft link
+    if (checkNormie.isSoftLink(result)) {
+      return PrivateTree.resolveSoftLink(result)
+
+    // Hard link
+    } else {
+      return check.isPrivateFileInfo(result.node)
+        ? PrivateFile.fromInfo(this.mmpt, result.key, result.node)
+        : PrivateTree.fromInfo(this.mmpt, result.key, result.node)
+
+    }
   }
 
-  async getRecurse(nodeInfo: PrivateSkeletonInfo, parts: string[]): Promise<Maybe<{ key: string; node: DecryptedNode }>> {
+  async getRecurse(nodeInfo: PrivateSkeletonInfo | SoftLink, parts: string[]): Promise<Maybe<{ key: string; node: DecryptedNode } | SoftLink>> {
+    if (checkNormie.isSoftLink(nodeInfo)) return nodeInfo
+
     const [head, ...rest] = parts
     if (head === undefined) return {
       key: nodeInfo.key,
@@ -222,7 +248,35 @@ export default class PrivateTree extends BaseTree {
     return reloadedNext === undefined ? null : this.getRecurse(reloadedNext, rest)
   }
 
-  getLinks(): BaseLinks {
+
+  // Links
+  // -----
+
+  static async resolveSoftLink(link: SoftLink): Promise<PrivateTree | PrivateFile | null> {
+    const domain = link.ipns.split("/")[0]
+
+    if (!link.privateName || !link.key) throw new Error("Mixing public and private soft links is not supported yet.")
+
+    const rootCid = await dns.lookupDnsLink(domain)
+    if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
+
+    const privateCid = (await protocol.basic.getSimpleLinks(rootCid)).private.cid
+    const mmpt = await MMPT.fromCID(privateCid)
+
+    const info = await protocol.priv.getLatestByName(
+      mmpt,
+      link.privateName as PrivateName,
+      link.key
+    )
+
+    if (!info) return null
+
+    return info.metadata.isFile
+      ? PrivateFile.fromInfo(mmpt, link.key, info)
+      : PrivateTree.fromInfo(mmpt, link.key, info)
+  }
+
+  getLinks(): Links {
     return mapObj(this.header.links, (link) => {
       const { key, ...rest } = link
       return { ...rest  }
@@ -233,10 +287,25 @@ export default class PrivateTree extends BaseTree {
     const now = Date.now()
     const { cid, size, key, isFile, skeleton } = result
     const pointer = result.name
-    this.header.links[name] = { name, key, pointer, size, isFile: isFile, mtime: metadata.mtimeFromMs(now) }
+    this.header.links[name] = { name, key, pointer, size, isFile: isFile }
     this.header.skeleton[name] = { cid, key, subSkeleton: skeleton }
     this.header.revision = this.header.revision + 1
     this.header.metadata.unixMeta.mtime = now
+    return this
+  }
+
+  insertSoftLink({ name, username, key, privateName }: { name: string, username: string, key: string, privateName: PrivateName }): this {
+    const softLink = {
+      ipns: `${username}.files.${setup.endpoints.user}`,
+      name,
+      privateName,
+      key
+    }
+
+    this.header.links[name] = softLink
+    this.header.skeleton[name] = softLink
+    this.header.revision = this.header.revision + 1
+    this.header.metadata.unixMeta.mtime = Date.now()
     return this
   }
 
