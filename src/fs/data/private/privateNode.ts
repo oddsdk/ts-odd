@@ -1,12 +1,12 @@
 import * as cbor from "cborg"
 import * as uint8arrays from "uint8arrays"
+import { webcrypto } from "one-webcrypto"
 
 import * as metadata from "../metadata.js"
 import { AbortContext, hasProp, isNonEmpty, isRecord, Timestamp } from "../common.js"
 import * as bloom from "./bloomfilter.js"
 import * as namefilter from "./namefilter.js"
 import * as ratchet from "./spiralratchet.js"
-import { crypto } from "./webcrypto.js"
 
 
 export type PrivateNode = PrivateDirectory | PrivateFile
@@ -189,7 +189,7 @@ export async function loadNode(ref: PrivateRef, ctx: PrivateOperationContext): P
 
 export async function newDirectory(parentBareFilter: bloom.BloomFilter, ctx: PrivateOperationContext & Timestamp): Promise<PrivateDirectory> {
   const revision = await ratchet.setup()
-  const inumber = crypto.getRandomValues(new Uint8Array(32))
+  const inumber = webcrypto.getRandomValues(new Uint8Array(32))
   const bareName = await namefilter.addToBare(parentBareFilter, inumber)
   return {
     metadata: metadata.newDirectory(ctx.now),
@@ -201,7 +201,7 @@ export async function newDirectory(parentBareFilter: bloom.BloomFilter, ctx: Pri
 
 export async function newFile(parentBareFilter: bloom.BloomFilter, ctx: PrivateOperationContext & Timestamp): Promise<PrivateFile> {
   const revision = await ratchet.setup()
-  const inumber = crypto.getRandomValues(new Uint8Array(32))
+  const inumber = webcrypto.getRandomValues(new Uint8Array(32))
   const bareName = await namefilter.addToBare(parentBareFilter, inumber)
   return {
     metadata: metadata.newFile(ctx.now),

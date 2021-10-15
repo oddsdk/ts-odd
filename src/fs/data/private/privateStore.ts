@@ -6,8 +6,8 @@ import { CID } from "multiformats/cid"
 import * as Block from "multiformats/block"
 import { sha256 } from "multiformats/hashes/sha2"
 import * as codec from "@ipld/dag-cbor" // encode blocks using the DAG-CBOR format
+import { webcrypto } from "one-webcrypto"
 
-import { crypto, webcrypto } from "./webcrypto.js"
 import { PrivateStore, PrivateStoreLookup, PrivateRef } from "./privateNode.js"
 
 export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<iamap.IAMap<CID>> } {
@@ -55,7 +55,7 @@ export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<
       const iv = encryptedBlock.slice(0, 16)
       const ciphertext = encryptedBlock.slice(16)
 
-      const cleartext: ArrayBuffer = await webcrypto.decrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), ciphertext)
+      const cleartext: ArrayBuffer = await webcrypto.subtle.decrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), ciphertext)
       return new Uint8Array(cleartext)
     },
 
@@ -64,8 +64,8 @@ export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<
         throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
       }
 
-      const iv = crypto.getRandomValues(new Uint8Array(16))
-      const ciphertext: ArrayBuffer = await webcrypto.encrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), block)
+      const iv = webcrypto.getRandomValues(new Uint8Array(16))
+      const ciphertext: ArrayBuffer = await webcrypto.subtle.encrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), block)
 
       const encryptedBlock = uint8arrays.concat([iv, new Uint8Array(ciphertext)])
 
@@ -122,5 +122,5 @@ export function createInMemoryUnencrypted(base: PrivateStoreLookup): PrivateStor
 
 async function keyFromRef(ref: PrivateRef): Promise<CryptoKey> {
   // TODO: Detect when ref.algorithm is not AES-GCM and error out fittingly!
-  return await webcrypto.importKey("raw", ref.key, { name: ref.algorithm }, true, ["encrypt", "decrypt"])
+  return await webcrypto.subtle.importKey("raw", ref.key, { name: ref.algorithm }, true, ["encrypt", "decrypt"])
 }

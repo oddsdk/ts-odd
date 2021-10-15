@@ -1,7 +1,7 @@
 import * as uint8arrays from "uint8arrays"
+import { webcrypto } from "one-webcrypto"
 
 import { CborForm, hasProp } from "../common.js"
-import { crypto, webcrypto } from "./webcrypto.js"
 
 export interface SpiralRatchet {
   large: ArrayBuffer
@@ -31,7 +31,7 @@ export async function toKey(ratchet: SpiralRatchet): Promise<ArrayBuffer> {
 }
 
 export async function setup(options?: Partial<RatchetOptions>): Promise<SpiralRatchet> {
-  let [mediumSkip, smallSkip] = crypto.getRandomValues(new Uint8Array(2))
+  let [mediumSkip, smallSkip] = webcrypto.getRandomValues(new Uint8Array(2))
   mediumSkip = options?.preIncrementMedium == null ? mediumSkip : options.preIncrementMedium
   smallSkip = options?.preIncrementSmall == null ? smallSkip : options.preIncrementSmall
 
@@ -47,7 +47,7 @@ export async function setup(options?: Partial<RatchetOptions>): Promise<SpiralRa
 }
 
 async function zero({ seed }: { seed?: ArrayBuffer }): Promise<SpiralRatchet> {
-  const largePre = seed || crypto.getRandomValues(new Uint8Array(32)).buffer
+  const largePre = seed || webcrypto.getRandomValues(new Uint8Array(32)).buffer
   const mediumPre = await sha(complement(largePre))
   const medium = await sha(mediumPre)
   const small = await sha(complement(mediumPre))
@@ -394,12 +394,12 @@ async function incBySmall(ratchet: SpiralRatchet, n: number): Promise<SpiralRatc
 }
 
 async function sha(buffer: ArrayBuffer): Promise<ArrayBuffer> {
-  return await webcrypto.digest("sha-256", buffer)
+  return await webcrypto.subtle.digest("sha-256", buffer)
 }
 
 async function shaN(buffer: ArrayBuffer, n: number): Promise<ArrayBuffer> {
   for (let i = 0; i < n; i++) {
-    buffer = await webcrypto.digest("sha-256", buffer)
+    buffer = await webcrypto.subtle.digest("sha-256", buffer)
   }
   return buffer
 }

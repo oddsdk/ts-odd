@@ -1,5 +1,6 @@
+import { webcrypto } from "one-webcrypto"
+
 import * as bloom from "./bloomfilter.js"
-import { webcrypto } from "./webcrypto.js"
 
 
 export function empty(): bloom.BloomFilter {
@@ -59,24 +60,24 @@ export async function slowStepSaturate(filter: bloom.BloomFilter): Promise<bloom
 
 // modifies the bloom filter in place
 async function saturationStep(filter: bloom.BloomFilter): Promise<void> {
-  const hash = await webcrypto.digest("sha-256", filter)
+  const hash = await webcrypto.subtle.digest("sha-256", filter)
   bloom.add(new Uint8Array(hash), filter, bloom.wnfsParameters)
 }
 
 // also modifies in place
 async function saturationStepEnsure(filter: bloom.BloomFilter): Promise<void> {
   const ones = bloom.countOnes(filter)
-  let hash = await webcrypto.digest("sha-256", filter)
+  let hash = await webcrypto.subtle.digest("sha-256", filter)
   do {
     // re-hash the hash (& we assume at least hashing twice in this situation)
-    hash = await webcrypto.digest("sha-256", hash)
+    hash = await webcrypto.subtle.digest("sha-256", hash)
     bloom.add(new Uint8Array(hash), filter, bloom.wnfsParameters)
   } while (bloom.countOnes(filter) === ones)
 }
 
 
 export async function addToBare(bareFilter: bloom.BloomFilter, keyOrINumber: ArrayBuffer): Promise<bloom.BloomFilter> {
-  const hash = await webcrypto.digest("sha-256", keyOrINumber)
+  const hash = await webcrypto.subtle.digest("sha-256", keyOrINumber)
   const added = new Uint8Array(bareFilter)
   bloom.add(new Uint8Array(hash), added, bloom.wnfsParameters)
   return added
