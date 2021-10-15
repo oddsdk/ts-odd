@@ -1,4 +1,5 @@
-import crypto from "crypto"
+import { webcrypto } from "one-webcrypto"
+
 import tweetnacl from "tweetnacl"
 import utils from "keystore-idb/lib/utils.js"
 import { CharSize, Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey, SymmKeyLength } from "keystore-idb/lib/types.js"
@@ -11,12 +12,6 @@ import { setDependencies } from "./dependencies.js"
 import * as setup from "../../src/setup.js"
 
 setup.shouldPin({ enabled: false })
-
-
-// FIXME: Upgrade @node/types as soon as webcrypto types are available
-// @ts-ignore: Upgrade @node/types as soon as webcrypto types are available
-const webcrypto: Crypto = crypto.webcrypto
-globalThis.crypto = webcrypto
 
 
 

@@ -1,6 +1,8 @@
 import * as cbor from "cborg"
 
-import { isBlob, isJust } from "../common/type-checks.js"
+import { SymmAlg } from "keystore-idb/lib/types.js"
+
+import { isBlob, isDefined, isJust, isString } from "../common/type-checks.js"
 import { Maybe } from "../common/types.js"
 import * as blob from "../common/blob.js"
 import * as crypto from "../crypto/index.js"
@@ -15,12 +17,34 @@ export const add = async (content: FileContent, key: Maybe<string>): Promise<Add
   // can't cbor encode blobs ie file streams
   const normalized = isBlob(content) ? await blob.toUint8Array(content) : content
   const encoded = cbor.encode(normalized)
-  const toAdd = isJust(key) ? await crypto.aes.encrypt(encoded, key) : encoded
+  
+  if (!isJust(key)) {
+    return basic.add(encoded)
+  }
+
+  const withAlgorithm = cbor.encode({
+    alg: SymmAlg.AES_CTR,
+    cip: encoded
+  })
+  const toAdd = await crypto.aes.encrypt(withAlgorithm, key)
   return basic.add(toAdd)
 }
 
 export const catAndDecode = async (cid: CID, key: Maybe<string>): Promise<unknown> => {
   const buf = await basic.catBuf(cid)
-  const toDecode = isJust(key) ? await crypto.aes.decrypt(buf, key) : buf
+  
+  if (!isJust(key)) {
+    return cbor.decode(buf)
+  }
+
+  const withAlgorithm = cbor.decode(buf)
+  if (!isSymmAlg(withAlgorithm.alg) || !isDefined(withAlgorithm.cip)) {
+    throw new Error(`Unexpected private block. Expected "alg" and "cip" field.`)
+  }
+  const toDecode = await crypto.aes.decrypt(withAlgorithm.cip, key)
   return cbor.decode(toDecode)
+}
+
+function isSymmAlg(alg: unknown): alg is SymmAlg {
+  return isString(alg) && (Object.values(SymmAlg) as string[]).includes(alg)
 }
