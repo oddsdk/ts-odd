@@ -2,23 +2,23 @@ import tweetnacl from "tweetnacl"
 import rsaOperations from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
 import aes from "keystore-idb/lib/aes/index.js"
-import { CharSize, SymmKeyLength } from "keystore-idb/lib/types.js"
+import { CharSize, SymmAlg, SymmKeyLength } from "keystore-idb/lib/types.js"
 
 import { assertBrowser } from "../common/browser.js"
 import * as keystore from "../keystore.js"
 
 
-export const encrypt = async (data: Uint8Array, keyStr: string): Promise<Uint8Array> => {
+export const encrypt = async (data: Uint8Array, keyStr: string, alg: SymmAlg): Promise<Uint8Array> => {
   assertBrowser("aes.encrypt")
   const key = await aes.importKey(keyStr, { length: SymmKeyLength.B256 })
-  const encrypted = await aes.encryptBytes(data.buffer, key)
+  const encrypted = await aes.encryptBytes(data.buffer, key, { alg })
   return new Uint8Array(encrypted)
 }
 
-export const decrypt = async (encrypted: Uint8Array, keyStr: string): Promise<Uint8Array> => {
+export const decrypt = async (encrypted: Uint8Array, keyStr: string, alg: SymmAlg): Promise<Uint8Array> => {
   assertBrowser("aes.decrypt")
   const key = await aes.importKey(keyStr, { length: SymmKeyLength.B256 })
-  const decryptedBuf = await aes.decryptBytes(encrypted.buffer, key)
+  const decryptedBuf = await aes.decryptBytes(encrypted.buffer, key, { alg })
   return new Uint8Array(decryptedBuf)
 }
 

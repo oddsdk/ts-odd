@@ -21,12 +21,10 @@ export const add = async (content: FileContent, key: Maybe<string>): Promise<Add
   if (!isJust(key)) {
     return basic.add(encoded)
   }
-
-  const withAlgorithm = cbor.encode({
-    alg: SymmAlg.AES_CTR,
-    cip: encoded
-  })
-  const toAdd = await crypto.aes.encrypt(withAlgorithm, key)
+  
+  const alg = SymmAlg.AES_CTR
+  const cip = await crypto.aes.encrypt(encoded, key, alg)
+  const toAdd = cbor.encode({ alg, cip })
   return basic.add(toAdd)
 }
 
@@ -41,7 +39,8 @@ export const catAndDecode = async (cid: CID, key: Maybe<string>): Promise<unknow
   if (!isSymmAlg(withAlgorithm.alg) || !isDefined(withAlgorithm.cip)) {
     throw new Error(`Unexpected private block. Expected "alg" and "cip" field.`)
   }
-  const toDecode = await crypto.aes.decrypt(withAlgorithm.cip, key)
+  const alg = withAlgorithm.alg
+  const toDecode = await crypto.aes.decrypt(withAlgorithm.cip, key, alg)
   return cbor.decode(toDecode)
 }
 
