@@ -530,11 +530,6 @@
     "@typescript-eslint/types" "4.29.3"
     eslint-visitor-keys "^2.0.0"
 
-"@ungap/global-this@^0.4.4":
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/@ungap/global-this/-/global-this-0.4.4.tgz#8a1b2cfcd3e26e079a847daba879308c924dd695"
-  integrity sha512-mHkm6FvepJECMNthFuIgpAEFmPOk71UyXuIxYfjytvFTnSDBIz7jmViO+LfHI/AjrazWije0PnSP3+/NlwzqtA==
-
 "@ungap/promise-all-settled@1.1.2":
   version "1.1.2"
   resolved "https://registry.npmjs.org/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz"
@@ -2861,13 +2856,13 @@ keypair@^1.0.1:
   resolved "https://registry.yarnpkg.com/keypair/-/keypair-1.0.4.tgz#a749a45f388593f3950f18b3757d32a93bd8ce83"
   integrity sha512-zwhgOhhniaL7oxMgUMKKw5219PWWABMO+dgMnzJOQ2/5L3XJtTJGhW2PEXlxXj9zaccdReZJZ83+4NPhVfNVDg==
 
-keystore-idb@^0.15.1:
-  version "0.15.1"
-  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.15.1.tgz#31236e3dc5c566170a9ce761de018e85ddf811d3"
-  integrity sha512-NspQIQjRrUk6iYHWtmu9TLP0rQDSBDv0cQbB/Phf0gM/lfOXP0DiPc51kpoK5/nTWOdDceCtTfrwBCJY7UcxkQ==
+keystore-idb@^0.15.3-alpha1:
+  version "0.15.3-alpha1"
+  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.15.3-alpha1.tgz#d732749ce027e5fbe0c383b284677fd35975f385"
+  integrity sha512-9cMiQJ5SaCkFSyUxMpmvJrOm1N7vUE5NyIZvG56NhnbHzx/DozwQkqxB/dDUTn4qH5pVs+1VcHrgxUwk0zZ49g==
   dependencies:
-    "@ungap/global-this" "^0.4.4"
     localforage "^1.10.0"
+    one-webcrypto "^1.0.1"
     uint8arrays "^3.0.0"
 
 level-codec@^10.0.0:
@@ -3724,6 +3719,11 @@ once@^1.3.0, once@^1.3.1, once@^1.4.0:
   integrity sha1-WDsap3WWHUsROsF9nFC6753Xa9E=
   dependencies:
     wrappy "1"
+
+one-webcrypto@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/one-webcrypto/-/one-webcrypto-1.0.1.tgz#023dcf8983276dc568a0ecfc71aa71ad045190b8"
+  integrity sha512-yFtrnpAgreBUDgEM/iTMGXwCnyyo/zwTOly/Pqx8T8TFd79QUv0OI+WkVMvCVgBg5Eja7Uo12x2M7v7RJPba8A==
 
 onetime@^5.1.2:
   version "5.1.2"
