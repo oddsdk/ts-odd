@@ -85,7 +85,7 @@ export default class RootTree implements Puttable {
     await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
-    tree.setVersion(semver.latest)
+    await tree.setVersion(semver.latest)
 
     await Promise.all([
       tree.updatePuttable(Branch.Public, publicTree),

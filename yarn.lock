@@ -2846,12 +2846,13 @@ keypair@^1.0.1:
   resolved "https://registry.yarnpkg.com/keypair/-/keypair-1.0.4.tgz#a749a45f388593f3950f18b3757d32a93bd8ce83"
   integrity sha512-zwhgOhhniaL7oxMgUMKKw5219PWWABMO+dgMnzJOQ2/5L3XJtTJGhW2PEXlxXj9zaccdReZJZ83+4NPhVfNVDg==
 
-keystore-idb@^0.15.2:
-  version "0.15.2"
-  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.15.2.tgz#4f391df01d10bb8ef8514668801fa9b8e57d1989"
-  integrity sha512-EncMTE/05LAw94ij7qgkXyNY7RErEJFueAhyaa+qqIbGYbiMBHKYSqHE+BvFz6GEk2udM+T4R/iKlenh10Rt4w==
+keystore-idb@^0.15.3-alpha1:
+  version "0.15.3-alpha1"
+  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.15.3-alpha1.tgz#d732749ce027e5fbe0c383b284677fd35975f385"
+  integrity sha512-9cMiQJ5SaCkFSyUxMpmvJrOm1N7vUE5NyIZvG56NhnbHzx/DozwQkqxB/dDUTn4qH5pVs+1VcHrgxUwk0zZ49g==
   dependencies:
     localforage "^1.10.0"
+    one-webcrypto "^1.0.1"
     uint8arrays "^3.0.0"
 
 level-codec@^10.0.0:
@@ -3713,6 +3714,11 @@ one-webcrypto@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/one-webcrypto/-/one-webcrypto-1.0.0.tgz#4ad436a6f76213a9c0c4484f873ab677074e0e14"
   integrity sha512-3JjdroVLZstd2dBQeN9Q2RfyrZdLfCPYdfMwKboSoHXvvTlON746rmak6OaLthUsuSngnl8AZ8A7f0SnR6Bn9Q==
+
+one-webcrypto@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/one-webcrypto/-/one-webcrypto-1.0.1.tgz#023dcf8983276dc568a0ecfc71aa71ad045190b8"
+  integrity sha512-yFtrnpAgreBUDgEM/iTMGXwCnyyo/zwTOly/Pqx8T8TFd79QUv0OI+WkVMvCVgBg5Eja7Uo12x2M7v7RJPba8A==
 
 onetime@^5.1.2:
   version "5.1.2"
