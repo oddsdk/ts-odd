@@ -18,12 +18,12 @@ export const hash = {
 export const aes = {
   encrypt: async (data: Uint8Array, keyStr: string): Promise<Uint8Array> => {
     const key = await importKey(keyStr, { length: SymmKeyLength.B256 })
-    const encrypted = await encryptBytes(data.buffer, key)
+    const encrypted = await encryptBytes(data, key)
     return new Uint8Array(encrypted)
   },
   decrypt: async (encrypted: Uint8Array, keyStr: string): Promise<Uint8Array> => {
     const key = await importKey(keyStr, { length: SymmKeyLength.B256 })
-    const decryptedBuf = await decryptBytes(encrypted.buffer, key)
+    const decryptedBuf = await decryptBytes(encrypted, key)
     return new Uint8Array(decryptedBuf)
   },
   genKeyStr: async (): Promise<string> => {
@@ -49,7 +49,7 @@ export const aes = {
       sessionKey,
       uint8arrays.fromString(encrypted, "base64pad")
     )
-    return uint8arrays.toString(decrypted)
+    return uint8arrays.toString(new Uint8Array(decrypted))
   }
 }
 
