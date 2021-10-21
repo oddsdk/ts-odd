@@ -454,11 +454,6 @@
   dependencies:
     "@types/node" "*"
 
-"@types/wtfnode@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@types/wtfnode/-/wtfnode-0.7.0.tgz#e5d9c675bccc2f786830ffa40ffe8865f92057d9"
-  integrity sha512-kdBHgE9+M1Os7UqWZtiLhKye5reFl8cPBYyCsP2fatwZRz7F7GdIxIHZ20Kkc0hYBfbXE+lzPOTUU1I0qgjtHA==
-
 "@types/yargs-parser@*":
   version "20.2.0"
   resolved "https://registry.npmjs.org/@types/yargs-parser/-/yargs-parser-20.2.0.tgz"
@@ -4812,11 +4807,6 @@ ws@7.4.6, ws@^7.3.1, ws@~7.4.2:
   version "7.4.6"
   resolved "https://registry.npmjs.org/ws/-/ws-7.4.6.tgz"
   integrity sha512-YmhHDO4MzaDLB+M9ym/mDA5z0naX8j7SIlT8f8z+I0VtzsRbekxEutHSme7NPS2qE8StCYQNUnfWdXta/Yu85A==
-
-wtfnode@^0.9.1:
-  version "0.9.1"
-  resolved "https://registry.yarnpkg.com/wtfnode/-/wtfnode-0.9.1.tgz#c385679d2df6fb4d64d734eeeaab767fcee3e0d3"
-  integrity sha512-Ip6C2KeQPl/F3aP1EfOnPoQk14Udd9lffpoqWDNH3Xt78svxPbv53ngtmtfI0q2Te3oTq79XKTnRNXVIn/GsPA==
 
 xml2js@^0.4.23:
   version "0.4.23"
