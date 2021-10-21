@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node Environment
         uses: actions/setup-node@v2
         with:
-          node-version: '16.11'
+          node-version: '16'
 
       # https://github.com/actions/cache/blob/main/examples.md#node---yarn
       - name: Get yarn cache directory path
