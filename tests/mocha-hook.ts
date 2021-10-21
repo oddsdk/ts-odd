@@ -4,6 +4,8 @@ import { IPFS } from "ipfs-core"
 import { createInMemoryIPFS } from "./helpers/in-memory-ipfs.js"
 import * as ipfsConfig from "../src/ipfs/config.js"
 
+import * as wtfnode from "wtfnode"
+
 declare module "mocha" {
   export interface Context {
     browser: puppeteer.Browser
@@ -25,6 +27,11 @@ export const mochaHooks = {
   afterAll: async function(this: mocha.Context) {
     if (this.browser != null) await this.browser.close()
     if (this.ipfs != null) await this.ipfs.stop()
+
+    console.log("will wtfnode.dump in 5 seconds")
+    setTimeout(() => {
+      wtfnode.dump()
+    }, 5000)
   },
 
   // Each
