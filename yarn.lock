@@ -412,7 +412,7 @@
 
 "@types/mocha@^9.0.0":
   version "9.0.0"
-  resolved "https://registry.npmjs.org/@types/mocha/-/mocha-9.0.0.tgz"
+  resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-9.0.0.tgz#3205bcd15ada9bc681ac20bef64e9e6df88fd297"
   integrity sha512-scN0hAWyLVAvLR9AyW7HoFF5sJZglyBsbPuHO4fv7JRvfmPBMfp1ozWqOf/e4wwPNxezBZXRfWzMb6iFLgEVRA==
 
 "@types/node@*", "@types/node@>=13.7.0", "@types/node@^16.4.1":
