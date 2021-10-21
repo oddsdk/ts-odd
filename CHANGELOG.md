@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.29.1
+
+- Check the wnfs version field when initialising a filesystem and alert a user about outdated filesystems or outdated apps.
+
+
 ### v0.29.0
 
 - Upgrade js-ipfs libraries to the versions corresponding to the 0.58 release.
