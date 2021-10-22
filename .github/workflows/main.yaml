@@ -44,7 +44,7 @@ jobs:
       # ---
 
       - name: Install Dependencies
-        run: yarn install --network-concurrency 1
+        run: yarn install --frozen-lockfile --network-concurrency 1
 
       - name: Build & Test
         run: yarn test:prod
