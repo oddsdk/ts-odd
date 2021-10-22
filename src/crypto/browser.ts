@@ -1,62 +1,10 @@
 import tweetnacl from "tweetnacl"
 import rsaOperations from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
-import aes from "keystore-idb/lib/aes/index.js"
-import { CharSize, SymmKeyLength } from "keystore-idb/lib/types.js"
 
 import { assertBrowser } from "../common/browser.js"
 import * as keystore from "../keystore.js"
 
-
-export const encrypt = async (data: Uint8Array, keyStr: string): Promise<Uint8Array> => {
-  assertBrowser("aes.encrypt")
-  const key = await aes.importKey(keyStr, { length: SymmKeyLength.B256 })
-  const encrypted = await aes.encryptBytes(data.buffer, key)
-  return new Uint8Array(encrypted)
-}
-
-export const decrypt = async (encrypted: Uint8Array, keyStr: string): Promise<Uint8Array> => {
-  assertBrowser("aes.decrypt")
-  const key = await aes.importKey(keyStr, { length: SymmKeyLength.B256 })
-  const decryptedBuf = await aes.decryptBytes(encrypted.buffer, key)
-  return new Uint8Array(decryptedBuf)
-}
-
-export const genKeyStr = async (): Promise<string> => {
-  assertBrowser("aes.genKeyStr")
-  const key = await aes.makeKey({ length: SymmKeyLength.B256 })
-  return aes.exportKey(key)
-}
-
-export const decryptGCM = async (encrypted: string, keyStr: string, ivStr: string): Promise<string> => {
-  assertBrowser("aes.decryptGCM")
-  const iv = utils.base64ToArrBuf(ivStr)
-  const sessionKey = await crypto.subtle.importKey(
-    "raw",
-    utils.base64ToArrBuf(keyStr),
-    "AES-GCM",
-    false,
-    [ "encrypt", "decrypt" ]
-  )
-
-  // Decrypt secrets
-  const decrypted = await crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv: iv
-    },
-    sessionKey,
-    utils.base64ToArrBuf(encrypted)
-  )
-  return utils.arrBufToStr(decrypted, CharSize.B8)
-}
-
-export const sha256 = async (bytes: Uint8Array): Promise<Uint8Array> => {
-  assertBrowser("hash.sha256")
-  const buf = bytes.buffer
-  const hash = await crypto.subtle.digest("SHA-256", buf)
-  return new Uint8Array(hash)
-}
 
 export const rsaVerify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> => {
   assertBrowser("rsa.verify")
@@ -64,8 +12,8 @@ export const rsaVerify = (message: Uint8Array, signature: Uint8Array, publicKey:
   return rsaOperations.verify(message, signature, keyStr)
 }
 
-export const ed25519Verify = (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> => {
-  return new Promise(resolve => resolve(tweetnacl.sign.detached.verify(message, signature, publicKey)))
+export const ed25519Verify = async (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> => {
+  return tweetnacl.sign.detached.verify(message, signature, publicKey)
 }
 
 export const ksPublicExchangeKey = async (): Promise<string> => {
