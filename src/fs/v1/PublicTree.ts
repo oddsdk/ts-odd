@@ -15,7 +15,7 @@ import * as link from "../link.js"
 import * as metadata from "../metadata.js"
 import * as protocol from "../protocol/index.js"
 import * as skeleton from "../protocol/public/skeleton.js"
-import * as version from "../version.js"
+import * as versions from "../versions.js"
 
 
 type ConstructorParams = {
@@ -50,7 +50,7 @@ export class PublicTree extends BaseTree {
     return new PublicTree({
       links: {},
       header: {
-        metadata: metadata.empty(false, version.publicDirectoryVersion),
+        metadata: metadata.empty(false, versions.latest),
         skeleton: {},
       },
       cid: null

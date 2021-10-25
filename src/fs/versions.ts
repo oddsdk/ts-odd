@@ -41,8 +41,6 @@ export const isSmallerThan = (a: SemVer, b: SemVer): boolean => {
 
 
 // VERSIONS
-export const rootFilesystemVersion = encode(1, 0, 0)
-export const publicFileVersion = encode(1, 0, 0)
-export const publicDirectoryVersion = encode(1, 0, 0)
-export const privateFileVersion = encode(1, 0, 0)
-export const privateDirectoryVersion = encode(1, 0, 0)
+export const v0 = encode(0, 0, 0)
+export const v1 = encode(1, 0, 0)
+export const latest = encode(1, 0, 0)

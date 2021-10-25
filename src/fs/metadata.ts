@@ -1,5 +1,5 @@
 import type { Mtime } from "ipfs-unixfs"
-import * as version from "./version.js"
+import * as versions from "./versions.js"
 
 export type UnixFileMode = number
 
@@ -22,7 +22,7 @@ export type UnixMeta = {
 export type Metadata = {
   unixMeta: UnixMeta
   isFile: boolean
-  version: version.SemVer
+  version: versions.SemVer
 }
 
 export const emptyUnix = (isFile: boolean): UnixMeta => ({
@@ -32,7 +32,7 @@ export const emptyUnix = (isFile: boolean): UnixMeta => ({
   _type: isFile ? UnixNodeType.File : UnixNodeType.Directory,
 })
 
-export const empty = (isFile: boolean, version: version.SemVer): Metadata => ({
+export const empty = (isFile: boolean, version: versions.SemVer): Metadata => ({
   isFile,
   version,
   unixMeta: emptyUnix(isFile)

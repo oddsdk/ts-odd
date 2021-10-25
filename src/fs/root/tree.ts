@@ -13,7 +13,7 @@ import * as ipfs from "../../ipfs/index.js"
 import * as link from "../link.js"
 import * as pathing from "../../path.js"
 import * as protocol from "../protocol/index.js"
-import * as version from "../version.js"
+import * as versions from "../versions.js"
 import * as storage from "../../storage/index.js"
 import * as ucanPermissions from "../../ucan/permissions.js"
 
@@ -86,7 +86,7 @@ export default class RootTree implements Puttable {
     await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
-    await tree.setVersion(version.rootFilesystemVersion)
+    await tree.setVersion(versions.latest)
 
     await Promise.all([
       tree.updatePuttable(Branch.Public, publicTree),
@@ -245,14 +245,14 @@ export default class RootTree implements Puttable {
   // VERSION
   // -------
 
-  async setVersion(v: version.SemVer): Promise<this> {
-    const result = await protocol.basic.putFile(version.toString(v))
+  async setVersion(v: versions.SemVer): Promise<this> {
+    const result = await protocol.basic.putFile(versions.toString(v))
     return this.updateLink(Branch.Version, result)
   }
 
-  async getVersion(): Promise<version.SemVer | null> {
+  async getVersion(): Promise<versions.SemVer | null> {
     const file = await protocol.basic.getFile(this.links[Branch.Version].cid)
-    return version.fromString(uint8arrays.toString(file))
+    return versions.fromString(uint8arrays.toString(file))
   }
 
 }

@@ -3,7 +3,7 @@ import { isString, isObject, isNum, isBool } from "../../common/index.js"
 import { CID } from "../../ipfs/index.js"
 import { Tree, File, Link, Links, BaseLink } from "../types.js"
 import { Skeleton, TreeInfo, FileInfo, TreeHeader, FileHeader } from "../protocol/public/types.js"
-import { SemVer } from "../version.js"
+import { SemVer } from "../versions.js"
 import { Metadata, UnixMeta } from "../metadata.js"
 
 
