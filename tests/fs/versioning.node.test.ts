@@ -2,8 +2,9 @@ import expect from "expect"
 
 import * as path from "../../src/path.js"
 import * as version from "../../src/fs/version.js"
+import { checkVersion } from "../../src/filesystem.js"
 
-import { emptyFilesystem, loadFilesystem } from "../helpers/filesystem.js"
+import { emptyFilesystem } from "../helpers/filesystem.js"
 
 
 describe("the filesystem versioning system", () => {
@@ -14,7 +15,7 @@ describe("the filesystem versioning system", () => {
         await fs.root.setVersion(version.encode(2, 0, 0))
         const changedCID = await fs.root.put()
 
-        await expect(async () => await loadFilesystem(changedCID)).rejects.toBeDefined()
+        await expect(checkVersion(changedCID)).rejects.toBeDefined()
     })
 
 })

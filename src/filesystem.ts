@@ -4,10 +4,13 @@ import * as cidLog from "./common/cid-log.js"
 import * as debug from "./common/debug.js"
 import * as dataRoot from "./data-root.js"
 import * as ucan from "./ucan/internal.js"
+import * as protocol from "./fs/protocol/index.js"
+import * as version from "./fs/version.js"
 
 import { Branch } from "./path.js"
 import { Maybe, authenticatedUsername } from "./common/index.js"
 import { Permissions } from "./ucan/permissions.js"
+import { CID } from "./ipfs/types.js"
 
 
 /**
@@ -73,8 +76,11 @@ export async function loadFileSystem(
   // If a file system exists, load it and return it
   const p = permissions || undefined
 
-  fs = cid ? await FileSystem.fromCID(cid, { permissions: p }) : null
-  if (fs) return fs
+  if (cid != null) {
+    await checkVersion(cid)
+    fs = await FileSystem.fromCID(cid, { permissions: p })
+    if (fs != null) return fs
+  }
 
   // Otherwise make a new one
   if (!rootKey) throw new Error("Can't make new filesystem without a root AES key")
@@ -84,6 +90,30 @@ export async function loadFileSystem(
   // Fin
   return fs
 }
+
+
+export async function checkVersion(filesystemCID: CID): Promise<void> {
+  const links = await protocol.basic.getLinks(filesystemCID)
+  const versionStr = new TextDecoder().decode(await protocol.basic.getFile(links[Branch.Version].cid))
+
+  if (versionStr !== version.toString(version.rootFilesystemVersion)) {
+    const versionParsed = version.fromString(versionStr)
+    
+    if (versionParsed == null || version.isSmallerThan(version.rootFilesystemVersion, versionParsed)) {
+      if (globalThis.alert != null) {
+        globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem was upgraded to or created at a newer version. Please let this app's developer know.`)
+      }
+      throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${version.toString(version.rootFilesystemVersion)}). Please upgrade this app's webnative version.`)
+    }
+
+    if (globalThis.alert != null) {
+      globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fisison support.`)
+    }
+    throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${version.toString(version.rootFilesystemVersion)}). The user should migrate their filesystem.`)
+  }
+}
+
+
 
 
 

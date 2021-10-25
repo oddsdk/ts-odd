@@ -1,3 +1,5 @@
+import * as uint8arrays from "uint8arrays"
+
 import { AddResult, CID } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Links, Puttable, SimpleLink } from "../types.js"
@@ -100,7 +102,6 @@ export default class RootTree implements Puttable {
     { cid, permissions }: { cid: CID; permissions?: Permissions }
   ): Promise<RootTree> {
     const links = await protocol.basic.getLinks(cid)
-    await RootTree.checkVersion(links)
 
     const keys = permissions ? await permissionKeys(permissions) : []
 
@@ -119,7 +120,7 @@ export default class RootTree implements Puttable {
 
     let mmpt, privateNodes
     if (privateCID === null) {
-      mmpt = await MMPT.create()
+      mmpt = MMPT.create()
       privateNodes = {}
     } else {
       mmpt = await MMPT.fromCID(privateCID)
@@ -148,26 +149,6 @@ export default class RootTree implements Puttable {
 
     // Fin
     return tree
-  }
-
-  static async checkVersion(links: Links): Promise<void> {
-    const versionStr = new TextDecoder().decode(await protocol.basic.getFile(links[Branch.Version].cid))
-    
-    if (versionStr !== version.toString(version.rootFilesystemVersion)) {
-      const versionParsed = version.fromString(versionStr)
-      
-      if (versionParsed == null || version.isSmallerThan(version.rootFilesystemVersion, versionParsed)) {
-        if (globalThis.alert != null) {
-          globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem was upgraded to or created at a newer version. Please let this app's developer know.`)
-        }
-        throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${version.toString(version.rootFilesystemVersion)}). Please upgrade this app's webnative version.`)
-      }
-
-      if (globalThis.alert != null) {
-        globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fisison support.`)
-      }
-      throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${version.toString(version.rootFilesystemVersion)}). The user should migrate their filesystem.`)
-    }
   }
 
   // MUTATIONS
@@ -267,6 +248,11 @@ export default class RootTree implements Puttable {
   async setVersion(v: version.SemVer): Promise<this> {
     const result = await protocol.basic.putFile(version.toString(v))
     return this.updateLink(Branch.Version, result)
+  }
+
+  async getVersion(): Promise<version.SemVer | null> {
+    const file = await protocol.basic.getFile(this.links[Branch.Version].cid)
+    return version.fromString(uint8arrays.toString(file))
   }
 
 }
