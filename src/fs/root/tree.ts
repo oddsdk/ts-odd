@@ -4,7 +4,6 @@ import { Links, Puttable, SimpleLink } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
 import { Maybe } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
-import { SemVer } from "../semver.js"
 
 import * as crypto from "../../crypto/index.js"
 import * as identifiers from "../../common/identifiers.js"
@@ -12,7 +11,7 @@ import * as ipfs from "../../ipfs/index.js"
 import * as link from "../link.js"
 import * as pathing from "../../path.js"
 import * as protocol from "../protocol/index.js"
-import * as semver from "../semver.js"
+import * as version from "../version.js"
 import * as storage from "../../storage/index.js"
 import * as ucanPermissions from "../../ucan/permissions.js"
 
@@ -85,7 +84,7 @@ export default class RootTree implements Puttable {
     await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
-    tree.setVersion(semver.latest)
+    await tree.setVersion(version.rootFilesystemVersion)
 
     await Promise.all([
       tree.updatePuttable(Branch.Public, publicTree),
@@ -151,23 +150,23 @@ export default class RootTree implements Puttable {
     return tree
   }
 
-  static async checkVersion(links: Links) {
+  static async checkVersion(links: Links): Promise<void> {
     const versionStr = new TextDecoder().decode(await protocol.basic.getFile(links[Branch.Version].cid))
     
-    if (versionStr !== semver.toString(semver.latest)) {
-      const version = semver.fromString(versionStr)
+    if (versionStr !== version.toString(version.rootFilesystemVersion)) {
+      const versionParsed = version.fromString(versionStr)
       
-      if (version == null || semver.isSmallerThan(semver.latest, version)) {
+      if (versionParsed == null || version.isSmallerThan(version.rootFilesystemVersion, versionParsed)) {
         if (globalThis.alert != null) {
           globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem was upgraded to or created at a newer version. Please let this app's developer know.`)
         }
-        throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${semver.toString(semver.latest)}). Please upgrade this app's webnative version.`)
+        throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${version.toString(version.rootFilesystemVersion)}). Please upgrade this app's webnative version.`)
       }
 
       if (globalThis.alert != null) {
         globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fisison support.`)
       }
-      throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${semver.toString(semver.latest)}). The user should migrate their filesystem.`)
+      throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${version.toString(version.rootFilesystemVersion)}). The user should migrate their filesystem.`)
     }
   }
 
@@ -265,8 +264,8 @@ export default class RootTree implements Puttable {
   // VERSION
   // -------
 
-  async setVersion(version: SemVer): Promise<this> {
-    const result = await protocol.basic.putFile(semver.toString(version))
+  async setVersion(v: version.SemVer): Promise<this> {
+    const result = await protocol.basic.putFile(version.toString(v))
     return this.updateLink(Branch.Version, result)
   }
 

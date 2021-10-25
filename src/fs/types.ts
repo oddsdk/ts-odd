@@ -2,7 +2,6 @@ import type { Mtime } from "ipfs-unixfs"
 import { Maybe } from "../common/index.js"
 import { FileContent, CID, AddResult } from "../ipfs/index.js"
 import { Path } from "../path.js"
-import { SemVer } from "./semver.js"
 
 
 // FILE
@@ -70,8 +69,6 @@ export interface UnixTree {
 }
 
 export interface Tree extends UnixTree, Puttable {
-  version: SemVer
-
   createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
   createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
 

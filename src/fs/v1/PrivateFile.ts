@@ -12,6 +12,7 @@ import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
 import * as protocol from "../protocol/index.js"
 import * as namefilter from "../protocol/private/namefilter.js"
+import * as version from "../version.js"
 
 
 type ConstructorParams = {
@@ -57,7 +58,7 @@ export class PrivateFile extends BaseFile {
         bareNameFilter,
         key: contentKey,
         revision: 1,
-        metadata: metadata.empty(true),
+        metadata: metadata.empty(true, version.privateFileVersion),
         content: contentInfo.cid
       }
     })

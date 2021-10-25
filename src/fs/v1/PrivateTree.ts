@@ -15,7 +15,7 @@ import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
 import * as namefilter from "../protocol/private/namefilter.js"
 import * as protocol from "../protocol/index.js"
-import * as semver from "../semver.js"
+import * as version from "../version.js"
 
 
 type ConstructorParams = {
@@ -34,7 +34,7 @@ export default class PrivateTree extends BaseTree {
   mmpt: MMPT
 
   constructor({ mmpt, key, header }: ConstructorParams) {
-    super(semver.latest)
+    super()
 
     this.children = {}
     this.header = header
@@ -57,7 +57,7 @@ export default class PrivateTree extends BaseTree {
       mmpt,
       key,
       header: {
-        metadata: metadata.empty(false),
+        metadata: metadata.empty(false, version.privateDirectoryVersion),
         bareNameFilter,
         revision: 1,
         links: {},

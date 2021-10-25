@@ -3,7 +3,6 @@ import { throttle } from "throttle-debounce"
 import { BaseLinks } from "./types.js"
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
 import { PublishHook, UnixTree, Tree, File } from "./types.js"
-import { SemVer } from "./semver.js"
 import BareTree from "./bare/tree.js"
 import RootTree from "./root/tree.js"
 import PublicTree from "./v1/PublicTree.js"
@@ -42,7 +41,6 @@ type ConstructorParams = {
 type FileSystemOptions = {
   localOnly?: boolean
   permissions?: Permissions
-  version?: SemVer
 }
 
 type NewFileSystemOptions = FileSystemOptions & {

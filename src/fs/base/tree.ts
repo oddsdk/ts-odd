@@ -4,17 +4,10 @@ import * as pathing from "../../path.js"
 import { AddResult, CID, FileContent } from "../../ipfs/index.js"
 import { Maybe } from "../../common/index.js"
 import { Path } from "../../path.js"
-import { SemVer } from "../semver.js"
 import { Tree, File, UnixTree, BaseLinks, UpdateCallback } from "../types.js"
 
 
 abstract class BaseTree implements Tree, UnixTree {
-
-  version: SemVer
-
-  constructor(version: SemVer) {
-    this.version = version
-  }
 
   async put(): Promise<CID> {
     const { cid } = await this.putDetailed()

@@ -6,6 +6,7 @@ import * as check from "../types/check.js"
 import * as history from "./PublicHistory.js"
 import * as metadata from "../metadata.js"
 import * as protocol from "../protocol/index.js"
+import * as version from "../version.js"
 import { isObject, Maybe } from "../../common/index.js"
 
 
@@ -38,7 +39,7 @@ export class PublicFile extends BaseFile {
   static async create(content: FileContent): Promise<PublicFile> {
     return new PublicFile({
       content,
-      header: { metadata: metadata.empty(true) },
+      header: { metadata: metadata.empty(true, version.publicFileVersion) },
       cid: null
     })
   }
