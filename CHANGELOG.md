@@ -2,7 +2,7 @@
 
 ### v0.29.1
 
-- Check the wnfs version field when initialising a filesystem and alert a user about outdated filesystems or outdated apps.
+- Check the wnfs version field when initialising a filesystem and alert users about outdated filesystems or outdated apps.
 
 
 ### v0.29.0

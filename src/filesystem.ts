@@ -70,6 +70,8 @@ export async function loadFileSystem(
     debug.log("📓 DNSLink is newer:", cid)
 
     // TODO: We could test the filesystem version at this DNSLink at this point to figure out whether to continue locally.
+    // However, that needs a plan for reconciling local changes back into the DNSLink, once migrated. And a plan for migrating changes
+    // that are only stored locally.
 
   }
 
