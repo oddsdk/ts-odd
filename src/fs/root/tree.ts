@@ -1,10 +1,11 @@
+import * as uint8arrays from "uint8arrays"
+
 import { AddResult, CID } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Links, Puttable, SimpleLink } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
 import { Maybe } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
-import { SemVer } from "../semver.js"
 
 import * as crypto from "../../crypto/index.js"
 import * as identifiers from "../../common/identifiers.js"
@@ -12,7 +13,7 @@ import * as ipfs from "../../ipfs/index.js"
 import * as link from "../link.js"
 import * as pathing from "../../path.js"
 import * as protocol from "../protocol/index.js"
-import * as semver from "../semver.js"
+import * as versions from "../versions.js"
 import * as storage from "../../storage/index.js"
 import * as ucanPermissions from "../../ucan/permissions.js"
 
@@ -85,7 +86,7 @@ export default class RootTree implements Puttable {
     await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
-    await tree.setVersion(semver.latest)
+    await tree.setVersion(versions.latest)
 
     await Promise.all([
       tree.updatePuttable(Branch.Public, publicTree),
@@ -101,7 +102,6 @@ export default class RootTree implements Puttable {
     { cid, permissions }: { cid: CID; permissions?: Permissions }
   ): Promise<RootTree> {
     const links = await protocol.basic.getLinks(cid)
-    await RootTree.checkVersion(links)
 
     const keys = permissions ? await permissionKeys(permissions) : []
 
@@ -120,7 +120,7 @@ export default class RootTree implements Puttable {
 
     let mmpt, privateNodes
     if (privateCID === null) {
-      mmpt = await MMPT.create()
+      mmpt = MMPT.create()
       privateNodes = {}
     } else {
       mmpt = await MMPT.fromCID(privateCID)
@@ -149,26 +149,6 @@ export default class RootTree implements Puttable {
 
     // Fin
     return tree
-  }
-
-  static async checkVersion(links: Links) {
-    const versionStr = new TextDecoder().decode(await protocol.basic.getFile(links[Branch.Version].cid))
-    
-    if (versionStr !== semver.toString(semver.latest)) {
-      const version = semver.fromString(versionStr)
-      
-      if (version == null || semver.isSmallerThan(semver.latest, version)) {
-        if (globalThis.alert != null) {
-          globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem was upgraded to or created at a newer version. Please let this app's developer know.`)
-        }
-        throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${semver.toString(semver.latest)}). Please upgrade this app's webnative version.`)
-      }
-
-      if (globalThis.alert != null) {
-        globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fisison support.`)
-      }
-      throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${semver.toString(semver.latest)}). The user should migrate their filesystem.`)
-    }
   }
 
   // MUTATIONS
@@ -265,9 +245,14 @@ export default class RootTree implements Puttable {
   // VERSION
   // -------
 
-  async setVersion(version: SemVer): Promise<this> {
-    const result = await protocol.basic.putFile(semver.toString(version))
+  async setVersion(v: versions.SemVer): Promise<this> {
+    const result = await protocol.basic.putFile(versions.toString(v))
     return this.updateLink(Branch.Version, result)
+  }
+
+  async getVersion(): Promise<versions.SemVer | null> {
+    const file = await protocol.basic.getFile(this.links[Branch.Version].cid)
+    return versions.fromString(uint8arrays.toString(file))
   }
 
 }

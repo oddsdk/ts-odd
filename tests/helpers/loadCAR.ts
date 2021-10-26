@@ -15,3 +15,13 @@ export async function loadCAR(filepath: string, ipfs: IPFS): Promise<{ roots: CI
     inStream.close()
   }
 }
+
+export async function loadCARWithRoot(filepath: string, ipfs: IPFS): Promise<CID> {
+  const { roots } = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
+  const [rootCID] = roots
+  
+  if (rootCID == null) {
+    throw new Error(`CAR file at ${filepath} doesn't have a root specified.`)
+  }
+  return rootCID
+}
