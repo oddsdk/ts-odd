@@ -1,18 +1,7 @@
-import { SymmAlg } from "keystore-idb/lib/types.js"
-
 import * as browserCrypto from "../crypto/browser.js"
 import * as browserStorage from "../storage/browser.js"
 
 export const DEFAULT_IMPLEMENTATION: Dependencies = {
-  hash: {
-    sha256: browserCrypto.sha256
-  },
-  aes: {
-    encrypt: browserCrypto.encrypt,
-    decrypt: browserCrypto.decrypt,
-    genKeyStr: browserCrypto.genKeyStr,
-    decryptGCM: browserCrypto.decryptGCM,
-  },
   rsa: {
     verify: browserCrypto.rsaVerify
   },
@@ -42,8 +31,6 @@ export let impl: Dependencies = DEFAULT_IMPLEMENTATION
 
 export const setDependencies = (fns: Partial<Dependencies>): Dependencies => {
   impl = {
-    hash: merge(impl.hash, fns.hash),
-    aes: merge(impl.aes, fns.aes),
     rsa: merge(impl.rsa, fns.rsa),
     ed25519: merge(impl.ed25519, fns.ed25519),
     keystore: merge(impl.keystore, fns.keystore),
@@ -60,15 +47,6 @@ const merge = <T>(first: T, second: Partial<T> | undefined): T => {
 }
 
 export interface Dependencies {
-  hash: {
-    sha256: (bytes: Uint8Array) => Promise<Uint8Array>
-  }
-  aes: {
-    encrypt: (bytes: Uint8Array, key: string, alg: SymmAlg) => Promise<Uint8Array>
-    decrypt: (bytes: Uint8Array, key: string, alg: SymmAlg) => Promise<Uint8Array>
-    genKeyStr: () => Promise<string>
-    decryptGCM: (encrypted: string, keyStr: string, ivStr: string) => Promise<string>
-  }
   rsa: {
     verify: (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => Promise<boolean>
   }

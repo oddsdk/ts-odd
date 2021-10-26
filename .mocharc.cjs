@@ -6,7 +6,7 @@ module.exports = {
         "src/**/*.test.ts",
         "src/*.test.ts",
     ],
-    require: "tests/mocha-hook.ts",
+    require: ["ts-node/register", "tests/mocha-hook.ts"],
     timeout: 120000,
     loader: "ts-node/esm",
 }

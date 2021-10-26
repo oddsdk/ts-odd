@@ -1,14 +1,14 @@
+import type { IPFS } from "ipfs-core"
+
 import * as fs from "fs"
 import * as dagPB from "@ipld/dag-pb"
 import * as Ipfs from "ipfs-core"
-
+import tempDir from "ipfs-utils/src/temp-dir.js"
 import { createRepo } from "ipfs-repo"
 import { BlockCodec } from "multiformats/codecs/interface"
 import { MemoryDatastore } from "datastore-core/memory"
 import { MemoryBlockstore } from "blockstore-core/memory"
 
-import tempDir from "ipfs-utils/src/temp-dir.js"
-import type { IPFS } from "ipfs-core"
 
 
 export async function createInMemoryIPFS(): Promise<IPFS> {
@@ -26,8 +26,28 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
     },
     config: {
       Addresses: {
-        Swarm: []
+        Swarm: ["/ip4/0.0.0.0/tcp/4002"],
+        API: "/ip4/127.0.0.1/tcp/5002",
+        Gateway: "/ip4/127.0.0.1/tcp/9090"
       },
+      Discovery: {
+        MDNS: {
+          Enabled: false
+        },
+        webRTCStar: {
+          Enabled: false
+        }
+      }
+    },
+    libp2p: {
+      peerStore: {
+        persistence: false
+      },
+      config: {
+        peerDiscovery: {
+          autoDial: false
+        }
+      }
     },
     repo: createRepo(
       dir,
@@ -39,18 +59,18 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
 
         return Promise.resolve(lookup[codeOrName])
       }, {
-        root: memoryDs,
-        blocks: memoryBs,
-        keys: memoryDs,
-        datastore: memoryDs,
-        pins: memoryDs
-      }, {
-        repoLock: {
-          lock: async () => ({ close: async () => { return } }),
-          locked: async () => false
-        },
-        autoMigrate: false,
-      }
+      root: memoryDs,
+      blocks: memoryBs,
+      keys: memoryDs,
+      datastore: memoryDs,
+      pins: memoryDs
+    }, {
+      repoLock: {
+        lock: async () => ({ close: async () => { return } }),
+        locked: async () => false
+      },
+      autoMigrate: false,
+    }
     )
   })
 }
