@@ -5,7 +5,7 @@ import * as debug from "./common/debug.js"
 import * as dataRoot from "./data-root.js"
 import * as ucan from "./ucan/internal.js"
 import * as protocol from "./fs/protocol/index.js"
-import * as version from "./fs/version.js"
+import * as versions from "./fs/versions.js"
 
 import { Branch } from "./path.js"
 import { Maybe, authenticatedUsername } from "./common/index.js"
@@ -96,20 +96,20 @@ export async function checkVersion(filesystemCID: CID): Promise<void> {
   const links = await protocol.basic.getLinks(filesystemCID)
   const versionStr = new TextDecoder().decode(await protocol.basic.getFile(links[Branch.Version].cid))
 
-  if (versionStr !== version.toString(version.latest)) {
-    const versionParsed = version.fromString(versionStr)
+  if (versionStr !== versions.toString(versions.latest)) {
+    const versionParsed = versions.fromString(versionStr)
     
-    if (versionParsed == null || version.isSmallerThan(version.latest, versionParsed)) {
+    if (versionParsed == null || versions.isSmallerThan(versions.latest, versionParsed)) {
       if (globalThis.alert != null) {
         globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem was upgraded to or created at a newer version. Please let this app's developer know.`)
       }
-      throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${version.toString(version.latest)}). Please upgrade this app's webnative version.`)
+      throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${versions.toString(versions.latest)}). Please upgrade this app's webnative version.`)
     }
 
     if (globalThis.alert != null) {
       globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fisison support.`)
     }
-    throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${version.toString(version.latest)}). The user should migrate their filesystem.`)
+    throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${versions.toString(versions.latest)}). The user should migrate their filesystem.`)
   }
 }
 
