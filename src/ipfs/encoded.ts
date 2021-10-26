@@ -22,7 +22,7 @@ export const add = async (content: FileContent, key: Maybe<string>): Promise<Add
     return basic.add(encoded)
   }
   
-  const alg = SymmAlg.AES_CTR
+  const alg = SymmAlg.AES_GCM
   const cip = await crypto.aes.encrypt(encoded, key, alg)
   const toAdd = cbor.encode({ alg, cip })
   return basic.add(toAdd)
