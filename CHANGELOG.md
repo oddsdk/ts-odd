@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.30.0-alpha1
+
+- **WNFS BREAKING CHANGE**: Encrypt the filesystem using AES-GCM instead of AES-CTR. Also wrap the filesystem blocks with some information about the encryption algorithm used.
+  Users need to migrate their filesystems to be able to load apps with this webnative version.
+  Apps need to updatee to this webnative version to load migrated/new filesystems.
+
 ### v0.29.1
 
 - Check the wnfs version field when initialising a filesystem and alert users about outdated filesystems or outdated apps.
