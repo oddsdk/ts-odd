@@ -104,15 +104,11 @@ export async function checkVersion(filesystemCID: CID): Promise<void> {
     const userMessages = setup.userMessages({})
     
     if (versionParsed == null || versions.isSmallerThan(versions.latest, versionParsed)) {
-      if (globalThis.alert != null) {
-        globalThis.alert(userMessages.versionMismatch.newer(versionStr))
-      }
+      await userMessages.versionMismatch.newer(versionStr)
       throw new Error(`Incompatible filesystem version. Version: ${versionStr} Supported: ${versions.toString(versions.latest)} Please upgrade this app's webnative version.`)
     }
 
-    if (globalThis.alert != null) {
-      globalThis.alert(userMessages.versionMismatch.older(versionStr))
-    }
+    await userMessages.versionMismatch.older(versionStr)
     throw new Error(`Incompatible filesystem version. Version: ${versionStr} Supported: (${versions.toString(versions.latest)} The user should migrate their filesystem.`)
   }
 }

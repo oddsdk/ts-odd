@@ -7,8 +7,8 @@ export type Endpoints = {
 
 export type UserMessages = {
   versionMismatch: {
-    newer(version: string): string
-    older(version: string): string
+    newer(version: string): Promise<void>
+    older(version: string): Promise<void>
   }
 }
 
@@ -35,10 +35,14 @@ export const setup: Setup = {
 
   userMessages: {
     versionMismatch: {
-      newer: (): string => `Sorry, we can't sync your filesystem with this app. This app only understands older versions of filesystems. Please try to hard refresh this site or let this app's developer know. Feel free to contact Fission support: support@fission.codes`,
-      older: (): string => `Sorry, we can't sync your filesystem with this app. Your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fission support: support@fission.codes`,
+      newer: async () => alertIfPossible(`Sorry, we can't sync your filesystem with this app. This app only understands older versions of filesystems. Please try to hard refresh this site or let this app's developer know. Feel free to contact Fission support: support@fission.codes`),
+      older: async () => alertIfPossible(`Sorry, we can't sync your filesystem with this app. Your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fission support: support@fission.codes`),
     }
   },
 
   shouldPin: false,
+}
+
+function alertIfPossible(str: string) {
+  if (globalThis.alert != null) globalThis.alert(str)
 }
