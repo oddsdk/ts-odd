@@ -6,6 +6,7 @@ import * as dataRoot from "./data-root.js"
 import * as ucan from "./ucan/internal.js"
 import * as protocol from "./fs/protocol/index.js"
 import * as versions from "./fs/versions.js"
+import * as setup from "./setup.js"
 
 import { Branch } from "./path.js"
 import { Maybe, authenticatedUsername } from "./common/index.js"
@@ -100,18 +101,15 @@ export async function checkVersion(filesystemCID: CID): Promise<void> {
 
   if (versionStr !== versions.toString(versions.latest)) {
     const versionParsed = versions.fromString(versionStr)
+    const userMessages = setup.userMessages({})
     
     if (versionParsed == null || versions.isSmallerThan(versions.latest, versionParsed)) {
-      if (globalThis.alert != null) {
-        globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem was upgraded to or created at a newer version. Please let this app's developer know.`)
-      }
-      throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${versions.toString(versions.latest)}). Please upgrade this app's webnative version.`)
+      await userMessages.versionMismatch.newer(versionStr)
+      throw new Error(`Incompatible filesystem version. Version: ${versionStr} Supported: ${versions.toString(versions.latest)} Please upgrade this app's webnative version.`)
     }
 
-    if (globalThis.alert != null) {
-      globalThis.alert(`Sorry, we can't sync your filesystem with this app, because your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fisison support.`)
-    }
-    throw new Error(`User filesystem version (${versionStr}) doesn't match the supported version (${versions.toString(versions.latest)}). The user should migrate their filesystem.`)
+    await userMessages.versionMismatch.older(versionStr)
+    throw new Error(`Incompatible filesystem version. Version: ${versionStr} Supported: (${versions.toString(versions.latest)} The user should migrate their filesystem.`)
   }
 }
 

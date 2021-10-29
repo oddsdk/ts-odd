@@ -1,4 +1,4 @@
-import { Endpoints, setup as internalSetup } from "./setup/internal.js"
+import { Endpoints, setup as internalSetup, UserMessages } from "./setup/internal.js"
 
 
 /**
@@ -40,5 +40,19 @@ export function endpoints(e: Partial<Endpoints>): Endpoints {
   internalSetup.endpoints = { ...internalSetup.endpoints, ...e }
   return { ...internalSetup.endpoints }
 }
+
+/**
+ * Configure messages that webnative sends to users.
+ * 
+ * `versionMismatch.newer` is shown when webnative detects
+ *  that the user's filesystem is newer than what this version of webnative supports.
+ * `versionMismatch.older` is shown when webnative detects that the user's
+ *  filesystem is older than what this version of webnative supports.
+ */
+export function userMessages(m: Partial<UserMessages>): UserMessages {
+  internalSetup.userMessages = { ...internalSetup.userMessages, ...m }
+  return { ...internalSetup.userMessages }
+}
+
 
 export { setDependencies } from "./setup/dependencies.js"
