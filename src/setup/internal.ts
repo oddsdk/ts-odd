@@ -1,6 +1,7 @@
 export type Endpoints = {
   api: string
   apiVersion: string
+  apiUrl: string | null
   lobby: string
   user: string
 }
@@ -15,6 +16,7 @@ export type UserMessages = {
 type Setup = {
   debug: boolean
   endpoints: Endpoints
+  getApiEndpoint: () => string
   userMessages: UserMessages
   shouldPin: boolean
 }
@@ -29,8 +31,16 @@ export const setup: Setup = {
   endpoints: {
     api: "https://runfission.com",
     apiVersion: "v2",
+    apiUrl: null,
     lobby: "https://auth.fission.codes",
     user: "fission.name"
+  },
+
+  getApiEndpoint: () =>  {
+    if (setup.endpoints.apiUrl) {
+      return setup.endpoints.apiUrl
+    }
+    return `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
   },
 
   userMessages: {
