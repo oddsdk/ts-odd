@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.29.2
+
+- Make webnative work across more environments and bundlers (upgrade one-webcrypto to 1.0.3)
+
 ### v0.29.1
 
 - Check the wnfs version field when initialising a filesystem and alert users about outdated filesystems or outdated apps.
