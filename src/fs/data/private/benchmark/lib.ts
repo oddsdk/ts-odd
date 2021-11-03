@@ -1,8 +1,9 @@
 import { performance } from "perf_hooks"
 import * as fc from "fast-check"
 import * as arrayBloom from "fission-bloom-filters"
-import * as bloom from "./bloomfilter.js"
-import { webcrypto } from "one-webcrypto"
+import * as bloom from "../bloomfilter.js"
+import { CountFalsePositivesAt } from "./falsepositive.js"
+import { spawn, Thread, Worker } from "threads"
 
 interface BloomFilterImpl<T> {
   create(): T
@@ -112,69 +113,42 @@ export function runBenchmark(amount: number, impl = byteArrayBasedImpl): void {
 }
 
 
-export function checkFprsTill(prefill: { min?: number; max: number }, count: number, params: bloom.BloomParameters): number[] {
+export async function* checkFprsTill(
+  prefill: { min?: number; max: number },
+  countPerWorker: number,
+  workers: number,
+  params: bloom.BloomParameters
+): AsyncGenerator<{ prefill: number; timeInMs: number; fpCount: number }, void> {
+  const count = countPerWorker * workers
   console.log(`Parameters:`)
   console.log(`m = ${params.mBytes * 8}`)
   console.log(`k = ${params.kHashes}`)
   console.log(`Checking membership of ${count} elements known to not have been added to the bloom filter before.`)
+  console.log(`Running with ${workers} workers.`)
+
+  const countFalsePositivesAts = await Promise.all(Array.from({ length: workers }).map(
+    () => spawn<CountFalsePositivesAt>(new Worker("./falsepositive.js"))
+  ))
+
   const prefills = Array.from({ length: (prefill.max - (prefill.min || 0) + 1) }, (_, i) => i + (prefill.min || 1))
-  return prefills.map(prefill => {
+  for (const prefill of prefills) {
     const before = performance.now()
-    const fpCount = fprAt(prefill, count, params)
+
+    const fpCounts = await Promise.all(countFalsePositivesAts.map(run => run(prefill, countPerWorker, params)))
+    const fpCount = fpCounts.reduce((a, b) => a + b)
+
     const timeInMs = performance.now() - before
     console.log(`Prefill: \t${prefill} False positive count:\t${fpCount} expected: ${(expectedFPR(prefill, params) * count).toFixed(8)} (${(timeInMs / 1000).toFixed(3)}s)`)
-    return fpCount
-  })
+    yield { prefill, timeInMs, fpCount }
+  }
+
+  for (const thread of countFalsePositivesAts) {
+    await Thread.terminate(thread)
+  }
 }
 
 export function expectedFPR(n: number, params: bloom.BloomParameters): number {
   const k = params.kHashes
   const m = params.mBytes * 8
   return Math.pow(1 - Math.exp(-k / (m / n)), k)
-}
-
-export function fprAt(prefill: number, count: number, params: bloom.BloomParameters): number {
-  const { filter, added } = prepareFilter(prefill, params)
-  return countFalsePositives(filter, added, params, count)
-}
-
-function prepareFilter(prefill: number, params: bloom.BloomParameters): { filter: bloom.BloomFilter; added: Uint8Array[] } {
-  const prefillBytesPerElem = 4
-  
-  const filter = bloom.empty(params)
-  const added = []
-  for (let i = 0; i < prefill; i++) {
-    const rand = webcrypto.getRandomValues(new Uint8Array(prefillBytesPerElem))
-    bloom.add(rand, filter, params)
-    added.push(rand)
-  }
-
-  return { filter, added }
-}
-
-function countFalsePositives(filter: bloom.BloomFilter, added: Uint8Array[], params: bloom.BloomParameters, count: number) {
-  const addedInts = added.map(bytes => new DataView(bytes.buffer).getUint32(0)).sort((a, b) => a - b)
-
-  let countRemaining = count
-  let falsePositives = 0
-  let i = 0
-  let addedIntsIndex = 0
-
-  while (countRemaining > 0) {
-    if (i === addedInts[addedIntsIndex]) {
-      addedIntsIndex++
-      continue
-    }
-
-    countRemaining--
-    const iArr = new Uint8Array(4)
-    new DataView(iArr.buffer).setUint32(0, i)
-    if (bloom.has(iArr, filter, params)) {
-      falsePositives++
-    }
-
-    i++
-  }
-  
-  return falsePositives
 }
