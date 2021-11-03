@@ -1,4 +1,6 @@
-import xxhash from "js-xxhash"
+// @ts-ignore
+import * as keccak from "sha3-wasm"
+import * as uint8arrays from "uint8arrays"
 
 export type BloomFilter = Uint8Array
 
@@ -44,7 +46,8 @@ function getBit(filter: BloomFilter, bitIndex: number): boolean {
 function* indicesFor(element: Uint8Array, parameters: BloomParameters): Generator<number, void, unknown> {
   const m = parameters.mBytes * 8
   for (let i = 0; i < parameters.kHashes; i++) {
-    yield xxhash.xxHash32(element, i) % m
+    const hash = keccak.sha3_256().update(uint8arrays.concat([element, new Uint8Array([i])])).digest()
+    yield (hash[0] + (hash[1] << 8)) % m
   }
 }
 
