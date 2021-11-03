@@ -119,6 +119,7 @@ export async function* checkFprsTill(
   workers: number,
   params: bloom.BloomParameters
 ): AsyncGenerator<{ prefill: number; timeInMs: number; fpCount: number; bitCounts: number[] }, void> {
+  const prefillMin = prefill.min || 1
   const count = countPerWorker * workers
   console.log(`Parameters:`)
   console.log(`m = ${params.mBytes * 8}`)
@@ -130,7 +131,7 @@ export async function* checkFprsTill(
     () => spawn<CountFalsePositivesAt>(new Worker("./falsepositive.js"))
   ))
 
-  const prefills = Array.from({ length: (prefill.max - (prefill.min || 0) + 1) }, (_, i) => i + (prefill.min || 1))
+  const prefills = Array.from({ length: (prefill.max - prefillMin + 1) }, (_, i) => prefill.max - i)
   for (const prefill of prefills) {
     const before = performance.now()
 

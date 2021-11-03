@@ -3994,6 +3994,11 @@ nan@^2.14.2:
   resolved "https://registry.npmjs.org/nan/-/nan-2.14.2.tgz"
   integrity sha512-M2ufzIiINKCuDfBSAUr1vWQ+vuVcA9kqx8JJUsbQi6yf1uGRyb7HfpdfUr5qLXf3B/t8dPvcjhKMmlfnP47EzQ==
 
+nanoassert@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/nanoassert/-/nanoassert-2.0.0.tgz#a05f86de6c7a51618038a620f88878ed1e490c09"
+  integrity sha512-7vO7n28+aYO4J+8w96AzhmU8G+Y/xpPDJz/se19ICsqj/momRbb9mh9ZUtkoJ5X3nTnPdhEJyc0qnM6yAsHBaA==
+
 nanoid@3.1.23, nanoid@^3.0.2, nanoid@^3.1.20:
   version "3.1.23"
   resolved "https://registry.npmjs.org/nanoid/-/nanoid-3.1.23.tgz"
@@ -4788,6 +4793,13 @@ set-delayed-interval@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/set-delayed-interval/-/set-delayed-interval-1.0.0.tgz#1f7c065780a365f10250f8a80e2be10175ea0388"
   integrity sha512-29fhAwuZlLcuBnW/EwxvLcg2D3ELX+VBDNhnavs3YYkab72qmrcSeQNVdzl8EcPPahGQXhBM6MKdPLCQGMDakw==
+
+sha3-wasm@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/sha3-wasm/-/sha3-wasm-1.0.0.tgz#ceabc2533d9b82043a3381135721ed49f5b09d43"
+  integrity sha512-yX0ULD3VD8U80YlM+6FapExy9uzYBpEOZzXRHwdhJn/+3PBbKhRHiNhknBqmMkW110zglXrJoZ52gtRbDGK4tg==
+  dependencies:
+    nanoassert "^2.0.0"
 
 shebang-command@^2.0.0:
   version "2.0.0"

@@ -4,4 +4,6 @@ import drain from "it-drain"
 
 const count = 1_000_000_000
 const workers = 8
-await drain(checkFprsTill({ min: 27, max: 47 }, count / workers, workers, bloom.wnfsParameters))
+const params = bloom.wnfsParameters
+// const params = { mBytes: 85, kHashes: 10 }
+await drain(checkFprsTill({ min: 1, max: 47 }, count / workers, workers, params))
