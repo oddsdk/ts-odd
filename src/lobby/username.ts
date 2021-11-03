@@ -8,7 +8,7 @@ import { USERNAME_BLOCKLIST } from "./blocklist.js"
 export async function isUsernameAvailable(
   username: string
 ): Promise<boolean> {
-  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
+  const apiEndpoint = setup.getApiEndpoint()
 
   const resp = await fetch(`${apiEndpoint}/user/data/${username}`)
   return !resp.ok

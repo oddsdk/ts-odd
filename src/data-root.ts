@@ -5,7 +5,6 @@ import * as dns from "./dns/index.js"
 import * as ucan from "./ucan/index.js"
 import { CID } from "./ipfs/index.js"
 import { api } from "./common/index.js"
-import { Ucan } from "./ucan/index.js"
 import { setup } from "./setup/internal.js"
 
 /**
@@ -44,7 +43,7 @@ export async function lookup(
 export async function lookupOnFisson(
   username: string
 ): Promise<CID | null> {
-  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
+  const apiEndpoint = setup.getApiEndpoint()
 
   try {
     const resp = await fetch(
@@ -74,7 +73,7 @@ export async function update(
   cid: CID | string,
   proof: string
 ): Promise<{ success: boolean }> {
-  const apiEndpoint = `${setup.endpoints.api}/${setup.endpoints.apiVersion}/api`
+  const apiEndpoint = setup.getApiEndpoint()
 
   // Debug
   debug.log("🌊 Updating your DNSLink:", cid)
