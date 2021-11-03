@@ -118,7 +118,7 @@ export async function* checkFprsTill(
   countPerWorker: number,
   workers: number,
   params: bloom.BloomParameters
-): AsyncGenerator<{ prefill: number; timeInMs: number; fpCount: number }, void> {
+): AsyncGenerator<{ prefill: number; timeInMs: number; fpCount: number; bitCounts: number[] }, void> {
   const count = countPerWorker * workers
   console.log(`Parameters:`)
   console.log(`m = ${params.mBytes * 8}`)
@@ -134,12 +134,13 @@ export async function* checkFprsTill(
   for (const prefill of prefills) {
     const before = performance.now()
 
-    const fpCounts = await Promise.all(countFalsePositivesAts.map(run => run(prefill, countPerWorker, params)))
-    const fpCount = fpCounts.reduce((a, b) => a + b)
+    const runs = await Promise.all(countFalsePositivesAts.map(run => run(prefill, countPerWorker, params)))
+    const fpCount = runs.map(r => r.falsePositiveCount).reduce((a, b) => a + b)
+    const bitCounts = runs.map(r => r.bitCount)
 
     const timeInMs = performance.now() - before
-    console.log(`Prefill: \t${prefill} False positive count:\t${fpCount} expected: ${(expectedFPR(prefill, params) * count).toFixed(8)} (${(timeInMs / 1000).toFixed(3)}s)`)
-    yield { prefill, timeInMs, fpCount }
+    console.log(`Prefill: \t${prefill} False positive count:\t${fpCount} expected: ${(expectedFPR(prefill, params) * count).toFixed(8)} bitcounts: ${bitCounts} (${(timeInMs / 1000).toFixed(3)}s)`)
+    yield { prefill, timeInMs, fpCount, bitCounts }
   }
 
   for (const thread of countFalsePositivesAts) {

@@ -7,9 +7,12 @@ export type CountFalsePositivesAt = typeof countFalsePositivesAt
 
 expose(countFalsePositivesAt)
 
-export function countFalsePositivesAt(prefill: number, count: number, params: bloom.BloomParameters): number {
+export function countFalsePositivesAt(prefill: number, count: number, params: bloom.BloomParameters): { falsePositiveCount: number; bitCount: number } {
   const { filter, added } = prepareFilter(prefill, params)
-  return countFalsePositives(filter, added, params, count)
+  return {
+    falsePositiveCount: countFalsePositives(filter, added, params, count),
+    bitCount: bloom.countOnes(filter)
+  }
 }
 
 function prepareFilter(prefill: number, params: bloom.BloomParameters): { filter: bloom.BloomFilter; added: Uint8Array[] } {
