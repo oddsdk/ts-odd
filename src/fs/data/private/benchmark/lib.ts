@@ -112,17 +112,14 @@ export function runBenchmark(amount: number, impl = byteArrayBasedImpl): void {
   console.log("time (ms):", performance.now() - before)
 }
 
+export type TestCase = { prefill: number } & bloom.BloomParameters
 
-export async function* checkFprsTill(
-  prefills: number[],
+export async function* checkFalsePositivesAt(
+  cases: TestCase[],
   countPerWorker: number,
   workers: number,
-  params: bloom.BloomParameters
-): AsyncGenerator<{ prefill: number; timeInMs: number; fpCount: number; bitCounts: number[] }, void> {
+): AsyncGenerator<{ testCase: TestCase; timeInMs: number; fpCount: number; bitCounts: number[] }, void> {
   const count = countPerWorker * workers
-  console.log(`Parameters:`)
-  console.log(`m = ${params.mBytes * 8}`)
-  console.log(`k = ${params.kHashes}`)
   console.log(`Checking membership of ${count} elements known to not have been added to the bloom filter before.`)
   console.log(`Running with ${workers} workers.`)
 
@@ -130,16 +127,16 @@ export async function* checkFprsTill(
     () => spawn<CountFalsePositivesAt>(new Worker("./falsepositive.js"))
   ))
 
-  for (const prefill of prefills) {
+  for (const testCase of cases) {
     const before = performance.now()
 
-    const runs = await Promise.all(countFalsePositivesAts.map(run => run(prefill, countPerWorker, params)))
+    const runs = await Promise.all(countFalsePositivesAts.map(run => run(testCase.prefill, countPerWorker, testCase)))
     const fpCount = runs.map(r => r.falsePositiveCount).reduce((a, b) => a + b)
     const bitCounts = runs.map(r => r.bitCount)
 
     const timeInMs = performance.now() - before
-    console.log(`Prefill: \t${prefill} False positive count:\t${fpCount} expected: ${(expectedFPR(prefill, params) * count).toFixed(8)} bitcounts: ${bitCounts} (${(timeInMs / 1000).toFixed(3)}s)`)
-    yield { prefill, timeInMs, fpCount, bitCounts }
+    console.log(`Params: n=${testCase.prefill} k=${testCase.kHashes} m=${testCase.mBytes*8}\tFalse positive count:\t${fpCount} expected: ${(expectedFPR(testCase) * count).toFixed(8)} bitcounts: ${bitCounts} (${(timeInMs / 1000).toFixed(3)}s)`)
+    yield { testCase, timeInMs, fpCount, bitCounts }
   }
 
   for (const thread of countFalsePositivesAts) {
@@ -147,8 +144,9 @@ export async function* checkFprsTill(
   }
 }
 
-export function expectedFPR(n: number, params: bloom.BloomParameters): number {
-  const k = params.kHashes
-  const m = params.mBytes * 8
+export function expectedFPR(testCase: TestCase): number {
+  const k = testCase.kHashes
+  const m = testCase.mBytes * 8
+  const n = testCase.prefill
   return Math.pow(1 - Math.exp(-k / (m / n)), k)
 }
