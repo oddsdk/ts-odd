@@ -1,6 +1,5 @@
 // @ts-ignore
-import * as keccak from "sha3-wasm"
-import * as uint8arrays from "uint8arrays"
+import * as blake3 from "blake3"
 
 export type BloomFilter = Uint8Array
 
@@ -15,6 +14,9 @@ export const wnfsParameters: BloomParameters = {
 }
 
 export function empty(parameters: BloomParameters): BloomFilter {
+  if (parameters.mBytes <= 0 || parameters.mBytes > 2**16/8) {
+    throw new Error(`Unsupported bloom filter parameter size: ${parameters.mBytes * 8} bits. Needs to be > 0 and < ${2**16}`)
+  }
   return new Uint8Array(Array.from(new Array(parameters.mBytes)))
 }
 
@@ -44,10 +46,13 @@ function getBit(filter: BloomFilter, bitIndex: number): boolean {
 }
 
 function* indicesFor(element: Uint8Array, parameters: BloomParameters): Generator<number, void, unknown> {
+  const digestBytes = parameters.kHashes * 2
   const m = parameters.mBytes * 8
+
+  const hash = blake3.hash(element, { length: digestBytes }) as Buffer
+
   for (let i = 0; i < parameters.kHashes; i++) {
-    const hash = keccak.sha3_256().update(uint8arrays.concat([element, new Uint8Array([i])])).digest()
-    yield (hash[0] + (hash[1] << 8)) % m
+    yield (hash[2 * i] + (hash[2 * i + 1] << 8)) % m
   }
 }
 

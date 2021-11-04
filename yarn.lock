@@ -839,6 +839,11 @@ bl@^5.0.0:
     inherits "^2.0.4"
     readable-stream "^3.4.0"
 
+blake3@^2.1.4:
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/blake3/-/blake3-2.1.4.tgz#78117bc9e80941097fdf7d03e897a9ee595ecd62"
+  integrity sha512-70hmx0lPd6zmtNwxPT4/1P0pqaEUlTJ0noUBvCXPLfMpN0o8PPaK3q7ZlpRIyhrqcXxeMAJSowNm/L9oi/x1XA==
+
 blakejs@^1.1.0:
   version "1.1.0"
   resolved "https://registry.npmjs.org/blakejs/-/blakejs-1.1.0.tgz"
