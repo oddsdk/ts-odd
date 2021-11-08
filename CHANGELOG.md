@@ -2,6 +2,7 @@
 
 ### v0.29.2
 
+- Make webnative work across more environments and bundlers (upgrade one-webcrypto to 1.0.3)
 - Make full API URL configurable (not just API host).
 - Fix version checking failing on old filesystems which are missing a `version` tag.
 
