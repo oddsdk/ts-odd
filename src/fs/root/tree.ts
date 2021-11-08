@@ -147,6 +147,11 @@ export default class RootTree implements Puttable {
       privateNodes
     })
 
+    if (links[Branch.Version] == null) {
+      // Old versions of WNFS didn't write a root version link
+      await tree.setVersion(versions.latest)
+    }
+
     // Fin
     return tree
   }
