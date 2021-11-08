@@ -3,6 +3,7 @@
 ### v0.29.2
 
 - Make full API URL configurable (not just API host).
+- Fix version checking failing on old filesystems which are missing a `version` tag.
 
 ### v0.29.1
 
