@@ -93,7 +93,7 @@ export function empty(): PrivateStoreLookup {
 }
 
 
-export function createInMemoryUnencrypted(base: PrivateStoreLookup): PrivateStore {
+export function createInMemoryUnencrypted(base: PrivateStoreLookup): PrivateStore & { getMap: () => Map<string, { ref: PrivateRef; block: Uint8Array }> } {
   const memoryMap = new Map<string, { ref: PrivateRef; block: Uint8Array }>()
   const keyForRef = (ref: PrivateRef) => uint8arrays.toString(ref.namefilter, "base64url")
   return {
@@ -115,6 +115,10 @@ export function createInMemoryUnencrypted(base: PrivateStoreLookup): PrivateStor
         throw new Error("Can't overwrite key! Append-only!")
       }
       memoryMap.set(key, { ref, block })
+    },
+
+    getMap(): typeof memoryMap {
+      return memoryMap
     }
 
   }

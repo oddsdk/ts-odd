@@ -97,7 +97,7 @@ describe("the private node module", () => {
     const iamap = await store.getBackingIAMap()
   })
 
-  it("runs filesystem operations as modeled", async function () {
+  it.only("runs filesystem operations as modeled", async function () {
     const store = privateStore.createInMemoryUnencrypted(privateStore.empty())
     const ratchetStore = createMemoryRatchetStore()
     const ctx = {
@@ -107,16 +107,25 @@ describe("the private node module", () => {
       ratchetDisparityBudget: () => 1_000_000
     }
 
+    // @ts-ignore
+    let fs: privateNode.PrivateDirectory
+    // @ts-ignore
+    let fsOps: FileSystemOperation[]
+
     await fc.assert(
       fc.asyncProperty(
         arbitraryFileSystemUsage({ numOperations: 10 }),
         async ({ state: state, ops }) => {
-          let fs = await privateNode.newDirectory(namefilter.empty(), ctx)
+          fsOps = ops
+
+          fs = await privateNode.newDirectory(namefilter.empty(), ctx)
 
           // run modeled operations on the 'real' system
           let i = 1
           for (const operation of ops) {
             fs = await interpretOperation(fs, operation, { ...ctx, now: i })
+            const ref = await privateNode.storeNodeAndAdvance(fs, ctx)
+            fs = await privateNode.loadNode(ref, ctx) as any
             i++
           }
 
@@ -124,8 +133,33 @@ describe("the private node module", () => {
           const result = await directoryToModel(fs, ctx)
           expect(result).toEqual(state)
         }
-      )
+      ), { numRuns: 1 }
     )
+
+    const namefilters = Array.from(store.getMap().keys()).map(namefilterStr => uint8arrays.fromString(namefilterStr, "base64url"))
+    const binaryAnd = (a: Uint8Array, b: Uint8Array) => {
+      const l = Math.min(a.length, b.length)
+      const result = new Uint8Array(l)
+      for (let i = 0; i < l; i++) {
+        result[i] = a[i] & b[i]
+      }
+      return result
+    }
+    const encoding = "hex"
+    const reducedNamefilter = namefilters.reduce(binaryAnd)
+    const reducedNamefilterEncoded = uint8arrays.toString(reducedNamefilter, encoding)
+    // @ts-ignore
+    const bareNameEncoded = uint8arrays.toString(fs.bareName, encoding)
+
+    console.log("ran these filesystem operations:")
+    // @ts-ignore
+    fsOps.forEach(op => console.log(` - ${JSON.stringify(op)}`))
+    console.log("resulting namefilters:")
+    namefilters.forEach(filter => console.log(` - ${uint8arrays.toString(filter, encoding)}`))
+    console.log("binary and of all above:\n", reducedNamefilterEncoded)
+    console.log("bare namefilter of root directory:\n", bareNameEncoded)
+    console.log("Are they the same?", bareNameEncoded === reducedNamefilterEncoded)
+    
   })
 
   it("runs filesystem operations as modeled on ipfs", async function () {
