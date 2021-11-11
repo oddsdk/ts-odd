@@ -1,7 +1,6 @@
 import * as check from "../types/check.js"
 import * as protocol from "../protocol/index.js"
 import * as link from "../link.js"
-import * as semver from "../semver.js"
 
 import { AddResult, CID, FileContent } from "../../ipfs/index.js"
 import { Links, BaseLinks, Tree, File, Puttable, UpdateCallback } from "../types.js"
@@ -18,7 +17,7 @@ class BareTree extends BaseTree {
   children: { [name: string]: Tree | File }
 
   constructor(links: Links) {
-    super(semver.v0)
+    super()
     this.links = links
     this.children = {}
   }

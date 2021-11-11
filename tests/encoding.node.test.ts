@@ -2,7 +2,8 @@ import expect from "expect"
 import * as cbor from "cborg"
 import * as aes from "keystore-idb/aes/index.js"
 import { SymmKeyLength } from "keystore-idb/types.js"
-import { NODE_IMPLEMENTATION } from "../src/setup/node.js"
+
+import * as crypto from "../src/crypto/index.js"
 
 
 describe("cbor encoding in node", () => {
@@ -15,8 +16,8 @@ describe("cbor encoding in node", () => {
             hello: "world!"
         }
         const encoded = cbor.encode(message)
-        const cipher = await NODE_IMPLEMENTATION.aes.encrypt(encoded, keyStr)
-        const decipher = await NODE_IMPLEMENTATION.aes.decrypt(cipher, keyStr)
+        const cipher = await crypto.aes.encrypt(encoded, keyStr)
+        const decipher = await crypto.aes.decrypt(cipher, keyStr)
         const decoded = cbor.decode(decipher)
 
         expect(decoded).toEqual(message)

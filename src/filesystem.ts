@@ -4,10 +4,14 @@ import * as cidLog from "./common/cid-log.js"
 import * as debug from "./common/debug.js"
 import * as dataRoot from "./data-root.js"
 import * as ucan from "./ucan/internal.js"
+import * as protocol from "./fs/protocol/index.js"
+import * as versions from "./fs/versions.js"
+import * as setup from "./setup.js"
 
 import { Branch } from "./path.js"
 import { Maybe, authenticatedUsername } from "./common/index.js"
 import { Permissions } from "./ucan/permissions.js"
+import { CID } from "./ipfs/types.js"
 
 
 /**
@@ -66,13 +70,20 @@ export async function loadFileSystem(
     await cidLog.add(cid)
     debug.log("📓 DNSLink is newer:", cid)
 
+    // TODO: We could test the filesystem version at this DNSLink at this point to figure out whether to continue locally.
+    // However, that needs a plan for reconciling local changes back into the DNSLink, once migrated. And a plan for migrating changes
+    // that are only stored locally.
+
   }
 
   // If a file system exists, load it and return it
   const p = permissions || undefined
 
-  fs = cid ? await FileSystem.fromCID(cid, { permissions: p }) : null
-  if (fs) return fs
+  if (cid != null) {
+    await checkVersion(cid)
+    fs = await FileSystem.fromCID(cid, { permissions: p })
+    if (fs != null) return fs
+  }
 
   // Otherwise make a new one
   if (!rootKey) throw new Error("Can't make new filesystem without a root AES key")
@@ -82,6 +93,28 @@ export async function loadFileSystem(
   // Fin
   return fs
 }
+
+
+export async function checkVersion(filesystemCID: CID): Promise<void> {
+  const links = await protocol.basic.getLinks(filesystemCID)
+  // if there's no version link, we assume it's from a 1.0.0-comatible version (from before ~ November 2020)
+  const versionStr = links[Branch.Version] == null ? "1.0.0" : new TextDecoder().decode(await protocol.basic.getFile(links[Branch.Version].cid))
+
+  if (versionStr !== versions.toString(versions.latest)) {
+    const versionParsed = versions.fromString(versionStr)
+    const userMessages = setup.userMessages({})
+
+    if (versionParsed == null || versions.isSmallerThan(versions.latest, versionParsed)) {
+      await userMessages.versionMismatch.newer(versionStr)
+      throw new Error(`Incompatible filesystem version. Version: ${versionStr} Supported: ${versions.toString(versions.latest)} Please upgrade this app's webnative version.`)
+    }
+
+    await userMessages.versionMismatch.older(versionStr)
+    throw new Error(`Incompatible filesystem version. Version: ${versionStr} Supported: (${versions.toString(versions.latest)} The user should migrate their filesystem.`)
+  }
+}
+
+
 
 
 

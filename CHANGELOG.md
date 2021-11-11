@@ -1,5 +1,17 @@
 # Changelog
 
+### v0.29.2
+
+- Make webnative work across more environments and bundlers (upgrade one-webcrypto to 1.0.3)
+- Make full API URL configurable (not just API host).
+- Fix version checking failing on old filesystems which are missing a `version` tag.
+
+### v0.29.1
+
+- Check the wnfs version field when initialising a filesystem and alert users about outdated filesystems or outdated apps.
+- Make version mismatch errors configurable through `setup.userMessages(...)`.
+
+
 ### v0.29.0
 
 - Upgrade js-ipfs libraries to the versions corresponding to the 0.58 release.

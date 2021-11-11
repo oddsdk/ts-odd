@@ -18,7 +18,12 @@ const didCache: {
  * This function caches the DID for 3 hours.
  */
 export async function did(): Promise<string> {
-  const host = setup.endpoints.api.replace(/^https?:\/\//, "").replace(/\/$/, "")
+  let host
+  try {
+    host = new URL(setup.getApiEndpoint()).host
+  } catch (e) {
+    throw new Error("Unable to parse API Endpoint")
+  }
   const now = Date.now() // in milliseconds
 
   if (

@@ -1,41 +1,23 @@
 import expect from "expect"
 
-import { loadCAR } from "../helpers/loadCAR.js"
+import { loadCARWithRoot } from "../helpers/loadCAR.js"
 
 import "../../src/setup/node.js"
 import FileSystem from "../../src/fs/filesystem.js"
 import { File } from "../../src/fs/types.js"
 import * as path from "../../src/path.js"
-import * as identifiers from "../../src/common/identifiers.js"
-import * as crypto from "../../src/crypto/index.js"
+
 import { ipfsFromContext } from "../mocha-hook.js"
+import { loadFilesystem } from "../helpers/filesystem.js"
 
 
 describe("the filesystem", () => {
 
   it("can load filesystem fixtures", async function () {
     const ipfs = ipfsFromContext(this)
-    const { roots } = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
-    const [rootCID] = roots
-    expect(rootCID).toBeDefined()
-
+    const rootCID = await loadCARWithRoot("tests/fixtures/webnative-integration-test.car", ipfs)
     const readKey = "pJW/xgBGck9/ZXwQHNPhV3zSuqGlUpXiChxwigwvUws="
-    await crypto.keystore.importSymmKey(readKey, await identifiers.readKey({ path: path.directory("private") }))
-
-    const fs = await FileSystem.fromCID(rootCID.toString(), {
-      localOnly: true,
-      permissions: {
-        fs: {
-          public: [path.root()],
-          private: [path.root()]
-        }
-      }
-    })
-
-    if (fs == null) {
-      expect(fs).not.toBe(null)
-      return
-    }
+    const fs = await loadFilesystem(rootCID.toString(), readKey)
 
     let files = await listFiles(fs, path.directory("public"))
     files = files.concat(await listFiles(fs, path.directory("private")))
