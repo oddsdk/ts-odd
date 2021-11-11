@@ -8,7 +8,7 @@ import * as namefilter from "./namefilter.js"
 import * as ratchet from "./spiralratchet.js"
 import * as bloom from "./bloomfilter.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
-import { arbitraryFileSystemUsage, FileSystemModel, FileSystemOperation, FileSystemUsage, initialFileSystemModel, runOperation } from "../../../../tests/helpers/fileSystemModel.js"
+import { arbitraryFileSystemUsage, FileSystemModel, FileSystemOperation, initialFileSystemModel, runOperation } from "../../../../tests/helpers/fileSystemModel.js"
 import { Timestamp } from "../common.js"
 
 
@@ -107,18 +107,11 @@ describe("the private node module", () => {
       ratchetDisparityBudget: () => 1_000_000
     }
 
-    // @ts-ignore
-    let fs: privateNode.PrivateDirectory = null
-    // @ts-ignore
-    let model: FileSystemUsage = null
-
     await fc.assert(
       fc.asyncProperty(
         arbitraryFileSystemUsage({ numOperations: 10 }),
         async ({ state, ops }) => {
-          model = { state, ops }
-
-          fs = await privateNode.newDirectory(namefilter.empty(), ctx)
+          let fs = await privateNode.newDirectory(namefilter.empty(), ctx)
 
           // run modeled operations on the 'real' system
           let i = 1
@@ -133,56 +126,8 @@ describe("the private node module", () => {
           const result = await directoryToModel(fs, ctx)
           expect(result).toEqual(state)
         }
-      ), { numRuns: 1 }
+      )
     )
-
-    const namefilters = Array.from(store.getMap().keys()).map(namefilterStr => uint8arrays.fromString(namefilterStr, "base64url"))
-    const binaryAnd = (a: Uint8Array, b: Uint8Array) => {
-      const l = Math.min(a.length, b.length)
-      const result = new Uint8Array(l)
-      for (let i = 0; i < l; i++) {
-        result[i] = a[i] & b[i]
-      }
-      return result
-    }
-    const encode = (namefilter: Uint8Array) => uint8arrays.toString(namefilter, "hex")
-    const chooseRandom = <T>(arr: T[]) => arr[Math.min(arr.length - 1, Math.floor(Math.random() * arr.length))]
-    const unique = <T>(arr: T[]) => Array.from(new Set(arr).values())
-    const rootBareNameEncoded = encode(namefilters.reduce(binaryAnd))
-
-    const minedNamefiltersEncoded = []
-    const bloomFilterFillTarget = 2 // a bare namefilter with 2 inumbers
-    const maxBitCount = bloomFilterFillTarget * bloom.wnfsParameters.kHashes
-    const expectedBitCounts = [maxBitCount, maxBitCount-1]
-
-    tryingAnother: while (minedNamefiltersEncoded.length < 100000) {
-      let namefilter = chooseRandom(namefilters)
-      let bitCount = bloom.countOnes(namefilter)
-      while (!expectedBitCounts.includes(bitCount)) {
-        namefilter = binaryAnd(namefilter, chooseRandom(namefilters))
-        bitCount = bloom.countOnes(namefilter)
-        if (bitCount <= (bloomFilterFillTarget - 1) * bloom.wnfsParameters.kHashes) {
-          continue tryingAnother
-        }
-      }
-      minedNamefiltersEncoded.push(encode(namefilter))
-    }
-
-    const minedNamefiltersEncodedUnique = unique(minedNamefiltersEncoded)
-
-    const actualBareNamesEncoded = Array.from(store.getMap().entries())
-      .map(([ref, entry]) => encode(privateNode.nodeFromCbor(entry.block).bareName))
-
-    console.log(actualBareNamesEncoded.map(b => bloom.countOnes(uint8arrays.fromString(b, "hex"))))
-
-    const bareNameHits = minedNamefiltersEncodedUnique.filter(namefilter => actualBareNamesEncoded.includes(namefilter))
-
-    console.log("ran these filesystem operations:")
-    model.ops.forEach(op => console.log(` - ${JSON.stringify(op)}`))
-    console.log(`resulting in ${namefilters.length} namefilter(s)`)
-    console.log(`mined ${minedNamefiltersEncodedUnique.length} additional namefilters, of which ${bareNameHits.length} are actual hits.`)
-    bareNameHits.forEach(namefilter => console.log(` - ${namefilter}`))
-    console.log(`subdirectories: `, fs.links.length)
   })
 
   it("runs filesystem operations as modeled on ipfs", async function () {
