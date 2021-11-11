@@ -30,16 +30,14 @@ export default class RootTree implements Puttable {
 
   links: Links
   mmpt: MMPT
-  privateLog: Array<SimpleLink>
 
   publicTree: PublicTree
   prettyTree: BareTree
   privateNodes: Record<string, PrivateNode>
 
-  constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateNodes }: {
+  constructor({ links, mmpt, publicTree, prettyTree, privateNodes }: {
     links: Links
     mmpt: MMPT
-    privateLog: Array<SimpleLink>
 
     publicTree: PublicTree
     prettyTree: BareTree
@@ -47,7 +45,6 @@ export default class RootTree implements Puttable {
   }) {
     this.links = links
     this.mmpt = mmpt
-    this.privateLog = privateLog
 
     this.publicTree = publicTree
     this.prettyTree = prettyTree
@@ -72,7 +69,6 @@ export default class RootTree implements Puttable {
     const tree = new RootTree({
       links: {},
       mmpt,
-      privateLog: [],
 
       publicTree,
       prettyTree,
@@ -125,20 +121,10 @@ export default class RootTree implements Puttable {
       privateNodes = await loadPrivateNodes(keys, mmpt)
     }
 
-    const privateLogCid = links[Branch.PrivateLog]?.cid
-    const privateLog = privateLogCid
-      ? await ipfs.dagGet(privateLogCid)
-          .then(dagNode => dagNode.Links.map(link.fromDAGLink))
-          .then(links => links.sort((a, b) => {
-            return parseInt(a.name, 10) - parseInt(b.name, 10)
-          }))
-      : []
-
     // Construct tree
     const tree = new RootTree({
       links,
       mmpt,
-      privateLog,
 
       publicTree,
       prettyTree,
@@ -184,60 +170,6 @@ export default class RootTree implements Puttable {
 
   findPrivateNode(path: DistinctivePath): [DistinctivePath, PrivateNode | null] {
     return findPrivateNode(this.privateNodes, path)
-  }
-
-
-  // PRIVATE LOG
-  // -----------
-  // CBOR array containing chunks.
-  //
-  // Chunk size is based on the default IPFS block size,
-  // which is 1024 * 256 bytes. 1 log chunk should fit in 1 block.
-  // We'll use the CSV format for the data in the chunks.
-  static LOG_CHUNK_SIZE = 1020 // Math.floor((1024 * 256) / (256 + 1))
-
-
-  async addPrivateLogEntry(cid: string): Promise<void> {
-    const log = [...this.privateLog]
-    let idx = Math.max(0, log.length - 1)
-
-    // get last chunk
-    let lastChunk = log[idx]?.cid
-      ? (await ipfs.cat(log[idx].cid)).split(",")
-      : []
-
-    // needs new chunk
-    const needsNewChunk = lastChunk.length + 1 > RootTree.LOG_CHUNK_SIZE
-    if (needsNewChunk) {
-      idx = idx + 1
-      lastChunk = []
-    }
-
-    // add to chunk
-    const hashedCid = await crypto.hash.sha256Str(cid)
-    const updatedChunk = [...lastChunk, hashedCid]
-    const updatedChunkDeposit = await protocol.basic.putFile(
-      updatedChunk.join(",")
-    )
-
-    log[idx] = {
-      name: idx.toString(),
-      cid: updatedChunkDeposit.cid,
-      size: updatedChunkDeposit.size
-    }
-
-    // save log
-    const logDeposit = await ipfs.dagPutLinks(
-      log.map(link.toDAGLink)
-    )
-
-    this.updateLink(Branch.PrivateLog, {
-      cid: logDeposit.cid,
-      isFile: false,
-      size: await ipfs.size(logDeposit.cid)
-    })
-
-    this.privateLog = log
   }
 
 

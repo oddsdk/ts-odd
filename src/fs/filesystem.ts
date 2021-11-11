@@ -438,9 +438,7 @@ export class FileSystem {
         this.root.privateNodes[pathing.toPosix(nodePath)] = result
         await result.put()
         await this.root.updatePuttable(Branch.Private, this.root.mmpt)
-
-        const cid = await this.root.mmpt.put()
-        await this.root.addPrivateLogEntry(cid)
+        await this.root.mmpt.put()
       }
 
     } else if (head === Branch.Pretty && isMutation) {
