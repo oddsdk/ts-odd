@@ -1,5 +1,4 @@
-// @ts-ignore
-import * as blake3 from "blake3"
+import * as xxhash from "js-xxhash"
 
 export type BloomFilter = Uint8Array
 
@@ -46,13 +45,10 @@ function getBit(filter: BloomFilter, bitIndex: number): boolean {
 }
 
 function* indicesFor(element: Uint8Array, parameters: BloomParameters): Generator<number, void, unknown> {
-  const digestBytes = parameters.kHashes * 2
   const m = parameters.mBytes * 8
 
-  const hash = blake3.hash(element, { length: digestBytes }) as Buffer
-
   for (let i = 0; i < parameters.kHashes; i++) {
-    yield (hash[2 * i] + (hash[2 * i + 1] << 8)) % m
+    yield xxhash.xxHash32(element, i) % m
   }
 }
 
