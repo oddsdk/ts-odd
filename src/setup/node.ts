@@ -1,5 +1,4 @@
 import tweetnacl from "tweetnacl"
-import { webcrypto } from "one-webcrypto"
 import utils from "keystore-idb/lib/utils.js"
 import { Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey } from "keystore-idb/lib/types.js"
 import config from "keystore-idb/lib/config.js"
