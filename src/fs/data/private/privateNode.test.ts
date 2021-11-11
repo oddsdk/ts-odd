@@ -97,7 +97,7 @@ describe("the private node module", () => {
     const iamap = await store.getBackingIAMap()
   })
 
-  it.only("runs filesystem operations as modeled", async function () {
+  it("runs filesystem operations as modeled", async function () {
     const store = privateStore.createInMemoryUnencrypted(privateStore.empty())
     const ratchetStore = createMemoryRatchetStore()
     const ctx = {
