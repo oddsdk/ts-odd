@@ -9,10 +9,19 @@ import { emptyFilesystem } from "../helpers/filesystem.js"
 
 describe("the filesystem versioning system", () => {
 
-    it("throws an error if the version doesn't match", async function() {
+    it("throws an error if the version is too high", async function() {
         const fs = await emptyFilesystem()
         await fs.write(path.file("public", "some", "file.txt"), "Hello, World!")
-        await fs.root.setVersion(versions.encode(2, 0, 0))
+        await fs.root.setVersion(versions.encode(versions.latest.major + 1, 0, 0))
+        const changedCID = await fs.root.put()
+
+        await expect(checkVersion(changedCID)).rejects.toBeDefined()
+    })
+
+    it("throws an error if the version is too low", async function() {
+        const fs = await emptyFilesystem()
+        await fs.write(path.file("public", "some", "file.txt"), "Hello, World!")
+        await fs.root.setVersion(versions.encode(versions.latest.major - 1, 0, 0))
         const changedCID = await fs.root.put()
 
         await expect(checkVersion(changedCID)).rejects.toBeDefined()

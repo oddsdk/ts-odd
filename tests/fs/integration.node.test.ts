@@ -16,7 +16,7 @@ describe("the filesystem", () => {
   it("can load filesystem fixtures", async function () {
     const ipfs = ipfsFromContext(this)
 
-    const rootCID = await loadCARWithRoot("tests/fixtures/webnative-integration-test-v1-0-1.car", ipfs)
+    const rootCID = await loadCARWithRoot("tests/fixtures/webnative-integration-test-v2-0-0.car", ipfs)
     const readKey = "pJW/xgBGck9/ZXwQHNPhV3zSuqGlUpXiChxwigwvUws="
     const fs = await loadFilesystem(rootCID.toString(), readKey)
 
