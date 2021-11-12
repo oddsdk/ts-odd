@@ -3,18 +3,24 @@ import * as pathing from "../../path.js"
 
 import { AddResult, CID, FileContent } from "../../ipfs/index.js"
 import { Maybe } from "../../common/index.js"
-import { Path } from "../../path.js"
-import { Tree, File, UnixTree, BaseLinks, UpdateCallback } from "../types.js"
+import { DistinctivePath, Path } from "../../path.js"
+import { Tree, File, UnixTree, Links, UpdateCallback } from "../types.js"
 
 
 abstract class BaseTree implements Tree, UnixTree {
+
+  readOnly: boolean
+
+  constructor() {
+    this.readOnly = false
+  }
 
   async put(): Promise<CID> {
     const { cid } = await this.putDetailed()
     return cid
   }
 
-  async ls(path: Path): Promise<BaseLinks> {
+  async ls(path: Path): Promise<Links> {
     const dir = await this.get(path)
     if (dir === null) {
       throw new Error("Path does not exist")
@@ -179,6 +185,36 @@ abstract class BaseTree implements Tree, UnixTree {
       : this.createChildTree(name, onUpdate)
   }
 
+  async updateChild(child: Tree | File, path: Path): Promise<this> {
+    const chain: [string, Tree][] = []
+
+    await path.reduce(async (promise: Promise<Tree>, p, idx) => {
+      const parent = await promise
+      chain.push([p, parent])
+
+      if (idx + 1 === path.length) {
+        return parent
+      }
+
+      const c = await parent.getDirectChild(p)
+
+      if (!check.isTree(c)) {
+        const pathSoFar = path.slice(idx + 1)
+        throw new Error(`Expected a tree at the given path: ${pathing.log(pathSoFar)}`)
+      }
+
+      return c
+    }, Promise.resolve(this))
+
+    await chain.reverse().reduce(async (promise, [name, parent]) => {
+      const c = await promise
+      await parent.updateDirectChild(c, name, () => parent.put())
+      return parent
+    }, Promise.resolve(child))
+
+    return this
+  }
+
   abstract createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
   abstract createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
 
@@ -191,7 +227,7 @@ abstract class BaseTree implements Tree, UnixTree {
   abstract get(path: Path): Promise<Tree | File | null>
 
   abstract updateLink(name: string, result: AddResult): this
-  abstract getLinks(): BaseLinks
+  abstract getLinks(): Links
 }
 
 

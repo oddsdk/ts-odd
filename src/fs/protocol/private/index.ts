@@ -45,7 +45,7 @@ export const getByCID = async (cid: CID, key: string): Promise<DecryptedNode> =>
   return await readNode(cid, key)
 }
 
-export const getByLatestName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
+export const getLatestByName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
   const cid = await mmpt.get(name)
   if (cid === null) return null
   return getLatestByCID(mmpt, cid, key)
@@ -59,10 +59,10 @@ export const getLatestByCID = async (mmpt: MMPT, cid: CID, key: string): Promise
     : node
 }
 
-export const getLatestByBareNameFilter = async(mmpt: MMPT, bareName: BareNameFilter, key:string): Promise<Maybe<DecryptedNode>> => {
+export const getLatestByBareNameFilter = async(mmpt: MMPT, bareName: BareNameFilter, key: string): Promise<Maybe<DecryptedNode>> => {
   const revisionFilter = await namefilter.addRevision(bareName, key, 1)
   const name = await namefilter.toPrivateName(revisionFilter)
-  return getByLatestName(mmpt, name, key)
+  return getLatestByName(mmpt, name, key)
 }
 
 export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: string, lastKnownRevision: number): Promise<Maybe<Revision>> => {

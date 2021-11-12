@@ -70,7 +70,7 @@ export class PrivateFile extends BaseFile {
   }
 
   static async fromLatestName(mmpt: MMPT, name: PrivateName, key: string): Promise<PrivateFile> {
-    const info = await protocol.priv.getByLatestName(mmpt, name, key)
+    const info = await protocol.priv.getLatestByName(mmpt, name, key)
     return PrivateFile.fromInfo(mmpt, key, info)
   }
 

@@ -1,15 +1,20 @@
 # Changelog
-### v0.30.0-alpha2
+
+### v0.30.0
 
 - **WNFS BREAKING CHANGE**: Encrypt the filesystem using AES-GCM instead of AES-CTR. Also wrap the filesystem blocks with some information about the encryption algorithm used.
   Users need to migrate their filesystems to be able to load apps with this webnative version.
   Apps need to update to this webnative version to load migrated/new filesystems.
+- Adds soft/symbolic links.
+
+
 
 ### v0.29.2
 
 - Make webnative work across more environments and bundlers (upgrade one-webcrypto to 1.0.3)
 - Make full API URL configurable (not just API host).
 - Fix version checking failing on old filesystems which are missing a `version` tag.
+
 
 ### v0.29.1
 
@@ -22,6 +27,7 @@
 - Upgrade js-ipfs libraries to the versions corresponding to the 0.58 release.
 - Update API endpoints to v2 and add setup parameter to specify API version.
 - No longer uses `ipfs-message-port-client` and `ipfs-message-port-protocol` forks which sometimes caused weird dependency conflicts.
+
 
 
 ### v0.28.1

@@ -2,7 +2,7 @@ import * as uint8arrays from "uint8arrays"
 
 import { AddResult, CID } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
-import { Links, Puttable, SimpleLink } from "../types.js"
+import { Puttable, SimpleLink, SimpleLinks } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
 import { Maybe } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
@@ -29,7 +29,7 @@ type PrivateNode = PrivateTree | PrivateFile
 
 export default class RootTree implements Puttable {
 
-  links: Links
+  links: SimpleLinks
   mmpt: MMPT
   privateLog: Array<SimpleLink>
 
@@ -38,7 +38,7 @@ export default class RootTree implements Puttable {
   privateNodes: Record<string, PrivateNode>
 
   constructor({ links, mmpt, privateLog, publicTree, prettyTree, privateNodes }: {
-    links: Links
+    links: SimpleLinks
     mmpt: MMPT
     privateLog: Array<SimpleLink>
 
@@ -101,8 +101,7 @@ export default class RootTree implements Puttable {
   static async fromCID(
     { cid, permissions }: { cid: CID; permissions?: Permissions }
   ): Promise<RootTree> {
-    const links = await protocol.basic.getLinks(cid)
-
+    const links = await protocol.basic.getSimpleLinks(cid)
     const keys = permissions ? await permissionKeys(permissions) : []
 
     // Load public parts
