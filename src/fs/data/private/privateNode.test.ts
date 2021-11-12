@@ -69,9 +69,9 @@ describe("the private node module", () => {
     expect(contentRead).toEqual(content)
   })
 
-  it("round-trips to/from IPFS", async function() {
+  it.only("round-trips to/from IPFS", async function() {
     const ipfs = ipfsFromContext(this)
-    const store = privateStore.create(ipfs)
+    const store = privateStore.create(await privateStore.createHAMT(ipfs))
     const ratchetStore = createMemoryRatchetStore()
     const ctx = {
       ...store,
@@ -81,7 +81,7 @@ describe("the private node module", () => {
     }
 
     const path: [string, ...string[]] = ["Apps", "Flatmate", "state.json"]
-    const content = new TextEncoder().encode(JSON.stringify({
+    const content = uint8arrays.fromString(JSON.stringify({
       hello: "World!"
     }))
 
@@ -89,12 +89,27 @@ describe("the private node module", () => {
     ratchetStore.storeRatchet(directory.bareName, directory.revision)
     const emptyFsRef = await privateNode.storeNode(directory, ctx)
     directory = await privateNode.loadNode(emptyFsRef, ctx) as privateNode.PrivateDirectoryPersisted
-
     directory = await privateNode.write(path, content, directory, ctx)
-
     const ref = await privateNode.storeNodeAndAdvance(directory, ctx)
+    const hamt = await store.getBackingHAMT()
 
-    const iamap = await store.getBackingIAMap()
+    const cid = hamt.id
+    const reconstructedStore = privateStore.create(await privateStore.loadHAMT(cid, ipfs))
+    const reconstructedCtx = {
+      ...reconstructedStore,
+      ...ratchetStore,
+      now: 0,
+      ratchetDisparityBudget: () => 1_000_000
+    }
+
+    const reconstructedDir = await privateNode.loadNode(ref, reconstructedCtx)
+    // For type checking
+    if (!privateNode.isPrivateDirectory(reconstructedDir)) {
+      throw new Error("Expected to load back a directory, not a file")
+    }
+
+    const { result } = await privateNode.readSeeking(path, reconstructedDir, ctx)
+    expect(uint8arrays.toString(result)).toEqual(uint8arrays.toString(content))
   })
 
   it("runs filesystem operations as modeled", async function () {
@@ -132,7 +147,7 @@ describe("the private node module", () => {
 
   it("runs filesystem operations as modeled on ipfs", async function () {
     const ipfs = ipfsFromContext(this)
-    const store = privateStore.create(ipfs)
+    const store = privateStore.create(await privateStore.createHAMT(ipfs))
     const ratchetStore = createMemoryRatchetStore()
     const ctx = {
       ...store,

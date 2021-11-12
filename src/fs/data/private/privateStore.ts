@@ -10,10 +10,14 @@ import { webcrypto } from "one-webcrypto"
 
 import { PrivateStore, PrivateStoreLookup, PrivateRef } from "./privateNode.js"
 
-export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<iamap.IAMap<CID>> } {
-  iamap.registerHasher(sha256.code, 32, async input => (await sha256.digest(input)).bytes)
 
-  let currentMap = iamap.create<CID>({
+export type HAMT = iamap.IAMap<CID>
+
+iamap.registerHasher(sha256.code, 32, async input => (await sha256.digest(input)).bytes)
+
+
+export function ipfsStore(ipfs: IPFS): iamap.Store<CID> {
+  return {
     async load(cid) {
       const bytes = await ipfs.block.get(cid)
       const block = await Block.decode({ bytes: bytes, codec, hasher: sha256 })
@@ -33,7 +37,22 @@ export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<
     isLink(obj) {
       return CID.asCID(obj) != null
     }
-  }, { hashAlg: sha256.code, bitWidth: 5, bucketSize: 2 })
+  }
+}
+
+export async function createHAMT(ipfs: IPFS): Promise<HAMT> {
+  return await iamap.create<CID>(ipfsStore(ipfs), { hashAlg: sha256.code, bitWidth: 5, bucketSize: 2 })
+}
+
+
+export async function loadHAMT(cid: CID, ipfs: IPFS): Promise<HAMT> {
+  return await iamap.load<CID>(ipfsStore(ipfs), cid)
+}
+
+
+export function create(hamt: HAMT): PrivateStore & { getBackingHAMT(): Promise<HAMT> } {
+
+  let currentMap: Promise<HAMT> = Promise.resolve(hamt)
 
   return {
 
@@ -77,7 +96,7 @@ export function create(ipfs: IPFS): PrivateStore & { getBackingIAMap(): Promise<
       await currentMap
     },
 
-    async getBackingIAMap() {
+    async getBackingHAMT() {
       return await currentMap
     }
 
