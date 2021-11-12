@@ -17,7 +17,7 @@ export async function loadCAR(filepath: string, ipfs: IPFS): Promise<{ roots: CI
 }
 
 export async function loadCARWithRoot(filepath: string, ipfs: IPFS): Promise<CID> {
-  const { roots } = await loadCAR("tests/fixtures/webnative-integration-test.car", ipfs)
+  const { roots } = await loadCAR(filepath, ipfs)
   const [rootCID] = roots
   
   if (rootCID == null) {

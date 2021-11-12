@@ -92,16 +92,6 @@
     multiformats "^9.0.0"
     varint "^6.0.0"
 
-"@ipld/car@^3.1.16":
-  version "3.1.16"
-  resolved "https://registry.yarnpkg.com/@ipld/car/-/car-3.1.16.tgz#8b0acfef0e9a74fa285731486ab2d3a1b7c12236"
-  integrity sha512-LvIXl7BYmy8em1PFB1l2Iu3/bFHYHy3h3x7HcDi9veoGSYi70dAIthJsXgkoYoGfRSLONR1FDjaoFjbbXk87Qw==
-  dependencies:
-    "@ipld/dag-cbor" "^6.0.0"
-    "@types/varint" "^6.0.0"
-    multiformats "^9.0.0"
-    varint "^6.0.0"
-
 "@ipld/dag-cbor@^6.0.0":
   version "6.0.6"
   resolved "https://registry.npmjs.org/@ipld/dag-cbor/-/dag-cbor-6.0.6.tgz"

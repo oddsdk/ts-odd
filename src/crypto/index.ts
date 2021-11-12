@@ -1,5 +1,6 @@
 import * as uint8arrays from "uint8arrays"
 import { webcrypto } from "one-webcrypto"
+import { SymmAlg } from "keystore-idb/lib/types.js"
 import { importKey, encryptBytes, decryptBytes, makeKey, exportKey } from "keystore-idb/lib/aes/index.js"
 import { SymmKeyLength } from "keystore-idb/lib/types.js"
 
@@ -16,14 +17,14 @@ export const hash = {
   sha256Str: sha256Str
 }
 export const aes = {
-  encrypt: async (data: Uint8Array, keyStr: string): Promise<Uint8Array> => {
-    const key = await importKey(keyStr, { length: SymmKeyLength.B256 })
-    const encrypted = await encryptBytes(data, key)
+  encrypt: async (data: Uint8Array, keyStr: string, alg: SymmAlg): Promise<Uint8Array> => {
+    const key = await importKey(keyStr, { length: SymmKeyLength.B256, alg })
+    const encrypted = await encryptBytes(data, key, { alg })
     return new Uint8Array(encrypted)
   },
-  decrypt: async (encrypted: Uint8Array, keyStr: string): Promise<Uint8Array> => {
-    const key = await importKey(keyStr, { length: SymmKeyLength.B256 })
-    const decryptedBuf = await decryptBytes(encrypted, key)
+  decrypt: async (encrypted: Uint8Array, keyStr: string, alg: SymmAlg): Promise<Uint8Array> => {
+    const key = await importKey(keyStr, { length: SymmKeyLength.B256, alg })
+    const decryptedBuf = await decryptBytes(encrypted, key, { alg })
     return new Uint8Array(decryptedBuf)
   },
   genKeyStr: async (): Promise<string> => {

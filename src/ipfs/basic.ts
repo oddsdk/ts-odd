@@ -10,6 +10,7 @@ import * as util from "./util.js"
 import { DAG_NODE_DATA } from "./constants.js"
 import * as uint8arrays from "uint8arrays"
 import { setup } from "../setup/internal.js"
+import { isObject, isString } from "../common/type-checks.js"
 
 
 export const add = async (content: ImportCandidate): Promise<AddResult> => {
@@ -101,8 +102,10 @@ export const attemptPin = async (cid: CID): Promise<void> => {
   try {
     await ipfs.pin.add(cid, { recursive: false })
   } catch (err) {
+    if (!isObject(err)) throw err
+    if (!isString(err.message)) throw err
     if (!err.message || !err.message.includes("already pinned recursively")) {
-      throw new Error(err)
+      throw err
     }
   }
 }
