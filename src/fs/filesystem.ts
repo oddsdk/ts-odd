@@ -331,6 +331,12 @@ export class FileSystem {
     if (!username) throw new Error("I need a username in order to use this method")
     if (!sameTree) throw new Error("`link` is only supported on the same tree for now")
 
+    const canShare = ucan.dictionary.lookupFilesystemUcan(
+      pathing.directory(pathing.Branch.Shared)
+    )
+
+    if (!canShare) throw new Error("Not allowed to share private items")
+
     await this.runOnNode(at, true, async (node, relPath) => {
       if (typeCheck.isFile(node)) {
         throw new Error("Cannot add a soft link to a file")
