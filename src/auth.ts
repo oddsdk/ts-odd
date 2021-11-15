@@ -63,6 +63,7 @@ export async function redirectToLobby(
   const fs = permissions?.fs
   const platform = permissions?.platform
   const raw = permissions?.raw
+  const sharing = permissions?.sharing
 
   const exchangeDid = await did.exchange()
   const writeDid = await did.write()
@@ -76,7 +77,8 @@ export async function redirectToLobby(
     [ "didWrite", writeDid ],
     [ "redirectTo", redirectTo ],
     [ "sdk", VERSION.toString() ],
-    [ "sharedRepo", sharedRepo ? "t" : "f" ]
+    [ "sharedRepo", sharedRepo ? "t" : "f" ],
+    [ "sharing", sharing ? "t" : "f" ]
 
   ].concat(
     app              ? [[ "appFolder", `${app.creator}/${app.name}` ]] : [],
