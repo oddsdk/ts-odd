@@ -1,5 +1,6 @@
 import * as uint8arrays from "uint8arrays"
 import * as iamap from "iamap"
+import * as cbor from "cborg"
 import { CID } from "multiformats/cid"
 import * as Block from "multiformats/block"
 import { sha256 } from "multiformats/hashes/sha2"
@@ -8,14 +9,27 @@ import { webcrypto } from "one-webcrypto"
 
 import { PrivateStore, PrivateStoreLookup, PrivateRef } from "./privateNode.js"
 import { BlockStore } from "../blockStore.js"
+import { hasProp, isCID, isRecord } from "../common.js"
 
 
 export type HAMT = iamap.IAMap<CID>
 
+/** leafs at the private store HAMT, later encoded as CBOR */
+interface PrivateStoreLeaf {
+  name: Uint8Array // namefilter
+  link: CID
+}
+
+function isPrivateStoreLeaf(obj: unknown): obj is PrivateStoreLeaf {
+  return isRecord(obj)
+    && hasProp(obj, "name") && obj.name instanceof Uint8Array
+    && hasProp(obj, "link") && isCID(obj.link)
+}
+
 iamap.registerHasher(sha256.code, 32, async input => (await sha256.digest(input)).bytes)
 
 
-export function toHAMTBackingStore(baseBlockStore: BlockStore): iamap.Store<CID> {
+function toHAMTBackingStore(baseBlockStore: BlockStore): iamap.Store<CID> {
   return {
     async load(cid) {
       const bytes = await baseBlockStore.getBlock(cid, {}) // TODO: AbortSignal
@@ -56,45 +70,58 @@ export function create(hamt: HAMT, baseBlockStore: BlockStore): PrivateStore & {
   return {
 
     async getBlock(ref, { signal }) {
-      if (ref.algorithm !== "AES-GCM") {
-        throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
-      }
+      const alg = ref.algorithm
+      const hamtKey = await hamtKeyFromName(ref.namefilter)
+      const hamtLeaf = await (await currentMap).get(hamtKey)
 
-      const blockCID: CID = await (await currentMap).get(await hamtKeyFromRef(ref))
-
-      if (blockCID == null) {
+      if (hamtLeaf == null) {
         return null
       }
 
-      const encryptedBlock = await baseBlockStore.getBlock(blockCID, { signal })
-
-      if (encryptedBlock.byteLength < 16) {
-        throw new Error(`Can't decrypt private block: Expected at least 16 bytes. Instead got ${encryptedBlock.byteLength} bytes.`)
+      if (!isPrivateStoreLeaf(hamtLeaf)) {
+        throw new Error(`Can't decode HAMT leaf: ${JSON.stringify(hamtLeaf)}`)
       }
 
-      const iv = encryptedBlock.slice(0, 16)
-      const ciphertext = encryptedBlock.slice(16)
+      if (!uint8arrays.equals(hamtKey, await hamtKeyFromName(hamtLeaf.name))) {
+        throw new Error(`Corrupt block: The key of a block doesn't match the hash of its namefilter.`)
+      }
+
+      if (alg !== "AES-GCM") {
+        throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
+      }
+
+      const ciphertextWithIV = await baseBlockStore.getBlock(hamtLeaf.link, { signal })
+
+      if (ciphertextWithIV.byteLength < 16) {
+        throw new Error(`Can't decrypt private block: Expected at least 16 bytes. Instead got ${ciphertextWithIV.byteLength} bytes.`)
+      }
+
+      const iv = ciphertextWithIV.slice(0, 16)
+      const ciphertext = ciphertextWithIV.slice(16)
 
       const cleartext: ArrayBuffer = await webcrypto.subtle.decrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), ciphertext)
       return new Uint8Array(cleartext)
     },
 
     async putBlock(ref, block, { signal }) {
-      if (ref.algorithm !== "AES-GCM") {
+      const alg = ref.algorithm
+      if (alg !== "AES-GCM") {
         throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
       }
 
       const iv = webcrypto.getRandomValues(new Uint8Array(16))
       const ciphertext: ArrayBuffer = await webcrypto.subtle.encrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), block)
-
-      const encryptedBlock = uint8arrays.concat([iv, new Uint8Array(ciphertext)])
-
-      const blockCID = await baseBlockStore.putBlock(encryptedBlock, codec, { signal })
+      const ciphertextWithIV = uint8arrays.concat([iv, new Uint8Array(ciphertext)])
+      const blockCID = await baseBlockStore.putBlock(ciphertextWithIV, codec, { signal })
+      const blockNode = {
+        name: ref.namefilter,
+        link: blockCID, // TODO Multivalue. May need a change to the privateStore interface
+      }
 
       const mapBefore = currentMap
       currentMap = (async () => {
         const map = await mapBefore
-        return await map.set(await hamtKeyFromRef(ref), blockCID)
+        return await map.set(await hamtKeyFromName(ref.namefilter), blockNode)
       })()
       await currentMap
     },
@@ -151,6 +178,6 @@ async function keyFromRef(ref: PrivateRef): Promise<CryptoKey> {
   return await webcrypto.subtle.importKey("raw", ref.key, { name: ref.algorithm }, true, ["encrypt", "decrypt"])
 }
 
-async function hamtKeyFromRef(ref: PrivateRef): Promise<Uint8Array> {
-  return new Uint8Array(await webcrypto.subtle.digest("sha-256", ref.namefilter))
+async function hamtKeyFromName(namefilter: Uint8Array): Promise<Uint8Array> {
+  return new Uint8Array(await webcrypto.subtle.digest("sha-256", namefilter))
 }
