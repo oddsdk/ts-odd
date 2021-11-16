@@ -81,7 +81,7 @@ export async function resendVerificationEmail(): Promise<{ success: boolean }> {
  * copying the soft links into their private filesystem.
  */
 export function shareLink(details: ShareDetails): string {
-  return setup.endpoints.lobby + "/share/" + details.sharedBy.username + "/" + details.shareId + "/"
+  return setup.endpoints.lobby + "/#/share/" + details.sharedBy.username + "/" + details.shareId + "/"
 }
 
 
