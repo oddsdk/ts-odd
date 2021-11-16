@@ -9,6 +9,7 @@ import * as protocol from "./protocol/index.js"
 import * as shareKey from "./protocol/shared/key.js"
 
 import { Branch, DirectoryPath } from "../path.js"
+import { SharedBy, ShareDetails } from "./types.js"
 import { didToPublicKey } from "../did/transformers.js"
 import BareTree from "./bare/tree.js"
 import PrivateFile from "./v1/PrivateFile.js"
@@ -35,9 +36,9 @@ export async function privateNode(
   items: Array<[string, PrivateTree | PrivateFile]>,
   { shareWith, sharedBy }: {
     shareWith: string | string[],
-    sharedBy: { did: string, username: string }
+    sharedBy: SharedBy
   }
-): Promise<{ shareId: string }> {
+): Promise<ShareDetails> {
   const exchangeDIDs = Array.isArray(shareWith)
     ? shareWith
     : shareWith.startsWith("did:")
@@ -103,7 +104,7 @@ export async function privateNode(
   await rootTree.addShares(links)
 
   // Fin
-  return { shareId: counter.toString() }
+  return { shareId: counter.toString(), sharedBy }
 }
 
 

@@ -2,7 +2,7 @@ import { throttle } from "throttle-debounce"
 
 import { Links } from "./types.js"
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
-import { PublishHook, Tree, File } from "./types.js"
+import { PublishHook, Tree, File, ShareDetails } from "./types.js"
 import BareTree from "./bare/tree.js"
 import RootTree from "./root/tree.js"
 import PublicTree from "./v1/PublicTree.js"
@@ -438,7 +438,7 @@ export class FileSystem {
   /**
    * Share a private file with a user.
    */
-  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: { did: string, username: string }, shareWith: string | string[] }): Promise<{ shareId: string }> {
+  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: { did: string, username: string }, shareWith: string | string[] }): Promise<ShareDetails> {
     const verifiedPaths = paths.filter(path => {
       return pathing.isBranch(pathing.Branch.Private, path)
     })
