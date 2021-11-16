@@ -1,6 +1,7 @@
 import * as did from "../did/index.js"
 import * as ucan from "../ucan/index.js"
 import * as ucanStore from "../ucan/store.js"
+import { ShareDetails } from "../fs/types.js"
 import { api } from "../common/index.js"
 import { setup } from "../setup/internal.js"
 import RootTree from "../fs/root/tree.js"
@@ -71,6 +72,16 @@ export async function resendVerificationEmail(): Promise<{ success: boolean }> {
   return {
     success: response.status < 300
   }
+}
+
+
+/**
+ * Create a share link.
+ * There people can "accept" a share,
+ * copying the soft links into their private filesystem.
+ */
+export function shareLink(details: ShareDetails): string {
+  return setup.endpoints.lobby + "/share/" + details.sharedBy.username + "/" + details.shareId + "/"
 }
 
 
