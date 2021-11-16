@@ -1,5 +1,3 @@
-import type { IPFS } from "ipfs-core"
-
 import * as uint8arrays from "uint8arrays"
 import * as iamap from "iamap"
 import { CID } from "multiformats/cid"
@@ -9,6 +7,7 @@ import * as codec from "@ipld/dag-cbor" // encode blocks using the DAG-CBOR form
 import { webcrypto } from "one-webcrypto"
 
 import { PrivateStore, PrivateStoreLookup, PrivateRef } from "./privateNode.js"
+import { BlockStore } from "../blockStore.js"
 
 
 export type HAMT = iamap.IAMap<CID>
@@ -16,17 +15,17 @@ export type HAMT = iamap.IAMap<CID>
 iamap.registerHasher(sha256.code, 32, async input => (await sha256.digest(input)).bytes)
 
 
-export function ipfsStore(ipfs: IPFS): iamap.Store<CID> {
+export function toHAMTBackingStore(baseBlockStore: BlockStore): iamap.Store<CID> {
   return {
     async load(cid) {
-      const bytes = await ipfs.block.get(cid)
+      const bytes = await baseBlockStore.getBlock(cid, {}) // TODO: AbortSignal
       const block = await Block.decode({ bytes: bytes, codec, hasher: sha256 })
       return block.value
     },
 
     async save(node) {
       const block = await Block.encode({ value: node, codec, hasher: sha256 })
-      await ipfs.block.put(block.bytes)
+      await baseBlockStore.putBlock(block.bytes, codec, {}) // TODO: AbortSignal
       return block.cid
     },
 
@@ -40,35 +39,37 @@ export function ipfsStore(ipfs: IPFS): iamap.Store<CID> {
   }
 }
 
-export async function createHAMT(ipfs: IPFS): Promise<HAMT> {
-  return await iamap.create<CID>(ipfsStore(ipfs), { hashAlg: sha256.code, bitWidth: 5, bucketSize: 2 })
+export async function createHAMT(baseBlockStore: BlockStore): Promise<HAMT> {
+  return await iamap.create<CID>(toHAMTBackingStore(baseBlockStore), { hashAlg: sha256.code, bitWidth: 5, bucketSize: 2 })
 }
 
 
-export async function loadHAMT(cid: CID, ipfs: IPFS): Promise<HAMT> {
-  return await iamap.load<CID>(ipfsStore(ipfs), cid)
+export async function loadHAMT(cid: CID, baseBlockStore: BlockStore): Promise<HAMT> {
+  return await iamap.load<CID>(toHAMTBackingStore(baseBlockStore), cid)
 }
 
 
-export function create(hamt: HAMT): PrivateStore & { getBackingHAMT(): Promise<HAMT> } {
+export function create(hamt: HAMT, baseBlockStore: BlockStore): PrivateStore & { getHAMTSnapshot(): Promise<HAMT> } {
 
   let currentMap: Promise<HAMT> = Promise.resolve(hamt)
 
   return {
 
-    async getBlock(ref) {
+    async getBlock(ref, { signal }) {
       if (ref.algorithm !== "AES-GCM") {
         throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
       }
 
-      const encryptedBlock: Uint8Array = await (await currentMap).get(ref.namefilter)
+      const blockCID: CID = await (await currentMap).get(await hamtKeyFromRef(ref))
 
-      if (encryptedBlock == null) {
+      if (blockCID == null) {
         return null
       }
 
+      const encryptedBlock = await baseBlockStore.getBlock(blockCID, { signal })
+
       if (encryptedBlock.byteLength < 16) {
-        throw new Error(`Can't decrypt private block: Must be at least 16 bytes long to contain an iv. Instead got length ${encryptedBlock.byteLength}`)
+        throw new Error(`Can't decrypt private block: Expected at least 16 bytes. Instead got ${encryptedBlock.byteLength} bytes.`)
       }
 
       const iv = encryptedBlock.slice(0, 16)
@@ -78,7 +79,7 @@ export function create(hamt: HAMT): PrivateStore & { getBackingHAMT(): Promise<H
       return new Uint8Array(cleartext)
     },
 
-    async putBlock(ref, block) {
+    async putBlock(ref, block, { signal }) {
       if (ref.algorithm !== "AES-GCM") {
         throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
       }
@@ -88,15 +89,17 @@ export function create(hamt: HAMT): PrivateStore & { getBackingHAMT(): Promise<H
 
       const encryptedBlock = uint8arrays.concat([iv, new Uint8Array(ciphertext)])
 
+      const blockCID = await baseBlockStore.putBlock(encryptedBlock, codec, { signal })
+
       const mapBefore = currentMap
       currentMap = (async () => {
         const map = await mapBefore
-        return await map.set(ref.namefilter, encryptedBlock)
+        return await map.set(await hamtKeyFromRef(ref), blockCID)
       })()
       await currentMap
     },
 
-    async getBackingHAMT() {
+    async getHAMTSnapshot() {
       return await currentMap
     }
 
@@ -146,4 +149,8 @@ export function createInMemoryUnencrypted(base: PrivateStoreLookup): PrivateStor
 async function keyFromRef(ref: PrivateRef): Promise<CryptoKey> {
   // TODO: Detect when ref.algorithm is not AES-GCM and error out fittingly!
   return await webcrypto.subtle.importKey("raw", ref.key, { name: ref.algorithm }, true, ["encrypt", "decrypt"])
+}
+
+async function hamtKeyFromRef(ref: PrivateRef): Promise<Uint8Array> {
+  return new Uint8Array(await webcrypto.subtle.digest("sha-256", ref.namefilter))
 }

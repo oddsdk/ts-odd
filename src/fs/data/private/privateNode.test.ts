@@ -10,6 +10,8 @@ import * as bloom from "./bloomfilter.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"
 import { arbitraryFileSystemUsage, FileSystemModel, FileSystemOperation, initialFileSystemModel, runOperation } from "../../../../tests/helpers/fileSystemModel.js"
 import { Timestamp } from "../common.js"
+import { isCI } from "../../../../tests/helpers/common.js"
+import { createIPFSBlockStore, createMemoryBlockStore } from "../blockStore.js"
 
 
 function createMemoryRatchetStore(): privateNode.RatchetStore & { storeRatchet(bareName: bloom.BloomFilter, spiral: ratchet.SpiralRatchet): void } {
@@ -60,18 +62,15 @@ describe("the private node module", () => {
 
     directory = await privateNode.write(path, content, directory, ctx)
 
-    let reconstructed = await privateNode.loadNode(await privateNode.storeNodeAndAdvance(directory, ctx), ctx) as privateNode.PrivateDirectory
-
-    reconstructed = await privateNode.write(path, content, reconstructed, ctx)
-    reconstructed = await privateNode.loadNode(await privateNode.storeNodeAndAdvance(reconstructed, ctx), ctx) as privateNode.PrivateDirectory
-
+    const reconstructed = await privateNode.loadNode(await privateNode.storeNodeAndAdvance(directory, ctx), ctx) as privateNode.PrivateDirectory
     const contentRead = await privateNode.read(path, reconstructed, ctx)
     expect(contentRead).toEqual(content)
   })
 
-  it.only("round-trips to/from IPFS", async function() {
+  it("round-trips to/from IPFS", async function() {
     const ipfs = ipfsFromContext(this)
-    const store = privateStore.create(await privateStore.createHAMT(ipfs))
+    const blockStore = createIPFSBlockStore(ipfs)
+    const store = privateStore.create(await privateStore.createHAMT(blockStore), blockStore)
     const ratchetStore = createMemoryRatchetStore()
     const ctx = {
       ...store,
@@ -91,10 +90,10 @@ describe("the private node module", () => {
     directory = await privateNode.loadNode(emptyFsRef, ctx) as privateNode.PrivateDirectoryPersisted
     directory = await privateNode.write(path, content, directory, ctx)
     const ref = await privateNode.storeNodeAndAdvance(directory, ctx)
-    const hamt = await store.getBackingHAMT()
+    const hamt = await store.getHAMTSnapshot()
 
     const cid = hamt.id
-    const reconstructedStore = privateStore.create(await privateStore.loadHAMT(cid, ipfs))
+    const reconstructedStore = privateStore.create(await privateStore.loadHAMT(cid, blockStore), blockStore)
     const reconstructedCtx = {
       ...reconstructedStore,
       ...ratchetStore,
@@ -141,13 +140,13 @@ describe("the private node module", () => {
           const result = await directoryToModel(fs, ctx)
           expect(result).toEqual(state)
         }
-      )
+      ), { numRuns: isCI() ? 50 : 5 }
     )
   })
 
-  it("runs filesystem operations as modeled on ipfs", async function () {
-    const ipfs = ipfsFromContext(this)
-    const store = privateStore.create(await privateStore.createHAMT(ipfs))
+  it("runs filesystem operations on an encrypted private store", async function () {
+    const blockStore = createMemoryBlockStore()
+    const store = privateStore.create(await privateStore.createHAMT(blockStore), blockStore)
     const ratchetStore = createMemoryRatchetStore()
     const ctx = {
       ...store,
@@ -176,7 +175,7 @@ describe("the private node module", () => {
           const result = await directoryToModel(fs, ctx)
           expect(result).toEqual(state)
         }
-      ), { numRuns: 10 }
+      ), { numRuns: isCI() ? 50 : 5 }
     )
   })
 
