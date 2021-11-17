@@ -1,10 +1,10 @@
 import * as uint8arrays from "uint8arrays"
 import * as iamap from "iamap"
-import * as cbor from "cborg"
 import { CID } from "multiformats/cid"
 import * as Block from "multiformats/block"
 import { sha256 } from "multiformats/hashes/sha2"
-import * as codec from "@ipld/dag-cbor" // encode blocks using the DAG-CBOR format
+import * as codecCbor from "@ipld/dag-cbor" // encode blocks using the DAG-CBOR format
+import * as codecRaw from "multiformats/codecs/raw"
 import { webcrypto } from "one-webcrypto"
 
 import { PrivateStore, PrivateStoreLookup, PrivateRef } from "./privateNode.js"
@@ -33,13 +33,13 @@ function toHAMTBackingStore(baseBlockStore: BlockStore): iamap.Store<CID> {
   return {
     async load(cid) {
       const bytes = await baseBlockStore.getBlock(cid, {}) // TODO: AbortSignal
-      const block = await Block.decode({ bytes: bytes, codec, hasher: sha256 })
+      const block = await Block.decode({ bytes: bytes, codec: codecCbor, hasher: sha256 })
       return block.value
     },
 
     async save(node) {
-      const block = await Block.encode({ value: node, codec, hasher: sha256 })
-      await baseBlockStore.putBlock(block.bytes, codec, {}) // TODO: AbortSignal
+      const block = await Block.encode({ value: node, codec: codecCbor, hasher: sha256 })
+      await baseBlockStore.putBlock(block.bytes, codecCbor, {}) // TODO: AbortSignal
       return block.cid
     },
 
@@ -112,7 +112,7 @@ export function create(hamt: HAMT, baseBlockStore: BlockStore): PrivateStore & {
       const iv = webcrypto.getRandomValues(new Uint8Array(16))
       const ciphertext: ArrayBuffer = await webcrypto.subtle.encrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), block)
       const ciphertextWithIV = uint8arrays.concat([iv, new Uint8Array(ciphertext)])
-      const blockCID = await baseBlockStore.putBlock(ciphertextWithIV, codec, { signal })
+      const blockCID = await baseBlockStore.putBlock(ciphertextWithIV, codecRaw, { signal })
       const blockNode = {
         name: ref.namefilter,
         link: blockCID, // TODO Multivalue. May need a change to the privateStore interface

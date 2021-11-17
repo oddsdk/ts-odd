@@ -2,6 +2,8 @@ import type { IPFS } from "ipfs-core"
 
 import * as fs from "fs"
 import * as dagPB from "@ipld/dag-pb"
+import * as dagCBOR from "@ipld/dag-cbor"
+import * as codecRaw from "multiformats/codecs/raw"
 import * as Ipfs from "ipfs-core"
 import tempDir from "ipfs-utils/src/temp-dir.js"
 import { createRepo } from "ipfs-repo"
@@ -54,7 +56,11 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
       codeOrName => {
         const lookup: Record<string, BlockCodec<number, unknown>> = {
           [dagPB.code]: dagPB,
-          [dagPB.name]: dagPB
+          [dagPB.name]: dagPB,
+          [dagCBOR.code]: dagCBOR,
+          [dagCBOR.name]: dagCBOR,
+          [codecRaw.code]: codecRaw,
+          [codecRaw.name]: codecRaw,
         }
 
         return Promise.resolve(lookup[codeOrName])
