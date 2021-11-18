@@ -18,12 +18,14 @@ export type HAMT = iamap.IAMap<CID>
 interface PrivateStoreLeaf {
   name: Uint8Array // namefilter
   link: CID
+  alg: string // "AES-GCM" is the only string supported atm
 }
 
 function isPrivateStoreLeaf(obj: unknown): obj is PrivateStoreLeaf {
   return isRecord(obj)
     && hasProp(obj, "name") && obj.name instanceof Uint8Array
     && hasProp(obj, "link") && isCID(obj.link)
+    && hasProp(obj, "alg") && typeof obj.alg === "string"
 }
 
 iamap.registerHasher(sha256.code, 32, async input => (await sha256.digest(input)).bytes)
@@ -70,7 +72,6 @@ export function create(hamt: HAMT, baseBlockStore: BlockStore): PrivateStore & {
   return {
 
     async getBlock(ref, { signal }) {
-      const alg = ref.algorithm
       const hamtKey = await hamtKeyFromName(ref.namefilter)
       const hamtLeaf = await (await currentMap).get(hamtKey)
 
@@ -86,8 +87,10 @@ export function create(hamt: HAMT, baseBlockStore: BlockStore): PrivateStore & {
         throw new Error(`Corrupt block: The key of a block doesn't match the hash of its namefilter.`)
       }
 
+      const alg = hamtLeaf.alg
+
       if (alg !== "AES-GCM") {
-        throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
+        throw new Error(`Can't decrypt private block: Unsupported algorithm "${alg}".`)
       }
 
       const ciphertextWithIV = await baseBlockStore.getBlock(hamtLeaf.link, { signal })
@@ -99,23 +102,20 @@ export function create(hamt: HAMT, baseBlockStore: BlockStore): PrivateStore & {
       const iv = ciphertextWithIV.slice(0, 16)
       const ciphertext = ciphertextWithIV.slice(16)
 
-      const cleartext: ArrayBuffer = await webcrypto.subtle.decrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), ciphertext)
+      const cleartext: ArrayBuffer = await webcrypto.subtle.decrypt({ name: alg, iv }, await keyFromRef(ref, alg), ciphertext)
       return new Uint8Array(cleartext)
     },
 
     async putBlock(ref, block, { signal }) {
-      const alg = ref.algorithm
-      if (alg !== "AES-GCM") {
-        throw new Error(`Can't decrypt private block: Unsupported algorithm "${ref.algorithm}".`)
-      }
-
+      const alg = "AES-GCM"
       const iv = webcrypto.getRandomValues(new Uint8Array(16))
-      const ciphertext: ArrayBuffer = await webcrypto.subtle.encrypt({ name: "AES-GCM", iv }, await keyFromRef(ref), block)
+      const ciphertext: ArrayBuffer = await webcrypto.subtle.encrypt({ name: alg, iv }, await keyFromRef(ref, alg), block)
       const ciphertextWithIV = uint8arrays.concat([iv, new Uint8Array(ciphertext)])
       const blockCID = await baseBlockStore.putBlock(ciphertextWithIV, codecRaw, { signal })
-      const blockNode = {
+      const blockNode: PrivateStoreLeaf = {
         name: ref.namefilter,
         link: blockCID, // TODO Multivalue. May need a change to the privateStore interface
+        alg: alg,
       }
 
       const mapBefore = currentMap
@@ -173,9 +173,9 @@ export function createInMemoryUnencrypted(base: PrivateStoreLookup): PrivateStor
   }
 }
 
-async function keyFromRef(ref: PrivateRef): Promise<CryptoKey> {
+async function keyFromRef(ref: PrivateRef, alg: string): Promise<CryptoKey> {
   // TODO: Detect when ref.algorithm is not AES-GCM and error out fittingly!
-  return await webcrypto.subtle.importKey("raw", ref.key, { name: ref.algorithm }, true, ["encrypt", "decrypt"])
+  return await webcrypto.subtle.importKey("raw", ref.key, { name: alg }, true, ["encrypt", "decrypt"])
 }
 
 async function hamtKeyFromName(namefilter: Uint8Array): Promise<Uint8Array> {

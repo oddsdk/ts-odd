@@ -39,7 +39,6 @@ export interface PrivateFile {
 
 export interface PrivateRef {
   key: Uint8Array // 32bit AES key
-  algorithm: "AES-GCM" // only supported algorithm right now
   namefilter: bloom.BloomFilter
 }
 
@@ -72,7 +71,6 @@ export function isPrivateDirectory(node: PrivateNode): node is PrivateDirectory 
 
 export function isPrivateRef(ref: unknown): ref is PrivateRef {
   if (!hasProp(ref, "key") || !(ref.key instanceof Uint8Array)) return false
-  if (!hasProp(ref, "algorithm") || ref.algorithm !== "AES-GCM") return false
   if (!hasProp(ref, "namefilter") || !(ref.namefilter instanceof Uint8Array)) return false
   return true
 }
@@ -142,7 +140,6 @@ async function privateRefFor(node: { revision: ratchet.SpiralRatchet; bareName: 
   const key = await ratchet.toKey(node.revision)
   return {
     key: new Uint8Array(key),
-    algorithm: "AES-GCM",
     namefilter: await namefilter.saturate(await namefilter.addToBare(node.bareName, key))
   }
 }
