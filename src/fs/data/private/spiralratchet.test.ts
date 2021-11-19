@@ -83,7 +83,7 @@ describe("the spiral ratchet module", () => {
     const test = (iters: number, preIncrementSmall: number, preIncrementMedium: number) => {
       it(`has the property incBy ${iters} = ${iters} * inc`, async () => {
         const spiral = await ratchet.setup({
-          seed: new TextEncoder().encode("hello world").buffer,
+          seed: new TextEncoder().encode("hello world"),
           preIncrementSmall,
           preIncrementMedium,
         })
@@ -314,7 +314,7 @@ describe("the spiral ratchet module", () => {
         arbitraryRatchetOptions(),
         async (options) => {
           // make sure to always generate an unrelated ratchet
-          const options2 = { ...options, seed: uint8arrays.concat([new Uint8Array([123]), new Uint8Array(options.seed)]).buffer }
+          const options2 = { ...options, seed: uint8arrays.concat([new Uint8Array([123]), options.seed]) }
           const spiral1 = await ratchet.setup(options)
           const spiral2 = await ratchet.setup(options2)
           await expect(all(take(ratchet.previous(spiral1, spiral2, discrepancyBudget), 1)))
@@ -356,7 +356,7 @@ async function iterateAsync<T>(initial: T, f: (obj: T) => Promise<T>, n: number)
 
 function arbitraryRatchetOptions(): fc.Arbitrary<ratchet.RatchetOptions> {
   return fc.record({
-    seed: fc.uint8Array().map(arr => arr.buffer),
+    seed: fc.uint8Array(),
     preIncrementMedium: fc.nat({ max: 255 }),
     preIncrementSmall: fc.nat({ max: 255 }),
   })
@@ -364,7 +364,7 @@ function arbitraryRatchetOptions(): fc.Arbitrary<ratchet.RatchetOptions> {
 
 function seededRatchet(seed: string, preIncrementSmall = 0, preIncrementMedium = 0): ratchet.RatchetOptions {
   return {
-    seed: new TextEncoder().encode(seed).buffer,
+    seed: new TextEncoder().encode(seed),
     preIncrementSmall,
     preIncrementMedium,
   }

@@ -4,17 +4,17 @@ import { webcrypto } from "one-webcrypto"
 import { CborForm, hasProp } from "../common.js"
 
 export interface SpiralRatchet {
-  large: ArrayBuffer
+  large: Uint8Array
 
-  medium: ArrayBuffer
+  medium: Uint8Array
   mediumCounter: number
 
-  small: ArrayBuffer
+  small: Uint8Array
   smallCounter: number
 }
 
 export interface RatchetOptions {
-  seed: ArrayBuffer
+  seed: Uint8Array
   preIncrementSmall: number
   preIncrementMedium: number
 }
@@ -26,8 +26,8 @@ export interface RatchetOptions {
 //--------------------------------------
 
 
-export async function toKey(ratchet: SpiralRatchet): Promise<ArrayBuffer> {
-  return sha(xor(ratchet.large, xor(ratchet.medium, ratchet.small)))
+export async function toKey(ratchet: SpiralRatchet): Promise<Uint8Array> {
+  return sha(uint8arrays.xor(ratchet.large, uint8arrays.xor(ratchet.medium, ratchet.small)))
 }
 
 export async function setup(options?: Partial<RatchetOptions>): Promise<SpiralRatchet> {
@@ -46,8 +46,8 @@ export async function setup(options?: Partial<RatchetOptions>): Promise<SpiralRa
   })
 }
 
-async function zero({ seed }: { seed?: ArrayBuffer }): Promise<SpiralRatchet> {
-  const largePre = seed || webcrypto.getRandomValues(new Uint8Array(32)).buffer
+async function zero({ seed }: { seed?: Uint8Array }): Promise<SpiralRatchet> {
+  const largePre = seed || webcrypto.getRandomValues(new Uint8Array(32))
   const mediumPre = await sha(complement(largePre))
   const medium = await sha(mediumPre)
   const small = await sha(complement(mediumPre))
@@ -170,13 +170,10 @@ export async function seekSubLarge(currentSeek: SpiralSeek, increaser: (ratchet:
 }
 
 export async function compare(left: SpiralRatchet, right: SpiralRatchet, maxSteps: number): Promise<number | "unknown"> {
-  const leftLargeInitial = new Uint8Array(left.large)
-  const rightLargeInitial = new Uint8Array(right.large)
-
   const leftCounter = combinedCounter(left)
   const rightCounter = combinedCounter(right)
 
-  if (uint8arrays.equals(leftLargeInitial, rightLargeInitial)) {
+  if (uint8arrays.equals(left.large, right.large)) {
     if (leftCounter === rightCounter) {
       return 0
     }
@@ -204,7 +201,7 @@ export async function compare(left: SpiralRatchet, right: SpiralRatchet, maxStep
     rightLargeCounter++
 
     // largerCountAhead is how many `inc`s the larger one is head of the smaller one
-    if (uint8arrays.equals(new Uint8Array(rightLarge), leftLargeInitial)) {
+    if (uint8arrays.equals(rightLarge, left.large)) {
       // rightLargeCounter * 256*256 is the count of `inc`s applied via advancing the large digit continually
       // -rightCounter is the difference between `right` and its next large epoch.
       // leftCounter is just what's left to add because of the count at which `left` is.
@@ -212,7 +209,7 @@ export async function compare(left: SpiralRatchet, right: SpiralRatchet, maxStep
       return largerCountAhead
     }
 
-    if (uint8arrays.equals(new Uint8Array(leftLarge), rightLargeInitial)) {
+    if (uint8arrays.equals(leftLarge, right.large)) {
       // In this case, we compute the same difference, but return the negative to indicate
       // that `right` is bigger than `left` rather than the other way around.
       const largerCountAhead = leftLargeCounter * 256 * 256 - leftCounter + rightCounter
@@ -228,15 +225,15 @@ export function equal(left: SpiralRatchet, right: SpiralRatchet): boolean {
 }
 
 export function equalLarge(left: SpiralRatchet, right: SpiralRatchet): boolean {
-  return uint8arrays.equals(new Uint8Array(left.large), new Uint8Array(right.large))
+  return uint8arrays.equals(left.large, right.large)
 }
 
 export function equalMedium(left: SpiralRatchet, right: SpiralRatchet): boolean {
-  return left.mediumCounter === right.mediumCounter && uint8arrays.equals(new Uint8Array(left.medium), new Uint8Array(right.medium))
+  return left.mediumCounter === right.mediumCounter && uint8arrays.equals(left.medium, right.medium)
 }
 
 export function equalSmall(left: SpiralRatchet, right: SpiralRatchet): boolean {
-  return left.smallCounter === right.smallCounter && uint8arrays.equals(new Uint8Array(left.small), new Uint8Array(right.small))
+  return left.smallCounter === right.smallCounter && uint8arrays.equals(left.small, right.small)
 }
 
 export async function* previous(recent: SpiralRatchet, old: SpiralRatchet, discrepancyBudget: number): AsyncGenerator<SpiralRatchet, void, unknown> {
@@ -352,10 +349,10 @@ export async function nextN(spiral: SpiralRatchet, n: number): Promise<SpiralRat
 
 export function toCborForm(ratchet: SpiralRatchet): CborForm {
   return {
-    large: new Uint8Array(ratchet.large),
-    medium: new Uint8Array(ratchet.medium),
+    large: ratchet.large,
+    medium: ratchet.medium,
     mediumCounter: ratchet.mediumCounter,
-    small: new Uint8Array(ratchet.small),
+    small: ratchet.small,
     smallCounter: ratchet.smallCounter
   }
 }
@@ -369,10 +366,10 @@ export function fromCborForm(cbor: unknown): SpiralRatchet {
   if (!hasProp(cbor, "mediumCounter") || typeof cbor.mediumCounter !== "number") throw error()
   if (!hasProp(cbor, "smallCounter") || typeof cbor.smallCounter !== "number") throw error()
   return {
-    large: cbor.large.buffer,
-    medium: cbor.medium.buffer,
+    large: cbor.large,
+    medium: cbor.medium,
     mediumCounter: cbor.mediumCounter,
-    small: cbor.small.buffer,
+    small: cbor.small,
     smallCounter: cbor.smallCounter
   }
 }
@@ -393,27 +390,21 @@ async function incBySmall(ratchet: SpiralRatchet, n: number): Promise<SpiralRatc
   })
 }
 
-async function sha(buffer: ArrayBuffer): Promise<ArrayBuffer> {
-  return await webcrypto.subtle.digest("sha-256", buffer)
+async function sha(buffer: Uint8Array): Promise<Uint8Array> {
+  return new Uint8Array(await webcrypto.subtle.digest("sha-256", buffer))
 }
 
-async function shaN(buffer: ArrayBuffer, n: number): Promise<ArrayBuffer> {
+async function shaN(arr: Uint8Array, n: number): Promise<Uint8Array> {
   for (let i = 0; i < n; i++) {
-    buffer = await webcrypto.subtle.digest("sha-256", buffer)
+    arr = new Uint8Array(await webcrypto.subtle.digest("sha-256", arr))
   }
-  return buffer
+  return arr
 }
 
 function combinedCounter(ratchet: SpiralRatchet): number {
   return 256 * ratchet.mediumCounter + ratchet.smallCounter
 }
 
-function complement(array: ArrayBuffer): ArrayBuffer {
-  return new Uint8Array(array).map(n => n ^ 0xFF).buffer
-}
-
-function xor(l: ArrayBuffer, r: ArrayBuffer): ArrayBuffer {
-  if (l.byteLength != r.byteLength) throw new Error("Can't xor two array buffers with different lengths")
-  const rBytes = new Uint8Array(r)
-  return new Uint8Array(l).map((value, i) => value ^ rBytes[i])
+function complement(array: Uint8Array): Uint8Array {
+  return array.map(n => n ^ 0xFF)
 }

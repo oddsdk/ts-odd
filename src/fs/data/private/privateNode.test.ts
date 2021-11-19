@@ -27,7 +27,7 @@ function createMemoryRatchetStore(): privateNode.RatchetStore & { storeRatchet(b
       }
     },
 
-    getOldestKnownRatchet(bareName) {
+    async getOldestKnownRatchet(bareName) {
       const spiral = memoryMap.get(keyForName(bareName))
       if (spiral == null) {
         throw new Error(`Couldn't find a ratchet for this name ${bareName}`)

@@ -51,7 +51,7 @@ export interface PrivateStore extends PrivateStoreLookup {
 }
 
 export interface RatchetStore {
-  getOldestKnownRatchet(bareName: bloom.BloomFilter): ratchet.SpiralRatchet
+  getOldestKnownRatchet(bareName: bloom.BloomFilter): Promise<ratchet.SpiralRatchet>
 }
 
 export interface PrivateConfig {
@@ -493,7 +493,7 @@ export async function* historyFor(
   directory: PrivateDirectory,
   ctx: PrivateOperationContext
 ): AsyncGenerator<PrivateNode, void> {
-  const oldestKnownRatchet = ctx.getOldestKnownRatchet(directory.bareName)
+  const oldestKnownRatchet = await ctx.getOldestKnownRatchet(directory.bareName)
   // It's technically possible that we know older ratchets than what's in "getOldestKnownRatchet".
   // But we ignore this, because in most cases the stored ratchet is the oldest known ratchet.
   const rootPrevious = yieldBetween(directory.bareName, directory.revision, oldestKnownRatchet, ctx)
