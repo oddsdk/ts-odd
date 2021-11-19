@@ -62,8 +62,8 @@ describe("the private node module", () => {
 
     directory = await privateNode.write(path, content, directory, ctx)
 
-    const reconstructed = await privateNode.loadNode(await privateNode.storeNodeAndAdvance(directory, ctx), ctx) as privateNode.PrivateDirectory
-    const contentRead = await privateNode.read(path, reconstructed, ctx)
+    const advanced = await loadDirectory(await privateNode.storeNodeAndAdvance(directory, ctx), ctx)
+    const contentRead = await privateNode.read(path, advanced, ctx)
     expect(contentRead).toEqual(content)
   })
 
@@ -86,8 +86,9 @@ describe("the private node module", () => {
 
     let directory = await privateNode.newDirectory(namefilter.empty(), ctx)
     ratchetStore.storeRatchet(directory.bareName, directory.revision)
-    const emptyFsRef = await privateNode.storeNode(directory, ctx)
-    directory = await privateNode.loadNode(emptyFsRef, ctx) as privateNode.PrivateDirectoryPersisted
+
+    await privateNode.storeNode(directory, ctx)
+
     directory = await privateNode.write(path, content, directory, ctx)
     const ref = await privateNode.storeNodeAndAdvance(directory, ctx)
     const hamt = await store.getHAMTSnapshot()
@@ -101,12 +102,7 @@ describe("the private node module", () => {
       ratchetDisparityBudget: () => 1_000_000
     }
 
-    const reconstructedDir = await privateNode.loadNode(ref, reconstructedCtx)
-    // For type checking
-    if (!privateNode.isPrivateDirectory(reconstructedDir)) {
-      throw new Error("Expected to load back a directory, not a file")
-    }
-
+    const reconstructedDir = await loadDirectory(ref, reconstructedCtx)
     const { result } = await privateNode.readSeeking(path, reconstructedDir, ctx)
     expect(uint8arrays.toString(result)).toEqual(uint8arrays.toString(content))
   })
@@ -131,8 +127,7 @@ describe("the private node module", () => {
           let i = 1
           for (const operation of ops) {
             fs = await interpretOperation(fs, operation, { ...ctx, now: i })
-            const ref = await privateNode.storeNodeAndAdvance(fs, ctx)
-            fs = await privateNode.loadNode(ref, ctx) as any
+            fs = await loadDirectory(await privateNode.storeNodeAndAdvance(fs, ctx), ctx)
             i++
           }
 
@@ -166,8 +161,7 @@ describe("the private node module", () => {
           let i = 1
           for (const operation of ops) {
             fs = await interpretOperation(fs, operation, { ...ctx, now: i })
-            const ref = await privateNode.storeNodeAndAdvance(fs, ctx)
-            fs = await privateNode.loadNode(ref, ctx) as any
+            fs = await loadDirectory(await privateNode.storeNodeAndAdvance(fs, ctx), ctx)
             i++
           }
 
@@ -221,3 +215,11 @@ async function interpretOperation(
   }
 }
 
+async function loadDirectory(
+  ref: privateNode.PrivateRef,
+  ctx: privateNode.PrivateOperationContext & privateNode.PrivateStore
+): Promise<privateNode.PrivateDirectory> {
+  const dir = await privateNode.loadNode(ref, ctx)
+  if (!privateNode.isPrivateDirectory(dir)) throw new Error("Invalid state")
+  return dir
+}

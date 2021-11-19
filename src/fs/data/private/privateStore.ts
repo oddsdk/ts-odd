@@ -14,6 +14,10 @@ import { hasProp, isCID, isRecord } from "../common.js"
 
 export type HAMT = iamap.IAMap<CID>
 
+export interface HAMTPrivateStore extends PrivateStore {
+  getHAMTSnapshot(): Promise<HAMT>
+}
+
 /** leafs at the private store HAMT, later encoded as CBOR */
 interface PrivateStoreLeaf {
   name: Uint8Array // namefilter
@@ -65,7 +69,7 @@ export async function loadHAMT(cid: CID, baseBlockStore: BlockStore): Promise<HA
 }
 
 
-export function create(hamt: HAMT, baseBlockStore: BlockStore): PrivateStore & { getHAMTSnapshot(): Promise<HAMT> } {
+export function create(hamt: HAMT | PromiseLike<HAMT>, baseBlockStore: BlockStore): HAMTPrivateStore {
 
   let currentMap: Promise<HAMT> = Promise.resolve(hamt)
 
