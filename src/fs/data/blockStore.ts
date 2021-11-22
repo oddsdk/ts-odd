@@ -29,6 +29,7 @@ export function emptyBlockStore(): BlockStoreLookup {
 
 
 export function createMemoryBlockStore(base: BlockStoreLookup = emptyBlockStore()): MemoryBlockStore {
+  // IPFS is /basically/ a hashmap ;)
   const memoryMap = new Map<string, Uint8Array>()
 
   return {

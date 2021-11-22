@@ -54,5 +54,18 @@ export function userMessages(m: Partial<UserMessages>): UserMessages {
   return { ...internalSetup.userMessages }
 }
 
+/**
+ * A setting for an internal algorithm that compares values of unknown disparity.
+ * 
+ * Don't worry about this unless you're working with private files or directories
+ * with over one million version entries.
+ */
+export function ratchetDisparityBudget(getRatchetDisparityBudget?: () => number): number {
+  if (getRatchetDisparityBudget != null) {
+    internalSetup.getRatchetDisparityBudget = getRatchetDisparityBudget
+  }
+  return internalSetup.getRatchetDisparityBudget()
+}
+
 
 export { setDependencies } from "./setup/dependencies.js"

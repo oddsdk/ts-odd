@@ -19,6 +19,7 @@ type Setup = {
   getApiEndpoint: () => string
   userMessages: UserMessages
   shouldPin: boolean
+  getRatchetDisparityBudget: () => number
 }
 
 
@@ -51,6 +52,8 @@ export const setup: Setup = {
   },
 
   shouldPin: false,
+
+  getRatchetDisparityBudget: () => 1_000_000,
 }
 
 function alertIfPossible(str: string) {

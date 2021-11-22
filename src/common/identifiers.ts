@@ -1,3 +1,5 @@
+import * as uint8arrays from "uint8arrays"
+
 import { DistinctivePath } from "../path.js"
 import * as crypto from "../crypto/index.js"
 
@@ -12,6 +14,11 @@ export async function bareNameFilter({ path }: { path: DistinctivePath }): Promi
 export async function readKey({ path }: { path: DistinctivePath }): Promise<string> {
   const hash = await crypto.hash.sha256Str(pathToString(path))
   return `wnfs__readKey__${hash}`
+}
+
+export async function ratchet({ bareName }: { bareName: Uint8Array }): Promise<string> {
+  const hash = await crypto.hash.sha256Str(uint8arrays.toString(bareName, "base64"))
+  return `wnfs__ratchet__${hash}`
 }
 
 

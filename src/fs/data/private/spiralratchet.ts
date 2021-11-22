@@ -1,7 +1,7 @@
 import * as uint8arrays from "uint8arrays"
 import { webcrypto } from "one-webcrypto"
 
-import { CborForm, hasProp } from "../common.js"
+import { CborForm, hasProp, isRecord } from "../common.js"
 
 export interface SpiralRatchet {
   large: Uint8Array
@@ -19,6 +19,15 @@ export interface RatchetOptions {
   preIncrementMedium: number
 }
 
+export function isSpiralRatchet(obj: unknown): obj is SpiralRatchet {
+  return isRecord(obj)
+    && hasProp(obj, "large") && obj.large instanceof Uint8Array
+    && hasProp(obj, "medium") && obj.medium instanceof Uint8Array
+    && hasProp(obj, "small") && obj.small instanceof Uint8Array
+    && hasProp(obj, "mediumCounter") && typeof obj.mediumCounter === "number"
+    && hasProp(obj, "smallCounter") && typeof obj.smallCounter === "number"
+}
+
 
 
 //--------------------------------------
@@ -27,7 +36,7 @@ export interface RatchetOptions {
 
 
 export async function toKey(ratchet: SpiralRatchet): Promise<Uint8Array> {
-  return sha(uint8arrays.xor(ratchet.large, uint8arrays.xor(ratchet.medium, ratchet.small)))
+  return await sha(uint8arrays.xor(ratchet.large, uint8arrays.xor(ratchet.medium, ratchet.small)))
 }
 
 export async function setup(options?: Partial<RatchetOptions>): Promise<SpiralRatchet> {

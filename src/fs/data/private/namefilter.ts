@@ -3,8 +3,15 @@ import { webcrypto } from "one-webcrypto"
 import * as bloom from "./bloomfilter.js"
 
 
+export type Namefilter = Uint8Array
+
+
 export function empty(): bloom.BloomFilter {
   return bloom.empty(bloom.wnfsParameters)
+}
+
+export function isNamefilter(obj: unknown): obj is Namefilter {
+  return obj instanceof Uint8Array
 }
 
 export const SATURATION_THRESHOLD = 1019
@@ -76,7 +83,7 @@ async function saturationStepEnsure(filter: bloom.BloomFilter): Promise<void> {
 }
 
 
-export async function addToBare(bareFilter: bloom.BloomFilter, keyOrINumber: ArrayBuffer): Promise<bloom.BloomFilter> {
+export async function addToBare(bareFilter: bloom.BloomFilter, keyOrINumber: Uint8Array): Promise<bloom.BloomFilter> {
   const hash = await webcrypto.subtle.digest("sha-256", keyOrINumber)
   const added = new Uint8Array(bareFilter)
   bloom.add(new Uint8Array(hash), added, bloom.wnfsParameters)

@@ -1,6 +1,7 @@
 import * as uint8arrays from "uint8arrays"
+import { CID as CIDObj } from "multiformats"
 
-import { AddResult, CID } from "../../ipfs/index.js"
+import { AddResult, CID, get as getIPFS } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Links, Puttable } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
@@ -16,38 +17,41 @@ import * as versions from "../versions.js"
 import * as storage from "../../storage/index.js"
 import * as ucanPermissions from "../../ucan/permissions.js"
 
-import BareTree from "../bare/tree.js"
-import MMPT from "../protocol/private/mmpt.js"
-import PublicTree from "../v1/PublicTree.js"
-import PrivateTree from "../v1/PrivateTree.js"
-import PrivateFile from "../v1/PrivateFile.js"
+import * as namefilter from "../data/private/namefilter.js"
 
-
-type PrivateNode = PrivateTree | PrivateFile
+import { BlockStore, createIPFSBlockStore } from "../data/blockStore.js"
+import * as privateStore from "../data/private/privateStore.js"
+import * as privateNode from "../data/private/privateNode.js"
+import * as publicNode from "../data/public/publicNode.js"
+import { HAMTPrivateStore } from "../data/private/privateStore.js"
+import { RatchetStore, PrivateNode } from "../data/private/privateNode.js"
+import { isSpiralRatchet, SpiralRatchet, toKey } from "../data/private/spiralratchet.js"
+import { PublicDirectory } from "../data/public/publicNode.js"
+import { setup } from "../../index.js"
 
 
 export default class RootTree implements Puttable {
 
   links: Links
-  mmpt: MMPT
-
-  publicTree: PublicTree
-  prettyTree: BareTree
+  blockStore: BlockStore
+  privateStore: HAMTPrivateStore
+  ratchetStore: RatchetStore
+  publicRootDirectory: PublicDirectory
   privateNodes: Record<string, PrivateNode>
 
-  constructor({ links, mmpt, publicTree, prettyTree, privateNodes }: {
+  constructor({ links, blockStore, privateStore, ratchetStore, publicRootDirectory, privateNodes }: {
     links: Links
-    mmpt: MMPT
-
-    publicTree: PublicTree
-    prettyTree: BareTree
+    blockStore: BlockStore
+    privateStore: HAMTPrivateStore
+    ratchetStore: RatchetStore
+    publicRootDirectory: PublicDirectory
     privateNodes: Record<string, PrivateNode>
   }) {
     this.links = links
-    this.mmpt = mmpt
-
-    this.publicTree = publicTree
-    this.prettyTree = prettyTree
+    this.blockStore = blockStore
+    this.privateStore = privateStore
+    this.ratchetStore = ratchetStore
+    this.publicRootDirectory = publicRootDirectory
     this.privateNodes = privateNodes
   }
 
@@ -56,79 +60,83 @@ export default class RootTree implements Puttable {
   // --------------
 
   static async empty({ rootKey }: { rootKey: string }): Promise<RootTree> {
-    const publicTree = await PublicTree.empty()
-    const prettyTree = await BareTree.empty()
-    const mmpt = MMPT.create()
+    // common for both public and private
+    const now = Date.now()
+    const blockStore = createIPFSBlockStore(await getIPFS())
+    
+    // public
+    const publicRootDirectory = await publicNode.newDirectory(now)
 
-    // Private tree
-    const rootPath = pathing.toPosix(pathing.directory(pathing.Branch.Private))
-    const rootTree = await PrivateTree.create(mmpt, rootKey, null)
-    await rootTree.put()
-
-    // Construct tree
-    const tree = new RootTree({
-      links: {},
-      mmpt,
-
-      publicTree,
-      prettyTree,
-      privateNodes: {
-        [rootPath]: rootTree
-      }
+    // private
+    const privStore = privateStore.create(privateStore.createHAMT(blockStore), blockStore)
+    const ratchetStore = new BasicRatchetStore()
+    const privateRootDirectory = await privateNode.newDirectory(namefilter.empty(), {
+      ...privStore,
+      ...ratchetStore.asStore(),
+      now,
+      ratchetDisparityBudget: () => setup.ratchetDisparityBudget(),
     })
+    await ratchetStore.storeRatchet(privateRootDirectory.bareName, privateRootDirectory.revision)
 
     // Store root key
     await RootTree.storeRootKey(rootKey)
 
-    // Set version and store new sub trees
-    await tree.setVersion(versions.latest)
-
-    await Promise.all([
-      tree.updatePuttable(Branch.Public, publicTree),
-      tree.updatePuttable(Branch.Pretty, prettyTree),
-      tree.updatePuttable(Branch.Private, mmpt)
-    ])
+    const privateRootPath = pathing.toPosix(pathing.directory(pathing.Branch.Private))
 
     // Fin
-    return tree
+    return new RootTree({
+      links: {},
+      blockStore,
+      privateStore: privStore,
+      ratchetStore,
+      publicRootDirectory,
+      privateNodes: { [privateRootPath]: privateRootDirectory}
+    })
   }
 
   static async fromCID(
     { cid, permissions }: { cid: CID; permissions?: Permissions }
   ): Promise<RootTree> {
+    const now = Date.now()
+    const blockStore = createIPFSBlockStore(await getIPFS())
     const links = await protocol.basic.getLinks(cid)
 
     const keys = permissions ? await permissionKeys(permissions) : []
+    const ratchetStore = permissions != null
+      ? await BasicRatchetStore.fromPrivatePathKeys(keys)
+      : new BasicRatchetStore()
 
     // Load public parts
     const publicCID = links[Branch.Public]?.cid || null
-    const publicTree = publicCID === null
-      ? await PublicTree.empty()
-      : await PublicTree.fromCID(publicCID)
+    const publicRootDirectory = publicCID === null
+      ? await publicNode.newDirectory(now)
+      : await publicNode.load(CIDObj.parse(publicCID), blockStore)
 
-    const prettyTree = links[Branch.Pretty]
-                         ? await BareTree.fromCID(links[Branch.Pretty].cid)
-                         : await BareTree.empty()
+    if (publicNode.isPublicFile(publicRootDirectory)) {
+      throw new Error(`Expected public root directory, but got a file at ${publicCID}`)
+    }
 
     // Load private bits
     const privateCID = links[Branch.Private]?.cid || null
 
-    let mmpt, privateNodes
-    if (privateCID === null) {
-      mmpt = MMPT.create()
-      privateNodes = {}
-    } else {
-      mmpt = await MMPT.fromCID(privateCID)
-      privateNodes = await loadPrivateNodes(keys, mmpt)
+    const hamt = privateCID == null
+      ? await privateStore.createHAMT(blockStore)
+      : await privateStore.loadHAMT(CIDObj.parse(privateCID), blockStore)
+    const privStore = privateStore.create(hamt, blockStore)
+    const privateCtx = {
+      ...privStore,
+      ...ratchetStore.asStore(),
+      ratchetDisparityBudget: () => setup.ratchetDisparityBudget()
     }
+    const privateNodes = privateCID == null ? {} : loadPrivateNodes(keys, privateCtx)
 
     // Construct tree
     const tree = new RootTree({
       links,
-      mmpt,
-
-      publicTree,
-      prettyTree,
+      blockStore,
+      privateStore: privStore,
+      ratchetStore,
+      publicRootDirectory,
       privateNodes
     })
 
@@ -150,7 +158,27 @@ export default class RootTree implements Puttable {
   }
 
   async putDetailed(): Promise<AddResult> {
-    return protocol.basic.putLinks(this.links)
+    const hamt = await this.privateStore.getHAMTSnapshot()
+    const hamtCID = CIDObj.asCID(hamt.id)
+    if (hamtCID == null) {
+      throw new Error(`Couldn't store HAMT. Expected to have a CID, but got ${hamt.id}`)
+    }
+    const publicCID = await publicNode.store(this.publicRootDirectory, this.blockStore)
+    return protocol.basic.putLinks({
+      ...this.links,
+      private: {
+        name: "private",
+        isFile: false,
+        size: 0,
+        cid: hamtCID.toString(),
+      },
+      public: {
+        name: "public",
+        isFile: false,
+        size: 0,
+        cid: publicCID.toString()
+      }
+    })
   }
 
   updateLink(name: string, result: AddResult): this {
@@ -198,33 +226,10 @@ export default class RootTree implements Puttable {
 // ㊙️
 
 
-type PathKey = { path: DistinctivePath; key: string }
-
-
-async function findBareNameFilter(
-  map: Record<string, PrivateNode>,
+type PrivatePathKey = {
   path: DistinctivePath
-): Promise<Maybe<BareNameFilter>> {
-  const bareNameFilterId = await identifiers.bareNameFilter({ path })
-  const bareNameFilter: Maybe<BareNameFilter> = await storage.getItem(bareNameFilterId)
-  if (bareNameFilter) return bareNameFilter
-
-  const [nodePath, node] = findPrivateNode(map, path)
-  if (!node) return null
-
-  const unwrappedPath = pathing.unwrap(path)
-  const relativePath = unwrappedPath.slice(pathing.unwrap(nodePath).length)
-
-  if (PrivateFile.instanceOf(node)) {
-    return relativePath.length === 0 ? node.header.bareNameFilter : null
-  }
-
-  if (!node.exists(relativePath)) {
-    if (pathing.isDirectory(path)) await node.mkdir(relativePath)
-    else await node.add(relativePath, "")
-  }
-
-  return node.get(relativePath).then(t => t ? t.header.bareNameFilter : null)
+  ratchet: SpiralRatchet
+  bareName: Uint8Array
 }
 
 function findPrivateNode(
@@ -241,63 +246,97 @@ function findPrivateNode(
     : [ path, null ]
 }
 
-function loadPrivateNodes(
-  pathKeys: PathKey[],
-  mmpt: MMPT
+async function loadPrivateNodes(
+  pathKeys: PrivatePathKey[],
+  ctx: privateNode.PrivateOperationContext
 ): Promise<Record<string, PrivateNode>> {
-  return sortedPathKeys(pathKeys).reduce((acc, { path, key }) => {
-    return acc.then(async map => {
-      let privateNode
-
-      const unwrappedPath = pathing.unwrap(path)
-
-      // if root, no need for bare name filter
-      if (unwrappedPath.length === 1 && unwrappedPath[0] === pathing.Branch.Private) {
-        privateNode = await PrivateTree.fromBaseKey(mmpt, key)
-
-      } else {
-        const bareNameFilter = await findBareNameFilter(map, path)
-        if (!bareNameFilter) throw new Error(`Was trying to load the PrivateTree for the path \`${path}\`, but couldn't find the bare name filter for it.`)
-        if (pathing.isDirectory(path)) {
-          privateNode = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key)
-        } else {
-          privateNode = await PrivateFile.fromBareNameFilter(mmpt, bareNameFilter, key)
-        }
-      }
-
-      const posixPath = pathing.toPosix(path)
-      return { ...map, [posixPath]: privateNode }
-    })
-  }, Promise.resolve({}))
+  const privateNodes: Record<string, PrivateNode> = {}
+  for (const entry of pathKeys) {
+    const key = await toKey(entry.ratchet)
+    const fullName = await namefilter.addToBare(entry.bareName, key)
+    const saturatedName = await namefilter.saturate(fullName)
+    const privateRef = { key, namefilter: saturatedName }
+    privateNodes[pathing.toPosix(entry.path)] = await privateNode.loadNode(privateRef, ctx)
+  }
+  return privateNodes
 }
 
 async function permissionKeys(
   permissions: Permissions
-): Promise<PathKey[]> {
-  return ucanPermissions.paths(permissions).reduce(async (
-    acc: Promise<PathKey[]>,
-    path: DistinctivePath
-  ): Promise<PathKey[]> => {
-    if (pathing.isBranch(pathing.Branch.Public, path)) return acc
+): Promise<PrivatePathKey[]> {
+  const pathKeys: PrivatePathKey[] = []
+  for (const path of ucanPermissions.paths(permissions)) {
+    if (pathing.isBranch(pathing.Branch.Public, path)) continue
 
-    const name = await identifiers.readKey({ path })
-    const key = await crypto.keystore.exportSymmKey(name)
-    const pk: PathKey = { path: path, key: key }
-
-    return acc.then(
-      list => [ ...list, pk ]
-    )
-  }, Promise.resolve(
-    []
-  ))
+    const bareName = await loadBareName({ path })
+    const ratchet = await loadRatchet({ path, bareName })
+    pathKeys.push({ path, bareName, ratchet })
+  }
+  return sortedPrivatePathKeys(pathKeys)
 }
 
 /**
  * Sort keys alphabetically by path.
  * This is used to sort paths by parent first.
  */
-function sortedPathKeys(list: PathKey[]): PathKey[] {
+function sortedPrivatePathKeys(list: PrivatePathKey[]): PrivatePathKey[] {
   return list.sort(
     (a, b) => pathing.toPosix(a.path).localeCompare(pathing.toPosix(b.path))
   )
+}
+
+async function loadBareName({ path }: { path: DistinctivePath }): Promise<namefilter.Namefilter> {
+  // Get the bare name filter
+  const bareNameId = await identifiers.bareNameFilter({ path })
+  const bareName = await storage.getItem(bareNameId)
+  if (bareName == null) {
+    throw new Error(`Can't get permission for path ${pathing.toPosix(path)}: Missing bare namefilter`)
+  }
+  if (!(bareName instanceof Uint8Array)) {
+    throw new Error(`Can't get permission for path ${pathing.toPosix(path)}: Can't decode bare name. Expected Uint8Array. Got ${typeof bareName}.`)
+  }
+  return bareName
+}
+
+async function loadRatchet({ path, bareName }: { path: DistinctivePath; bareName: namefilter.Namefilter }): Promise<SpiralRatchet> {
+  const ratchetId = await identifiers.ratchet({ bareName })
+  const ratchet: SpiralRatchet | null = await storage.getItem(ratchetId)
+  if (ratchet == null) {
+    throw new Error(`Can't get permission for path ${pathing.toPosix(path)}: Missing ratchet.`)
+  }
+  if (!isSpiralRatchet(ratchet)) {
+    throw new Error(`Can't get permission for path ${pathing.toPosix(path)}: Expected ratchet, but got ${JSON.stringify(ratchet)}`)
+  }
+  return ratchet
+}
+
+class BasicRatchetStore implements RatchetStore {
+
+  static async fromPrivatePathKeys(privateAccesses: PrivatePathKey[]): Promise<BasicRatchetStore> {
+    const ratchetStore = new BasicRatchetStore()
+    for (const entry of privateAccesses) {
+      await ratchetStore.storeRatchet(entry.bareName, entry.ratchet)
+    }
+    return ratchetStore
+  }
+
+  async storeRatchet(bareName: Uint8Array, ratchet: SpiralRatchet): Promise<void> {
+    await storage.setItem(await identifiers.ratchet({ bareName }), ratchet)
+  }
+  
+  async getOldestKnownRatchet(bareName: Uint8Array): Promise<SpiralRatchet> {
+    const ratchet = await storage.getItem<unknown>(await identifiers.ratchet({ bareName }))
+    if (ratchet == null) {
+      throw new Error(`Missing spiral ratchet for bare namefilter ${uint8arrays.toString(bareName, "base64pad")}`)
+    }
+    if (!isSpiralRatchet(ratchet)) {
+      throw new Error(`Stored corrupted spiral ratchet at namefilter ${uint8arrays.toString(bareName, "base64pad")}: ${JSON.stringify(ratchet)}`)
+    }
+    return ratchet
+  }
+
+  asStore(): RatchetStore {
+    return this
+  }
+
 }
