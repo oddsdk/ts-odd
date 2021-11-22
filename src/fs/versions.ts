@@ -36,7 +36,9 @@ export const toString = (version: SemVer): string => {
 }
 
 export const isSmallerThan = (a: SemVer, b: SemVer): boolean => {
-  return a.major < b.major || a.minor < b.major || a.patch < b.patch
+  if (a.major != b.major) return a.major < b.major
+  if (a.minor != b.minor) return a.minor < b.minor
+  return a.patch < b.patch
 }
 
 
