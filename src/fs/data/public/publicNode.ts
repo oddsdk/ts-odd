@@ -2,7 +2,7 @@ import { CID } from "multiformats/cid"
 import * as dagCbor from "@ipld/dag-cbor"
 import { BlockStore } from "../blockStore.js"
 import { AbortContext, hasProp, isCID, isNonEmpty, isRecord, isRecordOf, mapRecord, Timestamp } from "../common.js"
-import { Metadata, newDirectory, updateMtime, newFile, isMetadata } from "../metadata.js"
+import * as metadata from "../metadata.js"
 
 
 export type PublicNode = PublicFile | PublicDirectory
@@ -16,14 +16,14 @@ export type PublicNodePersisted = PublicFile | PublicDirectoryPersisted
 export type PublicNodeSchema<Link> = PublicFile | PublicDirectorySchema<Link>
 
 export interface PublicDirectorySchema<Link> {
-  metadata: Metadata
+  metadata: metadata.Metadata
   userland: { [name: string]: Link }
   previous?: CID
 }
 
 
 export interface PublicFile {
-  metadata: Metadata
+  metadata: metadata.Metadata
   userland: CID
   previous?: CID
 }
@@ -45,7 +45,7 @@ export function isPublicNode(data: unknown): data is PublicNode {
 }
 
 export function isPublicNodeSchema<Link>(data: unknown, isLink: (value: unknown) => value is Link): data is PublicNodeSchema<Link> {
-  if (!isRecord(data) || !hasProp(data, "metadata") || !isMetadata(data.metadata) || !hasProp(data, "userland")) {
+  if (!isRecord(data) || !hasProp(data, "metadata") || !metadata.isMetadata(data.metadata) || !hasProp(data, "userland")) {
     return false
   }
   if (hasProp(data, "previous") && !isCID(data.previous)) {
@@ -82,6 +82,10 @@ export async function sealLink(link: PublicNode | CID, ctx: OperationContext): P
   return await store(link, ctx)
 }
 
+export async function newDirectory(posixTimestamp: number): Promise<PublicDirectory> {
+  return { metadata: metadata.newDirectory(posixTimestamp), userland: {} }
+}
+
 
 //--------------------------------------
 // Operations
@@ -105,13 +109,13 @@ export async function ls(
   path: string[],
   directory: PublicDirectory,
   ctx: OperationContext
-): Promise<Record<string, Metadata>> {
+): Promise<Record<string, metadata.Metadata>> {
   const node = isNonEmpty(path) ? await getNode(path, directory, ctx) : directory
 
   if (node == null) throw new Error(`Couldn't ls. No such path ${path}.`)
   if (isPublicFile(node)) throw new Error(`Couldn't ls ${path}, it's a file.`)
 
-  const result: Record<string, Metadata> = {}
+  const result: Record<string, metadata.Metadata> = {}
   for (const [name, entry] of Object.entries(node.userland)) {
     result[name] = (await resolveLink(entry, ctx)).metadata
   }
@@ -143,12 +147,12 @@ export async function write(
         }
         return {
           ...file,
-          metadata: updateMtime(file.metadata, ctx.now),
+          metadata: metadata.updateMtime(file.metadata, ctx.now),
           userland: content
         }
       }
       return {
-        metadata: newFile(ctx.now),
+        metadata: metadata.newFile(ctx.now),
         userland: content
       }
     },
@@ -200,7 +204,7 @@ export async function mkdir(
       userland: {
         ...directory.userland,
         [name]: {
-          metadata: newDirectory(ctx.now),
+          metadata: metadata.newDirectory(ctx.now),
           userland: {}
         }
       }
@@ -209,7 +213,7 @@ export async function mkdir(
 
   const nextDirectory = existing == null ?
     {
-      metadata: newDirectory(ctx.now),
+      metadata: metadata.newDirectory(ctx.now),
       userland: {}
     } :
     existing
@@ -277,7 +281,7 @@ export async function upsert(
 
     return {
       ...directory,
-      metadata: updateMtime(directory.metadata, ctx.now),
+      metadata: metadata.updateMtime(directory.metadata, ctx.now),
       userland
     }
   }
@@ -291,7 +295,7 @@ export async function upsert(
 
   return {
     ...directory,
-    metadata: updateMtime(directory.metadata, ctx.now),
+    metadata: metadata.updateMtime(directory.metadata, ctx.now),
     userland: {
       ...directory.userland,
       [name]: changedDirectory
