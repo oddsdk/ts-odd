@@ -2,7 +2,7 @@ import expect from "expect"
 
 import * as path from "../../src/path.js"
 import * as versions from "../../src/fs/versions.js"
-import { checkVersion } from "../../src/filesystem.js"
+import { checkFileSystemVersion } from "../../src/filesystem.js"
 
 import { emptyFilesystem } from "../helpers/filesystem.js"
 
@@ -15,7 +15,7 @@ describe("the filesystem versioning system", () => {
         await fs.root.setVersion(versions.encode(versions.latest.major + 1, 0, 0))
         const changedCID = await fs.root.put()
 
-        await expect(checkVersion(changedCID)).rejects.toBeDefined()
+        await expect(checkFileSystemVersion(changedCID)).rejects.toBeDefined()
     })
 
     it("throws an error if the version is too low", async function() {
@@ -24,7 +24,7 @@ describe("the filesystem versioning system", () => {
         await fs.root.setVersion(versions.encode(versions.latest.major - 1, 0, 0))
         const changedCID = await fs.root.put()
 
-        await expect(checkVersion(changedCID)).rejects.toBeDefined()
+        await expect(checkFileSystemVersion(changedCID)).rejects.toBeDefined()
     })
 
 })

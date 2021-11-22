@@ -80,7 +80,7 @@ export async function loadFileSystem(
   const p = permissions || undefined
 
   if (cid != null) {
-    await checkVersion(cid)
+    await checkFileSystemVersion(cid)
     fs = await FileSystem.fromCID(cid, { permissions: p })
     if (fs != null) return fs
   }
@@ -95,7 +95,7 @@ export async function loadFileSystem(
 }
 
 
-export async function checkVersion(filesystemCID: CID): Promise<void> {
+export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> {
   const links = await protocol.basic.getSimpleLinks(filesystemCID)
   // if there's no version link, we assume it's from a 1.0.0-compatible version
   // (from before ~ November 2020)
