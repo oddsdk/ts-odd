@@ -1,4 +1,5 @@
 import * as cbor from "@ipld/dag-cbor"
+import { SymmAlg } from "keystore-idb/lib/types.js"
 
 import * as basic from "./protocol/basic.js"
 import * as crypto from "../crypto/index.js"
@@ -77,14 +78,21 @@ export async function privateNode(
   )
 
   // Add entry index to ipfs
+  const symmKeyAlgo = SymmAlg.AES_GCM
   const indexNode = Object.assign({}, index.header)
-  const indexResult = await basic.putEncryptedFile(indexNode, index.key)
+  const indexResult = await basic.putFile(
+    await crypto.aes.encrypt(
+      new TextEncoder().encode( JSON.stringify(indexNode) ),
+      index.key,
+      symmKeyAlgo
+    )
+  )
 
   // Create share payload
   const payload = cbor.encode(shareKey.payload({
     entryIndexCid: indexResult.cid,
     symmKey: index.key,
-    symmKeyAlgo: "AES-CTR" // TODO: Account for the AES-GCM changes
+    symmKeyAlgo
   }))
 
   // Add encrypted payloads to ipfs

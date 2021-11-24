@@ -1,9 +1,12 @@
+import * as cbor from "@ipld/dag-cbor"
+import { SymmAlg } from "keystore-idb/lib/types.js"
 import { throttle } from "throttle-debounce"
 
 import { Links } from "./types.js"
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
 import { PublishHook, Tree, File, ShareDetails } from "./types.js"
 import BareTree from "./bare/tree.js"
+import MMPT from "./protocol/private/mmpt.js"
 import RootTree from "./root/tree.js"
 import PublicTree from "./v1/PublicTree.js"
 import PrivateFile from "./v1/PrivateFile.js"
@@ -14,9 +17,15 @@ import * as dataRoot from "../data-root.js"
 import * as debug from "../common/debug.js"
 import * as crypto from "../crypto/index.js"
 import * as did from "../did/index.js"
+import * as ipfs from "../ipfs/basic.js"
+import * as keystore from "../keystore.js"
 import * as pathing from "../path.js"
+import * as privateTypeChecks from "./protocol/private/types/check.js"
+import * as protocol from "./protocol/index.js"
+import * as shareKey from "./protocol/shared/key.js"
 import * as sharing from "./share.js"
 import * as typeCheck from "./types/check.js"
+import * as typeChecks from "../common/type-checks.js"
 import * as ucan from "../ucan/index.js"
 
 import { CID, FileContent } from "../ipfs/index.js"
@@ -408,31 +417,69 @@ export class FileSystem {
   }
 
 
-  // COMMON
-  // ------
+  // SHARING
+  // -------
 
   /**
-   * Stores the public part of the exchange key in the DID format,
-   * in the `/public/.well-known/exchange/DID_GOES_HERE/` directory.
+   * Loads a share.
+   * This'll return a "entry index", in other words,
+   * a private tree with symlinks (soft links) to the shared items.
    */
-  async addPublicExchangeKey(): Promise<void> {
-    const publicDid = await did.exchange()
+  async loadShare({ shareId, sharedBy }: { shareId: string, sharedBy: string }): Promise<PrivateTree> {
+    let sharePayload
 
-    await this.mkdir(
-      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
-    )
-  }
+    const ourExchangeDid = await did.exchange()
+    const theirRootDid = await did.root(sharedBy)
 
-  /**
-   * Checks if the public exchange key was added in the well-known location.
-   * See `addPublicExchangeKey()` for the exact details.
-   */
-  async hasPublicExchangeKey(): Promise<boolean> {
-    const publicDid = await did.exchange()
+    // Share key
+    const key = await shareKey.create({
+      counter: parseInt(shareId, 10),
+      recipientExchangeDid: ourExchangeDid,
+      senderRootDid: theirRootDid
+    })
 
-    return this.exists(
-      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
-    )
+    // Load their shared section
+    const root = await dataRoot.lookup(sharedBy)
+    if (!root) throw new Error("This user doesn't have a filesystem yet.")
+
+    const rootLinks = await protocol.basic.getSimpleLinks(root)
+    const sharedLinksCid = rootLinks[Branch.Shared]?.cid || null
+    if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
+
+    const sharedLinks = await protocol.basic.getSimpleLinks(sharedLinksCid) || {}
+    const shareLink = sharedLinks[key]
+    if (!shareLink) throw new Error("Couldn't find a matching share.")
+
+    sharePayload = await ipfs.catBuf(shareLink.cid)
+
+    // Decode payload
+    const ks = await keystore.get()
+    const exchangeKey = await ks.exchangeKey()
+
+    const decryptedPayload = await crypto.rsa.decrypt(sharePayload, exchangeKey.privateKey)
+    const decodedPayload: Record<string, unknown> = cbor.decode(new Uint8Array(decryptedPayload))
+
+    if (!typeChecks.hasProp(decodedPayload, "entryIndexCid")) throw new Error("Share payload is missing the `entryIndexCid` property")
+    if (!typeChecks.hasProp(decodedPayload, "symmKey")) throw new Error("Share payload is missing the `symmKey` property")
+    if (!typeChecks.hasProp(decodedPayload, "symmKeyAlgo")) throw new Error("Share payload is missing the `symmKeyAlgo` property")
+
+    const entryIndexCid: string = decodedPayload.entryIndexCid as string
+    const symmKey: string = decodedPayload.symmKey as string
+    const symmKeyAlgo: string = decodedPayload.symmKeyAlgo as string
+
+    // Load MMPT
+    const mmptCid = rootLinks[Branch.Private]?.cid
+    if (!mmptCid) throw new Error("This user's filesystem doesn't have a private branch")
+    const theirMmpt = await MMPT.fromCID(rootLinks[Branch.Private]?.cid)
+
+    // Decode index
+    const encryptedIndex = await ipfs.catBuf(entryIndexCid)
+    const indexInfo = await crypto.aes.decrypt(encryptedIndex, symmKey, symmKeyAlgo as SymmAlg)
+    if (!privateTypeChecks.isDecryptedNode(indexInfo)) throw new Error("The share payload did not point to a valid entry index")
+
+    // Load index and return it
+    const index = await PrivateTree.fromInfo(theirMmpt, symmKey, indexInfo)
+    return index
   }
 
   /**
@@ -475,6 +522,34 @@ export class FileSystem {
 
     // Fin
     return shareDetails
+  }
+
+
+  // COMMON
+  // ------
+
+  /**
+   * Stores the public part of the exchange key in the DID format,
+   * in the `/public/.well-known/exchange/DID_GOES_HERE/` directory.
+   */
+  async addPublicExchangeKey(): Promise<void> {
+    const publicDid = await did.exchange()
+
+    await this.mkdir(
+      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
+    )
+  }
+
+  /**
+   * Checks if the public exchange key was added in the well-known location.
+   * See `addPublicExchangeKey()` for the exact details.
+   */
+  async hasPublicExchangeKey(): Promise<boolean> {
+    const publicDid = await did.exchange()
+
+    return this.exists(
+      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
+    )
   }
 
 
