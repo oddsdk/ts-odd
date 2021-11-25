@@ -4,7 +4,7 @@ import { throttle } from "throttle-debounce"
 
 import { Links } from "./types.js"
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
-import { PublishHook, Tree, File, ShareDetails } from "./types.js"
+import { PublishHook, Tree, File, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
 import MMPT from "./protocol/private/mmpt.js"
 import RootTree from "./root/tree.js"
@@ -227,13 +227,42 @@ export class FileSystem {
   // POSIX INTERFACE (FILES)
   // -----------------------
 
-  async add(path: FilePath, content: FileContent, options: MutationOptions = {}): Promise<this> {
+  async add(
+    path: FilePath,
+    content: FileContent | SoftLink | SoftLink[],
+    options: MutationOptions = {}
+  ): Promise<this> {
     if (pathing.isDirectory(path)) throw new Error("`add` only accepts file paths")
 
     await this.runOnNode(path, true, async (node, relPath) => {
-      return typeCheck.isFile(node)
-        ? node.updateContent(content)
-        : node.add(relPath, content)
+      const destinationIsFile = typeCheck.isFile(node)
+      const contentIsSoftLinks = typeCheck.isSoftLink(content) || typeCheck.isSoftLinks(content)
+
+      if (destinationIsFile && contentIsSoftLinks) {
+        throw new Error("Can't add soft links to a file")
+      }
+
+      if (destinationIsFile && !contentIsSoftLinks) {
+        return (node as File).updateContent(content as FileContent)
+
+      } else if (contentIsSoftLinks) {
+        const links = Array.isArray(content) ? content : [ content ] as Array<SoftLink>
+        this.runOnChildTree(node as Tree, relPath, async tree => {
+          links.forEach((link: SoftLink) => {
+            if (PrivateTree.instanceOf(tree) || PublicTree.instanceOf(tree)) tree.assignLink({
+              name: link.name,
+              link: link,
+              skeleton: link
+            })
+          })
+
+          return tree
+        })
+
+      } else if (!destinationIsFile) {
+        return (node as Tree).add(relPath, content as FileContent)
+
+      }
     })
     if (options.publish) {
       await this.publish()
@@ -351,45 +380,38 @@ export class FileSystem {
         throw new Error("Cannot add a soft link to a file")
       }
 
-      let tree = node
-      if (relPath.length) {
-        if (!await tree.exists(relPath)) await tree.mkdir(relPath)
-        const g = await tree.get(relPath)
-        if (typeCheck.isTree(g)) tree = g
-        else throw new Error("`symlink.at` path does not point to a directory")
-      }
+      return this.runOnChildTree(node, relPath, async tree => {
+        if (PrivateTree.instanceOf(tree)) {
+          const destNode: PrivateTree | PrivateFile | null = await this.runOnNode(referringTo, false, async (a, relPath) => {
+            const b = typeCheck.isFile(a)
+              ? a
+              : await a.get(relPath)
 
-      if (PrivateTree.instanceOf(tree)) {
-        const destNode: PrivateTree | PrivateFile | null = await this.runOnNode(referringTo, false, async (a, relPath) => {
-          const b = typeCheck.isFile(a)
-            ? a
-            : await a.get(relPath)
+            if (PrivateTree.instanceOf(b)) return b
+            else if (PrivateFile.instanceOf(b)) return b
+            else throw new Error("`symlink.referringTo` is not of the right type")
+          })
 
-          if (PrivateTree.instanceOf(b)) return b
-          else if (PrivateFile.instanceOf(b)) return b
-          else throw new Error("`symlink.referringTo` is not of the right type")
-        })
+          if (!destNode) throw new Error("Could not find the item the symlink is referring to")
 
-        if (!destNode) throw new Error("Could not find the item the symlink is referring to")
+          tree.insertSoftLink({
+            name,
+            username,
+            key: destNode.key,
+            privateName: await destNode.getName()
+          })
 
-        tree.insertSoftLink({
-          name,
-          username,
-          key: destNode.key,
-          privateName: await destNode.getName()
-        })
+        } else if (PublicTree.instanceOf(tree)) {
+          tree.insertSoftLink({
+            path: pathing.removeBranch(referringTo),
+            name,
+            username
+          })
 
-      } else if (PublicTree.instanceOf(tree)) {
-        tree.insertSoftLink({
-          path: pathing.removeBranch(referringTo),
-          name,
-          username
-        })
+        }
 
-      }
-
-      if (relPath.length) return await node.updateChild(tree, relPath)
-      return node
+        return tree
+      })
     })
 
     return this
@@ -419,6 +441,8 @@ export class FileSystem {
 
   // SHARING
   // -------
+
+
 
   /**
    * Loads a share.
@@ -637,6 +661,23 @@ export class FileSystem {
     }
 
     return result
+  }
+
+  /** @internal */
+  async runOnChildTree(node: Tree, relPath: Path, fn: (tree: Tree) => Promise<Tree>): Promise<Tree> {
+    let tree = node
+
+    if (relPath.length) {
+      if (!await tree.exists(relPath)) await tree.mkdir(relPath)
+      const g = await tree.get(relPath)
+      if (typeCheck.isTree(g)) tree = g
+      else throw new Error("Path does not point to a directory")
+    }
+
+    tree = await fn(tree)
+
+    if (relPath.length) return await node.updateChild(tree, relPath)
+    return node
   }
 
   /** @internal */

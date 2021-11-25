@@ -1,5 +1,5 @@
 import { CID, FileContent } from "../../ipfs/index.js"
-import { Links, NonEmptyPath, SoftLink, UpdateCallback } from "../types.js"
+import { Links, NonEmptyPath, SoftLink, Link, UpdateCallback } from "../types.js"
 import { Maybe } from "../../common/index.js"
 import { DistinctivePath, Path } from "../../path.js"
 import { SkeletonInfo, TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
@@ -201,6 +201,16 @@ export class PublicTree extends BaseTree {
   // Links
   // -----
 
+  assignLink({ name, link, skeleton }: {
+    name: string,
+    link: Link,
+    skeleton: SkeletonInfo | SoftLink
+  }): void {
+    this.links[name] = link
+    this.header.skeleton[name] = skeleton
+    this.header.metadata.unixMeta.mtime = Date.now()
+  }
+
   static async resolveSoftLink(link: SoftLink): Promise<Child | null> {
     const [domain, ...pieces] = link.ipns.split("/")
     const path = pathing.fromPosix(pieces.join("/"))
@@ -239,15 +249,17 @@ export class PublicTree extends BaseTree {
 
   updateLink(name: string, result: PutDetails): this {
     const { cid, metadata, userland, size, isFile, skeleton } = result
-    this.links[name] = link.make(name, cid, false, size)
-    this.header.skeleton[name] = {
-      cid,
-      metadata,
-      userland,
-      subSkeleton: skeleton,
-      isFile
-    }
-    this.header.metadata.unixMeta.mtime = Date.now()
+    this.assignLink({
+      name,
+      link: link.make(name, cid, false, size),
+      skeleton: {
+        cid,
+        metadata,
+        userland,
+        subSkeleton: skeleton,
+        isFile
+      }
+    })
     return this
   }
 
@@ -256,10 +268,11 @@ export class PublicTree extends BaseTree {
       ipns: `${username}.files.${setup.endpoints.user}/public/${pathing.toPosix(path)}`,
       name
     }
-
-    this.links[name] = softLink
-    this.header.skeleton[name] = softLink
-    this.header.metadata.unixMeta.mtime = Date.now()
+    this.assignLink({
+      name,
+      link: softLink,
+      skeleton: softLink
+    })
     return this
   }
 }
