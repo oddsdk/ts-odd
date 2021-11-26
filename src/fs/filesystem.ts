@@ -228,7 +228,7 @@ export class FileSystem {
   // -----------------------
 
   async add(
-    path: FilePath,
+    path: DistinctivePath,
     content: FileContent | SoftLink | SoftLink[],
     options: MutationOptions = {}
   ): Promise<this> {
@@ -442,11 +442,23 @@ export class FileSystem {
   // SHARING
   // -------
 
-
+  /**
+   * Accept a share.
+   * Copies the links to the items into your 'Shared with me' directory.
+   * eg. `private/Shared with me/Sharer/`
+   */
+  async acceptShare({ shareId, sharedBy }: { shareId: string, sharedBy: string }): Promise<this> {
+    const share = await this.loadShare({ shareId, sharedBy })
+    await this.add(
+      pathing.directory(Branch.Private, "Shared with me", sharedBy),
+      await share.ls([])
+    )
+    return this
+  }
 
   /**
    * Loads a share.
-   * This'll return a "entry index", in other words,
+   * Returns a "entry index", in other words,
    * a private tree with symlinks (soft links) to the shared items.
    */
   async loadShare({ shareId, sharedBy }: { shareId: string, sharedBy: string }): Promise<PrivateTree> {
