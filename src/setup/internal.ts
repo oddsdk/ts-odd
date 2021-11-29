@@ -45,8 +45,8 @@ export const setup: Setup = {
 
   userMessages: {
     versionMismatch: {
-      newer: async () => alertIfPossible(`Sorry, we can't sync your filesystem with this app. This app only understands older versions of filesystems. Please try to hard refresh this site or let this app's developer know. Feel free to contact Fission support: support@fission.codes`),
-      older: async () => alertIfPossible(`Sorry, we can't sync your filesystem with this app. Your filesystem version is out-dated and it needs to be migrated. Use the migration app or talk to Fission support: support@fission.codes`),
+      newer: async () => alertIfPossible(`Sorry, we can't sync your filesystem with this app. This app only understands older versions of filesystems.\n\nPlease try to hard refresh this site or let this app's developer know.\n\nFeel free to contact Fission support: support@fission.codes`),
+      older: async () => alertIfPossible(`Sorry, we can't sync your filesystem with this app. Your filesystem version is out-dated and it needs to be migrated.\n\nRun a migration (https://guide.fission.codes/accounts/account-signup/account-migration) or talk to Fission support: support@fission.codes`),
     }
   },
 
