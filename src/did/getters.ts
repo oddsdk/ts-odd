@@ -21,7 +21,7 @@ export async function root(
   try {
     const maybeDid = await dns.lookupTxtRecord(`_did.${username}.${domain}`)
     if (maybeDid !== null) return maybeDid
-  } catch (_err) { 
+  } catch (_err) {
     // lookup failed
   }
 
@@ -36,12 +36,12 @@ export async function ownRoot(): Promise<string> {
   const dict = getDictionary()
   const first = Object.values(dict)[0]
   if (first !== undefined) {
-    return rootIssuer(first[1])
+    return rootIssuer(first)
   }
 
   // if that fails look up user DNS root
   const username = await common.authenticatedUsername()
-  if(!isString(username)) {
+  if (!isString(username)) {
     throw new Error("No logged in user")
   }
   return root(username)

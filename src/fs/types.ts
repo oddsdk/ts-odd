@@ -57,7 +57,7 @@ export interface Puttable {
 
 export type UpdateCallback = () => Promise<unknown>
 export type PublishHook = (result: CID, proof: string) => unknown
-export type SharedBy = { did: string, username: string }
+export type SharedBy = { rootDid: string, username: string }
 export type ShareDetails = { shareId: string, sharedBy: SharedBy }
 
 

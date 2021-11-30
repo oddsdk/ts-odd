@@ -56,7 +56,7 @@ export async function privateNode(
       await shareKey.create({
         counter,
         recipientExchangeDid: did,
-        senderRootDid: sharedBy.did
+        senderRootDid: sharedBy.rootDid
       })
     ] as [string, string]
   }))

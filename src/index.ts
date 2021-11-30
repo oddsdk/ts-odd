@@ -337,7 +337,6 @@ interface AuthLobbyClassifiedInfo {
 async function importClassifiedInfo(
   classifiedInfo: AuthLobbyClassifiedInfo
 ): Promise<void> {
-
   // Extract session key and its iv
   const rawSessionKey = await crypto.keystore.decrypt(classifiedInfo.sessionKey)
 

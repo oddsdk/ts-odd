@@ -1,10 +1,11 @@
 import * as cbor from "@ipld/dag-cbor"
+import * as uint8arrays from "uint8arrays"
 import { SymmAlg } from "keystore-idb/lib/types.js"
 import { throttle } from "throttle-debounce"
 
 import { Links } from "./types.js"
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
-import { PublishHook, Tree, File, ShareDetails, SoftLink } from "./types.js"
+import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
 import MMPT from "./protocol/private/mmpt.js"
 import RootTree from "./root/tree.js"
@@ -482,11 +483,14 @@ export class FileSystem {
     const sharedLinksCid = rootLinks[Branch.Shared]?.cid || null
     if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
 
-    const sharedLinks = await protocol.basic.getSimpleLinks(sharedLinksCid) || {}
-    const shareLink = sharedLinks[key]
+    const sharedLinks = cbor.decode(await ipfs.catBuf(sharedLinksCid))
+    const shareLink = typeChecks.isObject(sharedLinks) ? sharedLinks[key] : null
     if (!shareLink) throw new Error("Couldn't find a matching share.")
 
-    sharePayload = await ipfs.catBuf(shareLink.cid)
+    const shareLinkCid = typeChecks.isObject(shareLink) ? shareLink.cid : null
+    if (!typeChecks.isString(shareLinkCid)) throw new Error("Couldn't find a matching share.")
+
+    sharePayload = await ipfs.catBuf(shareLinkCid)
 
     // Decode payload
     const ks = await keystore.get()
@@ -495,13 +499,13 @@ export class FileSystem {
     const decryptedPayload = await crypto.rsa.decrypt(sharePayload, exchangeKey.privateKey)
     const decodedPayload: Record<string, unknown> = cbor.decode(new Uint8Array(decryptedPayload))
 
-    if (!typeChecks.hasProp(decodedPayload, "entryIndexCid")) throw new Error("Share payload is missing the `entryIndexCid` property")
-    if (!typeChecks.hasProp(decodedPayload, "symmKey")) throw new Error("Share payload is missing the `symmKey` property")
-    if (!typeChecks.hasProp(decodedPayload, "symmKeyAlgo")) throw new Error("Share payload is missing the `symmKeyAlgo` property")
+    if (!typeChecks.hasProp(decodedPayload, "cid")) throw new Error("Share payload is missing the `cid` property")
+    if (!typeChecks.hasProp(decodedPayload, "key")) throw new Error("Share payload is missing the `key` property")
+    if (!typeChecks.hasProp(decodedPayload, "algo")) throw new Error("Share payload is missing the `algo` property")
 
-    const entryIndexCid: string = decodedPayload.entryIndexCid as string
-    const symmKey: string = decodedPayload.symmKey as string
-    const symmKeyAlgo: string = decodedPayload.symmKeyAlgo as string
+    const entryIndexCid: string = decodedPayload.cid as string
+    const symmKey: string = uint8arrays.toString(decodedPayload.key as Uint8Array, "base64pad")
+    const symmKeyAlgo: string = decodedPayload.algo as string
 
     // Load MMPT
     const mmptCid = rootLinks[Branch.Private]?.cid
@@ -510,7 +514,8 @@ export class FileSystem {
 
     // Decode index
     const encryptedIndex = await ipfs.catBuf(entryIndexCid)
-    const indexInfo = await crypto.aes.decrypt(encryptedIndex, symmKey, symmKeyAlgo as SymmAlg)
+    const indexInfoBytes = await crypto.aes.decrypt(encryptedIndex, symmKey, symmKeyAlgo as SymmAlg)
+    const indexInfo = JSON.parse(uint8arrays.toString(indexInfoBytes, "utf8"))
     if (!privateTypeChecks.isDecryptedNode(indexInfo)) throw new Error("The share payload did not point to a valid entry index")
 
     // Load index and return it
@@ -521,7 +526,7 @@ export class FileSystem {
   /**
    * Share a private file with a user.
    */
-  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: { did: string, username: string }, shareWith: string | string[] }): Promise<ShareDetails> {
+  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy, shareWith: string | string[] }): Promise<ShareDetails> {
     const verifiedPaths = paths.filter(path => {
       return pathing.isBranch(pathing.Branch.Private, path)
     })
@@ -530,7 +535,7 @@ export class FileSystem {
     if (!sharedBy) {
       const username = await authenticatedUsername()
       if (!username) throw new Error("I need a username in order to use this method")
-      sharedBy = { did: await did.ownRoot(), username }
+      sharedBy = { rootDid: await did.ownRoot(), username }
     }
 
     // Get the items to share
@@ -555,6 +560,9 @@ export class FileSystem {
 
     // Bump the counter
     await this.root.bumpSharedCounter()
+
+    // Publish
+    await this.publish()
 
     // Fin
     return shareDetails
