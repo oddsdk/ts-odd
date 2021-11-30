@@ -1,5 +1,7 @@
 import * as browserCrypto from "../crypto/browser.js"
 import * as browserStorage from "../storage/browser.js"
+import * as authLobby from "../auth/lobby.js"
+import { InitOptions, State } from "../index.js"
 
 
 export const DEFAULT_IMPLEMENTATION: Dependencies = {
@@ -25,7 +27,13 @@ export const DEFAULT_IMPLEMENTATION: Dependencies = {
     setItem: browserStorage.setItem,
     removeItem: browserStorage.removeItem,
     clear: browserStorage.clear,
-  }
+  },
+  auth: {
+    init: authLobby.init,
+    register: authLobby.register,
+    isUsernameValid: authLobby.isUsernameValid,
+    isUsernameAvailable: authLobby.isUsernameAvailable,
+  },
 }
 
 export let impl: Dependencies = DEFAULT_IMPLEMENTATION
@@ -36,6 +44,7 @@ export const setDependencies = (fns: Partial<Dependencies>): Dependencies => {
     ed25519: merge(impl.ed25519, fns.ed25519),
     keystore: merge(impl.keystore, fns.keystore),
     storage: merge(impl.storage, fns.storage),
+    auth: merge(impl.auth, fns.auth),
   }
   return impl
 }
@@ -61,7 +70,7 @@ export interface Dependencies {
     sign: (message: string, charSize: number) => Promise<string>
     importSymmKey: (key: string, name: string) => Promise<void>
     exportSymmKey: (name: string) => Promise<string>
-    keyExists: (keyName:string) => Promise<boolean>
+    keyExists: (keyName: string) => Promise<boolean>
     getAlg: () => Promise<string>
     clear: () => Promise<void>
   }
@@ -70,5 +79,11 @@ export interface Dependencies {
     setItem: <T>(key: string, val: T) => Promise<T>
     removeItem: (key: string) => Promise<void>
     clear: () => Promise<void>
+  }
+  auth: {
+    init: (options: InitOptions) => Promise<State | null>
+    register: (options: { email: string; username: string }) => Promise<{ success: boolean }>
+    isUsernameValid: (username: string) => Promise<boolean>
+    isUsernameAvailable: (username: string) => Promise<boolean>
   }
 }
