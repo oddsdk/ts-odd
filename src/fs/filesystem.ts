@@ -596,6 +596,21 @@ export class FileSystem {
     )
   }
 
+  /**
+   * Resolve a symlink directly.
+   * The `get` and `cat` methods will automatically resolve symlinks,
+   * but sometimes when working with symlinks directly
+   * you might want to use this method instead.
+   */
+  resolveSymlink(link: SoftLink): Promise<File | Tree | null> {
+    console.log(link, typeChecks.hasProp(link, "privateName"))
+    if (typeChecks.hasProp(link, "privateName")) {
+      return PrivateTree.resolveSoftLink(link)
+    } else {
+      return PublicTree.resolveSoftLink(link)
+    }
+  }
+
 
   // INTERNAL
   // --------

@@ -289,8 +289,12 @@ export default class PrivateTree extends BaseTree {
 
   getLinks(): Links {
     return mapObj(this.header.links, (link) => {
-      const { key, ...rest } = link
-      return { ...rest  }
+      if (checkNormie.isSoftLink(link)) {
+        return { ...link }
+      } else {
+        const { key, ...rest } = link
+        return { ...rest  }
+      }
     })
   }
 

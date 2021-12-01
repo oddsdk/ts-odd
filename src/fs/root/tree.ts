@@ -7,7 +7,6 @@ import { Puttable, SimpleLink, SimpleLinks } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
 import { Maybe } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
-import { get as getIpfs } from "../../ipfs/config.js"
 
 import * as crypto from "../../crypto/index.js"
 import * as identifiers from "../../common/identifiers.js"
@@ -151,7 +150,9 @@ export default class RootTree implements Puttable {
 
     // Shared
     const sharedCid = links[Branch.Shared]?.cid || null
-    const sharedLinks = sharedCid ? await protocol.basic.getSimpleLinks(sharedCid) : {}
+    const sharedLinks = sharedCid
+      ? cbor.decode(await ipfs.catBuf(sharedCid)) as SimpleLinks
+      : {}
 
     const sharedCounterCid = links[Branch.SharedCounter]?.cid || null
     const sharedCounter = sharedCounterCid
@@ -283,11 +284,9 @@ export default class RootTree implements Puttable {
       this.sharedLinks
     )
 
-    const ipfsClient = await getIpfs()
-    const cid = await ipfsClient.dag.put(
+    const cid = await ipfs.add(
       cbor.encode(this.sharedLinks),
-      { format: "dag-cbor", hashAlg: "sha2-256" }
-    ).then(c => c.toString())
+    ).then(c => c.cid)
 
     this.updateLink(Branch.Shared, {
       cid: cid,
