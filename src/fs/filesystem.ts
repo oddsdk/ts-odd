@@ -230,25 +230,32 @@ export class FileSystem {
 
   async add(
     path: DistinctivePath,
-    content: FileContent | SoftLink | SoftLink[],
+    content: FileContent | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options: MutationOptions = {}
   ): Promise<this> {
-    if (pathing.isDirectory(path)) throw new Error("`add` only accepts file paths")
-
     await this.runOnNode(path, true, async (node, relPath) => {
       const destinationIsFile = typeCheck.isFile(node)
-      const contentIsSoftLinks = typeCheck.isSoftLink(content) || typeCheck.isSoftLinks(content)
+      const contentIsSoftLinks = typeCheck.isSoftLink(content)
+        || typeCheck.isSoftLinkDictionary(content)
+        || typeCheck.isSoftLinkList(content)
 
-      if (destinationIsFile && contentIsSoftLinks) {
+      if (contentIsSoftLinks && destinationIsFile) {
         throw new Error("Can't add soft links to a file")
+      } else if (!contentIsSoftLinks && pathing.isDirectory(path)) {
+        throw new Error("`add` only accepts file paths when working with regular files")
       }
 
       if (destinationIsFile && !contentIsSoftLinks) {
         return (node as File).updateContent(content as FileContent)
 
       } else if (contentIsSoftLinks) {
-        const links = Array.isArray(content) ? content : [ content ] as Array<SoftLink>
-        this.runOnChildTree(node as Tree, relPath, async tree => {
+        const links = Array.isArray(content)
+          ? content
+          : typeChecks.isObject(content)
+            ? Object.values(content) as Array<SoftLink>
+            : [ content ] as Array<SoftLink>
+
+        return this.runOnChildTree(node as Tree, relPath, async tree => {
           links.forEach((link: SoftLink) => {
             if (PrivateTree.instanceOf(tree) || PublicTree.instanceOf(tree)) tree.assignLink({
               name: link.name,
@@ -603,7 +610,6 @@ export class FileSystem {
    * you might want to use this method instead.
    */
   resolveSymlink(link: SoftLink): Promise<File | Tree | null> {
-    console.log(link, typeChecks.hasProp(link, "privateName"))
     if (typeChecks.hasProp(link, "privateName")) {
       return PrivateTree.resolveSoftLink(link)
     } else {
