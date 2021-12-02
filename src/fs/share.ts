@@ -46,7 +46,7 @@ export async function privateNode(
       ? [ shareWith ]
       : await listExchangeDIDs(shareWith)
 
-  const counter = rootTree.sharedCounter || 0
+  const counter = rootTree.sharedCounter || 1
   const mmpt = rootTree.mmpt
 
   // Create share keys

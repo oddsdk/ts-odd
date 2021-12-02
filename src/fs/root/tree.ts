@@ -85,7 +85,7 @@ export default class RootTree implements Puttable {
       mmpt,
       privateLog: [],
 
-      sharedCounter: 0,
+      sharedCounter: 1,
       sharedLinks: {},
 
       publicTree,
@@ -159,7 +159,7 @@ export default class RootTree implements Puttable {
       ? await protocol.basic
         .getFile(sharedCounterCid)
         .then(a => JSON.parse(uint8arrays.toString(a, "utf8")))
-      : 0
+      : 1
 
     // Construct tree
     const tree = new RootTree({
