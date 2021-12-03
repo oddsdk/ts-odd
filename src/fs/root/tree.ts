@@ -1,5 +1,6 @@
 import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
+import { CID as MultiformatCID } from "multiformats/cid"
 
 import { AddResult, CID } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
@@ -7,16 +8,18 @@ import { Puttable, SimpleLink, SimpleLinks } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
 import { Maybe } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
+import { get as getIpfs } from "../../ipfs/config.js"
 
 import * as crypto from "../../crypto/index.js"
 import * as identifiers from "../../common/identifiers.js"
-import * as ipfs from "../../ipfs/index.js"
 import * as link from "../link.js"
+import * as ipfs from "../../ipfs/index.js"
 import * as pathing from "../../path.js"
 import * as protocol from "../protocol/index.js"
-import * as versions from "../versions.js"
 import * as storage from "../../storage/index.js"
+import * as typeChecks from "../../common/type-checks.js"
 import * as ucanPermissions from "../../ucan/permissions.js"
+import * as versions from "../versions.js"
 
 import BareTree from "../bare/tree.js"
 import MMPT from "../protocol/private/mmpt.js"
@@ -151,7 +154,7 @@ export default class RootTree implements Puttable {
     // Shared
     const sharedCid = links[Branch.Shared]?.cid || null
     const sharedLinks = sharedCid
-      ? cbor.decode(await ipfs.catBuf(sharedCid)) as SimpleLinks
+      ? await this.getSharedLinks(sharedCid)
       : {}
 
     const sharedCounterCid = links[Branch.SharedCounter]?.cid || null
@@ -284,9 +287,18 @@ export default class RootTree implements Puttable {
       this.sharedLinks
     )
 
-    const cid = await ipfs.add(
-      cbor.encode(this.sharedLinks),
-    ).then(c => c.cid)
+    const cborApprovedLinks = Object.values(this.sharedLinks).reduce(
+      (acc, { cid, name, size }) => ({ ...acc,
+        [name]: { cid: MultiformatCID.parse(cid).toV1(), name, size }
+      }),
+      {}
+    )
+
+    const ipfsClient = await getIpfs()
+    const cid = await ipfsClient.block.put(
+      cbor.encode(cborApprovedLinks),
+      { format: cbor.name, mhtype: "sha2-256", pin: false, version: 1 }
+    ).then(c => c.toString())
 
     this.updateLink(Branch.Shared, {
       cid: cid,
@@ -295,6 +307,32 @@ export default class RootTree implements Puttable {
     })
 
     return this
+  }
+
+  static async getSharedLinks(cid: CID): Promise<SimpleLinks> {
+    const ipfsClient = await getIpfs()
+    const parsedCID = MultiformatCID.parse(cid)
+    const block = await ipfsClient.block.get(parsedCID)
+    const decodedBlock = cbor.decode(block)
+
+    if (!typeChecks.isObject(decodedBlock)) throw new Error("Invalid shared section, not an object")
+
+    return Object.values(decodedBlock).reduce(
+      (acc: SimpleLinks, link: unknown): SimpleLinks => {
+        if (!typeChecks.isObject(link)) return acc
+
+        const name = link.name ? link.name as string : null
+        const cid = link.cid
+          ? typeChecks.isString(link.cid)
+            ? link.cid
+            : MultiformatCID.asCID(link.cid)
+          : null
+
+        if (!name || !cid) return acc
+        return { ...acc, [name]: { name, cid: cid?.toString(), size: (link.size || 0) as number } }
+      },
+      {}
+    )
   }
 
   async setSharedCounter(counter: number): Promise<number> {

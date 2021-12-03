@@ -490,7 +490,8 @@ export class FileSystem {
     const sharedLinksCid = rootLinks[Branch.Shared]?.cid || null
     if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
 
-    const sharedLinks = cbor.decode(await ipfs.catBuf(sharedLinksCid))
+    console.log("load shared link")
+    const sharedLinks = await RootTree.getSharedLinks(sharedLinksCid)
     const shareLink = typeChecks.isObject(sharedLinks) ? sharedLinks[key] : null
     if (!shareLink) throw new Error("Couldn't find a matching share.")
 
