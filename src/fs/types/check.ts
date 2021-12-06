@@ -29,7 +29,12 @@ export const isSoftLink = (obj: any): obj is SoftLink => {
 }
 
 export const isSoftLinkDictionary = (obj: any): obj is Record<string, SoftLink> => {
-  return isObject(obj) && Object.values(obj).every(isSoftLink)
+  if (isObject(obj)) {
+    const values = Object.values(obj)
+    return values.length > 0 && values.every(isSoftLink)
+  }
+
+  return false
 }
 
 export const isSoftLinkList = (obj: any): obj is Array<SoftLink> => {
