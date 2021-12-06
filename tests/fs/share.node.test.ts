@@ -1,17 +1,18 @@
 import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
+import { SymmAlg } from "keystore-idb/lib/types.js"
 
 import expect from "expect"
 import { getPublicKey } from "keystore-idb/lib/rsa/index.js"
 
 import "../../src/setup/node.js"
 
+import * as privateCheck from "../../src/fs/protocol/private/types/check.js"
 import * as crypto from "../../src/crypto/index.js"
 import * as did from "../../src/did/index.js"
 import * as pathing from "../../src/path.js"
 import * as protocol from "../../src/fs/protocol/index.js"
 import * as sharingKey from "../../src/fs/protocol/shared/key.js"
-import * as sharing from "../../src/fs/share.js"
 
 import { Branch } from "../../src/path.js"
 import { KeyType } from "../../src/did/types.js"
@@ -58,7 +59,7 @@ describe("the filesystem", () => {
         pathing.directory(Branch.Private, "a", "d", "e")
       ],
       {
-        sharedBy: { did: senderDID, username: "anonymous" },
+        sharedBy: { rootDid: senderDID, username: "anonymous" },
         shareWith: [ exchangeDID ]
       }
     )
@@ -79,10 +80,15 @@ describe("the filesystem", () => {
       new Uint8Array(a)
     ))
 
-    const entryIndexInfo = await protocol.priv.readNode(
-      decryptedPayload.cid,
-      uint8arrays.toString(decryptedPayload.key, "base64pad")
-    )
+    const entryIndexInfo = JSON.parse(new TextDecoder().decode(await crypto.aes.decrypt(
+      await protocol.basic.getFile(decryptedPayload.cid),
+      uint8arrays.toString(decryptedPayload.key, "base64pad"),
+      SymmAlg.AES_GCM
+    )))
+
+    if (!privateCheck.isPrivateTreeInfo(entryIndexInfo)) {
+      throw new Error("Entry index is not a PrivateTree")
+    }
 
     const entryIndex = await PrivateTree.fromInfo(
       fs.root.mmpt,

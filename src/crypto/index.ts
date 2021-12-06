@@ -31,8 +31,8 @@ export const aes = {
     const decryptedBuf = await decryptBytes(encrypted, key, { alg })
     return new Uint8Array(decryptedBuf)
   },
-  genKeyStr: async (): Promise<string> => {
-    const key = await makeKey({ length: SymmKeyLength.B256 })
+  genKeyStr: async (alg?: SymmAlg): Promise<string> => {
+    const key = await makeKey({ length: SymmKeyLength.B256, alg })
     return exportKey(key)
   },
   decryptGCM: async (encrypted: string, keyStr: string, ivStr: string): Promise<string> => {

@@ -64,7 +64,7 @@ export async function privateNode(
   }))
 
   // Create entry index
-  const indexKey = await crypto.aes.genKeyStr()
+  const indexKey = await crypto.aes.genKeyStr(SymmAlg.AES_GCM)
   const index = await PrivateTree.create(mmpt, indexKey, null)
 
   await Promise.all(
@@ -84,7 +84,7 @@ export async function privateNode(
   const indexNode = Object.assign({}, index.header)
   const indexResult = await basic.putFile(
     await crypto.aes.encrypt(
-      new TextEncoder().encode( JSON.stringify(indexNode) ),
+      new TextEncoder().encode(JSON.stringify(indexNode)),
       index.key,
       symmKeyAlgo
     )
