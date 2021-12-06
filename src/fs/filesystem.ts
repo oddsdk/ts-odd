@@ -570,6 +570,7 @@ export class FileSystem {
     await this.root.bumpSharedCounter()
 
     // Publish
+    await this.root.updatePuttable(Branch.Private, this.root.mmpt)
     await this.publish()
 
     // Fin

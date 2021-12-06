@@ -7,10 +7,12 @@ import * as dataRoot from "../data-root.js"
 import * as ipfs from "../ipfs/basic.js"
 import * as pathing from "../path.js"
 import * as protocol from "./protocol/index.js"
+import * as entryIndex from "./protocol/shared/entry-index.js"
 import * as shareKey from "./protocol/shared/key.js"
 
 import { Branch, DirectoryPath } from "../path.js"
 import { SharedBy, ShareDetails } from "./types.js"
+import { ShareKey } from "./protocol/shared/key.js"
 import { didToPublicKey } from "../did/transformers.js"
 import BareTree from "./bare/tree.js"
 import PrivateFile from "./v1/PrivateFile.js"
@@ -50,7 +52,7 @@ export async function privateNode(
   const mmpt = rootTree.mmpt
 
   // Create share keys
-  const shareKeysWithDIDs: [string, string][] = await Promise.all(exchangeDIDs.map(async did => {
+  const shareKeysWithDIDs: [string, ShareKey][] = await Promise.all(exchangeDIDs.map(async did => {
     return [
       did,
       await shareKey.create({
@@ -58,7 +60,7 @@ export async function privateNode(
         recipientExchangeDid: did,
         senderRootDid: sharedBy.rootDid
       })
-    ] as [string, string]
+    ] as [string, ShareKey]
   }))
 
   // Create entry index
@@ -87,6 +89,16 @@ export async function privateNode(
       symmKeyAlgo
     )
   )
+
+  // Add entry index CID to MMPT
+  if (shareKeysWithDIDs.length) {
+    const namefilter = await entryIndex.namefilter({
+      bareFilter: indexNode.bareNameFilter,
+      shareKey: shareKeysWithDIDs[0][1]
+    })
+
+    await mmpt.add(namefilter, indexResult.cid)
+  }
 
   // Create share payload
   const payload = cbor.encode(shareKey.payload({
