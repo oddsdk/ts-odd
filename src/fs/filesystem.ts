@@ -455,7 +455,7 @@ export class FileSystem {
    * Copies the links to the items into your 'Shared with me' directory.
    * eg. `private/Shared with me/Sharer/`
    */
-  async acceptShare({ shareId, sharedBy }: { shareId: string, sharedBy: string }): Promise<this> {
+  async acceptShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<this> {
     const share = await this.loadShare({ shareId, sharedBy })
     await this.add(
       pathing.directory(Branch.Private, "Shared with me", sharedBy),
@@ -469,9 +469,7 @@ export class FileSystem {
    * Returns a "entry index", in other words,
    * a private tree with symlinks (soft links) to the shared items.
    */
-  async loadShare({ shareId, sharedBy }: { shareId: string, sharedBy: string }): Promise<PrivateTree> {
-    let sharePayload
-
+  async loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<PrivateTree> {
     const ourExchangeDid = await did.exchange()
     const theirRootDid = await did.root(sharedBy)
 
@@ -498,7 +496,7 @@ export class FileSystem {
     const shareLinkCid = typeChecks.isObject(shareLink) ? shareLink.cid : null
     if (!typeChecks.isString(shareLinkCid)) throw new Error("Couldn't find a matching share.")
 
-    sharePayload = await ipfs.catBuf(shareLinkCid)
+    const sharePayload = await ipfs.catBuf(shareLinkCid)
 
     // Decode payload
     const ks = await keystore.get()
@@ -534,7 +532,7 @@ export class FileSystem {
   /**
    * Share a private file with a user.
    */
-  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy, shareWith: string | string[] }): Promise<ShareDetails> {
+  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails> {
     const verifiedPaths = paths.filter(path => {
       return pathing.isBranch(pathing.Branch.Private, path)
     })

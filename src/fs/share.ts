@@ -38,7 +38,7 @@ export async function privateNode(
   rootTree: RootTree,
   items: Array<[string, PrivateTree | PrivateFile]>,
   { shareWith, sharedBy }: {
-    shareWith: string | string[],
+    shareWith: string | string[]
     sharedBy: SharedBy
   }
 ): Promise<ShareDetails> {
