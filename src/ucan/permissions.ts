@@ -7,6 +7,7 @@ export type Permissions = {
   fs?: FileSystemPermissions
   platform?: PlatformPermissions
   raw?: RawPermissions
+  sharing?: boolean
 }
 
 export type AppInfo = {

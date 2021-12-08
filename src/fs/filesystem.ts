@@ -1,9 +1,13 @@
+import * as cbor from "@ipld/dag-cbor"
+import * as uint8arrays from "uint8arrays"
+import { SymmAlg } from "keystore-idb/lib/types.js"
 import { throttle } from "throttle-debounce"
 
 import { Links } from "./types.js"
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
-import { PublishHook, Tree, File } from "./types.js"
+import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
+import MMPT from "./protocol/private/mmpt.js"
 import RootTree from "./root/tree.js"
 import PublicTree from "./v1/PublicTree.js"
 import PrivateFile from "./v1/PrivateFile.js"
@@ -14,8 +18,15 @@ import * as dataRoot from "../data-root.js"
 import * as debug from "../common/debug.js"
 import * as crypto from "../crypto/index.js"
 import * as did from "../did/index.js"
+import * as ipfs from "../ipfs/basic.js"
+import * as keystore from "../keystore.js"
 import * as pathing from "../path.js"
+import * as privateTypeChecks from "./protocol/private/types/check.js"
+import * as protocol from "./protocol/index.js"
+import * as shareKey from "./protocol/shared/key.js"
+import * as sharing from "./share.js"
 import * as typeCheck from "./types/check.js"
+import * as typeChecks from "../common/type-checks.js"
 import * as ucan from "../ucan/index.js"
 
 import { CID, FileContent } from "../ipfs/index.js"
@@ -51,16 +62,6 @@ type NewFileSystemOptions = FileSystemOptions & {
 type MutationOptions = {
   publish?: boolean
 }
-
-
-// CONSTANTS
-
-
-export const EXCHANGE_PATH: DirectoryPath = pathing.directory(
-  pathing.Branch.Public,
-  ".well-known",
-  "exchange"
-)
 
 
 // CLASS
@@ -227,13 +228,49 @@ export class FileSystem {
   // POSIX INTERFACE (FILES)
   // -----------------------
 
-  async add(path: FilePath, content: FileContent, options: MutationOptions = {}): Promise<this> {
-    if (pathing.isDirectory(path)) throw new Error("`add` only accepts file paths")
-
+  async add(
+    path: DistinctivePath,
+    content: FileContent | SoftLink | SoftLink[] | Record<string, SoftLink>,
+    options: MutationOptions = {}
+  ): Promise<this> {
     await this.runOnNode(path, true, async (node, relPath) => {
-      return typeCheck.isFile(node)
-        ? node.updateContent(content)
-        : node.add(relPath, content)
+      const destinationIsFile = typeCheck.isFile(node)
+      const contentIsSoftLinks = typeCheck.isSoftLink(content)
+        || typeCheck.isSoftLinkDictionary(content)
+        || typeCheck.isSoftLinkList(content)
+
+      if (contentIsSoftLinks && destinationIsFile) {
+        throw new Error("Can't add soft links to a file")
+      } else if (!contentIsSoftLinks && pathing.isDirectory(path)) {
+        throw new Error("`add` only accepts file paths when working with regular files")
+      }
+
+      if (destinationIsFile && !contentIsSoftLinks) {
+        return (node as File).updateContent(content as FileContent)
+
+      } else if (contentIsSoftLinks) {
+        const links = Array.isArray(content)
+          ? content
+          : typeChecks.isObject(content)
+            ? Object.values(content) as Array<SoftLink>
+            : [ content ] as Array<SoftLink>
+
+        return this.runOnChildTree(node as Tree, relPath, async tree => {
+          links.forEach((link: SoftLink) => {
+            if (PrivateTree.instanceOf(tree) || PublicTree.instanceOf(tree)) tree.assignLink({
+              name: link.name,
+              link: link,
+              skeleton: link
+            })
+          })
+
+          return tree
+        })
+
+      } else if (!destinationIsFile) {
+        return (node as Tree).add(relPath, content as FileContent)
+
+      }
     })
     if (options.publish) {
       await this.publish()
@@ -340,50 +377,49 @@ export class FileSystem {
     if (!username) throw new Error("I need a username in order to use this method")
     if (!sameTree) throw new Error("`link` is only supported on the same tree for now")
 
+    const canShare = ucan.dictionary.lookupFilesystemUcan(
+      pathing.directory(pathing.Branch.Shared)
+    )
+
+    if (!canShare) throw new Error("Not allowed to share private items")
+
     await this.runOnNode(at, true, async (node, relPath) => {
       if (typeCheck.isFile(node)) {
         throw new Error("Cannot add a soft link to a file")
       }
 
-      let tree = node
-      if (relPath.length) {
-        if (!await tree.exists(relPath)) await tree.mkdir(relPath)
-        const g = await tree.get(relPath)
-        if (typeCheck.isTree(g)) tree = g
-        else throw new Error("`symlink.at` path does not point to a directory")
-      }
+      return this.runOnChildTree(node, relPath, async tree => {
+        if (PrivateTree.instanceOf(tree)) {
+          const destNode: PrivateTree | PrivateFile | null = await this.runOnNode(referringTo, false, async (a, relPath) => {
+            const b = typeCheck.isFile(a)
+              ? a
+              : await a.get(relPath)
 
-      if (PrivateTree.instanceOf(tree)) {
-        const destNode: PrivateTree | PrivateFile | null = await this.runOnNode(referringTo, false, async (a, relPath) => {
-          const b = typeCheck.isFile(a)
-            ? a
-            : await a.get(relPath)
+            if (PrivateTree.instanceOf(b)) return b
+            else if (PrivateFile.instanceOf(b)) return b
+            else throw new Error("`symlink.referringTo` is not of the right type")
+          })
 
-          if (PrivateTree.instanceOf(b)) return b
-          else if (PrivateFile.instanceOf(b)) return b
-          else throw new Error("`symlink.referringTo` is not of the right type")
-        })
+          if (!destNode) throw new Error("Could not find the item the symlink is referring to")
 
-        if (!destNode) throw new Error("Could not find the item the symlink is referring to")
+          tree.insertSoftLink({
+            name,
+            username,
+            key: destNode.key,
+            privateName: await destNode.getName()
+          })
 
-        tree.insertSoftLink({
-          name,
-          username,
-          key: destNode.key,
-          privateName: await destNode.getName()
-        })
+        } else if (PublicTree.instanceOf(tree)) {
+          tree.insertSoftLink({
+            path: pathing.removeBranch(referringTo),
+            name,
+            username
+          })
 
-      } else if (PublicTree.instanceOf(tree)) {
-        tree.insertSoftLink({
-          path: pathing.removeBranch(referringTo),
-          name,
-          username
-        })
+        }
 
-      }
-
-      if (relPath.length) return await node.updateChild(tree, relPath)
-      return node
+        return tree
+      })
     })
 
     return this
@@ -411,6 +447,134 @@ export class FileSystem {
   }
 
 
+  // SHARING
+  // -------
+
+  /**
+   * Accept a share.
+   * Copies the links to the items into your 'Shared with me' directory.
+   * eg. `private/Shared with me/Sharer/`
+   */
+  async acceptShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<this> {
+    const share = await this.loadShare({ shareId, sharedBy })
+    await this.add(
+      pathing.directory(Branch.Private, "Shared with me", sharedBy),
+      await share.ls([])
+    )
+    return this
+  }
+
+  /**
+   * Loads a share.
+   * Returns a "entry index", in other words,
+   * a private tree with symlinks (soft links) to the shared items.
+   */
+  async loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<PrivateTree> {
+    const ourExchangeDid = await did.exchange()
+    const theirRootDid = await did.root(sharedBy)
+
+    // Share key
+    const key = await shareKey.create({
+      counter: parseInt(shareId, 10),
+      recipientExchangeDid: ourExchangeDid,
+      senderRootDid: theirRootDid
+    })
+
+    // Load their shared section
+    const root = await dataRoot.lookup(sharedBy)
+    if (!root) throw new Error("This user doesn't have a filesystem yet.")
+
+    const rootLinks = await protocol.basic.getSimpleLinks(root)
+    const sharedLinksCid = rootLinks[Branch.Shared]?.cid || null
+    if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
+
+    const sharedLinks = await RootTree.getSharedLinks(sharedLinksCid)
+    const shareLink = typeChecks.isObject(sharedLinks) ? sharedLinks[key] : null
+    if (!shareLink) throw new Error("Couldn't find a matching share.")
+
+    const shareLinkCid = typeChecks.isObject(shareLink) ? shareLink.cid : null
+    if (!typeChecks.isString(shareLinkCid)) throw new Error("Couldn't find a matching share.")
+
+    const sharePayload = await ipfs.catBuf(shareLinkCid)
+
+    // Decode payload
+    const ks = await keystore.get()
+    const exchangeKey = await ks.exchangeKey()
+
+    const decryptedPayload = await crypto.rsa.decrypt(sharePayload, exchangeKey.privateKey)
+    const decodedPayload: Record<string, unknown> = cbor.decode(new Uint8Array(decryptedPayload))
+
+    if (!typeChecks.hasProp(decodedPayload, "cid")) throw new Error("Share payload is missing the `cid` property")
+    if (!typeChecks.hasProp(decodedPayload, "key")) throw new Error("Share payload is missing the `key` property")
+    if (!typeChecks.hasProp(decodedPayload, "algo")) throw new Error("Share payload is missing the `algo` property")
+
+    const entryIndexCid: string = decodedPayload.cid as string
+    const symmKey: string = uint8arrays.toString(decodedPayload.key as Uint8Array, "base64pad")
+    const symmKeyAlgo: string = decodedPayload.algo as string
+
+    // Load MMPT
+    const mmptCid = rootLinks[Branch.Private]?.cid
+    if (!mmptCid) throw new Error("This user's filesystem doesn't have a private branch")
+    const theirMmpt = await MMPT.fromCID(rootLinks[Branch.Private]?.cid)
+
+    // Decode index
+    const encryptedIndex = await ipfs.catBuf(entryIndexCid)
+    const indexInfoBytes = await crypto.aes.decrypt(encryptedIndex, symmKey, symmKeyAlgo as SymmAlg)
+    const indexInfo = JSON.parse(uint8arrays.toString(indexInfoBytes, "utf8"))
+    if (!privateTypeChecks.isDecryptedNode(indexInfo)) throw new Error("The share payload did not point to a valid entry index")
+
+    // Load index and return it
+    const index = await PrivateTree.fromInfo(theirMmpt, symmKey, indexInfo)
+    return index
+  }
+
+  /**
+   * Share a private file with a user.
+   */
+  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails> {
+    const verifiedPaths = paths.filter(path => {
+      return pathing.isBranch(pathing.Branch.Private, path)
+    })
+
+    // Our username
+    if (!sharedBy) {
+      const username = await authenticatedUsername()
+      if (!username) throw new Error("I need a username in order to use this method")
+      sharedBy = { rootDid: await did.ownRoot(), username }
+    }
+
+    // Get the items to share
+    const items = await verifiedPaths.reduce(async (promise: Promise<[string, PrivateFile | PrivateTree][]>, path) => {
+      const acc = await promise
+      const name = pathing.terminus(path)
+      const item = await this.get(path)
+      return name && (PrivateFile.instanceOf(item) || PrivateTree.instanceOf(item))
+        ? [ ...acc, [ name, item ] as [string, PrivateFile | PrivateTree] ]
+        : acc
+    }, Promise.resolve([]))
+
+    // No items?
+    if (!items.length) throw new Error("Didn't find any items to share")
+
+    // Share the items
+    const shareDetails = await sharing.privateNode(
+      this.root,
+      items,
+      { shareWith, sharedBy }
+    )
+
+    // Bump the counter
+    await this.root.bumpSharedCounter()
+
+    // Publish
+    await this.root.updatePuttable(Branch.Private, this.root.mmpt)
+    await this.publish()
+
+    // Fin
+    return shareDetails
+  }
+
+
   // COMMON
   // ------
 
@@ -422,7 +586,7 @@ export class FileSystem {
     const publicDid = await did.exchange()
 
     await this.mkdir(
-      pathing.combine(EXCHANGE_PATH, pathing.directory(publicDid))
+      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
     )
   }
 
@@ -434,8 +598,22 @@ export class FileSystem {
     const publicDid = await did.exchange()
 
     return this.exists(
-      pathing.combine(EXCHANGE_PATH, pathing.directory(publicDid))
+      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
     )
+  }
+
+  /**
+   * Resolve a symlink directly.
+   * The `get` and `cat` methods will automatically resolve symlinks,
+   * but sometimes when working with symlinks directly
+   * you might want to use this method instead.
+   */
+  resolveSymlink(link: SoftLink): Promise<File | Tree | null> {
+    if (typeChecks.hasProp(link, "privateName")) {
+      return PrivateTree.resolveSoftLink(link)
+    } else {
+      return PublicTree.resolveSoftLink(link)
+    }
   }
 
 
@@ -523,6 +701,23 @@ export class FileSystem {
     }
 
     return result
+  }
+
+  /** @internal */
+  async runOnChildTree(node: Tree, relPath: Path, fn: (tree: Tree) => Promise<Tree>): Promise<Tree> {
+    let tree = node
+
+    if (relPath.length) {
+      if (!await tree.exists(relPath)) await tree.mkdir(relPath)
+      const g = await tree.get(relPath)
+      if (typeCheck.isTree(g)) tree = g
+      else throw new Error("Path does not point to a directory")
+    }
+
+    tree = await fn(tree)
+
+    if (relPath.length) return await node.updateChild(tree, relPath)
+    return node
   }
 
   /** @internal */

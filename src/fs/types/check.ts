@@ -28,6 +28,19 @@ export const isSoftLink = (obj: any): obj is SoftLink => {
     && isString(obj.ipns)
 }
 
+export const isSoftLinkDictionary = (obj: any): obj is Record<string, SoftLink> => {
+  if (isObject(obj)) {
+    const values = Object.values(obj)
+    return values.length > 0 && values.every(isSoftLink)
+  }
+
+  return false
+}
+
+export const isSoftLinkList = (obj: any): obj is Array<SoftLink> => {
+  return Array.isArray(obj) && obj.every(isSoftLink)
+}
+
 export const isHardLink = (obj: any): obj is HardLink => {
   return isObject(obj)
     && isCID((obj as any).cid)

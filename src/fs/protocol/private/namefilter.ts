@@ -61,7 +61,7 @@ export const toHash = async (filter: BloomFilter): Promise<PrivateName> => {
 }
 
 // saturate a filter (string) to 320 bits
-export const saturate = async (filter: RevisionNameFilter, threshold = SATURATION_THRESHOLD): Promise<SaturatedNameFilter> => {
+export const saturate = async (filter: RevisionNameFilter | BareNameFilter, threshold = SATURATION_THRESHOLD): Promise<SaturatedNameFilter> => {
   const saturated = await saturateFilter(fromHex(filter), threshold)
   return (await toHex(saturated)) as SaturatedNameFilter
 }

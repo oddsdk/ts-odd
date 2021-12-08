@@ -1,16 +1,19 @@
 import { CID as CIDObj } from "multiformats/cid"
 import dagPb, { DAGLink, DAGNode } from "ipld-dag-pb"
+
 import * as dagPB from "@ipld/dag-pb"
+import * as uint8arrays from "uint8arrays"
+
 import type { IPFSEntry } from "ipfs-core-types/src/root"
 import type { ImportCandidate } from "ipfs-core-types/src/utils"
 
-import { get as getIpfs } from "./config.js"
 import { CID, AddResult } from "./types.js"
-import * as util from "./util.js"
 import { DAG_NODE_DATA } from "./constants.js"
-import * as uint8arrays from "uint8arrays"
-import { setup } from "../setup/internal.js"
+import { get as getIpfs } from "./config.js"
 import { isObject, isString } from "../common/type-checks.js"
+import { setup } from "../setup/internal.js"
+
+import * as util from "./util.js"
 
 
 export const add = async (content: ImportCandidate): Promise<AddResult> => {

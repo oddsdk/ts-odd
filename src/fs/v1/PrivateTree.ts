@@ -4,9 +4,9 @@ import PrivateFile from "./PrivateFile.js"
 import PrivateHistory from "./PrivateHistory.js"
 
 import { Links, SoftLink, UpdateCallback } from "../types.js"
-import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult } from "../protocol/private/types.js"
+import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, PrivateLink } from "../protocol/private/types.js"
 import { FileContent } from "../../ipfs/index.js"
-import { DistinctivePath, Path } from "../../path.js"
+import { Path } from "../../path.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
 import { setup } from "../../setup/internal.js"
@@ -252,6 +252,17 @@ export default class PrivateTree extends BaseTree {
   // Links
   // -----
 
+  assignLink({ name, link, skeleton }: {
+    name: string,
+    link: PrivateLink | SoftLink,
+    skeleton: PrivateSkeletonInfo | SoftLink
+  }): void {
+    this.header.links[name] = link
+    this.header.skeleton[name] = skeleton
+    this.header.revision = this.header.revision + 1
+    this.header.metadata.unixMeta.mtime = Date.now()
+  }
+
   static async resolveSoftLink(link: SoftLink): Promise<PrivateTree | PrivateFile | null> {
     const domain = link.ipns.split("/")[0]
 
@@ -278,19 +289,23 @@ export default class PrivateTree extends BaseTree {
 
   getLinks(): Links {
     return mapObj(this.header.links, (link) => {
-      const { key, ...rest } = link
-      return { ...rest  }
+      if (checkNormie.isSoftLink(link)) {
+        return { ...link }
+      } else {
+        const { key, ...rest } = link
+        return { ...rest  }
+      }
     })
   }
 
   updateLink(name: string, result: PrivateAddResult): this {
-    const now = Date.now()
     const { cid, size, key, isFile, skeleton } = result
     const pointer = result.name
-    this.header.links[name] = { name, key, pointer, size, isFile: isFile }
-    this.header.skeleton[name] = { cid, key, subSkeleton: skeleton }
-    this.header.revision = this.header.revision + 1
-    this.header.metadata.unixMeta.mtime = now
+    this.assignLink({
+      name,
+      link: { name, key, pointer, size, isFile: isFile },
+      skeleton: { cid, key, subSkeleton: skeleton }
+    })
     return this
   }
 
@@ -301,11 +316,11 @@ export default class PrivateTree extends BaseTree {
       privateName,
       key
     }
-
-    this.header.links[name] = softLink
-    this.header.skeleton[name] = softLink
-    this.header.revision = this.header.revision + 1
-    this.header.metadata.unixMeta.mtime = Date.now()
+    this.assignLink({
+      name,
+      link: softLink,
+      skeleton: softLink
+    })
     return this
   }
 

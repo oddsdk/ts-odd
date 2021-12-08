@@ -80,9 +80,8 @@ export async function lookupAppUcan(domain: string): Promise<string | null> {
  * Look up a UCAN with a file system path.
  */
 export async function lookupFilesystemUcan(path: DistinctivePath | "*"): Promise<string | null> {
-  if (lookup("*")) {
-    return lookup("*")
-  }
+  const god = lookup("*")
+  if (god) return god
 
   const all = path === "*"
   const isDirectory = all ? false : pathing.isDirectory(path as DistinctivePath)
@@ -108,4 +107,3 @@ export async function lookupFilesystemUcan(path: DistinctivePath | "*"): Promise
     null
   )
 }
-
