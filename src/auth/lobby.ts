@@ -17,7 +17,7 @@ export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null
   const { autoRemoveUrlParams = true, rootKey } = options
 
-  // TODO: should be shared? 
+  // TODO: should be shared?
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
       ? undefined
@@ -132,8 +132,6 @@ function isAuthLobbyClassifiedInfo(obj: unknown): obj is AuthLobbyClassifiedInfo
 async function importClassifiedInfo(
   classifiedInfo: AuthLobbyClassifiedInfo
 ): Promise<void> {
-
-  console.log(classifiedInfo)
   // Extract session key and its iv
   const rawSessionKey = await crypto.keystore.decrypt(classifiedInfo.sessionKey)
 
