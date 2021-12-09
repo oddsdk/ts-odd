@@ -703,7 +703,10 @@ export class FileSystem {
     return result
   }
 
-  /** @internal */
+  /** @internal
+  * `put` should be called on the node returned from the function.
+  * Normally this is handled by `runOnNode`.
+  */
   async runOnChildTree(node: Tree, relPath: Path, fn: (tree: Tree) => Promise<Tree>): Promise<Tree> {
     let tree = node
 

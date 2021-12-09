@@ -1,7 +1,9 @@
 import { AddResult, CID } from "../../../ipfs/index.js"
+import { Puttable, SimpleLinks } from "../../types.js"
+import { setup } from "../../../setup/internal.js"
 import * as basic from "../basic.js"
 import * as link from "../../link.js"
-import { Puttable, SimpleLinks } from "../../types.js"
+
 
 const nibbles = {
   "0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true, "7": true,
@@ -55,7 +57,11 @@ export default class MMPT implements Puttable {
 
     // if already in tree, then skip
     if (name === nextNameOrSib) {
-      // skip
+      if (setup.debug && this.links[name]?.cid !== value) {
+        console.warn(`Adding \`${name}\` to the MMPT again with a different value. This should not happen. The original value will still be used and can loading issues on other ipfs repos. Current CID is \`${this.links[name]?.cid}\`, new CID is \`${value}\`.`)
+      } else {
+        // skip
+      }
     }
 
     // if no children starting with first char of name, then add with entire name as key
