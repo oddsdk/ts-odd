@@ -7,6 +7,7 @@
   Apps need to update to this webnative version to load migrated/new filesystems.
 - Adds ability to share private files.
 - Adds soft/symbolic links.
+- Add dependency injection for initialise and registering accounts
 
 
 
