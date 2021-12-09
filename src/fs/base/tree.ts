@@ -185,6 +185,10 @@ abstract class BaseTree implements Tree, UnixTree {
       : this.createChildTree(name, onUpdate)
   }
 
+  /**
+  * `put` is called on child (result of promise) in `updateDirectChild`
+  * Then for the outermost parent, `put` should be called manually.
+  */
   async updateChild(child: Tree | File, path: Path): Promise<this> {
     const chain: [string, Tree][] = []
 
