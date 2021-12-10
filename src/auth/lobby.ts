@@ -17,7 +17,7 @@ import * as pathing from "../path.js"
 import * as storage from "../storage/index.js"
 import * as ucan from "../ucan/internal.js"
 import * as user from "../lobby/username.js"
-
+import * as linking from "./linking.js"
 
 export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null
@@ -100,7 +100,13 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
   return user.isUsernameAvailable(username)
 }
 
+export const openChannel = async (did: string): Promise<void> => {
+  return linking.openWssChannel(did, linking.handleMessage)
+}
 
+export const closeChannel = async (): Promise<void> => {
+  return linking.closeWssChannel()
+}
 
 // 🛳
 
@@ -111,8 +117,6 @@ export const IMPLEMENTATION: Implementation = {
   isUsernameValid,
   isUsernameAvailable,
 }
-
-
 
 // HELPERS
 

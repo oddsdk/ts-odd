@@ -18,3 +18,11 @@ export const isUsernameValid = (username: string): Promise<boolean> => {
 export const isUsernameAvailable = (username: string): Promise<boolean> => {
   return authLobby.isUsernameAvailable(username)
 }
+
+export const openChannel = (username: string): Promise<void> => {
+  return authLobby.openChannel(username)
+}
+
+export const closeChannel = (): Promise<void> => {
+  return authLobby.closeChannel()
+}
