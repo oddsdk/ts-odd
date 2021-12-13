@@ -2845,9 +2845,9 @@ just-safe-get@^2.0.0:
   integrity sha512-DPWEh00QFgJNyfULPwgc9rTvdiPYVyt69hcgjWbN3lzKMmISW43Hwc+nlRAIo+su6PLVqUOMEUJNYR1xFog7xQ==
 
 just-safe-set@^2.1.0, just-safe-set@^2.2.1:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/just-safe-set/-/just-safe-set-2.2.1.tgz#25209ac3313c4c19b67159925a3dd86394338b54"
-  integrity sha512-Yx8y52RfcLjMJtn9UqKM2WFRvq8Xes5bozYU2Fd23Y3p1hJScuSH4i7zY9NfE4APSFfvBgFQFxlfWpGUeCrwkg==
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/just-safe-set/-/just-safe-set-2.2.3.tgz#b717b71a7237ff9f4b9d1220128a576001a11535"
+  integrity sha512-6zAkfGKRjB766zXv/UVSGOFKSAqakhwLQDyIR9bmIhJ/e6jS3Ci1VxYTqaiooYZZUw3VLg0sZva8PE6JX/iu2w==
 
 k-bucket@^5.1.0:
   version "5.1.0"
