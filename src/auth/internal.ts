@@ -26,3 +26,7 @@ export const openChannel = (username: string): Promise<void> => {
 export const closeChannel = (): Promise<void> => {
   return authLobby.closeChannel()
 }
+
+export const publishOnChannel = (data: any): Promise<void> => {
+  return authLobby.publishOnChannel(data)
+}

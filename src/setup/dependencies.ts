@@ -35,6 +35,7 @@ export const DEFAULT_IMPLEMENTATION: Dependencies = {
     isUsernameAvailable: authLobby.isUsernameAvailable,
     openChannel: authLobby.openChannel,
     closeChannel: authLobby.closeChannel,
+    publishOnChannel: authLobby.publishOnChannel,
   },
 }
 
@@ -89,5 +90,6 @@ export interface Dependencies {
     isUsernameAvailable: (username: string) => Promise<boolean>
     openChannel: (username: string) => Promise<void>
     closeChannel: () => Promise<void>
+    publishOnChannel: (data: any) => Promise<void>
   }
 }
