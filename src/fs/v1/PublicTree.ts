@@ -2,7 +2,7 @@ import { CID, FileContent } from "../../ipfs/index.js"
 import { Links, NonEmptyPath, SoftLink, Link, UpdateCallback } from "../types.js"
 import { Maybe } from "../../common/index.js"
 import { DistinctivePath, Path } from "../../path.js"
-import { SkeletonInfo, TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
+import { Skeleton, SkeletonInfo, TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
 import { setup } from "../../setup/internal.js"
 
 import BaseTree from "../base/tree.js"
@@ -178,7 +178,7 @@ export class PublicTree extends BaseTree {
   async get(path: Path): Promise<Child | null> {
     if (path.length < 1) return this
 
-    const skeletonInfo = skeleton.getPath(this.header.skeleton, path as NonEmptyPath)
+    const skeletonInfo = this.getRecurse(this.header.skeleton, path as NonEmptyPath)
     if (skeletonInfo === null) return null
 
     // Hard link
@@ -195,6 +195,25 @@ export class PublicTree extends BaseTree {
     }
 
     return null
+  }
+
+  async getRecurse(skel: Skeleton, path: NonEmptyPath): Promise<SkeletonInfo | SoftLink | null> {
+    const head = path[0]
+    const child = skel[head] || null
+    const nextPath = skeleton.nextNonEmpty(path)
+
+    if (check.isSoftLink(child)) {
+      const resolved = await PublicTree.resolveSoftLink(child)
+      if (!resolved) return null
+
+      return resolved
+    } else if (child === null || nextPath === null) {
+      return child
+    } else if (child.subSkeleton) {
+      return this.getRecurse(child.subSkeleton, nextPath)
+    } else {
+      return null
+    }
   }
 
 

@@ -18,6 +18,7 @@ import * as dns from "../../dns/index.js"
 import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
 import * as namefilter from "../protocol/private/namefilter.js"
+import * as pathing from "../../path.js"
 import * as protocol from "../protocol/index.js"
 import * as versions from "../versions.js"
 
@@ -212,23 +213,32 @@ export default class PrivateTree extends BaseTree {
     const result = await this.getRecurse(next, rest)
     if (result === null) return null
 
-    // Soft link
-    if (checkNormie.isSoftLink(result)) {
-      return PrivateTree.resolveSoftLink(result)
-
-    // Hard link
-    } else {
-      return check.isPrivateFileInfo(result.node)
-        ? PrivateFile.fromInfo(this.mmpt, result.key, result.node)
-        : PrivateTree.fromInfo(this.mmpt, result.key, result.node)
-
-    }
+    return check.isPrivateFileInfo(result.node)
+      ? PrivateFile.fromInfo(this.mmpt, result.key, result.node)
+      : PrivateTree.fromInfo(this.mmpt, result.key, result.node)
   }
 
-  async getRecurse(nodeInfo: PrivateSkeletonInfo | SoftLink, parts: string[]): Promise<Maybe<{ key: string; node: DecryptedNode } | SoftLink>> {
-    if (checkNormie.isSoftLink(nodeInfo)) return nodeInfo
-
+  async getRecurse(nodeInfo: PrivateSkeletonInfo | SoftLink, parts: string[]): Promise<Maybe<{ key: string; node: DecryptedNode }>> {
     const [head, ...rest] = parts
+
+    if (checkNormie.isSoftLink(nodeInfo)) {
+      const resolved = await PrivateTree.resolveSoftLink(nodeInfo)
+      if (!resolved) return null
+
+      if (head === undefined) return {
+        key: resolved.key,
+        node: resolved.header
+      }
+
+      if (PrivateTree.instanceOf(resolved)) {
+        const resolvedRecurse = await resolved.get(rest)
+        if (!resolvedRecurse) return null
+        return { key: resolvedRecurse.key, node: resolvedRecurse.header }
+      }
+
+      throw new Error("Was expecting a directory at: " + pathing.log(parts))
+    }
+
     if (head === undefined) return {
       key: nodeInfo.key,
       node: await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
@@ -240,9 +250,7 @@ export default class PrivateTree extends BaseTree {
     }
 
     const reloadedNode = await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
-    if (!check.isPrivateTreeInfo(reloadedNode)) {
-      return null
-    }
+    if (!check.isPrivateTreeInfo(reloadedNode)) return null
 
     const reloadedNext = reloadedNode.skeleton[head]
     return reloadedNext === undefined ? null : this.getRecurse(reloadedNext, rest)
