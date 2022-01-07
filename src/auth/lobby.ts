@@ -19,6 +19,7 @@ import * as ucan from "../ucan/internal.js"
 import * as user from "../lobby/username.js"
 import * as linking from "./linking.js"
 import * as channel from "./channel.js"
+import * as linking from "./linking.js"
 
 export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null
@@ -102,7 +103,7 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
 }
 
 export const openChannel = async (did: string): Promise<void> => {
-  return channel.openWssChannel(did, channel.handleMessage)
+  return channel.openWssChannel(did, linking.handleMessage)
 }
 
 export const closeChannel = async (): Promise<void> => {

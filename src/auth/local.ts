@@ -4,6 +4,7 @@ import { createAccount } from "../lobby/index.js"
 import * as user from "../lobby/username.js"
 import * as storage from "../storage/index.js"
 import * as channel from "./channel.js"
+import * as linking from "./linking.js"
 
 
 export const init = async (): Promise<State | null> => {
@@ -30,7 +31,7 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
 }
 
 export const openChannel = async (did: string): Promise<void> => {
-  return channel.openWssChannel(did, channel.handleMessage) 
+  return channel.openWssChannel(did, linking.handleMessage) 
 }
 
 export const closeChannel = async (): Promise<void> => {

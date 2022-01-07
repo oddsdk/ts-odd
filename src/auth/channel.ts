@@ -23,6 +23,7 @@ export const openWssChannel = async (maybeUsername: string, handleMessage: (this
 
   const rootDid = await lookupRootDid(maybeUsername).catch(_ => null)
   if (!rootDid) {
+    console.error("failed to lookup root DID")
     return
   }
 
@@ -30,9 +31,19 @@ export const openWssChannel = async (maybeUsername: string, handleMessage: (this
   const endpoint = apiEndpoint.replace(/^https?:\/\//, "wss://")
   const topic = `deviceLink#${rootDid}`
   console.log("Opening channel", topic)
-  cs.topic = topic
-  cs.socket = new WebSocket(`${endpoint}/user/link/${rootDid}`)
-  cs.socket.onmessage = handleMessage
+  return new Promise((resolve, reject) => {
+    cs.topic = topic
+    cs.socket = new WebSocket(`${endpoint}/user/link/${rootDid}`)
+    cs.socket.onmessage = handleMessage
+    cs.socket.onopen = () => {
+      console.log("socket is open")
+      resolve()
+    }
+    cs.socket.onerror = () => {
+      console.error("socket error")
+      reject()
+    }  
+  }) 
 }
 
 export const closeWssChannel = async (): Promise<void> => {
@@ -44,12 +55,8 @@ export const closeWssChannel = async (): Promise<void> => {
   resetChannelState()
 }
 
-export const handleMessage = (ev: MessageEvent): any => {
-  console.log(ev)
-  return null
-}
-
 export const publishOnWssChannel = (data: any): void => {
+  console.debug("publishing on channel", data)
   const binary = typeof data === "string"
     ? new TextEncoder().encode(data).buffer
     : data
