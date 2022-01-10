@@ -231,7 +231,7 @@ export default class PrivateTree extends BaseTree {
       }
 
       if (PrivateTree.instanceOf(resolved)) {
-        const resolvedRecurse = await resolved.get(rest)
+        const resolvedRecurse = await resolved.get(parts)
         if (!resolvedRecurse) return null
         return { key: resolvedRecurse.key, node: resolvedRecurse.header }
       }

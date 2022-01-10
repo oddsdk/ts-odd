@@ -4,6 +4,8 @@ import * as fc from "fast-check"
 import "../../src/setup/node.js"
 import * as check from "../../src/fs/types/check.js"
 import * as path from "../../src/path.js"
+import PublicFile from "../../src/fs/v1/PublicFile.js"
+import PublicTree from "../../src/fs/v1/PublicTree.js"
 
 import { pathSegment, pathSegmentPair } from "../helpers/paths.js"
 import { emptyFilesystem } from "../helpers/filesystem.js"
@@ -216,24 +218,26 @@ describe("the public filesystem api", function () {
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
-        async ({ pathSegmentPair, fileContent }) => {
+        async ({ pathSegmentPair }) => {
           const atPath = path.directory("public", pathSegmentPair.first)
-          const destinationPath = path.directory("public", pathSegmentPair.second)
-          const name = path.terminus(destinationPath) || "Symlink"
+          const referringToPath = path.directory("public", pathSegmentPair.second)
+          const name = path.terminus(referringToPath) || "Symlink"
 
-          await fs.mkdir(destinationPath)
+          await fs.mkdir(referringToPath)
           await fs.symlink({
             at: atPath,
-            referringTo: destinationPath,
+            referringTo: referringToPath,
             name,
             username: "test"
           })
 
           const at = await fs.get(atPath)
           const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+          const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)
           expect(check.isSoftLink(symlink)).toEqual(true)
+          expect(followed).toBeInstanceOf(PublicTree)
         })
     )
   })
@@ -244,24 +248,26 @@ describe("the public filesystem api", function () {
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
-        async ({ pathSegmentPair, fileContent }) => {
+        async ({ pathSegmentPair }) => {
           const atPath = path.directory("public", pathSegmentPair.first)
-          const destinationPath = path.file("public", pathSegmentPair.second)
-          const name = path.terminus(destinationPath) || "Symlink"
+          const referringToPath = path.file("public", pathSegmentPair.second)
+          const name = path.terminus(referringToPath) || "Symlink"
 
-          await fs.write(destinationPath, "")
+          await fs.write(referringToPath, "")
           await fs.symlink({
             at: atPath,
-            referringTo: destinationPath,
+            referringTo: referringToPath,
             name,
             username: "test"
           })
 
           const at = await fs.get(atPath)
           const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+          const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)
           expect(check.isSoftLink(symlink)).toEqual(true)
+          expect(followed).toBeInstanceOf(PublicFile)
         })
     )
   })

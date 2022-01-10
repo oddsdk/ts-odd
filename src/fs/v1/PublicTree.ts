@@ -178,34 +178,31 @@ export class PublicTree extends BaseTree {
   async get(path: Path): Promise<Child | null> {
     if (path.length < 1) return this
 
-    const skeletonInfo = this.getRecurse(this.header.skeleton, path as NonEmptyPath)
-    if (skeletonInfo === null) return null
+    const res = await this.getRecurse(this.header.skeleton, path as NonEmptyPath)
 
     // Hard link
-    if (check.isHardLink(skeletonInfo)) {
-      const info = await protocol.pub.get(skeletonInfo.cid)
+    if (check.isHardLink(res)) {
+      const info = await protocol.pub.get(res.cid)
       return check.isFileInfo(info)
-        ? PublicFile.fromInfo(info, skeletonInfo.cid)
-        : PublicTree.fromInfo(info, skeletonInfo.cid)
-
-    // Soft link
-    } else if (check.isSoftLink(skeletonInfo)) {
-      return PublicTree.resolveSoftLink(skeletonInfo)
-
+        ? PublicFile.fromInfo(info, res.cid)
+        : PublicTree.fromInfo(info, res.cid)
     }
 
-    return null
+    // Child
+    return res as Child
   }
 
-  async getRecurse(skel: Skeleton, path: NonEmptyPath): Promise<SkeletonInfo | SoftLink | null> {
+  async getRecurse(skel: Skeleton, path: NonEmptyPath): Promise<SkeletonInfo | Child | null> {
     const head = path[0]
     const child = skel[head] || null
     const nextPath = skeleton.nextNonEmpty(path)
 
     if (check.isSoftLink(child)) {
       const resolved = await PublicTree.resolveSoftLink(child)
-      if (!resolved) return null
-
+      if (nextPath) {
+        if (PublicTree.instanceOf(resolved)) return resolved.get(nextPath)
+        return null
+      }
       return resolved
     } else if (child === null || nextPath === null) {
       return child

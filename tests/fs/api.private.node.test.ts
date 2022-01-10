@@ -1,9 +1,14 @@
 import expect from "expect"
 import * as fc from "fast-check"
 
+// @ts-ignore
+import mockery from "mockery"
+
 import "../../src/setup/node.js"
 import * as check from "../../src/fs/types/check.js"
 import * as path from "../../src/path.js"
+import PrivateFile from "../../src/fs/v1/PrivateFile.js"
+import PrivateTree from "../../src/fs/v1/PrivateTree.js"
 
 import { pathSegment, pathSegmentPair } from "../helpers/paths.js"
 import { emptyFilesystem } from "../helpers/filesystem.js"
@@ -214,24 +219,26 @@ describe("the private filesystem api", function () {
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
-        async ({ pathSegmentPair, fileContent }) => {
+        async ({ pathSegmentPair }) => {
           const atPath = path.directory("private", pathSegmentPair.first)
-          const destinationPath = path.directory("private", pathSegmentPair.second)
-          const name = path.terminus(destinationPath) || "Symlink"
+          const referringToPath = path.directory("private", pathSegmentPair.second)
+          const name = path.terminus(referringToPath) || "Symlink"
 
-          await fs.mkdir(destinationPath)
+          await fs.mkdir(referringToPath)
           await fs.symlink({
             at: atPath,
-            referringTo: destinationPath,
+            referringTo: referringToPath,
             name,
             username: "test"
           })
 
           const at = await fs.get(atPath)
           const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+          const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)
           expect(check.isSoftLink(symlink)).toEqual(true)
+          expect(followed).toBeInstanceOf(PrivateTree)
         })
     )
   })
@@ -242,25 +249,61 @@ describe("the private filesystem api", function () {
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
-        async ({ pathSegmentPair, fileContent }) => {
+        async ({ pathSegmentPair }) => {
           const atPath = path.directory("private", pathSegmentPair.first)
-          const destinationPath = path.file("private", pathSegmentPair.second)
-          const name = path.terminus(destinationPath) || "Symlink"
+          const referringToPath = path.file("private", pathSegmentPair.second)
+          const name = path.terminus(referringToPath) || "Symlink"
 
-          await fs.write(destinationPath, "")
+          await fs.write(referringToPath, "")
           await fs.symlink({
             at: atPath,
-            referringTo: destinationPath,
+            referringTo: referringToPath,
             name,
             username: "test"
           })
 
           const at = await fs.get(atPath)
           const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+          const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)
           expect(check.isSoftLink(symlink)).toEqual(true)
+          expect(followed).toBeInstanceOf(PrivateFile)
         })
     )
   })
+
+  // it ("reads files in a soft-linked directory", async () => {
+  //   const fs = await emptyFilesystem()
+  //
+  //   mockery.registerMock("../../src/dns/index.js", () => ({
+  //     lookupDnsLink: () => fs.root.put()
+  //   }))
+  //
+  //   await fc.assert(
+  //     fc.asyncProperty(
+  //       fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
+  //       async ({ pathSegmentPair }) => {
+  //         const atPath = path.directory("private", pathSegmentPair.first)
+  //         const referringToPath = path.directory("private", pathSegmentPair.second)
+  //         const name = path.terminus(referringToPath) || "Symlink"
+  //
+  //         await fs.mkdir(referringToPath)
+  //         await fs.write(path.combine(referringToPath, path.file("a.txt")), "A")
+  //
+  //         await fs.symlink({
+  //           at: atPath,
+  //           referringTo: referringToPath,
+  //           name,
+  //           username: "test"
+  //         })
+  //
+  //         const text = await fs.read(
+  //           path.combine(atPath, path.file(name, "a.txt"))
+  //         )
+  //
+  //         expect(text).toEqual("A")
+  //       })
+  //   )
+  // })
 })
