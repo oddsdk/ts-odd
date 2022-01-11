@@ -10,6 +10,8 @@ import BareTree from "../bare/tree.js"
 import PublicFile from "./PublicFile.js"
 import PublicHistory from "./PublicHistory.js"
 
+import * as cidLog from "../../common/cid-log.js"
+import * as common from "../../common/index.js"
 import * as dns from "../../dns/index.js"
 import * as check from "../types/check.js"
 import * as history from "./PublicHistory.js"
@@ -236,7 +238,9 @@ export class PublicTree extends BaseTree {
 
     if (!isPublic) throw new Error("Mixing public and private soft links is not supported yet.")
 
-    const rootCid = await dns.lookupDnsLink(domain)
+    const rootCid = domain === await common.authenticatedUserDomain({ withFiles: true })
+      ? await cidLog.newest()
+      : await dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
     const publicCid = (await protocol.basic.getSimpleLinks(rootCid)).public.cid

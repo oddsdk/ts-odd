@@ -11,9 +11,11 @@ import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
 import { setup } from "../../setup/internal.js"
 
-import * as crypto from "../../crypto/index.js"
 import * as check from "../protocol/private/types/check.js"
 import * as checkNormie from "../types/check.js"
+import * as cidLog from "../../common/cid-log.js"
+import * as common from "../../common/index.js"
+import * as crypto from "../../crypto/index.js"
 import * as dns from "../../dns/index.js"
 import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
@@ -276,7 +278,9 @@ export default class PrivateTree extends BaseTree {
 
     if (!link.privateName || !link.key) throw new Error("Mixing public and private soft links is not supported yet.")
 
-    const rootCid = await dns.lookupDnsLink(domain)
+    const rootCid = domain === await common.authenticatedUserDomain({ withFiles: true })
+      ? await cidLog.newest()
+      : await dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
     const privateCid = (await protocol.basic.getSimpleLinks(rootCid)).private.cid
