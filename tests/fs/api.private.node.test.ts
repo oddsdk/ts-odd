@@ -272,38 +272,4 @@ describe("the private filesystem api", function () {
         })
     )
   })
-
-  // it ("reads files in a soft-linked directory", async () => {
-  //   const fs = await emptyFilesystem()
-  //
-  //   mockery.registerMock("../../src/dns/index.js", () => ({
-  //     lookupDnsLink: () => fs.root.put()
-  //   }))
-  //
-  //   await fc.assert(
-  //     fc.asyncProperty(
-  //       fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
-  //       async ({ pathSegmentPair }) => {
-  //         const atPath = path.directory("private", pathSegmentPair.first)
-  //         const referringToPath = path.directory("private", pathSegmentPair.second)
-  //         const name = path.terminus(referringToPath) || "Symlink"
-  //
-  //         await fs.mkdir(referringToPath)
-  //         await fs.write(path.combine(referringToPath, path.file("a.txt")), "A")
-  //
-  //         await fs.symlink({
-  //           at: atPath,
-  //           referringTo: referringToPath,
-  //           name,
-  //           username: "test"
-  //         })
-  //
-  //         const text = await fs.read(
-  //           path.combine(atPath, path.file(name, "a.txt"))
-  //         )
-  //
-  //         expect(text).toEqual("A")
-  //       })
-  //   )
-  // })
 })
