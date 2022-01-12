@@ -42,8 +42,7 @@ export const isSoftLinkList = (obj: any): obj is Array<SoftLink> => {
 }
 
 export const isHardLink = (obj: any): obj is HardLink => {
-  return isObject(obj)
-    && isCID((obj as any).cid)
+  return isObject(obj) && isCID((obj as any).cid)
 }
 
 export const isLinks = (obj: any): obj is Links => {

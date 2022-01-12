@@ -16,7 +16,7 @@ export const getPath = (skeleton: Skeleton, path: NonEmptyPath): SkeletonInfo | 
   }
 }
 
-function nextNonEmpty(parts: NonEmptyPath): NonEmptyPath | null {
+export function nextNonEmpty(parts: NonEmptyPath): NonEmptyPath | null {
   const next = parts.slice(1)
   if (next.length < 1) {
     return null

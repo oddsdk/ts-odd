@@ -2,7 +2,7 @@ import { CID, FileContent } from "../../ipfs/index.js"
 import { Links, NonEmptyPath, SoftLink, Link, UpdateCallback } from "../types.js"
 import { Maybe } from "../../common/index.js"
 import { DistinctivePath, Path } from "../../path.js"
-import { SkeletonInfo, TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
+import { Skeleton, SkeletonInfo, TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
 import { setup } from "../../setup/internal.js"
 
 import BaseTree from "../base/tree.js"
@@ -10,6 +10,8 @@ import BareTree from "../bare/tree.js"
 import PublicFile from "./PublicFile.js"
 import PublicHistory from "./PublicHistory.js"
 
+import * as cidLog from "../../common/cid-log.js"
+import * as common from "../../common/index.js"
 import * as dns from "../../dns/index.js"
 import * as check from "../types/check.js"
 import * as history from "./PublicHistory.js"
@@ -178,23 +180,39 @@ export class PublicTree extends BaseTree {
   async get(path: Path): Promise<Child | null> {
     if (path.length < 1) return this
 
-    const skeletonInfo = skeleton.getPath(this.header.skeleton, path as NonEmptyPath)
-    if (skeletonInfo === null) return null
+    const res = await this.getRecurse(this.header.skeleton, path as NonEmptyPath)
 
     // Hard link
-    if (check.isHardLink(skeletonInfo)) {
-      const info = await protocol.pub.get(skeletonInfo.cid)
+    if (check.isHardLink(res)) {
+      const info = await protocol.pub.get(res.cid)
       return check.isFileInfo(info)
-        ? PublicFile.fromInfo(info, skeletonInfo.cid)
-        : PublicTree.fromInfo(info, skeletonInfo.cid)
-
-    // Soft link
-    } else if (check.isSoftLink(skeletonInfo)) {
-      return PublicTree.resolveSoftLink(skeletonInfo)
-
+        ? PublicFile.fromInfo(info, res.cid)
+        : PublicTree.fromInfo(info, res.cid)
     }
 
-    return null
+    // Child
+    return res as Child
+  }
+
+  async getRecurse(skel: Skeleton, path: NonEmptyPath): Promise<SkeletonInfo | Child | null> {
+    const head = path[0]
+    const child = skel[head] || null
+    const nextPath = skeleton.nextNonEmpty(path)
+
+    if (check.isSoftLink(child)) {
+      const resolved = await PublicTree.resolveSoftLink(child)
+      if (nextPath) {
+        if (PublicTree.instanceOf(resolved)) return resolved.get(nextPath)
+        return null
+      }
+      return resolved
+    } else if (child === null || nextPath === null) {
+      return child
+    } else if (child.subSkeleton) {
+      return this.getRecurse(child.subSkeleton, nextPath)
+    } else {
+      return null
+    }
   }
 
 
@@ -220,7 +238,9 @@ export class PublicTree extends BaseTree {
 
     if (!isPublic) throw new Error("Mixing public and private soft links is not supported yet.")
 
-    const rootCid = await dns.lookupDnsLink(domain)
+    const rootCid = domain === await common.authenticatedUserDomain({ withFiles: true })
+      ? await cidLog.newest()
+      : await dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
     const publicCid = (await protocol.basic.getSimpleLinks(rootCid)).public.cid

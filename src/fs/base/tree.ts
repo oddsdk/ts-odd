@@ -3,7 +3,7 @@ import * as pathing from "../../path.js"
 
 import { AddResult, CID, FileContent } from "../../ipfs/index.js"
 import { Maybe } from "../../common/index.js"
-import { DistinctivePath, Path } from "../../path.js"
+import { Path } from "../../path.js"
 import { Tree, File, UnixTree, Links, UpdateCallback } from "../types.js"
 
 
