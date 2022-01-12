@@ -1,9 +1,6 @@
 import expect from "expect"
 import * as fc from "fast-check"
 
-// @ts-ignore
-import mockery from "mockery"
-
 import "../../src/setup/node.js"
 import * as check from "../../src/fs/types/check.js"
 import * as path from "../../src/path.js"
