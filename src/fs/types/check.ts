@@ -2,7 +2,7 @@
 import { isString, isObject, isNum, isBool } from "../../common/index.js"
 import { CID } from "../../ipfs/index.js"
 import { Tree, File, HardLink, SoftLink, Links, BaseLink } from "../types.js"
-import { Skeleton, TreeInfo, FileInfo, TreeHeader, FileHeader } from "../protocol/public/types.js"
+import { Skeleton, SkeletonInfo, TreeInfo, FileInfo, TreeHeader, FileHeader } from "../protocol/public/types.js"
 import { SemVer } from "../versions.js"
 import { Metadata, UnixMeta } from "../metadata.js"
 
@@ -42,7 +42,7 @@ export const isSoftLinkList = (obj: any): obj is Array<SoftLink> => {
 }
 
 export const isHardLink = (obj: any): obj is HardLink => {
-  return isObject(obj) && isCID((obj as any).cid)
+  return isBaseLink(obj) && isCID((obj as any).cid)
 }
 
 export const isLinks = (obj: any): obj is Links => {
@@ -66,16 +66,17 @@ export const isMetadata = (obj: any): obj is Metadata => {
 }
 
 export const isSkeleton = (obj: any): obj is Skeleton => {
-  return isObject(obj)
-      && Object.values(obj).every(val => {
-        const isNode = isObject(val)
-          && isCID(val.cid)
-          && isCID(val.userland)
-          && isCID(val.metadata)
-          && isSkeleton(val.subSkeleton)
+  return isObject(obj) && Object.values(obj).every(isSkeletonInfo)
+}
 
-        return isNode || isSoftLink(val)
-      })
+export const isSkeletonInfo = (val: any): val is SkeletonInfo => {
+  const isNode = isObject(val)
+    && isCID(val.cid)
+    && isCID(val.userland)
+    && isCID(val.metadata)
+    && isSkeleton(val.subSkeleton)
+
+  return isNode || isSoftLink(val)
 }
 
 export const isTreeHeader = (obj: any): obj is TreeHeader => {
