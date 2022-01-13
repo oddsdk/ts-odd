@@ -212,44 +212,32 @@ export default class PrivateTree extends BaseTree {
     const next = this.header.skeleton[head]
     if (next === undefined) return null
 
-    const result = await this.getRecurse(next, rest)
-    if (result === null) return null
-
-    return check.isPrivateFileInfo(result.node)
-      ? PrivateFile.fromInfo(this.mmpt, result.key, result.node)
-      : PrivateTree.fromInfo(this.mmpt, result.key, result.node)
+    return this.getRecurse(next, rest)
   }
 
-  async getRecurse(nodeInfo: PrivateSkeletonInfo | SoftLink, parts: string[]): Promise<Maybe<{ key: string; node: DecryptedNode }>> {
+  async getRecurse(
+    nodeInfo: PrivateSkeletonInfo | SoftLink,
+    parts: string[]
+  ): Promise<PrivateTree | PrivateFile | null> {
     const [head, ...rest] = parts
 
     if (checkNormie.isSoftLink(nodeInfo)) {
       const resolved = await PrivateTree.resolveSoftLink(nodeInfo)
-      if (!resolved) return null
 
-      if (head === undefined) return {
-        key: resolved.key,
-        node: resolved.header
-      }
+      if (!resolved) return null
+      if (head === undefined) return resolved
 
       if (PrivateTree.instanceOf(resolved)) {
-        const resolvedRecurse = await resolved.get(parts)
-        if (!resolvedRecurse) return null
-        return { key: resolvedRecurse.key, node: resolvedRecurse.header }
+        return resolved.get(parts).then(makeReadOnly)
       }
 
       throw new Error("Was expecting a directory at: " + pathing.log(parts))
     }
 
-    if (head === undefined) return {
-      key: nodeInfo.key,
-      node: await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
-    }
+    if (head === undefined) return getNode(this.mmpt, nodeInfo)
 
     const nextChild = nodeInfo.subSkeleton[head]
-    if (nextChild !== undefined) {
-      return this.getRecurse(nextChild, rest)
-    }
+    if (nextChild !== undefined) return this.getRecurse(nextChild, rest)
 
     const reloadedNode = await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
     if (!check.isPrivateTreeInfo(reloadedNode)) return null
@@ -294,9 +282,12 @@ export default class PrivateTree extends BaseTree {
 
     if (!info) return null
 
-    return info.metadata.isFile
-      ? PrivateFile.fromInfo(mmpt, link.key, info)
-      : PrivateTree.fromInfo(mmpt, link.key, info)
+    const item = info.metadata.isFile
+      ? await PrivateFile.fromInfo(mmpt, link.key, info)
+      : await PrivateTree.fromInfo(mmpt, link.key, info)
+
+    if (item) item.readOnly = true
+    return item
   }
 
   getLinks(): Links {
@@ -336,4 +327,28 @@ export default class PrivateTree extends BaseTree {
     return this
   }
 
+}
+
+
+
+// 🛠
+
+
+async function getNode(
+  mmpt: MMPT,
+  nodeInfo: PrivateSkeletonInfo
+): Promise<PrivateFile | PrivateTree | null> {
+  const node = await protocol.priv.getLatestByCID(mmpt, nodeInfo.cid, nodeInfo.key)
+
+  return check.isPrivateFileInfo(node)
+    ? await PrivateFile.fromInfo(mmpt, nodeInfo.key, node)
+    : await PrivateTree.fromInfo(mmpt, nodeInfo.key, node)
+}
+
+
+function makeReadOnly(
+  maybeFileOrTree: PrivateFile | PrivateTree | null
+): PrivateFile | PrivateTree | null {
+  if (maybeFileOrTree) maybeFileOrTree.readOnly = true
+  return maybeFileOrTree
 }

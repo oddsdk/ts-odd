@@ -157,7 +157,7 @@ export class PublicTree extends BaseTree {
     if (childInfo === null) return null
 
     // Hard link
-    if (check.isHardLink(childInfo)) {
+    if (check.isSkeletonInfo(childInfo)) {
       child = childInfo.isFile
         ? await PublicFile.fromCID(childInfo.cid)
         : await PublicTree.fromCID(childInfo.cid)
@@ -183,7 +183,7 @@ export class PublicTree extends BaseTree {
     const res = await this.getRecurse(this.header.skeleton, path as NonEmptyPath)
 
     // Hard link
-    if (check.isHardLink(res)) {
+    if (check.isSkeletonInfo(res)) {
       const info = await protocol.pub.get(res.cid)
       return check.isFileInfo(info)
         ? PublicFile.fromInfo(info, res.cid)
@@ -202,8 +202,11 @@ export class PublicTree extends BaseTree {
     if (check.isSoftLink(child)) {
       const resolved = await PublicTree.resolveSoftLink(child)
       if (nextPath) {
-        if (PublicTree.instanceOf(resolved)) return resolved.get(nextPath)
-        return null
+        if (PublicTree.instanceOf(resolved)) {
+          return resolved.get(nextPath).then(makeReadOnly)
+        } else {
+          return null
+        }
       }
       return resolved
     } else if (child === null || nextPath === null) {
@@ -245,11 +248,10 @@ export class PublicTree extends BaseTree {
 
     const publicCid = (await protocol.basic.getSimpleLinks(rootCid)).public.cid
     const publicPath = pathing.removeBranch(path)
-
     const publicTree = await PublicTree.fromCID(publicCid)
+
     const item = await publicTree.get(pathing.unwrap(publicPath))
     if (item) item.readOnly = true
-
     return item
   }
 
@@ -295,6 +297,14 @@ export class PublicTree extends BaseTree {
     })
     return this
   }
+}
+
+
+function makeReadOnly(
+  maybeFileOrTree: Child | null
+): Child | null {
+  if (maybeFileOrTree) maybeFileOrTree.readOnly = true
+  return maybeFileOrTree
 }
 
 
