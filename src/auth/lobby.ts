@@ -19,7 +19,7 @@ import * as ucan from "../ucan/internal.js"
 import * as user from "../lobby/username.js"
 import * as linking from "./linking.js"
 import * as channel from "./channel.js"
-import * as linking from "./linking.js"
+import * as linking from "./linking/switch.js"
 
 export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null

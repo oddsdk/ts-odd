@@ -4,7 +4,7 @@ import { createAccount } from "../lobby/index.js"
 import * as user from "../lobby/username.js"
 import * as storage from "../storage/index.js"
 import * as channel from "./channel.js"
-import * as linking from "./linking.js"
+import * as linking from "./linking/switch.js"
 
 
 export const init = async (): Promise<State | null> => {
