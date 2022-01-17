@@ -2,9 +2,10 @@ import aes from "keystore-idb/lib/aes/index.js"
 import config from "keystore-idb/lib/config.js"
 import rsa from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
-import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
+import { KeyUse, SymmAlg } from "keystore-idb/lib/types.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
+import * as storage from "../../storage/index.js"
 import { setLinkingRole } from "../linking/switch.js"
 import { publishOnChannel } from "../index.js"
 import * as auth from "../index.js"
@@ -12,6 +13,7 @@ import * as auth from "../index.js"
 type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 
 type LinkingState = {
+  username: string | null
   sessionKey: CryptoKey | null
   temporaryRsaPair: CryptoKeyPair | null
   step: LinkingStep | null
@@ -20,6 +22,7 @@ type LinkingState = {
 type PinCallback = (challenge: { pin: number[] }) => void
 
 const ls: LinkingState = {
+  username: null ,
   sessionKey: null,
   temporaryRsaPair: null,
   step: null
@@ -49,6 +52,7 @@ const nextStep = () => {
 export const startLinkingConsumer = async (username: string, challenge: PinCallback): Promise<null> => {
   setLinkingRole("CONSUMER")
   ls.step = "BROADCAST"
+  ls.username = username
   showChallenge = challenge 
   await auth.openChannel(username)
   await sendTemporaryExchangeKey()
@@ -61,10 +65,11 @@ export const handleMessage = async (message: string): Promise<void> => {
   if (ls.step === "NEGOTIATION") {
     const pin = await handleSessionKey(message)
     if (pin) {
-      console.log("PIN to SHOW", Array.from(pin))
       await sendUserChallenge(pin)
       showChallenge({pin: Array.from(pin)})
     }
+  } else if (ls.step === "DELEGATION") {
+    await linkDevice(message)
   }
 }
 
@@ -72,7 +77,7 @@ export const handleMessage = async (message: string): Promise<void> => {
 // 🔗 Device Linking Steps 
 
 /**
- * CONSUMER: BROADCAST
+ *  BROADCAST
  * 
  * This is the CONSUMER first step (after opening the channel) where we 
  * broadcast a temporary public key. This key is then published on channel as 
@@ -90,7 +95,7 @@ export const handleMessage = async (message: string): Promise<void> => {
 }
 
 /**
- * CONSUMER: NEGOTIATION
+ *  NEGOTIATION
  * 
  * The Consumer receives the session key and validates the encrypted UCAN. 
  * Upon success, returns a 6-digit pin code to be use for the user challenge.
@@ -151,7 +156,7 @@ export const handleMessage = async (message: string): Promise<void> => {
 }
 
 /**
- * CONSUMER: NEGOTIATION (response)
+ * NEGOTIATION (response)
  * 
  * Encrypt and publish the CONSUMER did and generated pin for verification by the PRODUCER.
  * 
@@ -174,4 +179,33 @@ export const sendUserChallenge = async (pin: Uint8Array): Promise<void> => {
     })
   )
   nextStep()
+}
+
+/**
+ * CONSUMER: DELEGATION
+ *
+ * Decrypt the delegated credentials and forward to client implementation
+ *
+ * @param pin
+ * @returns
+ */
+const linkDevice = async (data: string): Promise<void> => {
+  if (!ls.sessionKey) return
+
+  const { iv, msg } = JSON.parse(data)
+
+  const delegation = await aes.decrypt(
+    msg,
+    ls.sessionKey,
+    {
+      alg: SymmAlg.AES_GCM,
+      iv: iv
+    }
+  )
+
+  await storage.setItem("webnative.auth_username", ls.username)
+  await auth.linkDevice(delegation)
+  resetLinkingState()
+  
+  return
 }

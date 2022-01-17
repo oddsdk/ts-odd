@@ -3,6 +3,9 @@ import { InitOptions } from "../init/types.js"
 import { State } from "./state.js"
 
 
+import type { Msg } from "keystore-idb/lib/types.js"
+
+
 export const init = (options: InitOptions): Promise<State | null> => {
   return authLobby.init(options)
 }
@@ -29,4 +32,12 @@ export const closeChannel = (): Promise<void> => {
 
 export const publishOnChannel = (data: any): Promise<void> => {
   return authLobby.publishOnChannel(data)
+}
+
+export const delegateAccount = (audience: string): Promise<Msg> => {
+  return authLobby.delegateAccount(audience)
+}
+
+export const linkDevice = (data: any): Promise<null> => {
+  return authLobby.linkDevice(data)
 }

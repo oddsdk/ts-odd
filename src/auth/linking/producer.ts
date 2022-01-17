@@ -1,10 +1,10 @@
 import aes from "keystore-idb/lib/aes/index.js"
-import config from "keystore-idb/lib/config.js"
 import rsa from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
 import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
+
 import { setLinkingRole } from "../linking/switch.js"
 import { publishOnChannel } from "../index.js"
 import * as auth from "../index.js"
@@ -61,22 +61,12 @@ export const handleMessage = async (message: string): Promise<void> => {
   if (ls.step === "BROADCAST") {
     await sendSessionKey(message)
   } else if (ls.step === "NEGOTIATION") {
-    const response = await handleUserChallenge(message)
-    if (response) {
-      const json = JSON.parse(response)
-      const pin = Object.values(json.pin) as number[]
-      userChallenge({ pin, confirmPin: delegateAccountOrCancel })
-    }
+    await handleUserChallenge(message)
+  } else if (ls.step === "DELEGATION") {
+    console.log("noop")
   }
 }
 
-const delegateAccountOrCancel = (linkDevice: boolean): void => {
-  if (linkDevice) {
-    console.log("User confirmed, now let's delegate")
-  } else {
-    console.log("User declined")
-  }
-}
 
 /**
  * BROADCAST
@@ -132,27 +122,59 @@ export const handleUserChallenge = async (data: any): Promise<string | null> => 
 
   const { iv, msg } = JSON.parse(data)
 
-  console.debug("msg: " + msg)
+  // console.debug("msg: " + msg)
   if (!iv) {
     throw new Error("I tried to decrypt some data (with AES) but the `iv` was missing from the message")
   }
 
-  console.debug("decrypting msg")
-  return await aes.decrypt(msg, ls.sessionKey, {
+  const message = await aes.decrypt(msg, ls.sessionKey, {
     alg: SymmAlg.AES_GCM,
     iv
   })
-  nextStep()
+
+  const json = JSON.parse(message)
+  const pin = Object.values(json.pin) as number[] ?? null
+  const audience = json.did as string ?? null
+
+  if (pin !== null && audience !== null) {
+    userChallenge({ pin, confirmPin: delegateAccount(audience) })
+    nextStep()
+  }
+
+  return null
 }
+
 
 /**
  * DELEGATION
  * 
- * This step is user initiated, create the UCAN with delegate rights for the CONSUMER (and a WNFS read key).
+ * This step is user initiated by a callback that may accept or reject delegation.
+ * The dependency injected auth.delegateAccount creates a UCAN with delegate rights and any other keys for the CONSUMER. 
  * 
- * @param data 
- * @returns 
+ * @param audience
+ * @returns
  */
-export const sendReadKeyAndUcan = async (data: any): Promise<null> => {
-  return null
+
+ const delegateAccount = (audience: string): (linkDevice: boolean) => Promise<void> => {
+  return async function(linkDevice: boolean) {
+    if (!ls.sessionKey) return
+
+    if (linkDevice) {
+      console.log("User confirmed, now let's delegate")
+      const message = await auth.delegateAccount(audience)
+
+      const iv = utils.randomBuf(16)
+      const msg = await aes.encrypt(message, ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })
+
+      await publishOnChannel(
+        JSON.stringify({
+          iv: utils.arrBufToBase64(iv),
+          msg
+        })
+      )
+    } else {
+      console.log("User declined")
+    }
+    resetLinkingState()
+  }
 }

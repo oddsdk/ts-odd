@@ -17,9 +17,10 @@ import * as pathing from "../path.js"
 import * as storage from "../storage/index.js"
 import * as ucan from "../ucan/internal.js"
 import * as user from "../lobby/username.js"
-import * as linking from "./linking.js"
 import * as channel from "./channel.js"
 import * as linking from "./linking/switch.js"
+
+import type { Msg } from "keystore-idb/lib/types.js"
 
 export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null
@@ -116,6 +117,14 @@ export const publishOnChannel = async (data: any): Promise<void> => {
 
 // 🛳
 
+
+export const delegateAccount = async (audience: string): Promise<Msg> => {
+  return ""
+}
+
+export const linkDevice = async (data: any): Promise<null> => {
+  return null
+}
 
 export const IMPLEMENTATION: Implementation = {
   init,

@@ -3,6 +3,7 @@ import * as browserStorage from "../storage/browser.js"
 import * as authLobby from "../auth/lobby.js"
 import { InitOptions, State } from "../index.js"
 
+import type { Msg } from "keystore-idb/lib/types.js"
 
 export const DEFAULT_IMPLEMENTATION: Dependencies = {
   rsa: {
@@ -36,6 +37,8 @@ export const DEFAULT_IMPLEMENTATION: Dependencies = {
     openChannel: authLobby.openChannel,
     closeChannel: authLobby.closeChannel,
     publishOnChannel: authLobby.publishOnChannel,
+    delegateAccount: authLobby.delegateAccount,
+    linkDevice: authLobby.linkDevice,
   },
 }
 
@@ -91,5 +94,7 @@ export interface Dependencies {
     openChannel: (username: string) => Promise<void>
     closeChannel: () => Promise<void>
     publishOnChannel: (data: any) => Promise<void>
+    delegateAccount: (audience: string) => Promise<Msg>
+    linkDevice: (data: any) => Promise<null>
   }
 }
