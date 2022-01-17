@@ -17,9 +17,15 @@ type LinkingState = {
   step: LinkingStep | null
 }
 
-type ChallengeCallback = (challenge: { pin: number[]; confirmPin: (confirmed: boolean) => void }) => void
+type ChallengeCallback = (
+  challenge:
+    {
+      pin: number[]
+      afterChallenge: (challengeResponse: { userConfirmedPin: boolean }) => Promise<void>
+    }
+) => void
 
-let userChallenge: ChallengeCallback
+let challengeUser: ChallengeCallback
 
 const ls: LinkingState = {
   sessionKey: null,
@@ -46,10 +52,10 @@ const nextStep = () => {
   }
 }
 
-export const startLinkingProducer = async (username: string, challenge: ChallengeCallback): Promise<null> => {
+export const startLinkingProducer = async (username: string, onChallenge: ChallengeCallback): Promise<null> => {
   setLinkingRole("PRODUCER")
   ls.step = "BROADCAST"
-  userChallenge = challenge
+  challengeUser = onChallenge
 
   await auth.openChannel(username)
   return null
@@ -137,7 +143,7 @@ export const handleUserChallenge = async (data: any): Promise<string | null> => 
   const audience = json.did as string ?? null
 
   if (pin !== null && audience !== null) {
-    userChallenge({ pin, confirmPin: delegateAccount(audience) })
+    challengeUser({ pin, afterChallenge: delegateAccount(audience) })
     nextStep()
   }
 
@@ -155,11 +161,11 @@ export const handleUserChallenge = async (data: any): Promise<string | null> => 
  * @returns
  */
 
- const delegateAccount = (audience: string): (linkDevice: boolean) => Promise<void> => {
-  return async function(linkDevice: boolean) {
+const delegateAccount = (audience: string): (challengeResponse: { userConfirmedPin: boolean }) => Promise<void> => {
+  return async function ({ userConfirmedPin }) {
     if (!ls.sessionKey) return
 
-    if (linkDevice) {
+    if (userConfirmedPin) {
       console.log("User confirmed, now let's delegate")
       const message = await auth.delegateAccount(audience)
 
