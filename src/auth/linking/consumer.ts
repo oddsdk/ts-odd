@@ -29,6 +29,7 @@ const ls: LinkingState = {
 }
 
 let showChallenge: PinCallback 
+let reportCompletion: () => void
 
 const resetLinkingState = () => {
   ls.sessionKey = null
@@ -49,11 +50,13 @@ const nextStep = () => {
   }
 }
 
-export const startLinkingConsumer = async (username: string, challenge: PinCallback): Promise<null> => {
+// export const startLinkingConsumer = async (username: string, challenge: PinCallback): Promise<null> => {
+export const startLinkingConsumer = async (username: string, onChallenge: PinCallback, onCompletion: () => void): Promise<null> => {
   setLinkingRole("CONSUMER")
   ls.step = "BROADCAST"
   ls.username = username
-  showChallenge = challenge 
+  showChallenge = onChallenge 
+  reportCompletion = onCompletion
   await auth.openChannel(username)
   await sendTemporaryExchangeKey()
   return null
@@ -194,7 +197,7 @@ const linkDevice = async (data: string): Promise<void> => {
 
   const { iv, msg } = JSON.parse(data)
 
-  const delegation = await aes.decrypt(
+  const delegatedUcan = await aes.decrypt(
     msg,
     ls.sessionKey,
     {
@@ -204,8 +207,10 @@ const linkDevice = async (data: string): Promise<void> => {
   )
 
   await storage.setItem("webnative.auth_username", ls.username)
-  await auth.linkDevice(delegation)
+  await auth.linkDevice(delegatedUcan)
+  reportCompletion()
   resetLinkingState()
+  await auth.closeChannel()
   
   return
 }
