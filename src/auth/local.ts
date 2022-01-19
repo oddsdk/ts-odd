@@ -3,11 +3,11 @@ import { State } from "./state.js"
 import { createAccount } from "../lobby/index.js"
 import * as user from "../lobby/username.js"
 import * as storage from "../storage/index.js"
-import * as channel from "./channel.js"
 import * as did from "../did/index.js"
-import * as linking from "./linking/switch.js"
 import * as ucan from "../ucan/index.js"
+import * as channel from "./channel.js"
 import type { Msg } from "keystore-idb/lib/types.js"
+import * as linking from "./linking/switch.js"
 
 export const init = async (): Promise<State | null> => {
   console.log("initialize local auth")
@@ -44,7 +44,7 @@ export const publishOnChannel = async (data: any): Promise<void> => {
   return channel.publishOnWssChannel(data)
 }
 
-export const delegateAccount = async (audience: string): Promise<Msg> => {
+export const delegateAccount = async (audience: string): Promise<Record<string, unknown>> => {
   console.log("Audience in user code", audience)
 
   // Proof
@@ -62,11 +62,16 @@ export const delegateAccount = async (audience: string): Promise<Msg> => {
     // proofs: [ await localforage.getItem("ucan") ]
   })
 
-  return ucan.encode(u)
+  return { token: ucan.encode(u) }
 }
 
-export const linkDevice = async (u: any): Promise<null> => {
-  await storage.setItem("ucan", u)
+export const linkDevice = async (data: Record<string, unknown>): Promise<null> => {
+  const { token } = data
+  const u = ucan.decode(token as string)
+
+  if (await ucan.isValid(u)) {
+    await storage.setItem("ucan", token)
+  }
 
   return null
 }

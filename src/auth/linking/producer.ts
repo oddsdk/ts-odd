@@ -174,7 +174,8 @@ const delegateAccount = (audience: string): (challengeResponse: { userConfirmedP
 
     if (userConfirmedPin) {
       console.log("User confirmed, now let's delegate")
-      const message = await auth.delegateAccount(audience)
+      const delegation = await auth.delegateAccount(audience)
+      const message = JSON.stringify(delegation)
 
       const iv = utils.randomBuf(16)
       const msg = await aes.encrypt(message, ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })

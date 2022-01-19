@@ -3,8 +3,6 @@ import * as browserStorage from "../storage/browser.js"
 import * as authLobby from "../auth/lobby.js"
 import { InitOptions, State } from "../index.js"
 
-import type { Msg } from "keystore-idb/lib/types.js"
-
 export const DEFAULT_IMPLEMENTATION: Dependencies = {
   rsa: {
     verify: browserCrypto.rsaVerify
@@ -94,7 +92,7 @@ export interface Dependencies {
     openChannel: (username: string) => Promise<void>
     closeChannel: () => Promise<void>
     publishOnChannel: (data: any) => Promise<void>
-    delegateAccount: (audience: string) => Promise<Msg>
-    linkDevice: (data: any) => Promise<null>
+    delegateAccount: (audience: string) => Promise<Record<string, unknown>>
+    linkDevice: (data: Record<string, unknown>) => Promise<null>
   }
 }

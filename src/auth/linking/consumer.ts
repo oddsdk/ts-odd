@@ -202,7 +202,7 @@ const linkDevice = async (data: string): Promise<void> => {
 
   const { iv, msg } = JSON.parse(data)
 
-  const delegatedUcan = await aes.decrypt(
+  const message = await aes.decrypt(
     msg,
     ls.sessionKey,
     {
@@ -210,9 +210,10 @@ const linkDevice = async (data: string): Promise<void> => {
       iv: iv
     }
   )
+  const delegation = JSON.parse(message)
 
   await storage.setItem("webnative.auth_username", ls.username)
-  await auth.linkDevice(delegatedUcan)
+  await auth.linkDevice(delegation)
   reportCompletion(ls.username)
   resetLinkingState()
   await auth.closeChannel()

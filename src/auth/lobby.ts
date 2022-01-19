@@ -20,8 +20,6 @@ import * as user from "../lobby/username.js"
 import * as channel from "./channel.js"
 import * as linking from "./linking/switch.js"
 
-import type { Msg } from "keystore-idb/lib/types.js"
-
 export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null
   const { autoRemoveUrlParams = true, rootKey } = options
@@ -115,16 +113,16 @@ export const publishOnChannel = async (data: any): Promise<void> => {
   return channel.publishOnWssChannel(data)
 }
 
-// 🛳
-
-
-export const delegateAccount = async (audience: string): Promise<Msg> => {
-  return ""
+export const delegateAccount = async (audience: string): Promise<Record<string, unknown>> => {
+  return {}
 }
 
-export const linkDevice = async (data: any): Promise<null> => {
+export const linkDevice = async (data: Record<string, unknown>): Promise<null> => {
   return null
 }
+
+
+// 🛳
 
 export const IMPLEMENTATION: Implementation = {
   init,
