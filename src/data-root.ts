@@ -1,11 +1,15 @@
+import { CID } from "multiformats/cid"
+
 import * as check from "./fs/types/check.js"
 import * as debug from "./common/debug.js"
 import * as did from "./did/index.js"
 import * as dns from "./dns/index.js"
+import * as typeChecks from "./common/type-checks.js"
 import * as ucan from "./ucan/index.js"
-import { CID } from "./ipfs/index.js"
+
 import { api } from "./common/index.js"
 import { setup } from "./setup/internal.js"
+
 
 /**
  * CID representing an empty string. We use to to speed up DNS propagation
@@ -23,12 +27,12 @@ export async function lookup(
   username: string
 ): Promise<CID | null> {
   const maybeRoot = await lookupOnFisson(username)
-  if(maybeRoot === EMPTY_CID) return null
+  if(!maybeRoot || maybeRoot.toString() === EMPTY_CID) return null
   if(maybeRoot !== null) return maybeRoot
 
   try {
     const cid = await dns.lookupDnsLink(username + ".files." + setup.endpoints.user)
-    return cid === EMPTY_CID ? null : cid
+    return !cid || cid === EMPTY_CID ? null : CID.parse(cid)
   } catch(err) {
     console.error(err)
     throw new Error("Could not locate user root in dns")
@@ -57,7 +61,10 @@ export async function lookupOnFisson(
     return cid
 
   } catch(err) {
-    debug.log("Could not locate user root on Fission server: ", err.toString())
+    debug.log(
+      "Could not locate user root on Fission server: ",
+      typeChecks.hasProp(err, "toString") ? (err as any).toString() : err
+    )
     return null
 
   }
@@ -70,10 +77,11 @@ export async function lookupOnFisson(
  * @param proof The proof to use in the UCAN sent to the API.
  */
 export async function update(
-  cid: CID | string,
+  cidInstance: CID,
   proof: string
 ): Promise<{ success: boolean }> {
   const apiEndpoint = setup.getApiEndpoint()
+  const cid = cidInstance.toString()
 
   // Debug
   debug.log("🌊 Updating your DNSLink:", cid)

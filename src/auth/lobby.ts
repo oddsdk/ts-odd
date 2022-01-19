@@ -1,17 +1,21 @@
-import * as identifiers from "../common/identifiers.js"
-import * as common from "../common/index.js"
-import { USERNAME_STORAGE_KEY } from "../common/index.js"
-import * as crypto from "../crypto/index.js"
-import * as did from "../did/index.js"
-import { loadFileSystem } from "../filesystem.js"
+import { CID } from "multiformats/cid"
+
 import FileSystem from "../fs/index.js"
 import { InitOptions, scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, State, validateSecrets } from "../index.js"
-import * as ipfs from "../ipfs/index.js"
-import * as user from "../lobby/username.js"
-import * as pathing from "../path.js"
+import { USERNAME_STORAGE_KEY } from "../common/index.js"
+import { loadFileSystem } from "../filesystem.js"
 import { setup } from "../setup/internal.js"
+
+import * as crypto from "../crypto/index.js"
+import * as did from "../did/index.js"
+import * as identifiers from "../common/identifiers.js"
+import * as common from "../common/index.js"
+import * as ipfs from "../ipfs/index.js"
+import * as pathing from "../path.js"
 import * as storage from "../storage/index.js"
 import * as ucan from "../ucan/internal.js"
+import * as user from "../lobby/username.js"
+
 
 export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null
@@ -37,7 +41,7 @@ export const init = async (options: InitOptions): Promise<State | null> => {
     await retry(async () => importClassifiedInfo(
       authorised === "via-postmessage"
         ? await getClassifiedViaPostMessage()
-        : JSON.parse(await ipfs.cat(authorised)) // in any other case we expect it to be a CID
+        : JSON.parse(await ipfs.cat(CID.parse(authorised))) // in any other case we expect it to be a CID
     ), { tries: 10, timeout: 10000, timeoutMessage: "Trying to retrieve UCAN(s) and readKey(s) from the auth lobby timed out after 10 seconds." })
 
     await storage.setItem(USERNAME_STORAGE_KEY, username)

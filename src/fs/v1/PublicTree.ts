@@ -1,4 +1,6 @@
-import { CID, FileContent } from "../../ipfs/index.js"
+import { CID } from "multiformats/cid"
+
+import { FileContent } from "../../ipfs/index.js"
 import { Links, NonEmptyPath, SoftLink, Link, UpdateCallback } from "../types.js"
 import { Maybe } from "../../common/index.js"
 import { DistinctivePath, Path } from "../../path.js"
@@ -246,7 +248,7 @@ export class PublicTree extends BaseTree {
       : await dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
-    const publicCid = (await protocol.basic.getSimpleLinks(rootCid)).public.cid
+    const publicCid = (await protocol.basic.getSimpleLinks(CID.parse(rootCid))).public.cid
     const publicPath = pathing.removeBranch(path)
     const publicTree = await PublicTree.fromCID(publicCid)
 

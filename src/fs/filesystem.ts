@@ -1,5 +1,6 @@
 import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
+import { CID } from "multiformats/cid"
 import { SymmAlg } from "keystore-idb/lib/types.js"
 import { throttle } from "throttle-debounce"
 
@@ -29,7 +30,7 @@ import * as typeCheck from "./types/check.js"
 import * as typeChecks from "../common/type-checks.js"
 import * as ucan from "../ucan/index.js"
 
-import { CID, FileContent } from "../ipfs/index.js"
+import { FileContent } from "../ipfs/index.js"
 import { NoPermissionError } from "../errors.js"
 import { Permissions, appDataPath } from "../ucan/permissions.js"
 import { authenticatedUsername } from "../common/index.js"
@@ -108,7 +109,7 @@ export class FileSystem {
     // Add the root CID of the file system to the CID log
     // (reverse list, newest cid first)
     const logCid = async (cid: CID) => {
-      await cidLog.add(cid)
+      await cidLog.add(cid.toString())
       debug.log("📓 Adding to the CID ledger:", cid)
     }
 
@@ -501,6 +502,8 @@ export class FileSystem {
     const ks = await keystore.get()
     const exchangeKey = await ks.exchangeKey()
 
+    if (!exchangeKey.privateKey) throw new Error("Missing private key in exchange key-pair")
+
     const decryptedPayload = await crypto.rsa.decrypt(sharePayload, exchangeKey.privateKey)
     const decodedPayload: Record<string, unknown> = cbor.decode(new Uint8Array(decryptedPayload))
 
@@ -518,7 +521,7 @@ export class FileSystem {
     const theirMmpt = await MMPT.fromCID(rootLinks[Branch.Private]?.cid)
 
     // Decode index
-    const encryptedIndex = await ipfs.catBuf(entryIndexCid)
+    const encryptedIndex = await ipfs.catBuf(CID.parse(entryIndexCid))
     const indexInfoBytes = await crypto.aes.decrypt(encryptedIndex, symmKey, symmKeyAlgo as SymmAlg)
     const indexInfo = JSON.parse(uint8arrays.toString(indexInfoBytes, "utf8"))
     if (!privateTypeChecks.isDecryptedNode(indexInfo)) throw new Error("The share payload did not point to a valid entry index")

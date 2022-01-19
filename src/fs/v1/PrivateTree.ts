@@ -1,3 +1,5 @@
+import { CID } from "multiformats/cid"
+
 import BaseTree from "../base/tree.js"
 import MMPT from "../protocol/private/mmpt.js"
 import PrivateFile from "./PrivateFile.js"
@@ -271,7 +273,7 @@ export default class PrivateTree extends BaseTree {
       : await dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
-    const privateCid = (await protocol.basic.getSimpleLinks(rootCid)).private.cid
+    const privateCid = (await protocol.basic.getSimpleLinks(CID.parse(rootCid))).private.cid
     const mmpt = await MMPT.fromCID(privateCid)
 
     const info = await protocol.priv.getLatestByName(

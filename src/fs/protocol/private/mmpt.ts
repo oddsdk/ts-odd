@@ -13,7 +13,7 @@ const isNibble = (str: string): boolean => nibbles[str] === true
 
 type Member = {
   name: string
-  cid: string
+  cid: CID
 }
 
 /**

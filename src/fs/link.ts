@@ -1,32 +1,34 @@
-import dagPb, { DAGLink } from "ipld-dag-pb"
+import * as dagPB from "@ipld/dag-pb"
+import { PBLink } from "@ipld/dag-pb"
+import { CID } from "multiformats/cid"
 import type { IPFSEntry } from "ipfs-core-types/src/root"
 
 import { HardLink, SimpleLink } from "./types.js"
 
 
-export const toDAGLink = (link: SimpleLink): DAGLink => {
+export const toDAGLink = (link: SimpleLink): PBLink => {
   const { name, cid, size } = link
-  return new dagPb.DAGLink(name, size, cid)
+  return dagPB.createLink(name, size, cid)
 }
 
 export const fromFSFile = (fsObj: IPFSEntry): HardLink => {
   const { name = "", cid, size, type } = fsObj
   return {
     name,
-    cid: cid.toString(),
+    cid: cid,
     size,
     isFile: type !== "dir"
   }
 }
 
-export const fromDAGLink = (link: DAGLink): SimpleLink => {
-  const name = link.Name
-  const cid = link.Hash.toString()
-  const size = link.Tsize
+export const fromDAGLink = (link: PBLink): SimpleLink => {
+  const name = link.Name || ""
+  const cid = link.Hash
+  const size = link.Tsize || 0
   return { name, cid, size }
 }
 
-export const make = (name: string, cid: string, isFile: boolean, size: number): HardLink => {
+export const make = (name: string, cid: CID, isFile: boolean, size: number): HardLink => {
   return {
     name,
     cid,

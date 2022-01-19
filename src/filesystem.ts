@@ -1,3 +1,5 @@
+import { CID } from "multiformats/cid"
+
 import FileSystem from "./fs/index.js"
 
 import * as cidLog from "./common/cid-log.js"
@@ -11,7 +13,6 @@ import * as setup from "./setup.js"
 import { Branch } from "./path.js"
 import { Maybe, authenticatedUsername } from "./common/index.js"
 import { Permissions } from "./ucan/permissions.js"
-import { CID } from "./ipfs/types.js"
 
 
 /**
@@ -30,7 +31,8 @@ export async function loadFileSystem(
   username?: string,
   rootKey?: string
 ): Promise<FileSystem> {
-  let cid, fs
+  let cid: Maybe<CID>
+  let fs
 
   // Look for username
   username = username || (await authenticatedUsername() || undefined)
@@ -41,15 +43,15 @@ export async function loadFileSystem(
 
   // Determine the correct CID of the file system to load
   const dataCid = navigator.onLine ? await dataRoot.lookup(username) : null
-  const [ logIdx, logLength ] = dataCid ? await cidLog.index(dataCid) : [ -1, 0 ]
+  const [ logIdx, logLength ] = dataCid ? await cidLog.index(dataCid.toString()) : [ -1, 0 ]
 
   if (!navigator.onLine) {
     // Offline, use local CID
-    cid = await cidLog.newest()
+    cid = CID.parse(await cidLog.newest())
 
   } else if (!dataCid) {
     // No DNS CID yet
-    cid = await cidLog.newest()
+    cid = CID.parse(await cidLog.newest())
     if (cid) debug.log("📓 No DNSLink, using local CID:", cid)
     else debug.log("📓 Creating a new file system")
 
@@ -60,14 +62,14 @@ export async function loadFileSystem(
 
   } else if (logIdx > 0) {
     // DNS is outdated
-    cid = await cidLog.newest()
+    cid = CID.parse(await cidLog.newest())
     const idxLog = logIdx === 1 ? "1 newer local entry" : logIdx + " newer local entries"
     debug.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid)
 
   } else {
     // DNS is newer
     cid = dataCid
-    await cidLog.add(cid)
+    await cidLog.add(cid.toString())
     debug.log("📓 DNSLink is newer:", cid)
 
     // TODO: We could test the filesystem version at this DNSLink at this point to figure out whether to continue locally.

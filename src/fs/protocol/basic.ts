@@ -1,9 +1,10 @@
 /** @internal */
 import type { ImportCandidate } from "ipfs-core-types/src/utils"
-import dagPb from "ipld-dag-pb"
+import * as dagPB from "@ipld/dag-pb"
+import { CID } from "multiformats/cid"
 
 import * as ipfs from "../../ipfs/index.js"
-import { CID, FileContent, AddResult } from "../../ipfs/index.js"
+import { FileContent, AddResult } from "../../ipfs/index.js"
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
 
 import { SimpleLinks, Links } from "../types.js"
@@ -37,10 +38,15 @@ export const getSimpleLinks = async (cid: CID): Promise<SimpleLinks> => {
 
 export const getFileSystemLinks = async (cid: CID): Promise<Links> => {
   const topNode = await ipfs.dagGet(cid)
+  console.log("topNode", topNode)
+
   const links = await Promise.all(topNode.Links.map(async l => {
-    const innerNode = await ipfs.dagGet(l.Hash.toString())
+    const innerNode = await ipfs.dagGet(l.Hash)
     const innerLinks = link.arrToMap(innerNode.Links.map(link.fromDAGLink))
     const isSoftLink = !!innerLinks["softLink"]
+
+    console.log("innerNode", innerNode)
+    console.log("innerLinks", innerLinks)
 
     if (isSoftLink) {
       const a = await ipfs.catBuf(innerLinks["softLink"].cid)
@@ -69,9 +75,13 @@ export const putLinks = async (links: Links | SimpleLinks): Promise<AddResult> =
       if (check.isSoftLink(l)) {
         const softLink = await ipfs.add(JSON.stringify(l))
         const dagNode = await ipfs.dagPut(
-          new dagPb.DAGNode(DAG_NODE_DATA, [ new dagPb.DAGLink("softLink", softLink.size, softLink.cid) ])
+          dagPB.createNode(
+            DAG_NODE_DATA, [
+              dagPB.createLink("softLink", softLink.size, softLink.cid)
+            ]
+          )
         )
-        return new dagPb.DAGLink(l.name, dagNode.size, dagNode.cid)
+        return dagPB.createLink(l.name, dagNode.size, dagNode.cid)
       } else if (l.Hash) {
         return l
       } else {

@@ -41,6 +41,7 @@ describe("the filesystem", () => {
     const exchangeKeyPair = await crypto.rsa.genKey()
     const exchangePubKey = await getPublicKey(exchangeKeyPair)
     const exchangeDID = did.publicKeyToDid(exchangePubKey, KeyType.RSA)
+    if (!exchangeKeyPair.privateKey) throw new Error("Missing private key in exchange key-pair")
 
     const senderKeyPair = await crypto.rsa.genKey()
     const senderPubKey = await getPublicKey(senderKeyPair)

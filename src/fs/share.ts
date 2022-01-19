@@ -102,7 +102,7 @@ export async function privateNode(
 
   // Create share payload
   const payload = cbor.encode(shareKey.payload({
-    entryIndexCid: indexResult.cid,
+    entryIndexCid: indexResult.cid.toString(),
     symmKey: index.key,
     symmKeyAlgo
   }))

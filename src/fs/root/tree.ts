@@ -1,8 +1,8 @@
 import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
-import { CID as MultiformatCID } from "multiformats/cid"
+import { CID } from "multiformats/cid"
 
-import { AddResult, CID } from "../../ipfs/index.js"
+import { AddResult } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Puttable, SimpleLink, SimpleLinks } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
@@ -234,7 +234,7 @@ export default class RootTree implements Puttable {
   static LOG_CHUNK_SIZE = 1020 // Math.floor((1024 * 256) / (256 + 1))
 
 
-  async addPrivateLogEntry(cid: string): Promise<void> {
+  async addPrivateLogEntry(cid: CID): Promise<void> {
     const log = [...this.privateLog]
     let idx = Math.max(0, log.length - 1)
 
@@ -251,7 +251,7 @@ export default class RootTree implements Puttable {
     }
 
     // add to chunk
-    const hashedCid = await crypto.hash.sha256Str(cid)
+    const hashedCid = await crypto.hash.sha256Str(cid.toString())
     const updatedChunk = [...lastChunk, hashedCid]
     const updatedChunkDeposit = await protocol.basic.putFile(
       updatedChunk.join(",")
@@ -289,7 +289,7 @@ export default class RootTree implements Puttable {
 
     const cborApprovedLinks = Object.values(this.sharedLinks).reduce(
       (acc, { cid, name, size }) => ({ ...acc,
-        [name]: { cid: MultiformatCID.parse(cid).toV1(), name, size }
+        [name]: { cid, name, size }
       }),
       {}
     )
@@ -298,7 +298,7 @@ export default class RootTree implements Puttable {
     const cid = await ipfsClient.block.put(
       cbor.encode(cborApprovedLinks),
       { format: cbor.name, mhtype: "sha2-256", pin: false, version: 1 }
-    ).then(c => c.toString())
+    )
 
     this.updateLink(Branch.Shared, {
       cid: cid,
@@ -311,7 +311,7 @@ export default class RootTree implements Puttable {
 
   static async getSharedLinks(cid: CID): Promise<SimpleLinks> {
     const ipfsClient = await getIpfs()
-    const parsedCID = MultiformatCID.parse(cid)
+    const parsedCID = cid
     const block = await ipfsClient.block.get(parsedCID)
     const decodedBlock = cbor.decode(block)
 
@@ -324,12 +324,12 @@ export default class RootTree implements Puttable {
         const name = link.name ? link.name as string : null
         const cid = link.cid
           ? typeChecks.isString(link.cid)
-            ? link.cid
-            : MultiformatCID.asCID(link.cid)
+            ? CID.parse(link.cid)
+            : CID.asCID(link.cid)
           : null
 
         if (!name || !cid) return acc
-        return { ...acc, [name]: { name, cid: cid?.toString(), size: (link.size || 0) as number } }
+        return { ...acc, [name]: { name, cid, size: (link.size || 0) as number } }
       },
       {}
     )
