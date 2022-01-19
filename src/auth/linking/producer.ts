@@ -4,10 +4,9 @@ import utils from "keystore-idb/lib/utils.js"
 import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
-
+import * as auth from "../index.js"
 import { setLinkingRole } from "../linking/switch.js"
 import { publishOnChannel } from "../index.js"
-import * as auth from "../index.js"
 
 type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 
@@ -17,7 +16,7 @@ type LinkingState = {
   step: LinkingStep | null
 }
 
-type ChallengeCallback = (
+export type ChallengeCallback = (
   challenge:
     {
       pin: number[]
@@ -26,6 +25,7 @@ type ChallengeCallback = (
 ) => void
 
 let challengeUser: ChallengeCallback
+let reportCompletion: () => void
 
 const ls: LinkingState = {
   sessionKey: null,
@@ -52,12 +52,19 @@ const nextStep = () => {
   }
 }
 
-export const startLinkingProducer = async (username: string, onChallenge: ChallengeCallback): Promise<null> => {
+export const startLinkingProducer = async (
+  config: {
+    username: string
+    onChallenge: ChallengeCallback
+    onCompletion: () => void
+  }
+): Promise<null> => {
   setLinkingRole("PRODUCER")
   ls.step = "BROADCAST"
-  challengeUser = onChallenge
+  challengeUser = config.onChallenge
+  reportCompletion = config.onCompletion
 
-  await auth.openChannel(username)
+  await auth.openChannel(config.username)
   return null
 }
 
@@ -178,9 +185,9 @@ const delegateAccount = (audience: string): (challengeResponse: { userConfirmedP
           msg
         })
       )
-    } else {
-      console.log("User declined")
     }
+
+    reportCompletion()
     resetLinkingState()
   }
 }
