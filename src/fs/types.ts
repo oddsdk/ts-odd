@@ -19,7 +19,7 @@ export interface File extends Puttable {
 export interface SimpleLink {
   name: string
   size: number
-  cid: CID
+  cid: CID | string
 }
 
 export interface BaseLink {

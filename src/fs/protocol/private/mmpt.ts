@@ -1,5 +1,6 @@
 import { AddResult, CID } from "../../../ipfs/index.js"
 import { Puttable, SimpleLinks } from "../../types.js"
+import { cidFromString } from "../../../common/index.js"
 import { setup } from "../../../setup/internal.js"
 import * as basic from "../basic.js"
 import * as link from "../../link.js"
@@ -83,7 +84,7 @@ export default class MMPT implements Puttable {
       this.removeChild(nextNameOrSib)
       await Promise.all([
         newTree.add(name.slice(1), value),
-        newTree.add(nextNameOrSib.slice(1), nextCID)
+        newTree.add(nextNameOrSib.slice(1), cidFromString(nextCID))
       ])
       await this.putAndUpdateChildLink(name[0])
     }
@@ -115,7 +116,7 @@ export default class MMPT implements Puttable {
     if (nextName === null) return null
 
     if (nextName.length > 1) {
-      return this.links[nextName].cid
+      return cidFromString(this.links[nextName].cid)
     }
     const nextTree = await this.getDirectChild(nextName)
     return nextTree.get(name.slice(1))
@@ -129,9 +130,9 @@ export default class MMPT implements Puttable {
     const children = await Promise.all(
       Object.values(this.links).map(async ({ name, cid }) => {
         if (name.length > 1) {
-          return [{ name, cid }]
+          return [{ name, cid: cidFromString(cid) }]
         }
-        const child = await MMPT.fromCID(cid)
+        const child = await MMPT.fromCID(cidFromString(cid))
         const childMembers = await child.members()
         return childMembers.map(mem => ({
           ...mem,
@@ -147,7 +148,7 @@ export default class MMPT implements Puttable {
       return this.children[name]
     }
 
-    const child = await MMPT.fromCID(this.links[name].cid)
+    const child = await MMPT.fromCID(cidFromString(this.links[name].cid))
     // check that the child wasn't added while retrieving the mmpt from the network
     if (this.children[name]) {
       return this.children[name]

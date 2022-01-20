@@ -8,6 +8,7 @@ import { FileContent, AddResult } from "../../ipfs/index.js"
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
 
 import { SimpleLinks, Links } from "../types.js"
+import { cidFromString } from "../../common/index.js"
 import * as check from "../types/check.js"
 import * as link from "../link.js"
 import * as typeCheck from "../../common/type-checks.js"
@@ -38,24 +39,24 @@ export const getSimpleLinks = async (cid: CID): Promise<SimpleLinks> => {
 
 export const getFileSystemLinks = async (cid: CID): Promise<Links> => {
   const topNode = await ipfs.dagGet(cid)
-  console.log("topNode", topNode)
+  // console.log("topNode", topNode)
 
   const links = await Promise.all(topNode.Links.map(async l => {
     const innerNode = await ipfs.dagGet(l.Hash)
     const innerLinks = link.arrToMap(innerNode.Links.map(link.fromDAGLink))
     const isSoftLink = !!innerLinks["softLink"]
 
-    console.log("innerNode", innerNode)
-    console.log("innerLinks", innerLinks)
+    // console.log("innerNode", innerNode)
+    // console.log("innerLinks", innerLinks)
 
     if (isSoftLink) {
-      const a = await ipfs.catBuf(innerLinks["softLink"].cid)
+      const a = await ipfs.catBuf(cidFromString(innerLinks["softLink"].cid))
       const b = new TextDecoder().decode(a)
       return JSON.parse(b)
     }
 
     const f = await ipfs.encoded.catAndDecode(
-      innerLinks["metadata"].cid,
+      cidFromString(innerLinks["metadata"].cid),
       null
     )
 

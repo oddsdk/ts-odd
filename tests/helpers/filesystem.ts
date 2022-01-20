@@ -1,7 +1,10 @@
+import { CID } from "multiformats/cid"
+
 import FileSystem from "../../src/fs/filesystem.js"
 import * as path from "../../src/path.js"
 import * as identifiers from "../../src/common/identifiers.js"
 import * as crypto from "../../src/crypto/index.js"
+
 
 export const emptyFilesystem: () => Promise<FileSystem> = async () => {
   const rootKey = await crypto.aes.genKeyStr()
@@ -18,7 +21,7 @@ export const emptyFilesystem: () => Promise<FileSystem> = async () => {
 }
 
 
-export async function loadFilesystem(cid: string, readKey?: string): Promise<FileSystem> {
+export async function loadFilesystem(cid: CID, readKey?: string): Promise<FileSystem> {
   if (readKey != null) {
     await crypto.keystore.importSymmKey(readKey, await identifiers.readKey({ path: path.directory("private") }))
   }

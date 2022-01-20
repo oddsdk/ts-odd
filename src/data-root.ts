@@ -7,12 +7,12 @@ import * as dns from "./dns/index.js"
 import * as typeChecks from "./common/type-checks.js"
 import * as ucan from "./ucan/index.js"
 
-import { api } from "./common/index.js"
+import { api, cidFromString } from "./common/index.js"
 import { setup } from "./setup/internal.js"
 
 
 /**
- * CID representing an empty string. We use to to speed up DNS propagation
+ * CID representing an empty string. We use this to speed up DNS propagation
  * However, we treat that as a null value in the code
  */
 const EMPTY_CID = "Qmc5m94Gu7z62RC8waSKkZUrCCBJPyHbkpmGzEePxy2oXJ"
@@ -27,12 +27,12 @@ export async function lookup(
   username: string
 ): Promise<CID | null> {
   const maybeRoot = await lookupOnFisson(username)
-  if(!maybeRoot || maybeRoot.toString() === EMPTY_CID) return null
-  if(maybeRoot !== null) return maybeRoot
+  if (!maybeRoot || maybeRoot.toString() === EMPTY_CID) return null
+  if (maybeRoot !== null) return maybeRoot
 
   try {
     const cid = await dns.lookupDnsLink(username + ".files." + setup.endpoints.user)
-    return !cid || cid === EMPTY_CID ? null : CID.parse(cid)
+    return !cid || cid === EMPTY_CID ? null : cidFromString(cid)
   } catch(err) {
     console.error(err)
     throw new Error("Could not locate user root in dns")
@@ -55,10 +55,7 @@ export async function lookupOnFisson(
       { cache: "reload" } // don't use cache
     )
     const cid = await resp.json()
-    if (!check.isCID(cid)) {
-      throw new Error("Did not receive a CID")
-    }
-    return cid
+    return cidFromString(cid)
 
   } catch(err) {
     debug.log(

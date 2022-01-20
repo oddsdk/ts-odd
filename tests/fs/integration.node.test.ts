@@ -19,7 +19,7 @@ describe("the filesystem", () => {
 
     const rootCID = await loadCARWithRoot("tests/fixtures/webnative-integration-test-v2-0-0.car", ipfs)
     const readKey = "pJW/xgBGck9/ZXwQHNPhV3zSuqGlUpXiChxwigwvUws="
-    const fs = await loadFilesystem(rootCID.toString(), readKey)
+    const fs = await loadFilesystem(rootCID, readKey)
 
     let files = await listFiles(fs, path.directory("public"))
     files = files.concat(await listFiles(fs, path.directory("private")))

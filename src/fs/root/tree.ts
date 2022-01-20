@@ -6,7 +6,7 @@ import { AddResult } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Puttable, SimpleLink, SimpleLinks } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
-import { Maybe } from "../../common/index.js"
+import { Maybe, cidFromString } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
 import { get as getIpfs } from "../../ipfs/config.js"
 
@@ -124,10 +124,10 @@ export default class RootTree implements Puttable {
     const publicCID = links[Branch.Public]?.cid || null
     const publicTree = publicCID === null
       ? await PublicTree.empty()
-      : await PublicTree.fromCID(publicCID)
+      : await PublicTree.fromCID(cidFromString(publicCID))
 
     const prettyTree = links[Branch.Pretty]
-                         ? await BareTree.fromCID(links[Branch.Pretty].cid)
+                         ? await BareTree.fromCID(cidFromString(links[Branch.Pretty].cid))
                          : await BareTree.empty()
 
     // Load private bits
@@ -138,13 +138,13 @@ export default class RootTree implements Puttable {
       mmpt = MMPT.create()
       privateNodes = {}
     } else {
-      mmpt = await MMPT.fromCID(privateCID)
+      mmpt = await MMPT.fromCID(cidFromString(privateCID))
       privateNodes = await loadPrivateNodes(keys, mmpt)
     }
 
     const privateLogCid = links[Branch.PrivateLog]?.cid
     const privateLog = privateLogCid
-      ? await ipfs.dagGet(privateLogCid)
+      ? await ipfs.dagGet(cidFromString(privateLogCid))
           .then(dagNode => dagNode.Links.map(link.fromDAGLink))
           .then(links => links.sort((a, b) => {
             return parseInt(a.name, 10) - parseInt(b.name, 10)
@@ -154,13 +154,13 @@ export default class RootTree implements Puttable {
     // Shared
     const sharedCid = links[Branch.Shared]?.cid || null
     const sharedLinks = sharedCid
-      ? await this.getSharedLinks(sharedCid)
+      ? await this.getSharedLinks(cidFromString(sharedCid))
       : {}
 
     const sharedCounterCid = links[Branch.SharedCounter]?.cid || null
     const sharedCounter = sharedCounterCid
       ? await protocol.basic
-        .getFile(sharedCounterCid)
+        .getFile(cidFromString(sharedCounterCid))
         .then(a => JSON.parse(uint8arrays.toString(a, "utf8")))
       : 1
 
@@ -240,7 +240,7 @@ export default class RootTree implements Puttable {
 
     // get last chunk
     let lastChunk = log[idx]?.cid
-      ? (await ipfs.cat(log[idx].cid)).split(",")
+      ? (await ipfs.cat(cidFromString(log[idx].cid))).split(",")
       : []
 
     // needs new chunk
@@ -366,7 +366,7 @@ export default class RootTree implements Puttable {
   }
 
   async getVersion(): Promise<versions.SemVer | null> {
-    const file = await protocol.basic.getFile(this.links[Branch.Version].cid)
+    const file = await protocol.basic.getFile(cidFromString(this.links[Branch.Version].cid))
     return versions.fromString(uint8arrays.toString(file))
   }
 

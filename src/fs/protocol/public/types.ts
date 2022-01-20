@@ -11,9 +11,9 @@ export type PutDetails = AddResult & {
 }
 
 export type SkeletonInfo = {
-  cid: CID
-  userland: CID
-  metadata: CID
+  cid: CID | string
+  userland: CID | string
+  metadata: CID | string
   subSkeleton: Skeleton
   isFile: boolean
 }
@@ -27,14 +27,14 @@ export type TreeHeader = {
 }
 
 export type TreeInfo = TreeHeader & {
-  userland: CID
+  userland: CID | string
 }
 
 export type FileHeader = {
   metadata: Metadata
-  previous?: CID
+  previous?: CID | string
 }
 
 export type FileInfo = FileHeader & {
-  userland: CID
+  userland: CID | string
 }

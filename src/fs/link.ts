@@ -4,11 +4,12 @@ import { CID } from "multiformats/cid"
 import type { IPFSEntry } from "ipfs-core-types/src/root"
 
 import { HardLink, SimpleLink } from "./types.js"
+import { cidFromString } from "../common/cid.js"
 
 
 export const toDAGLink = (link: SimpleLink): PBLink => {
   const { name, cid, size } = link
-  return dagPB.createLink(name, size, cid)
+  return dagPB.createLink(name, size, cidFromString(cid))
 }
 
 export const fromFSFile = (fsObj: IPFSEntry): HardLink => {

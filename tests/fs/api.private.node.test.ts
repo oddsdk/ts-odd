@@ -31,6 +31,7 @@ describe("the private filesystem api", function () {
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
           const filepath = path.file("private", pathSegment)
+          console.log(filepath)
 
           await fs.write(filepath, fileContent.val)
 

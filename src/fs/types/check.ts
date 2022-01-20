@@ -1,6 +1,7 @@
 /** @internal */
+import { CID } from "multiformats/cid"
+
 import { isString, isObject, isNum, isBool } from "../../common/index.js"
-import { CID } from "../../ipfs/index.js"
 import { Tree, File, HardLink, SoftLink, Links, BaseLink } from "../types.js"
 import { Skeleton, SkeletonInfo, TreeInfo, FileInfo, TreeHeader, FileHeader } from "../protocol/public/types.js"
 import { SemVer } from "../versions.js"
@@ -102,13 +103,9 @@ export const isFileInfo = (obj: any): obj is FileInfo => {
     && isCID((obj as any).userland)
 }
 
-export const isCID = (obj: any): obj is CID => {
-  return isString(obj)
-}
-
-export const isCIDList = (obj: any): obj is CID[] => {
-  return Array.isArray(obj)
-      && obj.every(isCID)
+export const isCID = (obj: any): obj is CID | string => {
+  const cid = CID.asCID(obj)
+  return !!cid || isString(obj)
 }
 
 export const isSemVer = (obj: any): obj is SemVer => {

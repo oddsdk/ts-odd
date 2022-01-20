@@ -1,5 +1,6 @@
 import expect from "expect"
 import crypto from "crypto"
+import { CID } from "multiformats/cid"
 import { IPFS } from "ipfs-core"
 
 import MMPT from "./mmpt.js"
@@ -23,15 +24,15 @@ The MMPT is a glorified key-value store.
 This returns an array of key-values sorted by the key,
 so that key collisions are more likely to be tested.
 */
-async function generateExampleEntries(ipfs: IPFS, amount: number): Promise<{ name: string; cid: string }[]> {
-  const entries: { name: string; cid: string }[] = []
+async function generateExampleEntries(ipfs: IPFS, amount: number): Promise<{ name: string; cid: CID }[]> {
+  const entries: { name: string; cid: CID }[] = []
 
   for (const i of Array(amount).keys()) {
     const hash = sha256Str(`${i}`)
     const cid = await ipfs.object.put({ Data: encode(hash), Links: [] })
     entries.push({
       name: hash,
-      cid: cid.toString(),
+      cid: cid,
     })
   }
 
@@ -73,7 +74,7 @@ describe("the mmpt", function () {
     const entries = await generateExampleEntries(ipfs, amount)
 
     const slice_size = 5
-    let soFar: { name: string; cid: string }[] = []
+    let soFar: { name: string; cid: CID }[] = []
     let missing = []
 
     for (let i = 0; i < entries.length; i += slice_size) {

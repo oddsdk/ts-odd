@@ -5,7 +5,7 @@ import * as link from "../link.js"
 
 import { AddResult, CID, FileContent } from "../../ipfs/index.js"
 import { HardLinks, BaseLinks, Tree, File, Puttable, UpdateCallback } from "../types.js"
-import { Maybe } from "../../common/index.js"
+import { Maybe, cidFromString } from "../../common/index.js"
 import { Path } from "../../path.js"
 
 import BareFile from "../bare/file.js"
@@ -57,11 +57,11 @@ class BareTree extends BaseTree {
   async createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<BareFile> {
     const existing = await this.getDirectChild(name)
     let file: BareFile
-    if(existing === null){
+    if (existing === null) {
       file = await BareFile.create(content)
     } else if (BareFile.instanceOf(existing)) {
       file = await existing.updateContent(content)
-    }else {
+    } else {
       throw new Error(`There is already a directory with that name: ${name}`)
     }
     await this.updateDirectChild(file, name, onUpdate)
@@ -86,25 +86,26 @@ class BareTree extends BaseTree {
 
   removeDirectChild(name: string): this {
     delete this.links[name]
-    if(this.children[name]) {
+    if (this.children[name]) {
       delete this.children[name]
     }
     return this
   }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
-    if(this.children[name]) {
+    if (this.children[name]) {
       return this.children[name]
     }
 
     const link = this.links[name] || null
-    if(link === null) return null
+    if (link === null) return null
+    const cid = cidFromString(link.cid)
     const child = link.isFile
-      ? await BareFile.fromCID(link.cid)
-      : await BareTree.fromCID(link.cid)
+      ? await BareFile.fromCID(cid)
+      : await BareTree.fromCID(cid)
 
     // check that the child wasn't added while retrieving the content from the network
-    if(this.children[name]) {
+    if (this.children[name]) {
       return this.children[name]
     }
 

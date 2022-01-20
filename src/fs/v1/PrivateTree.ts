@@ -10,7 +10,7 @@ import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, 
 import { FileContent } from "../../ipfs/index.js"
 import { Path } from "../../path.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
-import { isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
+import { cidFromString, isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
 import { setup } from "../../setup/internal.js"
 
 import * as check from "../protocol/private/types/check.js"
@@ -273,8 +273,8 @@ export default class PrivateTree extends BaseTree {
       : await dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
-    const privateCid = (await protocol.basic.getSimpleLinks(CID.parse(rootCid))).private.cid
-    const mmpt = await MMPT.fromCID(privateCid)
+    const privateCid = (await protocol.basic.getSimpleLinks(cidFromString(rootCid))).private.cid
+    const mmpt = await MMPT.fromCID(cidFromString(privateCid))
 
     const info = await protocol.priv.getLatestByName(
       mmpt,

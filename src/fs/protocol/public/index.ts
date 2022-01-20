@@ -4,8 +4,7 @@ import { CID } from "multiformats/cid"
 import { Links, HardLink, SimpleLinks } from "../../types.js"
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from "./types.js"
 import { Metadata } from "../../metadata.js"
-import { isString } from "../../../common/type-checks.js"
-import { isValue, Maybe, blob } from "../../../common/index.js"
+import { cidFromString, isValue, Maybe, blob } from "../../../common/index.js"
 import { FileContent } from "../../../ipfs/index.js"
 
 import * as check from "../../types/check.js"
@@ -34,8 +33,8 @@ export const putTree = async (
   const { cid, size } = await basic.putLinks(internalLinks)
   return {
     cid,
-    userland: userland.cid,
-    metadata: metadata.cid,
+    userland: cidFromString(userland.cid),
+    metadata: cidFromString(metadata.cid),
     size,
     isFile: false,
     skeleton: skeletonVal
@@ -58,8 +57,8 @@ export const putFile = async (
   const { cid, size } = await basic.putLinks(internalLinks)
   return {
     cid,
-    userland: userland.cid,
-    metadata: metadata.cid,
+    userland: cidFromString(userland.cid),
+    metadata: cidFromString(metadata.cid),
     size,
     isFile: true,
     skeleton: {}
@@ -89,12 +88,14 @@ export const getValue = async (
   linksOrCID: SimpleLinks | CID,
   name: string,
 ): Promise<unknown> => {
-  if (CID.isCID(linksOrCID)) {
-    const links = await basic.getSimpleLinks(linksOrCID)
+  const cid = CID.asCID(linksOrCID)
+
+  if (cid) {
+    const links = await basic.getSimpleLinks(cid)
     return getValueFromLinks(links, name)
   }
 
-  return getValueFromLinks(linksOrCID, name)
+  return getValueFromLinks(linksOrCID as SimpleLinks, name)
 }
 
 export const getValueFromLinks = async (
@@ -104,7 +105,7 @@ export const getValueFromLinks = async (
   const linkCID = links[name]?.cid
   if (!linkCID) return null
 
-  return ipfs.encoded.catAndDecode(linkCID, null)
+  return ipfs.encoded.catAndDecode(cidFromString(linkCID), null)
 }
 
 export const getAndCheckValue = async <T>(

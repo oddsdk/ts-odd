@@ -33,7 +33,7 @@ import * as ucan from "../ucan/index.js"
 import { FileContent } from "../ipfs/index.js"
 import { NoPermissionError } from "../errors.js"
 import { Permissions, appDataPath } from "../ucan/permissions.js"
-import { authenticatedUsername } from "../common/index.js"
+import { authenticatedUsername, cidFromString } from "../common/index.js"
 
 
 // TYPES
@@ -489,14 +489,14 @@ export class FileSystem {
     const sharedLinksCid = rootLinks[Branch.Shared]?.cid || null
     if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
 
-    const sharedLinks = await RootTree.getSharedLinks(sharedLinksCid)
+    const sharedLinks = await RootTree.getSharedLinks(cidFromString(sharedLinksCid))
     const shareLink = typeChecks.isObject(sharedLinks) ? sharedLinks[key] : null
     if (!shareLink) throw new Error("Couldn't find a matching share.")
 
     const shareLinkCid = typeChecks.isObject(shareLink) ? shareLink.cid : null
     if (!typeChecks.isString(shareLinkCid)) throw new Error("Couldn't find a matching share.")
 
-    const sharePayload = await ipfs.catBuf(shareLinkCid)
+    const sharePayload = await ipfs.catBuf(cidFromString(shareLinkCid))
 
     // Decode payload
     const ks = await keystore.get()
@@ -518,7 +518,7 @@ export class FileSystem {
     // Load MMPT
     const mmptCid = rootLinks[Branch.Private]?.cid
     if (!mmptCid) throw new Error("This user's filesystem doesn't have a private branch")
-    const theirMmpt = await MMPT.fromCID(rootLinks[Branch.Private]?.cid)
+    const theirMmpt = await MMPT.fromCID(cidFromString(rootLinks[Branch.Private]?.cid))
 
     // Decode index
     const encryptedIndex = await ipfs.catBuf(CID.parse(entryIndexCid))
