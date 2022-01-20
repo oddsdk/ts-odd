@@ -8,13 +8,15 @@ import * as auth from "../index.js"
 import { setLinkingRole } from "../linking/switch.js"
 import { publishOnChannel } from "../index.js"
 
+import type { Maybe } from "../../common/index.js"
+
 type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 
 type LinkingState = {
-  username: string | null
-  sessionKey: CryptoKey | null
-  temporaryRsaPair: CryptoKeyPair | null
-  step: LinkingStep | null
+  username: Maybe<string>
+  sessionKey: Maybe<CryptoKey>
+  temporaryRsaPair: Maybe<CryptoKeyPair>
+  step: Maybe<LinkingStep>
 }
 
 export type ChallengeCallback = (
@@ -133,7 +135,7 @@ export const sendSessionKey = async (didThrowaway: string): Promise<void> => {
  * @param data 
  * @returns 
  */
-export const handleUserChallenge = async (data: any): Promise<string | null> => {
+export const handleUserChallenge = async (data: any): Promise<Maybe<string>> => {
   if (!ls.sessionKey) return null
 
   const { iv, msg } = JSON.parse(data)

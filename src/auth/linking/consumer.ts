@@ -10,13 +10,15 @@ import { setLinkingRole } from "../linking/switch.js"
 import { publishOnChannel } from "../index.js"
 import * as auth from "../index.js"
 
+import type { Maybe } from "../../common/index.js"
+
 type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 
 type LinkingState = {
-  username: string | null
-  sessionKey: CryptoKey | null
-  temporaryRsaPair: CryptoKeyPair | null
-  step: LinkingStep | null
+  username: Maybe<string>
+  sessionKey: Maybe<CryptoKey>
+  temporaryRsaPair: Maybe<CryptoKeyPair>
+  step: Maybe<LinkingStep>
 }
 
 export type PinCallback = (challenge: { pin: number[] }) => void
@@ -113,7 +115,7 @@ export const sendTemporaryExchangeKey = async (): Promise<void> => {
  * @param data 
  * @returns pin
  */
-export const handleSessionKey = async (data: any): Promise<Uint8Array | null> => {
+export const handleSessionKey = async (data: any): Promise<Maybe<Uint8Array>> => {
   if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) return null
 
   if (ls.sessionKey) {
