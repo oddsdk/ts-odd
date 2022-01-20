@@ -241,7 +241,11 @@ export default class PrivateTree extends BaseTree {
     const nextChild = nodeInfo.subSkeleton[head]
     if (nextChild !== undefined) return this.getRecurse(nextChild, rest)
 
-    const reloadedNode = await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
+    const reloadedNode = await protocol.priv.getLatestByCID(
+      this.mmpt,
+      cidFromString(nodeInfo.cid),
+      nodeInfo.key
+    )
     if (!check.isPrivateTreeInfo(reloadedNode)) return null
 
     const reloadedNext = reloadedNode.skeleton[head]
@@ -340,7 +344,11 @@ async function getNode(
   mmpt: MMPT,
   nodeInfo: PrivateSkeletonInfo
 ): Promise<PrivateFile | PrivateTree | null> {
-  const node = await protocol.priv.getLatestByCID(mmpt, nodeInfo.cid, nodeInfo.key)
+  const node = await protocol.priv.getLatestByCID(
+    mmpt,
+    cidFromString(nodeInfo.cid),
+    nodeInfo.key
+  )
 
   return check.isPrivateFileInfo(node)
     ? await PrivateFile.fromInfo(mmpt, nodeInfo.key, node)

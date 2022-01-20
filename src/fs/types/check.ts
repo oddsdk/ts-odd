@@ -105,7 +105,7 @@ export const isFileInfo = (obj: any): obj is FileInfo => {
 
 export const isCID = (obj: any): obj is CID | string => {
   const cid = CID.asCID(obj)
-  return !!cid || isString(obj)
+  return !!cid || isString(obj) || (obj && "code" in obj && "version" in obj && "multihash" in obj)
 }
 
 export const isSemVer = (obj: any): obj is SemVer => {

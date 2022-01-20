@@ -22,7 +22,7 @@ export type Skeleton = { [name: string]: SkeletonInfo | SoftLink }
 
 export type TreeHeader = {
   metadata: Metadata
-  previous?: CID
+  previous?: CID | string
   skeleton: Skeleton
 }
 

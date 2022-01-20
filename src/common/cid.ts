@@ -6,9 +6,16 @@ import { CID } from "multiformats/cid"
  * Passing an already decoded CID instance works too.
  * NOTE: Throws an error if a CID cannot be decoded!
  */
-export function cidFromString(possiblyEncoded: CID | string): CID {
-  const cid = CID.asCID(possiblyEncoded)
-  return cid || CID.parse(possiblyEncoded as string)
+export function cidFromString(val: CID | object | string): CID {
+  const cid = CID.asCID(val)
+  if (cid) return cid
+
+  if (typeof val === "string") return CID.parse(val as string)
+  if (typeof val === "object" && "version" in val && "code" in val && "multihash" in val) {
+    return CID.create(val.version, val.code, val.multihash)
+  }
+
+  throw new Error(`Could not decode CID: ${val}`)
 }
 
 /**
