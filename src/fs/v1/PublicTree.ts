@@ -5,7 +5,7 @@ import { Links, NonEmptyPath, SoftLink, Link, UpdateCallback } from "../types.js
 import { Maybe } from "../../common/index.js"
 import { DistinctivePath, Path } from "../../path.js"
 import { Skeleton, SkeletonInfo, TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
-import { cidFromString } from "../../common/cid.js"
+import { decodeCID } from "../../common/cid.js"
 import { setup } from "../../setup/internal.js"
 
 import BaseTree from "../base/tree.js"
@@ -75,7 +75,7 @@ export class PublicTree extends BaseTree {
 
   static async fromInfo(info: TreeInfo, cid: CID): Promise<PublicTree> {
     const { userland, metadata, previous, skeleton } = info
-    const links = await protocol.basic.getFileSystemLinks(cidFromString(userland))
+    const links = await protocol.basic.getFileSystemLinks(decodeCID(userland))
     return new PublicTree({
       links,
       header: { metadata, previous, skeleton },
@@ -161,7 +161,7 @@ export class PublicTree extends BaseTree {
 
     // Hard link
     if (check.isSkeletonInfo(childInfo)) {
-      const cid = cidFromString(childInfo.cid)
+      const cid = decodeCID(childInfo.cid)
       child = childInfo.isFile
         ? await PublicFile.fromCID(cid)
         : await PublicTree.fromCID(cid)
@@ -188,7 +188,7 @@ export class PublicTree extends BaseTree {
 
     // Hard link
     if (check.isSkeletonInfo(res)) {
-      const cid = cidFromString(res.cid)
+      const cid = decodeCID(res.cid)
       const info = await protocol.pub.get(cid)
       return check.isFileInfo(info)
         ? PublicFile.fromInfo(info, cid)
@@ -251,9 +251,9 @@ export class PublicTree extends BaseTree {
       : await dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
-    const publicCid = (await protocol.basic.getSimpleLinks(CID.parse(rootCid))).public.cid
+    const publicCid = (await protocol.basic.getSimpleLinks(decodeCID(rootCid))).public.cid
     const publicPath = pathing.removeBranch(path)
-    const publicTree = await PublicTree.fromCID(cidFromString(publicCid))
+    const publicTree = await PublicTree.fromCID(decodeCID(publicCid))
 
     const item = await publicTree.get(pathing.unwrap(publicPath))
     if (item) item.readOnly = true

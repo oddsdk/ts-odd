@@ -4,7 +4,7 @@ import { CID } from "multiformats/cid"
 import { Links, HardLink, SimpleLinks } from "../../types.js"
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from "./types.js"
 import { Metadata } from "../../metadata.js"
-import { cidFromString, isValue, Maybe, blob } from "../../../common/index.js"
+import { decodeCID, isValue, Maybe, blob } from "../../../common/index.js"
 import { FileContent } from "../../../ipfs/index.js"
 
 import * as check from "../../types/check.js"
@@ -33,8 +33,8 @@ export const putTree = async (
   const { cid, size } = await basic.putLinks(internalLinks)
   return {
     cid,
-    userland: cidFromString(userland.cid),
-    metadata: cidFromString(metadata.cid),
+    userland: decodeCID(userland.cid),
+    metadata: decodeCID(metadata.cid),
     size,
     isFile: false,
     skeleton: skeletonVal
@@ -57,8 +57,8 @@ export const putFile = async (
   const { cid, size } = await basic.putLinks(internalLinks)
   return {
     cid,
-    userland: cidFromString(userland.cid),
-    metadata: cidFromString(metadata.cid),
+    userland: decodeCID(userland.cid),
+    metadata: decodeCID(metadata.cid),
     size,
     isFile: true,
     skeleton: {}
@@ -105,7 +105,7 @@ export const getValueFromLinks = async (
   const linkCID = links[name]?.cid
   if (!linkCID) return null
 
-  return ipfs.encoded.catAndDecode(cidFromString(linkCID), null)
+  return ipfs.encoded.catAndDecode(decodeCID(linkCID), null)
 }
 
 export const getAndCheckValue = async <T>(

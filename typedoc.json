@@ -7,6 +7,5 @@
   "excludeProtected": true,
   "name": "Fission SDK",
   "out": "docs",
-  "readme": "./scripts/TYPEDOC.md",
-  "highlightTheme": "github-light"
+  "readme": "./scripts/TYPEDOC.md"
 }

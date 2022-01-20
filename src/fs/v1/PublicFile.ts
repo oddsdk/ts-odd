@@ -8,7 +8,7 @@ import * as history from "./PublicHistory.js"
 import * as metadata from "../metadata.js"
 import * as protocol from "../protocol/index.js"
 import * as versions from "../versions.js"
-import { cidFromString, isObject, Maybe } from "../../common/index.js"
+import { decodeCID, isObject, Maybe } from "../../common/index.js"
 
 
 type ConstructorParams = {
@@ -52,7 +52,7 @@ export class PublicFile extends BaseFile {
 
   static async fromInfo(info: FileInfo, cid: CID): Promise<PublicFile> {
     const { userland, metadata, previous } = info
-    const content = await protocol.basic.getFile(cidFromString(userland))
+    const content = await protocol.basic.getFile(decodeCID(userland))
     return new PublicFile({
       content,
       header: { metadata, previous },

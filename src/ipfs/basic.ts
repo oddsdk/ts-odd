@@ -10,7 +10,7 @@ import type { ImportCandidate } from "ipfs-core-types/src/utils"
 import { AddResult } from "./types.js"
 import { DAG_NODE_DATA } from "./constants.js"
 import { get as getIpfs } from "./config.js"
-import { isObject, isString } from "../common/type-checks.js"
+import { decodeCID, isObject, isString } from "../common/index.js"
 import { setup } from "../setup/internal.js"
 
 import * as util from "./util.js"
@@ -60,7 +60,7 @@ export const ls = async (cid: CID): Promise<IPFSEntry[]> => {
 export const dagGet = async (cid: CID): Promise<PBNode> => {
   const ipfs = await getIpfs()
   await attemptPin(cid)
-  const raw = await ipfs.dag.get(CID.parse(cid.toString()))
+  const raw = await ipfs.dag.get(cid)
   const node = util.rawToDAGNode(raw)
   return node
 }

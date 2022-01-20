@@ -1,7 +1,7 @@
 import { BareNameFilter, PrivateName } from "./namefilter.js"
 import { CID } from "../../../ipfs/index.js"
 import { DecryptedNode, PrivateAddResult, Revision } from "./types.js"
-import { Maybe, cidFromString } from "../../../common/index.js"
+import { Maybe, decodeCID } from "../../../common/index.js"
 import MMPT from "./mmpt.js"
 
 import * as basic from "../basic.js"
@@ -21,7 +21,7 @@ export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Pro
     const contentBareFilter = await namefilter.addToBare(node.bareNameFilter, node.key)
     const contentFilter = await namefilter.addRevision(contentBareFilter, node.key, node.revision)
     const contentName = await namefilter.toPrivateName(contentFilter)
-    await mmpt.add(contentName, cidFromString(node.content))
+    await mmpt.add(contentName, decodeCID(node.content))
   }
 
   const [skeleton, isFile] = check.isPrivateFileInfo(node) ? [{}, true] : [node.skeleton, false]
@@ -56,7 +56,7 @@ export const getLatestByCID = async (mmpt: MMPT, cid: CID, key: string): Promise
   const node = await getByCID(cid, key)
   const latest = await findLatestRevision(mmpt, node.bareNameFilter, key, node.revision)
   return latest?.cid
-    ? await getByCID(cidFromString(latest?.cid), key)
+    ? await getByCID(decodeCID(latest?.cid), key)
     : node
 }
 

@@ -5,7 +5,7 @@ import * as link from "../link.js"
 
 import { AddResult, CID, FileContent } from "../../ipfs/index.js"
 import { HardLinks, BaseLinks, Tree, File, Puttable, UpdateCallback } from "../types.js"
-import { Maybe, cidFromString } from "../../common/index.js"
+import { Maybe, decodeCID } from "../../common/index.js"
 import { Path } from "../../path.js"
 
 import BareFile from "../bare/file.js"
@@ -99,7 +99,7 @@ class BareTree extends BaseTree {
 
     const link = this.links[name] || null
     if (link === null) return null
-    const cid = cidFromString(link.cid)
+    const cid = decodeCID(link.cid)
     const child = link.isFile
       ? await BareFile.fromCID(cid)
       : await BareTree.fromCID(cid)

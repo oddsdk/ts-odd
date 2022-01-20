@@ -7,7 +7,7 @@ import * as dns from "./dns/index.js"
 import * as typeChecks from "./common/type-checks.js"
 import * as ucan from "./ucan/index.js"
 
-import { api, cidFromString } from "./common/index.js"
+import { api, decodeCID } from "./common/index.js"
 import { setup } from "./setup/internal.js"
 
 
@@ -32,7 +32,7 @@ export async function lookup(
 
   try {
     const cid = await dns.lookupDnsLink(username + ".files." + setup.endpoints.user)
-    return !cid || cid === EMPTY_CID ? null : cidFromString(cid)
+    return !cid || cid === EMPTY_CID ? null : decodeCID(cid)
   } catch(err) {
     console.error(err)
     throw new Error("Could not locate user root in dns")
@@ -55,7 +55,7 @@ export async function lookupOnFisson(
       { cache: "reload" } // don't use cache
     )
     const cid = await resp.json()
-    return cidFromString(cid)
+    return decodeCID(cid)
 
   } catch(err) {
     debug.log(

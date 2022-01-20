@@ -8,7 +8,7 @@ import { FileContent, AddResult } from "../../ipfs/index.js"
 import { DAG_NODE_DATA } from "../../ipfs/constants.js"
 
 import { SimpleLinks, Links } from "../types.js"
-import { cidFromString } from "../../common/index.js"
+import { decodeCID } from "../../common/index.js"
 import * as check from "../types/check.js"
 import * as link from "../link.js"
 import * as typeCheck from "../../common/type-checks.js"
@@ -50,13 +50,13 @@ export const getFileSystemLinks = async (cid: CID): Promise<Links> => {
     // console.log("innerLinks", innerLinks)
 
     if (isSoftLink) {
-      const a = await ipfs.catBuf(cidFromString(innerLinks["softLink"].cid))
+      const a = await ipfs.catBuf(decodeCID(innerLinks["softLink"].cid))
       const b = new TextDecoder().decode(a)
       return JSON.parse(b)
     }
 
     const f = await ipfs.encoded.catAndDecode(
-      cidFromString(innerLinks["metadata"].cid),
+      decodeCID(innerLinks["metadata"].cid),
       null
     )
 

@@ -10,6 +10,7 @@ type RawDAGLink = {
 }
 
 const rawToDAGLink = (raw: RawDAGLink): PBLink => {
+  console.log("😈", raw)
   return dagPB.createLink(raw.Name, raw.Tsize, raw.Hash)
 }
 

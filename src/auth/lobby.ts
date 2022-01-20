@@ -1,6 +1,6 @@
 import FileSystem from "../fs/index.js"
 import { InitOptions, scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, State, validateSecrets } from "../index.js"
-import { USERNAME_STORAGE_KEY, cidFromString } from "../common/index.js"
+import { USERNAME_STORAGE_KEY, decodeCID } from "../common/index.js"
 import { loadFileSystem } from "../filesystem.js"
 import { setup } from "../setup/internal.js"
 
@@ -39,7 +39,7 @@ export const init = async (options: InitOptions): Promise<State | null> => {
     await retry(async () => importClassifiedInfo(
       authorised === "via-postmessage"
         ? await getClassifiedViaPostMessage()
-        : JSON.parse(await ipfs.cat(cidFromString(authorised))) // in any other case we expect it to be a CID
+        : JSON.parse(await ipfs.cat(decodeCID(authorised))) // in any other case we expect it to be a CID
     ), { tries: 10, timeout: 10000, timeoutMessage: "Trying to retrieve UCAN(s) and readKey(s) from the auth lobby timed out after 10 seconds." })
 
     await storage.setItem(USERNAME_STORAGE_KEY, username)

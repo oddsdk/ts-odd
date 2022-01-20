@@ -16,7 +16,7 @@ import * as sharingKey from "../../src/fs/protocol/shared/key.js"
 
 import { Branch } from "../../src/path.js"
 import { KeyType } from "../../src/did/types.js"
-import { cidFromString } from "../../src/common/index.js"
+import { decodeCID } from "../../src/common/index.js"
 import { emptyFilesystem } from "../helpers/filesystem.js"
 
 import PrivateFile from "../../src/fs/v1/PrivateFile.js"
@@ -74,7 +74,7 @@ describe("the filesystem", () => {
     })
 
     const createdLink = fs.root.sharedLinks[shareKey]
-    const sharePayload = await protocol.basic.getFile(cidFromString(createdLink.cid))
+    const sharePayload = await protocol.basic.getFile(decodeCID(createdLink.cid))
     const decryptedPayload: Record<string, any> = await crypto.rsa.decrypt(
       sharePayload,
       exchangeKeyPair.privateKey

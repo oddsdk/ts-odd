@@ -11,7 +11,7 @@ import * as versions from "./fs/versions.js"
 import * as setup from "./setup.js"
 
 import { Branch } from "./path.js"
-import { Maybe, authenticatedUsername, cidFromString } from "./common/index.js"
+import { Maybe, authenticatedUsername, decodeCID } from "./common/index.js"
 import { Permissions } from "./ucan/permissions.js"
 
 
@@ -47,11 +47,11 @@ export async function loadFileSystem(
 
   if (!navigator.onLine) {
     // Offline, use local CID
-    cid = cidFromString(await cidLog.newest())
+    cid = decodeCID(await cidLog.newest())
 
   } else if (!dataCid) {
     // No DNS CID yet
-    cid = cidFromString(await cidLog.newest())
+    cid = decodeCID(await cidLog.newest())
     if (cid) debug.log("📓 No DNSLink, using local CID:", cid)
     else debug.log("📓 Creating a new file system")
 
@@ -62,7 +62,7 @@ export async function loadFileSystem(
 
   } else if (logIdx > 0) {
     // DNS is outdated
-    cid = cidFromString(await cidLog.newest())
+    cid = decodeCID(await cidLog.newest())
     const idxLog = logIdx === 1 ? "1 newer local entry" : logIdx + " newer local entries"
     debug.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid)
 
@@ -105,7 +105,7 @@ export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> 
     ? "1.0.0"
     : new TextDecoder().decode(
         await protocol.basic.getFile(
-          cidFromString(links[Branch.Version].cid)
+          decodeCID(links[Branch.Version].cid)
         )
       )
 
