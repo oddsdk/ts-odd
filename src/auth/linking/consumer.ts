@@ -32,6 +32,7 @@ const ls: LinkingState = {
 }
 
 const resetLinkingState = () => {
+  ls.username = null
   ls.sessionKey = null
   ls.temporaryRsaPair = null
   ls.step = null
@@ -62,7 +63,8 @@ export const startLinkingConsumer = async (
   ls.username = config.username
   challengeUser = config.onChallenge
   reportCompletion = config.onCompletion
-  await auth.openChannel(config.username)
+
+  await auth.openChannel(ls.username)
   await sendTemporaryExchangeKey()
   return null
 }

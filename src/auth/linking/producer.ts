@@ -11,6 +11,7 @@ import { publishOnChannel } from "../index.js"
 type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 
 type LinkingState = {
+  username: string | null
   sessionKey: CryptoKey | null
   temporaryRsaPair: CryptoKeyPair | null
   step: LinkingStep | null
@@ -25,9 +26,10 @@ export type ChallengeCallback = (
 ) => void
 
 let challengeUser: ChallengeCallback
-let reportCompletion: () => void
+let reportCompletion: (username: string | null) => void
 
 const ls: LinkingState = {
+  username: null,
   sessionKey: null,
   temporaryRsaPair: null,
   step: null
@@ -56,15 +58,16 @@ export const startLinkingProducer = async (
   config: {
     username: string
     onChallenge: ChallengeCallback
-    onCompletion: () => void
+    onCompletion: (username: string | null) => void
   }
 ): Promise<null> => {
   setLinkingRole("PRODUCER")
   ls.step = "BROADCAST"
+  ls.username = config.username
   challengeUser = config.onChallenge
   reportCompletion = config.onCompletion
 
-  await auth.openChannel(config.username)
+  await auth.openChannel(ls.username)
   return null
 }
 
@@ -188,7 +191,7 @@ const delegateAccount = (audience: string): (challengeResponse: { userConfirmedP
       )
     }
 
-    reportCompletion()
+    reportCompletion(ls.username)
     resetLinkingState()
   }
 }
