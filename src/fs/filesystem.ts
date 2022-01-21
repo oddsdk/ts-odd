@@ -110,7 +110,7 @@ export class FileSystem {
     // (reverse list, newest cid first)
     const logCid = async (cid: CID) => {
       await cidLog.add(cid.toString())
-      debug.log("📓 Adding to the CID ledger:", cid)
+      debug.log("📓 Adding to the CID ledger:", cid.toString())
     }
 
     // Update the user's data root when making changes
