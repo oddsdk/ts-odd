@@ -2,12 +2,18 @@
 
 ### v0.30.0
 
-- **WNFS BREAKING CHANGE**: Encrypt the filesystem using AES-GCM instead of AES-CTR. Also wrap the filesystem blocks with some information about the encryption algorithm used.
-  Users need to migrate their filesystems to be able to load apps with this webnative version.
-  Apps need to update to this webnative version to load migrated/new filesystems.
+#### Breaking Changes
+
+- Encrypts the filesystem using AES-GCM instead of AES-CTR. Also wraps the filesystem blocks with some information about the encryption algorithm used.
+  Users will need to migrate their filesystems to be able to load apps with this webnative version.
+  Apps will need to update to this webnative version to load migrated/new filesystems.
+- CID strings have been replaced with CID class instances from the [multiformats](https://github.com/multiformats/js-multiformats/blob/master/src/cid.js#L22) library.
+
+#### Features
+
 - Adds ability to share private files.
 - Adds soft/symbolic links.
-- Add dependency injection for initialise and registering accounts
+- Adds dependency injection for initialising and registering accounts.
 
 
 
