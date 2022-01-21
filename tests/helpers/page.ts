@@ -6,6 +6,7 @@ import { Page } from "puppeteer"
 export async function loadWebnativePage(page: Page): Promise<void> {
   const dirname = path.dirname(url.fileURLToPath(import.meta.url))
   const htmlPath = path.join(dirname, "../fixtures/index.html")
+
   page.on("console", async event => {
     const t = event.type()
     switch (t) {
@@ -18,16 +19,20 @@ export async function loadWebnativePage(page: Page): Promise<void> {
         return
     }
   })
+
   page.on("pageerror", async error => {
     console.error("Error in puppeteer: " + error.name, error.message, error.stack)
   })
+
   await page.goto(`file://${htmlPath}`, { waitUntil: "domcontentloaded" })
+
   const { isWebnativeLoaded } = await page.evaluate(async function () {
     return {
       // @ts-ignore
       isWebnativeLoaded: window.webnative != null,
     }
   })
+
   if (!isWebnativeLoaded) {
     try {
       await fs.readFile(path.join(dirname, "../../dist/index.umd.min.js"))

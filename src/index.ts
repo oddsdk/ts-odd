@@ -199,7 +199,6 @@ export * as ipfs from "./ipfs/index.js"
 export * as keystore from "./keystore.js"
 export * as machinery from "./common/index.js"
 export * as crypto from "./crypto/index.js"
-export * as cbor from "cborg"
 
 
 

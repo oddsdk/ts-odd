@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.30.0-alpha13",
+  "version": "0.30.0-alpha14",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -81,7 +81,6 @@
     "ipfs-core-types": "^0.9.0",
     "ipfs-repo": "^14.0.1",
     "mocha": "^9.1.4",
-    "multihashing-async": "^2.1.4",
     "puppeteer": "^13.1.1",
     "rimraf": "^3.0.2",
     "ts-node": "^10.4.0",
@@ -93,8 +92,6 @@
   "dependencies": {
     "@ipld/dag-cbor": "^7.0.0",
     "@ipld/dag-pb": "^2.1.15",
-    "cborg": "^1.6.1",
-    "cids": "^1.1.9",
     "fission-bloom-filters": "1.7.1",
     "ipfs-message-port-client": "^0.10.3",
     "ipfs-message-port-protocol": "^0.10.5",

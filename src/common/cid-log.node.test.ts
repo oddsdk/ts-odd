@@ -1,14 +1,16 @@
-import expect from "expect"
+import { CID } from "multiformats/cid"
+import { sha256 } from "multiformats/hashes/sha2"
+import * as dagPB from "@ipld/dag-pb"
 import * as fc from "fast-check"
-import CID from "cids"
-import multihash from "multihashing-async"
+import expect from "expect"
+
 import * as cidLog from "./cid-log.js"
 import * as storage from "../storage/index.js"
 
 async function generateCids(data: Uint8Array[]): Promise<string[]> {
   const promisedCids = data.map(async bytes => {
-    const mhash = await multihash(bytes, "sha2-256")
-    const cid = new CID(1, "dag-pb", mhash)
+    const mhash = await sha256.digest(bytes)
+    const cid = CID.createV1(dagPB.code, mhash)
     return cid.toString()
   })
   return Promise.all(promisedCids)

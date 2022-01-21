@@ -14,10 +14,11 @@ describe("cbor encoding in the browser", () => {
       const wn = webnative
       const keyStr = await wn.crypto.aes.genKeyStr()
 
-      const encoded = wn.cbor.encode(message)
+      // @ts-ignore
+      const encoded = (window as any).cbor.encode(message)
       const cipher = await wn.crypto.aes.encrypt(encoded, keyStr)
       const decipher = await wn.crypto.aes.decrypt(cipher, keyStr)
-      const decoded = wn.cbor.decode(decipher)
+      const decoded = (window as any).cbor.decode(decipher)
 
       return decoded
     }
