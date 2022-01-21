@@ -28,7 +28,6 @@ class BareTree extends BaseTree {
   }
 
   static async fromCID(cid: CID): Promise<BareTree> {
-    console.log("🍊", cid)
     const links = link.arrToMap(
       (await ipfs.ls(cid)).map(link.fromFSFile)
     )

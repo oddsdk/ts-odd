@@ -52,25 +52,25 @@ export async function loadFileSystem(
   } else if (!dataCid) {
     // No DNS CID yet
     cid = decodeCID(await cidLog.newest())
-    if (cid) debug.log("📓 No DNSLink, using local CID:", cid)
+    if (cid) debug.log("📓 No DNSLink, using local CID:", cid.toString())
     else debug.log("📓 Creating a new file system")
 
   } else if (logIdx === 0) {
     // DNS is up to date
     cid = dataCid
-    debug.log("📓 DNSLink is up to date:", cid)
+    debug.log("📓 DNSLink is up to date:", cid.toString())
 
   } else if (logIdx > 0) {
     // DNS is outdated
     cid = decodeCID(await cidLog.newest())
     const idxLog = logIdx === 1 ? "1 newer local entry" : logIdx + " newer local entries"
-    debug.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid)
+    debug.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid.toString())
 
   } else {
     // DNS is newer
     cid = dataCid
     await cidLog.add(cid.toString())
-    debug.log("📓 DNSLink is newer:", cid)
+    debug.log("📓 DNSLink is newer:", cid.toString())
 
     // TODO: We could test the filesystem version at this DNSLink at this point to figure out whether to continue locally.
     // However, that needs a plan for reconciling local changes back into the DNSLink, once migrated. And a plan for migrating changes

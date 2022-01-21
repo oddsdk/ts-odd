@@ -311,8 +311,7 @@ export default class RootTree implements Puttable {
 
   static async getSharedLinks(cid: CID): Promise<SimpleLinks> {
     const ipfsClient = await getIpfs()
-    const parsedCID = cid
-    const block = await ipfsClient.block.get(parsedCID)
+    const block = await ipfsClient.block.get(cid)
     const decodedBlock = cbor.decode(block)
 
     if (!typeChecks.isObject(decodedBlock)) throw new Error("Invalid shared section, not an object")

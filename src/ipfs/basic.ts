@@ -21,7 +21,7 @@ export const add = async (content: ImportCandidate): Promise<AddResult> => {
   const result = await ipfs.add(content, { cidVersion: 1, pin: setup.shouldPin })
 
   return {
-    cid: result.cid,
+    cid: decodeCID(result.cid),
     size: result.size,
     isFile: true
   }
@@ -50,9 +50,8 @@ export const cat = async (cid: CID): Promise<string> => {
 export const ls = async (cid: CID): Promise<IPFSEntry[]> => {
   const ipfs = await getIpfs()
   const links = []
-  console.log("😵‍💫", cid)
   for await (const link of ipfs.ls(cid)) {
-    links.push(link)
+    links.push({ ...link, cid: decodeCID(link.cid) })
   }
   return links
 }
@@ -83,7 +82,7 @@ export const dagPut = async (node: PBNode): Promise<AddResult> => {
       storeCodec: "dag-pb",
       hashAlg: "sha2-256"
     }
-  )
+  ).then(decodeCID)
 
   await attemptPin(cid)
   const nodeSize = await size(cid)

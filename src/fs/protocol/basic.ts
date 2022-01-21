@@ -39,15 +39,11 @@ export const getSimpleLinks = async (cid: CID): Promise<SimpleLinks> => {
 
 export const getFileSystemLinks = async (cid: CID): Promise<Links> => {
   const topNode = await ipfs.dagGet(cid)
-  // console.log("topNode", topNode)
 
   const links = await Promise.all(topNode.Links.map(async l => {
     const innerNode = await ipfs.dagGet(l.Hash)
     const innerLinks = link.arrToMap(innerNode.Links.map(link.fromDAGLink))
     const isSoftLink = !!innerLinks["softLink"]
-
-    // console.log("innerNode", innerNode)
-    // console.log("innerLinks", innerLinks)
 
     if (isSoftLink) {
       const a = await ipfs.catBuf(decodeCID(innerLinks["softLink"].cid))
