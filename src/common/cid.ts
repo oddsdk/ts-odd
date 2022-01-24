@@ -4,7 +4,7 @@ import { CID } from "multiformats/cid"
 /**
  * Decode a possibly string-encoded CID.
  * Passing an already decoded CID instance works too.
- * NOTE: Throws an error if a CID cannot be decoded!
+ * @throws Throws an error if a CID cannot be decoded!
  */
 export function decodeCID(val: CID | object | string): CID {
   const cid = CID.asCID(val)
