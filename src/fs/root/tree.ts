@@ -1,12 +1,12 @@
 import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
-import { CID as MultiformatCID } from "multiformats/cid"
+import { CID } from "multiformats/cid"
 
-import { AddResult, CID } from "../../ipfs/index.js"
+import { AddResult } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Puttable, SimpleLink, SimpleLinks } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
-import { Maybe } from "../../common/index.js"
+import { Maybe, decodeCID } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
 import { get as getIpfs } from "../../ipfs/config.js"
 
@@ -124,10 +124,10 @@ export default class RootTree implements Puttable {
     const publicCID = links[Branch.Public]?.cid || null
     const publicTree = publicCID === null
       ? await PublicTree.empty()
-      : await PublicTree.fromCID(publicCID)
+      : await PublicTree.fromCID(decodeCID(publicCID))
 
     const prettyTree = links[Branch.Pretty]
-                         ? await BareTree.fromCID(links[Branch.Pretty].cid)
+                         ? await BareTree.fromCID(decodeCID(links[Branch.Pretty].cid))
                          : await BareTree.empty()
 
     // Load private bits
@@ -138,13 +138,13 @@ export default class RootTree implements Puttable {
       mmpt = MMPT.create()
       privateNodes = {}
     } else {
-      mmpt = await MMPT.fromCID(privateCID)
+      mmpt = await MMPT.fromCID(decodeCID(privateCID))
       privateNodes = await loadPrivateNodes(keys, mmpt)
     }
 
     const privateLogCid = links[Branch.PrivateLog]?.cid
     const privateLog = privateLogCid
-      ? await ipfs.dagGet(privateLogCid)
+      ? await ipfs.dagGet(decodeCID(privateLogCid))
           .then(dagNode => dagNode.Links.map(link.fromDAGLink))
           .then(links => links.sort((a, b) => {
             return parseInt(a.name, 10) - parseInt(b.name, 10)
@@ -154,13 +154,13 @@ export default class RootTree implements Puttable {
     // Shared
     const sharedCid = links[Branch.Shared]?.cid || null
     const sharedLinks = sharedCid
-      ? await this.getSharedLinks(sharedCid)
+      ? await this.getSharedLinks(decodeCID(sharedCid))
       : {}
 
     const sharedCounterCid = links[Branch.SharedCounter]?.cid || null
     const sharedCounter = sharedCounterCid
       ? await protocol.basic
-        .getFile(sharedCounterCid)
+        .getFile(decodeCID(sharedCounterCid))
         .then(a => JSON.parse(uint8arrays.toString(a, "utf8")))
       : 1
 
@@ -234,13 +234,13 @@ export default class RootTree implements Puttable {
   static LOG_CHUNK_SIZE = 1020 // Math.floor((1024 * 256) / (256 + 1))
 
 
-  async addPrivateLogEntry(cid: string): Promise<void> {
+  async addPrivateLogEntry(cid: CID): Promise<void> {
     const log = [...this.privateLog]
     let idx = Math.max(0, log.length - 1)
 
     // get last chunk
     let lastChunk = log[idx]?.cid
-      ? (await ipfs.cat(log[idx].cid)).split(",")
+      ? (await ipfs.cat(decodeCID(log[idx].cid))).split(",")
       : []
 
     // needs new chunk
@@ -251,7 +251,7 @@ export default class RootTree implements Puttable {
     }
 
     // add to chunk
-    const hashedCid = await crypto.hash.sha256Str(cid)
+    const hashedCid = await crypto.hash.sha256Str(cid.toString())
     const updatedChunk = [...lastChunk, hashedCid]
     const updatedChunkDeposit = await protocol.basic.putFile(
       updatedChunk.join(",")
@@ -289,7 +289,7 @@ export default class RootTree implements Puttable {
 
     const cborApprovedLinks = Object.values(this.sharedLinks).reduce(
       (acc, { cid, name, size }) => ({ ...acc,
-        [name]: { cid: MultiformatCID.parse(cid).toV1(), name, size }
+        [name]: { cid, name, size }
       }),
       {}
     )
@@ -298,7 +298,7 @@ export default class RootTree implements Puttable {
     const cid = await ipfsClient.block.put(
       cbor.encode(cborApprovedLinks),
       { format: cbor.name, mhtype: "sha2-256", pin: false, version: 1 }
-    ).then(c => c.toString())
+    )
 
     this.updateLink(Branch.Shared, {
       cid: cid,
@@ -311,8 +311,7 @@ export default class RootTree implements Puttable {
 
   static async getSharedLinks(cid: CID): Promise<SimpleLinks> {
     const ipfsClient = await getIpfs()
-    const parsedCID = MultiformatCID.parse(cid)
-    const block = await ipfsClient.block.get(parsedCID)
+    const block = await ipfsClient.block.get(cid)
     const decodedBlock = cbor.decode(block)
 
     if (!typeChecks.isObject(decodedBlock)) throw new Error("Invalid shared section, not an object")
@@ -323,13 +322,11 @@ export default class RootTree implements Puttable {
 
         const name = link.name ? link.name as string : null
         const cid = link.cid
-          ? typeChecks.isString(link.cid)
-            ? link.cid
-            : MultiformatCID.asCID(link.cid)
+          ? decodeCID(link.cid as any)
           : null
 
         if (!name || !cid) return acc
-        return { ...acc, [name]: { name, cid: cid?.toString(), size: (link.size || 0) as number } }
+        return { ...acc, [name]: { name, cid, size: (link.size || 0) as number } }
       },
       {}
     )
@@ -366,7 +363,7 @@ export default class RootTree implements Puttable {
   }
 
   async getVersion(): Promise<versions.SemVer | null> {
-    const file = await protocol.basic.getFile(this.links[Branch.Version].cid)
+    const file = await protocol.basic.getFile(decodeCID(this.links[Branch.Version].cid))
     return versions.fromString(uint8arrays.toString(file))
   }
 

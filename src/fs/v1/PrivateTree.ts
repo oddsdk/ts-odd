@@ -1,3 +1,5 @@
+import { CID } from "multiformats/cid"
+
 import BaseTree from "../base/tree.js"
 import MMPT from "../protocol/private/mmpt.js"
 import PrivateFile from "./PrivateFile.js"
@@ -8,7 +10,7 @@ import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, 
 import { FileContent } from "../../ipfs/index.js"
 import { Path } from "../../path.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
-import { isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
+import { decodeCID, isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
 import { setup } from "../../setup/internal.js"
 
 import * as check from "../protocol/private/types/check.js"
@@ -239,7 +241,11 @@ export default class PrivateTree extends BaseTree {
     const nextChild = nodeInfo.subSkeleton[head]
     if (nextChild !== undefined) return this.getRecurse(nextChild, rest)
 
-    const reloadedNode = await protocol.priv.getLatestByCID(this.mmpt, nodeInfo.cid, nodeInfo.key)
+    const reloadedNode = await protocol.priv.getLatestByCID(
+      this.mmpt,
+      decodeCID(nodeInfo.cid),
+      nodeInfo.key
+    )
     if (!check.isPrivateTreeInfo(reloadedNode)) return null
 
     const reloadedNext = reloadedNode.skeleton[head]
@@ -271,8 +277,8 @@ export default class PrivateTree extends BaseTree {
       : await dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
-    const privateCid = (await protocol.basic.getSimpleLinks(rootCid)).private.cid
-    const mmpt = await MMPT.fromCID(privateCid)
+    const privateCid = (await protocol.basic.getSimpleLinks(decodeCID(rootCid))).private.cid
+    const mmpt = await MMPT.fromCID(decodeCID(privateCid))
 
     const info = await protocol.priv.getLatestByName(
       mmpt,
@@ -338,7 +344,11 @@ async function getNode(
   mmpt: MMPT,
   nodeInfo: PrivateSkeletonInfo
 ): Promise<PrivateFile | PrivateTree | null> {
-  const node = await protocol.priv.getLatestByCID(mmpt, nodeInfo.cid, nodeInfo.key)
+  const node = await protocol.priv.getLatestByCID(
+    mmpt,
+    decodeCID(nodeInfo.cid),
+    nodeInfo.key
+  )
 
   return check.isPrivateFileInfo(node)
     ? await PrivateFile.fromInfo(mmpt, nodeInfo.key, node)

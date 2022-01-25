@@ -132,6 +132,8 @@ class InMemoryRSAKeyStore implements KeyStore {
     const mergedCfg = config.merge(this.cfg, cfg)
     const writeKey = await this.writeKey()
 
+    if (!writeKey.privateKey) throw new Error("Missing private key in write key-pair")
+
     return utils.arrBufToBase64(await rsa.sign(
       msg,
       writeKey.privateKey,
@@ -178,6 +180,8 @@ class InMemoryRSAKeyStore implements KeyStore {
   ): Promise<string> {
     const exchangeKey = await this.exchangeKey()
     const mergedCfg = config.merge(this.cfg, cfg)
+
+    if (!exchangeKey.privateKey) throw new Error("Missing private key in exchange key-pair")
 
     return utils.arrBufToStr(
       await rsa.decrypt(

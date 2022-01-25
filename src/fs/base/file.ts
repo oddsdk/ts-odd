@@ -1,6 +1,8 @@
 /** @internal */
+import type { CID } from "multiformats/cid"
+
 import { File } from "../types.js"
-import { AddResult, CID, FileContent } from "../../ipfs/index.js"
+import { AddResult, FileContent } from "../../ipfs/index.js"
 
 
 export abstract class BaseFile implements File {

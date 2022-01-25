@@ -1,4 +1,5 @@
-export type CID = string
+import type { CID } from "multiformats/cid"
+
 export type Codec = string
 
 export type FileContent = Record<string, unknown> | FileContentRaw | Blob | string | number | boolean

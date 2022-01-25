@@ -5,7 +5,7 @@ import { FileContent } from "../../ipfs/index.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { DecryptedNode, PrivateAddResult, PrivateFileInfo } from "../protocol/private/types.js"
 import { isObject } from "../../common/type-checks.js"
-import { Maybe } from "../../common/index.js"
+import { Maybe, decodeCID } from "../../common/index.js"
 import * as crypto from "../../crypto/index.js"
 import * as check from "../protocol/private/types/check.js"
 import * as history from "./PrivateHistory.js"
@@ -84,7 +84,11 @@ export class PrivateFile extends BaseFile {
       throw new Error(`Could not parse a valid private file using the given key`)
     }
 
-    const content = await protocol.basic.getEncryptedFile(info.content, info.key)
+    const content = await protocol.basic.getEncryptedFile(
+      decodeCID(info.content),
+      info.key
+    )
+
     return new PrivateFile({
       content,
       key,

@@ -1,15 +1,17 @@
 /** @internal */
-import { Links, HardLink, HardLinks, SimpleLinks } from "../../types.js"
+import { CID } from "multiformats/cid"
+
+import { Links, HardLink, SimpleLinks } from "../../types.js"
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from "./types.js"
 import { Metadata } from "../../metadata.js"
-import { isString } from "../../../common/type-checks.js"
-import * as check from "../../types/check.js"
-import { isValue, Maybe, blob } from "../../../common/index.js"
-import * as ipfs from "../../../ipfs/index.js"
-import { CID, FileContent } from "../../../ipfs/index.js"
-import * as link from "../../link.js"
+import { decodeCID, isValue, Maybe, blob } from "../../../common/index.js"
+import { FileContent } from "../../../ipfs/index.js"
 
+import * as check from "../../types/check.js"
+import * as ipfs from "../../../ipfs/index.js"
+import * as link from "../../link.js"
 import * as basic from "../basic.js"
+
 
 export const putTree = async (
     links: Links,
@@ -31,8 +33,8 @@ export const putTree = async (
   const { cid, size } = await basic.putLinks(internalLinks)
   return {
     cid,
-    userland: userland.cid,
-    metadata: metadata.cid,
+    userland: decodeCID(userland.cid),
+    metadata: decodeCID(metadata.cid),
     size,
     isFile: false,
     skeleton: skeletonVal
@@ -55,8 +57,8 @@ export const putFile = async (
   const { cid, size } = await basic.putLinks(internalLinks)
   return {
     cid,
-    userland: userland.cid,
-    metadata: metadata.cid,
+    userland: decodeCID(userland.cid),
+    metadata: decodeCID(metadata.cid),
     size,
     isFile: true,
     skeleton: {}
@@ -86,8 +88,11 @@ export const getValue = async (
   linksOrCID: SimpleLinks | CID,
   name: string,
 ): Promise<unknown> => {
-  if (isString(linksOrCID)) {
-    const links = await basic.getSimpleLinks(linksOrCID)
+  const cid = CID.asCID(linksOrCID)
+
+  if (check.isCID(linksOrCID)) {
+    if (!cid) return null
+    const links = await basic.getSimpleLinks(cid)
     return getValueFromLinks(links, name)
   }
 
@@ -101,8 +106,9 @@ export const getValueFromLinks = async (
   const linkCID = links[name]?.cid
   if (!linkCID) return null
 
-  return ipfs.encoded.catAndDecode(linkCID, null)
+  return ipfs.encoded.catAndDecode(decodeCID(linkCID), null)
 }
+
 export const getAndCheckValue = async <T>(
   linksOrCid: SimpleLinks | CID,
   name: string,
@@ -113,12 +119,17 @@ export const getAndCheckValue = async <T>(
   return checkValue(val, name, checkFn, canBeNull)
 }
 
-export const checkValue = <T>(val: any, name: string, checkFn: (val: any) => val is T, canBeNull = false): T => {
-  if(!isValue(val)){
+export const checkValue = <T>(
+  val: any,
+  name: string,
+  checkFn: (val: any) => val is T,
+  canBeNull = false
+): T => {
+  if (!isValue(val)) {
     if(canBeNull) return val
     throw new Error(`Could not find header value: ${name}`)
   }
-  if(checkFn(val)){
+  if (checkFn(val)) {
     return val
   }
   throw new Error(`Improperly formatted header value: ${name}`)

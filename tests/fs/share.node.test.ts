@@ -16,6 +16,7 @@ import * as sharingKey from "../../src/fs/protocol/shared/key.js"
 
 import { Branch } from "../../src/path.js"
 import { KeyType } from "../../src/did/types.js"
+import { decodeCID } from "../../src/common/index.js"
 import { emptyFilesystem } from "../helpers/filesystem.js"
 
 import PrivateFile from "../../src/fs/v1/PrivateFile.js"
@@ -41,6 +42,7 @@ describe("the filesystem", () => {
     const exchangeKeyPair = await crypto.rsa.genKey()
     const exchangePubKey = await getPublicKey(exchangeKeyPair)
     const exchangeDID = did.publicKeyToDid(exchangePubKey, KeyType.RSA)
+    if (!exchangeKeyPair.privateKey) throw new Error("Missing private key in exchange key-pair")
 
     const senderKeyPair = await crypto.rsa.genKey()
     const senderPubKey = await getPublicKey(senderKeyPair)
@@ -72,7 +74,7 @@ describe("the filesystem", () => {
     })
 
     const createdLink = fs.root.sharedLinks[shareKey]
-    const sharePayload = await protocol.basic.getFile(createdLink.cid)
+    const sharePayload = await protocol.basic.getFile(decodeCID(createdLink.cid))
     const decryptedPayload: Record<string, any> = await crypto.rsa.decrypt(
       sharePayload,
       exchangeKeyPair.privateKey

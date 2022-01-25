@@ -1,12 +1,15 @@
+import type { CID } from "multiformats/cid"
+
 import { BaseLink, SoftLink } from "../../types.js"
 import  { Metadata } from "../../metadata.js"
-import { AddResult, CID } from "../../../ipfs/index.js"
+import { AddResult } from "../../../ipfs/index.js"
 import { BareNameFilter, PrivateName } from "./namefilter.js"
+
 
 export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo
 
 export type PrivateFileInfo = {
-  content: CID
+  content: CID | string
   metadata: Metadata
   bareNameFilter: BareNameFilter
   revision: number
@@ -31,7 +34,7 @@ export type PrivateTreeInfo = {
 export type PrivateSkeleton = { [name: string]: PrivateSkeletonInfo | SoftLink }
 
 export type PrivateSkeletonInfo = {
-  cid: CID
+  cid: CID | string
   key: string
   subSkeleton: PrivateSkeleton
 }
@@ -43,7 +46,7 @@ export type PrivateAddResult = AddResult & {
 }
 
 export type Revision = {
-  cid: CID
+  cid: CID | string
   name: PrivateName
   number: number
 }

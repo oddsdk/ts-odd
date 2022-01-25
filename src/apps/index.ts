@@ -1,8 +1,9 @@
+import type { CID } from "multiformats/cid"
+
 import * as did from "../did/index.js"
 import * as ucan from "../ucan/index.js"
 import { api, Maybe, isString } from "../common/index.js"
 import { setup } from "../setup/internal.js"
-import { CID } from "../ipfs/index.js"
 
 
 export type App = {

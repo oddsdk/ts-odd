@@ -5,6 +5,7 @@ import * as blob from "./blob.js"
 import * as storage from "../storage/index.js"
 import { setup } from "../setup/internal.js"
 
+export * from "./cid.js"
 export * from "./types.js"
 export * from "./type-checks.js"
 export * from "./util.js"

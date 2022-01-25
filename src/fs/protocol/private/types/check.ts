@@ -1,4 +1,4 @@
-import { isNum, isObject, isString } from "../../../../common/index.js"
+import { isNum, isObject, isString, notNull } from "../../../../common/index.js"
 import * as check  from "../../../types/check.js"
 import { PrivateFileInfo, PrivateTreeInfo, PrivateLink, PrivateLinks, DecryptedNode, PrivateSkeletonInfo, PrivateSkeleton } from "../types.js"
 
@@ -11,7 +11,7 @@ export const isPrivateFileInfo = (obj: any): obj is PrivateFileInfo => {
     && check.isMetadata(obj.metadata)
     && obj.metadata.isFile
     && isString(obj.key)
-    && check.isCID(obj.content)
+    && notNull(obj.content)
 }
 
 export const isPrivateTreeInfo = (obj: any): obj is PrivateTreeInfo => {
@@ -41,7 +41,7 @@ export const isPrivateSkeleton = (obj: any): obj is PrivateSkeleton => {
 
 export const isPrivateSkeletonInfo = (obj: any): obj is PrivateSkeletonInfo => {
   return isObject(obj)
-    && check.isCID(obj.cid)
+    && notNull(obj.cid)
     && isString(obj.key)
     && isPrivateSkeleton(obj.subSkeleton)
 }

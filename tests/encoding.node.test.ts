@@ -1,5 +1,5 @@
 import expect from "expect"
-import * as cbor from "cborg"
+import * as cbor from "@ipld/dag-cbor"
 import * as aes from "keystore-idb/aes/index.js"
 import { SymmAlg, SymmKeyLength } from "keystore-idb/types.js"
 

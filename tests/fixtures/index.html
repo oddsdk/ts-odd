@@ -25,6 +25,10 @@
 
   </script>
   <script src="../../dist/index.umd.min.js"></script>
+  <script type="module">
+    import * as cborg from "https://cdn.skypack.dev/cborg";
+    window.cbor = Array.isArray(cborg) ? cborg[0] : cborg
+  </script>
   <script>
     webnative.setup.endpoints({
       api: "https://runfission.net",

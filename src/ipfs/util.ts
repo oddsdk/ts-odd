@@ -1,7 +1,10 @@
+import * as dagPB from "@ipld/dag-pb"
 import { CID } from "multiformats/cid"
-import dagPb, { DAGLink, DAGNode } from "ipld-dag-pb"
+import { PBLink, PBNode } from "@ipld/dag-pb"
 import type { GetResult } from "ipfs-core-types/src/dag"
-import OldCID from "cids"
+
+import { decodeCID } from "../common/cid.js"
+
 
 type RawDAGLink = {
   Name: string
@@ -9,14 +12,12 @@ type RawDAGLink = {
   Tsize: number
 }
 
-const rawToDAGLink = (raw: RawDAGLink): DAGLink => {
-  const h = raw.Hash
-  const c = new OldCID(h.version, h.code, h.multihash.bytes)
-  return new dagPb.DAGLink(raw.Name, raw.Tsize, c)
+const rawToDAGLink = (raw: RawDAGLink): PBLink => {
+  return dagPB.createLink(raw.Name, raw.Tsize, decodeCID(raw.Hash))
 }
 
-export const rawToDAGNode = (raw: GetResult): DAGNode => {
+export const rawToDAGNode = (raw: GetResult): PBNode => {
   const data = raw?.value?.Data
   const links = raw?.value?.Links?.map(rawToDAGLink)
-  return new dagPb.DAGNode(data, links)
+  return dagPB.createNode(data, links)
 }

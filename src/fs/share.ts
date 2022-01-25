@@ -13,6 +13,7 @@ import * as shareKey from "./protocol/shared/key.js"
 import { Branch, DirectoryPath } from "../path.js"
 import { SharedBy, ShareDetails } from "./types.js"
 import { ShareKey } from "./protocol/shared/key.js"
+import { decodeCID } from "../common/cid.js"
 import { didToPublicKey } from "../did/transformers.js"
 import BareTree from "./bare/tree.js"
 import PrivateFile from "./v1/PrivateFile.js"
@@ -102,7 +103,7 @@ export async function privateNode(
 
   // Create share payload
   const payload = cbor.encode(shareKey.payload({
-    entryIndexCid: indexResult.cid,
+    entryIndexCid: indexResult.cid.toString(),
     symmKey: index.key,
     symmKeyAlgo
   }))
@@ -136,7 +137,7 @@ export async function listExchangeDIDs(username: string) {
   const prettyTreeCid = rootLinks[Branch.Pretty]?.cid || null
   if (!prettyTreeCid) throw new Error("This person's filesystem doesn't have a pretty tree.")
 
-  const tree = await BareTree.fromCID(prettyTreeCid)
+  const tree = await BareTree.fromCID(decodeCID(prettyTreeCid))
   const exchangePath = pathing.unwrap(pathing.removeBranch(EXCHANGE_PATH))
   const exchangeTree = await tree.get(exchangePath)
 
