@@ -13,9 +13,9 @@ export type PutDetails = AddResult & {
 }
 
 export type SkeletonInfo = {
-  cid: CID | string
-  userland: CID | string
-  metadata: CID | string
+  cid: CID
+  userland: CID
+  metadata: CID
   subSkeleton: Skeleton
   isFile: boolean
 }
@@ -24,19 +24,19 @@ export type Skeleton = { [name: string]: SkeletonInfo | SoftLink }
 
 export type TreeHeader = {
   metadata: Metadata
-  previous?: CID | string
+  previous?: CID
   skeleton: Skeleton
 }
 
 export type TreeInfo = TreeHeader & {
-  userland: CID | string
+  userland: CID
 }
 
 export type FileHeader = {
   metadata: Metadata
-  previous?: CID | string
+  previous?: CID
 }
 
 export type FileInfo = FileHeader & {
-  userland: CID | string
+  userland: CID
 }

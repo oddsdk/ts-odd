@@ -75,7 +75,7 @@ export class PublicTree extends BaseTree {
 
   static async fromInfo(info: TreeInfo, cid: CID): Promise<PublicTree> {
     const { userland, metadata, previous, skeleton } = info
-    const links = await protocol.basic.getFileSystemLinks(decodeCID(userland))
+    const links = await protocol.basic.getFileSystemLinks(userland)
     return new PublicTree({
       links,
       header: { metadata, previous, skeleton },
@@ -161,7 +161,7 @@ export class PublicTree extends BaseTree {
 
     // Hard link
     if (check.isSkeletonInfo(childInfo)) {
-      const cid = decodeCID(childInfo.cid)
+      const cid = childInfo.cid
       child = childInfo.isFile
         ? await PublicFile.fromCID(cid)
         : await PublicTree.fromCID(cid)
@@ -188,7 +188,7 @@ export class PublicTree extends BaseTree {
 
     // Hard link
     if (check.isSkeletonInfo(res)) {
-      const cid = decodeCID(res.cid)
+      const cid = res.cid
       const info = await protocol.pub.get(cid)
       return check.isFileInfo(info)
         ? PublicFile.fromInfo(info, cid)

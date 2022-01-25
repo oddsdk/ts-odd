@@ -9,7 +9,7 @@ import { BareNameFilter, PrivateName } from "./namefilter.js"
 export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo
 
 export type PrivateFileInfo = {
-  content: CID | string
+  content: CID
   metadata: Metadata
   bareNameFilter: BareNameFilter
   revision: number
@@ -34,7 +34,7 @@ export type PrivateTreeInfo = {
 export type PrivateSkeleton = { [name: string]: PrivateSkeletonInfo | SoftLink }
 
 export type PrivateSkeletonInfo = {
-  cid: CID | string
+  cid: CID
   key: string
   subSkeleton: PrivateSkeleton
 }
@@ -46,7 +46,7 @@ export type PrivateAddResult = AddResult & {
 }
 
 export type Revision = {
-  cid: CID | string
+  cid: CID
   name: PrivateName
   number: number
 }
