@@ -243,7 +243,7 @@ export default class PrivateTree extends BaseTree {
 
     const reloadedNode = await protocol.priv.getLatestByCID(
       this.mmpt,
-      nodeInfo.cid,
+      decodeCID(nodeInfo.cid),
       nodeInfo.key
     )
     if (!check.isPrivateTreeInfo(reloadedNode)) return null
@@ -346,7 +346,7 @@ async function getNode(
 ): Promise<PrivateFile | PrivateTree | null> {
   const node = await protocol.priv.getLatestByCID(
     mmpt,
-    nodeInfo.cid,
+    decodeCID(nodeInfo.cid),
     nodeInfo.key
   )
 

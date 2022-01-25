@@ -81,12 +81,7 @@ export const get = async (cid: CID): Promise<TreeInfo | FileInfo> => {
   if (!check.isCID(userland)) throw new Error("Could not find userland")
 
   const previous = links["previous"]?.cid || undefined
-  return {
-    metadata,
-    skeleton,
-    userland: decodeCID(userland),
-    previous: previous ? decodeCID(previous) : undefined
-  }
+  return { userland, metadata, previous, skeleton }
 }
 
 export const getValue = async (

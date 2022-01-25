@@ -1,7 +1,7 @@
 import MMPT from "../protocol/private/mmpt.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { DecryptedNode, Revision } from "../protocol/private/types.js"
-import { Maybe } from "../../common/index.js"
+import { Maybe, decodeCID } from "../../common/index.js"
 import { Metadata } from "../metadata.js"
 import * as protocol from "../protocol/index.js"
 
@@ -94,7 +94,7 @@ export default class PrivateHistory {
    * @internal
    */
   _getRevisionInfo(revision: Revision): Promise<DecryptedNode> {
-    return protocol.priv.readNode(revision.cid, this.node.key)
+    return protocol.priv.readNode(decodeCID(revision.cid), this.node.key)
   }
 
   /**
