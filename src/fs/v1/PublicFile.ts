@@ -1,5 +1,7 @@
+import type { CID } from "multiformats/cid"
+
 import { FileInfo, FileHeader, PutDetails } from "../protocol/public/types.js"
-import { CID, FileContent } from "../../ipfs/index.js"
+import { FileContent } from "../../ipfs/index.js"
 import BaseFile from "../base/file.js"
 import PublicHistory from "./PublicHistory.js"
 

@@ -1,4 +1,6 @@
-import { AddResult, CID } from "../../../ipfs/index.js"
+import type { CID } from "multiformats/cid"
+
+import { AddResult } from "../../../ipfs/index.js"
 import { Puttable, SimpleLinks } from "../../types.js"
 import { decodeCID } from "../../../common/index.js"
 import { setup } from "../../../setup/internal.js"

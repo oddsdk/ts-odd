@@ -1,5 +1,7 @@
+import type { CID } from "multiformats/cid"
+
 import { Maybe } from "../common/index.js"
-import { FileContent, CID, AddResult } from "../ipfs/index.js"
+import { FileContent, AddResult } from "../ipfs/index.js"
 import { Path } from "../path.js"
 
 

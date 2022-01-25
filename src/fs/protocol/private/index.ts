@@ -1,5 +1,6 @@
+import type { CID } from "multiformats/cid"
+
 import { BareNameFilter, PrivateName } from "./namefilter.js"
-import { CID } from "../../../ipfs/index.js"
 import { DecryptedNode, PrivateAddResult, Revision } from "./types.js"
 import { Maybe, decodeCID } from "../../../common/index.js"
 import MMPT from "./mmpt.js"

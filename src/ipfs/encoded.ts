@@ -1,3 +1,4 @@
+import type { CID } from "multiformats/cid"
 import { SymmAlg } from "keystore-idb/lib/types.js"
 import * as cbor from "@ipld/dag-cbor"
 
@@ -8,7 +9,7 @@ import * as crypto from "../crypto/index.js"
 
 // IPFS
 
-import { CID, FileContent, AddResult } from "./types.js"
+import { FileContent, AddResult } from "./types.js"
 import * as basic from "./basic.js"
 
 

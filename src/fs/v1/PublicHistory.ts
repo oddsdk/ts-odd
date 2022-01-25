@@ -1,4 +1,5 @@
-import { CID } from "../../ipfs/index.js"
+import type { CID } from "multiformats/cid"
+
 import { Maybe } from "../../common/index.js"
 import { Metadata } from "../metadata.js"
 

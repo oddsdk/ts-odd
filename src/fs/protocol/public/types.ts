@@ -1,5 +1,7 @@
+import type { CID } from "multiformats/cid"
+
 import { Metadata } from "../../metadata.js"
-import { AddResult, CID } from "../../../ipfs/index.js"
+import { AddResult } from "../../../ipfs/index.js"
 import { SoftLink } from "../../types.js"
 
 

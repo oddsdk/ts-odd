@@ -1,7 +1,10 @@
+import type { CID } from "multiformats/cid"
+
 import { BaseLink, SoftLink } from "../../types.js"
 import  { Metadata } from "../../metadata.js"
-import { AddResult, CID } from "../../../ipfs/index.js"
+import { AddResult } from "../../../ipfs/index.js"
 import { BareNameFilter, PrivateName } from "./namefilter.js"
+
 
 export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo
 
