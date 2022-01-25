@@ -90,12 +90,13 @@ export const getValue = async (
 ): Promise<unknown> => {
   const cid = CID.asCID(linksOrCID)
 
-  if (cid) {
+  if (check.isCID(linksOrCID)) {
+    if (!cid) return null
     const links = await basic.getSimpleLinks(cid)
     return getValueFromLinks(links, name)
   }
 
-  return getValueFromLinks(linksOrCID as SimpleLinks, name)
+  return getValueFromLinks(linksOrCID, name)
 }
 
 export const getValueFromLinks = async (
