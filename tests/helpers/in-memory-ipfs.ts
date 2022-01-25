@@ -18,7 +18,6 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
   const memoryDs = new MemoryDatastore()
   const memoryBs = new MemoryBlockstore()
 
-  // @ts-ignore
   return await Ipfs.create({
     offline: true,
     silent: true,
