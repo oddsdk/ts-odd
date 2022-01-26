@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.30.0-alpha15",
+  "version": "0.30.0",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
