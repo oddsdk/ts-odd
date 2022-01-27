@@ -5,10 +5,31 @@ import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import * as auth from "../index.js"
-import { setLinkingRole } from "../linking/switch.js"
 import { publishOnChannel } from "../index.js"
+import { EventEmitter } from "../../common/event-emitter"
+import { setLinkingRole } from "../linking/switch.js"
 
 import type { Maybe } from "../../common/index.js"
+import type { EventListener } from "../../common/event-emitter"
+
+type AccountLinkingProducer = {
+  on: OnChallenge & OnLink & OnError & OnDone
+  cancel: () => void
+}
+
+type OnChallenge = (
+  event: "challenge",
+  listener: (
+    args: {
+      pin: number[]
+      confirmPin: () => void
+      rejectPin: () => void
+    }
+  ) => void
+) => void
+type OnLink = (event: "link", listener: (args: { username: string }) => void) => void
+type OnError = (event: "error", listener: (args: { err: Error }) => void) => void
+type OnDone = (event: "done", listener: () => void) => void
 
 type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 
@@ -19,16 +40,7 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
-export type ChallengeCallback = (
-  challenge:
-    {
-      pin: number[]
-      afterChallenge: (challengeResponse: { userConfirmedPin: boolean }) => Promise<void>
-    }
-) => void
-
-let challengeUser: ChallengeCallback
-let reportCompletion: (username: string | null) => void
+let eventEmitter: Maybe<EventEmitter> = null
 
 const ls: LinkingState = {
   username: null,
@@ -37,10 +49,43 @@ const ls: LinkingState = {
   step: null
 }
 
+
+export const createProducer = async (config: { username: string; timeout?: number }): Promise<AccountLinkingProducer> => {
+  if (eventEmitter === null) {
+    eventEmitter = new EventEmitter()
+    setLinkingRole("PRODUCER")
+    ls.step = "BROADCAST"
+    ls.username = config.username
+    await auth.openChannel(ls.username)
+  }
+
+  return {
+    on: (event: string, listener: EventListener) => { eventEmitter?.addEventListener(event, listener) },
+    cancel
+  }
+}
+
+const cancel = async () => {
+  eventEmitter = null
+  resetLinkingState()
+  await auth.closeChannel()
+}
+
 const resetLinkingState = () => {
   ls.sessionKey = null
   ls.temporaryRsaPair = null
   ls.step = null
+}
+
+
+export const handleMessage = async (message: string): Promise<void> => {
+  if (ls.step === "BROADCAST") {
+    await sendSessionKey(message)
+  } else if (ls.step === "NEGOTIATION") {
+    await handleUserChallenge(message)
+  } else if (ls.step === "DELEGATION") {
+    // Noop
+  }
 }
 
 const nextStep = () => {
@@ -56,35 +101,6 @@ const nextStep = () => {
   }
 }
 
-export const startLinkingProducer = async (
-  config: {
-    username: string
-    onChallenge: ChallengeCallback
-    onCompletion: (username: string | null) => void
-  }
-): Promise<null> => {
-  setLinkingRole("PRODUCER")
-  ls.step = "BROADCAST"
-  ls.username = config.username
-  challengeUser = config.onChallenge
-  reportCompletion = config.onCompletion
-
-  await auth.openChannel(ls.username)
-  return null
-}
-
-export const handleMessage = async (message: string): Promise<void> => {
-  console.debug("Linking Status", ls)
-
-  if (ls.step === "BROADCAST") {
-    await sendSessionKey(message)
-  } else if (ls.step === "NEGOTIATION") {
-    await handleUserChallenge(message)
-  } else if (ls.step === "DELEGATION") {
-    console.log("noop")
-  }
-}
-
 
 /**
  * BROADCAST
@@ -93,7 +109,7 @@ export const handleMessage = async (message: string): Promise<void> => {
  * 
  * @param didThrowaway 
  */
-export const sendSessionKey = async (didThrowaway: string): Promise<void> => {
+const sendSessionKey = async (didThrowaway: string): Promise<void> => {
   ls.sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
 
   const sessionKey = await aes.exportKey(ls.sessionKey)
@@ -135,12 +151,11 @@ export const sendSessionKey = async (didThrowaway: string): Promise<void> => {
  * @param data 
  * @returns 
  */
-export const handleUserChallenge = async (data: any): Promise<Maybe<string>> => {
+const handleUserChallenge = async (data: string): Promise<Maybe<string>> => {
   if (!ls.sessionKey) return null
 
   const { iv, msg } = JSON.parse(data)
 
-  // console.debug("msg: " + msg)
   if (!iv) {
     throw new Error("I tried to decrypt some data (with AES) but the `iv` was missing from the message")
   }
@@ -155,7 +170,7 @@ export const handleUserChallenge = async (data: any): Promise<Maybe<string>> => 
   const audience = json.did as string ?? null
 
   if (pin !== null && audience !== null) {
-    challengeUser({ pin, afterChallenge: delegateAccount(audience) })
+    eventEmitter?.dispatchEvent("challenge", { pin, confirmPin: delegateAccount(audience), rejectPin: () => cancel() })
     nextStep()
   }
 
@@ -172,28 +187,24 @@ export const handleUserChallenge = async (data: any): Promise<Maybe<string>> => 
  * @param audience
  * @returns
  */
-
-const delegateAccount = (audience: string): (challengeResponse: { userConfirmedPin: boolean }) => Promise<void> => {
-  return async function ({ userConfirmedPin }) {
+const delegateAccount = (audience: string): () => Promise<void> => {
+  return async function () {
     if (!ls.sessionKey) return
 
-    if (userConfirmedPin) {
-      console.log("User confirmed, now let's delegate")
-      const delegation = await auth.delegateAccount(audience)
-      const message = JSON.stringify(delegation)
+    const delegation = await auth.delegateAccount(audience)
+    const message = JSON.stringify(delegation)
 
-      const iv = utils.randomBuf(16)
-      const msg = await aes.encrypt(message, ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const iv = utils.randomBuf(16)
+    const msg = await aes.encrypt(message, ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })
 
-      await publishOnChannel(
-        JSON.stringify({
-          iv: utils.arrBufToBase64(iv),
-          msg
-        })
-      )
-    }
+    await publishOnChannel(
+      JSON.stringify({
+        iv: utils.arrBufToBase64(iv),
+        msg
+      })
+    )
 
-    reportCompletion(ls.username)
+    eventEmitter?.dispatchEvent("link", { username: ls.username })
     resetLinkingState()
   }
 }

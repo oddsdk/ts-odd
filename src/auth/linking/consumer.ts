@@ -6,11 +6,23 @@ import { KeyUse, SymmAlg } from "keystore-idb/lib/types.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import * as storage from "../../storage/index.js"
+import { EventEmitter } from "../../common/event-emitter"
 import { setLinkingRole } from "../linking/switch.js"
 import { publishOnChannel } from "../index.js"
 import * as auth from "../index.js"
 
 import type { Maybe } from "../../common/index.js"
+import type { EventListener } from "../../common/event-emitter"
+
+type AccountLinkingConsumer = {
+  on: OnChallenge & OnLink & OnError & OnDone
+  cancel: () => void
+}
+
+type OnChallenge = (event: "challenge", listener: (args: { pin: number[] }) => void) => void
+type OnLink = (event: "link", listener: (args: { username: string }) => void) => void
+type OnError = (event: "error", listener: (args: { err: Error }) => void) => void
+type OnDone = (event: "done", listener: () => void) => void
 
 type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 
@@ -21,11 +33,6 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
-export type PinCallback = (challenge: { pin: number[] }) => void
-
-let challengeUser: PinCallback
-let reportCompletion: (username: string | null) => void
-
 const ls: LinkingState = {
   username: null,
   sessionKey: null,
@@ -33,11 +40,49 @@ const ls: LinkingState = {
   step: null
 }
 
+let eventEmitter: Maybe<EventEmitter> = null
+
+
+export const createConsumer = async (config: { username: string; timeout?: number }): Promise<AccountLinkingConsumer> => {
+  if (eventEmitter === null) {
+    eventEmitter = new EventEmitter()
+    setLinkingRole("CONSUMER")
+    ls.step = "BROADCAST"
+    ls.username = config.username
+    await auth.openChannel(ls.username)
+    await sendTemporaryExchangeKey()
+  }
+
+  return {
+    on: (event: string, listener: EventListener) => { eventEmitter?.addEventListener(event, listener) },
+    cancel
+  }
+}
+
+const cancel = async () => {
+  eventEmitter = null
+  resetLinkingState()
+  await auth.closeChannel()
+}
+
 const resetLinkingState = () => {
   ls.username = null
   ls.sessionKey = null
   ls.temporaryRsaPair = null
   ls.step = null
+}
+
+
+export const handleMessage = async (message: string): Promise<void> => {
+  if (ls.step === "NEGOTIATION") {
+    const pin = await handleSessionKey(message)
+    if (pin) {
+      await sendUserChallenge(pin)
+      eventEmitter?.dispatchEvent("challenge", { pin: Array.from(pin) })
+    }
+  } else if (ls.step === "DELEGATION") {
+    await linkDevice(message)
+  }
 }
 
 const nextStep = () => {
@@ -53,38 +98,6 @@ const nextStep = () => {
   }
 }
 
-export const startLinkingConsumer = async (
-  config: {
-    username: string
-    onChallenge: PinCallback
-    onCompletion: (username: string | null) => void
-  }
-): Promise<null> => {
-  setLinkingRole("CONSUMER")
-  ls.step = "BROADCAST"
-  ls.username = config.username
-  challengeUser = config.onChallenge
-  reportCompletion = config.onCompletion
-
-  await auth.openChannel(ls.username)
-  await sendTemporaryExchangeKey()
-  return null
-}
-
-export const handleMessage = async (message: string): Promise<void> => {
-  console.debug("Linking Status", ls)
-
-  if (ls.step === "NEGOTIATION") {
-    const pin = await handleSessionKey(message)
-    if (pin) {
-      await sendUserChallenge(pin)
-      challengeUser({ pin: Array.from(pin) })
-    }
-  } else if (ls.step === "DELEGATION") {
-    await linkDevice(message)
-  }
-}
-
 
 // 🔗 Device Linking Steps 
 
@@ -95,7 +108,7 @@ export const handleMessage = async (message: string): Promise<void> => {
  * broadcast a temporary public key. This key is then published on channel as 
  * the throwaway DID key.
  */
-export const sendTemporaryExchangeKey = async (): Promise<void> => {
+const sendTemporaryExchangeKey = async (): Promise<void> => {
   const cfg = config.normalize()
 
   const { rsaSize, hashAlg } = cfg
@@ -115,7 +128,7 @@ export const sendTemporaryExchangeKey = async (): Promise<void> => {
  * @param data 
  * @returns pin
  */
-export const handleSessionKey = async (data: any): Promise<Maybe<Uint8Array>> => {
+const handleSessionKey = async (data: string): Promise<Maybe<Uint8Array>> => {
   if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) return null
 
   if (ls.sessionKey) {
@@ -175,7 +188,7 @@ export const handleSessionKey = async (data: any): Promise<Maybe<Uint8Array>> =>
  * @param pin 
  * @returns 
  */
-export const sendUserChallenge = async (pin: Uint8Array): Promise<void> => {
+const sendUserChallenge = async (pin: Uint8Array): Promise<void> => {
   if (!ls.sessionKey) return
 
   const iv = utils.randomBuf(16)
@@ -218,7 +231,7 @@ const linkDevice = async (data: string): Promise<void> => {
 
   await storage.setItem("webnative.auth_username", ls.username)
   await auth.linkDevice(delegation)
-  reportCompletion(ls.username)
+  eventEmitter?.dispatchEvent("link", { username: ls.username })
   resetLinkingState()
   await auth.closeChannel()
 
