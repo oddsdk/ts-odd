@@ -2,6 +2,7 @@ import tweetnacl from "tweetnacl"
 import rsaOperations from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
 
+import { Implementation } from "./implementation/types.js"
 import { assertBrowser } from "../common/browser.js"
 import * as keystore from "../keystore.js"
 
@@ -67,4 +68,29 @@ export const ksGetAlg = async (): Promise<string> => {
 export const ksClear = async (): Promise<void> => {
   assertBrowser("keystore.clear")
   return keystore.clear()
+}
+
+
+
+// 🛳
+
+
+export const IMPLEMENTATION: Implementation = {
+  rsa: {
+    verify: rsaVerify
+  },
+  ed25519: {
+    verify: ed25519Verify
+  },
+  keystore: {
+    publicExchangeKey: ksPublicExchangeKey,
+    publicWriteKey: ksPublicWriteKey,
+    decrypt: ksDecrypt,
+    sign: ksSign,
+    importSymmKey: ksImportSymmKey,
+    exportSymmKey: ksExportSymmKey,
+    keyExists: ksKeyExists,
+    getAlg: ksGetAlg,
+    clear: ksClear,
+  },
 }

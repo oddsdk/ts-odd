@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.30.1
+
+Fixes circular dependencies.
+
+
 ### v0.30.0
 
 #### Breaking Changes
