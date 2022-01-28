@@ -56,7 +56,7 @@
     "start": "tsc -w",
     "test": "mocha",
     "test:imports": "madge src --ts-config tsconfig.json --extensions ts --circular --warning",
-    "test:prod": "yarn run build && yarn run lint && yarn run test:gh-action",
+    "test:prod": "yarn run build && yarn run lint && yarn run test:imports && yarn run test:gh-action",
     "test:types": "cp -RT tests/types/ lib/ && yarn run tsd",
     "test:unit": "mocha --watch --testPathPattern=src/",
     "test:gh-action": "TEST_ENV=gh-action yarn test",
