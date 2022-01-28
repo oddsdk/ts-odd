@@ -1,6 +1,10 @@
 import FileSystem from "../fs/index.js"
-import { InitOptions, scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, State, validateSecrets } from "../index.js"
+
+import { Implementation } from "./implementation/types.js"
+import { InitOptions } from "../init/types.js"
+
 import { USERNAME_STORAGE_KEY, decodeCID } from "../common/index.js"
+import { scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, State, validateSecrets } from "./state.js"
 import { loadFileSystem } from "../filesystem.js"
 import { setup } from "../setup/internal.js"
 
@@ -96,7 +100,22 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
   return user.isUsernameAvailable(username)
 }
 
+
+
+// 🛳
+
+
+export const IMPLEMENTATION: Implementation = {
+  init,
+  register,
+  isUsernameValid,
+  isUsernameAvailable,
+}
+
+
+
 // HELPERS
+
 
 async function retry(action: () => Promise<void>, options: { tries: number; timeout: number; timeoutMessage: string }): Promise<void> {
   return await Promise.race([

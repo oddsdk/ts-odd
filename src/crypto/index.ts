@@ -4,7 +4,10 @@ import { SymmAlg } from "keystore-idb/lib/types.js"
 import { importKey, encryptBytes, decryptBytes, makeKey, exportKey } from "keystore-idb/lib/aes/index.js"
 import { SymmKeyLength } from "keystore-idb/lib/types.js"
 
-import { impl } from "../setup/dependencies.js"
+import { impl } from "./implementation.js"
+
+
+// HASHING
 
 
 export const sha256Str = async(str: string): Promise<string> => {
@@ -18,6 +21,10 @@ export const hash = {
     new Uint8Array(await webcrypto.subtle.digest("sha-256", bytes)),
   sha256Str: sha256Str
 }
+
+
+
+// AES
 
 
 export const aes = {
@@ -59,6 +66,10 @@ export const aes = {
 }
 
 
+
+// RSA
+
+
 export const rsa = {
   decrypt: (data: Uint8Array, privateKey: CryptoKey) =>
     webcrypto.subtle.decrypt(
@@ -96,10 +107,21 @@ export const rsa = {
   verify: (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> =>
     impl.rsa.verify(message, signature, publicKey)
 }
+
+
+
+// ED25519
+
+
 export const ed25519 = {
   verify: (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> =>
     impl.ed25519.verify(message, signature, publicKey)
 }
+
+
+
+// KEYSTORE
+
 
 export const keystore = {
   publicExchangeKey: (): Promise<string> =>

@@ -1,5 +1,8 @@
 import localforage from "localforage"
+
+import { Implementation } from "./implementation/types.js"
 import { assertBrowser } from "../common/browser.js"
+
 
 export const getItem = <T>(key: string): Promise<T | null> => {
   assertBrowser("storage.getItem")
@@ -21,3 +24,14 @@ export const clear = (): Promise<void> => {
   return localforage.clear()
 }
 
+
+
+// 🛳
+
+
+export const IMPLEMENTATION: Implementation = {
+  getItem,
+  setItem,
+  removeItem,
+  clear,
+}

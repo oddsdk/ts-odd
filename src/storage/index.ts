@@ -1,14 +1,14 @@
-import { impl } from "../setup/dependencies.js"
+import { impl } from "./implementation.js"
 
 
-export const getItem = <T>(key: string): Promise<T | null> => 
-  impl.storage.getItem(key)
+export const getItem = <T>(key: string): Promise<T | null> =>
+  impl.getItem(key)
 
-export const setItem = <T>(key: string, val: T): Promise<T> => 
-  impl.storage.setItem(key, val)
+export const setItem = <T>(key: string, val: T): Promise<T> =>
+  impl.setItem(key, val)
 
-export const removeItem = (key: string): Promise<void> => 
-  impl.storage.removeItem(key)
+export const removeItem = (key: string): Promise<void> =>
+  impl.removeItem(key)
 
-export const clear = (): Promise<void> => 
-  impl.storage.clear()
+export const clear = (): Promise<void> =>
+  impl.clear()

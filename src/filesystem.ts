@@ -8,11 +8,11 @@ import * as dataRoot from "./data-root.js"
 import * as ucan from "./ucan/internal.js"
 import * as protocol from "./fs/protocol/index.js"
 import * as versions from "./fs/versions.js"
-import * as setup from "./setup.js"
 
 import { Branch } from "./path.js"
 import { Maybe, authenticatedUsername, decodeCID } from "./common/index.js"
 import { Permissions } from "./ucan/permissions.js"
+import { setup } from "./setup/internal.js"
 
 
 /**
@@ -111,7 +111,7 @@ export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> 
 
   if (versionStr !== versions.toString(versions.latest)) {
     const versionParsed = versions.fromString(versionStr)
-    const userMessages = setup.userMessages({})
+    const userMessages = setup.userMessages
 
     if (versionParsed == null || versions.isSmallerThan(versions.latest, versionParsed)) {
       await userMessages.versionMismatch.newer(versionStr)

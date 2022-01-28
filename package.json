@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.30.0",
+  "version": "0.31.0",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -55,7 +55,8 @@
     "build:minified": "node scripts/build-minified.js",
     "start": "tsc -w",
     "test": "mocha",
-    "test:prod": "yarn run build && yarn run lint && yarn run test:gh-action",
+    "test:imports": "madge src --ts-config tsconfig.json --extensions ts --circular --warning",
+    "test:prod": "yarn run build && yarn run lint && yarn run test:imports && yarn run test:gh-action",
     "test:types": "cp -RT tests/types/ lib/ && yarn run tsd",
     "test:unit": "mocha --watch --testPathPattern=src/",
     "test:gh-action": "TEST_ENV=gh-action yarn test",
@@ -98,10 +99,12 @@
     "ipld-dag-pb": "^0.22.3",
     "keystore-idb": "^0.15.4",
     "localforage": "^1.10.0",
+    "madge": "^5.0.1",
     "multiformats": "^9.5.4",
     "one-webcrypto": "^1.0.3",
     "throttle-debounce": "^3.0.1",
     "tweetnacl": "^1.0.3",
+    "typedoc-plugin-missing-exports": "^0.22.6",
     "uint8arrays": "^3.0.0"
   },
   "tsd": {

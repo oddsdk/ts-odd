@@ -1,8 +1,9 @@
-import { State } from "../index.js"
+import { USERNAME_STORAGE_KEY } from "../common/index.js"
+import { State } from "./state.js"
 import { createAccount } from "../lobby/index.js"
 import * as user from "../lobby/username.js"
 import * as storage from "../storage/index.js"
-import { USERNAME_STORAGE_KEY } from "../common/index.js"
+
 
 export const init = async (): Promise<State | null> => {
   console.log("initialize local auth")

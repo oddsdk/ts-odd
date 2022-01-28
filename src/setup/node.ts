@@ -6,8 +6,12 @@ import aes from "keystore-idb/lib/aes/index.js"
 import rsa from "keystore-idb/lib/rsa/index.js"
 
 import { Storage } from "../../tests/storage/inMemory.js"
-import { setDependencies } from "./dependencies.js"
+
+import * as cryptoImpl from "../crypto/implementation.js"
+import * as storageImpl from "../storage/implementation.js"
+
 import * as setup from "../../src/setup.js"
+
 
 setup.shouldPin({ enabled: false })
 
@@ -26,12 +30,9 @@ const ed25519Verify = async (message: Uint8Array, signature: Uint8Array, publicK
 }
 
 
-
-
 //-------------------------------------
 // Node RSA Keystore
 //-------------------------------------
-
 
 class InMemoryRSAKeyStore implements KeyStore {
 
@@ -126,8 +127,6 @@ class InMemoryRSAKeyStore implements KeyStore {
     return utils.arrBufToStr(msgBytes, mergedCfg.charSize)
   }
 
-
-
   async sign(msg: Msg, cfg?: Partial<Config>): Promise<string> {
     const mergedCfg = config.merge(this.cfg, cfg)
     const writeKey = await this.writeKey()
@@ -219,9 +218,11 @@ const getKeystore = (() => {
   }
 })()
 
+
 const inMemoryStorage = new Storage()
 
-export const NODE_IMPLEMENTATION = {
+
+cryptoImpl.set({
   rsa: {
     verify: rsaVerify
   },
@@ -264,13 +265,13 @@ export const NODE_IMPLEMENTATION = {
     async clear(): Promise<void> {
       return
     },
-  },
-  storage: {
-    getItem: inMemoryStorage.getItem,
-    setItem: inMemoryStorage.setItem,
-    removeItem: inMemoryStorage.removeItem,
-    clear: inMemoryStorage.clear,
   }
-}
+})
 
-setDependencies(NODE_IMPLEMENTATION)
+
+storageImpl.set({
+  getItem: inMemoryStorage.getItem,
+  setItem: inMemoryStorage.setItem,
+  removeItem: inMemoryStorage.removeItem,
+  clear: inMemoryStorage.clear,
+})
