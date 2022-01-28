@@ -95,6 +95,9 @@ export * from "./filesystem.js"
 export * from "./common/version.js"
 
 export const fs = FileSystem
+export { Scenario, State } from "./auth/state.js"
+export { AuthCancelled, AuthSucceeded, Continuation, NotAuthorised } from "./auth/state.js"
+export { InitialisationError, InitOptions } from "./init/types.js"
 
 export * as apps from "./apps/index.js"
 export * as dataRoot from "./data-root.js"
