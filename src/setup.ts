@@ -54,9 +54,9 @@ export function endpoints(e: Partial<Endpoints>): Endpoints {
  * Override how auth, crypto or storage operates in webnative.
  */
 export function setImplementations(opts: {
-  auth?: AuthImplementation
-  crypto?: CryptoImplementation
-  storage?: StorageImplementation
+  auth?: Partial<AuthImplementation>
+  crypto?: Partial<CryptoImplementation>
+  storage?: Partial<StorageImplementation>
 }) {
   if (opts.auth) authImpl.set(opts.auth)
   if (opts.crypto) cryptoImpl.set(opts.crypto)
