@@ -27,7 +27,7 @@ type OnChallenge = (
     }
   ) => void
 ) => void
-type OnLink = (event: "link", listener: (args: { username: string }) => void) => void
+type OnLink = (event: "link", listener: (args: { approved: boolean; username: string }) => void) => void
 type OnError = (event: "error", listener: (args: { err: Error }) => void) => void
 type OnDone = (event: "done", listener: () => void) => void
 
@@ -170,7 +170,7 @@ const handleUserChallenge = async (data: string): Promise<Maybe<string>> => {
   const audience = json.did as string ?? null
 
   if (pin !== null && audience !== null) {
-    eventEmitter?.dispatchEvent("challenge", { pin, confirmPin: delegateAccount(audience), rejectPin: () => cancel() })
+    eventEmitter?.dispatchEvent("challenge", { pin, confirmPin: delegateAccount(audience), rejectPin: declineDelegation })
     nextStep()
   }
 
@@ -179,9 +179,9 @@ const handleUserChallenge = async (data: string): Promise<Maybe<string>> => {
 
 
 /**
- * DELEGATION
+ * DELEGATION: Delegate account
  * 
- * This step is user initiated by a callback that may accept or reject delegation.
+ * This step is user initiated when a user confirms a pin
  * The dependency injected auth.delegateAccount creates a UCAN with delegate rights and any other keys for the CONSUMER. 
  * 
  * @param audience
@@ -192,7 +192,7 @@ const delegateAccount = (audience: string): () => Promise<void> => {
     if (!ls.sessionKey) return
 
     const delegation = await auth.delegateAccount(audience)
-    const message = JSON.stringify(delegation)
+    const message = JSON.stringify({ linkStatus: "APPROVED", delegation })
 
     const iv = utils.randomBuf(16)
     const msg = await aes.encrypt(message, ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })
@@ -204,7 +204,34 @@ const delegateAccount = (audience: string): () => Promise<void> => {
       })
     )
 
-    eventEmitter?.dispatchEvent("link", { username: ls.username })
+    eventEmitter?.dispatchEvent("link", { approved: true, username: ls.username })
     resetLinkingState()
   }
+}
+
+/**
+ * DELEGATION: Decline delegation
+ *
+ * This step is user initiated when a user rejects a pin
+ *
+ * @param
+ * @returns
+ */
+const declineDelegation = async () => {
+  if (!ls.sessionKey) return
+
+  const message = JSON.stringify({ linkStatus: "DENIED" })
+
+  const iv = utils.randomBuf(16)
+  const msg = await aes.encrypt(message, ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })
+
+  await publishOnChannel(
+    JSON.stringify({
+      iv: utils.arrBufToBase64(iv),
+      msg
+    })
+  )
+
+  eventEmitter?.dispatchEvent("link", { approved: false, username: ls.username })
+  resetLinkingState()
 }

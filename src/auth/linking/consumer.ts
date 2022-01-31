@@ -20,7 +20,7 @@ type AccountLinkingConsumer = {
 }
 
 type OnChallenge = (event: "challenge", listener: (args: { pin: number[] }) => void) => void
-type OnLink = (event: "link", listener: (args: { username: string }) => void) => void
+type OnLink = (event: "link", listener: (args: { approved: boolean; username: string }) => void) => void
 type OnError = (event: "error", listener: (args: { err: Error }) => void) => void
 type OnDone = (event: "done", listener: () => void) => void
 
@@ -227,11 +227,16 @@ const linkDevice = async (data: string): Promise<void> => {
       iv: iv
     }
   )
-  const delegation = JSON.parse(message)
+  const response = JSON.parse(message)
 
-  await storage.setItem("webnative.auth_username", ls.username)
-  await auth.linkDevice(delegation)
-  eventEmitter?.dispatchEvent("link", { username: ls.username })
+  if (response.linkStatus === "APPROVED") {
+    await storage.setItem("webnative.auth_username", ls.username)
+    await auth.linkDevice(response.delegation)
+    eventEmitter?.dispatchEvent("link", { approved: true, username: ls.username })
+  } else if (response.linkStatus === "DENIED") {
+    eventEmitter?.dispatchEvent("link", { approved: false, username: ls.username })
+  }
+
   resetLinkingState()
   await auth.closeChannel()
 
