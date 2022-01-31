@@ -1,5 +1,10 @@
 # Changelog
 
+
+### v0.31.1
+
+Move `madge` and `typedoc-plugin-missing-exports` from `dependencies` into `devDependencies`.
+
 ### v0.31.0
 
 Fixes circular dependencies.
