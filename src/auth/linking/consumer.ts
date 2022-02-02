@@ -7,9 +7,8 @@ import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import * as storage from "../../storage/index.js"
 import { EventEmitter } from "../../common/event-emitter"
-import { setLinkingRole } from "../linking/switch.js"
-import { publishOnChannel } from "../index.js"
 import * as auth from "../index.js"
+import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 
 import type { Maybe } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter"
@@ -33,68 +32,60 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
-const ls: LinkingState = {
-  username: null,
-  sessionKey: null,
-  temporaryRsaPair: null,
-  step: null
-}
-
-let eventEmitter: Maybe<EventEmitter> = null
-
-
 export const createConsumer = async (config: { username: string; timeout?: number }): Promise<AccountLinkingConsumer> => {
-  if (eventEmitter === null) {
-    eventEmitter = new EventEmitter()
-    setLinkingRole("CONSUMER")
-    ls.step = "BROADCAST"
-    ls.username = config.username
-    await auth.openChannel(ls.username)
-    await sendTemporaryExchangeKey()
+  let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
+  const ls: LinkingState = {
+    username: config.username,
+    sessionKey: null,
+    temporaryRsaPair: null,
+    step: "BROADCAST"
+  }
+
+  const handleMessage = async (event: MessageEvent): Promise<void> => {
+    const { data } = event
+    const message = new TextDecoder().decode(data.arrayBuffer ? await data.arrayBuffer() : data)
+    console.debug("message (raw)", message)
+
+    if (ls.step === "NEGOTIATION") {
+      ls.sessionKey = await handleSessionKey(ls, message)
+      // nullify temporaryRsaKey? It has served its purpose
+
+      if (ls.sessionKey) {
+        const { pin, challenge } = await generateUserChallenge(ls.sessionKey)
+        channel.send(challenge)
+        eventEmitter?.dispatchEvent("challenge", { pin: Array.from(pin) })
+        ls.step = "DELEGATION"
+      }
+    } else if (ls.step === "DELEGATION") {
+      const approved = await linkDevice(ls, message)
+
+      if (approved !== null) {
+        eventEmitter?.dispatchEvent("link", { approved, username: ls.username })
+      } else {
+        console.log("Could not link device")
+      }
+
+      await done()
+    }
+  }
+
+  const channel = await auth.createChannel(config.username, handleMessage)
+  const { temporaryRsaPair, temporaryDID }  = await generateTemporaryExchangeKey()
+  ls.temporaryRsaPair = temporaryRsaPair
+  ls.step = "NEGOTIATION"
+
+  await channel.send(temporaryDID)
+
+  const done = async () => {
+    eventEmitter?.dispatchEvent("done")
+    eventEmitter = null
+    channel.close()
+    // reset linking state?
   }
 
   return {
     on: (event: string, listener: EventListener) => { eventEmitter?.addEventListener(event, listener) },
-    cancel
-  }
-}
-
-const cancel = async () => {
-  eventEmitter = null
-  resetLinkingState()
-  await auth.closeChannel()
-}
-
-const resetLinkingState = () => {
-  ls.username = null
-  ls.sessionKey = null
-  ls.temporaryRsaPair = null
-  ls.step = null
-}
-
-
-export const handleMessage = async (message: string): Promise<void> => {
-  if (ls.step === "NEGOTIATION") {
-    const pin = await handleSessionKey(message)
-    if (pin) {
-      await sendUserChallenge(pin)
-      eventEmitter?.dispatchEvent("challenge", { pin: Array.from(pin) })
-    }
-  } else if (ls.step === "DELEGATION") {
-    await linkDevice(message)
-  }
-}
-
-const nextStep = () => {
-  switch (ls.step) {
-    case "BROADCAST":
-      ls.step = "NEGOTIATION"
-      break
-    case "NEGOTIATION":
-      ls.step = "DELEGATION"
-      break
-    default:
-      ls.step = "BROADCAST"
+    cancel: done
   }
 }
 
@@ -104,31 +95,32 @@ const nextStep = () => {
 /**
  *  BROADCAST
  * 
- * This is the CONSUMER first step (after opening the channel) where we 
- * broadcast a temporary public key. This key is then published on channel as 
- * the throwaway DID key.
+ * The first CONSUMER step (after opening the channel) generates a temporary RSA keypair.
+ * A temporary public key is converted to a DID for broadcast on the channel.
+ * 
+ * @returns temporary RSA key pair and temporary DID
  */
-const sendTemporaryExchangeKey = async (): Promise<void> => {
+const generateTemporaryExchangeKey = async (): Promise<{temporaryRsaPair: CryptoKeyPair; temporaryDID: string}> => {
   const cfg = config.normalize()
 
   const { rsaSize, hashAlg } = cfg
-  ls.temporaryRsaPair = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Exchange)
-  const pubKey = await rsa.getPublicKey(ls.temporaryRsaPair)
+  const temporaryRsaPair = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Exchange)
+  const pubKey = await rsa.getPublicKey(temporaryRsaPair)
   const temporaryDID = did.publicKeyToDid(pubKey, did.KeyType.RSA)
-  await publishOnChannel(temporaryDID)
-  nextStep()
+  return { temporaryRsaPair, temporaryDID }
 }
 
 /**
  *  NEGOTIATION
  * 
  * The Consumer receives the session key and validates the encrypted UCAN. 
- * Upon success, returns a 6-digit pin code to be use for the user challenge.
+ * Upon success, returns the session key.
  * 
+ * @param ls
  * @param data 
- * @returns pin
+ * @returns the session key or null on failure
  */
-const handleSessionKey = async (data: string): Promise<Maybe<Uint8Array>> => {
+const handleSessionKey = async (ls: LinkingState, data: string): Promise<Maybe<CryptoKey>> => {
   if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) return null
 
   if (ls.sessionKey) {
@@ -142,13 +134,10 @@ const handleSessionKey = async (data: string): Promise<Maybe<Uint8Array>> => {
   const rawSessionKey = await rsa.decrypt(encryptedSessionKey, ls.temporaryRsaPair.privateKey)
   const sessionKey = await aes.importKey(utils.arrBufToBase64(rawSessionKey), { alg: SymmAlg.AES_GCM, length: 256 })
 
-  ls.sessionKey = sessionKey
-  ls.temporaryRsaPair = null
-
   // Extract UCAN
   const encodedUcan = await aes.decrypt(
     json.msg,
-    ls.sessionKey,
+    sessionKey,
     {
       alg: SymmAlg.AES_GCM,
       iv: iv
@@ -175,9 +164,7 @@ const handleSessionKey = async (data: string): Promise<Maybe<Uint8Array>> => {
     throw new Error("Closed UCAN session key does not match the one we already have")
   }
 
-  return new Uint8Array(utils.randomBuf(6)).map(n => {
-    return n % 10
-  })
+  return sessionKey
 }
 
 /**
@@ -188,22 +175,23 @@ const handleSessionKey = async (data: string): Promise<Maybe<Uint8Array>> => {
  * @param pin 
  * @returns 
  */
-const sendUserChallenge = async (pin: Uint8Array): Promise<void> => {
-  if (!ls.sessionKey) return
+const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint8Array; challenge: string }> => {
+  const pin = new Uint8Array(utils.randomBuf(6)).map(n => {
+    return n % 10
+  })
 
   const iv = utils.randomBuf(16)
   const msg = await aes.encrypt(JSON.stringify({
     did: await did.ucan(),
     pin
-  }), ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })
+  }), sessionKey, { iv, alg: SymmAlg.AES_GCM })
 
-  await publishOnChannel(
-    JSON.stringify({
-      iv: utils.arrBufToBase64(iv),
-      msg
-    })
-  )
-  nextStep()
+  const challenge = JSON.stringify({
+    iv: utils.arrBufToBase64(iv),
+    msg
+  })
+
+  return { pin, challenge }
 }
 
 /**
@@ -211,11 +199,12 @@ const sendUserChallenge = async (pin: Uint8Array): Promise<void> => {
  *
  * Decrypt the delegated credentials and forward to client implementation
  *
- * @param pin
- * @returns
+ * @param ls
+ * @param data
+ * @returns link success or null on error
  */
-const linkDevice = async (data: string): Promise<void> => {
-  if (!ls.sessionKey) return
+const linkDevice = async (ls: LinkingState, data: string): Promise<Maybe<boolean>> => {
+  if (!ls.sessionKey) return null
 
   const { iv, msg } = JSON.parse(data)
 
@@ -227,18 +216,16 @@ const linkDevice = async (data: string): Promise<void> => {
       iv: iv
     }
   )
+
   const response = JSON.parse(message)
+  let linkResult = null
 
   if (response.linkStatus === "APPROVED") {
-    await storage.setItem("webnative.auth_username", ls.username)
+    await storage.setItem(USERNAME_STORAGE_KEY, ls.username)
     await auth.linkDevice(response.delegation)
-    eventEmitter?.dispatchEvent("link", { approved: true, username: ls.username })
+    linkResult = true
   } else if (response.linkStatus === "DENIED") {
-    eventEmitter?.dispatchEvent("link", { approved: false, username: ls.username })
+    linkResult = false
   }
-
-  resetLinkingState()
-  await auth.closeChannel()
-
-  return
+  return linkResult
 }

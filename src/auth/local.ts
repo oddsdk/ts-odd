@@ -6,8 +6,8 @@ import * as storage from "../storage/index.js"
 import * as did from "../did/index.js"
 import * as ucan from "../ucan/index.js"
 import * as channel from "./channel.js"
-import type { Msg } from "keystore-idb/lib/types.js"
-import * as linking from "./linking/switch.js"
+
+import type { Channel } from "./channel.js"
 
 export const init = async (): Promise<State | null> => {
   console.log("initialize local auth")
@@ -32,16 +32,8 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
   return user.isUsernameAvailable(username)
 }
 
-export const openChannel = async (did: string): Promise<void> => {
-  return channel.openWssChannel(did, linking.handleMessage)
-}
-
-export const closeChannel = async (): Promise<void> => {
-  return channel.closeWssChannel()
-}
-
-export const publishOnChannel = async (data: any): Promise<void> => {
-  return channel.publishOnWssChannel(data)
+export const createChannel = (username: string, handleMessage: (event: MessageEvent) => any): Promise<Channel> => {
+  return channel.createChannel(username, handleMessage)
 }
 
 export const delegateAccount = async (audience: string): Promise<Record<string, unknown>> => {
@@ -82,8 +74,7 @@ export const LOCAL_IMPLEMENTATION = {
     register,
     isUsernameValid,
     isUsernameAvailable,
-    openChannel,
-    closeChannel,
+    createChannel,
     delegateAccount,
     linkDevice
   }

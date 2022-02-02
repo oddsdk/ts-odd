@@ -5,9 +5,7 @@ import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import * as auth from "../index.js"
-import { publishOnChannel } from "../index.js"
 import { EventEmitter } from "../../common/event-emitter"
-import { setLinkingRole } from "../linking/switch.js"
 
 import type { Maybe } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter"
@@ -40,64 +38,70 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
-let eventEmitter: Maybe<EventEmitter> = null
-
-const ls: LinkingState = {
-  username: null,
-  sessionKey: null,
-  temporaryRsaPair: null,
-  step: null
-}
-
-
 export const createProducer = async (config: { username: string; timeout?: number }): Promise<AccountLinkingProducer> => {
-  if (eventEmitter === null) {
-    eventEmitter = new EventEmitter()
-    setLinkingRole("PRODUCER")
+  let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
+  const ls: LinkingState = {
+    username: config.username,
+    sessionKey: null,
+    temporaryRsaPair: null,
+    step: "BROADCAST"
+  }
+
+  const handleMessage = async (event: MessageEvent): Promise<any> => {
+    const { data } = event
+    const message = new TextDecoder().decode(data.arrayBuffer ? await data.arrayBuffer() : data)
+    console.debug("message (raw)", message)
+
+    if (ls.step === "BROADCAST") {
+      const { sessionKey, sessionKeyMessage } = await generateSessionKey(message)
+      ls.sessionKey = sessionKey
+      ls.step = "NEGOTIATION"
+      channel.send(sessionKeyMessage)
+    } else if (ls.step === "NEGOTIATION") {
+      if (ls.sessionKey) {
+        const { pin, audience } = await handleUserChallenge(ls.sessionKey, message)
+        if (pin !== null && audience !== null) {
+          eventEmitter?.dispatchEvent("challenge",
+            {
+              pin,
+              confirmPin: delegateAccount(ls.sessionKey, audience, finishDelegation),
+              rejectPin: declineDelegation(ls.sessionKey, finishDelegation)
+            })
+        } else {
+          console.log("Could not process challenge sent from consumer")
+        }
+        ls.step = "DELEGATION"
+      }
+    } else if (ls.step === "DELEGATION") {
+      // Noop
+    }
+  }
+
+  const finishDelegation = async (delegationMessage: string, approved: boolean): Promise<void> => {
+    await channel.send(delegationMessage)
+
+    eventEmitter?.dispatchEvent("link", { approved, username: ls.username })
+    resetLinkingState()
+  }
+
+  const channel = await auth.createChannel(config.username, handleMessage)
+
+  const resetLinkingState = () => {
+    ls.sessionKey = null
+    ls.temporaryRsaPair = null
     ls.step = "BROADCAST"
-    ls.username = config.username
-    await auth.openChannel(ls.username)
+  }
+
+  const cancel = async () => {
+    eventEmitter?.dispatchEvent("done")
+    eventEmitter = null
+    resetLinkingState()
+    channel.close()
   }
 
   return {
     on: (event: string, listener: EventListener) => { eventEmitter?.addEventListener(event, listener) },
     cancel
-  }
-}
-
-const cancel = async () => {
-  eventEmitter = null
-  resetLinkingState()
-  await auth.closeChannel()
-}
-
-const resetLinkingState = () => {
-  ls.sessionKey = null
-  ls.temporaryRsaPair = null
-  ls.step = null
-}
-
-
-export const handleMessage = async (message: string): Promise<void> => {
-  if (ls.step === "BROADCAST") {
-    await sendSessionKey(message)
-  } else if (ls.step === "NEGOTIATION") {
-    await handleUserChallenge(message)
-  } else if (ls.step === "DELEGATION") {
-    // Noop
-  }
-}
-
-const nextStep = () => {
-  switch (ls.step) {
-    case "BROADCAST":
-      ls.step = "NEGOTIATION"
-      break
-    case "NEGOTIATION":
-      ls.step = "DELEGATION"
-      break
-    default:
-      ls.step = "BROADCAST"
   }
 }
 
@@ -108,38 +112,41 @@ const nextStep = () => {
  * This should be called by the PRODUCER upon receiving the throwaway DID key.
  * 
  * @param didThrowaway 
+ * @returns session key and session key message for CONSUMER
  */
-const sendSessionKey = async (didThrowaway: string): Promise<void> => {
-  ls.sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
+const generateSessionKey = async (didThrowaway: string): Promise<{ sessionKey: CryptoKey; sessionKeyMessage: string }> => {
+  const sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
 
-  const sessionKey = await aes.exportKey(ls.sessionKey)
+  const exportedSessionKey = await aes.exportKey(sessionKey)
 
   const { publicKey } = did.didToPublicKey(didThrowaway)
   const publicCryptoKey = await rsa.importPublicKey(publicKey, HashAlg.SHA_256, KeyUse.Exchange)
 
   // Note: rsa.encrypt expects a B16 string
-  const rawSessionKey = utils.arrBufToStr(utils.base64ToArrBuf(sessionKey), CharSize.B16)
+  const rawSessionKey = utils.arrBufToStr(utils.base64ToArrBuf(exportedSessionKey), CharSize.B16)
   const encryptedSessionKey = await rsa.encrypt(rawSessionKey, publicCryptoKey)
 
   const u = await ucan.build({
     issuer: await did.ucan(),
     audience: didThrowaway,
     lifetimeInSeconds: 60 * 5, // 5 minutes
-    facts: [{ sessionKey }],
+    facts: [{ sessionKey: exportedSessionKey }],
     potency: null
   })
 
   const iv = utils.randomBuf(16)
-  const msg = await aes.encrypt(ucan.encode(u), ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })
+  const msg = await aes.encrypt(ucan.encode(u), sessionKey, { iv, alg: SymmAlg.AES_GCM })
 
-  await publishOnChannel(
-    JSON.stringify({
-      iv: utils.arrBufToBase64(iv),
-      msg,
-      sessionKey: utils.arrBufToBase64(encryptedSessionKey)
-    })
-  )
-  nextStep()
+  const sessionKeyMessage = JSON.stringify({
+    iv: utils.arrBufToBase64(iv),
+    msg,
+    sessionKey: utils.arrBufToBase64(encryptedSessionKey)
+  })
+
+  return {
+    sessionKey,
+    sessionKeyMessage
+  }
 }
 
 
@@ -149,18 +156,16 @@ const sendSessionKey = async (didThrowaway: string): Promise<void> => {
  * PRODUCER receives the DID & challenge PIN from the CONSUMER.
  * 
  * @param data 
- * @returns 
+ * @returns pin and audience
  */
-const handleUserChallenge = async (data: string): Promise<Maybe<string>> => {
-  if (!ls.sessionKey) return null
-
+const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<{ pin: number[]; audience: string }> => {
   const { iv, msg } = JSON.parse(data)
 
   if (!iv) {
     throw new Error("I tried to decrypt some data (with AES) but the `iv` was missing from the message")
   }
 
-  const message = await aes.decrypt(msg, ls.sessionKey, {
+  const message = await aes.decrypt(msg, sessionKey, {
     alg: SymmAlg.AES_GCM,
     iv
   })
@@ -169,12 +174,7 @@ const handleUserChallenge = async (data: string): Promise<Maybe<string>> => {
   const pin = Object.values(json.pin) as number[] ?? null
   const audience = json.did as string ?? null
 
-  if (pin !== null && audience !== null) {
-    eventEmitter?.dispatchEvent("challenge", { pin, confirmPin: delegateAccount(audience), rejectPin: declineDelegation })
-    nextStep()
-  }
-
-  return null
+  return { pin, audience }
 }
 
 
@@ -187,25 +187,24 @@ const handleUserChallenge = async (data: string): Promise<Maybe<string>> => {
  * @param audience
  * @returns
  */
-const delegateAccount = (audience: string): () => Promise<void> => {
+const delegateAccount = (
+  sessionKey: CryptoKey,
+  audience: string,
+  finishDelegation: (delegationMessage: string, approved: boolean) => Promise<void>
+): () => Promise<void> => {
   return async function () {
-    if (!ls.sessionKey) return
-
     const delegation = await auth.delegateAccount(audience)
     const message = JSON.stringify({ linkStatus: "APPROVED", delegation })
 
     const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(message, ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aes.encrypt(message, sessionKey, { iv, alg: SymmAlg.AES_GCM })
 
-    await publishOnChannel(
-      JSON.stringify({
-        iv: utils.arrBufToBase64(iv),
-        msg
-      })
-    )
+    const delegationMessage = JSON.stringify({
+      iv: utils.arrBufToBase64(iv),
+      msg
+    })
 
-    eventEmitter?.dispatchEvent("link", { approved: true, username: ls.username })
-    resetLinkingState()
+    await finishDelegation(delegationMessage, true)
   }
 }
 
@@ -217,21 +216,21 @@ const delegateAccount = (audience: string): () => Promise<void> => {
  * @param
  * @returns
  */
-const declineDelegation = async () => {
-  if (!ls.sessionKey) return
+const declineDelegation = (
+  sessionKey: CryptoKey,
+  finishDelegation: (delegationMessage: string, approved: boolean) => Promise<void>
+): () => Promise<void> => {
+  return async function () {
+    const message = JSON.stringify({ linkStatus: "DENIED" })
 
-  const message = JSON.stringify({ linkStatus: "DENIED" })
+    const iv = utils.randomBuf(16)
+    const msg = await aes.encrypt(message, sessionKey, { iv, alg: SymmAlg.AES_GCM })
 
-  const iv = utils.randomBuf(16)
-  const msg = await aes.encrypt(message, ls.sessionKey, { iv, alg: SymmAlg.AES_GCM })
-
-  await publishOnChannel(
-    JSON.stringify({
+    const delegationMessage = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
       msg
     })
-  )
 
-  eventEmitter?.dispatchEvent("link", { approved: false, username: ls.username })
-  resetLinkingState()
+    await finishDelegation(delegationMessage, true)
+  }
 }

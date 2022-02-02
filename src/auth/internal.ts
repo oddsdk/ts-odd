@@ -3,11 +3,13 @@ import { InitOptions } from "../init/types.js"
 import { State } from "./state.js"
 
 
+import type { Channel } from "./channel"
+
 export const init = (options: InitOptions): Promise<State | null> => {
   return authLobby.init(options)
 }
 
-export const register = (options: { username: string; email: string }): Promise<{success: boolean}> => {
+export const register = (options: { username: string; email: string }): Promise<{ success: boolean }> => {
   return authLobby.register(options)
 }
 
@@ -19,16 +21,9 @@ export const isUsernameAvailable = (username: string): Promise<boolean> => {
   return authLobby.isUsernameAvailable(username)
 }
 
-export const openChannel = (username: string): Promise<void> => {
-  return authLobby.openChannel(username)
-}
 
-export const closeChannel = (): Promise<void> => {
-  return authLobby.closeChannel()
-}
-
-export const publishOnChannel = (data: any): Promise<void> => {
-  return authLobby.publishOnChannel(data)
+export const createChannel = (username: string, handleMessage: (event: MessageEvent) => any): Promise<Channel> => {
+  return authLobby.createChannel(username, handleMessage)
 }
 
 export const delegateAccount = (audience: string): Promise<Record<string, unknown>> => {

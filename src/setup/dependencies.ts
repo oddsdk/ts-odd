@@ -3,6 +3,8 @@ import * as browserStorage from "../storage/browser.js"
 import * as authLobby from "../auth/lobby.js"
 import { InitOptions, State } from "../index.js"
 
+import type { Channel } from "../auth/channel"
+
 export const DEFAULT_IMPLEMENTATION: Dependencies = {
   rsa: {
     verify: browserCrypto.rsaVerify
@@ -32,9 +34,7 @@ export const DEFAULT_IMPLEMENTATION: Dependencies = {
     register: authLobby.register,
     isUsernameValid: authLobby.isUsernameValid,
     isUsernameAvailable: authLobby.isUsernameAvailable,
-    openChannel: authLobby.openChannel,
-    closeChannel: authLobby.closeChannel,
-    publishOnChannel: authLobby.publishOnChannel,
+    createChannel: authLobby.createChannel,
     delegateAccount: authLobby.delegateAccount,
     linkDevice: authLobby.linkDevice,
   },
@@ -89,9 +89,7 @@ export interface Dependencies {
     register: (options: { email: string; username: string }) => Promise<{ success: boolean }>
     isUsernameValid: (username: string) => Promise<boolean>
     isUsernameAvailable: (username: string) => Promise<boolean>
-    openChannel: (username: string) => Promise<void>
-    closeChannel: () => Promise<void>
-    publishOnChannel: (data: any) => Promise<void>
+    createChannel: (username: string, handleMessage: (event: MessageEvent) => any) => Promise<Channel>
     delegateAccount: (audience: string) => Promise<Record<string, unknown>>
     linkDevice: (data: Record<string, unknown>) => Promise<null>
   }
