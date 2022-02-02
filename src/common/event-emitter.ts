@@ -16,7 +16,7 @@ export class EventEmitter {
   }
 
   public dispatchEvent(event: string, ...args: unknown[]): void {
-    this.events[event].forEach((listener: EventListener) => {
+    this.events[event]?.forEach((listener: EventListener) => {
       listener.apply(this, args)
     })
   }
