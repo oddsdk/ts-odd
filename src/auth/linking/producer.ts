@@ -187,7 +187,7 @@ const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise
   if (pin !== null && audience !== null) {
     return { ok: true, value: { pin, audience } }
   } else {
-    return { ok: false, error: new LinkingError(`Proucer received invalid pin ${json.pin} or audience ${json.audience}`) }
+    return { ok: false, error: new LinkingError(`Producer received invalid pin ${json.pin} or audience ${json.audience}`) }
   }
 }
 
