@@ -7,11 +7,11 @@ import * as auth from "../index.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import * as storage from "../../storage/index.js"
-import { EventEmitter } from "../../common/event-emitter"
+import { EventEmitter } from "../../common/event-emitter.js"
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 import { LinkingError, LinkingWarning, handleLinkingError } from "../linking.js"
 
-import type { EventListener } from "../../common/event-emitter"
+import type { EventListener } from "../../common/event-emitter.js"
 import type { Maybe, Result } from "../../common/index.js"
 
 type AccountLinkingConsumer = {
