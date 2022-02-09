@@ -6,12 +6,13 @@ import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import * as auth from "../index.js"
 import { EventEmitter } from "../../common/event-emitter"
+import { LinkingError, LinkingWarning, handleLinkingError } from "../linking.js"
 
-import type { Maybe } from "../../common/index.js"
+import type { Maybe, Result } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter"
 
 type AccountLinkingProducer = {
-  on: OnChallenge & OnLink & OnError & OnDone
+  on: OnChallenge & OnLink & OnDone
   cancel: () => void
 }
 
@@ -26,7 +27,6 @@ type OnChallenge = (
   ) => void
 ) => void
 type OnLink = (event: "link", listener: (args: { approved: boolean; username: string }) => void) => void
-type OnError = (event: "error", listener: (args: { err: Error }) => void) => void
 type OnDone = (event: "done", listener: () => void) => void
 
 type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
@@ -38,16 +38,17 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
-export const createProducer = async (config: { username: string; timeout?: number }): Promise<AccountLinkingProducer> => {
+export const createProducer = async (options: { username: string; timeout?: number }): Promise<AccountLinkingProducer> => {
+  const { username } = options
   let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
   const ls: LinkingState = {
-    username: config.username,
+    username,
     sessionKey: null,
     temporaryRsaPair: null,
     step: "BROADCAST"
   }
 
-  const handleMessage = async (event: MessageEvent): Promise<any> => {
+  const handleMessage = async (event: MessageEvent): Promise<void> => {
     const { data } = event
     const message = new TextDecoder().decode(data.arrayBuffer ? await data.arrayBuffer() : data)
     console.debug("message (raw)", message)
@@ -59,8 +60,10 @@ export const createProducer = async (config: { username: string; timeout?: numbe
       channel.send(sessionKeyMessage)
     } else if (ls.step === "NEGOTIATION") {
       if (ls.sessionKey) {
-        const { pin, audience } = await handleUserChallenge(ls.sessionKey, message)
-        if (pin !== null && audience !== null) {
+        const userChallengeResult = await handleUserChallenge(ls.sessionKey, message)
+
+        if (userChallengeResult.ok) {
+          const { pin, audience } = userChallengeResult.value
           eventEmitter?.dispatchEvent("challenge",
             {
               pin,
@@ -68,9 +71,11 @@ export const createProducer = async (config: { username: string; timeout?: numbe
               rejectPin: declineDelegation(ls.sessionKey, finishDelegation)
             })
         } else {
-          console.log("Could not process challenge sent from consumer")
+          handleLinkingError(userChallengeResult.error)
         }
-        ls.step = "DELEGATION"
+
+      } else {
+        handleLinkingError(new LinkingError("Producer missing session key when handling user challenge"))
       }
     } else if (ls.step === "DELEGATION") {
       // Noop
@@ -84,8 +89,6 @@ export const createProducer = async (config: { username: string; timeout?: numbe
     resetLinkingState()
   }
 
-  const channel = await auth.createChannel(config.username, handleMessage)
-
   const resetLinkingState = () => {
     ls.sessionKey = null
     ls.temporaryRsaPair = null
@@ -98,6 +101,8 @@ export const createProducer = async (config: { username: string; timeout?: numbe
     resetLinkingState()
     channel.close()
   }
+
+  const channel = await auth.createChannel({ username, handleMessage })
 
   return {
     on: (event: string, listener: EventListener) => { eventEmitter?.addEventListener(event, listener) },
@@ -114,7 +119,7 @@ export const createProducer = async (config: { username: string; timeout?: numbe
  * @param didThrowaway 
  * @returns session key and session key message for CONSUMER
  */
-const generateSessionKey = async (didThrowaway: string): Promise<{ sessionKey: CryptoKey; sessionKeyMessage: string }> => {
+export const generateSessionKey = async (didThrowaway: string): Promise<{ sessionKey: CryptoKey; sessionKeyMessage: string }> => {
   const sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
 
   const exportedSessionKey = await aes.exportKey(sessionKey)
@@ -158,23 +163,32 @@ const generateSessionKey = async (didThrowaway: string): Promise<{ sessionKey: C
  * @param data 
  * @returns pin and audience
  */
-const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<{ pin: number[]; audience: string }> => {
+const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<Result<{ pin: number[]; audience: string }, Error>> => {
   const { iv, msg } = JSON.parse(data)
 
   if (!iv) {
-    throw new Error("I tried to decrypt some data (with AES) but the `iv` was missing from the message")
+    return { ok: false, error: new LinkingError("Producer could not handle user challenge message because `iv` was missing") }
   }
 
-  const message = await aes.decrypt(msg, sessionKey, {
-    alg: SymmAlg.AES_GCM,
-    iv
-  })
+  let message = null
+  try {
+    message = await aes.decrypt(msg, sessionKey, {
+      alg: SymmAlg.AES_GCM,
+      iv
+    })
+  } catch (_) {
+    return { ok: false, error: new LinkingWarning("Ignoring message that could not be decrypted.") }
+  }
 
   const json = JSON.parse(message)
   const pin = Object.values(json.pin) as number[] ?? null
   const audience = json.did as string ?? null
 
-  return { pin, audience }
+  if (pin !== null && audience !== null) {
+    return { ok: true, value: { pin, audience } }
+  } else {
+    return { ok: false, error: new LinkingError(`Proucer received invalid pin ${json.pin} or audience ${json.audience}`) }
+  }
 }
 
 

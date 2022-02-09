@@ -3,7 +3,7 @@ import * as browserStorage from "../storage/browser.js"
 import * as authLobby from "../auth/lobby.js"
 import { InitOptions, State } from "../index.js"
 
-import type { Channel } from "../auth/channel"
+import type { Channel, ChannelOptions } from "../auth/channel"
 
 export const DEFAULT_IMPLEMENTATION: Dependencies = {
   rsa: {
@@ -89,7 +89,7 @@ export interface Dependencies {
     register: (options: { email: string; username: string }) => Promise<{ success: boolean }>
     isUsernameValid: (username: string) => Promise<boolean>
     isUsernameAvailable: (username: string) => Promise<boolean>
-    createChannel: (username: string, handleMessage: (event: MessageEvent) => any) => Promise<Channel>
+    createChannel: (options: ChannelOptions) => Promise<Channel>
     delegateAccount: (audience: string) => Promise<Record<string, unknown>>
     linkDevice: (data: Record<string, unknown>) => Promise<null>
   }

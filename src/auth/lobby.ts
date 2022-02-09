@@ -19,7 +19,7 @@ import * as ucan from "../ucan/internal.js"
 import * as user from "../lobby/username.js"
 import * as channel from "./channel.js"
 
-import type { Channel } from "./channel.js"
+import type { Channel, ChannelOptions } from "./channel"
 
 export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null
@@ -102,8 +102,8 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
   return user.isUsernameAvailable(username)
 }
 
-export const createChannel = (username: string, handleMessage: (event: MessageEvent) => any): Promise<Channel> => {
-  return channel.createChannel(username, handleMessage)
+export const createChannel = (options: ChannelOptions): Promise<Channel> => {
+  return channel.createChannel(options)
 }
 
 export const delegateAccount = async (audience: string): Promise<Record<string, unknown>> => {

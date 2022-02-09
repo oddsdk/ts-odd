@@ -2,6 +2,7 @@ import * as did from "../did/index.js"
 import * as storage from "../storage/index.js"
 import * as ucan from "../ucan/index.js"
 import { setup } from "../setup/internal.js"
+import { LinkingError } from "./linking.js"
 
 import type { Maybe } from "../common/index.js"
 
@@ -11,13 +12,17 @@ export type Channel = {
   close: () => void
 }
 
-export const createChannel = async (username: string, handleMessage: (this: WebSocket, ev: MessageEvent) => any):
-  Promise<Channel> => {
+export type ChannelOptions = {
+  username: string
+  handleMessage: (event: MessageEvent) => any
+}
+
+export const createChannel = async (options: ChannelOptions): Promise<Channel> => {
+  const { username, handleMessage } = options
 
   const rootDid = await lookupRootDid(username).catch(_ => null)
   if (!rootDid) {
-    console.error("failed to lookup root DID")
-    // return
+    throw new LinkingError(`Failed to lookup DID for ${username}`)
   }
 
   const apiEndpoint = setup.getApiEndpoint()
@@ -28,6 +33,7 @@ export const createChannel = async (username: string, handleMessage: (this: WebS
   const socket: Maybe<WebSocket> = new WebSocket(`${endpoint}/user/link/${rootDid}`)
   await waitForOpenConnection(socket)
   socket.onmessage = handleMessage
+  // socket.onerror = () => { // reconnect }
 
   const send = publishOnWssChannel(socket)
   const close = closeWssChannel(socket)
@@ -46,8 +52,7 @@ const waitForOpenConnection = async (socket: WebSocket): Promise<void> => {
       resolve()
     }
     socket.onerror = () => {
-      console.error("socket error")
-      reject()
+      reject("Websocket channel could not be opened")
     }
   })
 }
