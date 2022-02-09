@@ -8,7 +8,6 @@ import type { Maybe } from "../common/index.js"
 
 export type Channel = {
   send: (data: any) => void
-  receive: (event: MessageEvent) => any
   close: () => void
 }
 
@@ -40,7 +39,6 @@ export const createChannel = async (options: ChannelOptions): Promise<Channel> =
 
   return {
     send,
-    receive: handleMessage,
     close
   }
 }
