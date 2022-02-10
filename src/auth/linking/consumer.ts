@@ -2,7 +2,7 @@ import aes from "keystore-idb/lib/aes/index.js"
 import config from "keystore-idb/lib/config.js"
 import rsa from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
-import { KeyUse,SymmAlg } from "keystore-idb/lib/types.js"
+import { KeyUse, SymmAlg } from "keystore-idb/lib/types.js"
 import * as auth from "../index.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
@@ -48,30 +48,42 @@ export const createConsumer = async (options: { username: string; timeout?: numb
     console.debug("message (raw)", message)
 
     if (ls.step === "NEGOTIATION") {
-      const sessionKeyResult = await handleSessionKey(ls, message)
-
-      if (sessionKeyResult.ok) {
-        ls.sessionKey = sessionKeyResult.value
-
-        const { pin, challenge } = await generateUserChallenge(ls.sessionKey)
-        channel.send(challenge)
-        eventEmitter?.dispatchEvent("challenge", { pin: Array.from(pin) })
-        ls.step = "DELEGATION"
-        // nullify temporaryRsaKey? It has served its purpose
+      if (ls.sessionKey) {
+        handleLinkingError(new LinkingWarning("Consumer already received a session key"))
+      } else if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) {
+        handleLinkingError(new LinkingError("Consumer missing RSA key pair when handling session key message"))
       } else {
-        handleLinkingError(sessionKeyResult.error)
+        const sessionKeyResult = await handleSessionKey(ls.temporaryRsaPair.privateKey, message)
+
+        if (sessionKeyResult.ok) {
+          ls.sessionKey = sessionKeyResult.value
+
+          const { pin, challenge } = await generateUserChallenge(ls.sessionKey)
+          channel.send(challenge)
+          eventEmitter?.dispatchEvent("challenge", { pin: Array.from(pin) })
+          ls.step = "DELEGATION"
+          // nullify temporaryRsaKey? It has served its purpose
+        } else {
+          handleLinkingError(sessionKeyResult.error)
+        }
       }
     } else if (ls.step === "DELEGATION") {
-      const linkingResult = await linkDevice(ls, message) 
-
-      if (linkingResult.ok) {
-        const { approved } = linkingResult.value
-        eventEmitter?.dispatchEvent("link", { approved, username: ls.username })
+      if (!ls.sessionKey) {
+        handleLinkingError(new LinkingError("Consumer was missing session key when linking device"))
+      } else if (!ls.username) {
+        handleLinkingError(new LinkingError("Consumer was missing username when linking device"))
       } else {
-        handleLinkingError(linkingResult.error)
-      }
+        const linkingResult = await linkDevice(ls.sessionKey, ls.username, message)
 
-      await done()
+        if (linkingResult.ok) {
+          const { approved } = linkingResult.value
+          eventEmitter?.dispatchEvent("link", { approved, username: ls.username })
+        } else {
+          handleLinkingError(linkingResult.error)
+        }
+
+        await done()
+      }
     }
   }
 
@@ -125,15 +137,7 @@ const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair: Crypt
  * @param data 
  * @returns AES session key
  */
-const handleSessionKey = async (ls: LinkingState, data: string): Promise<Result<CryptoKey, Error>> => {
-  if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) {
-    return { ok: false, error: new LinkingError("Consumer missing RSA key pair when handling session key message") }
-  }
-
-  if (ls.sessionKey) {
-    return { ok: false, error: new LinkingWarning("Consumer already received a session key") }
-  }
-
+const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: string): Promise<Result<CryptoKey, Error>> => {
   const { iv, msg, sessionKey: encodedSessionKey } = JSON.parse(data)
 
   if (!iv) {
@@ -141,10 +145,9 @@ const handleSessionKey = async (ls: LinkingState, data: string): Promise<Result<
   }
 
   const encryptedSessionKey = utils.base64ToArrBuf(encodedSessionKey)
-  const rawSessionKey = await rsa.decrypt(encryptedSessionKey, ls.temporaryRsaPair.privateKey)
+  const rawSessionKey = await rsa.decrypt(encryptedSessionKey, temporaryRsaPrivateKey)
   const sessionKey = await aes.importKey(utils.arrBufToBase64(rawSessionKey), { alg: SymmAlg.AES_GCM, length: 256 })
 
-  // Extract UCAN
   let encodedUcan = null
 
   try {
@@ -220,9 +223,7 @@ const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint
  * @param data
  * @returns linking result
  */
-const linkDevice = async (ls: LinkingState, data: string): Promise<Result<{ approved: boolean }, Error>> => {
-  if (!ls.sessionKey) return { ok: false, error: new LinkingError("Consumer missing session key when linking device") }
-
+const linkDevice = async (sessionKey: CryptoKey, username: string, data: string): Promise<Result<{ approved: boolean }, Error>> => {
   const { iv, msg } = JSON.parse(data)
 
   if (!iv) {
@@ -233,7 +234,7 @@ const linkDevice = async (ls: LinkingState, data: string): Promise<Result<{ appr
   try {
     message = await aes.decrypt(
       msg,
-      ls.sessionKey,
+      sessionKey,
       {
         alg: SymmAlg.AES_GCM,
         iv: iv
@@ -246,12 +247,12 @@ const linkDevice = async (ls: LinkingState, data: string): Promise<Result<{ appr
   const response = JSON.parse(message)
 
   if (response.linkStatus === "APPROVED") {
-    await storage.setItem(USERNAME_STORAGE_KEY, ls.username)
+    await storage.setItem(USERNAME_STORAGE_KEY, username)
     await auth.linkDevice(response.delegation)
 
-    return { ok: true, value: { approved: true }}
+    return { ok: true, value: { approved: true } }
   } else if (response.linkStatus === "DENIED") {
-    return { ok: true, value: { approved: false }}
+    return { ok: true, value: { approved: false } }
   } else {
     return { ok: false, error: new LinkingError("Invalid linking message received from producer.") }
   }
