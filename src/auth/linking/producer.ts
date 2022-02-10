@@ -163,7 +163,7 @@ export const generateSessionKey = async (didThrowaway: string): Promise<{ sessio
  * @param data 
  * @returns pin and audience
  */
-const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<Result<{ pin: number[]; audience: string }, Error>> => {
+export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<Result<{ pin: number[]; audience: string }, Error>> => {
   const { iv, msg } = JSON.parse(data)
 
   if (!iv) {
@@ -201,7 +201,7 @@ const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise
  * @param audience
  * @returns
  */
-const delegateAccount = (
+export const delegateAccount = (
   sessionKey: CryptoKey,
   audience: string,
   finishDelegation: (delegationMessage: string, approved: boolean) => Promise<void>
@@ -230,7 +230,7 @@ const delegateAccount = (
  * @param
  * @returns
  */
-const declineDelegation = (
+export const declineDelegation = (
   sessionKey: CryptoKey,
   finishDelegation: (delegationMessage: string, approved: boolean) => Promise<void>
 ): () => Promise<void> => {

@@ -118,7 +118,7 @@ export const createConsumer = async (options: { username: string; timeout?: numb
  * 
  * @returns temporary RSA key pair and temporary DID
  */
-const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair: CryptoKeyPair; temporaryDID: string }> => {
+export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair: CryptoKeyPair; temporaryDID: string }> => {
   const cfg = config.normalize()
 
   const { rsaSize, hashAlg } = cfg
@@ -137,7 +137,7 @@ const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair: Crypt
  * @param data 
  * @returns AES session key
  */
-const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: string): Promise<Result<CryptoKey, Error>> => {
+export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: string): Promise<Result<CryptoKey, Error>> => {
   const { iv, msg, sessionKey: encodedSessionKey } = JSON.parse(data)
 
   if (!iv) {
@@ -195,7 +195,7 @@ const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: string)
  * @param pin 
  * @returns pin and challenge message
  */
-const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint8Array; challenge: string }> => {
+export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint8Array; challenge: string }> => {
   const pin = new Uint8Array(utils.randomBuf(6)).map(n => {
     return n % 10
   })
@@ -223,7 +223,7 @@ const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint
  * @param data
  * @returns linking result
  */
-const linkDevice = async (sessionKey: CryptoKey, username: string, data: string): Promise<Result<{ approved: boolean }, Error>> => {
+export const linkDevice = async (sessionKey: CryptoKey, username: string, data: string): Promise<Result<{ approved: boolean }, Error>> => {
   const { iv, msg } = JSON.parse(data)
 
   if (!iv) {
