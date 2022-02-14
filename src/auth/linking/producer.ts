@@ -61,6 +61,7 @@ export const createProducer = async (options: { username: string; timeout?: numb
     } else if (ls.step === "NEGOTIATION") {
       if (ls.sessionKey) {
         const userChallengeResult = await handleUserChallenge(ls.sessionKey, message)
+        ls.step = "DELEGATION"
 
         if (userChallengeResult.ok) {
           const { pin, audience } = userChallengeResult.value
