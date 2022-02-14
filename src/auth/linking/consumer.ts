@@ -114,7 +114,7 @@ export const createConsumer = async (options: { username: string; timeout?: numb
  *  BROADCAST
  * 
  * The first CONSUMER step (after opening the channel) generates a temporary RSA keypair.
- * A temporary public key is converted to a DID for broadcast on the channel.
+ * The temporary public key is converted to a DID for broadcast on the channel.
  * 
  * @returns temporary RSA key pair and temporary DID
  */
@@ -131,9 +131,9 @@ export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair
 /**
  *  NEGOTIATION
  * 
- * The Consumer receives the session key and validates the closed UCAN. 
+ * The CONSUMER receives the session key and validates the closed UCAN. 
  * 
- * @param ls
+ * @param temporaryRsaPrivateKey
  * @param data 
  * @returns AES session key
  */
@@ -190,9 +190,9 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
 /**
  * NEGOTIATION (response)
  * 
- * Encrypt and publish the CONSUMER did and generated pin for verification by the PRODUCER.
+ * Generate pin and challenge message for verification by the PRODUCER
  * 
- * @param pin 
+ * @param sessionKey
  * @returns pin and challenge message
  */
 export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint8Array; challenge: string }> => {
@@ -219,7 +219,8 @@ export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pi
  *
  * Decrypt the delegated credentials and forward to client implementation
  *
- * @param ls
+ * @param sessionKey
+ * @param username
  * @param data
  * @returns linking result
  */

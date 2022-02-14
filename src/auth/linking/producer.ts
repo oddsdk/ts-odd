@@ -117,7 +117,7 @@ export const createProducer = async (options: { username: string; timeout?: numb
  * This should be called by the PRODUCER upon receiving the throwaway DID key.
  * 
  * @param didThrowaway 
- * @returns session key and session key message for CONSUMER
+ * @returns session key and session key message for the CONSUMER
  */
 export const generateSessionKey = async (didThrowaway: string): Promise<{ sessionKey: CryptoKey; sessionKeyMessage: string }> => {
   const sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
@@ -195,11 +195,14 @@ export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): 
 /**
  * DELEGATION: Delegate account
  * 
- * This step is user initiated when a user confirms a pin
- * The dependency injected auth.delegateAccount creates a UCAN with delegate rights and any other keys for the CONSUMER. 
+ * Delegate the account after the developer calls the returned function
+ * The dependency injected auth.delegateAccount creates a UCAN with delegate rights and any other secrets
+ * intended for the CONSUMER. 
  * 
+ * @param sesionKey 
  * @param audience
- * @returns
+ * @param finishDelegation 
+ * @returns approve delegation function
  */
 export const delegateAccount = (
   sessionKey: CryptoKey,
@@ -225,10 +228,11 @@ export const delegateAccount = (
 /**
  * DELEGATION: Decline delegation
  *
- * This step is user initiated when a user rejects a pin
+ * Decline delegation after the developer calls the returned function
  *
- * @param
- * @returns
+ * @param sessionKey
+ * @param finishDelegation
+ * @returns decline delegation function
  */
 export const declineDelegation = (
   sessionKey: CryptoKey,
