@@ -165,7 +165,18 @@ export const generateSessionKey = async (didThrowaway: string): Promise<{ sessio
  * @returns pin and audience
  */
 export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<Result<{ pin: number[]; audience: string }, Error>> => {
-  const { iv, msg } = JSON.parse(data)
+  let iv, msg
+  try {
+    const json = JSON.parse(data)
+    iv = json.iv
+    msg = json.msg
+  } catch (_) {
+    return {
+      ok: false,
+      error: new LinkingWarning(`Producer received a user challenge it could not parse: ${data}. Most likely this message is a request from 
+      another consumer requesting a link and can be safely ignored.`)
+    }
+  }
 
   if (!iv) {
     return { ok: false, error: new LinkingError("Producer could not handle user challenge message because `iv` was missing") }

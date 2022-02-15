@@ -94,6 +94,20 @@ describe("handle user challenge", async () => {
     )
   })
 
+  it("returns a warning when it receives a temporary DID", async () => {
+    const temporaryDID = await did.ucan()
+
+    // A producer may be be partway through linking when another temporary DID arrives. This event will
+    // trigger a warning but will otherwise ignore the message.
+    const userChallengeResult = await producer.handleUserChallenge(sessionKey, temporaryDID)
+
+    let err = null
+    if (userChallengeResult.ok === false) { err = userChallengeResult.error }
+
+    expect(userChallengeResult.ok).toBe(false)
+    expect(err?.name === "LinkingWarning").toBe(true)
+  })
+
   it("returns an error when initialization vector is missing", async () => {
     const pin = [0, 0, 0, 0, 0, 0]
     const iv = utils.randomBuf(16)
