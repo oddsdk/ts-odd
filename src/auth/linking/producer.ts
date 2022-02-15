@@ -2,11 +2,13 @@ import aes from "keystore-idb/lib/aes/index.js"
 import rsa from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
 import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
-import * as did from "../../did/index.js"
-import * as ucan from "../../ucan/index.js"
 import * as auth from "../index.js"
+import * as did from "../../did/index.js"
+import * as storage from "../../storage/index.js"
+import * as ucan from "../../ucan/index.js"
 import { EventEmitter } from "../../common/event-emitter.js"
 import { LinkingError, LinkingWarning, handleLinkingError } from "../linking.js"
+import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 
 import type { Maybe, Result } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter.js"
@@ -40,6 +42,12 @@ type LinkingState = {
 
 export const createProducer = async (options: { username: string; timeout?: number }): Promise<AccountLinkingProducer> => {
   const { username } = options
+  const storedUsername = await storage.getItem(USERNAME_STORAGE_KEY)
+
+  if (username !== storedUsername) {
+    throw new LinkingError(`Cannot delegate for username ${username}`) 
+  }
+
   let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
   const ls: LinkingState = {
     username,
