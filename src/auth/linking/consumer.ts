@@ -47,7 +47,9 @@ export const createConsumer = async (options: { username: string; timeout?: numb
     const message = new TextDecoder().decode(data.arrayBuffer ? await data.arrayBuffer() : data)
     console.debug("message (raw)", message)
 
-    if (ls.step === "NEGOTIATION") {
+    if (ls.step === "BROADCAST") {
+        handleLinkingError(new LinkingWarning("Consumer is not ready to start linking"))
+    } else if (ls.step === "NEGOTIATION") {
       if (ls.sessionKey) {
         handleLinkingError(new LinkingWarning("Consumer already received a session key"))
       } else if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) {
