@@ -91,15 +91,23 @@ export const createConsumer = async (options: { username: string; timeout?: numb
     eventEmitter?.dispatchEvent("done")
     eventEmitter = null
     channel.close()
+    clearInterval(rsaExchangeInterval)
     // reset linking state?
   }
 
   const channel = await auth.createChannel({ username, handleMessage })
-  const { temporaryRsaPair, temporaryDID } = await generateTemporaryExchangeKey()
-  ls.temporaryRsaPair = temporaryRsaPair
-  ls.step = "NEGOTIATION"
 
-  await channel.send(temporaryDID)
+  const rsaExchangeInterval = setInterval(async () => {
+    if (!ls.sessionKey) {
+      const { temporaryRsaPair, temporaryDID } = await generateTemporaryExchangeKey()
+      ls.temporaryRsaPair = temporaryRsaPair
+      ls.step = "NEGOTIATION"
+
+      await channel.send(temporaryDID)
+    } else {
+      clearInterval(rsaExchangeInterval)
+    }
+  }, 2000)
 
   return {
     on: (event: string, listener: EventListener) => { eventEmitter?.addEventListener(event, listener) },
