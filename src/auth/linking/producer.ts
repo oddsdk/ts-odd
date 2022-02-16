@@ -8,7 +8,6 @@ import * as storage from "../../storage/index.js"
 import * as ucan from "../../ucan/index.js"
 import { EventEmitter } from "../../common/event-emitter.js"
 import { LinkingError, LinkingWarning, handleLinkingError } from "../linking.js"
-import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 
 import type { Maybe, Result } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter.js"
@@ -42,9 +41,9 @@ type LinkingState = {
 
 export const createProducer = async (options: { username: string; timeout?: number }): Promise<AccountLinkingProducer> => {
   const { username } = options
-  const storedUsername = await storage.getItem(USERNAME_STORAGE_KEY)
+  const canDelegate = await checkCapability(username)
 
-  if (username !== storedUsername) {
+  if (!canDelegate) {
     throw new LinkingError(`Cannot delegate for username ${username}`) 
   }
 
@@ -117,6 +116,31 @@ export const createProducer = async (options: { username: string; timeout?: numb
     cancel
   }
 }
+
+
+/** PREFLIGHT
+ *
+ * Check that the PRODUCER can delegate the account associated with the username
+ *
+ * @param username 
+ * @returns can delegate boolean
+ */
+const checkCapability = async (username: string): Promise<boolean> => {
+  const didFromDNS = await did.root(username)
+  const maybeUcan: string | null = await storage.getItem("ucan")
+
+  if (maybeUcan) {
+    const rootIssuerDid = ucan.rootIssuer(maybeUcan) 
+    const decodedUcan = ucan.decode(maybeUcan)
+    const { ptc } = decodedUcan.payload
+
+    return didFromDNS === rootIssuerDid && ptc === "SUPER_USER"
+  } else {
+    const rootDid = await did.write()
+
+    return didFromDNS === rootDid
+  }
+} 
 
 
 /**
