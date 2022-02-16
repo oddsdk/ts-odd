@@ -107,7 +107,6 @@ export const createProducer = async (options: { username: string; timeout?: numb
   const cancel = async () => {
     eventEmitter?.dispatchEvent("done")
     eventEmitter = null
-    resetLinkingState()
     channel.close()
   }
 
