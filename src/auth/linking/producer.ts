@@ -87,7 +87,7 @@ export const createProducer = async (options: { username: string; timeout?: numb
         handleLinkingError(new LinkingError("Producer missing session key when handling user challenge"))
       }
     } else if (ls.step === "DELEGATION") {
-      // Noop
+        handleLinkingError(new LinkingWarning("Producer received a message while delegating an account. The message will be ignored."))
     }
   }
 
