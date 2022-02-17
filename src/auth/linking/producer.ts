@@ -57,7 +57,6 @@ export const createProducer = async (options: { username: string; timeout?: numb
   const handleMessage = async (event: MessageEvent): Promise<void> => {
     const { data } = event
     const message = data.arrayBuffer ? new TextDecoder().decode(await data.arrayBuffer()) : data
-    console.debug("message (raw)", message)
 
     if (ls.step === "BROADCAST") {
       const { sessionKey, sessionKeyMessage } = await generateSessionKey(message)

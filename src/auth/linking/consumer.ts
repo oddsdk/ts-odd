@@ -45,7 +45,6 @@ export const createConsumer = async (options: { username: string; timeout?: numb
   const handleMessage = async (event: MessageEvent): Promise<void> => {
     const { data } = event
     const message = data.arrayBuffer ? new TextDecoder().decode(await data.arrayBuffer()) : data
-    console.debug("message (raw)", message)
 
     if (ls.step === "BROADCAST") {
         handleLinkingError(new LinkingWarning("Consumer is not ready to start linking"))
@@ -64,7 +63,6 @@ export const createConsumer = async (options: { username: string; timeout?: numb
           channel.send(challenge)
           eventEmitter?.dispatchEvent("challenge", { pin: Array.from(pin) })
           ls.step = "DELEGATION"
-          // nullify temporaryRsaKey? It has served its purpose
         } else {
           handleLinkingError(sessionKeyResult.error)
         }
@@ -94,7 +92,6 @@ export const createConsumer = async (options: { username: string; timeout?: numb
     eventEmitter = null
     channel.close()
     clearInterval(rsaExchangeInterval)
-    // reset linking state?
   }
 
   const channel = await auth.createChannel({ username, handleMessage })
