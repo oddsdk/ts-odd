@@ -26,6 +26,10 @@ export const createChannel = (options: ChannelOptions): Promise<Channel> => {
   return authLobby.createChannel(options)
 }
 
+export const checkCapability = async (username: string): Promise<boolean> => {
+  return authLobby.checkCapability(username)
+}
+
 export const delegateAccount = (audience: string): Promise<Record<string, unknown>> => {
   return authLobby.delegateAccount(audience)
 }

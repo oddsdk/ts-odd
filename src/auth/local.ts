@@ -36,9 +36,24 @@ export const createChannel = (options: ChannelOptions): Promise<Channel> => {
   return channel.createChannel(options)
 }
 
-export const delegateAccount = async (audience: string): Promise<Record<string, unknown>> => {
-  console.log("Audience in user code", audience)
+export const checkCapability = async (username: string): Promise<boolean> => {
+  const didFromDNS = await did.root(username)
+  const maybeUcan: string | null = await storage.getItem("ucan")
 
+  if (maybeUcan) {
+    const rootIssuerDid = ucan.rootIssuer(maybeUcan)
+    const decodedUcan = ucan.decode(maybeUcan)
+    const { ptc } = decodedUcan.payload
+
+    return didFromDNS === rootIssuerDid && ptc === "SUPER_USER"
+  } else {
+    const rootDid = await did.write()
+
+    return didFromDNS === rootDid
+  }
+}
+
+export const delegateAccount = async (audience: string): Promise<Record<string, unknown>> => {
   // Proof
   const proof = await storage.getItem("ucan") as string
 
@@ -75,6 +90,7 @@ export const LOCAL_IMPLEMENTATION = {
     isUsernameValid,
     isUsernameAvailable,
     createChannel,
+    checkCapability,
     delegateAccount,
     linkDevice
   }

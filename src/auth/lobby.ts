@@ -17,6 +17,7 @@ import * as pathing from "../path.js"
 import * as storage from "../storage/index.js"
 import * as ucan from "../ucan/internal.js"
 import * as user from "../lobby/username.js"
+import * as token from "../ucan/token.js"
 import * as channel from "./channel.js"
 
 import type { Channel, ChannelOptions } from "./channel"
@@ -104,6 +105,23 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
 
 export const createChannel = (options: ChannelOptions): Promise<Channel> => {
   return channel.createChannel(options)
+}
+
+export const checkCapability = async (username: string): Promise<boolean> => {
+  const didFromDNS = await did.root(username)
+  const maybeUcan: string | null = await storage.getItem("ucan")
+
+  if (maybeUcan) {
+    const rootIssuerDid = token.rootIssuer(maybeUcan)
+    const decodedUcan = token.decode(maybeUcan)
+    const { ptc } = decodedUcan.payload
+
+    return didFromDNS === rootIssuerDid && ptc === "SUPER_USER"
+  } else {
+    const rootDid = await did.write()
+
+    return didFromDNS === rootDid
+  }
 }
 
 export const delegateAccount = async (audience: string): Promise<Record<string, unknown>> => {

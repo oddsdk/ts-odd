@@ -4,7 +4,6 @@ import utils from "keystore-idb/lib/utils.js"
 import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
 import * as auth from "../index.js"
 import * as did from "../../did/index.js"
-import * as storage from "../../storage/index.js"
 import * as ucan from "../../ucan/index.js"
 import { EventEmitter } from "../../common/event-emitter.js"
 import { LinkingError, LinkingWarning, handleLinkingError } from "../linking.js"
@@ -41,7 +40,7 @@ type LinkingState = {
 
 export const createProducer = async (options: { username: string; timeout?: number }): Promise<AccountLinkingProducer> => {
   const { username } = options
-  const canDelegate = await checkCapability(username)
+  const canDelegate = await auth.checkCapability(username)
 
   if (!canDelegate) {
     throw new LinkingError(`Cannot delegate for username ${username}`) 
@@ -116,31 +115,6 @@ export const createProducer = async (options: { username: string; timeout?: numb
     cancel
   }
 }
-
-
-/** PREFLIGHT
- *
- * Check that the PRODUCER can delegate the account associated with the username
- *
- * @param username 
- * @returns can delegate boolean
- */
-const checkCapability = async (username: string): Promise<boolean> => {
-  const didFromDNS = await did.root(username)
-  const maybeUcan: string | null = await storage.getItem("ucan")
-
-  if (maybeUcan) {
-    const rootIssuerDid = ucan.rootIssuer(maybeUcan) 
-    const decodedUcan = ucan.decode(maybeUcan)
-    const { ptc } = decodedUcan.payload
-
-    return didFromDNS === rootIssuerDid && ptc === "SUPER_USER"
-  } else {
-    const rootDid = await did.write()
-
-    return didFromDNS === rootDid
-  }
-} 
 
 
 /**

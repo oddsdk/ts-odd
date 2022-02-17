@@ -35,6 +35,7 @@ export const DEFAULT_IMPLEMENTATION: Dependencies = {
     isUsernameValid: authLobby.isUsernameValid,
     isUsernameAvailable: authLobby.isUsernameAvailable,
     createChannel: authLobby.createChannel,
+    checkCapability: authLobby.checkCapability,
     delegateAccount: authLobby.delegateAccount,
     linkDevice: authLobby.linkDevice,
   },
@@ -90,6 +91,7 @@ export interface Dependencies {
     isUsernameValid: (username: string) => Promise<boolean>
     isUsernameAvailable: (username: string) => Promise<boolean>
     createChannel: (options: ChannelOptions) => Promise<Channel>
+    checkCapability: (username: string) => Promise<boolean>
     delegateAccount: (audience: string) => Promise<Record<string, unknown>>
     linkDevice: (data: Record<string, unknown>) => Promise<null>
   }
