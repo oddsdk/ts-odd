@@ -34,6 +34,6 @@ export const delegateAccount = (audience: string): Promise<Record<string, unknow
   return authLobby.delegateAccount(audience)
 }
 
-export const linkDevice = (data: Record<string, unknown>): Promise<null> => {
+export const linkDevice = (data: Record<string, unknown>): Promise<void> => {
   return authLobby.linkDevice(data)
 }

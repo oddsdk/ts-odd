@@ -72,15 +72,13 @@ export const delegateAccount = async (audience: string): Promise<Record<string, 
   return { token: ucan.encode(u) }
 }
 
-export const linkDevice = async (data: Record<string, unknown>): Promise<null> => {
+export const linkDevice = async (data: Record<string, unknown>): Promise<void> => {
   const { token } = data
   const u = ucan.decode(token as string)
 
   if (await ucan.isValid(u)) {
     await storage.setItem("ucan", token)
   }
-
-  return null
 }
 
 export const LOCAL_IMPLEMENTATION = {

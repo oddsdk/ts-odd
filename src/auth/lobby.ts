@@ -128,8 +128,8 @@ export const delegateAccount = async (audience: string): Promise<Record<string, 
   return {}
 }
 
-export const linkDevice = async (data: Record<string, unknown>): Promise<null> => {
-  return null
+export const linkDevice = async (data: Record<string, unknown>): Promise<void> => {
+  // implement this
 }
 
 
