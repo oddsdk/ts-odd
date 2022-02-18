@@ -30,8 +30,8 @@ export const checkCapability = async (username: string): Promise<boolean> => {
   return authLobby.checkCapability(username)
 }
 
-export const delegateAccount = (audience: string): Promise<Record<string, unknown>> => {
-  return authLobby.delegateAccount(audience)
+export const delegateAccount = (username: string, audience: string): Promise<Record<string, unknown>> => {
+  return authLobby.delegateAccount(username, audience)
 }
 
 export const linkDevice = (data: Record<string, unknown>): Promise<void> => {

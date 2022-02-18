@@ -92,7 +92,7 @@ export interface Dependencies {
     isUsernameAvailable: (username: string) => Promise<boolean>
     createChannel: (options: ChannelOptions) => Promise<Channel>
     checkCapability: (username: string) => Promise<boolean>
-    delegateAccount: (audience: string) => Promise<Record<string, unknown>>
+    delegateAccount: (username: string, audience: string) => Promise<Record<string, unknown>>
     linkDevice: (data: Record<string, unknown>) => Promise<void>
   }
 }

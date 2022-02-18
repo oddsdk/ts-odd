@@ -53,7 +53,7 @@ export const checkCapability = async (username: string): Promise<boolean> => {
   }
 }
 
-export const delegateAccount = async (audience: string): Promise<Record<string, unknown>> => {
+export const delegateAccount = async (username: string, audience: string): Promise<Record<string, unknown>> => {
   // Proof
   const proof = await storage.getItem("ucan") as string
 

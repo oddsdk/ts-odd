@@ -73,7 +73,7 @@ export const createProducer = async (options: { username: string; timeout?: numb
           eventEmitter?.dispatchEvent("challenge",
             {
               pin,
-              confirmPin: delegateAccount(ls.sessionKey, audience, finishDelegation),
+              confirmPin: delegateAccount(ls.sessionKey, username, audience, finishDelegation),
               rejectPin: declineDelegation(ls.sessionKey, finishDelegation)
             })
         } else {
@@ -222,11 +222,12 @@ export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): 
  */
 export const delegateAccount = (
   sessionKey: CryptoKey,
+  username: string,
   audience: string,
   finishDelegation: (delegationMessage: string, approved: boolean) => Promise<void>
 ): () => Promise<void> => {
   return async function () {
-    const delegation = await auth.delegateAccount(audience)
+    const delegation = await auth.delegateAccount(username, audience)
     const message = JSON.stringify({ linkStatus: "APPROVED", delegation })
 
     const iv = utils.randomBuf(16)
