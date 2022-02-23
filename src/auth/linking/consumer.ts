@@ -32,7 +32,7 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
-export const createConsumer = async (options: { username: string; timeout?: number }): Promise<AccountLinkingConsumer> => {
+export const createConsumer = async (options: { username: string }): Promise<AccountLinkingConsumer> => {
   const { username } = options
   let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
   const ls: LinkingState = {
@@ -47,7 +47,7 @@ export const createConsumer = async (options: { username: string; timeout?: numb
     const message = data.arrayBuffer ? new TextDecoder().decode(await data.arrayBuffer()) : data
 
     if (ls.step === "BROADCAST") {
-        handleLinkingError(new LinkingWarning("Consumer is not ready to start linking"))
+      handleLinkingError(new LinkingWarning("Consumer is not ready to start linking"))
     } else if (ls.step === "NEGOTIATION") {
       if (ls.sessionKey) {
         handleLinkingError(new LinkingWarning("Consumer already received a session key"))

@@ -38,12 +38,12 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
-export const createProducer = async (options: { username: string; timeout?: number }): Promise<AccountLinkingProducer> => {
+export const createProducer = async (options: { username: string }): Promise<AccountLinkingProducer> => {
   const { username } = options
   const canDelegate = await auth.checkCapability(username)
 
   if (!canDelegate) {
-    throw new LinkingError(`Cannot delegate for username ${username}`) 
+    throw new LinkingError(`Cannot delegate for username ${username}`)
   }
 
   let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
@@ -84,7 +84,7 @@ export const createProducer = async (options: { username: string; timeout?: numb
         handleLinkingError(new LinkingError("Producer missing session key when handling user challenge"))
       }
     } else if (ls.step === "DELEGATION") {
-        handleLinkingError(new LinkingWarning("Producer received a message while delegating an account. The message will be ignored."))
+      handleLinkingError(new LinkingWarning("Producer received a message while delegating an account. The message will be ignored."))
     }
   }
 
@@ -177,8 +177,8 @@ export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): 
   } catch (_) {
     return {
       ok: false,
-      error: new LinkingWarning(`Producer received a user challenge it could not parse: ${data}. Most likely this message is a request from 
-      another consumer requesting a link and can be safely ignored.`)
+      error: new LinkingWarning(`Producer received a user challenge it could not parse: ${data}. Most likely this message is a request from` +
+        " another consumer requesting a link and can be safely ignored.")
     }
   }
 
