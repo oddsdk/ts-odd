@@ -1,3 +1,4 @@
+import * as debug from "../common/debug.js"
 export class LinkingError extends Error {
   constructor(message: string) {
     super(message)
@@ -15,7 +16,7 @@ export class LinkingWarning extends Error {
 export const handleLinkingError = (error: LinkingError | LinkingWarning): void => {
   switch (error.name) {
     case "LinkingWarning":
-      console.warn(error.message)
+      debug.warn(error.message)
       break
 
     case "LinkingError":
