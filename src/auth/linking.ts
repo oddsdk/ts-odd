@@ -1,4 +1,7 @@
 import * as debug from "../common/debug.js"
+
+export { createConsumer as createRequestor } from "./linking/consumer.js"
+export { createProducer as createProvider } from "./linking/producer.js"
 export class LinkingError extends Error {
   constructor(message: string) {
     super(message)
