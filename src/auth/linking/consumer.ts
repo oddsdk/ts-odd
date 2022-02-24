@@ -9,7 +9,7 @@ import * as ucan from "../../ucan/index.js"
 import * as storage from "../../storage/index.js"
 import { EventEmitter } from "../../common/event-emitter.js"
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
-import { LinkingError, LinkingWarning, handleLinkingError } from "../linking.js"
+import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
 import type { EventListener } from "../../common/event-emitter.js"
 import type { Maybe, Result } from "../../common/index.js"
@@ -145,52 +145,62 @@ export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair
  * @returns AES session key
  */
 export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: string): Promise<Result<CryptoKey, Error>> => {
-  const { iv, msg, sessionKey: encodedSessionKey } = JSON.parse(data)
-
-  if (!iv) {
-    return { ok: false, error: new LinkingError("Consumer could not handle session key message because `iv` was missing") }
+  const typeGuard = (message: any): message is { iv: ArrayBuffer; msg: string; sessionKey: string } => {
+    return "iv" in message && "msg" in message && "sessionKey" in message
   }
 
-  const encryptedSessionKey = utils.base64ToArrBuf(encodedSessionKey)
-  const rawSessionKey = await rsa.decrypt(encryptedSessionKey, temporaryRsaPrivateKey)
-  const sessionKey = await aes.importKey(utils.arrBufToBase64(rawSessionKey), { alg: SymmAlg.AES_GCM, length: 256 })
+  const parseResult = tryParseMessage(data, typeGuard, { participant: "Consumer", callSite: "handleSessionKey" })
 
-  let encodedUcan = null
+  if (parseResult.ok) {
+    const { iv, msg, sessionKey: encodedSessionKey } = parseResult.value
 
-  try {
-    encodedUcan = await aes.decrypt(
-      msg,
-      sessionKey,
-      {
-        alg: SymmAlg.AES_GCM,
-        iv: iv
-      }
-    )
-  } catch (_) {
-    return { ok: false, error: new LinkingError("Could not decrypt closed UCAN with provided session key.") }
+    let sessionKey, rawSessionKey
+    try {
+      const encryptedSessionKey = utils.base64ToArrBuf(encodedSessionKey)
+      rawSessionKey = await rsa.decrypt(encryptedSessionKey, temporaryRsaPrivateKey)
+      sessionKey = await aes.importKey(utils.arrBufToBase64(rawSessionKey), { alg: SymmAlg.AES_GCM, length: 256 })
+    } catch {
+      return { ok: false, error: new LinkingWarning(`Consumer received a session key in handleSessionKey that it could not decrypt: ${data}. Ignoring message`) }
+    }
+
+    let encodedUcan = null
+    try {
+      encodedUcan = await aes.decrypt(
+        msg,
+        sessionKey,
+        {
+          alg: SymmAlg.AES_GCM,
+          iv: iv
+        }
+      )
+    } catch {
+      return { ok: false, error: new LinkingError("Could not decrypt closed UCAN with provided session key.") }
+    }
+
+    const decodedUcan = ucan.decode(encodedUcan)
+
+    if (await ucan.isValid(decodedUcan) === false) {
+      return { ok: false, error: new LinkingError("Invalid closed UCAN") }
+    }
+
+    if (decodedUcan.payload.ptc) {
+      return { ok: false, error: new LinkingError("Invalid closed UCAN: must not have any potency") }
+    }
+
+    const sessionKeyFromFact = decodedUcan.payload.fct[0] && decodedUcan.payload.fct[0].sessionKey
+    if (!sessionKeyFromFact) {
+      return { ok: false, error: new LinkingError("Session key is missing from closed UCAN") }
+    }
+
+    const sessionKeyWeAlreadyGot = utils.arrBufToBase64(rawSessionKey)
+    if (sessionKeyFromFact !== sessionKeyWeAlreadyGot) {
+      return { ok: false, error: new LinkingError("Closed UCAN session key does not match session key") }
+    }
+
+    return { ok: true, value: sessionKey }
+  } else {
+    return parseResult
   }
-
-  const decodedUcan = ucan.decode(encodedUcan)
-
-  if (await ucan.isValid(decodedUcan) === false) {
-    return { ok: false, error: new LinkingError("Invalid closed UCAN") }
-  }
-
-  if (decodedUcan.payload.ptc) {
-    return { ok: false, error: new LinkingError("Invalid closed UCAN: must not have any potency") }
-  }
-
-  const sessionKeyFromFact = decodedUcan.payload.fct[0] && decodedUcan.payload.fct[0].sessionKey
-  if (!sessionKeyFromFact) {
-    return { ok: false, error: new LinkingError("Session key is missing from closed UCAN") }
-  }
-
-  const sessionKeyWeAlreadyGot = utils.arrBufToBase64(rawSessionKey)
-  if (sessionKeyFromFact !== sessionKeyWeAlreadyGot) {
-    return { ok: false, error: new LinkingError("Closed UCAN session key does not match session key") }
-  }
-
-  return { ok: true, value: sessionKey }
 }
 
 
@@ -232,36 +242,42 @@ export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pi
  * @returns linking result
  */
 export const linkDevice = async (sessionKey: CryptoKey, username: string, data: string): Promise<Result<{ approved: boolean }, Error>> => {
-  const { iv, msg } = JSON.parse(data)
-
-  if (!iv) {
-    return { ok: false, error: new LinkingError("Consumer could not handle link device message because `iv` was missing") }
+  const typeGuard = (message: any): message is { iv: ArrayBuffer; msg: string } => {
+    return "iv" in message && "msg" in message
   }
 
-  let message = null
-  try {
-    message = await aes.decrypt(
-      msg,
-      sessionKey,
-      {
-        alg: SymmAlg.AES_GCM,
-        iv: iv
-      }
-    )
-  } catch (_) {
-    return { ok: false, error: new LinkingWarning("Ignoring message that could not be decrypted.") }
-  }
+  const parseResult = tryParseMessage(data, typeGuard, { participant: "Consumer", callSite: "linkDevice" })
 
-  const response = JSON.parse(message)
+  if (parseResult.ok) {
+    const { iv, msg } = parseResult.value
 
-  if (response.linkStatus === "APPROVED") {
-    await storage.setItem(USERNAME_STORAGE_KEY, username)
-    await auth.linkDevice(response.delegation)
+    let message = null
+    try {
+      message = await aes.decrypt(
+        msg,
+        sessionKey,
+        {
+          alg: SymmAlg.AES_GCM,
+          iv: iv
+        }
+      )
+    } catch (_) {
+      return { ok: false, error: new LinkingWarning("Ignoring message that could not be decrypted.") }
+    }
 
-    return { ok: true, value: { approved: true } }
-  } else if (response.linkStatus === "DENIED") {
-    return { ok: true, value: { approved: false } }
+    const response = JSON.parse(message)
+
+    if (response.linkStatus === "APPROVED") {
+      await storage.setItem(USERNAME_STORAGE_KEY, username)
+      await auth.linkDevice(response.delegation)
+
+      return { ok: true, value: { approved: true } }
+    } else if (response.linkStatus === "DENIED") {
+      return { ok: true, value: { approved: false } }
+    } else {
+      return { ok: false, error: new LinkingError("Invalid linking message received from producer.") }
+    }
   } else {
-    return { ok: false, error: new LinkingError("Invalid linking message received from producer.") }
+    return parseResult
   }
 }

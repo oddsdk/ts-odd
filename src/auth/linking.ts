@@ -1,7 +1,10 @@
 import * as debug from "../common/debug.js"
 
+import type { Result } from "../common/index.js"
+
 export { createConsumer as createRequestor } from "./linking/consumer.js"
 export { createProducer as createProvider } from "./linking/producer.js"
+
 export class LinkingError extends Error {
   constructor(message: string) {
     super(message)
@@ -27,5 +30,33 @@ export const handleLinkingError = (error: LinkingError | LinkingWarning): void =
 
     default:
       throw error
+  }
+}
+
+export const tryParseMessage = <T>(
+  data: string,
+  typeGuard: (message: unknown) => message is T,
+  context: { participant: string; callSite: string }
+): Result<T, LinkingWarning> => {
+  try {
+    const message = JSON.parse(data)
+
+    if (typeGuard(message)) {
+      return {
+        ok: true,
+        value: message
+      }
+    } else {
+      return {
+        ok: false,
+        error: new LinkingWarning(`${context.participant} received an unexpected message in ${context.callSite}: ${data}. Ignoring message.`)
+      }
+    }
+
+  } catch {
+    return {
+      ok: false,
+      error: new LinkingWarning(`${context.participant} received a message in ${context.callSite} that it could not parse: ${data}. Ignoring message.`)
+    }
   }
 }

@@ -6,7 +6,7 @@ import * as auth from "../index.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import { EventEmitter } from "../../common/event-emitter.js"
-import { LinkingError, LinkingWarning, handleLinkingError } from "../linking.js"
+import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
 import type { Maybe, Result } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter.js"
@@ -180,42 +180,38 @@ export const generateSessionKey = async (didThrowaway: string): Promise<{ sessio
  * @returns pin and audience
  */
 export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<Result<{ pin: number[]; audience: string }, Error>> => {
-  let iv, msg
-  try {
-    const json = JSON.parse(data)
-    iv = json.iv
-    msg = json.msg
-  } catch (_) {
-    return {
-      ok: false,
-      error: new LinkingWarning(`Producer received a user challenge it could not parse: ${data}. Most likely this message is a request from` +
-        " another consumer requesting a link and can be safely ignored.")
+  const typeGuard = (message: any): message is { iv: ArrayBuffer; msg: string } => {
+    return "iv" in message && "msg" in message
+  }
+
+  const parseResult = tryParseMessage(data, typeGuard, { participant: "Producer", callSite: "handleUserChallenge" })
+
+  if (parseResult.ok) {
+    const { iv, msg } = parseResult.value
+
+    let message = null
+    try {
+      message = await aes.decrypt(msg, sessionKey, {
+        alg: SymmAlg.AES_GCM,
+        iv
+      })
+    } catch {
+      return { ok: false, error: new LinkingWarning("Ignoring message that could not be decrypted.") }
     }
-  }
 
-  if (!iv) {
-    return { ok: false, error: new LinkingError("Producer could not handle user challenge message because `iv` was missing") }
-  }
+    const json = JSON.parse(message)
+    const pin = json.pin ? Object.values(json.pin) as number[] : null
+    const audience = json.did as string ?? null
 
-  let message = null
-  try {
-    message = await aes.decrypt(msg, sessionKey, {
-      alg: SymmAlg.AES_GCM,
-      iv
-    })
-  } catch (_) {
-    return { ok: false, error: new LinkingWarning("Ignoring message that could not be decrypted.") }
-  }
-
-  const json = JSON.parse(message)
-  const pin = Object.values(json.pin) as number[] ?? null
-  const audience = json.did as string ?? null
-
-  if (pin !== null && audience !== null) {
-    return { ok: true, value: { pin, audience } }
+    if (pin !== null && audience !== null) {
+      return { ok: true, value: { pin, audience } }
+    } else {
+      return { ok: false, error: new LinkingError(`Producer received invalid pin ${json.pin} or audience ${json.audience}`) }
+    }
   } else {
-    return { ok: false, error: new LinkingError(`Producer received invalid pin ${json.pin} or audience ${json.audience}`) }
+    return parseResult
   }
+
 }
 
 

@@ -75,7 +75,7 @@ describe("handle session key", async () => {
     expect(val).toEqual(sessionKey)
   })
 
-  it("returns an error when the initialization vector is missing in message", async () => {
+  it("returns a warning when the message received has the wrong shape", async () => {
     const closedUcan = await ucan.build({
       issuer: await did.ucan(),
       audience: temporaryDID,
@@ -95,7 +95,36 @@ describe("handle session key", async () => {
     if (sessionKeyResult.ok === false) { err = sessionKeyResult.error }
 
     expect(sessionKeyResult.ok).toBe(false)
-    expect(err?.name === "LinkingError").toBe(true)
+    expect(err?.name === "LinkingWarning").toBe(true)
+  })
+
+  it("returns a warning when it receives a session key it cannot decrypt with its temporary private key", async () => {
+    const cfg = config.normalize()
+    const { rsaSize, hashAlg } = cfg
+    const temporaryRsaPairNoise = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Exchange)
+    const rawSessionKeyNoise = utils.arrBufToStr(utils.base64ToArrBuf(exportedSessionKey), CharSize.B16)
+    const encryptedSessionKeyNoise = await rsa.encrypt(rawSessionKeyNoise, temporaryRsaPairNoise.publicKey)
+
+    const closedUcan = await ucan.build({
+      issuer: await did.ucan(),
+      audience: temporaryDID,
+      lifetimeInSeconds: 60 * 5,
+      facts: [{ sessionKey: exportedSessionKey }],
+      potency: null
+    })
+    const msg = await aes.encrypt(ucan.encode(closedUcan), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const message = JSON.stringify({
+      msg,
+      sessionKey: utils.arrBufToBase64(encryptedSessionKeyNoise) // session key encrypted with noise
+    })
+
+    const sessionKeyResult = await consumer.handleSessionKey(temporaryRsaPair.privateKey, message)
+
+    let err
+    if (sessionKeyResult.ok === false) { err = sessionKeyResult.error }
+
+    expect(sessionKeyResult.ok).toBe(false)
+    expect(err?.name === "LinkingWarning").toBe(true)
   })
 
   it("returns an error when closed UCAN cannot be decrypted with the provided session key", async () => {
@@ -109,6 +138,7 @@ describe("handle session key", async () => {
     })
     const msg = await aes.encrypt(ucan.encode(closedUcan), mismatchedSessionKey, { iv, alg: SymmAlg.AES_GCM })
     const message = JSON.stringify({
+      iv: utils.arrBufToBase64(iv),
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKey)
     })

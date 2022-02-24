@@ -108,7 +108,7 @@ describe("handle user challenge", async () => {
     expect(err?.name === "LinkingWarning").toBe(true)
   })
 
-  it("returns an error when initialization vector is missing", async () => {
+  it("returns a warning when the message received has the wrong shape", async () => {
     const pin = [0, 0, 0, 0, 0, 0]
     const iv = utils.randomBuf(16)
     const msg = await aes.encrypt(JSON.stringify({ did: DID, pin }), sessionKey, { iv, alg: SymmAlg.AES_GCM })
@@ -119,13 +119,13 @@ describe("handle user challenge", async () => {
     if (userChallengeResult.ok === false) { err = userChallengeResult.error }
 
     expect(userChallengeResult.ok).toBe(false)
-    expect(err?.name === "LinkingError").toBe(true)
+    expect(err?.name === "LinkingWarning").toBe(true)
   })
 
   it("returns an error when pin is missing", async () => {
     const iv = utils.randomBuf(16)
     const msg = await aes.encrypt(JSON.stringify({ did: DID }), sessionKey, { iv, alg: SymmAlg.AES_GCM }) // pin missing
-    const challenge = JSON.stringify({ msg })
+    const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
     const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
 
     let err = null
@@ -139,7 +139,7 @@ describe("handle user challenge", async () => {
     const pin = [0, 0, 0, 0, 0, 0]
     const iv = utils.randomBuf(16)
     const msg = await aes.encrypt(JSON.stringify({ pin }), sessionKey, { iv, alg: SymmAlg.AES_GCM }) // DID missing
-    const challenge = JSON.stringify({ msg })
+    const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
     const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
 
     let err = null
