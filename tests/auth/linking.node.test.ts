@@ -4,29 +4,29 @@ import { LOCAL_IMPLEMENTATION } from "../../src/auth/local.js"
 import { createConsumer } from "../../src/auth/linking/consumer.js"
 import { createProducer } from "../../src/auth/linking/producer.js"
 import { EventEmitter } from "../../src/common/event-emitter.js"
-import { setDependencies } from "../../src/setup.js"
+import { debug, setDependencies } from "../../src/setup.js"
 
 import type { Channel, ChannelOptions } from "../../src/auth/channel.js"
 
 type MessageData = string | ArrayBufferLike | Blob | ArrayBufferView
 
 /** Test implementation
- * The goal of test suite it to test the interaction of producers and consumers. Delegation
+ * The goal of test suite it to test the interaction between producers and consumers. Delegation
  * and the capablility to delegate are not tested.
  * 
- * The tests use an event emitter to emulate a networked communication channel. Checking capabilities
- * adds a username to a list of producers. Delegating an account associates a consumer DID with username
- * in the list of producers. Linking an account adds a username and associated consumer DID to the list 
- * of consumers.
+ * The tests use an event emitter to emulate a networked communication channel. Delegating an account
+ * adds a username and a consumer DID to be linked to a list of producers. Linking an account adds a 
+ * username and consumer DID to a list of consumers.
  * 
  * If all consumers are linked at the end of a test, the consumers and producers should be the same. Errors
  * or declined authorizations will set up different expectations.
+ * 
  */
 
 describe("account linking", () => {
   let channel: EventEmitter = new EventEmitter()
-  let producers: Record<string, string[]> = {}
-  let consumers: Record<string, string[]> = {}
+  let producerAccounts: Record<string, string[]> = {}
+  let consumerAccounts: Record<string, string[]> = {}
 
   before(() => {
     const createChannel = async (options: ChannelOptions): Promise<Channel> => {
@@ -46,8 +46,8 @@ describe("account linking", () => {
     }
 
     const delegateAccount = async (username: string, audience: string): Promise<Record<string, unknown>> => {
-      producers[username] = producers[username] ?? []
-      producers[username] = [...producers[username], audience]
+      producerAccounts[username] = producerAccounts[username] ?? []
+      producerAccounts[username] = [...producerAccounts[username], audience]
 
       return { username, audience }
     }
@@ -55,10 +55,9 @@ describe("account linking", () => {
     const linkDevice = async (data: Record<string, unknown>): Promise<void> => {
       const { username, audience } = data as Record<string, string>
 
-      consumers[username] = consumers[username] ?? []
-      consumers[username] = [...consumers[username], audience]
+      consumerAccounts[username] = consumerAccounts[username] ?? []
+      consumerAccounts[username] = [...consumerAccounts[username], audience]
     }
-
 
     setDependencies({
       ...LOCAL_IMPLEMENTATION,
@@ -70,35 +69,121 @@ describe("account linking", () => {
         linkDevice
       }
     })
+
+    // debug({ enabled: true })
   })
 
   afterEach(() => {
     channel = new EventEmitter()
-    producers = {}
-    consumers = {}
+    producerAccounts = {}
+    consumerAccounts = {}
   })
 
   it("links an account", async () => {
+    let consumerDone = false
+
     const producer = await createProducer({ username: "elm-owl" })
-    let producerDone = false
 
     producer.on("challenge", ({ confirmPin }) => {
       confirmPin()
     })
 
-    producer.on("done", () => {
-      producerDone = true
-    })
-
     const consumer = await createConsumer({ username: "elm-owl" })
-    let consumerDone = false
 
     consumer.on("done", () => {
       consumerDone = true
-      producer.cancel()
     })
 
-    while (!consumerDone || !producerDone) await new Promise(r => setTimeout(r, 1000))
-    expect(consumers).toEqual(producers)
+    while (!consumerDone) await new Promise(r => setTimeout(r, 1000))
+    producer.cancel()
+
+    expect(consumerAccounts["elm-owl"]).toBeDefined()
+    expect(consumerAccounts["elm-owl"].length).toEqual(1)
+    expect(producerAccounts["elm-owl"]).toBeDefined()
+    expect(producerAccounts["elm-owl"].length).toEqual(1)
+    expect(consumerAccounts).toEqual(producerAccounts)
+  })
+
+  it("links when consumer starts first", async () => {
+    let consumerDone = false
+
+    const consumer = await createConsumer({ username: "elm-owl" })
+
+    consumer.on("done", () => {
+      consumerDone = true
+    })
+
+    const producer = await createProducer({ username: "elm-owl" })
+
+    producer.on("challenge", ({ confirmPin }) => {
+      confirmPin()
+    })
+
+    while (!consumerDone) await new Promise(r => setTimeout(r, 1000))
+    producer.cancel()
+
+    expect(consumerAccounts["elm-owl"]).toBeDefined()
+    expect(consumerAccounts["elm-owl"].length).toEqual(1)
+    expect(producerAccounts["elm-owl"]).toBeDefined()
+    expect(producerAccounts["elm-owl"].length).toEqual(1)
+    expect(consumerAccounts).toEqual(producerAccounts)
+  })
+
+  it("declines to link an account", async () => {
+    let consumerDone = false
+
+    const producer = await createProducer({ username: "elm-owl" })
+
+    producer.on("challenge", ({ rejectPin }) => {
+      rejectPin()
+    })
+
+    const consumer = await createConsumer({ username: "elm-owl" })
+
+    consumer.on("done", () => {
+      consumerDone = true
+    })
+
+    while (!consumerDone) await new Promise(r => setTimeout(r, 1000))
+    producer.cancel()
+
+    console.log("consumers", consumerAccounts)
+    console.log("producers", producerAccounts)
+
+    expect(consumerAccounts["elm-owl"]).not.toBeDefined()
+    expect(producerAccounts["elm-owl"]).not.toBeDefined()
+    expect(consumerAccounts).toEqual(producerAccounts)
+  })
+
+
+  it("links with one producer and multiple consumers", async () => {
+    const numConsumers = Math.round(Math.random() * 2 + 2)
+    const producer = await createProducer({ username: "elm-owl" })
+
+    producer.on("challenge", ({ confirmPin }) => {
+      confirmPin()
+    })
+
+    const promisedConsumers = Array.from(Array(numConsumers)).map(async () => {
+      const emitter = await createConsumer({ username: "elm-owl" })
+      const consumer = { emitter, done: false }
+
+      consumer.emitter.on("done", () => {
+        consumer.done = true
+      })
+
+      return consumer
+    })
+
+    const consumers = await Promise.all(promisedConsumers)
+
+    while (!consumers.every(consumer => consumer.done)) await new Promise(r => setTimeout(r, 1000))
+    producer.cancel()
+
+    expect(consumerAccounts["elm-owl"]).toBeDefined()
+    expect(consumerAccounts["elm-owl"].length).toEqual(numConsumers)
+    expect(producerAccounts["elm-owl"]).toBeDefined()
+    expect(producerAccounts["elm-owl"].length).toEqual(numConsumers)
+    expect(consumerAccounts).toEqual(producerAccounts)
   })
 })
