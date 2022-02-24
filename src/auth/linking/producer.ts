@@ -70,12 +70,23 @@ export const createProducer = async (options: { username: string }): Promise<Acc
 
         if (userChallengeResult.ok) {
           const { pin, audience } = userChallengeResult.value
-          eventEmitter?.dispatchEvent("challenge",
-            {
-              pin,
-              confirmPin: delegateAccount(ls.sessionKey, username, audience, finishDelegation),
-              rejectPin: declineDelegation(ls.sessionKey, finishDelegation)
-            })
+
+          const confirmPin = async () => {
+            if (ls.sessionKey) {
+              await delegateAccount(ls.sessionKey, username, audience, finishDelegation)
+            } else {
+              handleLinkingError(new LinkingError("Producer missing session key when delegating account"))
+            }
+          }
+          const rejectPin = async () => {
+            if (ls.sessionKey) {
+              await declineDelegation(ls.sessionKey, finishDelegation)
+            } else {
+              handleLinkingError(new LinkingError("Producer missing session key when declining account delegation"))
+            }
+          }
+
+          eventEmitter?.dispatchEvent("challenge", { pin, confirmPin, rejectPin })
         } else {
           handleLinkingError(userChallengeResult.error)
         }
@@ -84,7 +95,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
         handleLinkingError(new LinkingError("Producer missing session key when handling user challenge"))
       }
     } else if (ls.step === "DELEGATION") {
-      handleLinkingError(new LinkingWarning("Producer received a message while delegating an account. The message will be ignored."))
+      handleLinkingError(new LinkingWarning("Producer received an unexpected message while delegating an account. The message will be ignored."))
     }
   }
 
@@ -211,61 +222,52 @@ export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): 
 /**
  * DELEGATION: Delegate account
  * 
- * Delegate the account after the developer calls the returned function
  * The dependency injected auth.delegateAccount creates a UCAN with delegate rights and any other secrets
  * intended for the CONSUMER. 
  * 
  * @param sesionKey 
  * @param audience
  * @param finishDelegation 
- * @returns approve delegation function
  */
-export const delegateAccount = (
+export const delegateAccount = async (
   sessionKey: CryptoKey,
   username: string,
   audience: string,
   finishDelegation: (delegationMessage: string, approved: boolean) => Promise<void>
-): () => Promise<void> => {
-  return async function () {
-    const delegation = await auth.delegateAccount(username, audience)
-    const message = JSON.stringify({ linkStatus: "APPROVED", delegation })
+): Promise<void> => {
+  const delegation = await auth.delegateAccount(username, audience)
+  const message = JSON.stringify({ linkStatus: "APPROVED", delegation })
 
-    const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(message, sessionKey, { iv, alg: SymmAlg.AES_GCM })
+  const iv = utils.randomBuf(16)
+  const msg = await aes.encrypt(message, sessionKey, { iv, alg: SymmAlg.AES_GCM })
 
-    const delegationMessage = JSON.stringify({
-      iv: utils.arrBufToBase64(iv),
-      msg
-    })
+  const delegationMessage = JSON.stringify({
+    iv: utils.arrBufToBase64(iv),
+    msg
+  })
 
-    await finishDelegation(delegationMessage, true)
-  }
+  await finishDelegation(delegationMessage, true)
 }
 
 /**
  * DELEGATION: Decline delegation
  *
- * Decline delegation after the developer calls the returned function
- *
  * @param sessionKey
  * @param finishDelegation
- * @returns decline delegation function
  */
-export const declineDelegation = (
+export const declineDelegation = async (
   sessionKey: CryptoKey,
   finishDelegation: (delegationMessage: string, approved: boolean) => Promise<void>
-): () => Promise<void> => {
-  return async function () {
-    const message = JSON.stringify({ linkStatus: "DENIED" })
+): Promise<void> => {
+  const message = JSON.stringify({ linkStatus: "DENIED" })
 
-    const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(message, sessionKey, { iv, alg: SymmAlg.AES_GCM })
+  const iv = utils.randomBuf(16)
+  const msg = await aes.encrypt(message, sessionKey, { iv, alg: SymmAlg.AES_GCM })
 
-    const delegationMessage = JSON.stringify({
-      iv: utils.arrBufToBase64(iv),
-      msg
-    })
+  const delegationMessage = JSON.stringify({
+    iv: utils.arrBufToBase64(iv),
+    msg
+  })
 
-    await finishDelegation(delegationMessage, true)
-  }
+  await finishDelegation(delegationMessage, true)
 }
