@@ -7,6 +7,8 @@ import utils from "keystore-idb/lib/utils.js"
 import * as did from "../../../src/did/index.js"
 import * as producer from "./producer.js"
 import * as ucan from "../../ucan/index.js"
+import { LOCAL_IMPLEMENTATION } from "../local.js"
+import { setDependencies } from "../../setup.js"
 
 describe("generate session key", async () => {
   let DID: string
@@ -161,5 +163,97 @@ describe("handle user challenge", async () => {
 
     expect(userChallengeResult.ok).toBe(false)
     expect(err?.name === "LinkingWarning").toBe(true)
+  })
+})
+
+
+describe("delegate account", async () => {
+  let sessionKey: CryptoKey
+  let accountDelegated: boolean | null
+  let approvedMessage: boolean | null
+  const username = "snakecase"
+  const audience = "audie"
+
+  const delegateAccount = async (username: string, audience: string): Promise<Record<string, unknown>> => {
+    return { username, audience }
+  }
+
+  const finishDelegation = async (delegationMessage: string, approved: boolean): Promise<void> => {
+    const { iv, msg } = JSON.parse(delegationMessage)
+    const message = await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv: iv })
+    const link = JSON.parse(message)
+
+    approvedMessage = approved
+
+    if (link.linkStatus === "APPROVED" &&
+      link.delegation.username === username &&
+      link.delegation.audience === audience) {
+      accountDelegated = true
+    }
+  }
+
+  before(async () => {
+    setDependencies({
+      ...LOCAL_IMPLEMENTATION,
+      auth: {
+        ...LOCAL_IMPLEMENTATION.auth,
+        delegateAccount
+      }
+    })
+  })
+
+  beforeEach(async () => {
+    sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
+    accountDelegated = null
+    approvedMessage = null 
+  })
+
+  it("delegates an account", async () => {
+    await producer.delegateAccount(sessionKey, username, audience, finishDelegation)
+
+    expect(accountDelegated).toBe(true)
+  })
+
+  it("calls finish delegation with an approved message", async () => {
+    await producer.delegateAccount(sessionKey, username, audience, finishDelegation)
+
+    expect(approvedMessage).toBe(true)
+  })
+})
+
+
+describe("decline delegation", async () => {
+  let sessionKey: CryptoKey
+  let accountDelegated: boolean | null
+  let approvedMessage: boolean | null
+
+  const finishDelegation = async (delegationMessage: string, approved: boolean): Promise<void> => {
+    const { iv, msg } = JSON.parse(delegationMessage)
+    const message = await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv: iv })
+    const link = JSON.parse(message)
+
+    approvedMessage = approved
+
+    if (link.linkStatus === "DENIED") {
+      accountDelegated = false 
+    }
+  }
+
+  beforeEach(async () => {
+    sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
+    accountDelegated = null 
+    approvedMessage = null
+  })
+
+  it("declines to delegate an account", async () => {
+    await producer.declineDelegation(sessionKey, finishDelegation)
+
+    expect(accountDelegated).toBe(false)
+  })
+
+  it("calls finish delegation with a declined message", async () => {
+    await producer.declineDelegation(sessionKey, finishDelegation)
+
+    expect(approvedMessage).toBe(false)
   })
 })
