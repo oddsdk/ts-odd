@@ -78,11 +78,10 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
         if (linkingResult.ok) {
           const { approved } = linkingResult.value
           eventEmitter?.dispatchEvent("link", { approved, username: ls.username })
+          await done()
         } else {
           handleLinkingError(linkingResult.error)
         }
-
-        await done()
       }
     }
   }
