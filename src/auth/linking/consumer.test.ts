@@ -8,6 +8,8 @@ import utils from "keystore-idb/lib/utils.js"
 import * as did from "../../../src/did/index.js"
 import * as consumer from "./consumer.js"
 import * as ucan from "../../ucan/index.js"
+import { LOCAL_IMPLEMENTATION } from "../local.js"
+import { setDependencies } from "../../setup.js"
 
 describe("generate temporary exchange key", async () => {
   it("returns a temporary RSA key pair and DID", async () => {
@@ -282,5 +284,149 @@ describe("generate a user challenge", async () => {
     const messagePin = Object.values(message.pin) as number[]
 
     expect(messagePin).toEqual(originalPin)
+  })
+})
+
+describe("link device", async () => {
+  let sessionKey: CryptoKey
+  let deviceLinked: boolean
+  const username = "snakecase" // username is set in storage, not important for these tests
+
+  const linkDevice = async (data: Record<string, unknown>): Promise<void> => {
+    if (data.link === true) {
+      deviceLinked = true
+    }
+  }
+
+  before(async () => {
+    setDependencies({
+      ...LOCAL_IMPLEMENTATION,
+      auth: {
+        ...LOCAL_IMPLEMENTATION.auth,
+        linkDevice
+      }
+    })
+  })
+
+  beforeEach(async () => {
+    sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
+    deviceLinked = false
+  })
+
+  it("links a device on approval", async () => {
+    const iv = utils.randomBuf(16)
+    const msg = await aes.encrypt(
+      JSON.stringify({ linkStatus: "APPROVED", delegation: { link: true } }),
+      sessionKey,
+      { iv, alg: SymmAlg.AES_GCM }
+    )
+    const message = JSON.stringify({
+      iv: utils.arrBufToBase64(iv),
+      msg,
+    })
+
+    const linkMessage = await consumer.linkDevice(sessionKey, username, message)
+
+    let val = null
+    if (linkMessage.ok) { val = linkMessage.value }
+
+    expect(val?.approved).toEqual(true)
+    expect(deviceLinked).toEqual(true)
+  })
+
+  it("does not link on rejection", async () => {
+    const iv = utils.randomBuf(16)
+    const msg = await aes.encrypt(
+      JSON.stringify({ linkStatus: "DENIED", delegation: { link: false } }),
+      sessionKey,
+      { iv, alg: SymmAlg.AES_GCM }
+    )
+    const message = JSON.stringify({
+      iv: utils.arrBufToBase64(iv),
+      msg,
+    })
+
+    const linkMessage = await consumer.linkDevice(sessionKey, username, message)
+
+    let val = null
+    if (linkMessage.ok) { val = linkMessage.value }
+
+    expect(val?.approved).toEqual(false)
+    expect(deviceLinked).toEqual(false)
+  })
+
+  it("returns a warning when the message received has the wrong shape", async () => {
+    const iv = utils.randomBuf(16)
+    const msg = await aes.encrypt(
+      JSON.stringify({ linkStatus: "DENIED", delegation: { link: false } }),
+      sessionKey,
+      { iv, alg: SymmAlg.AES_GCM }
+    )
+    const message = JSON.stringify({
+      msg, // iv missing
+    })
+
+    const linkMessage = await consumer.linkDevice(sessionKey, username, message)
+
+    let err
+    if (linkMessage.ok === false) { err = linkMessage.error }
+
+    expect(linkMessage.ok).toBe(false)
+    expect(err?.name === "LinkingWarning").toBe(true)
+  })
+
+  it("returns a warning when it receives a temporary DID", async () => {
+    const temporaryDID = await did.ucan()
+
+    const userChallengeResult = await consumer.linkDevice(sessionKey, username, temporaryDID)
+
+    let err = null
+    if (userChallengeResult.ok === false) { err = userChallengeResult.error }
+
+    expect(userChallengeResult.ok).toBe(false)
+    expect(err?.name === "LinkingWarning").toBe(true)
+  })
+
+  it("returns a warning when it receives a message it cannot decrypt", async () => {
+    const sessionKeyNoise = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
+    const iv = utils.randomBuf(16)
+    const msg = await aes.encrypt(
+      JSON.stringify({ linkStatus: "DENIED", delegation: { link: false } }),
+      sessionKeyNoise,
+      { iv, alg: SymmAlg.AES_GCM }
+    )
+    const message = JSON.stringify({
+      iv: utils.arrBufToBase64(iv),
+      msg
+    })
+
+    const linkMessage = await consumer.linkDevice(sessionKey, username, message)
+
+    let err
+    if (linkMessage.ok === false) { err = linkMessage.error }
+
+    expect(linkMessage.ok).toBe(false)
+    expect(err?.name === "LinkingWarning").toBe(true)
+  })
+
+  it("returns an error when it receives an invalid linking status message", async () => {
+    const iv = utils.randomBuf(16)
+    const msg = await aes.encrypt(
+      JSON.stringify({ linkStatus: "INVALID", delegation: { link: true } }),
+      sessionKey,
+      { iv, alg: SymmAlg.AES_GCM }
+    )
+    const message = JSON.stringify({
+      iv: utils.arrBufToBase64(iv),
+      msg
+    })
+
+    const linkMessage = await consumer.linkDevice(sessionKey, username, message)
+
+    let err
+    if (linkMessage.ok === false) { err = linkMessage.error }
+
+    expect(linkMessage.ok).toBe(false)
+    expect(err?.name === "LinkingError").toBe(true)
   })
 })
