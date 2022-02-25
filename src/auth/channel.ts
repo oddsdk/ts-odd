@@ -1,6 +1,4 @@
 import * as did from "../did/index.js"
-import * as storage from "../storage/index.js"
-import * as ucan from "../ucan/index.js"
 import { setup } from "../setup/internal.js"
 import { LinkingError } from "./linking.js"
 
@@ -21,7 +19,7 @@ type WebSocketData = string | ArrayBufferLike | Blob | ArrayBufferView
 export const createChannel = async (options: ChannelOptions): Promise<Channel> => {
   const { username, handleMessage } = options
 
-  const rootDid = await lookupRootDid(username).catch(_ => null)
+  const rootDid = await await did.root(username).catch(_ => null)
   if (!rootDid) {
     throw new LinkingError(`Failed to lookup DID for ${username}`)
   }
@@ -74,26 +72,4 @@ export const publishOnWssChannel = (socket: WebSocket): (data: WebSocketData) =>
 
     socket?.send(binary)
   }
-}
-
-
-// ⛑ Helpers
-
-const rootDidCache: Record<string, string> = {}
-
-const lookupRootDid = async (maybeUsername: string | null) => {
-  let x, y
-
-  const maybeUcan: string | null = await storage.getItem("ucan")
-  if (maybeUsername) {
-    x = maybeUsername
-    y = rootDidCache[x] || (await did.root(x))
-  } else if (maybeUcan) {
-    x = "ucan"
-    y = rootDidCache[x] || ucan.rootIssuer(maybeUcan)
-  } else {
-    x = "local"
-    y = rootDidCache[x] || (await did.write())
-  }
-  return y
 }
