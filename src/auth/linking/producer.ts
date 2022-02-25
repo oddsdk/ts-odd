@@ -265,5 +265,5 @@ export const declineDelegation = async (
     msg
   })
 
-  await finishDelegation(delegationMessage, true)
+  await finishDelegation(delegationMessage, false)
 }
