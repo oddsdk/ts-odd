@@ -146,9 +146,6 @@ describe("account linking", () => {
     while (!consumerDone) await new Promise(r => setTimeout(r, 1000))
     producer.cancel()
 
-    console.log("consumers", consumerAccounts)
-    console.log("producers", producerAccounts)
-
     expect(consumerAccounts["elm-owl"]).not.toBeDefined()
     expect(producerAccounts["elm-owl"]).not.toBeDefined()
     expect(consumerAccounts).toEqual(producerAccounts)
