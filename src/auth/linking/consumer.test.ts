@@ -9,7 +9,7 @@ import * as did from "../../../src/did/index.js"
 import * as consumer from "./consumer.js"
 import * as ucan from "../../ucan/index.js"
 import { LOCAL_IMPLEMENTATION } from "../local.js"
-import { setDependencies } from "../../setup.js"
+import { setImplementations } from "../../setup.js"
 
 describe("generate temporary exchange key", async () => {
   it("returns a temporary RSA key pair and DID", async () => {
@@ -50,6 +50,7 @@ describe("handle session key", async () => {
     temporaryDID = did.publicKeyToDid(exportedPubKey, did.KeyType.RSA)
 
     const rawSessionKey = utils.arrBufToStr(utils.base64ToArrBuf(exportedSessionKey), CharSize.B16)
+    if (!temporaryRsaPair.publicKey) throw new Error("Temporary RSA public key missing")
     encryptedSessionKey = await rsa.encrypt(rawSessionKey, temporaryRsaPair.publicKey)
   })
 
@@ -67,6 +68,7 @@ describe("handle session key", async () => {
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKey)
     })
+    if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
     const sessionKeyResult = await consumer.handleSessionKey(temporaryRsaPair.privateKey, message)
 
@@ -90,6 +92,7 @@ describe("handle session key", async () => {
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKey)
     })
+    if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
     const sessionKeyResult = await consumer.handleSessionKey(temporaryRsaPair.privateKey, message)
 
@@ -105,6 +108,8 @@ describe("handle session key", async () => {
     const { rsaSize, hashAlg } = cfg
     const temporaryRsaPairNoise = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Exchange)
     const rawSessionKeyNoise = utils.arrBufToStr(utils.base64ToArrBuf(exportedSessionKey), CharSize.B16)
+
+    if (!temporaryRsaPairNoise.publicKey) throw new Error("Temporary RSA public key missing")
     const encryptedSessionKeyNoise = await rsa.encrypt(rawSessionKeyNoise, temporaryRsaPairNoise.publicKey)
 
     const closedUcan = await ucan.build({
@@ -119,6 +124,7 @@ describe("handle session key", async () => {
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKeyNoise) // session key encrypted with noise
     })
+    if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
     const sessionKeyResult = await consumer.handleSessionKey(temporaryRsaPair.privateKey, message)
 
@@ -144,6 +150,7 @@ describe("handle session key", async () => {
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKey)
     })
+    if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
     const sessionKeyResult = await consumer.handleSessionKey(temporaryRsaPair.privateKey, message)
 
@@ -168,6 +175,7 @@ describe("handle session key", async () => {
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKey)
     })
+    if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
     const sessionKeyResult = await consumer.handleSessionKey(temporaryRsaPair.privateKey, message)
 
@@ -192,6 +200,7 @@ describe("handle session key", async () => {
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKey)
     })
+    if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
     const sessionKeyResult = await consumer.handleSessionKey(temporaryRsaPair.privateKey, message)
 
@@ -216,6 +225,7 @@ describe("handle session key", async () => {
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKey)
     })
+    if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
     const sessionKeyResult = await consumer.handleSessionKey(temporaryRsaPair.privateKey, message)
 
@@ -240,6 +250,7 @@ describe("handle session key", async () => {
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKey)
     })
+    if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
     const sessionKeyResult = await consumer.handleSessionKey(temporaryRsaPair.privateKey, message)
 
@@ -299,8 +310,7 @@ describe("link device", async () => {
   }
 
   before(async () => {
-    setDependencies({
-      ...LOCAL_IMPLEMENTATION,
+    setImplementations({
       auth: {
         ...LOCAL_IMPLEMENTATION.auth,
         linkDevice

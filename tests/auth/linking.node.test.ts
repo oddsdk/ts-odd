@@ -4,7 +4,7 @@ import { LOCAL_IMPLEMENTATION } from "../../src/auth/local.js"
 import { createConsumer } from "../../src/auth/linking/consumer.js"
 import { createProducer } from "../../src/auth/linking/producer.js"
 import { EventEmitter } from "../../src/common/event-emitter.js"
-import { debug, setDependencies } from "../../src/setup.js"
+import { debug, setImplementations } from "../../src/setup.js"
 
 import type { Channel, ChannelOptions } from "../../src/auth/channel.js"
 
@@ -59,8 +59,7 @@ describe("account linking", () => {
       consumerAccounts[username] = [...consumerAccounts[username], audience]
     }
 
-    setDependencies({
-      ...LOCAL_IMPLEMENTATION,
+    setImplementations({
       auth: {
         ...LOCAL_IMPLEMENTATION.auth,
         createChannel,

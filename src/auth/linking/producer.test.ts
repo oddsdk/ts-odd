@@ -8,7 +8,7 @@ import * as did from "../../../src/did/index.js"
 import * as producer from "./producer.js"
 import * as ucan from "../../ucan/index.js"
 import { LOCAL_IMPLEMENTATION } from "../local.js"
-import { setDependencies } from "../../setup.js"
+import { setImplementations } from "../../setup.js"
 
 describe("generate session key", async () => {
   let DID: string
@@ -193,8 +193,7 @@ describe("delegate account", async () => {
   }
 
   before(async () => {
-    setDependencies({
-      ...LOCAL_IMPLEMENTATION,
+    setImplementations({
       auth: {
         ...LOCAL_IMPLEMENTATION.auth,
         delegateAccount

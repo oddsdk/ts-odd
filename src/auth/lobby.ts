@@ -1,5 +1,6 @@
 import FileSystem from "../fs/index.js"
 
+import type { Channel, ChannelOptions } from "./channel"
 import { Implementation } from "./implementation/types.js"
 import { InitOptions } from "../init/types.js"
 
@@ -20,7 +21,7 @@ import * as user from "../lobby/username.js"
 import * as token from "../ucan/token.js"
 import * as channel from "./channel.js"
 
-import type { Channel, ChannelOptions } from "./channel"
+
 
 export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null
@@ -133,14 +134,21 @@ export const linkDevice = async (data: Record<string, unknown>): Promise<void> =
 }
 
 
+
 // 🛳
+
 
 export const IMPLEMENTATION: Implementation = {
   init,
   register,
   isUsernameValid,
   isUsernameAvailable,
+  createChannel,
+  checkCapability,
+  delegateAccount,
+  linkDevice
 }
+
 
 // HELPERS
 
