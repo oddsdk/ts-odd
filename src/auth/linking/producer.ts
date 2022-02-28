@@ -11,7 +11,7 @@ import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } fro
 import type { Maybe, Result } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter.js"
 
-type AccountLinkingProducer = {
+export type AccountLinkingProvider = {
   on: OnChallenge & OnLink & OnDone
   cancel: () => void
 }
@@ -38,7 +38,7 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
-export const createProducer = async (options: { username: string }): Promise<AccountLinkingProducer> => {
+export const createProducer = async (options: { username: string }): Promise<AccountLinkingProvider> => {
   const { username } = options
   const canDelegate = await auth.checkCapability(username)
 

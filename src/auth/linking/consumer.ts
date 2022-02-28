@@ -14,7 +14,7 @@ import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } fro
 import type { EventListener } from "../../common/event-emitter.js"
 import type { Maybe, Result } from "../../common/index.js"
 
-type AccountLinkingConsumer = {
+export type AccountLinkingRequestor = {
   on: OnChallenge & OnLink & OnDone
   cancel: () => void
 }
@@ -32,7 +32,7 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
-export const createConsumer = async (options: { username: string }): Promise<AccountLinkingConsumer> => {
+export const createConsumer = async (options: { username: string }): Promise<AccountLinkingRequestor> => {
   const { username } = options
   let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
   const ls: LinkingState = {
