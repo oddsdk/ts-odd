@@ -109,6 +109,9 @@ export const createChannel = (options: ChannelOptions): Promise<Channel> => {
 }
 
 export const checkCapability = async (username: string): Promise<boolean> => {
+  const readKey = await storage.getItem("readKey")
+  if (!readKey) return false
+
   const didFromDNS = await did.root(username)
   const maybeUcan: string | null = await storage.getItem("ucan")
 
@@ -126,11 +129,31 @@ export const checkCapability = async (username: string): Promise<boolean> => {
 }
 
 export const delegateAccount = async (username: string, audience: string): Promise<Record<string, unknown>> => {
-  return {}
+    const readKey = await storage.getItem("readKey")
+    const proof = await storage.getItem("ucan") as string
+
+    const u = await token.build({
+      audience,
+      issuer: await did.write(),
+      lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
+      potency: "SUPER_USER",
+      proof,
+  
+      // TODO: UCAN v0.7.0
+      // proofs: [ await localforage.getItem("ucan") ]
+    })
+  
+    return { readKey, token: token.encode(u) }
 }
 
 export const linkDevice = async (data: Record<string, unknown>): Promise<void> => {
-  // implement this
+  const { readKey, token: encodedToken } = data
+  const u = token.decode(encodedToken as string)
+
+  if (await token.isValid(u)) {
+    await storage.setItem("ucan", encodedToken)
+    await storage.setItem("readKey", readKey)
+  }
 }
 
 
