@@ -126,8 +126,8 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
 /**
  *  BROADCAST
  * 
- * The first CONSUMER step (after opening the channel) generates a temporary RSA keypair.
- * The temporary public key is converted to a DID for broadcast on the channel.
+ * Generate a temporary RSA keypair and extract a temporary DID from it.
+ * The temporary DID will be broadcast on the channel to start the linking process.
  * 
  * @returns temporary RSA key pair and temporary DID
  */
@@ -144,7 +144,9 @@ export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair
 /**
  *  NEGOTIATION
  * 
- * The CONSUMER receives the session key and validates the closed UCAN. 
+ * Decrypt the session key and check the closed UCAN for capability.
+ * The session key is encrypted with the temporary RSA keypair.
+ * The closed UCAN is encrypted with the session key.
  * 
  * @param temporaryRsaPrivateKey
  * @param data 
@@ -211,9 +213,9 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
 
 
 /**
- * NEGOTIATION (response)
+ * NEGOTIATION
  * 
- * Generate pin and challenge message for verification by the PRODUCER
+ * Generate pin and challenge message for verification by the producer. 
  * 
  * @param sessionKey
  * @returns pin and challenge message
@@ -238,9 +240,10 @@ export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pi
 }
 
 /**
- * CONSUMER: DELEGATION
+ * DELEGATION
  *
- * Decrypt the delegated credentials and forward to client implementation
+ * Decrypt the delegated credentials and forward to the dependency injected linkDevice function,
+ * or report that delegation was declined.
  *
  * @param sessionKey
  * @param username

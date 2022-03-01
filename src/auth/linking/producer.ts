@@ -137,10 +137,10 @@ export const createProducer = async (options: { username: string }): Promise<Acc
 /**
  * BROADCAST
  * 
- * This should be called by the PRODUCER upon receiving the throwaway DID key.
+ * Generate a session key and prepare a session key message to send to the consumer.
  * 
  * @param didThrowaway 
- * @returns session key and session key message for the CONSUMER
+ * @returns session key and session key message
  */
 export const generateSessionKey = async (didThrowaway: string): Promise<{ sessionKey: CryptoKey; sessionKeyMessage: string }> => {
   const sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
@@ -181,7 +181,7 @@ export const generateSessionKey = async (didThrowaway: string): Promise<{ sessio
 /**
  * NEGOTIATION
  * 
- * PRODUCER receives the DID & challenge PIN from the CONSUMER.
+ * Decrypt the user challenge and the consumer audience DID.
  * 
  * @param data 
  * @returns pin and audience
@@ -224,9 +224,9 @@ export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): 
 
 /**
  * DELEGATION: Delegate account
- * 
- * The dependency injected auth.delegateAccount creates a UCAN with delegate rights and any other secrets
- * intended for the CONSUMER. 
+ *
+ * Request delegation from the dependency injected delegateAccount function. 
+ * Prepare a delegation message to send to the consumer.
  * 
  * @param sesionKey 
  * @param audience
@@ -255,6 +255,8 @@ export const delegateAccount = async (
 /**
  * DELEGATION: Decline delegation
  *
+ * Prepare a delegation declined message to send to the consumer.
+ * 
  * @param sessionKey
  * @param finishDelegation
  */
