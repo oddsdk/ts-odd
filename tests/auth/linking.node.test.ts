@@ -152,7 +152,8 @@ describe("account linking", () => {
   })
 
 
-  it("links with one producer and multiple consumers", async () => {
+  // TODO: Run this test when we have implemented a message queue
+  it.skip("links with one producer and multiple consumers", async () => {
     const numConsumers = Math.round(Math.random() * 2 + 2)
     const producer = await createProducer({ username: "elm-owl" })
 
