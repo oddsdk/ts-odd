@@ -38,6 +38,13 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
+/**
+ * Create an account linking provider
+ *
+ * @param options provider options
+ * @param options.username username of the account
+ * @returns an account linking event emitter and cancel function
+ */
 export const createProducer = async (options: { username: string }): Promise<AccountLinkingProvider> => {
   const { username } = options
   const canDelegate = await auth.checkCapability(username)

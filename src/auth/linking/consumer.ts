@@ -32,6 +32,13 @@ type LinkingState = {
   step: Maybe<LinkingStep>
 }
 
+/**
+ * Create an account linking requestor
+ *
+ * @param options requestor options
+ * @param options.username username of the account
+ * @returns an account linking event emitter and cancel function
+ */
 export const createConsumer = async (options: { username: string }): Promise<AccountLinkingRequestor> => {
   const { username } = options
   let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
