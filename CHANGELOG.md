@@ -1,6 +1,10 @@
 # Changelog
 
 
+### v0.32.0
+
+- Adds app owned account linking
+
 ### v0.31.1
 
 Move `madge` and `typedoc-plugin-missing-exports` from `dependencies` into `devDependencies`.
