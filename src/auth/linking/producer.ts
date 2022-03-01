@@ -2,9 +2,10 @@ import aes from "keystore-idb/lib/aes/index.js"
 import rsa from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
 import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
-import { impl as auth } from "../implementation.js"
+
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
+import { impl as auth } from "../implementation.js"
 import { EventEmitter } from "../../common/event-emitter.js"
 import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
@@ -50,7 +51,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
   const canDelegate = await auth.checkCapability(username)
 
   if (!canDelegate) {
-    throw new LinkingError(`Cannot delegate for username ${username}`)
+    throw new LinkingError(`Producer cannot delegate for username ${username}`)
   }
 
   let eventEmitter: Maybe<EventEmitter> = new EventEmitter()

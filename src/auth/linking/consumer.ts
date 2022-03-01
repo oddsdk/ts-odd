@@ -3,10 +3,11 @@ import config from "keystore-idb/lib/config.js"
 import rsa from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
 import { KeyUse, SymmAlg } from "keystore-idb/lib/types.js"
-import { impl as auth } from "../implementation.js"
+
 import * as did from "../../did/index.js"
-import * as ucan from "../../ucan/index.js"
 import * as storage from "../../storage/index.js"
+import * as ucan from "../../ucan/index.js"
+import { impl as auth } from "../implementation.js"
 import { EventEmitter } from "../../common/event-emitter.js"
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
@@ -182,27 +183,27 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
         }
       )
     } catch {
-      return { ok: false, error: new LinkingError("Could not decrypt closed UCAN with provided session key.") }
+      return { ok: false, error: new LinkingError("Consumer could not decrypt closed UCAN with provided session key.") }
     }
 
     const decodedUcan = ucan.decode(encodedUcan)
 
     if (await ucan.isValid(decodedUcan) === false) {
-      return { ok: false, error: new LinkingError("Invalid closed UCAN") }
+      return { ok: false, error: new LinkingError("Consumer received an invalid closed UCAN") }
     }
 
     if (decodedUcan.payload.ptc) {
-      return { ok: false, error: new LinkingError("Invalid closed UCAN: must not have any potency") }
+      return { ok: false, error: new LinkingError("Consumer received a closed UCAN with potency. Closed UCAN must not have potency.") }
     }
 
     const sessionKeyFromFact = decodedUcan.payload.fct[0] && decodedUcan.payload.fct[0].sessionKey
     if (!sessionKeyFromFact) {
-      return { ok: false, error: new LinkingError("Session key is missing from closed UCAN") }
+      return { ok: false, error: new LinkingError("Consumer received a closed UCAN that was missing a session key in facts.") }
     }
 
     const sessionKeyWeAlreadyGot = utils.arrBufToBase64(rawSessionKey)
     if (sessionKeyFromFact !== sessionKeyWeAlreadyGot) {
-      return { ok: false, error: new LinkingError("Closed UCAN session key does not match session key") }
+      return { ok: false, error: new LinkingError("Consumer received a closed UCAN session key does not match the session key") }
     }
 
     return { ok: true, value: sessionKey }
@@ -270,8 +271,8 @@ export const linkDevice = async (sessionKey: CryptoKey, username: string, data: 
           iv: iv
         }
       )
-    } catch (_) {
-      return { ok: false, error: new LinkingWarning("Ignoring message that could not be decrypted.") }
+    } catch {
+      return { ok: false, error: new LinkingWarning("Consumer ignoring message that could not be decrypted in linkDevice.") }
     }
 
     const response = JSON.parse(message)
@@ -284,7 +285,7 @@ export const linkDevice = async (sessionKey: CryptoKey, username: string, data: 
     } else if (response.linkStatus === "DENIED") {
       return { ok: true, value: { approved: false } }
     } else {
-      return { ok: false, error: new LinkingError("Invalid linking message received from producer.") }
+      return { ok: false, error: new LinkingError("Consumer received an invalid link device message received from producer.") }
     }
   } else {
     return parseResult

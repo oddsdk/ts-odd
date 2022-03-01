@@ -32,7 +32,6 @@ export const createChannel = async (options: ChannelOptions): Promise<Channel> =
   const socket: Maybe<WebSocket> = new WebSocket(`${endpoint}/user/link/${rootDid}`)
   await waitForOpenConnection(socket)
   socket.onmessage = handleMessage
-  // socket.onerror = () => { // reconnect }
 
   const send = publishOnWssChannel(socket)
   const close = closeWssChannel(socket)
@@ -46,7 +45,6 @@ export const createChannel = async (options: ChannelOptions): Promise<Channel> =
 const waitForOpenConnection = async (socket: WebSocket): Promise<void> => {
   return new Promise((resolve, reject) => {
     socket.onopen = () => {
-      console.log("socket is open")
       resolve()
     }
     socket.onerror = () => {
