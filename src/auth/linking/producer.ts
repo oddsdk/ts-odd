@@ -79,20 +79,35 @@ export const createProducer = async (options: { username: string }): Promise<Acc
         if (userChallengeResult.ok) {
           const { pin, audience } = userChallengeResult.value
 
-          const confirmPin = async () => {
-            if (ls.sessionKey) {
-              await delegateAccount(ls.sessionKey, username, audience, finishDelegation)
-            } else {
-              handleLinkingError(new LinkingError("Producer missing session key when delegating account"))
+          const challengeOnce = () => {
+            let called = false
+
+            return {
+              confirmPin: async () => {
+                if (!called) {
+                  called = true
+
+                  if (ls.sessionKey) {
+                    await delegateAccount(ls.sessionKey, username, audience, finishDelegation)
+                  } else {
+                    handleLinkingError(new LinkingError("Producer missing session key when delegating account"))
+                  }
+                }
+              },
+              rejectPin: async () => {
+                if (!called) {
+                  called = true
+
+                  if (ls.sessionKey) {
+                    await declineDelegation(ls.sessionKey, finishDelegation)
+                  } else {
+                    handleLinkingError(new LinkingError("Producer missing session key when declining account delegation"))
+                  }
+                }
+              }
             }
           }
-          const rejectPin = async () => {
-            if (ls.sessionKey) {
-              await declineDelegation(ls.sessionKey, finishDelegation)
-            } else {
-              handleLinkingError(new LinkingError("Producer missing session key when declining account delegation"))
-            }
-          }
+          const { confirmPin, rejectPin } = challengeOnce()
 
           eventEmitter?.dispatchEvent("challenge", { pin, confirmPin, rejectPin })
         } else {
