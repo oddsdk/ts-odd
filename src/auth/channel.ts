@@ -5,7 +5,7 @@ import { LinkingError } from "./linking.js"
 import type { Maybe } from "../common/index.js"
 
 export type Channel = {
-  send: (data: WebSocketData) => void
+  send: (data: ChannelData) => void
   close: () => void
 }
 
@@ -14,7 +14,7 @@ export type ChannelOptions = {
   handleMessage: (event: MessageEvent) => void
 }
 
-type WebSocketData = string | ArrayBufferLike | Blob | ArrayBufferView
+type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView
 
 export const createChannel = async (options: ChannelOptions): Promise<Channel> => {
   const { username, handleMessage } = options
@@ -62,8 +62,8 @@ export const closeWssChannel = (socket: Maybe<WebSocket>): () => void => {
   }
 }
 
-export const publishOnWssChannel = (socket: WebSocket): (data: WebSocketData) => void => {
-  return function (data: WebSocketData) {
+export const publishOnWssChannel = (socket: WebSocket): (data: ChannelData) => void => {
+  return function (data: ChannelData) {
     const binary = typeof data === "string"
       ? new TextEncoder().encode(data).buffer
       : data
