@@ -105,7 +105,7 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
 }
 
 export const createChannel = (options: ChannelOptions): Promise<Channel> => {
-  return channel.createChannel(options)
+  return channel.createWssChannel(options)
 }
 
 export const checkCapability = async (username: string): Promise<boolean> => {

@@ -16,7 +16,7 @@ export type ChannelOptions = {
 
 type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView
 
-export const createChannel = async (options: ChannelOptions): Promise<Channel> => {
+export const createWssChannel = async (options: ChannelOptions): Promise<Channel> => {
   const { username, handleMessage } = options
 
   const rootDid = await await did.root(username).catch(() => null)
