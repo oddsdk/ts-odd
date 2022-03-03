@@ -15,7 +15,7 @@ import { privateFileContent as fileContent, privateDecode as decode } from "../h
 describe("the private filesystem api", function () {
 
   before(async function () {
-    fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 50 } : { numRuns: 10 })
+    fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 25 } : { numRuns: 10 })
   })
 
   after(async () => {

@@ -15,7 +15,7 @@ import { publicFileContent as fileContent, publicDecode as decode } from "../hel
 describe("the public filesystem api", function () {
 
   before(async function () {
-    fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 50 } : { numRuns: 10 })
+    fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 25 } : { numRuns: 10 })
   })
 
   after(async () => {
