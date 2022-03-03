@@ -19,7 +19,7 @@ type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView
 export const createChannel = async (options: ChannelOptions): Promise<Channel> => {
   const { username, handleMessage } = options
 
-  const rootDid = await await did.root(username).catch(_ => null)
+  const rootDid = await await did.root(username).catch(() => null)
   if (!rootDid) {
     throw new LinkingError(`Failed to lookup DID for ${username}`)
   }
@@ -32,6 +32,8 @@ export const createChannel = async (options: ChannelOptions): Promise<Channel> =
   const socket: Maybe<WebSocket> = new WebSocket(`${endpoint}/user/link/${rootDid}`)
   await waitForOpenConnection(socket)
   socket.onmessage = handleMessage
+  socket.onclose = ev => console.log("close", ev)
+  socket.onerror = ev => console.log("err", ev)
 
   const send = publishOnWssChannel(socket)
   const close = closeWssChannel(socket)
