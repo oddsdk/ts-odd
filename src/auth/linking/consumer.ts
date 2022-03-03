@@ -12,6 +12,7 @@ import { EventEmitter } from "../../common/event-emitter.js"
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
+import type { LinkingStep } from "../linking.js"
 import type { EventListener } from "../../common/event-emitter.js"
 import type { Maybe, Result } from "../../common/index.js"
 
@@ -23,8 +24,6 @@ export type AccountLinkingRequestor = {
 type OnChallenge = (event: "challenge", listener: (args: { pin: number[] }) => void) => void
 type OnLink = (event: "link", listener: (args: { approved: boolean; username: string }) => void) => void
 type OnDone = (event: "done", listener: () => void) => void
-
-type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 
 type LinkingState = {
   username: Maybe<string>

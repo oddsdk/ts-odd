@@ -9,6 +9,7 @@ import { impl as auth } from "../implementation.js"
 import { EventEmitter } from "../../common/event-emitter.js"
 import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
+import type { LinkingStep } from "../linking.js"
 import type { Maybe, Result } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter.js"
 
@@ -30,7 +31,6 @@ type OnChallenge = (
 type OnLink = (event: "link", listener: (args: { approved: boolean; username: string }) => void) => void
 type OnDone = (event: "done", listener: () => void) => void
 
-type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 
 type LinkingState = {
   username: Maybe<string>

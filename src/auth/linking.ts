@@ -3,6 +3,7 @@ import type { Result } from "../common/index.js"
 import * as debug from "../common/debug.js"
 
 
+export type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
 export class LinkingError extends Error {
   constructor(message: string) {
     super(message)
