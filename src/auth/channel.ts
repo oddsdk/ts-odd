@@ -32,8 +32,6 @@ export const createWssChannel = async (options: ChannelOptions): Promise<Channel
   const socket: Maybe<WebSocket> = new WebSocket(`${endpoint}/user/link/${rootDid}`)
   await waitForOpenConnection(socket)
   socket.onmessage = handleMessage
-  socket.onclose = ev => console.log("close", ev)
-  socket.onerror = ev => console.log("err", ev)
 
   const send = publishOnWssChannel(socket)
   const close = closeWssChannel(socket)

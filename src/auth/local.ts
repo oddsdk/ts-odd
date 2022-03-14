@@ -12,7 +12,6 @@ import * as user from "../lobby/username.js"
 
 
 export const init = async (): Promise<State | null> => {
-  console.log("initialize local auth")
   return new Promise((resolve) => resolve(null))
 }
 
