@@ -34,7 +34,6 @@ type OnDone = (event: "done", listener: () => void) => void
 type LinkingState = {
   username: Maybe<string>
   sessionKey: Maybe<CryptoKey>
-  temporaryRsaPair: Maybe<CryptoKeyPair>
   step: Maybe<LinkingStep>
 }
 
@@ -57,7 +56,6 @@ export const createProducer = async (options: { username: string }): Promise<Acc
   const ls: LinkingState = {
     username,
     sessionKey: null,
-    temporaryRsaPair: null,
     step: LinkingStep.Broadcast
   }
 
@@ -130,7 +128,6 @@ export const createProducer = async (options: { username: string }): Promise<Acc
 
   const resetLinkingState = () => {
     ls.sessionKey = null
-    ls.temporaryRsaPair = null
     ls.step = LinkingStep.Broadcast
   }
 
