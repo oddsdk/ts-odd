@@ -10,9 +10,8 @@ import * as ucan from "../../ucan/index.js"
 import { impl as auth } from "../implementation.js"
 import { EventEmitter } from "../../common/event-emitter.js"
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
-import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
+import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
-import type { LinkingStep } from "../linking.js"
 import type { EventListener } from "../../common/event-emitter.js"
 import type { Maybe, Result } from "../../common/index.js"
 
@@ -46,16 +45,16 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
     username,
     sessionKey: null,
     temporaryRsaPair: null,
-    step: "BROADCAST"
+    step: LinkingStep.Broadcast
   }
 
   const handleMessage = async (event: MessageEvent): Promise<void> => {
     const { data } = event
     const message = data.arrayBuffer ? new TextDecoder().decode(await data.arrayBuffer()) : data
 
-    if (ls.step === "BROADCAST") {
+    if (ls.step === LinkingStep.Broadcast) {
       handleLinkingError(new LinkingWarning("Consumer is not ready to start linking"))
-    } else if (ls.step === "NEGOTIATION") {
+    } else if (ls.step === LinkingStep.Negotiation) {
       if (ls.sessionKey) {
         handleLinkingError(new LinkingWarning("Consumer already received a session key"))
       } else if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) {
@@ -69,12 +68,12 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
           const { pin, challenge } = await generateUserChallenge(ls.sessionKey)
           channel.send(challenge)
           eventEmitter?.dispatchEvent("challenge", { pin: Array.from(pin) })
-          ls.step = "DELEGATION"
+          ls.step = LinkingStep.Delegation
         } else {
           handleLinkingError(sessionKeyResult.error)
         }
       }
-    } else if (ls.step === "DELEGATION") {
+    } else if (ls.step === LinkingStep.Delegation){
       if (!ls.sessionKey) {
         handleLinkingError(new LinkingError("Consumer was missing session key when linking device"))
       } else if (!ls.username) {
@@ -106,7 +105,7 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
     if (!ls.sessionKey) {
       const { temporaryRsaPair, temporaryDID } = await generateTemporaryExchangeKey()
       ls.temporaryRsaPair = temporaryRsaPair
-      ls.step = "NEGOTIATION"
+      ls.step = LinkingStep.Negotiation
 
       await channel.send(temporaryDID)
     } else {

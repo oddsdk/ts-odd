@@ -3,7 +3,12 @@ import type { Result } from "../common/index.js"
 import * as debug from "../common/debug.js"
 
 
-export type LinkingStep = "BROADCAST" | "NEGOTIATION" | "DELEGATION"
+export enum LinkingStep {
+  Broadcast = "BROADCAST",
+  Negotiation = "NEGOTIATION",
+  Delegation = "DELEGATION"
+}
+
 export class LinkingError extends Error {
   constructor(message: string) {
     super(message)

@@ -7,9 +7,8 @@ import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import { impl as auth } from "../implementation.js"
 import { EventEmitter } from "../../common/event-emitter.js"
-import { LinkingError, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
+import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
-import type { LinkingStep } from "../linking.js"
 import type { Maybe, Result } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter.js"
 
@@ -59,22 +58,22 @@ export const createProducer = async (options: { username: string }): Promise<Acc
     username,
     sessionKey: null,
     temporaryRsaPair: null,
-    step: "BROADCAST"
+    step: LinkingStep.Broadcast
   }
 
   const handleMessage = async (event: MessageEvent): Promise<void> => {
     const { data } = event
     const message = data.arrayBuffer ? new TextDecoder().decode(await data.arrayBuffer()) : data
 
-    if (ls.step === "BROADCAST") {
+    if (ls.step === LinkingStep.Broadcast) {
       const { sessionKey, sessionKeyMessage } = await generateSessionKey(message)
       ls.sessionKey = sessionKey
-      ls.step = "NEGOTIATION"
+      ls.step = LinkingStep.Negotiation
       channel.send(sessionKeyMessage)
-    } else if (ls.step === "NEGOTIATION") {
+    } else if (ls.step === LinkingStep.Negotiation) {
       if (ls.sessionKey) {
         const userChallengeResult = await handleUserChallenge(ls.sessionKey, message)
-        ls.step = "DELEGATION"
+        ls.step = LinkingStep.Delegation
 
         if (userChallengeResult.ok) {
           const { pin, audience } = userChallengeResult.value
@@ -117,7 +116,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
       } else {
         handleLinkingError(new LinkingError("Producer missing session key when handling user challenge"))
       }
-    } else if (ls.step === "DELEGATION") {
+    } else if (ls.step === LinkingStep.Delegation) {
       handleLinkingError(new LinkingWarning("Producer received an unexpected message while delegating an account. The message will be ignored."))
     }
   }
@@ -132,7 +131,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
   const resetLinkingState = () => {
     ls.sessionKey = null
     ls.temporaryRsaPair = null
-    ls.step = "BROADCAST"
+    ls.step = LinkingStep.Broadcast
   }
 
   const cancel = async () => {
