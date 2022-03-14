@@ -13,7 +13,7 @@ import type { LinkingStep } from "../linking.js"
 import type { Maybe, Result } from "../../common/index.js"
 import type { EventListener } from "../../common/event-emitter.js"
 
-export type AccountLinkingProvider = {
+export type AccountLinkingProducer = {
   on: OnChallenge & OnLink & OnDone
   cancel: () => void
 }
@@ -40,13 +40,13 @@ type LinkingState = {
 }
 
 /**
- * Create an account linking provider
+ * Create an account linking producer
  *
- * @param options provider options
+ * @param options producer options
  * @param options.username username of the account
  * @returns an account linking event emitter and cancel function
  */
-export const createProducer = async (options: { username: string }): Promise<AccountLinkingProvider> => {
+export const createProducer = async (options: { username: string }): Promise<AccountLinkingProducer> => {
   const { username } = options
   const canDelegate = await auth.checkCapability(username)
 

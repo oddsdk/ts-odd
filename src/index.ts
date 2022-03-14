@@ -99,7 +99,7 @@ export { Scenario, State } from "./auth/state.js"
 export { AuthCancelled, AuthSucceeded, Continuation, NotAuthorised } from "./auth/state.js"
 export { InitialisationError, InitOptions } from "./init/types.js"
 
-export * as auth from "./auth/index.js"
+export * as account from "./auth/index.js"
 export * as apps from "./apps/index.js"
 export * as dataRoot from "./data-root.js"
 export * as did from "./did/index.js"

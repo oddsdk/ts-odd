@@ -12,5 +12,5 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
   return impl.isUsernameAvailable(username)
 }
 
-export { AccountLinkingRequestor, createConsumer as createRequestor } from "./linking/consumer.js"
-export { AccountLinkingProvider, createProducer as createProvider } from "./linking/producer.js"
+export { AccountLinkingProducer, createProducer } from "./linking/producer.js"
+export { AccountLinkingConsumer, createConsumer } from "./linking/consumer.js"
