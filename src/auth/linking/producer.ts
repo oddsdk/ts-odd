@@ -6,15 +6,16 @@ import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import { impl as auth } from "../implementation.js"
-import { EventEmitter, EventSource } from "../../common/event-emitter.js"
+import { EventEmitter, EventListener } from "../../common/event-emitter.js"
 import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
 import type { Maybe, Result } from "../../common/index.js"
 
-export type AccountLinkingProducer = EventSource<ProducerEventMap> & {
+
+export type AccountLinkingProducer = {
+  on: <K extends keyof ProducerEventMap>(eventName: K, listener: EventListener<ProducerEventMap[K]>) => void
   cancel: () => void
 }
-
 export interface ProducerEventMap {
   "challenge": {
     pin: number[]
@@ -101,7 +102,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
           }
           const { confirmPin, rejectPin } = challengeOnce()
 
-          eventEmitter?.dispatchEvent("challenge", { pin, confirmPin, rejectPin })
+          eventEmitter?.emit("challenge", { pin, confirmPin, rejectPin })
         } else {
           handleLinkingError(userChallengeResult.error)
         }
@@ -119,7 +120,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
 
     if (ls.username == null) return // or throw error?
 
-    eventEmitter?.dispatchEvent("link", { approved, username: ls.username })
+    eventEmitter?.emit("link", { approved, username: ls.username })
     resetLinkingState()
   }
 
@@ -129,7 +130,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
   }
 
   const cancel = async () => {
-    eventEmitter?.dispatchEvent("done", undefined)
+    eventEmitter?.emit("done", undefined)
     eventEmitter = null
     channel.close()
   }
@@ -137,8 +138,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
   const channel = await auth.createChannel({ username, handleMessage })
 
   return {
-    addEventListener: (...args) => eventEmitter?.addEventListener(...args),
-    removeEventListener: (...args) => eventEmitter?.removeEventListener(...args),
+    on: (...args) => eventEmitter?.on(...args),
     cancel
   }
 }

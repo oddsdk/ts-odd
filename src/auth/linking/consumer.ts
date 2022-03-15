@@ -8,16 +8,17 @@ import * as did from "../../did/index.js"
 import * as storage from "../../storage/index.js"
 import * as ucan from "../../ucan/index.js"
 import { impl as auth } from "../implementation.js"
-import { EventEmitter, EventSource } from "../../common/event-emitter.js"
+import { EventEmitter, EventListener } from "../../common/event-emitter.js"
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
 import type { Maybe, Result } from "../../common/index.js"
 
-export type AccountLinkingConsumer = EventSource<ConsumerEventMap> & {
+
+export type AccountLinkingConsumer = {
+  on: <K extends keyof ConsumerEventMap>(eventName: K, listener: EventListener<ConsumerEventMap[K]>) => void
   cancel: () => void
 }
-
 export interface ConsumerEventMap {
   "challenge": { pin: number[] }
   "link": { approved: boolean; username: string }
@@ -67,7 +68,7 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
 
           const { pin, challenge } = await generateUserChallenge(ls.sessionKey)
           channel.send(challenge)
-          eventEmitter?.dispatchEvent("challenge", { pin: Array.from(pin) })
+          eventEmitter?.emit("challenge", { pin: Array.from(pin) })
           ls.step = LinkingStep.Delegation
         } else {
           handleLinkingError(sessionKeyResult.error)
@@ -83,7 +84,7 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
 
         if (linkingResult.ok) {
           const { approved } = linkingResult.value
-          eventEmitter?.dispatchEvent("link", { approved, username: ls.username })
+          eventEmitter?.emit("link", { approved, username: ls.username })
           await done()
         } else {
           handleLinkingError(linkingResult.error)
@@ -93,7 +94,7 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
   }
 
   const done = async () => {
-    eventEmitter?.dispatchEvent("done", undefined)
+    eventEmitter?.emit("done", undefined)
     eventEmitter = null
     channel.close()
     clearInterval(rsaExchangeInterval)
@@ -114,8 +115,7 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
   }, 2000)
 
   return {
-    addEventListener: (...args) => eventEmitter?.addEventListener(...args),
-    removeEventListener: (...args) => eventEmitter?.removeEventListener(...args),
+    on: (...args) => eventEmitter?.on(...args),
     cancel: done
   }
 }

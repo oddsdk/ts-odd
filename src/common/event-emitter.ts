@@ -1,32 +1,30 @@
 export type EventListener<E> = (event: E) => void
 
-export interface EventSource<EventMap> /* extends EventTarget */ {
-  addEventListener<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[K]>): void
-  removeEventListener<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[K]>): void
-}
-
-export class EventEmitter<EventMap> implements EventSource<EventMap> {
+export class EventEmitter<EventMap> {
   private readonly events: Map<keyof EventMap, Set<EventListener<unknown>>> = new Map()
 
-  public addEventListener<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[K]>): void {
+  public on<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[K]>): void {
     const eventSet = this.events.get(eventName)
-    if (eventSet == null) {
+
+    if (eventSet === undefined) {
       this.events.set(eventName, new Set([listener]) as Set<EventListener<unknown>>)
     } else {
       eventSet.add(listener as EventListener<unknown>)
     }
   }
 
-  public removeEventListener<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[K]>): void {
+  public removeListener<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[K]>): void {
     const eventSet = this.events.get(eventName)
-    if (eventSet == null) return
+    if (eventSet === undefined) return
+
     eventSet.delete(listener as EventListener<unknown>)
+
     if (eventSet.size === 0) {
       this.events.delete(eventName)
     }
   }
 
-  public dispatchEvent<K extends keyof EventMap>(eventName: K, event: EventMap[K]): void {
+  public emit<K extends keyof EventMap>(eventName: K, event: EventMap[K]): void {
     this.events.get(eventName)?.forEach((listener: EventListener<EventMap[K]>) => {
       listener.apply(this, [event])
     })
