@@ -6,7 +6,7 @@ import { createProducer } from "../../src/auth/linking/producer.js"
 import { EventEmitter } from "../../src/common/event-emitter.js"
 import { debug, setImplementations } from "../../src/setup.js"
 
-import type { Channel, ChannelOptions } from "../../src/auth/channel.js"
+import type { Channel, ChannelData, ChannelOptions } from "../../src/auth/channel.js"
 
 type MessageData = string | ArrayBufferLike | Blob | ArrayBufferView
 
@@ -24,7 +24,7 @@ type MessageData = string | ArrayBufferLike | Blob | ArrayBufferView
  */
 
 describe("account linking", () => {
-  let channel: EventEmitter = new EventEmitter()
+  let channel: EventEmitter<Record<string, ChannelData>> = new EventEmitter()
   let producerAccounts: Record<string, string[]> = {}
   let consumerAccounts: Record<string, string[]> = {}
 
@@ -83,13 +83,13 @@ describe("account linking", () => {
 
     const producer = await createProducer({ username: "elm-owl" })
 
-    producer.on("challenge", ({ confirmPin }) => {
+    producer.addEventListener("challenge", ({ confirmPin }) => {
       confirmPin()
     })
 
     const consumer = await createConsumer({ username: "elm-owl" })
 
-    consumer.on("done", () => {
+    consumer.addEventListener("done", () => {
       consumerDone = true
     })
 
@@ -108,13 +108,13 @@ describe("account linking", () => {
 
     const consumer = await createConsumer({ username: "elm-owl" })
 
-    consumer.on("done", () => {
+    consumer.addEventListener("done", () => {
       consumerDone = true
     })
 
     const producer = await createProducer({ username: "elm-owl" })
 
-    producer.on("challenge", ({ confirmPin }) => {
+    producer.addEventListener("challenge", ({ confirmPin }) => {
       confirmPin()
     })
 
@@ -133,13 +133,13 @@ describe("account linking", () => {
 
     const producer = await createProducer({ username: "elm-owl" })
 
-    producer.on("challenge", ({ rejectPin }) => {
+    producer.addEventListener("challenge", ({ rejectPin }) => {
       rejectPin()
     })
 
     const consumer = await createConsumer({ username: "elm-owl" })
 
-    consumer.on("done", () => {
+    consumer.addEventListener("done", () => {
       consumerDone = true
     })
 
@@ -157,7 +157,7 @@ describe("account linking", () => {
     const numConsumers = Math.round(Math.random() * 2 + 2)
     const producer = await createProducer({ username: "elm-owl" })
 
-    producer.on("challenge", ({ confirmPin }) => {
+    producer.addEventListener("challenge", ({ confirmPin }) => {
       confirmPin()
     })
 
@@ -165,7 +165,7 @@ describe("account linking", () => {
       const emitter = await createConsumer({ username: "elm-owl" })
       const consumer = { emitter, done: false }
 
-      consumer.emitter.on("done", () => {
+      consumer.emitter.addEventListener("done", () => {
         consumer.done = true
       })
 

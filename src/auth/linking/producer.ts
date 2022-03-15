@@ -6,29 +6,24 @@ import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import { impl as auth } from "../implementation.js"
-import { EventEmitter } from "../../common/event-emitter.js"
+import { EventEmitter, EventSource } from "../../common/event-emitter.js"
 import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
 import type { Maybe, Result } from "../../common/index.js"
-import type { EventListener } from "../../common/event-emitter.js"
 
-export type AccountLinkingProducer = {
-  on: OnChallenge & OnLink & OnDone
+export type AccountLinkingProducer = EventSource<ProducerEventMap> & {
   cancel: () => void
 }
 
-type OnChallenge = (
-  event: "challenge",
-  listener: (
-    args: {
-      pin: number[]
-      confirmPin: () => void
-      rejectPin: () => void
-    }
-  ) => void
-) => void
-type OnLink = (event: "link", listener: (args: { approved: boolean; username: string }) => void) => void
-type OnDone = (event: "done", listener: () => void) => void
+export interface ProducerEventMap {
+  "challenge": {
+    pin: number[]
+    confirmPin: () => void
+    rejectPin: () => void
+  }
+  "link": { approved: boolean; username: string }
+  "done": undefined
+}
 
 
 type LinkingState = {
@@ -52,7 +47,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
     throw new LinkingError(`Producer cannot delegate for username ${username}`)
   }
 
-  let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
+  let eventEmitter: Maybe<EventEmitter<ProducerEventMap>> = new EventEmitter()
   const ls: LinkingState = {
     username,
     sessionKey: null,
@@ -122,6 +117,8 @@ export const createProducer = async (options: { username: string }): Promise<Acc
   const finishDelegation = async (delegationMessage: string, approved: boolean): Promise<void> => {
     await channel.send(delegationMessage)
 
+    if (ls.username == null) return // or throw error?
+
     eventEmitter?.dispatchEvent("link", { approved, username: ls.username })
     resetLinkingState()
   }
@@ -132,7 +129,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
   }
 
   const cancel = async () => {
-    eventEmitter?.dispatchEvent("done")
+    eventEmitter?.dispatchEvent("done", undefined)
     eventEmitter = null
     channel.close()
   }
@@ -140,7 +137,8 @@ export const createProducer = async (options: { username: string }): Promise<Acc
   const channel = await auth.createChannel({ username, handleMessage })
 
   return {
-    on: (event: string, listener: EventListener) => { eventEmitter?.addEventListener(event, listener) },
+    addEventListener: (...args) => eventEmitter?.addEventListener(...args),
+    removeEventListener: (...args) => eventEmitter?.removeEventListener(...args),
     cancel
   }
 }

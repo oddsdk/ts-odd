@@ -8,21 +8,21 @@ import * as did from "../../did/index.js"
 import * as storage from "../../storage/index.js"
 import * as ucan from "../../ucan/index.js"
 import { impl as auth } from "../implementation.js"
-import { EventEmitter } from "../../common/event-emitter.js"
+import { EventEmitter, EventSource } from "../../common/event-emitter.js"
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
-import type { EventListener } from "../../common/event-emitter.js"
 import type { Maybe, Result } from "../../common/index.js"
 
-export type AccountLinkingConsumer = {
-  on: OnChallenge & OnLink & OnDone
+export type AccountLinkingConsumer = EventSource<ConsumerEventMap> & {
   cancel: () => void
 }
 
-type OnChallenge = (event: "challenge", listener: (args: { pin: number[] }) => void) => void
-type OnLink = (event: "link", listener: (args: { approved: boolean; username: string }) => void) => void
-type OnDone = (event: "done", listener: () => void) => void
+export interface ConsumerEventMap {
+  "challenge": { pin: number[] }
+  "link": { approved: boolean; username: string }
+  "done": undefined
+}
 
 type LinkingState = {
   username: Maybe<string>
@@ -40,7 +40,7 @@ type LinkingState = {
  */
 export const createConsumer = async (options: { username: string }): Promise<AccountLinkingConsumer> => {
   const { username } = options
-  let eventEmitter: Maybe<EventEmitter> = new EventEmitter()
+  let eventEmitter: Maybe<EventEmitter<ConsumerEventMap>> = new EventEmitter()
   const ls: LinkingState = {
     username,
     sessionKey: null,
@@ -93,7 +93,7 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
   }
 
   const done = async () => {
-    eventEmitter?.dispatchEvent("done")
+    eventEmitter?.dispatchEvent("done", undefined)
     eventEmitter = null
     channel.close()
     clearInterval(rsaExchangeInterval)
@@ -114,7 +114,8 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
   }, 2000)
 
   return {
-    on: (event: string, listener: EventListener) => { eventEmitter?.addEventListener(event, listener) },
+    addEventListener: (...args) => eventEmitter?.addEventListener(...args),
+    removeEventListener: (...args) => eventEmitter?.removeEventListener(...args),
     cancel: done
   }
 }

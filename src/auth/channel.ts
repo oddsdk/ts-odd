@@ -14,7 +14,7 @@ export type ChannelOptions = {
   handleMessage: (event: MessageEvent) => void
 }
 
-type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView
+export type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView
 
 export const createWssChannel = async (options: ChannelOptions): Promise<Channel> => {
   const { username, handleMessage } = options
