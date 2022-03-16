@@ -58,7 +58,6 @@ export const closeWssChannel = (socket: Maybe<WebSocket>): () => void => {
     if (socket) {
       socket.close(1000)
     }
-    socket = null
   }
 }
 
