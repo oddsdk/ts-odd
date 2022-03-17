@@ -1,5 +1,6 @@
 import FileSystem from "../fs/index.js"
 
+import type { Channel, ChannelOptions } from "./channel"
 import { Implementation } from "./implementation/types.js"
 import { InitOptions } from "../init/types.js"
 
@@ -17,6 +18,9 @@ import * as pathing from "../path.js"
 import * as storage from "../storage/index.js"
 import * as ucan from "../ucan/internal.js"
 import * as user from "../lobby/username.js"
+import * as token from "../ucan/token.js"
+import * as channel from "./channel.js"
+
 
 
 export const init = async (options: InitOptions): Promise<State | null> => {
@@ -100,6 +104,58 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
   return user.isUsernameAvailable(username)
 }
 
+export const createChannel = (options: ChannelOptions): Promise<Channel> => {
+  return channel.createWssChannel(options)
+}
+
+export const checkCapability = async (username: string): Promise<boolean> => {
+  const readKey = await storage.getItem("readKey")
+  if (!readKey) return false
+
+  const didFromDNS = await did.root(username)
+  const maybeUcan: string | null = await storage.getItem("ucan")
+
+  if (maybeUcan) {
+    const rootIssuerDid = token.rootIssuer(maybeUcan)
+    const decodedUcan = token.decode(maybeUcan)
+    const { ptc } = decodedUcan.payload
+
+    return didFromDNS === rootIssuerDid && ptc === "SUPER_USER"
+  } else {
+    const rootDid = await did.write()
+
+    return didFromDNS === rootDid
+  }
+}
+
+export const delegateAccount = async (username: string, audience: string): Promise<Record<string, unknown>> => {
+    const readKey = await storage.getItem("readKey")
+    const proof = await storage.getItem("ucan") as string
+
+    const u = await token.build({
+      audience,
+      issuer: await did.write(),
+      lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
+      potency: "SUPER_USER",
+      proof,
+  
+      // TODO: UCAN v0.7.0
+      // proofs: [ await localforage.getItem("ucan") ]
+    })
+  
+    return { readKey, token: token.encode(u) }
+}
+
+export const linkDevice = async (data: Record<string, unknown>): Promise<void> => {
+  const { readKey, token: encodedToken } = data
+  const u = token.decode(encodedToken as string)
+
+  if (await token.isValid(u)) {
+    await storage.setItem("ucan", encodedToken)
+    await storage.setItem("readKey", readKey)
+  }
+}
+
 
 
 // 🛳
@@ -110,8 +166,11 @@ export const IMPLEMENTATION: Implementation = {
   register,
   isUsernameValid,
   isUsernameAvailable,
+  createChannel,
+  checkCapability,
+  delegateAccount,
+  linkDevice
 }
-
 
 
 // HELPERS
