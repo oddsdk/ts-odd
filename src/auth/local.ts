@@ -11,7 +11,7 @@ import * as storage from "../storage/index.js"
 import * as ucan from "../ucan/index.js"
 import * as user from "../lobby/username.js"
 import { LinkingError } from "./linking.js"
-import RootTree from "../fs/root/tree"
+import RootTree from "../fs/root/tree.js"
 
 
 export const init = async (): Promise<State | null> => {
