@@ -4,6 +4,10 @@ import rsa from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
 import { KeyUse, SymmAlg } from "keystore-idb/lib/types.js"
 
+import { webcrypto } from "one-webcrypto"
+import * as uint8arrays from "uint8arrays"
+
+import * as check from "../../common/type-checks.js"
 import * as did from "../../did/index.js"
 import * as storage from "../../storage/index.js"
 import * as ucan from "../../ucan/index.js"
@@ -153,14 +157,18 @@ export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair
  * @returns AES session key
  */
 export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: string): Promise<Result<CryptoKey, Error>> => {
-  const typeGuard = (message: any): message is { iv: ArrayBuffer; msg: string; sessionKey: string } => {
-    return "iv" in message && "msg" in message && "sessionKey" in message
+  const typeGuard = (message: unknown): message is { iv: string; msg: string; sessionKey: string } => {
+    return check.isObject(message)
+      && "iv" in message && typeof message.iv === "string"
+      && "msg" in message && typeof message.msg === "string"
+      && "sessionKey" in message && typeof message.sessionKey === "string"
   }
 
   const parseResult = tryParseMessage(data, typeGuard, { participant: "Consumer", callSite: "handleSessionKey" })
 
   if (parseResult.ok) {
-    const { iv, msg, sessionKey: encodedSessionKey } = parseResult.value
+    const { iv: encodedIV, msg, sessionKey: encodedSessionKey } = parseResult.value
+    const iv = utils.base64ToArrBuf(encodedIV)
 
     let sessionKey, rawSessionKey
     try {
@@ -173,13 +181,16 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
 
     let encodedUcan = null
     try {
-      encodedUcan = await aes.decrypt(
-        msg,
-        sessionKey,
-        {
-          alg: SymmAlg.AES_GCM,
-          iv: iv
-        }
+      encodedUcan = uint8arrays.toString(
+        await webcrypto.subtle.decrypt(
+          {
+            name: "AES-GCM",
+            iv,
+          },
+          sessionKey,
+          utils.base64ToArrBuf(msg),
+        ),
+        "utf8"
       )
     } catch {
       return { ok: false, error: new LinkingError("Consumer could not decrypt closed UCAN with provided session key.") }
@@ -220,16 +231,28 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
  * @param sessionKey
  * @returns pin and challenge message
  */
-export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint8Array; challenge: string }> => {
-  const pin = new Uint8Array(utils.randomBuf(6)).map(n => {
+export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: number[]; challenge: string }> => {
+  const pin = Array.from(new Uint8Array(utils.randomBuf(6)).map(n => {
     return n % 10
-  })
+  }))
 
   const iv = utils.randomBuf(16)
-  const msg = await aes.encrypt(JSON.stringify({
-    did: await did.ucan(),
-    pin
-  }), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+  const msg = utils.arrBufToBase64(
+    await webcrypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv,
+      },
+      sessionKey,
+      uint8arrays.fromString(
+        JSON.stringify({
+          did: await did.ucan(),
+          pin
+        }),
+        "utf8"
+      ),
+    )
+  )
 
   const challenge = JSON.stringify({
     iv: utils.arrBufToBase64(iv),
@@ -251,41 +274,48 @@ export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pi
  * @returns linking result
  */
 export const linkDevice = async (sessionKey: CryptoKey, username: string, data: string): Promise<Result<{ approved: boolean }, Error>> => {
-  const typeGuard = (message: any): message is { iv: ArrayBuffer; msg: string } => {
-    return "iv" in message && "msg" in message
+  const typeGuard = (message: unknown): message is { iv: string; msg: string } => {
+    return check.isObject(message)
+      && "iv" in message && typeof message.iv === "string"
+      && "msg" in message && typeof message.msg === "string"
   }
 
   const parseResult = tryParseMessage(data, typeGuard, { participant: "Consumer", callSite: "linkDevice" })
 
   if (parseResult.ok) {
-    const { iv, msg } = parseResult.value
+    const { iv: encodedIV, msg } = parseResult.value
+    const iv = utils.base64ToArrBuf(encodedIV)
 
     let message = null
     try {
-      message = await aes.decrypt(
-        msg,
-        sessionKey,
-        {
-          alg: SymmAlg.AES_GCM,
-          iv: iv
-        }
+      message = uint8arrays.toString(
+        await webcrypto.subtle.decrypt(
+          {
+            name: "AES-GCM",
+            iv,
+          },
+          sessionKey,
+          utils.base64ToArrBuf(msg),
+        ),
+        "utf8"
       )
     } catch {
       return { ok: false, error: new LinkingWarning("Consumer ignoring message that could not be decrypted in linkDevice.") }
     }
 
-    const response = JSON.parse(message)
-
-    if (response.linkStatus === "APPROVED") {
-      await storage.setItem(USERNAME_STORAGE_KEY, username)
-      await auth.linkDevice(response.delegation)
-
-      return { ok: true, value: { approved: true } }
-    } else if (response.linkStatus === "DENIED") {
-      return { ok: true, value: { approved: false } }
-    } else {
-      return { ok: false, error: new LinkingError("Consumer received an invalid link device message received from producer.") }
+    const response = tryParseMessage(message, check.isObject, { participant: "Consumer", callSite: "linkDevice" })
+    if (!response.ok) {
+      return response
     }
+
+    if (response.value.linkStatus === "DENIED") {
+      return { ok: true, value: { approved: false } }
+    }
+
+    await storage.setItem(USERNAME_STORAGE_KEY, username)
+    await auth.linkDevice(response.value)
+
+    return { ok: true, value: { approved: true } }
   } else {
     return parseResult
   }

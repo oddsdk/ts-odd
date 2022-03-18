@@ -1,5 +1,6 @@
 import type { Channel, ChannelOptions } from "./channel"
 
+import * as check from "../common/type-checks.js"
 import { USERNAME_STORAGE_KEY } from "../common/index.js"
 import { State } from "./state.js"
 import { createAccount } from "../lobby/index.js"
@@ -9,6 +10,8 @@ import * as did from "../did/index.js"
 import * as storage from "../storage/index.js"
 import * as ucan from "../ucan/index.js"
 import * as user from "../lobby/username.js"
+import { LinkingError } from "./linking.js"
+import RootTree from "../fs/root/tree"
 
 
 export const init = async (): Promise<State | null> => {
@@ -70,15 +73,29 @@ export const delegateAccount = async (username: string, audience: string): Promi
     // proofs: [ await localforage.getItem("ucan") ]
   })
 
-  return { token: ucan.encode(u) }
+  const readKey = await RootTree.retrieveRootKey()
+
+  return { readKey, ucan: ucan.encode(u) }
+}
+
+function isLobbyLinkingData(data: unknown): data is { readKey: string; ucan: string } {
+  return check.isObject(data)
+    && "readKey" in data && typeof data.readKey === "string"
+    && "ucan" in data && typeof data.ucan === "string"
 }
 
 export const linkDevice = async (data: Record<string, unknown>): Promise<void> => {
-  const { token } = data
-  const u = ucan.decode(token as string)
+  if (!isLobbyLinkingData(data)) {
+    throw new LinkingError(`Consumer received invalid link device response from producer: Expected read key and ucan, but got ${JSON.stringify(data)}`)
+  }
+
+  const u = ucan.decode(data.ucan)
 
   if (await ucan.isValid(u)) {
-    await storage.setItem("ucan", token)
+    await storage.setItem("ucan", data.ucan)
+    await RootTree.storeRootKey(data.readKey)
+  } else {
+    throw new LinkingError(`Consumer received invalid link device response from producer. Given ucan is invalid: ${data.ucan}`)
   }
 }
 

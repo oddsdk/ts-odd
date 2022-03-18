@@ -4,6 +4,7 @@ import type { Channel, ChannelOptions } from "./channel"
 import { Implementation } from "./implementation/types.js"
 import { InitOptions } from "../init/types.js"
 
+import * as check from "../common/type-checks.js"
 import { USERNAME_STORAGE_KEY, decodeCID } from "../common/index.js"
 import { scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, State, validateSecrets } from "./state.js"
 import { loadFileSystem } from "../filesystem.js"
@@ -20,6 +21,7 @@ import * as ucan from "../ucan/internal.js"
 import * as user from "../lobby/username.js"
 import * as token from "../ucan/token.js"
 import * as channel from "./channel.js"
+import { LinkingError } from "./linking.js"
 
 
 
@@ -143,12 +145,22 @@ export const delegateAccount = async (username: string, audience: string): Promi
       // proofs: [ await localforage.getItem("ucan") ]
     })
   
-    return { readKey, token: token.encode(u) }
+    return { readKey, ucan: token.encode(u) }
+}
+
+function isLobbyLinkingData(data: unknown): data is { readKey: string; ucan: string } {
+  return check.isObject(data)
+    && "readKey" in data && typeof data.readKey === "string"
+    && "ucan" in data && typeof data.ucan === "string"
 }
 
 export const linkDevice = async (data: Record<string, unknown>): Promise<void> => {
-  const { readKey, token: encodedToken } = data
-  const u = token.decode(encodedToken as string)
+  if (!isLobbyLinkingData(data)) {
+    throw new LinkingError(`Consumer received invalid link device response from producer: Expected read key and ucan, but got ${JSON.stringify(data)}`)
+  }
+
+  const { readKey, ucan: encodedToken } = data
+  const u = token.decode(encodedToken)
 
   if (await token.isValid(u)) {
     await storage.setItem("ucan", encodedToken)
