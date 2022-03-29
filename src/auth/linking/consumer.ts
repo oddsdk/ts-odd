@@ -74,7 +74,7 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
           handleLinkingError(sessionKeyResult.error)
         }
       }
-    } else if (ls.step === LinkingStep.Delegation){
+    } else if (ls.step === LinkingStep.Delegation) {
       if (!ls.sessionKey) {
         handleLinkingError(new LinkingError("Consumer was missing session key when linking device"))
       } else if (!ls.username) {
@@ -221,16 +221,7 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
  * @returns pin and challenge message
  */
 export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint8Array; challenge: string }> => {
-  const v = utils.randomBuf(6)
-  const pin = new Uint8Array(v).map(n => {
-    // 16 is chosen here because it divides 256 evenly.
-    const modHex = n % 16
-    const hexMax = 15
-    const pinMax = 9
-
-    // This spreads out the sampling bias.
-    return Math.ceil(modHex / hexMax * pinMax)
-  })
+  const pin = new Uint8Array(utils.randomBuf(6, 9))
 
   const iv = utils.randomBuf(16)
   const msg = await aes.encrypt(JSON.stringify({
