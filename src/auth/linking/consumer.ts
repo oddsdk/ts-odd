@@ -121,14 +121,14 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
 }
 
 
-// 🔗 Device Linking Steps 
+// 🔗 Device Linking Steps
 
 /**
  *  BROADCAST
- * 
+ *
  * Generate a temporary RSA keypair and extract a temporary DID from it.
  * The temporary DID will be broadcast on the channel to start the linking process.
- * 
+ *
  * @returns temporary RSA key pair and temporary DID
  */
 export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair: CryptoKeyPair; temporaryDID: string }> => {
@@ -143,13 +143,13 @@ export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair
 
 /**
  *  NEGOTIATION
- * 
+ *
  * Decrypt the session key and check the closed UCAN for capability.
  * The session key is encrypted with the temporary RSA keypair.
  * The closed UCAN is encrypted with the session key.
- * 
+ *
  * @param temporaryRsaPrivateKey
- * @param data 
+ * @param data
  * @returns AES session key
  */
 export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: string): Promise<Result<CryptoKey, Error>> => {
@@ -214,15 +214,22 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
 
 /**
  * NEGOTIATION
- * 
- * Generate pin and challenge message for verification by the producer. 
- * 
+ *
+ * Generate pin and challenge message for verification by the producer.
+ *
  * @param sessionKey
  * @returns pin and challenge message
  */
 export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint8Array; challenge: string }> => {
-  const pin = new Uint8Array(utils.randomBuf(6)).map(n => {
-    return n % 10
+  const v = utils.randomBuf(6)
+  const pin = new Uint8Array(v).map(n => {
+    // 16 is chosen here because it divides 256 evenly.
+    const modHex = n % 16
+    const hexMax = 15
+    const pinMax = 9
+
+    // This spreads out the sampling bias.
+    return Math.ceil(modHex / hexMax * pinMax)
   })
 
   const iv = utils.randomBuf(16)
