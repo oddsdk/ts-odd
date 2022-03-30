@@ -3411,10 +3411,10 @@ k-bucket@^5.1.0:
   dependencies:
     randombytes "^2.1.0"
 
-keystore-idb@^0.15.4:
-  version "0.15.4"
-  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.15.4.tgz#ba2387a6a6284421f023c0719d099eb9d2c9cfa8"
-  integrity sha512-3HfkebZQzo7iFA301aXTizupfwlWk350uwCjdUY2p6v9jVP0B1frySTgesInqjHaj66mpridvg8WNF43JErEQg==
+keystore-idb@^0.15.5:
+  version "0.15.5"
+  resolved "https://registry.yarnpkg.com/keystore-idb/-/keystore-idb-0.15.5.tgz#7841362be09de0dedb86ed5fe16f6bcba46a0b91"
+  integrity sha512-7bcUAnY5iD0+N75odQVTCs8mhXBW+yLt9/HH8+VUrl44FGllpAhu7q3/w9QpNMHxLQv3OXs1fsA042CAviN79Q==
   dependencies:
     localforage "^1.10.0"
     one-webcrypto "^1.0.3"
