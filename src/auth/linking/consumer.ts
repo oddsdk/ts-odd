@@ -221,7 +221,7 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
  * @returns pin and challenge message
  */
 export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: Uint8Array; challenge: string }> => {
-  const pin = new Uint8Array(utils.randomBuf(6, 9))
+  const pin = new Uint8Array(utils.randomBuf(6, { max: 9 }))
 
   const iv = utils.randomBuf(16)
   const msg = await aes.encrypt(JSON.stringify({
