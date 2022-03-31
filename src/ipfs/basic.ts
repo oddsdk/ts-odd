@@ -132,5 +132,5 @@ const attemptPin = async (cid: CID): Promise<void> => {
 }
 
 const typeCheckCID = (cid: CID): void => {
-  if (!CID.asCID(cid)) throw new Error("Expected a CID object")
+  if (!CID.asCID(cid)) throw new Error(`Expected a CID object = ${cid}`)
 }
