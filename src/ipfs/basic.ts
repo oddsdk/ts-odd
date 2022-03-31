@@ -116,9 +116,7 @@ export const size = async (cid: CID): Promise<number> => {
   return stat.cumulativeSize
 }
 
-export const attemptPin = async (cid: CID): Promise<void> => {
-  typeCheckCID(cid)
-
+const attemptPin = async (cid: CID): Promise<void> => {
   if (!setup.shouldPin) return
 
   const ipfs = await getIpfs()
