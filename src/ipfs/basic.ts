@@ -28,48 +28,48 @@ export const add = async (content: ImportCandidate): Promise<AddResult> => {
 }
 
 export const catRaw = async (cid: CID): Promise<Uint8Array[]> => {
-  typeCheckCID(cid)
+  const newCID = typeCheckCID(cid)
 
   const ipfs = await getIpfs()
   const chunks = []
-  await attemptPin(cid)
-  for await (const chunk of ipfs.cat(cid)) {
+  await attemptPin(newCID)
+  for await (const chunk of ipfs.cat(newCID)) {
     chunks.push(chunk)
   }
   return chunks
 }
 
 export const catBuf = async (cid: CID): Promise<Uint8Array> => {
-  typeCheckCID(cid)
+  const newCID = typeCheckCID(cid)
 
-  const raw = await catRaw(cid)
+  const raw = await catRaw(newCID)
   return uint8arrays.concat(raw)
 }
 
 export const cat = async (cid: CID): Promise<string> => {
-  typeCheckCID(cid)
+  const newCID = typeCheckCID(cid)
 
-  const buf = await catBuf(cid)
+  const buf = await catBuf(newCID)
   return buf.toString()
 }
 
 export const ls = async (cid: CID): Promise<IPFSEntry[]> => {
-  typeCheckCID(cid)
+  const newCID = typeCheckCID(cid)
 
   const ipfs = await getIpfs()
   const links = []
-  for await (const link of ipfs.ls(cid)) {
+  for await (const link of ipfs.ls(newCID)) {
     links.push({ ...link, cid: decodeCID(link.cid) })
   }
   return links
 }
 
 export const dagGet = async (cid: CID): Promise<PBNode> => {
-  typeCheckCID(cid)
+  const newCID = typeCheckCID(cid)
 
   const ipfs = await getIpfs()
-  await attemptPin(cid)
-  const raw = await ipfs.dag.get(cid)
+  await attemptPin(newCID)
+  const raw = await ipfs.dag.get(newCID)
   const node = util.rawToDAGNode(raw)
   return node
 }
@@ -109,10 +109,10 @@ export const dagPutLinks = async (links: PBLink[]): Promise<AddResult> => {
 }
 
 export const size = async (cid: CID): Promise<number> => {
-  typeCheckCID(cid)
+  const newCID = typeCheckCID(cid)
 
   const ipfs = await getIpfs()
-  const stat = await ipfs.files.stat(`/ipfs/${cid}`)
+  const stat = await ipfs.files.stat(`/ipfs/${newCID}`)
   return stat.cumulativeSize
 }
 
@@ -131,6 +131,8 @@ const attemptPin = async (cid: CID): Promise<void> => {
   }
 }
 
-const typeCheckCID = (cid: CID): void => {
-  if (!CID.asCID(cid)) throw new Error(`Expected a CID object = ${cid}`)
+const typeCheckCID = (cid: CID): CID => {
+  const newCID = CID.asCID(cid)
+  if (!newCID) throw new Error(`Expected a CID class instance: Found ${cid}`)
+  return newCID
 }
