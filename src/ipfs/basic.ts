@@ -28,6 +28,8 @@ export const add = async (content: ImportCandidate): Promise<AddResult> => {
 }
 
 export const catRaw = async (cid: CID): Promise<Uint8Array[]> => {
+  typeCheckCID(cid)
+
   const ipfs = await getIpfs()
   const chunks = []
   await attemptPin(cid)
@@ -38,16 +40,22 @@ export const catRaw = async (cid: CID): Promise<Uint8Array[]> => {
 }
 
 export const catBuf = async (cid: CID): Promise<Uint8Array> => {
+  typeCheckCID(cid)
+
   const raw = await catRaw(cid)
   return uint8arrays.concat(raw)
 }
 
 export const cat = async (cid: CID): Promise<string> => {
+  typeCheckCID(cid)
+
   const buf = await catBuf(cid)
   return buf.toString()
 }
 
 export const ls = async (cid: CID): Promise<IPFSEntry[]> => {
+  typeCheckCID(cid)
+
   const ipfs = await getIpfs()
   const links = []
   for await (const link of ipfs.ls(cid)) {
@@ -57,6 +65,8 @@ export const ls = async (cid: CID): Promise<IPFSEntry[]> => {
 }
 
 export const dagGet = async (cid: CID): Promise<PBNode> => {
+  typeCheckCID(cid)
+
   const ipfs = await getIpfs()
   await attemptPin(cid)
   const raw = await ipfs.dag.get(cid)
@@ -99,12 +109,16 @@ export const dagPutLinks = async (links: PBLink[]): Promise<AddResult> => {
 }
 
 export const size = async (cid: CID): Promise<number> => {
+  typeCheckCID(cid)
+
   const ipfs = await getIpfs()
   const stat = await ipfs.files.stat(`/ipfs/${cid}`)
   return stat.cumulativeSize
 }
 
 export const attemptPin = async (cid: CID): Promise<void> => {
+  typeCheckCID(cid)
+
   if (!setup.shouldPin) return
 
   const ipfs = await getIpfs()
@@ -117,4 +131,8 @@ export const attemptPin = async (cid: CID): Promise<void> => {
       throw err
     }
   }
+}
+
+const typeCheckCID = (cid: CID): void => {
+  if (!CID.asCID(cid)) throw new Error("Expected a CID object")
 }
