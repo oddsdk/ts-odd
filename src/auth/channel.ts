@@ -43,19 +43,23 @@ export const createWssChannel = async (options: ChannelOptions): Promise<Channel
 }
 
 const waitForRootDid = async (username: string): Promise<string | null> => {
+  let rootDid: string | null = await did.root(username)
+  if (rootDid) {
+    return rootDid
+  }
+
   return new Promise((resolve) => {
-    const maxTries = 3
+    const maxRetries = 3
     let tries = 0
-    let rootDid: string | null = null
 
     const rootDidInterval = setInterval(async () => {
+      console.log("Could not fetch root DID. Retrying")
       rootDid = await did.root(username).catch((e) => {
         clearInterval(rootDidInterval)
         throw e
       })
 
-      if (!rootDid && tries < maxTries) {
-        console.log("Could not fetch root DID. Retrying")
+      if (!rootDid && tries < maxRetries) {
         tries++
         return
       }
