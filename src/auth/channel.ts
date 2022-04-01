@@ -19,7 +19,7 @@ export type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView
 export const createWssChannel = async (options: ChannelOptions): Promise<Channel> => {
   const { username, handleMessage } = options
 
-  const rootDid = await await did.root(username).catch(() => null)
+  const rootDid = await waitForRootDid(username)
   if (!rootDid) {
     throw new LinkingError(`Failed to lookup DID for ${username}`)
   }
@@ -40,6 +40,30 @@ export const createWssChannel = async (options: ChannelOptions): Promise<Channel
     send,
     close
   }
+}
+
+const waitForRootDid = async (username: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const maxTries = 3
+    let tries = 0
+    let rootDid: string | null = null
+
+    const rootDidInterval = setInterval(async () => {
+      rootDid = await did.root(username).catch((e) => {
+        clearInterval(rootDidInterval)
+        throw e
+      })
+
+      if (!rootDid && tries < maxTries) {
+        console.log("Could not fetch root DID. Retrying")
+        tries++
+        return
+      }
+
+      clearInterval(rootDidInterval)
+      resolve(rootDid)
+    }, 2000)
+  })
 }
 
 const waitForOpenConnection = async (socket: WebSocket): Promise<void> => {
