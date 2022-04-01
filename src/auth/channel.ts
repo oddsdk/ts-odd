@@ -46,11 +46,16 @@ const waitForRootDid = async (username: string): Promise<string | null> => {
   return new Promise((resolve) => {
     const maxTries = 3
     let tries = 0
-    let rootDid = null
+    let rootDid: string | null = null
 
     const rootDidInterval = setInterval(async () => {
-      rootDid = await await did.root(username).catch(() => null)
+      rootDid = await did.root(username).catch((e) => {
+        clearInterval(rootDidInterval)
+        throw e
+      })
+
       if (!rootDid && tries < maxTries) {
+        console.log("Could not fetch root DID. Retrying")
         tries++
         return
       }
