@@ -83,7 +83,7 @@ describe("the filesystem", () => {
     ))
 
     const entryIndexInfo = JSON.parse(new TextDecoder().decode(await crypto.aes.decrypt(
-      await protocol.basic.getFile(decryptedPayload.cid),
+      await protocol.basic.getFile(decodeCID(decryptedPayload.cid)),
       uint8arrays.toString(decryptedPayload.key, "base64pad"),
       SymmAlg.AES_GCM
     )))
