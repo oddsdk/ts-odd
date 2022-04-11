@@ -18,5 +18,6 @@ export type InitOptions = {
   // Options
   autoRemoveUrlParams?: boolean
   loadFileSystem?: boolean
+  localIpfs?: boolean
   rootKey?: string
 }
