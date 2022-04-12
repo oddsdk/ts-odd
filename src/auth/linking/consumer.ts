@@ -78,7 +78,7 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
           handleLinkingError(sessionKeyResult.error)
         }
       }
-    } else if (ls.step === LinkingStep.Delegation){
+    } else if (ls.step === LinkingStep.Delegation) {
       if (!ls.sessionKey) {
         handleLinkingError(new LinkingError("Consumer was missing session key when linking device"))
       } else if (!ls.username) {
@@ -125,14 +125,14 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
 }
 
 
-// 🔗 Device Linking Steps 
+// 🔗 Device Linking Steps
 
 /**
  *  BROADCAST
- * 
+ *
  * Generate a temporary RSA keypair and extract a temporary DID from it.
  * The temporary DID will be broadcast on the channel to start the linking process.
- * 
+ *
  * @returns temporary RSA key pair and temporary DID
  */
 export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair: CryptoKeyPair; temporaryDID: string }> => {
@@ -147,13 +147,13 @@ export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair
 
 /**
  *  NEGOTIATION
- * 
+ *
  * Decrypt the session key and check the closed UCAN for capability.
  * The session key is encrypted with the temporary RSA keypair.
  * The closed UCAN is encrypted with the session key.
- * 
+ *
  * @param temporaryRsaPrivateKey
- * @param data 
+ * @param data
  * @returns AES session key
  */
 export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: string): Promise<Result<CryptoKey, Error>> => {
@@ -225,16 +225,14 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
 
 /**
  * NEGOTIATION
- * 
- * Generate pin and challenge message for verification by the producer. 
- * 
+ *
+ * Generate pin and challenge message for verification by the producer.
+ *
  * @param sessionKey
  * @returns pin and challenge message
  */
 export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: number[]; challenge: string }> => {
-  const pin = Array.from(new Uint8Array(utils.randomBuf(6)).map(n => {
-    return n % 10
-  }))
+  const pin = Array.from(new Uint8Array(utils.randomBuf(6, { max: 9 })))
 
   const iv = utils.randomBuf(16)
   const msg = utils.arrBufToBase64(
