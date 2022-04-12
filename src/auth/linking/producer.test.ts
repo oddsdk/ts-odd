@@ -89,7 +89,6 @@ describe("handle user challenge", async () => {
           const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
 
           if (!userChallengeResult.ok) {
-            console.log(userChallengeResult)
             expect(userChallengeResult.ok).toBe(true)
             return
           }
