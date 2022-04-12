@@ -219,6 +219,12 @@ export default class RootTree implements Puttable {
     await crypto.keystore.importSymmKey(rootKey, rootKeyId)
   }
 
+  static async retrieveRootKey(): Promise<string> {
+    const path = pathing.directory(pathing.Branch.Private)
+    const rootKeyId = await identifiers.readKey({ path })
+    return await crypto.keystore.exportSymmKey(rootKeyId)
+  }
+
   findPrivateNode(path: DistinctivePath): [DistinctivePath, PrivateNode | null] {
     return findPrivateNode(this.privateNodes, path)
   }

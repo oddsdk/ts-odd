@@ -1,5 +1,7 @@
 import expect from "expect"
 import * as fc from "fast-check"
+import { webcrypto } from "one-webcrypto"
+import * as uint8arrays from "uint8arrays"
 import aes from "keystore-idb/lib/aes/index.js"
 import { SymmAlg } from "keystore-idb/lib/types.js"
 import utils from "keystore-idb/lib/utils.js"
@@ -30,13 +32,13 @@ describe("generate session key", async () => {
     const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(DID)
     const { iv, msg } = JSON.parse(sessionKeyMessage)
 
-    expect(async () => { await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv: iv }) }).not.toThrow()
+    await expect(aesDecrypt(msg, sessionKey, iv)).resolves.toBeDefined()
   })
 
   it("generates a valid closed UCAN", async () => {
     const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(DID)
     const { iv, msg } = JSON.parse(sessionKeyMessage)
-    const encodedUcan = await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv: iv })
+    const encodedUcan = await aesDecrypt(msg, sessionKey, iv)
     const decodedUcan = ucan.decode(encodedUcan)
 
     expect(await ucan.isValid(decodedUcan)).toBe(true)
@@ -45,16 +47,16 @@ describe("generate session key", async () => {
   it("generates a closed UCAN without any potency", async () => {
     const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(DID)
     const { iv, msg } = JSON.parse(sessionKeyMessage)
-    const encodedUcan = await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv: iv })
+    const encodedUcan = await aesDecrypt(msg, sessionKey, iv)
     const decodedUcan = ucan.decode(encodedUcan)
 
-    expect(await decodedUcan.payload.ptc).toBe(null)
+    expect(decodedUcan.payload.ptc).toBe(null)
   })
 
   it("generates a closed UCAN with the session key in its facts", async () => {
     const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(DID)
     const { iv, msg } = JSON.parse(sessionKeyMessage)
-    const encodedUcan = await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv: iv })
+    const encodedUcan = await aesDecrypt(msg, sessionKey, iv)
     const decodedUcan = ucan.decode(encodedUcan)
     const sessionKeyFromFact = decodedUcan.payload.fct[0] && decodedUcan.payload.fct[0].sessionKey
     const exportedSessionKey = await aes.exportKey(sessionKey)
@@ -79,19 +81,20 @@ describe("handle user challenge", async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.record({
-          pin: fc.uint8Array({ min: 0, max: 9, minLength: 6, maxLength: 6 }),
+          pin: fc.uint8Array({ min: 0, max: 9, minLength: 6, maxLength: 6 }).map(arr => Array.from(arr)),
           iv: fc.uint8Array({ minLength: 16, maxLength: 16 }).map(arr => arr.buffer)
         }), async ({ pin, iv }) => {
-          const msg = await aes.encrypt(JSON.stringify({ did: DID, pin }), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+          const msg = await aesEncrypt(JSON.stringify({ did: DID, pin }), sessionKey, iv)
           const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
           const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
 
-          let val = null
-          if (userChallengeResult.ok) { val = userChallengeResult.value }
+          if (!userChallengeResult.ok) {
+            expect(userChallengeResult.ok).toBe(true)
+            return
+          }
 
-          expect(userChallengeResult.ok).toBe(true)
-          expect(val?.pin).toEqual(Array.from(pin))
-          expect(val?.audience).toEqual(DID)
+          expect(userChallengeResult.value.pin).toEqual(pin)
+          expect(userChallengeResult.value.audience).toEqual(DID)
         })
     )
   })
@@ -113,7 +116,7 @@ describe("handle user challenge", async () => {
   it("returns a warning when the message received has the wrong shape", async () => {
     const pin = [0, 0, 0, 0, 0, 0]
     const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(JSON.stringify({ did: DID, pin }), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(JSON.stringify({ did: DID, pin }), sessionKey, iv)
     const challenge = JSON.stringify({ msg }) // initialization vector missing
     const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
 
@@ -126,7 +129,7 @@ describe("handle user challenge", async () => {
 
   it("returns an error when pin is missing", async () => {
     const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(JSON.stringify({ did: DID }), sessionKey, { iv, alg: SymmAlg.AES_GCM }) // pin missing
+    const msg = await aesEncrypt(JSON.stringify({ did: DID }), sessionKey, iv) // pin missing
     const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
     const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
 
@@ -140,7 +143,7 @@ describe("handle user challenge", async () => {
   it("returns an error when audience DID is missing", async () => {
     const pin = [0, 0, 0, 0, 0, 0]
     const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(JSON.stringify({ pin }), sessionKey, { iv, alg: SymmAlg.AES_GCM }) // DID missing
+    const msg = await aesEncrypt(JSON.stringify({ pin }), sessionKey, iv) // DID missing
     const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
     const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
 
@@ -154,7 +157,7 @@ describe("handle user challenge", async () => {
   it("ignores challenge messages it cannot decrypt", async () => {
     const pin = [0, 0, 0, 0, 0, 0]
     const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(JSON.stringify({ did: DID, pin }), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(JSON.stringify({ did: DID, pin }), sessionKey, iv)
     const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
     const userChallengeResult = await producer.handleUserChallenge(sessionKeyNoise, challenge)
 
@@ -180,14 +183,24 @@ describe("delegate account", async () => {
 
   const finishDelegation = async (delegationMessage: string, approved: boolean): Promise<void> => {
     const { iv, msg } = JSON.parse(delegationMessage)
-    const message = await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv: iv })
-    const link = JSON.parse(message)
+    const message = uint8arrays.toString(
+      await webcrypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: uint8arrays.fromString(iv, "base64"),
+        },
+        sessionKey,
+        utils.base64ToArrBuf(msg),
+      ),
+      "utf8"
+    )
+    const delegation = JSON.parse(message)
 
     approvedMessage = approved
 
-    if (link.linkStatus === "APPROVED" &&
-      link.delegation.username === username &&
-      link.delegation.audience === audience) {
+    if (approved &&
+      delegation.username === username &&
+      delegation.audience === audience) {
       accountDelegated = true
     }
   }
@@ -228,7 +241,7 @@ describe("decline delegation", async () => {
 
   const finishDelegation = async (delegationMessage: string, approved: boolean): Promise<void> => {
     const { iv, msg } = JSON.parse(delegationMessage)
-    const message = await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv: iv })
+    const message = await aesDecrypt(msg, sessionKey, iv)
     const link = JSON.parse(message)
 
     approvedMessage = approved
@@ -256,3 +269,29 @@ describe("decline delegation", async () => {
     expect(approvedMessage).toBe(false)
   })
 })
+
+
+async function aesEncrypt(payload: string, key: CryptoKey, ivStr: string | ArrayBuffer): Promise<string> {
+  const iv = typeof ivStr === "string" ? uint8arrays.fromString(ivStr, "base64") : ivStr
+  return utils.arrBufToBase64(
+    await webcrypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      uint8arrays.fromString(payload, "utf8")
+    )
+  )
+}
+
+async function aesDecrypt(cipher: string, key: CryptoKey, ivStr: string): Promise<string> {
+  return uint8arrays.toString(
+    await webcrypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: uint8arrays.fromString(ivStr, "base64"),
+      },
+      key,
+      utils.base64ToArrBuf(cipher),
+    ),
+    "utf8"
+  )
+}

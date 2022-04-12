@@ -1,4 +1,6 @@
 import expect from "expect"
+import * as uint8arrays from "uint8arrays"
+import { webcrypto } from "one-webcrypto"
 import aes from "keystore-idb/lib/aes/index.js"
 import config from "keystore-idb/lib/config.js"
 import rsa from "keystore-idb/lib/rsa/index.js"
@@ -62,7 +64,7 @@ describe("handle session key", async () => {
       facts: [{ sessionKey: exportedSessionKey }],
       potency: null
     })
-    const msg = await aes.encrypt(ucan.encode(closedUcan), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(ucan.encode(closedUcan), sessionKey, iv)
     const message = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
       msg,
@@ -87,7 +89,7 @@ describe("handle session key", async () => {
       facts: [{ sessionKey: exportedSessionKey }],
       potency: null
     })
-    const msg = await aes.encrypt(ucan.encode(closedUcan), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(ucan.encode(closedUcan), sessionKey, iv)
     const message = JSON.stringify({
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKey)
@@ -119,7 +121,7 @@ describe("handle session key", async () => {
       facts: [{ sessionKey: exportedSessionKey }],
       potency: null
     })
-    const msg = await aes.encrypt(ucan.encode(closedUcan), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(ucan.encode(closedUcan), sessionKey, iv)
     const message = JSON.stringify({
       msg,
       sessionKey: utils.arrBufToBase64(encryptedSessionKeyNoise) // session key encrypted with noise
@@ -144,7 +146,7 @@ describe("handle session key", async () => {
       facts: [{ sessionKey: exportedSessionKey }],
       potency: null
     })
-    const msg = await aes.encrypt(ucan.encode(closedUcan), mismatchedSessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(ucan.encode(closedUcan), mismatchedSessionKey, iv)
     const message = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
       msg,
@@ -169,7 +171,7 @@ describe("handle session key", async () => {
       facts: [{ sessionKey: exportedSessionKey }],
       potency: null
     })
-    const msg = await aes.encrypt(ucan.encode(closedUcan), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(ucan.encode(closedUcan), sessionKey, iv)
     const message = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
       msg,
@@ -194,7 +196,7 @@ describe("handle session key", async () => {
       facts: [{ sessionKey: exportedSessionKey }],
       potency: "SUPER_USER" // closed UCAN should have null potency
     })
-    const msg = await aes.encrypt(ucan.encode(closedUcan), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(ucan.encode(closedUcan), sessionKey, iv)
     const message = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
       msg,
@@ -219,7 +221,7 @@ describe("handle session key", async () => {
       facts: [],  // session key missing in facts
       potency: null
     })
-    const msg = await aes.encrypt(ucan.encode(closedUcan), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(ucan.encode(closedUcan), sessionKey, iv)
     const message = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
       msg,
@@ -244,7 +246,7 @@ describe("handle session key", async () => {
       facts: [{ sessionKey: "mismatchedSessionKey" }], // does not match session key
       potency: null
     })
-    const msg = await aes.encrypt(ucan.encode(closedUcan), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+    const msg = await aesEncrypt(ucan.encode(closedUcan), sessionKey, iv)
     const message = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
       msg,
@@ -282,13 +284,13 @@ describe("generate a user challenge", async () => {
     const { challenge } = await consumer.generateUserChallenge(sessionKey)
     const { iv, msg } = JSON.parse(challenge)
 
-    expect(async () => await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv })).not.toThrow()
+    await expect(aesDecrypt(msg, sessionKey, iv)).resolves.toBeDefined()
   })
 
   it("challenge message pin matches original pin", async () => {
     const { pin, challenge } = await consumer.generateUserChallenge(sessionKey)
     const { iv, msg } = JSON.parse(challenge)
-    const json = await aes.decrypt(msg, sessionKey, { alg: SymmAlg.AES_GCM, iv })
+    const json = await aesDecrypt(msg, sessionKey, iv)
     const message = JSON.parse(json)
 
     const originalPin = Array.from(pin)
@@ -325,10 +327,10 @@ describe("link device", async () => {
 
   it("links a device on approval", async () => {
     const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(
-      JSON.stringify({ linkStatus: "APPROVED", delegation: { link: true } }),
+    const msg = await aesEncrypt(
+      JSON.stringify({ link: true }),
       sessionKey,
-      { iv, alg: SymmAlg.AES_GCM }
+      iv
     )
     const message = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
@@ -346,10 +348,10 @@ describe("link device", async () => {
 
   it("does not link on rejection", async () => {
     const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(
+    const msg = await aesEncrypt(
       JSON.stringify({ linkStatus: "DENIED", delegation: { link: false } }),
       sessionKey,
-      { iv, alg: SymmAlg.AES_GCM }
+      iv
     )
     const message = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
@@ -367,10 +369,10 @@ describe("link device", async () => {
 
   it("returns a warning when the message received has the wrong shape", async () => {
     const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(
+    const msg = await aesEncrypt(
       JSON.stringify({ linkStatus: "DENIED", delegation: { link: false } }),
       sessionKey,
-      { iv, alg: SymmAlg.AES_GCM }
+      iv
     )
     const message = JSON.stringify({
       msg, // iv missing
@@ -400,10 +402,10 @@ describe("link device", async () => {
   it("returns a warning when it receives a message it cannot decrypt", async () => {
     const sessionKeyNoise = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
     const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(
+    const msg = await aesEncrypt(
       JSON.stringify({ linkStatus: "DENIED", delegation: { link: false } }),
       sessionKeyNoise,
-      { iv, alg: SymmAlg.AES_GCM }
+      iv
     )
     const message = JSON.stringify({
       iv: utils.arrBufToBase64(iv),
@@ -418,25 +420,30 @@ describe("link device", async () => {
     expect(linkMessage.ok).toBe(false)
     expect(err?.name === "LinkingWarning").toBe(true)
   })
-
-  it("returns an error when it receives an invalid linking status message", async () => {
-    const iv = utils.randomBuf(16)
-    const msg = await aes.encrypt(
-      JSON.stringify({ linkStatus: "INVALID", delegation: { link: true } }),
-      sessionKey,
-      { iv, alg: SymmAlg.AES_GCM }
-    )
-    const message = JSON.stringify({
-      iv: utils.arrBufToBase64(iv),
-      msg
-    })
-
-    const linkMessage = await consumer.linkDevice(sessionKey, username, message)
-
-    let err
-    if (linkMessage.ok === false) { err = linkMessage.error }
-
-    expect(linkMessage.ok).toBe(false)
-    expect(err?.name === "LinkingError").toBe(true)
-  })
 })
+
+
+async function aesEncrypt(payload: string, key: CryptoKey, ivStr: string | ArrayBuffer): Promise<string> {
+  const iv = typeof ivStr === "string" ? uint8arrays.fromString(ivStr, "base64") : ivStr
+  return utils.arrBufToBase64(
+    await webcrypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      uint8arrays.fromString(payload, "utf8")
+    )
+  )
+}
+
+async function aesDecrypt(cipher: string, key: CryptoKey, ivStr: string): Promise<string> {
+  return uint8arrays.toString(
+    await webcrypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: uint8arrays.fromString(ivStr, "base64"),
+      },
+      key,
+      utils.base64ToArrBuf(cipher),
+    ),
+    "utf8"
+  )
+}

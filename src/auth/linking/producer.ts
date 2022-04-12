@@ -3,6 +3,10 @@ import rsa from "keystore-idb/lib/rsa/index.js"
 import utils from "keystore-idb/lib/utils.js"
 import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
 
+import { webcrypto } from "one-webcrypto"
+import * as uint8arrays from "uint8arrays"
+
+import * as check from "../../common/type-checks.js"
 import * as did from "../../did/index.js"
 import * as ucan from "../../ucan/index.js"
 import { impl as auth } from "../implementation.js"
@@ -173,7 +177,16 @@ export const generateSessionKey = async (didThrowaway: string): Promise<{ sessio
   })
 
   const iv = utils.randomBuf(16)
-  const msg = await aes.encrypt(ucan.encode(u), sessionKey, { iv, alg: SymmAlg.AES_GCM })
+  const msg = utils.arrBufToBase64(
+    await webcrypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv,
+      },
+      sessionKey,
+      uint8arrays.fromString(ucan.encode(u), "utf8"),
+    ),
+  )
 
   const sessionKeyMessage = JSON.stringify({
     iv: utils.arrBufToBase64(iv),
@@ -197,27 +210,37 @@ export const generateSessionKey = async (didThrowaway: string): Promise<{ sessio
  * @returns pin and audience
  */
 export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<Result<{ pin: number[]; audience: string }, Error>> => {
-  const typeGuard = (message: any): message is { iv: ArrayBuffer; msg: string } => {
-    return "iv" in message && "msg" in message
+  const typeGuard = (message: unknown): message is { iv: string; msg: string } => {
+    return check.isObject(message)
+      && "iv" in message && typeof message.iv === "string"
+      && "msg" in message && typeof message.msg === "string"
   }
 
   const parseResult = tryParseMessage(data, typeGuard, { participant: "Producer", callSite: "handleUserChallenge" })
 
   if (parseResult.ok) {
-    const { iv, msg } = parseResult.value
+    const { iv: encodedIV, msg } = parseResult.value
+    const iv = utils.base64ToArrBuf(encodedIV)
 
     let message = null
     try {
-      message = await aes.decrypt(msg, sessionKey, {
-        alg: SymmAlg.AES_GCM,
-        iv
-      })
+      message = uint8arrays.toString(
+        await webcrypto.subtle.decrypt(
+          {
+            name: "AES-GCM",
+            iv,
+          },
+          sessionKey,
+          utils.base64ToArrBuf(msg),
+        ),
+        "utf8"
+      )
     } catch {
       return { ok: false, error: new LinkingWarning("Ignoring message that could not be decrypted.") }
     }
 
     const json = JSON.parse(message)
-    const pin = json.pin ? Object.values(json.pin) as number[] : null
+    const pin = json.pin as number[] ?? null
     const audience = json.did as string ?? null
 
     if (pin !== null && audience !== null) {
@@ -249,10 +272,19 @@ export const delegateAccount = async (
   finishDelegation: (delegationMessage: string, approved: boolean) => Promise<void>
 ): Promise<void> => {
   const delegation = await auth.delegateAccount(username, audience)
-  const message = JSON.stringify({ linkStatus: "APPROVED", delegation })
+  const message = JSON.stringify(delegation)
 
   const iv = utils.randomBuf(16)
-  const msg = await aes.encrypt(message, sessionKey, { iv, alg: SymmAlg.AES_GCM })
+  const msg = utils.arrBufToBase64(
+    await webcrypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv,
+      },
+      sessionKey,
+      uint8arrays.fromString(message, "utf8"),
+    ),
+  )
 
   const delegationMessage = JSON.stringify({
     iv: utils.arrBufToBase64(iv),
@@ -277,7 +309,16 @@ export const declineDelegation = async (
   const message = JSON.stringify({ linkStatus: "DENIED" })
 
   const iv = utils.randomBuf(16)
-  const msg = await aes.encrypt(message, sessionKey, { iv, alg: SymmAlg.AES_GCM })
+  const msg = utils.arrBufToBase64(
+    await webcrypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv,
+      },
+      sessionKey,
+      uint8arrays.fromString(message, "utf8"),
+    ),
+  )
 
   const delegationMessage = JSON.stringify({
     iv: utils.arrBufToBase64(iv),
