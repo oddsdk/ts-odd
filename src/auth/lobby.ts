@@ -131,21 +131,21 @@ export const checkCapability = async (username: string): Promise<boolean> => {
 }
 
 export const delegateAccount = async (username: string, audience: string): Promise<Record<string, unknown>> => {
-    const readKey = await storage.getItem("readKey")
-    const proof = await storage.getItem("ucan") as string
+  const readKey = await storage.getItem("readKey")
+  const proof = await storage.getItem("ucan") as string
 
-    const u = await token.build({
-      audience,
-      issuer: await did.write(),
-      lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
-      potency: "SUPER_USER",
-      proof,
-  
-      // TODO: UCAN v0.7.0
-      // proofs: [ await localforage.getItem("ucan") ]
-    })
-  
-    return { readKey, ucan: token.encode(u) }
+  const u = await token.build({
+    audience,
+    issuer: await did.write(),
+    lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
+    potency: "SUPER_USER",
+    proof,
+
+    // TODO: UCAN v0.7.0
+    // proofs: [ await localforage.getItem("ucan") ]
+  })
+
+  return { readKey, ucan: token.encode(u) }
 }
 
 function isLobbyLinkingData(data: unknown): data is { readKey: string; ucan: string } {
@@ -165,6 +165,8 @@ export const linkDevice = async (data: Record<string, unknown>): Promise<void> =
   if (await token.isValid(u)) {
     await storage.setItem("ucan", encodedToken)
     await storage.setItem("readKey", readKey)
+  } else {
+    throw new LinkingError(`Consumer received invalid link device response from producer. Given ucan is invalid: ${data.ucan}`)
   }
 }
 
