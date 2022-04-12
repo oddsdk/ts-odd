@@ -240,7 +240,7 @@ export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): 
     }
 
     const json = JSON.parse(message)
-    const pin = json.pin
+    const pin = json.pin as number[] ?? null
     const audience = json.did as string ?? null
 
     if (pin !== null && audience !== null) {
