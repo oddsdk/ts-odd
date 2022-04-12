@@ -420,27 +420,6 @@ describe("link device", async () => {
     expect(linkMessage.ok).toBe(false)
     expect(err?.name === "LinkingWarning").toBe(true)
   })
-
-  it("returns an error when it receives an invalid linking status message", async () => {
-    const iv = utils.randomBuf(16)
-    const msg = await aesEncrypt(
-      JSON.stringify({ linkStatus: "INVALID", delegation: { link: true } }),
-      sessionKey,
-      iv
-    )
-    const message = JSON.stringify({
-      iv: utils.arrBufToBase64(iv),
-      msg
-    })
-
-    const linkMessage = await consumer.linkDevice(sessionKey, username, message)
-
-    let err
-    if (linkMessage.ok === false) { err = linkMessage.error }
-
-    expect(linkMessage.ok).toBe(false)
-    expect(err?.name === "LinkingError").toBe(true)
-  })
 })
 
 
