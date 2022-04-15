@@ -11,8 +11,29 @@ export const set = (userIpfs: unknown): void => {
   ipfs = userIpfs as IPFS
 }
 
+export const setLocalIpfs = async (): Promise<void> => {
+  console.log("setting local ipfs worker")
+
+  const workerURL = new URL("../workers/ipfs.worker.js", import.meta.url)
+  const worker = new Worker(workerURL)
+
+  const port = await localIpfs(worker)
+  ipfs = IPFSClient.from(port) as unknown as IPFS 
+}
+
+function localIpfs(worker: Worker): Promise<MessagePort> {
+  return new Promise((resolve, reject) => {
+    const channel = new MessageChannel()
+    worker.postMessage({ endpoint: setup.endpoints.api, postId: "thisId" }, [ channel.port2 ])
+
+    resolve(channel.port1)
+  })
+}
+
 export const get = async (): Promise<IPFS> => {
   if (!ipfs) {
+    console.log("setting auth lobby ipfs worker")
+
     const port = await iframe()
     ipfs = IPFSClient.from(port) as unknown as IPFS
   }

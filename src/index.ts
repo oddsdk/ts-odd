@@ -4,9 +4,11 @@ import * as auth from "./auth/internal.js"
 import * as common from "./common/index.js"
 import * as ucan from "./ucan/internal.js"
 
+
 import { InitOptions, InitialisationError } from "./init/types.js"
 import { State, scenarioContinuation, scenarioNotAuthorised, validateSecrets } from "./auth/state.js"
 import { loadFileSystem } from "./filesystem.js"
+import { setLocalIpfs } from "./ipfs/config.js"
 
 import FileSystem from "./fs/index.js"
 
@@ -22,7 +24,10 @@ export async function initialise(options: InitOptions): Promise<State> {
   options = options || {}
 
   const permissions = options.permissions || null
+  const localIpfs = options.localIpfs ?? false 
   const { rootKey } = options
+
+  if (localIpfs) await setLocalIpfs()
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
