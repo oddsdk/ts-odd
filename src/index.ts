@@ -24,10 +24,7 @@ export async function initialise(options: InitOptions): Promise<State> {
   options = options || {}
 
   const permissions = options.permissions || null
-  const localIpfs = options.localIpfs ?? false 
-  const { rootKey } = options
-
-  if (localIpfs) await setLocalIpfs()
+  const { localIpfs = false, rootKey } = options
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
@@ -53,12 +50,16 @@ export async function initialise(options: InitOptions): Promise<State> {
     const validUcans = ucan.validatePermissions(permissions, authedUsername)
 
     if (validSecrets && validUcans) {
+      if (localIpfs) await setLocalIpfs()
+
       return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
     } else {
       return scenarioNotAuthorised(permissions)
     }
 
   } else if (authedUsername) {
+    if (localIpfs) await setLocalIpfs()
+
     return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
 
   } else {

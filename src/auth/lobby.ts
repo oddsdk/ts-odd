@@ -8,6 +8,7 @@ import * as check from "../common/type-checks.js"
 import { USERNAME_STORAGE_KEY, decodeCID } from "../common/index.js"
 import { scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, State, validateSecrets } from "./state.js"
 import { loadFileSystem } from "../filesystem.js"
+import { setLocalIpfs } from "../ipfs/config.js"
 import { setup } from "../setup/internal.js"
 
 import * as crypto from "../crypto/index.js"
@@ -27,7 +28,7 @@ import { LinkingError } from "./linking.js"
 
 export const init = async (options: InitOptions): Promise<State | null> => {
   const permissions = options.permissions || null
-  const { autoRemoveUrlParams = true, rootKey } = options
+  const { autoRemoveUrlParams = true, localIpfs = false, rootKey } = options
 
   // TODO: should be shared?
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
@@ -70,6 +71,9 @@ export const init = async (options: InitOptions): Promise<State | null> => {
       console.warn("Unable to validate UCAN permissions")
       return scenarioNotAuthorised(permissions)
     }
+
+    // Set local IPFS worker
+    if (localIpfs) await setLocalIpfs()
 
     return scenarioAuthSucceeded(
       permissions,
