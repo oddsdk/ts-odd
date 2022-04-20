@@ -1,6 +1,8 @@
 import FileSystem from "../fs/index.js"
 
+import type { ConnectionStatusEventMap } from "../ipfs/config.js"
 import type { Channel, ChannelOptions } from "./channel"
+import type { EventEmitter } from "../common/event-emitter.js"
 import { Implementation } from "./implementation/types.js"
 import { InitOptions } from "../init/types.js"
 
@@ -35,6 +37,12 @@ export const init = async (options: InitOptions): Promise<State | null> => {
     return options.loadFileSystem === false
       ? undefined
       : await loadFileSystem(permissions, username, rootKey)
+  }
+
+  const maybeSetLocalIpfs = async (): Promise<undefined | EventEmitter<ConnectionStatusEventMap>> => {
+    return localIpfs === false
+      ? undefined
+      : await setLocalIpfs()
   }
 
   // URL things
@@ -72,14 +80,12 @@ export const init = async (options: InitOptions): Promise<State | null> => {
       return scenarioNotAuthorised(permissions)
     }
 
-    // Set local IPFS worker
-    if (localIpfs) await setLocalIpfs()
-
     return scenarioAuthSucceeded(
       permissions,
       newUser,
       username,
-      await maybeLoadFs(username)
+      await maybeLoadFs(username),
+      await maybeSetLocalIpfs()
     )
 
   } else if (cancellation) {

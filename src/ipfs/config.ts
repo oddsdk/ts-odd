@@ -1,7 +1,12 @@
 import { IPFSClient } from "ipfs-message-port-client"
 import type { IPFS } from "ipfs-core"
 
+import { EventEmitter } from "../common/event-emitter.js"
 import { setup } from "../setup/internal.js"
+
+export interface ConnectionStatusEventMap {
+  "message": { offline: boolean; averageLatency: number }
+}
 
 
 let ipfs: IPFS | null = null
@@ -11,22 +16,30 @@ export const set = (userIpfs: unknown): void => {
   ipfs = userIpfs as IPFS
 }
 
-export const setLocalIpfs = async (): Promise<void> => {
+export const setLocalIpfs = async (): Promise<EventEmitter<ConnectionStatusEventMap>> => {
   console.log("setting local ipfs worker")
 
   const workerURL = new URL("../workers/ipfs.worker.js", import.meta.url)
   const worker = new Worker(workerURL)
 
-  const port = await localIpfs(worker)
+  const { port, connectionStatus } = await localIpfs(worker)
   ipfs = IPFSClient.from(port) as unknown as IPFS 
+
+  return connectionStatus
 }
 
-function localIpfs(worker: Worker): Promise<MessagePort> {
+function localIpfs(worker: Worker): Promise<{ port: MessagePort; connectionStatus: EventEmitter<ConnectionStatusEventMap> }> {
   return new Promise((resolve, reject) => {
     const channel = new MessageChannel()
-    worker.postMessage({ endpoint: setup.endpoints.api, postId: "thisId" }, [ channel.port2 ])
+    worker.postMessage({ endpoint: setup.endpoints.api }, [ channel.port2 ])
 
-    resolve(channel.port1)
+    const connectionStatus: EventEmitter<ConnectionStatusEventMap> = new EventEmitter()
+    worker.addEventListener("message", event => {
+      const { offline, averageLatency } = event.data
+      connectionStatus.emit("message", { offline, averageLatency })
+    })
+
+    resolve({ port: channel.port1, connectionStatus })
   })
 }
 

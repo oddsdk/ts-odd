@@ -4,6 +4,8 @@ import * as auth from "./auth/internal.js"
 import * as common from "./common/index.js"
 import * as ucan from "./ucan/internal.js"
 
+import type { ConnectionStatusEventMap } from "./ipfs/config.js"
+import type { EventEmitter } from "./common/event-emitter.js"
 
 import { InitOptions, InitialisationError } from "./init/types.js"
 import { State, scenarioContinuation, scenarioNotAuthorised, validateSecrets } from "./auth/state.js"
@@ -32,6 +34,12 @@ export async function initialise(options: InitOptions): Promise<State> {
       : await loadFileSystem(permissions, username, rootKey)
   }
 
+  const maybeSetLocalIpfs = async (): Promise<undefined | EventEmitter<ConnectionStatusEventMap>> => {
+    return localIpfs === false
+      ? undefined
+      : await setLocalIpfs()
+  }
+
   // Check if browser is supported
   if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
   if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
@@ -50,17 +58,23 @@ export async function initialise(options: InitOptions): Promise<State> {
     const validUcans = ucan.validatePermissions(permissions, authedUsername)
 
     if (validSecrets && validUcans) {
-      if (localIpfs) await setLocalIpfs()
-
-      return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+      return scenarioContinuation(
+        permissions, 
+        authedUsername, 
+        await maybeLoadFs(authedUsername), 
+        await maybeSetLocalIpfs()
+      )
     } else {
       return scenarioNotAuthorised(permissions)
     }
 
   } else if (authedUsername) {
-    if (localIpfs) await setLocalIpfs()
-
-    return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+    return scenarioContinuation(
+      permissions, 
+      authedUsername, 
+      await maybeLoadFs(authedUsername), 
+      await maybeSetLocalIpfs()
+    )
 
   } else {
     return scenarioNotAuthorised(permissions)

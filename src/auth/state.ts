@@ -5,6 +5,9 @@ import * as identifiers from "../common/identifiers.js"
 import * as pathing from "../path.js"
 import * as ucanPermissions from "../ucan/permissions.js"
 
+import type { EventEmitter } from "../common/event-emitter.js"
+import type { ConnectionStatusEventMap } from "../ipfs/config.js"
+
 import { Maybe } from "../common/types.js"
 import { Permissions } from "../ucan/permissions.js"
 
@@ -24,7 +27,8 @@ export function scenarioAuthSucceeded(
   permissions: Maybe<Permissions>,
   newUser: boolean,
   username: string,
-  fs: FileSystem | undefined
+  fs: FileSystem | undefined,
+  connectionStatus?: EventEmitter<ConnectionStatusEventMap>
 ): AuthSucceeded {
   return {
     scenario: Scenario.AuthSucceeded,
@@ -34,7 +38,9 @@ export function scenarioAuthSucceeded(
     throughLobby: true,
     fs,
     newUser,
-    username
+    username,
+
+    connectionStatus
   }
 }
 
@@ -55,7 +61,8 @@ export function scenarioAuthCancelled(
 export function scenarioContinuation(
   permissions: Maybe<Permissions>,
   username: string,
-  fs: FileSystem | undefined
+  fs: FileSystem | undefined,
+  connectionStatus?: EventEmitter<ConnectionStatusEventMap> | undefined
 ): Continuation {
   return {
     scenario: Scenario.Continuation,
@@ -65,7 +72,9 @@ export function scenarioContinuation(
     newUser: false,
     throughLobby: false,
     fs,
-    username
+    username,
+
+    connectionStatus
   }
 }
 
@@ -108,6 +117,7 @@ export type AuthSucceeded = {
   username: string
 
   fs?: FileSystem
+  connectionStatus?: EventEmitter<ConnectionStatusEventMap>
 }
 
 export type AuthCancelled = {
@@ -129,6 +139,7 @@ export type Continuation = {
   username: string
 
   fs?: FileSystem
+  connectionStatus?: EventEmitter<ConnectionStatusEventMap>
 }
 
 

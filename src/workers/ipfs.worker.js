@@ -280,6 +280,9 @@ function report(peer, status) {
     ? peerConnections.reduce((sum, connection) => sum + connection.latency, 0) / activeConnections.length
     : null
 
+  // Post connection status to main thread
+  self.postMessage({ offline, averageLatency })
+
   if (monitoringPeers) {
     console.table(peerConnections)
     console.log("offline", offline)
@@ -439,10 +442,9 @@ self.addEventListener("message", setup)
 
 
 function setup(event) {
-  const { endpoint, postId } = event.data
+  const { endpoint } = event.data
 
   self.apiEndpoint = endpoint
-  self.postId = postId
 
   if (!self.initiated) main(event.ports && event.ports[0])
   self.removeEventListener("message", setup)
