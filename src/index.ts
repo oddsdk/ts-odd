@@ -58,22 +58,26 @@ export async function initialise(options: InitOptions): Promise<State> {
     const validUcans = ucan.validatePermissions(permissions, authedUsername)
 
     if (validSecrets && validUcans) {
+      const connectionStatus = await maybeSetLocalIpfs()
+
       return scenarioContinuation(
         permissions, 
         authedUsername, 
         await maybeLoadFs(authedUsername), 
-        await maybeSetLocalIpfs()
+        connectionStatus
       )
     } else {
       return scenarioNotAuthorised(permissions)
     }
 
   } else if (authedUsername) {
+    const connectionStatus = await maybeSetLocalIpfs()
+
     return scenarioContinuation(
       permissions, 
       authedUsername, 
       await maybeLoadFs(authedUsername), 
-      await maybeSetLocalIpfs()
+      connectionStatus
     )
 
   } else {

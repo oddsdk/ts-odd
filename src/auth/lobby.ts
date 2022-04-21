@@ -80,12 +80,14 @@ export const init = async (options: InitOptions): Promise<State | null> => {
       return scenarioNotAuthorised(permissions)
     }
 
+    const connectionStatus = await maybeSetLocalIpfs()
+
     return scenarioAuthSucceeded(
       permissions,
       newUser,
       username,
       await maybeLoadFs(username),
-      await maybeSetLocalIpfs()
+      connectionStatus
     )
 
   } else if (cancellation) {
