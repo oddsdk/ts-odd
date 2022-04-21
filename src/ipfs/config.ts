@@ -17,27 +17,36 @@ export const set = (userIpfs: unknown): void => {
 }
 
 export const setLocalIpfs = async (): Promise<EventEmitter<ConnectionStatusEventMap>> => {
-  console.log("setting local ipfs worker")
-
-  const workerURL = new URL("../workers/ipfs.worker.js", import.meta.url)
-  const worker = new Worker(workerURL)
-
-  const { port, connectionStatus } = await localIpfs(worker)
+  const { port, connectionStatus } = await localIpfs()
   ipfs = IPFSClient.from(port) as unknown as IPFS 
 
   return connectionStatus
 }
 
-function localIpfs(worker: Worker): Promise<{ port: MessagePort; connectionStatus: EventEmitter<ConnectionStatusEventMap> }> {
-  return new Promise((resolve, reject) => {
+function localIpfs(): Promise<{ port: MessagePort; connectionStatus: EventEmitter<ConnectionStatusEventMap> }> {
+  return new Promise(resolve => {
+    const workerURL = new URL("../workers/ipfs.worker.js", import.meta.url)
     const channel = new MessageChannel()
-    worker.postMessage({ endpoint: setup.endpoints.api }, [ channel.port2 ])
-
     const connectionStatus: EventEmitter<ConnectionStatusEventMap> = new EventEmitter()
-    worker.addEventListener("message", event => {
-      const { offline, averageLatency } = event.data
-      connectionStatus.emit("message", { offline, averageLatency })
-    })
+
+    if (typeof SharedWorker === "function") {
+      const sharedWorker = new SharedWorker(workerURL)
+
+      sharedWorker.port.postMessage({ endpoint: setup.endpoints.api }, [ channel.port2 ])
+      sharedWorker.port.onmessage = event => {
+        const { offline, averageLatency } = event.data
+        connectionStatus.emit("message", { offline, averageLatency })
+      }
+
+    } else {
+      const worker = new Worker(workerURL)
+
+      worker.postMessage({ endpoint: setup.endpoints.api }, [ channel.port2 ])
+      worker.addEventListener("message", event => {
+        const { offline, averageLatency } = event.data
+        connectionStatus.emit("message", { offline, averageLatency })
+      })
+    }
 
     resolve({ port: channel.port1, connectionStatus })
   })

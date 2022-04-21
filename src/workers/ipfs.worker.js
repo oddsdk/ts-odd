@@ -280,8 +280,11 @@ function report(peer, status) {
     ? peerConnections.reduce((sum, connection) => sum + connection.latency, 0) / activeConnections.length
     : null
 
-  // Post connection status to main thread
-  self.postMessage({ offline, averageLatency })
+  if (typeof SharedWorkerGlobalScope === "function") { 
+    self.sharedWorkerPort.postMessage({ offline, averageLatency })
+  } else {
+    self.postMessage({ offline, averageLatency })
+  }
 
   if (monitoringPeers) {
     console.table(peerConnections)
@@ -438,17 +441,31 @@ const listen = function (target, type, options) {
 }
 
 
-self.addEventListener("message", setup)
+if (typeof SharedWorkerGlobalScope === "function") { 
+  self.onconnect = event => { 
+    // Default shared worker port
+    self.sharedWorkerPort = event.ports[0]
 
+    self.sharedWorkerPort.onmessage = event => {
+      const { endpoint } = event.data
 
-function setup(event) {
-  const { endpoint } = event.data
+      self.apiEndpoint = endpoint
 
-  self.apiEndpoint = endpoint
+      // Initialize IPFS with non-default message port
+      if (!self.initiated) main(event.ports && event.ports[0])
+      self.sharedWorkerPort.onmessage = null;
+    }
+  }
+} else {
+  self.addEventListener("message", setup)
 
-  if (!self.initiated) main(event.ports && event.ports[0])
-  self.removeEventListener("message", setup)
+  function setup(event) {
+    const { endpoint } = event.data
+
+    self.apiEndpoint = endpoint
+
+      // Initialize IPFS with message port
+    if (!self.initiated) main(event.ports && event.ports[0])
+    self.removeEventListener("message", setup)
+  }
 }
-
-
-if (typeof SharedWorkerGlobalScope === "function") main()
