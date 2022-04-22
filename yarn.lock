@@ -2536,6 +2536,16 @@ ipfs-message-port-protocol@^0.11.3:
     ipfs-core-types "^0.10.3"
     multiformats "^9.5.1"
 
+ipfs-message-port-server@^0.11.3:
+  version "0.11.3"
+  resolved "https://registry.yarnpkg.com/ipfs-message-port-server/-/ipfs-message-port-server-0.11.3.tgz#3f1bfc098ef36c93dc6b2c6c19ad104ef314adac"
+  integrity sha512-jRdRLZRaM+jXpTxpzKlkr9tzwFxFNkXiHg+Cx0byZzk2pdcwbNtbv9L1jG5M6iN/4UktrOl5QUqPA/TSzZmE0A==
+  dependencies:
+    ipfs-core-types "^0.10.3"
+    ipfs-message-port-protocol "^0.11.3"
+    it-all "^1.0.4"
+    multiformats "^9.5.1"
+
 ipfs-repo-migrations@^12.0.1:
   version "12.0.1"
   resolved "https://registry.npmjs.org/ipfs-repo-migrations/-/ipfs-repo-migrations-12.0.1.tgz"

@@ -3,7 +3,7 @@
     "moduleResolution": "node",
     "target": "ES2018",
     "module":"ESNext",
-    "lib": ["dom", "es2021"],
+    "lib": ["dom", "es2021", "webworker"],
     "strict": true,
     "sourceMap": true,
     "declaration": true,
