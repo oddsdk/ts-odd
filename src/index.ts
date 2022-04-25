@@ -43,7 +43,9 @@ export async function initialise(options: InitOptions): Promise<State> {
   // Check if browser is supported
   if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
   if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
-  if (isLocalIpfsSupported() === false) throw InitialisationError.UnsupportedLocalIpfs
+
+  // Check if local IPFS is supported
+  if (localIpfs && isLocalIpfsSupported() === false) throw InitialisationError.UnsupportedLocalIpfs
 
   const state = await auth.init(options)
 
