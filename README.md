@@ -63,6 +63,10 @@ const state = await wn.initialise({
     case wn.InitialisationError.UnsupportedBrowser:
       // Browser not supported.
       // Example: Firefox private mode can't use indexedDB.
+
+    case wn.InitialisationError.UnsupportedLocalIpfs:
+      // Local IPFS is not supported in UMD build.
+      // Support may be added in a future version. 
   }
 
 })

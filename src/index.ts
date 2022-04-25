@@ -43,6 +43,7 @@ export async function initialise(options: InitOptions): Promise<State> {
   // Check if browser is supported
   if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
   if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
+  if (isLocalIpfsSupported() === false) throw InitialisationError.UnsupportedLocalIpfs
 
   const state = await auth.init(options)
 
@@ -109,6 +110,15 @@ export async function isSupported(): Promise<boolean> {
     }))() as boolean
 }
 
+export const isLocalIpfsSupported = () => {
+  try {
+    new URL("./workers/ipfs.worker.js", import.meta.url)
+    return true
+  } catch {
+    // UMD build will not resolve path
+    return false
+  }
+}
 
 
 // EXPORT

@@ -6,7 +6,8 @@ import { Permissions } from "../ucan/permissions.js"
  */
 export enum InitialisationError {
   InsecureContext = "INSECURE_CONTEXT",
-  UnsupportedBrowser = "UNSUPPORTED_BROWSER"
+  UnsupportedBrowser = "UNSUPPORTED_BROWSER",
+  UnsupportedLocalIpfs = "UNSUPPORTED_LOCAL_IPFS"
 }
 
 
