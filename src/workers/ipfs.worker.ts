@@ -8,6 +8,16 @@ Pretty much copied from an example on https://github.com/ipfs/js-ipfs
 */
 
 
+import type { IPFS, Options } from "ipfs-core"
+import type { libp2p } from "ipfs-core/src/components/network"
+import type { MultiService } from "ipfs-message-port-protocol/src/rpc"
+import type { PBLink } from "@ipld/dag-pb"
+
+import { create as createIpfs } from "ipfs-core"
+import * as localforage from "localforage"
+import { Server, IPFSService } from "ipfs-message-port-server"
+
+
 interface IPFSWorkerGlobalScope extends WorkerGlobalScope {
   // Worker
   addEventListener<K extends keyof DedicatedWorkerGlobalScopeEventMap>(type: K, listener: (this: DedicatedWorkerGlobalScope, ev: DedicatedWorkerGlobalScopeEventMap[K]) => unknown, options?: boolean | AddEventListenerOptions): void
@@ -19,9 +29,9 @@ interface IPFSWorkerGlobalScope extends WorkerGlobalScope {
   sharedWorkerPort: MessagePort
 
   // IPFS
-  ipfs: IPFS
-  server: Server<unknown>
-  service: IPFSService
+  ipfs: IPFS & { libp2p: libp2p }
+  service: MultiService<IPFSService>
+  server: Server<IPFSService>
 
   apiEndpoint: string
   initiated: boolean
@@ -34,21 +44,13 @@ interface IPFSWorkerGlobalScope extends WorkerGlobalScope {
 
 declare const self: IPFSWorkerGlobalScope
 
-
-import type { IPFS, Options } from "ipfs-core"
-
-
-import { create as createIpfs } from "ipfs-core"
-// import * as libp2p from "libp2p" // ????
-
-import * as localforage from "localforage"
-import { Server, IPFSService } from "ipfs-message-port-server"
-
-
 // Global state
 async function initPeers(): Promise<string[]> { return new Promise(resolve => resolve([])) }
-let peers: string[] = await initPeers()
+let peers: string[] = []
+initPeers().then(ps => { peers = ps }).catch(() => { })
+// let peers: string[] = await initPeers()
 // let peers: string[] = Promise.resolve([])
+
 const latestPeerTimeoutIds: Record<string, unknown> = {}
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
 
@@ -107,9 +109,6 @@ const OPTIONS: Options = {
 }
 
 
-// importScripts("web_modules/ipfs.min.js")
-
-
 const main = async (port: MessagePort) => {
   // const IPFS = self.Ipfs
   self.initiated = true
@@ -124,14 +123,12 @@ const main = async (port: MessagePort) => {
   // peers = await localforage.getItem("ipfsPeers")
   const storedPeers: string | null = await localforage.getItem("ipfsPeers")
 
-  // if (peers) {
-    // peers = peers.split(",")
   if (storedPeers) {
     peers = storedPeers.split(",")
 
     fetchPeers().then(list =>
       localforage.setItem("ipfsPeers", list.join(","))
-    ).catch(() => {})
+    ).catch(() => { })
 
   } else {
     peers = await fetchPeers()
@@ -145,12 +142,11 @@ const main = async (port: MessagePort) => {
 
   // Start an IPFS node & create server that will expose it's API to all clients
   // over message channel.
-  // const ipfs = await IPFS.create(OPTIONS)
   const ipfs = await createIpfs(OPTIONS)
-  const service = new IPFSService(ipfs)
+  const service = new IPFSService(ipfs) as unknown as MultiService<IPFSService>
   const server = new Server(service)
 
-  self.ipfs = ipfs
+  self.ipfs = ipfs as unknown as IPFS & { libp2p: libp2p }
   self.service = service
   self.server = server
 
@@ -161,12 +157,6 @@ const main = async (port: MessagePort) => {
 
   console.log("🚀 Started IPFS node")
 
-  // Monitor bitswap and peer connections automatically if on localhost and staging environment
-  // if ([ "localhost", "auth.runfission.net" ].includes(self.location.hostname)) {
-  //   void monitorBitswap(true)
-  //   void monitorPeers()
-  // }
-
   // Connect every queued and future connection to the server.
   if (port) {
     server.connect(port)
@@ -174,6 +164,7 @@ const main = async (port: MessagePort) => {
   }
 
   for await (const event of connections) {
+    // @ts-ignore
     const p = event.ports && event.ports[0]
     if (p) server.connect(p)
   }
@@ -211,8 +202,7 @@ function fetchPeers() {
 // -----------
 
 async function keepAlive(peer: string, backoff: Backoff, status: ConnectionStatus) {
-  // let timeoutId: number | null = null
-  let timeoutId:  ReturnType<typeof setTimeout> | null = null
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
 
   if (backoff.currentBackoff < KEEP_TRYING_INTERVAL) {
 
@@ -227,9 +217,7 @@ async function keepAlive(peer: string, backoff: Backoff, status: ConnectionStatu
   // Track the latest reconnect attempt
   latestPeerTimeoutIds[peer] = timeoutId
 
-  // libp2p.ping(peer).then((latency: number) => {
   self.ipfs.libp2p.ping(peer).then((latency: number) => {
-  // libp2p.ping(peer).then((latency: number) => {
     const updatedStatus: ConnectionStatus = { connected: true, lastConnectedAt: Date.now(), latency }
     report(peer, updatedStatus)
 
@@ -275,8 +263,7 @@ async function tryConnecting(peer: string) {
     .then((latency: number) => {
 
       return self.ipfs.swarm
-        // .connect(peer, 1 * 1000)
-        .connect(peer)
+        .connect(peer, { timeout: 1 * 1000 })
         .then(() => {
           console.log(`🪐 Connected to ${peer}`)
 
@@ -308,9 +295,9 @@ self.reconnect = reconnect
 // ---------
 
 type ConnectionStatus = {
-   connected: boolean
-   lastConnectedAt: number
-   latency: number | null
+  connected: boolean
+  lastConnectedAt: number
+  latency: number | null
 }
 
 let peerConnections: ({ peer: string } & ConnectionStatus)[] = []
@@ -332,7 +319,7 @@ function report(peer: string, status: ConnectionStatus) {
     ? activeConnections.reduce((sum, connection) => sum + (connection.latency ?? 0), 0) / activeConnections.length
     : null
 
-  if (typeof SharedWorkerGlobalScope === "function") { 
+  if (typeof SharedWorkerGlobalScope === "function") {
     self.sharedWorkerPort.postMessage({ offline, averageLatency })
   } else {
     self.postMessage({ offline, averageLatency })
@@ -365,23 +352,23 @@ self.stopMonitoringPeers = stopMonitoringPeers
 // 🔮
 
 
-let monitor: number 
+let monitor: number
 
 
-async function asyncIteratorToArray(it) {
-  const chunks = []
+// async function asyncIteratorToArray(it) {
+//   const chunks = []
 
-  for await (const chunk of it) {
-    chunks.push(chunk)
-  }
+//   for await (const chunk of it) {
+//     chunks.push(chunk)
+//   }
 
-  return chunks
-}
+//   return chunks
+// }
 
 
 async function monitorBitswap(verbose: boolean) {
-  const cids = {}
-  const seen = []
+  const cids: Record<string, number> = {}
+  const seen: string[] = []
 
   verbose = verbose === undefined ? false : true
 
@@ -393,7 +380,6 @@ async function monitorBitswap(verbose: boolean) {
 
     peerList.map(async peer => {
       const peerId = peer.split("/").reverse()[0]
-      // const wantList = await ipfs.bitswap.wantlistForPeer(peerId, { timeout: 120 * 1000 })
       const wantList = await self.ipfs.bitswap.wantlistForPeer(peerId, { timeout: 120 * 1000 })
 
       wantList.forEach(async cid => {
@@ -418,15 +404,14 @@ async function monitorBitswap(verbose: boolean) {
           seen.push(s)
 
           const dag = await self.ipfs.dag.get(cid)
-          // const dag = await ipfs.dag.get(cid)
           const end = performance.now()
           const diff = end - start
           const loaded = `loaded locally in ${diff.toFixed(2)} ms`
 
           if (dag.value.Links) {
             console.log(`🧱 ${c} is a 👉 DAG structure (${loaded})`)
-              ;(console.table || console.log)(
-                dag.value.Links.map(l => {
+              ; (console.table || console.log)(
+                dag.value.Links.map((l: PBLink) => {
                   return { name: l.Name, cid: l.Hash.toString() }
                 })
               )
@@ -481,10 +466,10 @@ const listen = function (target: EventTarget, type: string, options: AddEventLis
     return events.splice(0)
   }
 
-  const reader = async function * () {
+  const reader = async function* () {
     try {
       while (true) {
-        yield * await read()
+        yield* await read()
       }
     } finally {
       target.removeEventListener(type, write, options)
@@ -496,8 +481,8 @@ const listen = function (target: EventTarget, type: string, options: AddEventLis
 }
 
 
-if (typeof SharedWorkerGlobalScope === "function") { 
-  self.onconnect = event => { 
+if (typeof SharedWorkerGlobalScope === "function") {
+  self.onconnect = event => {
     // Default shared worker port
     self.sharedWorkerPort = event.ports[0]
 
@@ -520,7 +505,7 @@ async function setup(event: MessageEvent) {
 
   self.apiEndpoint = endpoint
 
-    // Initialize IPFS with message port
+  // Initialize IPFS with message port
   if (!self.initiated) await main(event.ports && event.ports[0])
   self.removeEventListener("message", setup)
 }
