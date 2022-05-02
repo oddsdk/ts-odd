@@ -1,12 +1,15 @@
 import localforage from "localforage"
 
 import * as auth from "./auth/internal.js"
+import * as cidLog from "./common/cid-log.js"
 import * as common from "./common/index.js"
+import * as dataRoot from "./data-root.js"
+import * as pathing from "./path.js"
 import * as ucan from "./ucan/internal.js"
 
 import { InitOptions, InitialisationError } from "./init/types.js"
 import { State, scenarioContinuation, scenarioNotAuthorised, validateSecrets } from "./auth/state.js"
-import { loadFileSystem } from "./filesystem.js"
+import { createFilesystem, loadFileSystem } from "./filesystem.js"
 
 import FileSystem from "./fs/index.js"
 
@@ -22,7 +25,7 @@ export async function initialise(options: InitOptions): Promise<State> {
   options = options || {}
 
   const permissions = options.permissions || null
-  const { rootKey } = options
+  const { useWnfs = false, rootKey } = options
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
@@ -33,6 +36,7 @@ export async function initialise(options: InitOptions): Promise<State> {
   // Check if browser is supported
   if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
   if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
+
 
   const state = await auth.init(options)
 
@@ -48,25 +52,49 @@ export async function initialise(options: InitOptions): Promise<State> {
     const validUcans = ucan.validatePermissions(permissions, authedUsername)
 
     if (validSecrets && validUcans) {
-      return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+      return scenarioContinuation(
+        permissions,
+        authedUsername,
+        await maybeLoadFs(authedUsername)
+      )
     } else {
       return scenarioNotAuthorised(permissions)
     }
 
+  // Is this the right set of conditions? For now, this should only include root apps
+  } else if (authedUsername && useWnfs) {
+    if (options.loadFileSystem === false) throw new Error("Must load filesystem when using the useWnfs option.")
+
+    const dataCid = await dataRoot.lookup(authedUsername) // data root on server
+    const logCid = await cidLog.newest() // data root in app
+    const rootPermissions = { fs: { private: [pathing.root()], public: [pathing.root()] } }
+
+    if (dataCid === null && logCid === undefined) {
+      return scenarioContinuation(
+        rootPermissions,
+        authedUsername,
+        await createFilesystem(rootPermissions)
+      )
+    } else {
+      return scenarioContinuation(
+        rootPermissions,
+        authedUsername,
+        await maybeLoadFs(authedUsername),
+      )
+    }
+
   } else if (authedUsername) {
-    return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+    return scenarioContinuation(
+      permissions,
+      authedUsername,
+      await maybeLoadFs(authedUsername),
+    )
 
   } else {
     return scenarioNotAuthorised(permissions)
 
   }
 }
-
-
-/**
- * Alias for `initialise`.
- */
-export { initialise as initialize }
 
 
 
@@ -84,7 +112,6 @@ export async function isSupported(): Promise<boolean> {
       db.onerror = () => resolve(false)
     }))() as boolean
 }
-
 
 
 // EXPORT

@@ -1,14 +1,18 @@
+import localforage from "localforage"
 import { CID } from "multiformats/cid"
 
 import FileSystem from "./fs/index.js"
 
 import * as cidLog from "./common/cid-log.js"
+import * as crypto from "./crypto/index.js"
 import * as debug from "./common/debug.js"
 import * as dataRoot from "./data-root.js"
+import * as did from "./did/index.js"
 import * as ucan from "./ucan/internal.js"
 import * as protocol from "./fs/protocol/index.js"
 import * as versions from "./fs/versions.js"
 
+import { build as buildUcan, encode as encodeUcan } from "./ucan/token.js"
 import { Branch } from "./path.js"
 import { Maybe, authenticatedUsername, decodeCID } from "./common/index.js"
 import { Permissions } from "./ucan/permissions.js"
@@ -95,6 +99,60 @@ export async function loadFileSystem(
   // Fin
   return fs
 }
+
+export const createFilesystem = async (permissions: Permissions): Promise<FileSystem> => {
+  // Get or create root read key
+  const rootKey = await readKey()
+  console.log("root key", rootKey)
+
+  // Create an empty filesystem
+  const fs = await FileSystem.empty({ permissions, rootKey })
+  console.log("empty filesystem", fs)
+
+  // Self-authorize a filesystem UCAN
+  const issuer = await did.write()
+  const proof: string | null = await localforage.getItem("ucan")
+  const fsUcan = await buildUcan({
+    potency: "APPEND",
+    resource: "*",
+    proof: proof ? proof : undefined,
+    lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
+
+    audience: issuer,
+    issuer
+  })
+  console.log("fsUcan", fsUcan)
+
+  // Add filesystem UCAN to store
+  await ucan.store([encodeUcan(fsUcan)])
+
+  // Update filesystem
+  const rootCid = await fs.root.put()
+  console.log("root cid", rootCid)
+
+  // Publish data root
+  const res = await dataRoot.update(rootCid, encodeUcan(fsUcan))
+  // throw an error on failure?
+  console.log("data root update result", res)
+
+  // Update CID log
+  await cidLog.add(rootCid.toString())
+
+  return fs
+}
+
+
+// KEY
+
+async function readKey(): Promise<string> {
+  const maybeReadKey = await localforage.getItem("readKey") as unknown as string
+  if (maybeReadKey) return maybeReadKey
+
+  const readKey = await crypto.aes.genKeyStr()
+  await localforage.setItem("readKey", readKey)
+  return readKey
+}
+
 
 
 export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> {
