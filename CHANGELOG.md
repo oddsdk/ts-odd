@@ -3,7 +3,14 @@
 
 ### v0.32.0
 
-- Adds app owned account linking
+#### Features
+
+Adds app owned account linking.
+
+#### Bug fixes
+
+Fixes issue with loading private shares.
+
 
 ### v0.31.1
 

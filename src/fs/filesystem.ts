@@ -494,7 +494,7 @@ export class FileSystem {
     if (!shareLink) throw new Error("Couldn't find a matching share.")
 
     const shareLinkCid = typeChecks.isObject(shareLink) ? shareLink.cid : null
-    if (!typeChecks.isString(shareLinkCid)) throw new Error("Couldn't find a matching share.")
+    if (!shareLinkCid) throw new Error("Couldn't find a matching share.")
 
     const sharePayload = await ipfs.catBuf(decodeCID(shareLinkCid))
 
