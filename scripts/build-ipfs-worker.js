@@ -3,26 +3,25 @@ import * as https from 'https';
 import esbuild from "esbuild"
 
 
-console.log("📦 Bundling ipfs and ipfs worker...")
+console.log("📦 Bundling IPFS and IPFS worker...")
 
 const workerOutfile = "lib/workers/ipfs.worker.js"
 const ipfsOutfile = "lib/workers/ipfs.min.js"
 
 esbuild.buildSync({
-  // entryPoints: ["src/workers/ipfs.worker.js"],
-  entryPoints: ["src/workers/ipfs.worker.ts"],
+  entryPoints: ["src/workers/ipfs.worker.js"],
   outfile: workerOutfile,
   bundle: true,
   target: "es2020",
   allowOverwrite: true
 })
 
-// console.log(`⬇️ Dowloading minified IPFS bundle`)
+console.log(`⬇️ Dowloading minified IPFS bundle`)
 
-// const file = fs.createWriteStream(ipfsOutfile);
-// https.get("https://unpkg.com/ipfs@0.61.0/index.min.js", function(response) {
-//    response.pipe(file);
-//    file.on("finish", () => file.close());
-// });
+const file = fs.createWriteStream(ipfsOutfile);
+https.get("https://unpkg.com/ipfs@0.61.0/index.min.js", function(response) {
+   response.pipe(file);
+   file.on("finish", () => file.close());
+});
 
-// console.log(`📝 Wrote ${workerOutfile} and ${ipfsOutfile}`)
+console.log(`📝 Wrote ${workerOutfile} and ${ipfsOutfile}`)

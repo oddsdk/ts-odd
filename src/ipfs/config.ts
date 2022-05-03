@@ -23,7 +23,7 @@ export const setLocalIpfs = async (): Promise<EventEmitter<ConnectionStatusEvent
   return connectionStatus
 }
 
-function localIpfs(): Promise<{ port: MessagePort; connectionStatus: EventEmitter<ConnectionStatusEventMap> }> {
+export function localIpfs(): Promise<{ port: MessagePort; connectionStatus: EventEmitter<ConnectionStatusEventMap> }> {
   return new Promise(resolve => {
     const workerURL = new URL("../workers/ipfs.worker.js", import.meta.url)
     const channel = new MessageChannel()
@@ -54,8 +54,6 @@ function localIpfs(): Promise<{ port: MessagePort; connectionStatus: EventEmitte
 
 export const get = async (): Promise<IPFS> => {
   if (!ipfs) {
-    console.log("setting auth lobby ipfs worker")
-
     const port = await iframe()
     ipfs = IPFSClient.from(port) as unknown as IPFS
   }

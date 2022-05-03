@@ -10,9 +10,6 @@ Pretty much copied from an example on https://github.com/ipfs/js-ipfs
 import localforage from "localforage"
 import { Server, IPFSService } from "ipfs-message-port-server"
 
-// self.apiEndpoint = API_ENDPOINT
-
-console.log("IN LOCAL IPFS WORKER")
 
 // Global state
 let peers = Promise.resolve([])
@@ -117,13 +114,6 @@ const main = async (port) => {
   })
 
   console.log("🚀 Started IPFS node")
-
-  // TODO: We probably don't want to monitor by default at all
-  // Monitor bitswap and peer connections automatically if on localhost and staging environment
-  // if ([ "localhost", "auth.runfission.net" ].includes(self.location.hostname)) {
-  //   monitorBitswap()
-  //   monitorPeers()
-  // }
 
   // Connect every queued and future connection to the server.
   if (port) {
