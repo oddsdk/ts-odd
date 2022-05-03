@@ -1,6 +1,12 @@
 # Changelog
 
 
+### v0.33.0
+
+#### Features
+
+Adds app local IPFS worker.
+
 ### v0.32.0
 
 #### Features
