@@ -94,12 +94,13 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@ipld/car@^3.1.0":
-  version "3.2.4"
-  resolved "https://registry.npmjs.org/@ipld/car/-/car-3.2.4.tgz"
-  integrity sha512-rezKd+jk8AsTGOoJKqzfjLJ3WVft7NZNH95f0pfPbicROvzTyvHCNy567HzSUd6gRXZ9im29z5ZEv9Hw49jSYw==
+"@ipld/car@^4.1.0":
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/@ipld/car/-/car-4.1.2.tgz#5b39f48ff185d07403eefbd50f238f6c1ad0b179"
+  integrity sha512-VaeFFqrBWxPgTuHNuk0k5niWT82C51Y2uvju8lQkpOpSPzCW2hPKoR73dZ1i7MXB8zmOlxkjd3BG8oeJovAXtw==
   dependencies:
     "@ipld/dag-cbor" "^7.0.0"
+    cborg "^1.9.0"
     multiformats "^9.5.4"
     varint "^6.0.0"
 
@@ -945,6 +946,11 @@ cborg@^1.3.1, cborg@^1.3.3, cborg@^1.3.4, cborg@^1.5.4, cborg@^1.6.0:
   version "1.9.0"
   resolved "https://registry.npmjs.org/cborg/-/cborg-1.9.0.tgz"
   integrity sha512-V55F9PB2rQHXcmkZKiUEE+4IhOHu9clfO5fpcVNpSPb5V0ZdPoKhgiGA0w26J5Pd93FiMXW47ovZMw3T8V1eWA==
+
+cborg@^1.9.0:
+  version "1.9.1"
+  resolved "https://registry.yarnpkg.com/cborg/-/cborg-1.9.1.tgz#9ea2f7b1745048e7db51e78d54e8a9a0e4f64a11"
+  integrity sha512-6xKRdJ89ncwEXJGx9rFMRBNp72UqgYSGt2a88rqsvCLda4OuhRlh3xD2nu+ufrw6h9l94K0cnvyD4WEGpKtRtw==
 
 chalk@^2.0.0:
   version "2.4.2"
@@ -2346,10 +2352,10 @@ ipfs-bitswap@^10.0.1:
     varint "^6.0.0"
     varint-decoder "^1.0.0"
 
-ipfs-core-config@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.npmjs.org/ipfs-core-config/-/ipfs-core-config-0.3.2.tgz"
-  integrity sha512-nyL3ibYxNqvIPoKsb+xgb69E5zDaJswxxA2xBYwWKK2w9Ww9qYKkLmJ8vRn4l0rE/JPFi3iWXUzrmA6b3uVM4w==
+ipfs-core-config@^0.3.3:
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/ipfs-core-config/-/ipfs-core-config-0.3.3.tgz#38d548650008b36289e8dcbce33572f266af493f"
+  integrity sha512-hF5OE4qKy8vJetI3VYWOYePiW0JSV3i/9ArIrwATT0aJHbPzrRWJFQvvfeAFVEPqRmEBnnIQZCjHyGeVFbYfBg==
   dependencies:
     "@chainsafe/libp2p-noise" "^5.0.1"
     blockstore-datastore-adapter "^2.0.2"
@@ -2361,7 +2367,7 @@ ipfs-core-config@^0.3.2:
     hashlru "^2.3.0"
     interface-datastore "^6.0.2"
     ipfs-repo "^14.0.1"
-    ipfs-utils "^9.0.2"
+    ipfs-utils "^9.0.6"
     ipns "^0.16.0"
     is-ipfs "^6.0.1"
     it-all "^1.0.4"
@@ -2378,10 +2384,10 @@ ipfs-core-config@^0.3.2:
     p-queue "^6.6.1"
     uint8arrays "^3.0.0"
 
-ipfs-core-types@^0.10.2:
-  version "0.10.2"
-  resolved "https://registry.npmjs.org/ipfs-core-types/-/ipfs-core-types-0.10.2.tgz"
-  integrity sha512-IyPCAiiPiZ4qmmBFgh+wSS3aAQya5Ck+9lDYjBCw1+hK3SC3RzEP49CWqQMKQYbMnaa9pY1GsnGJkLC0TiE2vA==
+ipfs-core-types@^0.10.3:
+  version "0.10.3"
+  resolved "https://registry.yarnpkg.com/ipfs-core-types/-/ipfs-core-types-0.10.3.tgz#89ebe98199d4d829f2b20104bfa3299f808c80fe"
+  integrity sha512-GNid2lRBjR5qgScCglgk7w9Hk3TZAwPHQXxOLQx72wgyc0jF2U5NXRoKW0GRvX8NPbHmsrFszForIqxd23I1Gw==
   dependencies:
     "@ipld/dag-pb" "^2.1.3"
     interface-datastore "^6.0.2"
@@ -2389,28 +2395,19 @@ ipfs-core-types@^0.10.2:
     multiaddr "^10.0.0"
     multiformats "^9.5.1"
 
-ipfs-core-types@^0.9.0:
-  version "0.9.0"
-  resolved "https://registry.npmjs.org/ipfs-core-types/-/ipfs-core-types-0.9.0.tgz"
-  integrity sha512-VJ8vJSHvI1Zm7/SxsZo03T+zzpsg8pkgiIi5hfwSJlsrJ1E2v68QPlnLshGHUSYw89Oxq0IbETYl2pGTFHTWfg==
-  dependencies:
-    interface-datastore "^6.0.2"
-    multiaddr "^10.0.0"
-    multiformats "^9.4.13"
-
-ipfs-core-utils@^0.14.2:
-  version "0.14.2"
-  resolved "https://registry.npmjs.org/ipfs-core-utils/-/ipfs-core-utils-0.14.2.tgz"
-  integrity sha512-wgyg4QRSokSIxnhU1qTJQoEz/gzf6WHB4zBKTfMrQuiF55943aF06v3x2tZ4l+Hcgr2yEa7COSapcfCFKFsuoA==
+ipfs-core-utils@^0.14.3:
+  version "0.14.3"
+  resolved "https://registry.yarnpkg.com/ipfs-core-utils/-/ipfs-core-utils-0.14.3.tgz#d04c631c472507bdefc58d4e8d1d9109efbb411c"
+  integrity sha512-aBkewVhgAj3NWXPwu6imj0wADGiGVZmJzqKzODOJsibDjkx6FGdMv8kvvqtLnK8LS/dvSk9yk32IDtuDyYoV7Q==
   dependencies:
     any-signal "^3.0.0"
     blob-to-it "^1.0.1"
     browser-readablestream-to-it "^1.0.1"
     debug "^4.1.1"
     err-code "^3.0.1"
-    ipfs-core-types "^0.10.2"
+    ipfs-core-types "^0.10.3"
     ipfs-unixfs "^6.0.3"
-    ipfs-utils "^9.0.2"
+    ipfs-utils "^9.0.6"
     it-all "^1.0.4"
     it-map "^1.0.4"
     it-peekable "^1.0.2"
@@ -2424,13 +2421,13 @@ ipfs-core-utils@^0.14.2:
     timeout-abort-controller "^3.0.0"
     uint8arrays "^3.0.0"
 
-ipfs-core@^0.14.2:
-  version "0.14.2"
-  resolved "https://registry.npmjs.org/ipfs-core/-/ipfs-core-0.14.2.tgz"
-  integrity sha512-OKtX2UdZxEJ6ucoACzfaaVmzSH4NRW7CKH+b+NSl+EFeKLmNEV+1lkqfefCM4BYygzD958AwJw/i7HFIdzZIUA==
+ipfs-core@^0.14.3:
+  version "0.14.3"
+  resolved "https://registry.yarnpkg.com/ipfs-core/-/ipfs-core-0.14.3.tgz#e2fe617b67d63a839d82a88e1af849181c6453ed"
+  integrity sha512-2Xxcoesc15IVzIDwAFBaOtLBZo3lKblFQZDX3n4yDckieyHF8TvgBgSgsqp2puTk0szp9lU4xsZA2cRNeJxIbg==
   dependencies:
     "@chainsafe/libp2p-noise" "^5.0.0"
-    "@ipld/car" "^3.1.0"
+    "@ipld/car" "^4.1.0"
     "@ipld/dag-cbor" "^7.0.0"
     "@ipld/dag-json" "^8.0.1"
     "@ipld/dag-pb" "^2.1.3"
@@ -2450,15 +2447,15 @@ ipfs-core@^0.14.2:
     interface-blockstore "^2.0.2"
     interface-datastore "^6.0.2"
     ipfs-bitswap "^10.0.1"
-    ipfs-core-config "^0.3.2"
-    ipfs-core-types "^0.10.2"
-    ipfs-core-utils "^0.14.2"
-    ipfs-http-client "^56.0.2"
+    ipfs-core-config "^0.3.3"
+    ipfs-core-types "^0.10.3"
+    ipfs-core-utils "^0.14.3"
+    ipfs-http-client "^56.0.3"
     ipfs-repo "^14.0.1"
     ipfs-unixfs "^6.0.3"
     ipfs-unixfs-exporter "^7.0.3"
     ipfs-unixfs-importer "^9.0.3"
-    ipfs-utils "^9.0.2"
+    ipfs-utils "^9.0.6"
     ipns "^0.16.0"
     is-domain-name "^1.0.1"
     is-ipfs "^6.0.1"
@@ -2494,10 +2491,10 @@ ipfs-core@^0.14.2:
     timeout-abort-controller "^3.0.0"
     uint8arrays "^3.0.0"
 
-ipfs-http-client@^56.0.2:
-  version "56.0.2"
-  resolved "https://registry.npmjs.org/ipfs-http-client/-/ipfs-http-client-56.0.2.tgz"
-  integrity sha512-IeIJJo6CDNCnTFz2hTSzzBDX34/jJmlyxk65NJAS+kgvel9aPRYaSestymDJWvOZj4/bBtiJ8X2CsRQoaVyIBg==
+ipfs-http-client@^56.0.3:
+  version "56.0.3"
+  resolved "https://registry.yarnpkg.com/ipfs-http-client/-/ipfs-http-client-56.0.3.tgz#45bbea55347ef13524769d5919cbed84d9d022d6"
+  integrity sha512-E3L5ylVl6BjyRUsNehvfuRBYp1hj8vQ8in4zskVPMNzXs6JiCFUbif5a6BtcAlSK4xPQyJCeLNNAWLUeFQTLNA==
   dependencies:
     "@ipld/dag-cbor" "^7.0.0"
     "@ipld/dag-json" "^8.0.1"
@@ -2506,9 +2503,9 @@ ipfs-http-client@^56.0.2:
     dag-jose "^1.0.0"
     debug "^4.1.1"
     err-code "^3.0.1"
-    ipfs-core-types "^0.10.2"
-    ipfs-core-utils "^0.14.2"
-    ipfs-utils "^9.0.2"
+    ipfs-core-types "^0.10.3"
+    ipfs-core-utils "^0.14.3"
+    ipfs-utils "^9.0.6"
     it-first "^1.0.6"
     it-last "^1.0.4"
     merge-options "^3.0.4"
@@ -2518,26 +2515,26 @@ ipfs-http-client@^56.0.2:
     stream-to-it "^0.2.2"
     uint8arrays "^3.0.0"
 
-ipfs-message-port-client@^0.10.3:
-  version "0.10.3"
-  resolved "https://registry.npmjs.org/ipfs-message-port-client/-/ipfs-message-port-client-0.10.3.tgz"
-  integrity sha512-lAdIdU8fpZBGUg1dG22X55Qnm3N6BxEVf4d3tYu8ITaIxhrZ2nm2HmkNzlc5fYeIZKTICThIDYiqzqMTrx67aw==
+ipfs-message-port-client@^0.11.3:
+  version "0.11.3"
+  resolved "https://registry.yarnpkg.com/ipfs-message-port-client/-/ipfs-message-port-client-0.11.3.tgz#1bfb91660f567def4ad05ba335c436dbd13797bb"
+  integrity sha512-eMXyW6SVpDJN43R/XmaYbOGFvjH8yPuTafZ4FwZcuSpzOuj3JIRzQIVST3HMqYGse6zyo/6qbgmUixa2yzE2ag==
   dependencies:
     browser-readablestream-to-it "^1.0.1"
     err-code "^3.0.1"
-    ipfs-core-types "^0.9.0"
-    ipfs-message-port-protocol "^0.10.5"
+    ipfs-core-types "^0.10.3"
+    ipfs-message-port-protocol "^0.11.3"
     ipfs-unixfs "^6.0.3"
     it-peekable "^1.0.2"
-    multiformats "^9.4.13"
+    multiformats "^9.5.1"
 
-ipfs-message-port-protocol@^0.10.5:
-  version "0.10.5"
-  resolved "https://registry.npmjs.org/ipfs-message-port-protocol/-/ipfs-message-port-protocol-0.10.5.tgz"
-  integrity sha512-dHq+N0Epur5k7ZnQTSOepp5/Gmvtrg8SCD65t2okthkP8c4xIVxxaMpXZbHgi/2x0ix7HoQt4QiQa0StMkoj7A==
+ipfs-message-port-protocol@^0.11.3:
+  version "0.11.3"
+  resolved "https://registry.yarnpkg.com/ipfs-message-port-protocol/-/ipfs-message-port-protocol-0.11.3.tgz#73e1149682087e798c3cfcd6b4048e994d174860"
+  integrity sha512-LRZRlbeTdD2RXPyIjpuLV2ewrMSFwewBgm0s0lzpwtm0RNMXXKE8KBZu/fDZSkx7Cx/tL4nJJCfeyy1nowIDdg==
   dependencies:
-    ipfs-core-types "^0.9.0"
-    multiformats "^9.4.13"
+    ipfs-core-types "^0.10.3"
+    multiformats "^9.5.1"
 
 ipfs-repo-migrations@^12.0.1:
   version "12.0.1"
@@ -2635,10 +2632,30 @@ ipfs-unixfs@^6.0.3, ipfs-unixfs@^6.0.6:
     err-code "^3.0.1"
     protobufjs "^6.10.2"
 
-ipfs-utils@^9.0.1, ipfs-utils@^9.0.2:
+ipfs-utils@^9.0.1:
   version "9.0.5"
   resolved "https://registry.npmjs.org/ipfs-utils/-/ipfs-utils-9.0.5.tgz"
   integrity sha512-GXWfsq/nKtwkcTI4+KGc4CU9EFXjtkWaGcFAsnm177kAhA0Fnn8aWNRaF/C0xFraUIl1wTAUTWkaGKigVyfsTw==
+  dependencies:
+    any-signal "^3.0.0"
+    buffer "^6.0.1"
+    electron-fetch "^1.7.2"
+    err-code "^3.0.1"
+    is-electron "^2.2.0"
+    iso-url "^1.1.5"
+    it-glob "^1.0.1"
+    it-to-stream "^1.0.0"
+    merge-options "^3.0.4"
+    nanoid "^3.1.20"
+    native-fetch "^3.0.0"
+    node-fetch "https://registry.npmjs.org/@achingbrain/node-fetch/-/node-fetch-2.6.7.tgz"
+    react-native-fetch-api "^2.0.0"
+    stream-to-it "^0.2.2"
+
+ipfs-utils@^9.0.6:
+  version "9.0.6"
+  resolved "https://registry.yarnpkg.com/ipfs-utils/-/ipfs-utils-9.0.6.tgz#b7657b8be101e0bb64402aeb631c64168075a5e4"
+  integrity sha512-/WfdwOIiJVb3uqfKRQ9Eo+vCEKsDgp7h4Pdc37MRwAiFciZ7xKAkEqsfXubV0VQi8x5jWTifeHn8WEPBLL451w==
   dependencies:
     any-signal "^3.0.0"
     buffer "^6.0.1"
@@ -3880,7 +3897,7 @@ multicodec@^3.0.1:
     uint8arrays "^3.0.0"
     varint "^6.0.0"
 
-multiformats@^9.0.0, multiformats@^9.0.2, multiformats@^9.0.4, multiformats@^9.1.0, multiformats@^9.1.2, multiformats@^9.4.13, multiformats@^9.4.2, multiformats@^9.4.5, multiformats@^9.4.7, multiformats@^9.5.1, multiformats@^9.5.4:
+multiformats@^9.0.0, multiformats@^9.0.2, multiformats@^9.0.4, multiformats@^9.1.0, multiformats@^9.1.2, multiformats@^9.4.2, multiformats@^9.4.5, multiformats@^9.4.7, multiformats@^9.5.1, multiformats@^9.5.4:
   version "9.6.4"
   resolved "https://registry.npmjs.org/multiformats/-/multiformats-9.6.4.tgz"
   integrity sha512-fCCB6XMrr6CqJiHNjfFNGT0v//dxOBMrOMqUIzpPc/mmITweLEyhvMpY9bF+jZ9z3vaMAau5E8B68DW77QMXkg==
