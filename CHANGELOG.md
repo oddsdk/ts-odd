@@ -11,6 +11,10 @@ Adds app owned account linking.
 
 Fixes issue with loading private shares.
 
+#### Other
+
+Updated ipfs-related dependencies.
+
 
 ### v0.31.1
 
