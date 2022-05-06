@@ -65,7 +65,7 @@ export async function initialise(options: InitOptions): Promise<State> {
   } else if (authedUsername && useWnfs) {
     if (options.loadFileSystem === false) throw new Error("Must load filesystem when using the useWnfs option.")
 
-    const dataCid = await dataRoot.lookup(authedUsername) // data root on server
+    const dataCid = navigator.onLine ? await dataRoot.lookup(authedUsername) : null // data root on server
     const logCid = await cidLog.newest() // data root in app
     const rootPermissions = { fs: { private: [pathing.root()], public: [pathing.root()] } }
 
