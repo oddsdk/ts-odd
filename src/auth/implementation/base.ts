@@ -1,14 +1,14 @@
-import type { Channel, ChannelOptions } from "./channel"
+import type { Channel, ChannelOptions } from "../channel"
 
-import { USERNAME_STORAGE_KEY } from "../common/index.js"
-import { State } from "./state.js"
-import { createAccount } from "../lobby/index.js"
+import { USERNAME_STORAGE_KEY } from "../../common/index.js"
+import { State } from "../state.js"
+import { createAccount } from "../../lobby/index.js"
 
-import * as channel from "./channel.js"
-import * as did from "../did/index.js"
-import * as storage from "../storage/index.js"
-import * as ucan from "../ucan/index.js"
-import * as user from "../lobby/username.js"
+import * as channel from "../channel.js"
+import * as did from "../../did/index.js"
+import * as storage from "../../storage/index.js"
+import * as ucan from "../../ucan/index.js"
+import * as user from "../../lobby/username.js"
 
 
 export const init = async (): Promise<State | null> => {
@@ -87,7 +87,7 @@ export const linkDevice = async (data: Record<string, unknown>): Promise<void> =
 // 🛳
 
 
-export const LOCAL_IMPLEMENTATION = {
+export const BASE_IMPLEMENTATION = {
   auth: {
     init,
     register,
