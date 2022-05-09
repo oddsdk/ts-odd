@@ -8,11 +8,11 @@ import * as crypto from "./crypto/index.js"
 import * as debug from "./common/debug.js"
 import * as dataRoot from "./data-root.js"
 import * as did from "./did/index.js"
+import * as token from "./ucan/token.js"
 import * as ucan from "./ucan/internal.js"
 import * as protocol from "./fs/protocol/index.js"
 import * as versions from "./fs/versions.js"
 
-import { build as buildUcan, encode as encodeUcan } from "./ucan/token.js"
 import { Branch } from "./path.js"
 import { Maybe, authenticatedUsername, decodeCID } from "./common/index.js"
 import { Permissions } from "./ucan/permissions.js"
@@ -112,7 +112,7 @@ export const createFilesystem = async (permissions: Permissions): Promise<FileSy
   // Self-authorize a filesystem UCAN
   const issuer = await did.write()
   const proof: string | null = await localforage.getItem("ucan")
-  const fsUcan = await buildUcan({
+  const fsUcan = await token.build({
     potency: "APPEND",
     resource: "*",
     proof: proof ? proof : undefined,
@@ -124,14 +124,14 @@ export const createFilesystem = async (permissions: Permissions): Promise<FileSy
   console.log("fsUcan", fsUcan)
 
   // Add filesystem UCAN to store
-  await ucan.store([encodeUcan(fsUcan)])
+  await ucan.store([token.encode(fsUcan)])
 
   // Update filesystem
   const rootCid = await fs.root.put()
   console.log("root cid", rootCid)
 
   // Publish data root
-  const res = await dataRoot.update(rootCid, encodeUcan(fsUcan))
+  const res = await dataRoot.update(rootCid, token.encode(fsUcan))
   // throw an error on failure?
   console.log("data root update result", res)
 
