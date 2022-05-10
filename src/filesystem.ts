@@ -1,4 +1,3 @@
-import localforage from "localforage"
 import { CID } from "multiformats/cid"
 
 import FileSystem from "./fs/index.js"
@@ -8,6 +7,7 @@ import * as crypto from "./crypto/index.js"
 import * as debug from "./common/debug.js"
 import * as dataRoot from "./data-root.js"
 import * as did from "./did/index.js"
+import * as storage from "./storage/index.js"
 import * as token from "./ucan/token.js"
 import * as ucan from "./ucan/internal.js"
 import * as protocol from "./fs/protocol/index.js"
@@ -100,6 +100,12 @@ export async function loadFileSystem(
   return fs
 }
 
+
+/**
+ * Create a filesystem
+ *
+ * @param permissions The permissions to initialize the filesystem
+ */
 export const createFilesystem = async (permissions: Permissions): Promise<FileSystem> => {
   // Get or create root read key
   const rootKey = await readKey()
@@ -109,7 +115,7 @@ export const createFilesystem = async (permissions: Permissions): Promise<FileSy
 
   // Self-authorize a filesystem UCAN
   const issuer = await did.write()
-  const proof: string | null = await localforage.getItem("ucan")
+  const proof: string | null = await storage.getItem("ucan")
   const fsUcan = await token.build({
     potency: "APPEND",
     resource: "*",
@@ -133,19 +139,6 @@ export const createFilesystem = async (permissions: Permissions): Promise<FileSy
 
   return fs
 }
-
-
-// KEY
-
-async function readKey(): Promise<string> {
-  const maybeReadKey = await localforage.getItem("readKey") as unknown as string
-  if (maybeReadKey) return maybeReadKey
-
-  const readKey = await crypto.aes.genKeyStr()
-  await localforage.setItem("readKey", readKey)
-  return readKey
-}
-
 
 
 export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> {
@@ -188,4 +181,18 @@ async function addSampleData(fs: FileSystem): Promise<void> {
   await fs.mkdir({ directory: [ Branch.Private, "Photos" ] })
   await fs.mkdir({ directory: [ Branch.Private, "Video" ] })
   await fs.publish()
+}
+
+
+
+// 🔑
+
+
+async function readKey(): Promise<string> {
+  const maybeReadKey = await storage.getItem("readKey") as unknown as string
+  if (maybeReadKey) return maybeReadKey
+
+  const readKey = await crypto.aes.genKeyStr()
+  await storage.setItem("readKey", readKey)
+  return readKey
 }
