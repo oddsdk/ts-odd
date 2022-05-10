@@ -9,7 +9,7 @@ import utils from "keystore-idb/lib/utils.js"
 import * as did from "../../../src/did/index.js"
 import * as producer from "./producer.js"
 import * as ucan from "../../ucan/index.js"
-import { LOCAL_IMPLEMENTATION } from "../local.js"
+import { BASE_IMPLEMENTATION } from "../implementation/base.js"
 import { setImplementations } from "../../setup.js"
 
 describe("generate session key", async () => {
@@ -208,7 +208,7 @@ describe("delegate account", async () => {
   before(async () => {
     setImplementations({
       auth: {
-        ...LOCAL_IMPLEMENTATION.auth,
+        ...BASE_IMPLEMENTATION.auth,
         delegateAccount
       }
     })

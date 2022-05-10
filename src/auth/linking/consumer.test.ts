@@ -10,7 +10,7 @@ import utils from "keystore-idb/lib/utils.js"
 import * as did from "../../../src/did/index.js"
 import * as consumer from "./consumer.js"
 import * as ucan from "../../ucan/index.js"
-import { LOCAL_IMPLEMENTATION } from "../local.js"
+import { BASE_IMPLEMENTATION } from "../implementation/base.js"
 import { setImplementations } from "../../setup.js"
 
 describe("generate temporary exchange key", async () => {
@@ -314,7 +314,7 @@ describe("link device", async () => {
   before(async () => {
     setImplementations({
       auth: {
-        ...LOCAL_IMPLEMENTATION.auth,
+        ...BASE_IMPLEMENTATION.auth,
         linkDevice
       }
     })
