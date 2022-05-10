@@ -126,8 +126,7 @@ export const createFilesystem = async (permissions: Permissions): Promise<FileSy
   // Update filesystem and publish data root
   const rootCid = await fs.root.put()
   const res = await dataRoot.update(rootCid, token.encode(fsUcan))
-  // throw an error on failure?
-  console.log("data root update result", res)
+  if (!res.success) console.warn("Failed to update data root.")
 
   // Update CID log
   await cidLog.add(rootCid.toString())
