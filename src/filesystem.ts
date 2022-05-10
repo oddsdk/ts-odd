@@ -103,11 +103,9 @@ export async function loadFileSystem(
 export const createFilesystem = async (permissions: Permissions): Promise<FileSystem> => {
   // Get or create root read key
   const rootKey = await readKey()
-  console.log("root key", rootKey)
 
   // Create an empty filesystem
   const fs = await FileSystem.empty({ permissions, rootKey })
-  console.log("empty filesystem", fs)
 
   // Self-authorize a filesystem UCAN
   const issuer = await did.write()
@@ -121,16 +119,12 @@ export const createFilesystem = async (permissions: Permissions): Promise<FileSy
     audience: issuer,
     issuer
   })
-  console.log("fsUcan", fsUcan)
 
   // Add filesystem UCAN to store
   await ucan.store([token.encode(fsUcan)])
 
-  // Update filesystem
+  // Update filesystem and publish data root
   const rootCid = await fs.root.put()
-  console.log("root cid", rootCid)
-
-  // Publish data root
   const res = await dataRoot.update(rootCid, token.encode(fsUcan))
   // throw an error on failure?
   console.log("data root update result", res)

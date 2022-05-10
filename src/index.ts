@@ -61,7 +61,6 @@ export async function initialise(options: InitOptions): Promise<State> {
       return scenarioNotAuthorised(permissions)
     }
 
-  // Is this the right set of conditions? For now, this should only include root apps
   } else if (authedUsername && useWnfs) {
     if (options.loadFileSystem === false) throw new Error("Must load filesystem when using the useWnfs option.")
 
