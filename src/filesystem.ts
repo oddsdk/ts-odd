@@ -188,7 +188,7 @@ async function addSampleData(fs: FileSystem): Promise<void> {
 // 🔑
 
 
-async function readKey(): Promise<string> {
+export async function readKey(): Promise<string> {
   const maybeReadKey = await storage.getItem("readKey") as unknown as string
   if (maybeReadKey) return maybeReadKey
 
