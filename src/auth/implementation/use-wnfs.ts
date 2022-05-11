@@ -55,6 +55,7 @@ export const linkDevice = async (data: Record<string, unknown>): Promise<void> =
       issuer
     })
     await ucanInternal.store([ucan.encode(fsUcan)])
+
   } else {
     throw new LinkingError(`Consumer received invalid link device response from producer. Given ucan is invalid: ${data.ucan}`)
   }
