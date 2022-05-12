@@ -96,6 +96,12 @@ export async function initialise(options: InitOptions): Promise<State> {
 }
 
 
+/**
+ * Alias for `initialise`.
+ */
+ export { initialise as initialize }
+
+
 
 // SUPPORTED
 
