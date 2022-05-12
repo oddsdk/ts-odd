@@ -20,6 +20,10 @@ import FileSystem from "./fs/index.js"
  *
  * See `loadFileSystem` if you want to load the user's file system yourself.
  * NOTE: Only works on the main/ui thread, as it uses `window.location`.
+ *
+ * The `useWnfs` option is only necessary for apps that create their own WNFS. Apps that
+ * request filesystem `permissions` from the auth lobby can ignore `useWnfs` in this version
+ * of webnative.
  */
 export async function initialise(options: InitOptions): Promise<State> {
   options = options || {}
