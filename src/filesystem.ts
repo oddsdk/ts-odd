@@ -130,9 +130,7 @@ export const createFilesystem = async (permissions: Permissions): Promise<FileSy
   await ucan.store([token.encode(fsUcan)])
 
   // Update filesystem and publish data root
-  const rootCid = await fs.root.put()
-  const res = await dataRoot.update(rootCid, token.encode(fsUcan))
-  if (!res.success) console.warn("Failed to update data root.")
+  const rootCid = await fs.publish()
 
   // Clear the CID log and update it
   await cidLog.clear()
