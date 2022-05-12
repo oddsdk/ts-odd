@@ -189,6 +189,9 @@ async function addSampleData(fs: FileSystem): Promise<void> {
 // 🔑
 
 
+/**
+ * Create or get a read key for accessing the WNFS private root.
+ */
 export async function readKey(): Promise<string> {
   const maybeReadKey = await storage.getItem("readKey") as unknown as string
   if (maybeReadKey) return maybeReadKey
