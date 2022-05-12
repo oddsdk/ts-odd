@@ -134,7 +134,8 @@ export const createFilesystem = async (permissions: Permissions): Promise<FileSy
   const res = await dataRoot.update(rootCid, token.encode(fsUcan))
   if (!res.success) console.warn("Failed to update data root.")
 
-  // Update CID log
+  // Clear the CID log and update it
+  await cidLog.clear()
   await cidLog.add(rootCid.toString())
 
   return fs
