@@ -77,10 +77,14 @@ export async function initialise(options: InitOptions): Promise<State> {
         await createFilesystem(rootPermissions)
       )
     } else {
+      const fs = options.loadFileSystem === false ?
+        undefined :
+        await loadFileSystem(rootPermissions, authedUsername)
+
       return scenarioContinuation(
         rootPermissions,
         authedUsername,
-        await maybeLoadFs(authedUsername),
+        fs
       )
     }
 
