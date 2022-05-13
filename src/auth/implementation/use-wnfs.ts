@@ -6,6 +6,8 @@ import * as ucanInternal from "../../ucan/internal.js"
 import * as ucan from "../../ucan/token.js"
 import { LinkingError } from "../linking.js"
 
+import RootTree from "../../fs/root/tree.js"
+
 export const delegateAccount = async (username: string, audience: string): Promise<Record<string, unknown>> => {
   const readKey = await storage.getItem("readKey")
   const proof = await storage.getItem("ucan") as string
@@ -42,6 +44,8 @@ export const linkDevice = async (data: Record<string, unknown>): Promise<void> =
   if (await ucan.isValid(u)) {
     await storage.setItem("ucan", encodedToken)
     await storage.setItem("readKey", readKey)
+
+    await RootTree.storeRootKey(readKey)
 
     // Create and store filesystem UCAN
     const issuer = await did.write()
