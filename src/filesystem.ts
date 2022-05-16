@@ -104,7 +104,7 @@ export async function loadFileSystem(
 /**
  * Create a new filesystem and assign it to a user.
  *
- * Warning: This function will override a user's filesystem with a empty one.
+ * Warning: This function will override a user's filesystem with an empty one.
  *
  * @param permissions The permissions to initialize the filesystem
  */
