@@ -9,7 +9,7 @@ import * as ucan from "./ucan/internal.js"
 
 import { InitOptions, InitialisationError } from "./init/types.js"
 import { State, scenarioContinuation, scenarioNotAuthorised, validateSecrets } from "./auth/state.js"
-import { createFilesystem, loadFileSystem } from "./filesystem.js"
+import { installFileSystem, loadFileSystem } from "./filesystem.js"
 
 import FileSystem from "./fs/index.js"
 
