@@ -102,11 +102,13 @@ export async function loadFileSystem(
 
 
 /**
- * Create a filesystem
+ * Create a new filesystem and assign it to a user.
+ *
+ * Warning: This function will override a user's filesystem with a empty one.
  *
  * @param permissions The permissions to initialize the filesystem
  */
-export const createFilesystem = async (permissions: Permissions): Promise<FileSystem> => {
+export const installFileSystem = async (permissions: Permissions): Promise<FileSystem> => {
   // Get or create root read key
   const rootKey = await readKey()
 

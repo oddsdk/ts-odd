@@ -74,7 +74,7 @@ export async function initialise(options: InitOptions): Promise<State> {
       return scenarioContinuation(
         rootPermissions,
         authedUsername,
-        await createFilesystem(rootPermissions)
+        await installFileSystem(rootPermissions)
       )
     } else {
       const fs = options.loadFileSystem === false ?
