@@ -8,6 +8,27 @@ import { LinkingError } from "../linking.js"
 
 import RootTree from "../../fs/root/tree.js"
 
+
+export const checkCapability = async (username: string): Promise<boolean> => {
+  const readKey = await storage.getItem("readKey")
+  if (!readKey) return false
+
+  const didFromDNS = await did.root(username)
+  const maybeUcan: string | null = await storage.getItem("ucan")
+
+  if (maybeUcan) {
+    const rootIssuerDid = ucan.rootIssuer(maybeUcan)
+    const decodedUcan = ucan.decode(maybeUcan)
+    const { ptc } = decodedUcan.payload
+
+    return didFromDNS === rootIssuerDid && ptc === "SUPER_USER"
+  } else {
+    const rootDid = await did.write()
+
+    return didFromDNS === rootDid
+  }
+}
+
 export const delegateAccount = async (username: string, audience: string): Promise<Record<string, unknown>> => {
   const readKey = await storage.getItem("readKey")
   const proof = await storage.getItem("ucan") as string
@@ -77,7 +98,7 @@ export const USE_WNFS_IMPLEMENTATION = {
     isUsernameValid: base.isUsernameValid,
     isUsernameAvailable: base.isUsernameAvailable,
     createChannel: base.createChannel,
-    checkCapability: base.checkCapability,
+    checkCapability,
     delegateAccount,
     linkDevice
   }
