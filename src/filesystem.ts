@@ -7,10 +7,11 @@ import * as crypto from "./crypto/index.js"
 import * as debug from "./common/debug.js"
 import * as dataRoot from "./data-root.js"
 import * as did from "./did/index.js"
+import * as pathing from "./path.js"
+import * as protocol from "./fs/protocol/index.js"
 import * as storage from "./storage/index.js"
 import * as token from "./ucan/token.js"
 import * as ucan from "./ucan/internal.js"
-import * as protocol from "./fs/protocol/index.js"
 import * as versions from "./fs/versions.js"
 
 import { Branch } from "./path.js"
@@ -168,6 +169,28 @@ export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> 
   }
 }
 
+
+
+// ROOT HELPERS
+
+
+const ROOT_PERMISSIONS = { fs: { private: [pathing.root()], public: [pathing.root()] } }
+
+/**
+ * Load a user's root file system.
+ */
+ export const loadRootFileSystem = async (): Promise<FileSystem> => {
+  return await loadFileSystem(ROOT_PERMISSIONS)
+}
+
+/**
+ * Create a new filesystem with public and private roots and assign it to a user.
+ *
+ * Warning: This function will override a user's filesystem with an empty one.
+ */
+ export const bootstrapRootFileSystem = async (): Promise<FileSystem> => {
+  return await bootstrapFileSystem(ROOT_PERMISSIONS)
+ }
 
 
 
