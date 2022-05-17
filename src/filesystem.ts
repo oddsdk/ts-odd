@@ -108,7 +108,7 @@ export async function loadFileSystem(
  *
  * @param permissions The permissions to initialize the filesystem
  */
-export const installFileSystem = async (permissions: Permissions): Promise<FileSystem> => {
+export const bootstrapFileSystem = async (permissions: Permissions): Promise<FileSystem> => {
   // Get or create root read key
   const rootKey = await readKey()
 
