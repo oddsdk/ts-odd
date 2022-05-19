@@ -19,4 +19,5 @@ export type InitOptions = {
   autoRemoveUrlParams?: boolean
   loadFileSystem?: boolean
   rootKey?: string
+  useWnfs?: boolean
 }

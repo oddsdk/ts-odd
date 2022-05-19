@@ -3,10 +3,15 @@ import { CID } from "multiformats/cid"
 import FileSystem from "./fs/index.js"
 
 import * as cidLog from "./common/cid-log.js"
+import * as crypto from "./crypto/index.js"
 import * as debug from "./common/debug.js"
 import * as dataRoot from "./data-root.js"
-import * as ucan from "./ucan/internal.js"
+import * as did from "./did/index.js"
+import * as pathing from "./path.js"
 import * as protocol from "./fs/protocol/index.js"
+import * as storage from "./storage/index.js"
+import * as token from "./ucan/token.js"
+import * as ucan from "./ucan/internal.js"
 import * as versions from "./fs/versions.js"
 
 import { Branch } from "./path.js"
@@ -97,6 +102,47 @@ export async function loadFileSystem(
 }
 
 
+/**
+ * Create a new filesystem and assign it to a user.
+ *
+ * Warning: This function will override a user's filesystem with an empty one.
+ *
+ * @param permissions The permissions to initialize the filesystem
+ */
+export const bootstrapFileSystem = async (permissions: Permissions): Promise<FileSystem> => {
+  // Get or create root read key
+  const rootKey = await readKey()
+
+  // Create an empty filesystem
+  const fs = await FileSystem.empty({ permissions, rootKey })
+
+  // Self-authorize a filesystem UCAN
+  const issuer = await did.write()
+  const proof: string | null = await storage.getItem("ucan")
+  const fsUcan = await token.build({
+    potency: "APPEND",
+    resource: "*",
+    proof: proof ? proof : undefined,
+    lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
+
+    audience: issuer,
+    issuer
+  })
+
+  // Add filesystem UCAN to store
+  await ucan.store([token.encode(fsUcan)])
+
+  // Update filesystem and publish data root
+  const rootCid = await fs.publish()
+
+  // Clear the CID log and update it
+  await cidLog.clear()
+  await cidLog.add(rootCid.toString())
+
+  return fs
+}
+
+
 export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> {
   const links = await protocol.basic.getSimpleLinks(filesystemCID)
   // if there's no version link, we assume it's from a 1.0.0-compatible version
@@ -125,6 +171,28 @@ export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> 
 
 
 
+// ROOT HELPERS
+
+
+const ROOT_PERMISSIONS = { fs: { private: [pathing.root()], public: [pathing.root()] } }
+
+/**
+ * Load a user's root file system.
+ */
+ export const loadRootFileSystem = async (): Promise<FileSystem> => {
+  return await loadFileSystem(ROOT_PERMISSIONS)
+}
+
+/**
+ * Create a new filesystem with public and private roots and assign it to a user.
+ *
+ * Warning: This function will override a user's filesystem with an empty one.
+ */
+ export const bootstrapRootFileSystem = async (): Promise<FileSystem> => {
+  return await bootstrapFileSystem(ROOT_PERMISSIONS)
+ }
+
+
 
 
 // ㊙️
@@ -137,4 +205,21 @@ async function addSampleData(fs: FileSystem): Promise<void> {
   await fs.mkdir({ directory: [ Branch.Private, "Photos" ] })
   await fs.mkdir({ directory: [ Branch.Private, "Video" ] })
   await fs.publish()
+}
+
+
+
+// 🔑
+
+
+/**
+ * Create or get a read key for accessing the WNFS private root.
+ */
+export async function readKey(): Promise<string> {
+  const maybeReadKey: string | null = await storage.getItem("readKey")
+  if (maybeReadKey) return maybeReadKey
+
+  const readKey = await crypto.aes.genKeyStr()
+  await storage.setItem("readKey", readKey)
+  return readKey
 }

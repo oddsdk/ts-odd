@@ -1,12 +1,15 @@
 import localforage from "localforage"
 
 import * as auth from "./auth/internal.js"
+import * as cidLog from "./common/cid-log.js"
 import * as common from "./common/index.js"
+import * as dataRoot from "./data-root.js"
+import * as pathing from "./path.js"
 import * as ucan from "./ucan/internal.js"
 
 import { InitOptions, InitialisationError } from "./init/types.js"
 import { State, scenarioContinuation, scenarioNotAuthorised, validateSecrets } from "./auth/state.js"
-import { loadFileSystem } from "./filesystem.js"
+import { bootstrapFileSystem, loadFileSystem } from "./filesystem.js"
 
 import FileSystem from "./fs/index.js"
 
@@ -17,12 +20,16 @@ import FileSystem from "./fs/index.js"
  *
  * See `loadFileSystem` if you want to load the user's file system yourself.
  * NOTE: Only works on the main/ui thread, as it uses `window.location`.
+ *
+ * The `useWnfs` option is only necessary for apps that create their own WNFS. Apps that
+ * request filesystem `permissions` from the auth lobby can ignore `useWnfs` in this version
+ * of webnative.
  */
 export async function initialise(options: InitOptions): Promise<State> {
   options = options || {}
 
   const permissions = options.permissions || null
-  const { rootKey } = options
+  const { useWnfs = false, rootKey } = options
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
@@ -33,6 +40,7 @@ export async function initialise(options: InitOptions): Promise<State> {
   // Check if browser is supported
   if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
   if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
+
 
   const state = await auth.init(options)
 
@@ -48,13 +56,44 @@ export async function initialise(options: InitOptions): Promise<State> {
     const validUcans = ucan.validatePermissions(permissions, authedUsername)
 
     if (validSecrets && validUcans) {
-      return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+      return scenarioContinuation(
+        permissions,
+        authedUsername,
+        await maybeLoadFs(authedUsername)
+      )
     } else {
       return scenarioNotAuthorised(permissions)
     }
 
+  } else if (authedUsername && useWnfs) {
+    const dataCid = navigator.onLine ? await dataRoot.lookup(authedUsername) : null // data root on server or DNS
+    const logCid = await cidLog.newest() // data root in browser
+    const rootPermissions = { fs: { private: [pathing.root()], public: [pathing.root()] } }
+
+    if (dataCid === null && logCid === undefined) {
+      return scenarioContinuation(
+        rootPermissions,
+        authedUsername,
+        await bootstrapFileSystem(rootPermissions)
+      )
+    } else {
+      const fs = options.loadFileSystem === false ?
+        undefined :
+        await loadFileSystem(rootPermissions, authedUsername)
+
+      return scenarioContinuation(
+        rootPermissions,
+        authedUsername,
+        fs
+      )
+    }
+
   } else if (authedUsername) {
-    return scenarioContinuation(permissions, authedUsername, await maybeLoadFs(authedUsername))
+    return scenarioContinuation(
+      permissions,
+      authedUsername,
+      await maybeLoadFs(authedUsername),
+    )
 
   } else {
     return scenarioNotAuthorised(permissions)
@@ -84,7 +123,6 @@ export async function isSupported(): Promise<boolean> {
       db.onerror = () => resolve(false)
     }))() as boolean
 }
-
 
 
 // EXPORT

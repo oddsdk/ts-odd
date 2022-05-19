@@ -1,6 +1,6 @@
 import expect from "expect"
 
-import { LOCAL_IMPLEMENTATION } from "../../src/auth/local.js"
+import { BASE_IMPLEMENTATION } from "../../src/auth/implementation/base.js"
 import { createConsumer } from "../../src/auth/linking/consumer.js"
 import { createProducer } from "../../src/auth/linking/producer.js"
 import { EventEmitter } from "../../src/common/event-emitter.js"
@@ -61,7 +61,7 @@ describe("account linking", () => {
 
     setImplementations({
       auth: {
-        ...LOCAL_IMPLEMENTATION.auth,
+        ...BASE_IMPLEMENTATION.auth,
         createChannel,
         checkCapability,
         delegateAccount,

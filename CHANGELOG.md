@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.33.0
+
+#### Features
+
+Adds app owned WNFS.
 
 ### v0.32.0
 
