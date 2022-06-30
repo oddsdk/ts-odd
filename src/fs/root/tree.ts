@@ -72,8 +72,12 @@ export default class RootTree implements Puttable {
   // INITIALISATION
   // --------------
 
-  static async empty({ rootKey }: { rootKey: string }): Promise<RootTree> {
-    const publicTree = await PublicTree.empty()
+  static async empty({ rootKey, wnfsWasm }: { rootKey: string; wnfsWasm?: boolean }): Promise<RootTree> {
+    // TODO
+    const publicTree = wnfsWasm
+      ? await PublicTree.empty()
+      : await PublicTree.empty()
+
     const prettyTree = await BareTree.empty()
     const mmpt = MMPT.create()
 
@@ -102,7 +106,7 @@ export default class RootTree implements Puttable {
     await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
-    await tree.setVersion(versions.latest)
+    await tree.setVersion(wnfsWasm ? versions.wnfsWasm : versions.latest)
 
     await Promise.all([
       tree.updatePuttable(Branch.Public, publicTree),
