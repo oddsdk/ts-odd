@@ -1,4 +1,4 @@
-import * as authLobby from "./lobby.js"
+import * as authLobby from "./implementation/lobby.js"
 import { InitOptions } from "../init/types.js"
 import { State } from "./state.js"
 

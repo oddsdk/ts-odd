@@ -7,29 +7,107 @@ import * as dataRoot from "./data-root.js"
 import * as pathing from "./path.js"
 import * as ucan from "./ucan/internal.js"
 
-import { InitOptions, InitialisationError } from "./init/types.js"
-import { State, scenarioContinuation, scenarioNotAuthorised, validateSecrets } from "./auth/state.js"
+import { InitialisationError } from "./init/types.js"
+import { Permissions } from "./ucan/permissions.js"
+import { validateSecrets } from "./auth/state.js"
 import { bootstrapFileSystem, loadFileSystem } from "./filesystem.js"
 
 import FileSystem from "./fs/index.js"
 
+import { setImplementations } from "./setup.js"
+import { BASE_IMPLEMENTATION } from "./auth/implementation/base.js"
+import { USE_WNFS_IMPLEMENTATION } from "./auth/implementation/use-wnfs.js"
+import { LOBBY_IMPLEMENTATION } from "./auth/implementation/lobby.js"
+import { AppState } from "./auth/state/app.js"
+import { LinkedAppState } from "./auth/state/linkedApp.js"
+import * as appState from "./auth/state/app.js"
+import * as fissionAppState from "./auth/state/linkedApp.js"
 
-/**
- * Check if we're authenticated, process any lobby query-parameters present in the URL,
- * and initiate the user's file system if authenticated (can be disabled).
- *
- * See `loadFileSystem` if you want to load the user's file system yourself.
- * NOTE: Only works on the main/ui thread, as it uses `window.location`.
- *
- * The `useWnfs` option is only necessary for apps that create their own WNFS. Apps that
- * request filesystem `permissions` from the auth lobby can ignore `useWnfs` in this version
- * of webnative.
+
+/** App with root authority 
+ * 
+ * Can do everything, needs no permission from other apps.
+ * Opts-in to using WNFS.
+*/
+export async function app(options: { useWnfs: boolean }): Promise<AppState> {
+  options = options || {}
+
+  const { useWnfs = false } = options
+
+  /**
+   * Dependecy injected implementations are set internally. The developer does not
+   * need to be aware of them unless they have an advanced use case.
+  */
+  if (useWnfs) {
+    setImplementations(USE_WNFS_IMPLEMENTATION)
+  } else {
+    // We could eventually make the base implementation the default 
+    // because it assumes the least of any implementation
+    setImplementations(BASE_IMPLEMENTATION)
+  }
+
+  // Check if browser is supported
+  if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
+  if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
+
+  const authedUsername = await common.authenticatedUsername()
+
+  if (authedUsername && useWnfs) {
+    const dataCid = navigator.onLine ? await dataRoot.lookup(authedUsername) : null // data root on server or DNS
+    const logCid = await cidLog.newest() // data root in browser
+    const rootPermissions = { fs: { private: [pathing.root()], public: [pathing.root()] } }
+
+    if (dataCid === null && logCid === undefined) {
+      return appState.scenarioAuthed(
+        authedUsername,
+        await bootstrapFileSystem(rootPermissions)
+      )
+    } else {
+      const fs = options.useWnfs === false ?
+        undefined :
+        await loadFileSystem(rootPermissions, authedUsername)
+
+      return appState.scenarioAuthed(
+        authedUsername,
+        fs
+      )
+    }
+
+  } else if (authedUsername) {
+    return appState.scenarioAuthed(
+      authedUsername,
+      undefined
+    )
+
+  } else {
+    return appState.scenarioNotAuthed()
+
+  }
+}
+
+
+/** Rename existing initialize function
+ * 
+ * Not sure about the name! How do we name an app to make
+ * it clear that it uses the Fission Auth Lobby?
  */
-export async function initialise(options: InitOptions): Promise<State> {
+export async function fissionApp(options:
+  {
+    permissions?: Permissions
+
+    // Options
+    autoRemoveUrlParams?: boolean
+    loadFileSystem?: boolean
+    rootKey?: string
+  }
+): Promise<LinkedAppState> {
   options = options || {}
 
   const permissions = options.permissions || null
-  const { useWnfs = false, rootKey } = options
+  const { rootKey } = options
+
+
+  setImplementations(LOBBY_IMPLEMENTATION)
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
     return options.loadFileSystem === false
@@ -45,7 +123,7 @@ export async function initialise(options: InitOptions): Promise<State> {
   const state = await auth.init(options)
 
   // Allow auth implementation to return a State directly
-  if (state) {
+  if (state && fissionAppState.isLinkedAppState(state)) {
     return state
   }
 
@@ -56,56 +134,35 @@ export async function initialise(options: InitOptions): Promise<State> {
     const validUcans = ucan.validatePermissions(permissions, authedUsername)
 
     if (validSecrets && validUcans) {
-      return scenarioContinuation(
+      return fissionAppState.scenarioContinuation(
         permissions,
         authedUsername,
         await maybeLoadFs(authedUsername)
       )
     } else {
-      return scenarioNotAuthorised(permissions)
-    }
-
-  } else if (authedUsername && useWnfs) {
-    const dataCid = navigator.onLine ? await dataRoot.lookup(authedUsername) : null // data root on server or DNS
-    const logCid = await cidLog.newest() // data root in browser
-    const rootPermissions = { fs: { private: [pathing.root()], public: [pathing.root()] } }
-
-    if (dataCid === null && logCid === undefined) {
-      return scenarioContinuation(
-        rootPermissions,
-        authedUsername,
-        await bootstrapFileSystem(rootPermissions)
-      )
-    } else {
-      const fs = options.loadFileSystem === false ?
-        undefined :
-        await loadFileSystem(rootPermissions, authedUsername)
-
-      return scenarioContinuation(
-        rootPermissions,
-        authedUsername,
-        fs
-      )
+      return fissionAppState.scenarioNotAuthorised(permissions)
     }
 
   } else if (authedUsername) {
-    return scenarioContinuation(
+    return fissionAppState.scenarioContinuation(
       permissions,
       authedUsername,
       await maybeLoadFs(authedUsername),
     )
 
   } else {
-    return scenarioNotAuthorised(permissions)
+    return fissionAppState.scenarioNotAuthorised(permissions)
 
+    
   }
 }
 
 
 /**
- * Alias for `initialise`.
+ * Alias for `fissionApp`.
  */
-export { initialise as initialize }
+ export { fissionApp as initialise }
+ export { fissionApp as initialize }
 
 
 
@@ -133,8 +190,10 @@ export * from "./filesystem.js"
 export * from "./common/version.js"
 
 export const fs = FileSystem
-export { Scenario, State } from "./auth/state.js"
-export { AuthCancelled, AuthSucceeded, Continuation, NotAuthorised } from "./auth/state.js"
+export { AppScenario, AppState } from "./auth/state/app.js"
+export { AuthCancelled, AuthSucceeded, Continuation, NotAuthorised } from "./auth/state/linkedApp.js"
+export { Authed, NotAuthed } from "./auth/state/app.js"
+export { LinkedAppScenario as Scenario, LinkedAppState as State } from "./auth/state/linkedApp.js"
 export { InitialisationError, InitOptions } from "./init/types.js"
 
 export * as account from "./auth/index.js"
