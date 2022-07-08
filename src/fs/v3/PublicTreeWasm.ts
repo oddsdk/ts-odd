@@ -3,12 +3,12 @@ import { CID } from "multiformats"
 import { IPFS } from "ipfs-core-types"
 import { PublicDirectory } from "wnfs"
 
-import { FileContent } from "../../ipfs"
-import { Path } from "../../path"
-import { AddResult } from "../../ipfs"
-import { UnixTree, Puttable, File, Links, Tree, UpdateCallback } from "../types"
-import { BlockStore, IpfsBlockStore } from "./IpfsBlockStore"
-import { normalizeFileContent } from "../protocol/public"
+import { FileContent } from "../../ipfs/index.js"
+import { Path } from "../../path.js"
+import { AddResult } from "../../ipfs/index.js"
+import { UnixTree, Puttable, File, Links, Tree, UpdateCallback } from "../types.js"
+import { BlockStore, IpfsBlockStore } from "./IpfsBlockStore.js"
+import { normalizeFileContent } from "../protocol/public/index.js"
 
 interface DirEntry {
   name: string
@@ -50,7 +50,7 @@ export class PublicTreeWasm implements UnixTree, Puttable {
 
   async ls(path: Path): Promise<Links> {
     const root = await this.root
-    const entries: DirEntry[] = await root.ls(path, this.store)
+    const { result: entries } = await root.ls(path, this.store) as OpResult<DirEntry[]>
     const result: Links = {}
     for (const entry of entries) {
       result[entry.name] = {
@@ -99,7 +99,9 @@ export class PublicTreeWasm implements UnixTree, Puttable {
     const root = this.root
 
     this.root = (async () => {
-      const { rootDir } = await (await root).write(path, cid.bytes, new Date(), this.store)
+      const rootFetched = await root
+      const { rootDir } = await rootFetched.write(path, cid.bytes, new Date(), this.store) as OpResult<unknown>
+      rootFetched.free()
       return rootDir
     })()
 
