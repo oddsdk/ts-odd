@@ -95,6 +95,7 @@ export const USE_WNFS_IMPLEMENTATION = {
   auth: {
     init: base.init,
     register: base.register,
+    identify: base.identify,
     isUsernameValid: base.isUsernameValid,
     isUsernameAvailable: base.isUsernameAvailable,
     createChannel: base.createChannel,

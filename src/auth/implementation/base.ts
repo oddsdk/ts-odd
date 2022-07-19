@@ -16,13 +16,21 @@ export const init = async (): Promise<AppState | null> => {
 }
 
 export const register = async (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
-  const { success } = await createAccount(options)
+  // const { success } = await createAccount(options)
+  const { success } = await createAccount({ 
+    username: identify(options.username),
+    email: options.email
+  })
 
   if (success) {
     await storage.setItem(USERNAME_STORAGE_KEY, options.username)
     return { success: true }
   }
   return { success: false }
+}
+
+export const identify = (username: string): string => {
+  return username
 }
 
 export const isUsernameValid = async (username: string): Promise<boolean> => {
@@ -91,6 +99,7 @@ export const BASE_IMPLEMENTATION = {
   auth: {
     init,
     register,
+    identify,
     isUsernameValid,
     isUsernameAvailable,
     createChannel,

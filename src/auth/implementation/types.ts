@@ -6,6 +6,7 @@ import type { Channel, ChannelOptions } from "../../auth/channel"
 export type Implementation = {
   init: (options: InitOptions) => Promise<State | null>
   register: (options: { username: string; email?: string }) => Promise<{ success: boolean }>
+  identify: (username: string) => string
   isUsernameValid: (username: string) => Promise<boolean>
   isUsernameAvailable: (username: string) => Promise<boolean>
   createChannel: (options: ChannelOptions) => Promise<Channel>

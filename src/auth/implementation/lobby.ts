@@ -95,7 +95,12 @@ export const init = async (options: PermissionedAppInitOptions): Promise<Permiss
 }
 
 export const register = async (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
+  // TODO: Implement register when integrated into lobby
   return new Promise(resolve => resolve({ success: false }))
+}
+
+export const identify = (username: string): string => {
+  return username
 }
 
 export const isUsernameValid = async (username: string): Promise<boolean> => {
@@ -179,6 +184,7 @@ export const LOBBY_IMPLEMENTATION = {
   auth: {
     init,
     register,
+    identify,
     isUsernameValid,
     isUsernameAvailable,
     createChannel,
