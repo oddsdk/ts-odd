@@ -71,7 +71,7 @@ export interface UnixTree {
   readOnly: boolean
 
   ls(path: Path): Promise<Links>
-  mkdir(path: Path, onUpdate?: UpdateCallback): Promise<this>
+  mkdir(path: Path): Promise<this>
   cat(path: Path): Promise<FileContent>
   add(path: Path, content: FileContent): Promise<this>
   rm(path: Path): Promise<this>

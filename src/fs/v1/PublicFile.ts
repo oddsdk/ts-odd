@@ -10,7 +10,7 @@ import * as history from "./PublicHistory.js"
 import * as metadata from "../metadata.js"
 import * as protocol from "../protocol/index.js"
 import * as versions from "../versions.js"
-import { decodeCID, isObject, Maybe } from "../../common/index.js"
+import { decodeCID, isObject, hasProp, Maybe } from "../../common/index.js"
 
 
 type ConstructorParams = {
@@ -35,7 +35,8 @@ export class PublicFile extends BaseFile {
 
   static instanceOf(obj: unknown): obj is PublicFile {
     return isObject(obj)
-      && obj.content !== undefined
+      && hasProp(obj, "content")
+      && hasProp(obj, "header")
       && check.isFileHeader(obj.header)
   }
 

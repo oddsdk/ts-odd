@@ -6,7 +6,7 @@ import { PublicDirectory } from "wnfs"
 import { FileContent } from "../../ipfs/index.js"
 import { Path } from "../../path.js"
 import { AddResult } from "../../ipfs/index.js"
-import { UnixTree, Puttable, File, Links, Tree, UpdateCallback } from "../types.js"
+import { UnixTree, Puttable, File, Links, Tree } from "../types.js"
 import { BlockStore, IpfsBlockStore } from "./IpfsBlockStore.js"
 import { normalizeFileContent } from "../protocol/public/index.js"
 
@@ -57,13 +57,13 @@ export class PublicTreeWasm implements UnixTree, Puttable {
         name: entry.name,
         isFile: entry.metadata.unixMeta.kind === "file",
         size: 0, // TODO size?
-        cid: "", // TODO do we really need a CID here?
+        cid: "not provided for performance ", // TODO do we really need a CID here?
       }
     }
     return result
   }
 
-  async mkdir(path: Path, onUpdate?: UpdateCallback): Promise<this> {
+  async mkdir(path: Path): Promise<this> {
     const root = this.root
 
     this.root = (async () => {
@@ -136,12 +136,8 @@ export class PublicTreeWasm implements UnixTree, Puttable {
 
   async exists(path: Path): Promise<boolean> {
     const root = await this.root
-    try {
-      await root.getNode(path, this.store)
-      return true
-    } catch {
-      return false
-    }
+    const { result } = await root.getNode(path, this.store)
+    return result != null
   }
 
   async put(): Promise<CID> {

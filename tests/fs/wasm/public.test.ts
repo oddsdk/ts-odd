@@ -34,7 +34,6 @@ describe("the wasm public tree", () => {
     it("can list the 'hello' directory contents correctly", async () => {
       const tree = await simpleExample()
       const lsResult = await tree.ls(["hello"]) as HardLinks
-      console.log(lsResult)
       expect(lsResult["actor"].name).toEqual("actor")
       expect(lsResult["actor"].isFile).toEqual(false)
       expect(lsResult["world"].name).toEqual("world")
@@ -44,7 +43,6 @@ describe("the wasm public tree", () => {
     it("can list the 'hello/actor' directory contents and shows a file", async () => {
       const tree = await simpleExample()
       const lsResult = await tree.ls(["hello", "actor"]) as HardLinks
-      console.log(lsResult)
       expect(lsResult["James"].name).toEqual("James")
       expect(lsResult["James"].isFile).toEqual(true)
     })

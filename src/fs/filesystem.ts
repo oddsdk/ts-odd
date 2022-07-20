@@ -4,7 +4,7 @@ import { CID } from "multiformats/cid"
 import { SymmAlg } from "keystore-idb/lib/types.js"
 import { throttle } from "throttle-debounce"
 
-import { Links } from "./types.js"
+import { Links, UnixTree } from "./types.js"
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
 import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
@@ -124,7 +124,7 @@ export class FileSystem {
         })
       }
 
-      this._publishWhenOnline.push([ cid, proof ])
+      this._publishWhenOnline.push([cid, proof])
     }, false)
 
     this.publishHooks.push(logCid)
@@ -200,11 +200,16 @@ export class FileSystem {
 
   async ls(path: DirectoryPath): Promise<Links> {
     if (pathing.isFile(path)) throw new Error("`ls` only accepts directory paths")
-    return this.runOnNode(path, false, (node, relPath) => {
-      if (typeCheck.isFile(node)) {
-        throw new Error("Tried to `ls` a file")
-      } else {
-        return node.ls(relPath)
+    return this.runOnNode(path, false, {
+      async public(root, relPath) {
+        return root.ls(relPath)
+      },
+      async private(node, relPath) {
+        if (typeCheck.isFile(node)) {
+          throw new Error("Tried to `ls` a file")
+        } else {
+          return node.ls(relPath)
+        }
       }
     })
   }
@@ -212,11 +217,16 @@ export class FileSystem {
   async mkdir(path: DirectoryPath, options: MutationOptions = {}): Promise<this> {
     if (pathing.isFile(path)) throw new Error("`mkdir` only accepts directory paths")
 
-    await this.runOnNode(path, true, (node, relPath) => {
-      if (typeCheck.isFile(node)) {
-        throw new Error("Tried to `mkdir` a file")
-      } else {
-        return node.mkdir(relPath)
+    await this.runOnNode(path, true, {
+      async public(root, relPath) {
+        return root.mkdir(relPath)
+      },
+      async private(node, relPath) {
+        if (typeCheck.isFile(node)) {
+          throw new Error("Tried to `mkdir` a file")
+        } else {
+          return node.mkdir(relPath)
+        }
       }
     })
     if (options.publish) {
@@ -234,45 +244,76 @@ export class FileSystem {
     content: FileContent | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options: MutationOptions = {}
   ): Promise<this> {
-    await this.runOnNode(path, true, async (node, relPath) => {
-      const destinationIsFile = typeCheck.isFile(node)
-      const contentIsSoftLinks = typeCheck.isSoftLink(content)
-        || typeCheck.isSoftLinkDictionary(content)
-        || typeCheck.isSoftLinkList(content)
+    const contentIsSoftLinks = typeCheck.isSoftLink(content)
+      || typeCheck.isSoftLinkDictionary(content)
+      || typeCheck.isSoftLinkList(content)
 
-      if (contentIsSoftLinks && destinationIsFile) {
+    if (contentIsSoftLinks) {
+      if (pathing.isFile(path)) {
         throw new Error("Can't add soft links to a file")
-      } else if (!contentIsSoftLinks && pathing.isDirectory(path)) {
+      }
+
+      await this.runOnNode(path, true, {
+        public: async (root, relPath) => {
+          const links = Array.isArray(content)
+            ? content
+            : typeChecks.isObject(content)
+              ? Object.values(content) as Array<SoftLink>
+              : [content] as Array<SoftLink>
+
+          await this.runOnChildTree(root as Tree, relPath, async tree => {
+            links.forEach((link: SoftLink) => {
+              if (PrivateTree.instanceOf(tree) || PublicTree.instanceOf(tree)) tree.assignLink({
+                name: link.name,
+                link: link,
+                skeleton: link
+              })
+            })
+            return tree
+          })
+        },
+        private: async (node, relPath) => {
+          const links = Array.isArray(content)
+            ? content
+            : typeChecks.isObject(content)
+              ? Object.values(content) as Array<SoftLink>
+              : [content] as Array<SoftLink>
+
+          await this.runOnChildTree(node as Tree, relPath, async tree => {
+            links.forEach((link: SoftLink) => {
+              if (PrivateTree.instanceOf(tree) || PublicTree.instanceOf(tree)) tree.assignLink({
+                name: link.name,
+                link: link,
+                skeleton: link
+              })
+            })
+
+            return tree
+          })
+        }
+      })
+    } else {
+      if (pathing.isDirectory(path)) {
         throw new Error("`add` only accepts file paths when working with regular files")
       }
 
-      if (destinationIsFile && !contentIsSoftLinks) {
-        return (node as File).updateContent(content as FileContent)
+      await this.runOnNode(path, true, {
+        public: async (root, relPath) => {
+          await root.add(relPath, content)
+        },
+        private: async (node, relPath) => {
+          const destinationIsFile = typeCheck.isFile(node)
 
-      } else if (contentIsSoftLinks) {
-        const links = Array.isArray(content)
-          ? content
-          : typeChecks.isObject(content)
-            ? Object.values(content) as Array<SoftLink>
-            : [ content ] as Array<SoftLink>
+          if (destinationIsFile) {
+            await node.updateContent(content as FileContent)
 
-        return this.runOnChildTree(node as Tree, relPath, async tree => {
-          links.forEach((link: SoftLink) => {
-            if (PrivateTree.instanceOf(tree) || PublicTree.instanceOf(tree)) tree.assignLink({
-              name: link.name,
-              link: link,
-              skeleton: link
-            })
-          })
+          } else {
+            await node.add(relPath, content as FileContent)
+          }
+        }
+      })
+    }
 
-          return tree
-        })
-
-      } else if (!destinationIsFile) {
-        return (node as Tree).add(relPath, content as FileContent)
-
-      }
-    })
     if (options.publish) {
       await this.publish()
     }
@@ -281,10 +322,15 @@ export class FileSystem {
 
   async cat(path: FilePath): Promise<FileContent> {
     if (pathing.isDirectory(path)) throw new Error("`cat` only accepts file paths")
-    return this.runOnNode(path, false, async (node, relPath) => {
-      return typeCheck.isFile(node)
-        ? node.content
-        : node.cat(relPath)
+    return this.runOnNode(path, false, {
+      public: async (root, relPath) => {
+        return await root.cat(relPath)
+      },
+      private: async (node, relPath) => {
+        return typeCheck.isFile(node)
+          ? node.content
+          : await node.cat(relPath)
+      }
     })
   }
 
@@ -303,18 +349,27 @@ export class FileSystem {
   // -------------------------
 
   async exists(path: DistinctivePath): Promise<boolean> {
-    return this.runOnNode(path, false, async (node, relPath) => {
-      return typeCheck.isFile(node)
-        ? true // tried to check the existance of itself
-        : node.exists(relPath)
+    return this.runOnNode(path, false, {
+      public: async (root, relPath) => {
+        return await root.exists(relPath)
+      },
+      private: async (node, relPath) => {
+        // node is a file, then we tried to check the existance of itself
+        return typeCheck.isFile(node) || await node.exists(relPath)
+      }
     })
   }
 
   async get(path: DistinctivePath): Promise<Tree | File | null> {
-    return this.runOnNode(path, false, async (node, relPath) => {
-      return typeCheck.isFile(node)
-        ? node // tried to get itself
-        : node.get(relPath)
+    return this.runOnNode(path, false, {
+      public: async (root, relPath) => {
+        return await root.get(relPath)
+      },
+      private: async (node, relPath) => {
+        return typeCheck.isFile(node)
+          ? node // tried to get itself
+          : await node.get(relPath)
+      }
     })
   }
 
@@ -336,24 +391,36 @@ export class FileSystem {
       throw new Error("Destination already exists")
     }
 
-    await this.runOnNode(from, true, (node, relPath) => {
-      if (typeCheck.isFile(node)) {
-        throw new Error("Tried to `mv` within a file")
-      }
+    await this.runOnNode(from, true, {
+      public: async (root, relPath) => {
+        const [_, ...nextPath] = pathing.unwrap(to)
+        await root.mv(relPath, nextPath)
+      },
+      private: async (node, relPath) => {
+        if (typeCheck.isFile(node)) {
+          throw new Error("Tried to `mv` within a file")
+        }
 
-      const [ _, ...nextPath ] = pathing.unwrap(to)
-      return node.mv(relPath, nextPath)
+        const [_, ...nextPath] = pathing.unwrap(to)
+        // TODO FIXME: nextPath is wrong if you use a node that's deeper in the tree.
+        await node.mv(relPath, nextPath)
+      }
     })
 
     return this
   }
 
   async rm(path: DistinctivePath): Promise<this> {
-    await this.runOnNode(path, true, (node, relPath) => {
-      if (typeCheck.isFile(node)) {
-        throw new Error("Cannot `rm` a file you've asked permission for")
-      } else {
-        return node.rm(relPath)
+    await this.runOnNode(path, true, {
+      public: (root, relPath) => {
+        return root.rm(relPath)
+      },
+      private: (node, relPath) => {
+        if (typeCheck.isFile(node)) {
+          throw new Error("Cannot `rm` a file you've asked permission for")
+        } else {
+          return node.rm(relPath)
+        }
       }
     })
 
@@ -365,7 +432,7 @@ export class FileSystem {
    */
   async symlink(
     args:
-    { at: DirectoryPath; referringTo: DistinctivePath; name: string; username?: string }
+      { at: DirectoryPath; referringTo: DistinctivePath; name: string; username?: string }
   ): Promise<this> {
     const { at, referringTo, name } = args
 
@@ -384,43 +451,60 @@ export class FileSystem {
 
     if (!canShare) throw new Error("Not allowed to share private items")
 
-    await this.runOnNode(at, true, async (node, relPath) => {
-      if (typeCheck.isFile(node)) {
-        throw new Error("Cannot add a soft link to a file")
-      }
-
-      return this.runOnChildTree(node, relPath, async tree => {
-        if (PrivateTree.instanceOf(tree)) {
-          const destNode: PrivateTree | PrivateFile | null = await this.runOnNode(referringTo, false, async (a, relPath) => {
-            const b = typeCheck.isFile(a)
-              ? a
-              : await a.get(relPath)
-
-            if (PrivateTree.instanceOf(b)) return b
-            else if (PrivateFile.instanceOf(b)) return b
-            else throw new Error("`symlink.referringTo` is not of the right type")
+    await this.runOnNode(at, true, {
+      public: async (root, relPath) => {
+        if (!PublicTree.instanceOf(root)) {
+          // TODO
+          throw new Error(`Symlinks not supported in WASM-WNFS yet.`)
+        } else {
+          await this.runOnChildTree(root, relPath, async tree => {
+            if (PublicTree.instanceOf(tree)) {
+              tree.insertSoftLink({
+                path: pathing.removeBranch(referringTo),
+                name,
+                username
+              })
+            }
+            return tree
           })
-
-          if (!destNode) throw new Error("Could not find the item the symlink is referring to")
-
-          tree.insertSoftLink({
-            name,
-            username,
-            key: destNode.key,
-            privateName: await destNode.getName()
-          })
-
-        } else if (PublicTree.instanceOf(tree)) {
-          tree.insertSoftLink({
-            path: pathing.removeBranch(referringTo),
-            name,
-            username
-          })
-
         }
 
-        return tree
-      })
+      },
+      private: async (node, relPath) => {
+        if (typeCheck.isFile(node)) {
+          throw new Error("Cannot add a soft link to a file")
+        }
+
+        await this.runOnChildTree(node, relPath, async tree => {
+          if (PrivateTree.instanceOf(tree)) {
+            const destNode: PrivateTree | PrivateFile | null = await this.runOnNode(referringTo, false, {
+              public: async () => {
+                // This should be impossible at the moment
+                throw new Error(`File system hit a public node within a private node. This is not supported/this should not happen.`)
+              },
+              private: async (a, relPath) => {
+                const b = typeCheck.isFile(a)
+                  ? a
+                  : await a.get(relPath)
+
+                if (PrivateTree.instanceOf(b)) return b
+                else if (PrivateFile.instanceOf(b)) return b
+                else throw new Error("`symlink.referringTo` is not of the right type")
+              }
+            })
+
+            if (!destNode) throw new Error("Could not find the item the symlink is referring to")
+
+            tree.insertSoftLink({
+              name,
+              username,
+              key: destNode.key,
+              privateName: await destNode.getName()
+            })
+          }
+          return tree
+        })
+      }
     })
 
     return this
@@ -552,7 +636,7 @@ export class FileSystem {
       const name = pathing.terminus(path)
       const item = await this.get(path)
       return name && (PrivateFile.instanceOf(item) || PrivateTree.instanceOf(item))
-        ? [ ...acc, [ name, item ] as [string, PrivateFile | PrivateTree] ]
+        ? [...acc, [name, item] as [string, PrivateFile | PrivateTree]]
         : acc
     }, Promise.resolve([]))
 
@@ -624,11 +708,14 @@ export class FileSystem {
   // --------
 
   /** @internal */
-  async runOnNode<a>(
+  async runOnNode<A>(
     path: DistinctivePath,
     isMutation: boolean,
-    fn: (node: Tree | File, relPath: Path) => Promise<a>
-  ): Promise<a> {
+    handlers: {
+      public(root: UnixTree, relPath: Path): Promise<A>
+      private(node: Tree | File, relPath: Path): Promise<A>
+    },
+  ): Promise<A> {
     const parts = pathing.unwrap(path)
     const head = parts[0]
     const relPath = parts.slice(1)
@@ -648,14 +735,14 @@ export class FileSystem {
       this.proofs[decodedProof.signature] = proof
     }
 
-    let result: a
-    let resultPretty: a
+    let result: A
+    let resultPretty: A
 
     if (head === Branch.Public) {
-      result = await fn(this.root.publicTree, relPath)
+      result = await handlers.public(this.root.publicTree, relPath)
 
       if (isMutation && PublicTree.instanceOf(result)) {
-        resultPretty = await fn(this.root.prettyTree, relPath)
+        resultPretty = await handlers.public(this.root.prettyTree, relPath)
 
         this.root.publicTree = result
         this.root.prettyTree = resultPretty as unknown as BareTree
@@ -675,7 +762,7 @@ export class FileSystem {
         throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${pathing.toPosix(path)}"`)
       }
 
-      result = await fn(
+      result = await handlers.private(
         node,
         parts.slice(pathing.unwrap(nodePath).length)
       )
@@ -696,7 +783,7 @@ export class FileSystem {
       throw new Error("The pretty path is read only")
 
     } else if (head === Branch.Pretty) {
-      result = await fn(this.root.prettyTree, relPath)
+      result = await handlers.public(this.root.prettyTree, relPath)
 
     } else {
       throw new Error("Not a valid FileSystem path")

@@ -4,7 +4,7 @@ import { CID } from "multiformats/cid"
 
 import { AddResult } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
-import { Puttable, SimpleLink, SimpleLinks } from "../types.js"
+import { Puttable, SimpleLink, SimpleLinks, UnixTree } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
 import { Maybe, decodeCID } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
@@ -26,6 +26,7 @@ import MMPT from "../protocol/private/mmpt.js"
 import PublicTree from "../v1/PublicTree.js"
 import PrivateTree from "../v1/PrivateTree.js"
 import PrivateFile from "../v1/PrivateFile.js"
+import { PublicTreeWasm } from "../v3/PublicTreeWasm.js"
 
 
 type PrivateNode = PrivateTree | PrivateFile
@@ -40,7 +41,7 @@ export default class RootTree implements Puttable {
   sharedCounter: number
   sharedLinks: SimpleLinks
 
-  publicTree: PublicTree
+  publicTree: UnixTree & Puttable
   prettyTree: BareTree
   privateNodes: Record<string, PrivateNode>
 
@@ -52,7 +53,7 @@ export default class RootTree implements Puttable {
     sharedCounter: number
     sharedLinks: SimpleLinks
 
-    publicTree: PublicTree
+    publicTree: UnixTree & Puttable
     prettyTree: BareTree
     privateNodes: Record<string, PrivateNode>
   }) {
@@ -73,9 +74,9 @@ export default class RootTree implements Puttable {
   // --------------
 
   static async empty({ rootKey, wnfsWasm }: { rootKey: string; wnfsWasm?: boolean }): Promise<RootTree> {
-    // TODO
+    wnfsWasm = true // TODO: add setup option
     const publicTree = wnfsWasm
-      ? await PublicTree.empty()
+      ? PublicTreeWasm.empty(await getIpfs())
       : await PublicTree.empty()
 
     const prettyTree = await BareTree.empty()

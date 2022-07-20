@@ -83,8 +83,11 @@ export class PublicTree extends BaseTree {
     })
   }
 
-  static instanceOf(obj: any): obj is PublicTree {
-    return check.isLinks(obj.links) && check.isTreeHeader(obj.header)
+  static instanceOf(obj: unknown): obj is PublicTree {
+    return common.hasProp(obj, "links")
+      && common.hasProp(obj, "header")
+      && check.isLinks(obj.links)
+      && check.isTreeHeader(obj.header)
   }
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicTree> {

@@ -1,5 +1,3 @@
-import { CID } from "multiformats/cid"
-
 import BaseTree from "../base/tree.js"
 import MMPT from "../protocol/private/mmpt.js"
 import PrivateFile from "./PrivateFile.js"
@@ -10,7 +8,7 @@ import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, 
 import { FileContent } from "../../ipfs/index.js"
 import { Path } from "../../path.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
-import { decodeCID, isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
+import { decodeCID, isObject, hasProp, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
 import { setup } from "../../setup/internal.js"
 
 import * as check from "../protocol/private/types/check.js"
@@ -52,9 +50,10 @@ export default class PrivateTree extends BaseTree {
     this.mmpt = mmpt
   }
 
-  static instanceOf(obj: any): obj is PrivateTree {
+  static instanceOf(obj: unknown): obj is PrivateTree {
     return isObject(obj)
-      && obj.mmpt !== undefined
+      && hasProp(obj, "mmpt")
+      && hasProp(obj, "header")
       && check.isPrivateTreeInfo(obj.header)
   }
 

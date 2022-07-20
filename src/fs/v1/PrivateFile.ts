@@ -4,7 +4,7 @@ import PrivateHistory from "./PrivateHistory.js"
 import { FileContent } from "../../ipfs/index.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { DecryptedNode, PrivateAddResult, PrivateFileInfo } from "../protocol/private/types.js"
-import { isObject } from "../../common/type-checks.js"
+import { hasProp, isObject } from "../../common/type-checks.js"
 import { Maybe, decodeCID } from "../../common/index.js"
 import * as crypto from "../../crypto/index.js"
 import * as check from "../protocol/private/types/check.js"
@@ -39,10 +39,11 @@ export class PrivateFile extends BaseFile {
     this.mmpt = mmpt
   }
 
-  static instanceOf(obj: any): obj is PrivateFile {
+  static instanceOf(obj: unknown): obj is PrivateFile {
     return isObject(obj)
-      && obj.content !== undefined
-      && obj.mmpt !== undefined
+      && hasProp(obj, "content")
+      && hasProp(obj, "mmpt")
+      && hasProp(obj, "header")
       && check.isPrivateFileInfo(obj.header)
   }
 
