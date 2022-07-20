@@ -7,7 +7,7 @@ import * as dataRoot from "./data-root.js"
 import * as pathing from "./path.js"
 import * as ucan from "./ucan/internal.js"
 
-import { InitialisationError } from "./init/types.js"
+import { AppInitOptions, InitialisationError, LinkedAppInitOptions } from "./init/types.js"
 import { Permissions } from "./ucan/permissions.js"
 import { validateSecrets } from "./auth/state.js"
 import { bootstrapFileSystem, loadFileSystem } from "./filesystem.js"
@@ -32,7 +32,7 @@ import * as fissionAppState from "./auth/state/linkedApp.js"
  * NOTE: Only works on the main/ui thread, as it uses `window.location`.
  *
  */
-export async function app(options: { useWnfs: boolean }): Promise<AppState> {
+export async function app(options: AppInitOptions): Promise<AppState> {
   options = options || {}
 
   const { useWnfs = false } = options
@@ -60,7 +60,7 @@ export async function app(options: { useWnfs: boolean }): Promise<AppState> {
         await bootstrapFileSystem(rootPermissions)
       )
     } else {
-      const fs = options.useWnfs === false ?
+      const fs = options.loadFileSystem === false ?
         undefined :
         await loadFileSystem(rootPermissions, authedUsername)
 
@@ -90,16 +90,7 @@ export async function app(options: { useWnfs: boolean }): Promise<AppState> {
  * NOTE: Only works on the main/ui thread, as it uses `window.location`.
  *
  */
-export async function fissionApp(options:
-  {
-    permissions?: Permissions
-
-    // Options
-    autoRemoveUrlParams?: boolean
-    loadFileSystem?: boolean
-    rootKey?: string
-  }
-): Promise<LinkedAppState> {
+export async function fissionApp(options: LinkedAppInitOptions): Promise<LinkedAppState> {
   options = options || {}
 
   const permissions = options.permissions || null
@@ -193,7 +184,7 @@ export { AppScenario, AppState } from "./auth/state/app.js"
 export { AuthCancelled, AuthSucceeded, Continuation, NotAuthorised } from "./auth/state/linkedApp.js"
 export { Authed, NotAuthed } from "./auth/state/app.js"
 export { LinkedAppScenario as Scenario, LinkedAppState as State } from "./auth/state/linkedApp.js"
-export { InitialisationError, InitOptions } from "./init/types.js"
+export { AppInitOptions, InitialisationError, LinkedAppInitOptions } from "./init/types.js"
 
 export * as account from "./auth/index.js"
 export * as apps from "./apps/index.js"

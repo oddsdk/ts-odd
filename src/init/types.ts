@@ -12,12 +12,23 @@ export enum InitialisationError {
 
 
 // INTIALISE
-export type InitOptions = {
+
+
+export type InitOptions = AppInitOptions | LinkedAppInitOptions
+
+export type AppInitOptions = {
+  // Options
+  loadFileSystem?: boolean
+  rootKey?: string
+  useWnfs?: boolean
+}
+
+export type LinkedAppInitOptions = {
   permissions?: Permissions
 
   // Options
   autoRemoveUrlParams?: boolean
   loadFileSystem?: boolean
   rootKey?: string
-  useWnfs?: boolean
 }
+

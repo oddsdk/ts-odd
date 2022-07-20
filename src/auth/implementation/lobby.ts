@@ -2,7 +2,7 @@ import FileSystem from "../../fs/index.js"
 
 import type { Channel, ChannelOptions } from "../channel"
 import { Implementation } from "../implementation/types.js"
-import { InitOptions } from "../../init/types.js"
+import { LinkedAppInitOptions } from "../../init/types.js"
 
 import * as check from "../../common/type-checks.js"
 import { USERNAME_STORAGE_KEY, decodeCID } from "../../common/index.js"
@@ -26,7 +26,7 @@ import { LinkingError } from "../linking.js"
 
 
 
-export const init = async (options: InitOptions): Promise<LinkedAppState | null> => {
+export const init = async (options: LinkedAppInitOptions): Promise<LinkedAppState | null> => {
   const permissions = options.permissions || null
   const { autoRemoveUrlParams = true, rootKey } = options
 
