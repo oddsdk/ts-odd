@@ -17,7 +17,7 @@ export class BareFile extends BaseFile {
     return new BareFile(content)
   }
 
-  static instanceOf (obj: unknown): obj is BareFile {
+  static instanceOf(obj: unknown): obj is BareFile {
     return isObject(obj) && hasProp(obj, "content")
   }
 

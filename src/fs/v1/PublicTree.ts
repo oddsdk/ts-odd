@@ -231,8 +231,8 @@ export class PublicTree extends BaseTree {
   // -----
 
   assignLink({ name, link, skeleton }: {
-    name: string,
-    link: Link,
+    name: string
+    link: Link
     skeleton: SkeletonInfo | SoftLink
   }): void {
     this.links[name] = link
@@ -293,7 +293,7 @@ export class PublicTree extends BaseTree {
     return this
   }
 
-  insertSoftLink({ name, path, username }: { name: string, path: DistinctivePath, username: string }): this {
+  insertSoftLink({ name, path, username }: { name: string; path: DistinctivePath; username: string }): this {
     const softLink = {
       ipns: `${username}.files.${setup.endpoints.user}/public/${pathing.toPosix(path)}`,
       name

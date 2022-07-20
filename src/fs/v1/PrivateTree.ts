@@ -256,8 +256,8 @@ export default class PrivateTree extends BaseTree {
   // -----
 
   assignLink({ name, link, skeleton }: {
-    name: string,
-    link: PrivateLink | SoftLink,
+    name: string
+    link: PrivateLink | SoftLink
     skeleton: PrivateSkeletonInfo | SoftLink
   }): void {
     this.header.links[name] = link
@@ -317,7 +317,7 @@ export default class PrivateTree extends BaseTree {
     return this
   }
 
-  insertSoftLink({ name, username, key, privateName }: { name: string, username: string, key: string, privateName: PrivateName }): this {
+  insertSoftLink({ name, username, key, privateName }: { name: string; username: string; key: string; privateName: PrivateName }): this {
     const softLink = {
       ipns: `${username}.files.${setup.endpoints.user}`,
       name,

@@ -27,5 +27,13 @@ module.exports = {
     }],
     // If you want to *intentionally* run a promise without awaiting, prepend it with "void " instead of "await "
     "@typescript-eslint/no-floating-promises": ["error"],
+    '@typescript-eslint/no-unused-vars': [
+      'warn', // or error
+      { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      },
+    ],
   }
 }
