@@ -14,6 +14,7 @@ import { bootstrapFileSystem, loadFileSystem } from "./filesystem.js"
 
 import FileSystem from "./fs/index.js"
 
+import { isLinkedAppState } from "./auth/state.js"
 import { setImplementations } from "./setup.js"
 import { BASE_IMPLEMENTATION } from "./auth/implementation/base.js"
 import { USE_WNFS_IMPLEMENTATION } from "./auth/implementation/use-wnfs.js"
@@ -113,7 +114,7 @@ export async function fissionApp(options: LinkedAppInitOptions): Promise<LinkedA
   const state = await auth.init(options)
 
   // Allow auth implementation to return a State directly
-  if (state && fissionAppState.isLinkedAppState(state)) {
+  if (state && isLinkedAppState(state)) {
     return state
   }
 

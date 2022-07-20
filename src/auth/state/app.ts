@@ -1,5 +1,4 @@
 import FileSystem from "../../fs/index.js"
-import { State } from "../state.js"
 
 
 // SCENARIO
@@ -59,8 +58,4 @@ export type Authed = AppBase & {
   username: string
 
   fs?: FileSystem
-}
-
-export const isAppState = (state: State): state is AppState => {
-  return state.kind === "appState"
 }

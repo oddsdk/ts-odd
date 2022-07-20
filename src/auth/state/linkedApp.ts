@@ -2,7 +2,6 @@ import FileSystem from "../../fs/index.js"
 
 import { Maybe } from "../../common/types.js"
 import { Permissions } from "../../ucan/permissions.js"
-import { State } from "../state.js"
 
 
 // SCENARIO
@@ -135,8 +134,4 @@ export type Continuation = LinkedAppBase & {
   username: string
 
   fs?: FileSystem
-}
-
-export const isLinkedAppState = (state: State): state is LinkedAppState => {
-  return state.kind === "linkedAppState"
 }

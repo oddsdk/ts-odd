@@ -14,6 +14,14 @@ import { LinkedAppState } from "./state/linkedApp.js"
 export type State = AppState | LinkedAppState
 
 
+export const isAppState = (state: State): state is AppState => {
+  return state.kind === "appState"
+}
+
+export const isLinkedAppState = (state: State): state is LinkedAppState => {
+  return state.kind === "linkedAppState"
+}
+
 // VALIDATION
 
 
