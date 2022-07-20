@@ -24,25 +24,22 @@ import * as appState from "./auth/state/app.js"
 import * as fissionAppState from "./auth/state/linkedApp.js"
 
 
-/** App with root authority 
- * 
- * Can do everything, needs no permission from other apps.
- * Opts-in to using WNFS.
-*/
+/**
+ * Check if we're authenticated and initiate the user's file system if 
+ * authenticated (can be disabled).
+ *
+ * See `loadFileSystem` if you want to load the user's file system yourself.
+ * NOTE: Only works on the main/ui thread, as it uses `window.location`.
+ *
+ */
 export async function app(options: { useWnfs: boolean }): Promise<AppState> {
   options = options || {}
 
   const { useWnfs = false } = options
 
-  /**
-   * Dependecy injected implementations are set internally. The developer does not
-   * need to be aware of them unless they have an advanced use case.
-  */
   if (useWnfs) {
     setImplementations(USE_WNFS_IMPLEMENTATION)
   } else {
-    // We could eventually make the base implementation the default 
-    // because it assumes the least of any implementation
     setImplementations(BASE_IMPLEMENTATION)
   }
 
@@ -85,11 +82,13 @@ export async function app(options: { useWnfs: boolean }): Promise<AppState> {
   }
 }
 
-
-/** Rename existing initialize function
- * 
- * Not sure about the name! How do we name an app to make
- * it clear that it uses the Fission Auth Lobby?
+/**
+ * Check if we're authenticated, process any lobby query-parameters present in the URL,
+ * and initiate the user's file system if authenticated (can be disabled).
+ *
+ * See `loadFileSystem` if you want to load the user's file system yourself.
+ * NOTE: Only works on the main/ui thread, as it uses `window.location`.
+ *
  */
 export async function fissionApp(options:
   {
