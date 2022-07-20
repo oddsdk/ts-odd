@@ -31,20 +31,28 @@ interface OpResult<A> {
 export class PublicTreeWasm implements UnixTree, Puttable {
 
   root: Promise<PublicDirectory>
+  lastRoot: PublicDirectory
   store: BlockStore
   ipfs: IPFS
   readOnly: boolean
 
   constructor(root: PublicDirectory, store: BlockStore, ipfs: IPFS, readOnly: boolean) {
     this.root = Promise.resolve(root)
+    this.lastRoot = root
     this.store = store
     this.ipfs = ipfs
     this.readOnly = readOnly
   }
 
   static empty(ipfs: IPFS): PublicTreeWasm {
-    const root = new PublicDirectory(new Date())
     const store = new IpfsBlockStore(ipfs)
+    const root = new PublicDirectory(new Date())
+    return new PublicTreeWasm(root, store, ipfs, false)
+  }
+
+  static async fromCID(ipfs: IPFS, cid: CID): Promise<PublicTreeWasm> {
+    const store = new IpfsBlockStore(ipfs)
+    const root = await PublicDirectory.load(cid.bytes, store)
     return new PublicTreeWasm(root, store, ipfs, false)
   }
 
@@ -123,7 +131,7 @@ export class PublicTreeWasm implements UnixTree, Puttable {
     const root = this.root
 
     this.root = (async () => {
-      const { rootDir } = await (await root).basic_mv(from, to, new Date(), this.store) as OpResult<unknown>
+      const { rootDir } = await (await root).basicMv(from, to, new Date(), this.store) as OpResult<unknown>
       return rootDir
     })()
 
@@ -140,8 +148,20 @@ export class PublicTreeWasm implements UnixTree, Puttable {
     return result != null
   }
 
+  async historyStep(): Promise<PublicDirectory> {
+    const root = this.root
+    this.root = (async () => {
+      const { rootDir: rebasedRoot } = await (await root).baseHistoryOn(this.lastRoot, this.store)
+      this.lastRoot = rebasedRoot
+      return rebasedRoot
+    })()
+    return await this.root
+  }
+
   async put(): Promise<CID> {
-    return (await this.root).store(this.store)
+    const rebasedRoot = await this.historyStep()
+    const cidBytes = await rebasedRoot.store(this.store) as Uint8Array
+    return CID.decode(cidBytes)
   }
 
   async putDetailed(): Promise<AddResult> {

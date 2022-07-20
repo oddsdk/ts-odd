@@ -74,7 +74,6 @@ export default class RootTree implements Puttable {
   // --------------
 
   static async empty({ rootKey, wnfsWasm }: { rootKey: string; wnfsWasm?: boolean }): Promise<RootTree> {
-    wnfsWasm = true // TODO: add setup option
     const publicTree = wnfsWasm
       ? PublicTreeWasm.empty(await getIpfs())
       : await PublicTree.empty()
@@ -125,11 +124,17 @@ export default class RootTree implements Puttable {
     const links = await protocol.basic.getSimpleLinks(cid)
     const keys = permissions ? await permissionKeys(permissions) : []
 
+    const version = await parseVersionFromLinks(links)
+    const wnfsWasm = version === versions.wnfsWasm
+
     // Load public parts
     const publicCID = links[Branch.Public]?.cid || null
     const publicTree = publicCID === null
       ? await PublicTree.empty()
-      : await PublicTree.fromCID(decodeCID(publicCID))
+      : wnfsWasm
+        ? await PublicTreeWasm.fromCID(await getIpfs(), decodeCID(publicCID))
+        : await PublicTree.fromCID(decodeCID(publicCID))
+
 
     const prettyTree = links[Branch.Pretty]
                          ? await BareTree.fromCID(decodeCID(links[Branch.Pretty].cid))
@@ -374,10 +379,14 @@ export default class RootTree implements Puttable {
   }
 
   async getVersion(): Promise<versions.SemVer | null> {
-    const file = await protocol.basic.getFile(decodeCID(this.links[Branch.Version].cid))
-    return versions.fromString(uint8arrays.toString(file))
+    return await parseVersionFromLinks(this.links)
   }
 
+}
+
+async function parseVersionFromLinks(links: SimpleLinks): Promise<versions.SemVer | null> {
+  const file = await protocol.basic.getFile(decodeCID(links[Branch.Version].cid))
+  return versions.fromString(uint8arrays.toString(file))
 }
 
 

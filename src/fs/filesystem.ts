@@ -29,11 +29,13 @@ import * as sharing from "./share.js"
 import * as typeCheck from "./types/check.js"
 import * as typeChecks from "../common/type-checks.js"
 import * as ucan from "../ucan/index.js"
+import * as versions from "./versions.js"
 
 import { FileContent } from "../ipfs/index.js"
 import { NoPermissionError } from "../errors.js"
 import { Permissions, appDataPath } from "../ucan/permissions.js"
 import { authenticatedUsername, decodeCID } from "../common/index.js"
+import { setup } from "../setup/internal.js"
 
 
 // TYPES
@@ -149,7 +151,9 @@ export class FileSystem {
   static async empty(opts: NewFileSystemOptions = {}): Promise<FileSystem> {
     const { permissions, localOnly } = opts
     const rootKey = opts.rootKey || await crypto.aes.genKeyStr()
-    const root = await RootTree.empty({ rootKey })
+    // create a file system based on wnfs-wasm when this option is set:
+    const wnfsWasm = setup.fsVersion === versions.toString(versions.wnfsWasm)
+    const root = await RootTree.empty({ rootKey, wnfsWasm })
 
     const fs = new FileSystem({
       root,

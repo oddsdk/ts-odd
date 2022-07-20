@@ -4,6 +4,9 @@ import * as fc from "fast-check"
 import "../../src/setup/node.js"
 import * as check from "../../src/fs/types/check.js"
 import * as path from "../../src/path.js"
+import * as setup from "../../src/setup.js"
+import * as versions from "../../src/fs/versions.js"
+
 import PublicFile from "../../src/fs/v1/PublicFile.js"
 import PublicTree from "../../src/fs/v1/PublicTree.js"
 
@@ -12,10 +15,17 @@ import { emptyFilesystem } from "../helpers/filesystem.js"
 import { publicFileContent as fileContent, publicDecode as decode } from "../helpers/fileContent.js"
 
 
+const wnfsWasmEnabled = process.env.WNFS_WASM != null
+const itSkipInWasm = wnfsWasmEnabled ? it.skip : it
+
 describe("the public filesystem api", function () {
 
   before(async function () {
     fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 25 } : { numRuns: 10 })
+
+    if (wnfsWasmEnabled) {
+      setup.fsVersion({ version: versions.toString(versions.wnfsWasm) })
+    }
   })
 
   after(async () => {
@@ -212,7 +222,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it("makes soft links to directories", async () => {
+  itSkipInWasm("makes soft links to directories", async () => {
     const fs = await emptyFilesystem()
 
     await fc.assert(
@@ -242,7 +252,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it("makes soft links to files", async () => {
+  itSkipInWasm("makes soft links to files", async () => {
     const fs = await emptyFilesystem()
 
     await fc.assert(

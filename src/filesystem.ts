@@ -155,7 +155,7 @@ export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> 
         )
       )
 
-  if (versionStr !== versions.toString(versions.latest)) {
+  if (versionStr !== versions.toString(versions.latest) && versionStr !== versions.toString(versions.wnfsWasm)) {
     const versionParsed = versions.fromString(versionStr)
     const userMessages = setup.userMessages
 

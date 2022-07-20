@@ -1,3 +1,5 @@
+import * as versions from "../fs/versions.js"
+
 export type Endpoints = {
   api: string
   apiVersion: string
@@ -19,6 +21,7 @@ type Setup = {
   getApiEndpoint: () => string
   userMessages: UserMessages
   shouldPin: boolean
+  fsVersion: string
 }
 
 
@@ -51,6 +54,8 @@ export const setup: Setup = {
   },
 
   shouldPin: false,
+
+  fsVersion: versions.toString(versions.latest),
 }
 
 function alertIfPossible(str: string) {

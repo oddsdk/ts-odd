@@ -55,6 +55,7 @@
     "build:minified": "node scripts/build-minified.js",
     "start": "tsc -w",
     "test": "mocha",
+    "test-wasm": "WNFS_WASM=true mocha",
     "test:imports": "madge src --ts-config tsconfig.json --extensions ts --circular --warning",
     "test:prod": "yarn run build && yarn run lint && yarn run test:imports && yarn run test:gh-action",
     "test:types": "cp -RT tests/types/ lib/ && yarn run tsd",
@@ -93,7 +94,6 @@
     "yarn": "^1.22.17"
   },
   "dependencies": {
-    "wnfs": "file:../../rs-wnfs/crates/wasm/pkg/",
     "@ipld/dag-cbor": "^7.0.0",
     "@ipld/dag-pb": "^2.1.15",
     "fission-bloom-filters": "1.7.1",
@@ -106,7 +106,8 @@
     "one-webcrypto": "^1.0.3",
     "throttle-debounce": "^3.0.1",
     "tweetnacl": "^1.0.3",
-    "uint8arrays": "^3.0.0"
+    "uint8arrays": "^3.0.0",
+    "wnfs": "file:../../rs-wnfs/crates/wasm/pkg/"
   },
   "tsd": {
     "directory": "lib"
