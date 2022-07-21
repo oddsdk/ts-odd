@@ -2,11 +2,11 @@ import FileSystem from "../../fs/index.js"
 
 import type { Channel, ChannelOptions } from "../channel"
 import { Implementation } from "../implementation/types.js"
-import { LinkedAppInitOptions } from "../../init/types.js"
+import { PermissionedAppInitOptions } from "../../init/types.js"
 
 import * as check from "../../common/type-checks.js"
 import { USERNAME_STORAGE_KEY, decodeCID } from "../../common/index.js"
-import { scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, LinkedAppState } from "../state/linkedApp.js"
+import { scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, PermissionedAppState } from "../state/permissionedApp.js"
 import { validateSecrets } from "../state.js"
 import { loadFileSystem } from "../../filesystem.js"
 import { setup } from "../../setup/internal.js"
@@ -26,7 +26,7 @@ import { LinkingError } from "../linking.js"
 
 
 
-export const init = async (options: LinkedAppInitOptions): Promise<LinkedAppState | null> => {
+export const init = async (options: PermissionedAppInitOptions): Promise<PermissionedAppState | null> => {
   const permissions = options.permissions || null
   const { autoRemoveUrlParams = true, rootKey } = options
 

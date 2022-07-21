@@ -6,20 +6,20 @@ import * as ucanPermissions from "../ucan/permissions.js"
 import { Permissions } from "../ucan/permissions.js"
 
 import { AppState } from "./state/app.js"
-import { LinkedAppState } from "./state/linkedApp.js"
+import { PermissionedAppState } from "./state/permissionedApp.js"
 
 
 // STATE
 
-export type State = AppState | LinkedAppState
+export type State = AppState | PermissionedAppState
 
 
 export const isAppState = (state: State): state is AppState => {
   return state.kind === "appState"
 }
 
-export const isLinkedAppState = (state: State): state is LinkedAppState => {
-  return state.kind === "linkedAppState"
+export const isPermissionedAppState = (state: State): state is PermissionedAppState => {
+  return state.kind === "permissionedAppState"
 }
 
 // VALIDATION

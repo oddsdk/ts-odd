@@ -14,7 +14,7 @@ export enum InitialisationError {
 // INTIALISE
 
 
-export type InitOptions = AppInitOptions | LinkedAppInitOptions
+export type InitOptions = AppInitOptions | PermissionedAppInitOptions
 
 export type AppInitOptions = {
   // Options
@@ -23,7 +23,7 @@ export type AppInitOptions = {
   useWnfs?: boolean
 }
 
-export type LinkedAppInitOptions = {
+export type PermissionedAppInitOptions = {
   permissions?: Permissions
 
   // Options

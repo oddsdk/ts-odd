@@ -7,7 +7,7 @@ import { Permissions } from "../../ucan/permissions.js"
 // SCENARIO
 
 
-export enum LinkedAppScenario {
+export enum PermissionedAppScenario {
   NotAuthorised = "NOT_AUTHORISED",
   AuthSucceeded = "AUTH_SUCCEEDED",
   AuthCancelled = "AUTH_CANCELLED",
@@ -22,8 +22,8 @@ export function scenarioAuthSucceeded(
   fs: FileSystem | undefined
 ): AuthSucceeded {
   return {
-    kind: "linkedAppState",
-    scenario: LinkedAppScenario.AuthSucceeded,
+    kind: "permissionedAppState",
+    scenario: PermissionedAppScenario.AuthSucceeded,
     permissions,
 
     authenticated: true,
@@ -39,8 +39,8 @@ export function scenarioAuthCancelled(
   cancellationReason: string
 ): AuthCancelled {
   return {
-    kind: "linkedAppState",
-    scenario: LinkedAppScenario.AuthCancelled,
+    kind: "permissionedAppState",
+    scenario: PermissionedAppScenario.AuthCancelled,
     permissions,
 
     authenticated: false,
@@ -55,8 +55,8 @@ export function scenarioContinuation(
   fs: FileSystem | undefined
 ): Continuation {
   return {
-    kind: "linkedAppState",
-    scenario: LinkedAppScenario.Continuation,
+    kind: "permissionedAppState",
+    scenario: PermissionedAppScenario.Continuation,
     permissions,
 
     authenticated: true,
@@ -71,8 +71,8 @@ export function scenarioNotAuthorised(
   permissions: Maybe<Permissions>
 ): NotAuthorised {
   return {
-    kind: "linkedAppState",
-    scenario: LinkedAppScenario.NotAuthorised,
+    kind: "permissionedAppState",
+    scenario: PermissionedAppScenario.NotAuthorised,
     permissions,
 
     authenticated: false
@@ -84,27 +84,27 @@ export function scenarioNotAuthorised(
 // STATE
 
 
-export type LinkedAppState
+export type PermissionedAppState
   = NotAuthorised
   | AuthSucceeded
   | AuthCancelled
   | Continuation
 
 
-type LinkedAppBase = {
-  kind: "linkedAppState"
+type PermissionedAppBase = {
+  kind: "permissionedAppState"
 }
 
 
-export type NotAuthorised = LinkedAppBase & {
-  scenario: LinkedAppScenario.NotAuthorised
+export type NotAuthorised = PermissionedAppBase & {
+  scenario: PermissionedAppScenario.NotAuthorised
   permissions: Maybe<Permissions>
 
   authenticated: false
 }
 
-export type AuthSucceeded = LinkedAppBase & {
-  scenario: LinkedAppScenario.AuthSucceeded
+export type AuthSucceeded = PermissionedAppBase & {
+  scenario: PermissionedAppScenario.AuthSucceeded
   permissions: Maybe<Permissions>
 
   authenticated: true
@@ -115,8 +115,8 @@ export type AuthSucceeded = LinkedAppBase & {
   fs?: FileSystem
 }
 
-export type AuthCancelled = LinkedAppBase & {
-  scenario: LinkedAppScenario.AuthCancelled
+export type AuthCancelled = PermissionedAppBase & {
+  scenario: PermissionedAppScenario.AuthCancelled
   permissions: Maybe<Permissions>
 
   authenticated: false
@@ -124,8 +124,8 @@ export type AuthCancelled = LinkedAppBase & {
   throughLobby: true
 }
 
-export type Continuation = LinkedAppBase & {
-  scenario: LinkedAppScenario.Continuation
+export type Continuation = PermissionedAppBase & {
+  scenario: PermissionedAppScenario.Continuation
   permissions: Maybe<Permissions>
 
   authenticated: true

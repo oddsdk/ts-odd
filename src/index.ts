@@ -7,22 +7,22 @@ import * as dataRoot from "./data-root.js"
 import * as pathing from "./path.js"
 import * as ucan from "./ucan/internal.js"
 
-import { AppInitOptions, InitialisationError, LinkedAppInitOptions } from "./init/types.js"
+import { AppInitOptions, InitialisationError, PermissionedAppInitOptions } from "./init/types.js"
 import { Permissions } from "./ucan/permissions.js"
 import { validateSecrets } from "./auth/state.js"
 import { bootstrapFileSystem, loadFileSystem } from "./filesystem.js"
 
 import FileSystem from "./fs/index.js"
 
-import { isLinkedAppState } from "./auth/state.js"
+import { isPermissionedAppState } from "./auth/state.js"
 import { setImplementations } from "./setup.js"
 import { BASE_IMPLEMENTATION } from "./auth/implementation/base.js"
 import { USE_WNFS_IMPLEMENTATION } from "./auth/implementation/use-wnfs.js"
 import { LOBBY_IMPLEMENTATION } from "./auth/implementation/lobby.js"
 import { AppState } from "./auth/state/app.js"
-import { LinkedAppState } from "./auth/state/linkedApp.js"
+import { PermissionedAppState } from "./auth/state/permissionedApp.js"
 import * as appState from "./auth/state/app.js"
-import * as fissionAppState from "./auth/state/linkedApp.js"
+import * as permissionedAppState from "./auth/state/permissionedApp.js"
 
 
 /**
@@ -91,7 +91,7 @@ export async function app(options: AppInitOptions): Promise<AppState> {
  * NOTE: Only works on the main/ui thread, as it uses `window.location`.
  *
  */
-export async function fissionApp(options: LinkedAppInitOptions): Promise<LinkedAppState> {
+export async function permissionedApp(options: PermissionedAppInitOptions): Promise<PermissionedAppState> {
   options = options || {}
 
   const permissions = options.permissions || null
@@ -114,7 +114,7 @@ export async function fissionApp(options: LinkedAppInitOptions): Promise<LinkedA
   const state = await auth.init(options)
 
   // Allow auth implementation to return a State directly
-  if (state && isLinkedAppState(state)) {
+  if (state && isPermissionedAppState(state)) {
     return state
   }
 
@@ -125,24 +125,24 @@ export async function fissionApp(options: LinkedAppInitOptions): Promise<LinkedA
     const validUcans = ucan.validatePermissions(permissions, authedUsername)
 
     if (validSecrets && validUcans) {
-      return fissionAppState.scenarioContinuation(
+      return permissionedAppState.scenarioContinuation(
         permissions,
         authedUsername,
         await maybeLoadFs(authedUsername)
       )
     } else {
-      return fissionAppState.scenarioNotAuthorised(permissions)
+      return permissionedAppState.scenarioNotAuthorised(permissions)
     }
 
   } else if (authedUsername) {
-    return fissionAppState.scenarioContinuation(
+    return permissionedAppState.scenarioContinuation(
       permissions,
       authedUsername,
       await maybeLoadFs(authedUsername),
     )
 
   } else {
-    return fissionAppState.scenarioNotAuthorised(permissions)
+    return permissionedAppState.scenarioNotAuthorised(permissions)
 
     
   }
@@ -150,10 +150,10 @@ export async function fissionApp(options: LinkedAppInitOptions): Promise<LinkedA
 
 
 /**
- * Alias for `fissionApp`.
+ * Alias for `permissionedApp`.
  */
- export { fissionApp as initialise }
- export { fissionApp as initialize }
+ export { permissionedApp as initialise }
+ export { permissionedApp as initialize }
 
 
 
@@ -182,10 +182,10 @@ export * from "./common/version.js"
 
 export const fs = FileSystem
 export { AppScenario, AppState } from "./auth/state/app.js"
-export { AuthCancelled, AuthSucceeded, Continuation, NotAuthorised } from "./auth/state/linkedApp.js"
+export { AuthCancelled, AuthSucceeded, Continuation, NotAuthorised } from "./auth/state/permissionedApp.js"
 export { Authed, NotAuthed } from "./auth/state/app.js"
-export { LinkedAppScenario as Scenario, LinkedAppState as State } from "./auth/state/linkedApp.js"
-export { AppInitOptions, InitialisationError, LinkedAppInitOptions } from "./init/types.js"
+export { PermissionedAppScenario as Scenario, PermissionedAppState as State } from "./auth/state/permissionedApp.js"
+export { AppInitOptions, InitialisationError, PermissionedAppInitOptions } from "./init/types.js"
 
 export * as account from "./auth/index.js"
 export * as apps from "./apps/index.js"
