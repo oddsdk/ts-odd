@@ -56,6 +56,12 @@ export class PublicTreeWasm implements UnixTree, Puttable {
     return new PublicTreeWasm(root, store, ipfs, false)
   }
 
+  private async atomically(fn: (root: PublicDirectory) => Promise<PublicDirectory>) {
+    const root = await this.root
+    this.root = fn(root)
+    await this.root
+  }
+
   async ls(path: Path): Promise<Links> {
     const root = await this.root
     const { result: entries } = await root.ls(path, this.store) as OpResult<DirEntry[]>
@@ -72,12 +78,10 @@ export class PublicTreeWasm implements UnixTree, Puttable {
   }
 
   async mkdir(path: Path): Promise<this> {
-    const root = this.root
-
-    this.root = (async () => {
-      const { rootDir } = await (await root).mkdir(path, new Date(), this.store) as OpResult<unknown>
+    await this.atomically(async root => {
+      const { rootDir } = await root.mkdir(path, new Date(), this.store) as OpResult<null>
       return rootDir
-    })()
+    })
 
     return this
   }
@@ -104,36 +108,28 @@ export class PublicTreeWasm implements UnixTree, Puttable {
       pin: false,
     })
 
-    const root = this.root
-
-    this.root = (async () => {
-      const rootFetched = await root
-      const { rootDir } = await rootFetched.write(path, cid.bytes, new Date(), this.store) as OpResult<unknown>
-      rootFetched.free()
+    await this.atomically(async root => {
+      const { rootDir } = await root.write(path, cid.bytes, new Date(), this.store) as OpResult<null>
       return rootDir
-    })()
+    })
 
     return this
   }
 
   async rm(path: Path): Promise<this> {
-    const root = this.root
-
-    this.root = (async () => {
-      const { rootDir } = await (await root).rm(path, this.store) as OpResult<unknown>
+    await this.atomically(async root => {
+      const { rootDir } = await root.rm(path, this.store) as OpResult<null>
       return rootDir
-    })()
+    })
 
     return this
   }
 
   async mv(from: Path, to: Path): Promise<this> {
-    const root = this.root
-
-    this.root = (async () => {
-      const { rootDir } = await (await root).basicMv(from, to, new Date(), this.store) as OpResult<unknown>
+    await this.atomically(async root => {
+      const { rootDir } = await root.basicMv(from, to, new Date(), this.store) as OpResult<null>
       return rootDir
-    })()
+    })
 
     return this
   }
@@ -149,12 +145,11 @@ export class PublicTreeWasm implements UnixTree, Puttable {
   }
 
   async historyStep(): Promise<PublicDirectory> {
-    const root = this.root
-    this.root = (async () => {
-      const { rootDir: rebasedRoot } = await (await root).baseHistoryOn(this.lastRoot, this.store)
-      this.lastRoot = rebasedRoot
+    await this.atomically(async root => {
+      const { rootDir: rebasedRoot } = await root.baseHistoryOn(this.lastRoot, this.store) as OpResult<null>
+      this.lastRoot = root
       return rebasedRoot
-    })()
+    })
     return await this.root
   }
 

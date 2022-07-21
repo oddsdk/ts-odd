@@ -15,6 +15,7 @@ describe("the wasm public tree", () => {
     const ipfs = await ipfsConfig.get()
     const tree = PublicTreeWasm.empty(ipfs)
     await tree.mkdir(["hello", "world"])
+    await tree.historyStep()
     await tree.add(["hello", "actor", "James"], "Cameron?")
     return tree
   }
@@ -22,6 +23,13 @@ describe("the wasm public tree", () => {
   describe("the simple example", () => {
     it("has a hello world directory", async () => {
       const tree = await simpleExample()
+      expect(await tree.exists(["hello", "world"])).toEqual(true)
+    })
+
+    it("store- and load-roundtrips", async () => {
+      const cid = await (await simpleExample()).put()
+      console.log(cid)
+      const tree = await PublicTreeWasm.fromCID(await ipfsConfig.get(), cid)
       expect(await tree.exists(["hello", "world"])).toEqual(true)
     })
 

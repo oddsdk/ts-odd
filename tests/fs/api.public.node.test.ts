@@ -43,6 +43,7 @@ describe("the public filesystem api", function () {
           const filepath = path.file("public", pathSegment)
 
           await fs.write(filepath, fileContent.val)
+          await fs.historyStep()
 
           expect(await fs.exists(filepath)).toEqual(true)
         })
@@ -59,7 +60,9 @@ describe("the public filesystem api", function () {
           const filepath = path.file("public", pathSegment)
 
           await fs.write(filepath, fileContent.val)
+          await fs.historyStep()
           await fs.rm(filepath)
+          await fs.historyStep()
 
           expect(await fs.exists(filepath)).toEqual(false)
         })
@@ -76,6 +79,7 @@ describe("the public filesystem api", function () {
           const filepath = path.file("public", pathSegment)
 
           await fs.write(filepath, fileContent.val)
+          await fs.historyStep()
           const file = await fs.read(filepath)
           if (file == null) {
             expect(file).not.toBe(null)
@@ -99,7 +103,9 @@ describe("the public filesystem api", function () {
           const toPath = path.file("public", pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
+          await fs.historyStep()
           await fs.mv(fromPath, toPath)
+          await fs.historyStep()
           const fromExists = await fs.exists(fromPath)
           const toExists = await fs.exists(toPath)
 
@@ -119,7 +125,9 @@ describe("the public filesystem api", function () {
           const toPath = path.file("public", pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
+          await fs.historyStep()
           await fs.mv(fromPath, toPath)
+          await fs.historyStep()
 
           const file = await fs.read(toPath)
           if (file == null) {
@@ -142,6 +150,7 @@ describe("the public filesystem api", function () {
           const dirpath = path.directory("public", pathSegment)
 
           await fs.mkdir(dirpath)
+          await fs.historyStep()
 
           expect(await fs.exists(dirpath)).toEqual(true)
         }),
@@ -158,7 +167,9 @@ describe("the public filesystem api", function () {
           const dirpath = path.directory("public", pathSegment)
 
           await fs.mkdir(dirpath)
+          await fs.historyStep()
           await fs.rm(dirpath)
+          await fs.historyStep()
 
           expect(await fs.exists(dirpath)).toEqual(false)
         })
@@ -175,6 +186,7 @@ describe("the public filesystem api", function () {
           const filepath = path.file("public", pathSegment)
 
           await fs.write(filepath, fileContent.val)
+          await fs.historyStep()
 
           expect(await fs.exists(filepath)).toEqual(true)
         })
@@ -193,6 +205,7 @@ describe("the public filesystem api", function () {
           const filepath = path.file("public", "testDir", pathSegment)
 
           await fs.write(filepath, fileContent.val)
+          await fs.historyStep()
           const listing = await fs.ls(dirpath)
 
           expect(pathSegment in listing).toEqual(true)
@@ -213,7 +226,9 @@ describe("the public filesystem api", function () {
           const toPath = path.file("public", pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
+          await fs.historyStep()
           await fs.mv(fromPath, toPath)
+          await fs.historyStep()
           const fromExists = await fs.exists(fromPath)
           const toExists = await fs.exists(toPath)
 

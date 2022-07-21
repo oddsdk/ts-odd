@@ -4,7 +4,7 @@ import { CID } from "multiformats/cid"
 import { SymmAlg } from "keystore-idb/lib/types.js"
 import { throttle } from "throttle-debounce"
 
-import { Links, UnixTree } from "./types.js"
+import { Links, Puttable, UnixTree } from "./types.js"
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
 import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
@@ -36,6 +36,7 @@ import { NoPermissionError } from "../errors.js"
 import { Permissions, appDataPath } from "../ucan/permissions.js"
 import { authenticatedUsername, decodeCID } from "../common/index.js"
 import { setup } from "../setup/internal.js"
+import { PublicTreeWasm } from "./v3/PublicTreeWasm.js"
 
 
 // TYPES
@@ -204,11 +205,11 @@ export class FileSystem {
 
   async ls(path: DirectoryPath): Promise<Links> {
     if (pathing.isFile(path)) throw new Error("`ls` only accepts directory paths")
-    return this.runOnNode(path, false, {
-      async public(root, relPath) {
+    return this.runOnNode(path, {
+      public: async (root, relPath) => {
         return root.ls(relPath)
       },
-      async private(node, relPath) {
+      private: async (node, relPath) => {
         if (typeCheck.isFile(node)) {
           throw new Error("Tried to `ls` a file")
         } else {
@@ -221,15 +222,15 @@ export class FileSystem {
   async mkdir(path: DirectoryPath, options: MutationOptions = {}): Promise<this> {
     if (pathing.isFile(path)) throw new Error("`mkdir` only accepts directory paths")
 
-    await this.runOnNode(path, true, {
-      async public(root, relPath) {
-        return root.mkdir(relPath)
+    await this.runMutationOnNode(path, {
+      public: async (root: BareTree, relPath) => {
+        await root.mkdir(relPath)
       },
-      async private(node, relPath) {
+      private: async (node, relPath) => {
         if (typeCheck.isFile(node)) {
           throw new Error("Tried to `mkdir` a file")
         } else {
-          return node.mkdir(relPath)
+          await node.mkdir(relPath)
         }
       }
     })
@@ -257,7 +258,7 @@ export class FileSystem {
         throw new Error("Can't add soft links to a file")
       }
 
-      await this.runOnNode(path, true, {
+      await this.runMutationOnNode(path, {
         public: async (root, relPath) => {
           const links = Array.isArray(content)
             ? content
@@ -301,7 +302,7 @@ export class FileSystem {
         throw new Error("`add` only accepts file paths when working with regular files")
       }
 
-      await this.runOnNode(path, true, {
+      await this.runMutationOnNode(path, {
         public: async (root, relPath) => {
           await root.add(relPath, content)
         },
@@ -326,7 +327,7 @@ export class FileSystem {
 
   async cat(path: FilePath): Promise<FileContent> {
     if (pathing.isDirectory(path)) throw new Error("`cat` only accepts file paths")
-    return this.runOnNode(path, false, {
+    return this.runOnNode(path, {
       public: async (root, relPath) => {
         return await root.cat(relPath)
       },
@@ -353,7 +354,7 @@ export class FileSystem {
   // -------------------------
 
   async exists(path: DistinctivePath): Promise<boolean> {
-    return this.runOnNode(path, false, {
+    return this.runOnNode(path, {
       public: async (root, relPath) => {
         return await root.exists(relPath)
       },
@@ -365,7 +366,7 @@ export class FileSystem {
   }
 
   async get(path: DistinctivePath): Promise<Tree | File | null> {
-    return this.runOnNode(path, false, {
+    return this.runOnNode(path, {
       public: async (root, relPath) => {
         return await root.get(relPath)
       },
@@ -395,7 +396,7 @@ export class FileSystem {
       throw new Error("Destination already exists")
     }
 
-    await this.runOnNode(from, true, {
+    await this.runOnNode(from, {
       public: async (root, relPath) => {
         const [_, ...nextPath] = pathing.unwrap(to)
         await root.mv(relPath, nextPath)
@@ -415,15 +416,15 @@ export class FileSystem {
   }
 
   async rm(path: DistinctivePath): Promise<this> {
-    await this.runOnNode(path, true, {
-      public: (root, relPath) => {
-        return root.rm(relPath)
+    await this.runMutationOnNode(path, {
+      public: async (root, relPath) => {
+        await root.rm(relPath)
       },
-      private: (node, relPath) => {
+      private: async (node, relPath) => {
         if (typeCheck.isFile(node)) {
           throw new Error("Cannot `rm` a file you've asked permission for")
         } else {
-          return node.rm(relPath)
+          await node.rm(relPath)
         }
       }
     })
@@ -455,8 +456,11 @@ export class FileSystem {
 
     if (!canShare) throw new Error("Not allowed to share private items")
 
-    await this.runOnNode(at, true, {
+    await this.runMutationOnNode(at, {
       public: async (root, relPath) => {
+        if (BareTree.instanceOf(root)) {
+          return // skip the pretty tree, we don't need to attach the symlink to that.
+        }
         if (!PublicTree.instanceOf(root)) {
           // TODO
           throw new Error(`Symlinks not supported in WASM-WNFS yet.`)
@@ -481,7 +485,7 @@ export class FileSystem {
 
         await this.runOnChildTree(node, relPath, async tree => {
           if (PrivateTree.instanceOf(tree)) {
-            const destNode: PrivateTree | PrivateFile | null = await this.runOnNode(referringTo, false, {
+            const destNode: PrivateTree | PrivateFile | null = await this.runOnNode(referringTo, {
               public: async () => {
                 // This should be impossible at the moment
                 throw new Error(`File system hit a public node within a private node. This is not supported/this should not happen.`)
@@ -533,6 +537,26 @@ export class FileSystem {
     })
 
     return cid
+  }
+
+
+  // HISTORY STEPPING
+  // ----------------
+  /**
+   * Ensures the current version of your file system is "committed"
+   * and stepped forward, so the current version will always be
+   * persisted as an "step" in the history of the file system.
+   * 
+   * This function is implicitly called every time your file system
+   * changes are synced, so in most cases calling this is handled
+   * for you.
+   */
+  async historyStep(): Promise<void> {
+    const publicTree = this.root.publicTree
+    if (typeChecks.hasProp(publicTree, "historyStep") && typeof publicTree.historyStep === "function") {
+      // this function is not available in lower versions.
+      await publicTree.historyStep()
+    }
   }
 
 
@@ -712,9 +736,69 @@ export class FileSystem {
   // --------
 
   /** @internal */
+  async checkMutationPermissionAndAddProof(path: DistinctivePath, isMutation: boolean): Promise<void> {
+    const operation = isMutation ? "make changes to" : "query"
+
+    if (!this.localOnly) {
+      const proof = await ucan.dictionary.lookupFilesystemUcan(path)
+      const decodedProof = proof && ucan.decode(proof)
+
+      if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {
+        throw new NoPermissionError(`I don't have the necessary permissions ${operation} to the file system at "${pathing.toPosix(path)}"`)
+      }
+
+      this.proofs[decodedProof.signature] = proof
+    }
+  }
+
+  /** @internal */
+  async runMutationOnNode(
+    path: DistinctivePath,
+    handlers: {
+      public(root: UnixTree, relPath: Path): Promise<void>
+      private(node: PrivateTree | PrivateFile, relPath: Path): Promise<void>
+    },
+  ): Promise<void> {
+    const parts = pathing.unwrap(path)
+    const head = parts[0]
+    const relPath = parts.slice(1)
+
+    await this.checkMutationPermissionAndAddProof(path, true)
+
+    if (head === Branch.Public) {
+      await handlers.public(this.root.publicTree, relPath)
+      await handlers.public(this.root.prettyTree, relPath)
+
+      await Promise.all([
+        this.root.updatePuttable(Branch.Public, this.root.publicTree),
+        this.root.updatePuttable(Branch.Pretty, this.root.prettyTree)
+      ])
+
+    } else if (head === Branch.Private) {
+      const [nodePath, node] = this.root.findPrivateNode(path)
+
+      if (!node) {
+        throw new NoPermissionError(`I don't have the necessary permissions to make changes to the file system at "${pathing.toPosix(path)}"`)
+      }
+
+      await handlers.private(node, parts.slice(pathing.unwrap(nodePath).length))
+      await node.put()
+      await this.root.updatePuttable(Branch.Private, this.root.mmpt)
+
+      const cid = await this.root.mmpt.put()
+      await this.root.addPrivateLogEntry(cid)
+
+    } else if (head === Branch.Pretty) {
+      throw new Error("The pretty path is read only")
+
+    } else {
+      throw new Error("Not a valid FileSystem path")
+    }
+  }
+
+  /** @internal */
   async runOnNode<A>(
     path: DistinctivePath,
-    isMutation: boolean,
     handlers: {
       public(root: UnixTree, relPath: Path): Promise<A>
       private(node: Tree | File, relPath: Path): Promise<A>
@@ -724,77 +808,27 @@ export class FileSystem {
     const head = parts[0]
     const relPath = parts.slice(1)
 
-    const operation = isMutation
-      ? "make changes to"
-      : "query"
-
-    if (!this.localOnly) {
-      const proof = await ucan.dictionary.lookupFilesystemUcan(path)
-      const decodedProof = proof && ucan.decode(proof)
-
-      if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {
-        throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${pathing.toPosix(path)}"`)
-      }
-
-      this.proofs[decodedProof.signature] = proof
-    }
-
-    let result: A
-    let resultPretty: A
+    await this.checkMutationPermissionAndAddProof(path, false)
 
     if (head === Branch.Public) {
-      result = await handlers.public(this.root.publicTree, relPath)
-
-      if (isMutation && PublicTree.instanceOf(result)) {
-        resultPretty = await handlers.public(this.root.prettyTree, relPath)
-
-        this.root.publicTree = result
-        this.root.prettyTree = resultPretty as unknown as BareTree
-
-        await Promise.all([
-          this.root.updatePuttable(Branch.Public, this.root.publicTree),
-          this.root.updatePuttable(Branch.Pretty, this.root.prettyTree)
-        ])
-      }
+      return await handlers.public(this.root.publicTree, relPath)
 
     } else if (head === Branch.Private) {
-      const [nodePath, node] = this.root.findPrivateNode(
-        path
-      )
+      const [nodePath, node] = this.root.findPrivateNode(path)
 
       if (!node) {
-        throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${pathing.toPosix(path)}"`)
+        throw new NoPermissionError(`I don't have the necessary permissions to query the file system at "${pathing.toPosix(path)}"`)
       }
 
-      result = await handlers.private(
-        node,
-        parts.slice(pathing.unwrap(nodePath).length)
-      )
-
-      if (
-        isMutation &&
-        (PrivateTree.instanceOf(result) || PrivateFile.instanceOf(result))
-      ) {
-        this.root.privateNodes[pathing.toPosix(nodePath)] = result
-        await result.put()
-        await this.root.updatePuttable(Branch.Private, this.root.mmpt)
-
-        const cid = await this.root.mmpt.put()
-        await this.root.addPrivateLogEntry(cid)
-      }
-
-    } else if (head === Branch.Pretty && isMutation) {
-      throw new Error("The pretty path is read only")
+      return await handlers.private(node, parts.slice(pathing.unwrap(nodePath).length))
 
     } else if (head === Branch.Pretty) {
-      result = await handlers.public(this.root.prettyTree, relPath)
+      return await handlers.public(this.root.prettyTree, relPath)
 
     } else {
       throw new Error("Not a valid FileSystem path")
 
     }
-
-    return result
   }
 
   /** @internal

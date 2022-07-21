@@ -8,6 +8,7 @@ import * as link from "../link.js"
 import { AddResult, FileContent } from "../../ipfs/index.js"
 import { HardLinks, BaseLinks, Tree, File, Puttable, UpdateCallback } from "../types.js"
 import { Maybe, decodeCID } from "../../common/index.js"
+import { isObject, hasProp } from "../../common/type-checks.js"
 import { Path } from "../../path.js"
 
 import BareFile from "../bare/file.js"
@@ -18,9 +19,11 @@ class BareTree extends BaseTree {
 
   links: HardLinks
   children: { [name: string]: Tree | File }
+  type: "BareTree"
 
   constructor(links: HardLinks) {
     super()
+    this.type = "BareTree"
     this.links = links
     this.children = {}
   }
@@ -38,6 +41,14 @@ class BareTree extends BaseTree {
 
   static fromLinks(links: HardLinks): BareTree {
     return new BareTree(links)
+  }
+
+  static instanceOf(obj: unknown): obj is BareTree {
+    return isObject(obj)
+      && hasProp(obj, "links")
+      && hasProp(obj, "children")
+      && hasProp(obj, "type")
+      && obj.type === "BareTree"
   }
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree> {
