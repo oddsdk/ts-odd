@@ -1,7 +1,7 @@
 import type { Channel, ChannelOptions } from "../channel"
 
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
-import { State } from "../state.js"
+import { AppState } from "../state/app.js"
 import { createAccount } from "../../lobby/index.js"
 
 import * as channel from "../channel.js"
@@ -11,7 +11,7 @@ import * as ucan from "../../ucan/index.js"
 import * as user from "../../lobby/username.js"
 
 
-export const init = async (): Promise<State | null> => {
+export const init = async (): Promise<AppState | null> => {
   return new Promise((resolve) => resolve(null))
 }
 

@@ -4,7 +4,8 @@
 
 #### Features
 
-Adds app owned WNFS.
+- Adds app owned WNFS.
+- Separates initialize into app and permissionedApp entrypoints
 
 ### v0.32.0
 
