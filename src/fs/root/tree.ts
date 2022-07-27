@@ -75,7 +75,7 @@ export default class RootTree implements Puttable {
 
   static async empty({ rootKey, wnfsWasm }: { rootKey: string; wnfsWasm?: boolean }): Promise<RootTree> {
     const publicTree = wnfsWasm
-      ? PublicTreeWasm.empty(await getIpfs())
+      ? await PublicTreeWasm.empty(await getIpfs())
       : await PublicTree.empty()
 
     const prettyTree = await BareTree.empty()

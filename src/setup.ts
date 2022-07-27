@@ -47,6 +47,20 @@ export function fsVersion({ version }: { version: string }): string {
 }
 
 /**
+ * Configure how the wnfs wasm module should be loaded.
+ * 
+ * This only has an effect if you're using file systems of version 3 or higher.
+ * 
+ * By default this loads the required version of the wasm wnfs module from unpkg.com.
+ */
+export function wnfsWasmLoopkup(fn: (wnfsVersion: string) => Promise<BufferSource>) {
+  if (typeof fn !== "function") {
+    throw new Error(`Expected a function as an argument to 'setup.wasmWnfsLookup', but got ${fn}`)
+  }
+  internalSetup.wnfsWasmLookup = fn
+}
+
+/**
  * Override endpoints.
  *
  * You can override each of these,

@@ -22,6 +22,7 @@ type Setup = {
   userMessages: UserMessages
   shouldPin: boolean
   fsVersion: string
+  wnfsWasmLookup: (wnfsVersion: string) => Promise<BufferSource>
 }
 
 
@@ -56,6 +57,11 @@ export const setup: Setup = {
   shouldPin: false,
 
   fsVersion: versions.toString(versions.latest),
+
+  wnfsWasmLookup: async wnfsVersion => {
+    const response = await fetch(`https://unpkg.com/wnfs@${wnfsVersion}/wasm_wnfs_bg.wasm`)
+    return await response.arrayBuffer()
+  }
 }
 
 function alertIfPossible(str: string) {

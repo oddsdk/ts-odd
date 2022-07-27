@@ -1,8 +1,10 @@
 import * as uint8arrays from "uint8arrays"
 import { CID } from "multiformats"
 import { IPFS } from "ipfs-core-types"
-import { PublicDirectory } from "wnfs"
+import { initSync, PublicDirectory } from "wnfs"
 
+import { WASM_WNFS_VERSION } from "../../common/version.js"
+import { setup as setupInternal } from "../../setup/internal.js"
 import { FileContent } from "../../ipfs/index.js"
 import { Path } from "../../path.js"
 import { AddResult } from "../../ipfs/index.js"
@@ -44,13 +46,15 @@ export class PublicTreeWasm implements UnixTree, Puttable {
     this.readOnly = readOnly
   }
 
-  static empty(ipfs: IPFS): PublicTreeWasm {
+  static async empty(ipfs: IPFS): Promise<PublicTreeWasm> {
+    initSync(await setupInternal.wnfsWasmLookup(WASM_WNFS_VERSION))
     const store = new IpfsBlockStore(ipfs)
     const root = new PublicDirectory(new Date())
     return new PublicTreeWasm(root, store, ipfs, false)
   }
 
   static async fromCID(ipfs: IPFS, cid: CID): Promise<PublicTreeWasm> {
+    initSync(await setupInternal.wnfsWasmLookup(WASM_WNFS_VERSION))
     const store = new IpfsBlockStore(ipfs)
     const root = await PublicDirectory.load(cid.bytes, store)
     return new PublicTreeWasm(root, store, ipfs, false)

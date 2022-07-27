@@ -1,5 +1,4 @@
 import expect from "expect"
-import * as fc from "fast-check"
 import * as uint8arrays from "uint8arrays"
 
 import "../../../src/setup/node.js"
@@ -13,7 +12,7 @@ describe("the wasm public tree", () => {
 
   async function simpleExample() {
     const ipfs = await ipfsConfig.get()
-    const tree = PublicTreeWasm.empty(ipfs)
+    const tree = await PublicTreeWasm.empty(ipfs)
     await tree.mkdir(["hello", "world"])
     await tree.historyStep()
     await tree.add(["hello", "actor", "James"], "Cameron?")

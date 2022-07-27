@@ -1,4 +1,6 @@
 import tweetnacl from "tweetnacl"
+import * as path from "path"
+import * as fs from "fs"
 import utils from "keystore-idb/lib/utils.js"
 import { Config, CryptoSystem, KeyStore, KeyUse, Msg, PublicKey } from "keystore-idb/lib/types.js"
 import config from "keystore-idb/lib/config.js"
@@ -14,6 +16,12 @@ import * as setup from "../../src/setup.js"
 
 
 setup.shouldPin({ enabled: false })
+
+setup.wnfsWasmLoopkup(async () => {
+  const pathToThisModule = new URL(import.meta.url).pathname
+  const dirOfThisModule = path.parse(pathToThisModule).dir
+  return fs.readFileSync(path.join(dirOfThisModule, `../../node_modules/wnfs/wasm_wnfs_bg.wasm`))
+})
 
 
 //-------------------------------------
