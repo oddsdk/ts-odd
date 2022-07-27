@@ -4,8 +4,9 @@
 
 #### Features
 
-- Adds app owned WNFS.
+- Adds app owned WNFS
 - Separates initialize into app and permissionedApp entrypoints
+- Make email optional at registration
 
 ### v0.32.0
 

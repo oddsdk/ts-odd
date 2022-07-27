@@ -1,6 +1,6 @@
 import { impl } from "./implementation.js"
 
-export const register = async (options: { username: string; email: string }): Promise<{ success: boolean }> => {
+export const register = async (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
   return impl.register(options)
 }
 
