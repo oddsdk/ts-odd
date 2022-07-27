@@ -1,6 +1,5 @@
 import { CID } from "multiformats/cid"
 
-import * as check from "./fs/types/check.js"
 import * as debug from "./common/debug.js"
 import * as did from "./did/index.js"
 import * as dns from "./dns/index.js"
