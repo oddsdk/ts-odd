@@ -95,7 +95,7 @@ export const init = async (options: PermissionedAppInitOptions): Promise<Permiss
   return null
 }
 
-export const register = async (options: { username: string; email: string }): Promise<{ success: boolean }> => {
+export const register = async (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
   return new Promise(resolve => resolve({ success: false }))
 }
 

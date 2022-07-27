@@ -9,7 +9,7 @@ export const init = (options: InitOptions): Promise<State | null> => {
   return authLobby.init(options)
 }
 
-export const register = (options: { username: string; email: string }): Promise<{ success: boolean }> => {
+export const register = (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
   return authLobby.register(options)
 }
 

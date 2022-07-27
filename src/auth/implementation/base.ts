@@ -15,7 +15,7 @@ export const init = async (): Promise<AppState | null> => {
   return new Promise((resolve) => resolve(null))
 }
 
-export const register = async (options: { username: string; email: string }): Promise<{ success: boolean }> => {
+export const register = async (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
   const { success } = await createAccount(options)
 
   if (success) {
