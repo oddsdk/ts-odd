@@ -107,7 +107,7 @@
     "throttle-debounce": "^3.0.1",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^3.0.0",
-    "wnfs": ""
+    "wnfs": "https://ipfs.runfission.com/ipns/matheus23.files.fission.name/p/wnfs-0.1.7-alpha.tgz"
   },
   "tsd": {
     "directory": "lib"

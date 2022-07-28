@@ -27,7 +27,6 @@ describe("the wasm public tree", () => {
 
     it("store- and load-roundtrips", async () => {
       const cid = await (await simpleExample()).put()
-      console.log(cid)
       const tree = await PublicTreeWasm.fromCID(await ipfsConfig.get(), cid)
       expect(await tree.exists(["hello", "world"])).toEqual(true)
     })

@@ -5327,10 +5327,9 @@ which@2.0.2, which@^2.0.1:
   dependencies:
     isexe "^2.0.0"
 
-wnfs@*:
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/wnfs/-/wnfs-0.1.6.tgz#846f1b88886c9ab95d8098574b8f72c8984c518b"
-  integrity sha512-/zc/GAwOol9L3WZZMr25mtVwqXQ+BJaAu6lMzkmD3C8IIjLVpei7tfaJga4WPI0YcGv3Q4onLid/wxLJdKoi2g==
+"wnfs@https://ipfs.runfission.com/ipns/matheus23.files.fission.name/p/wnfs-0.1.7-alpha.tgz":
+  version "0.1.7-alpha"
+  resolved "https://ipfs.runfission.com/ipns/matheus23.files.fission.name/p/wnfs-0.1.7-alpha.tgz#4f895e677f51b01cb8b469a400d8a6bce0ba9742"
 
 word-wrap@^1.2.3, word-wrap@~1.2.3:
   version "1.2.3"
