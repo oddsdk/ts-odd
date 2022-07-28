@@ -155,17 +155,29 @@ export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> 
         )
       )
 
-  if (versionStr !== versions.toString(versions.latest) && versionStr !== versions.toString(versions.wnfsWasm)) {
-    const versionParsed = versions.fromString(versionStr)
-    const userMessages = setup.userMessages
+  const errorVersionBigger = async () => {
+    await setup.userMessages.versionMismatch.newer(versionStr)
+    return new Error(`Incompatible filesystem version. Version: ${versionStr} Supported versions: ${versions.supported.map(v => versions.toString(v)).join(", ")}. Please upgrade this app's webnative version.`)
+  }
 
-    if (versionParsed == null || versions.isSmallerThan(versions.latest, versionParsed)) {
-      await userMessages.versionMismatch.newer(versionStr)
-      throw new Error(`Incompatible filesystem version. Version: ${versionStr} Supported: ${versions.toString(versions.latest)} Please upgrade this app's webnative version.`)
-    }
+  const errorVersionSmaller = async () => {
+    await setup.userMessages.versionMismatch.older(versionStr)
+    return new Error(`Incompatible filesystem version. Version: ${versionStr} Supported versions: ${versions.supported.map(v => versions.toString(v)).join(", ")}. The user should migrate their filesystem.`)
+  }
 
-    await userMessages.versionMismatch.older(versionStr)
-    throw new Error(`Incompatible filesystem version. Version: ${versionStr} Supported: (${versions.toString(versions.latest)} The user should migrate their filesystem.`)
+  const versionParsed = versions.fromString(versionStr)
+
+  if (versionParsed == null) {
+    throw await errorVersionBigger()
+  }
+
+  const support = versions.isSupported(versionParsed)
+
+  if (support === "too-high") {
+    throw await errorVersionBigger()
+  }
+  if (support === "too-low") {
+    throw await errorVersionSmaller()
   }
 }
 
