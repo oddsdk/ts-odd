@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.33.0",
+  "version": "0.33.1",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -107,7 +107,7 @@
     "throttle-debounce": "^3.0.1",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^3.0.0",
-    "wnfs": "https://ipfs.runfission.com/ipns/matheus23.files.fission.name/p/wnfs-0.1.7-alpha.tgz"
+    "wnfs": "^0.1.7-alpha"
   },
   "tsd": {
     "directory": "lib"
