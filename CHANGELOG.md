@@ -1,5 +1,14 @@
 # Changelog
 
+### v0.33.1
+
+#### Features
+
+Enable new filesystem version 3.0.0 using rs-wnfs.
+- Add `setup.fsVersion` setting for configuring the default version for new file systems, can be `3.0.0` or `2.0.0`.
+- Add `setup.wnfsWasmLookup` setting for configuring from where and how to load the rs-wnfs WASM blob. By default it uses the https://unpkg.com CDN.
+- Add `WASM_WNFS_VERSION` constant, which is the dependency version for the `wnfs` npm package.
+
 ### v0.33.0
 
 #### Features
