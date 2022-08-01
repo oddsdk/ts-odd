@@ -116,13 +116,19 @@ const fs = state.fs
 await fs.ls(fs.appPath())
 
 // Create a sub directory and add some content
+const filePath = wn.path.file("Sub Directory", "hello.txt")
 await fs.write(
-  fs.appPath(wn.path.file("Sub Directory", "hello.txt")),
+  fs.appPath(filePath),
   "👋"
 )
 
 // Announce the changes to the server
 await fs.publish()
+
+// Read the file and decode as a string
+const decodedFile = await wnfs.cat(fs.appPath(filePath))
+  .then(a => a ? new TextDecoder().decode(a) : '')
+  
 ```
 
 
@@ -130,7 +136,7 @@ await fs.publish()
 
 WNFS exposes a familiar POSIX-style interface:
 - `add`: add a file
-- `cat`: retrieve a file
+- `cat`: retrieve a file (will need decoding)
 - `exists`: check if a file or directory exists
 - `ls`: list a directory
 - `mkdir`: create a directory
@@ -138,6 +144,41 @@ WNFS exposes a familiar POSIX-style interface:
 - `read`: alias for `cat`
 - `rm`: remove a file or directory
 - `write`: alias for `add`
+
+## Shared Public Data Example
+
+
+```ts
+// After initialising …
+const fs = state.fs
+const username = 'someotherusername'
+const name = `${username}_hello.txt`
+const at = wn.path.directory('public', 'Sub Directory')
+const referringTo = wn.path.file('public', 'Sub Directory', name)
+await fs.symlink({
+  at,
+  referringTo,
+  name,
+  username,
+})
+
+const decodedFileFromSymLink = await wnfs.cat(referringTo)
+  .then(a => a ? new TextDecoder().decode(a) : '')
+    
+    
+```
+[alternative example from @icidasset]([url](https://talk.fission.codes/t/viewer-apps-rendering-public-data/2051/5))without linking:
+```ts
+import { lookup } from "webnative/data-root"
+import { getLinks } from "webnative/fs/protocol/basic"
+import { PublicTree } from "webnative/fs/v1/PublicTree"
+
+const cid = await lookup(username)
+const publicCid = (await getLinks(cid)).public.cid
+
+const publicTree = await PublicTree.fromCID(publicCid)
+const playlist = await publicTree.get(pathToPlaylist)
+```
 
 
 ## Publish
