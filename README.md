@@ -167,7 +167,7 @@ const decodedFileFromSymLink = await wnfs.cat(referringTo)
     
     
 ```
-[alternative example from @icidasset]([url](https://talk.fission.codes/t/viewer-apps-rendering-public-data/2051/5))without linking:
+[alternative example from @icidasset]([url](https://talk.fission.codes/t/viewer-apps-rendering-public-data/2051/5)) without linking:
 ```ts
 import { lookup } from "webnative/data-root"
 import { getLinks } from "webnative/fs/protocol/basic"
