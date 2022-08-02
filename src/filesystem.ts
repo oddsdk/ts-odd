@@ -3,6 +3,7 @@ import { CID } from "multiformats/cid"
 import FileSystem from "./fs/index.js"
 
 import * as cidLog from "./common/cid-log.js"
+import * as common from "./common/index.js"
 import * as crypto from "./crypto/index.js"
 import * as debug from "./common/debug.js"
 import * as dataRoot from "./data-root.js"
@@ -105,11 +106,32 @@ export async function loadFileSystem(
 /**
  * Create a new filesystem and assign it to a user.
  *
- * Warning: This function will override a user's filesystem with an empty one.
- *
  * @param permissions The permissions to initialize the filesystem
+ * @param options Optional params
+ * @param options.reset Override an existing filesystem with an empty one
  */
-export const bootstrapFileSystem = async (permissions: Permissions): Promise<FileSystem> => {
+export const bootstrapFileSystem = async (
+  permissions: Permissions,
+  options: { reset?: boolean } = { reset: false }
+): Promise<FileSystem> => {
+  const { reset } = options
+  const authedUsername = await common.authenticatedUsername()
+
+  // Check for authed user and existing filesystem
+  if (authedUsername) {
+    if (!reset) {
+      const dataCid = navigator.onLine ? await dataRoot.lookup(authedUsername) : null // data root on server or DNS
+      const logCid = await cidLog.newest() // data root in browser
+
+      if (dataCid !== null || logCid !== undefined) {
+        throw new Error("Bootstrap operation will \"reset\" an existing filesystem. Please set reset to true if this behavior is desired.")
+      }
+    }
+
+  } else {
+    throw new Error("Cannot bootstrap filesystem because an authed user could not be found.")
+  }
+
   // Get or create root read key
   const rootKey = await readKey()
 
@@ -179,18 +201,21 @@ const ROOT_PERMISSIONS = { fs: { private: [pathing.root()], public: [pathing.roo
 /**
  * Load a user's root file system.
  */
- export const loadRootFileSystem = async (): Promise<FileSystem> => {
+export const loadRootFileSystem = async (): Promise<FileSystem> => {
   return await loadFileSystem(ROOT_PERMISSIONS)
 }
 
 /**
  * Create a new filesystem with public and private roots and assign it to a user.
  *
- * Warning: This function will override a user's filesystem with an empty one.
+ * @param options Optional params
+ * @param options.reset Override an existing filesystem with an empty one
  */
- export const bootstrapRootFileSystem = async (): Promise<FileSystem> => {
-  return await bootstrapFileSystem(ROOT_PERMISSIONS)
- }
+export const bootstrapRootFileSystem = async (
+  options: { reset?: boolean } = { reset: false }
+): Promise<FileSystem> => {
+  return await bootstrapFileSystem(ROOT_PERMISSIONS, options)
+}
 
 
 
