@@ -124,7 +124,7 @@ export const bootstrapFileSystem = async (
       const logCid = await cidLog.newest() // data root in browser
 
       if (dataCid !== null || logCid !== undefined) {
-        throw new Error("Bootstrap operation will reset an existing filesystem. Please set reset to true if this behavior is desired.")
+        throw new Error("Bootstrap operation will \"reset\" an existing filesystem. Please set reset to true if this behavior is desired.")
       }
     }
 
