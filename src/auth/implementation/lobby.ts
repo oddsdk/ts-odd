@@ -99,8 +99,8 @@ export const register = async (options: { username: string; email?: string }): P
   return new Promise(resolve => resolve({ success: false }))
 }
 
-export const identify = (username: string): string => {
-  return username
+export const transformUsername = (username: string): { username: string; hash: boolean } => {
+  return { username, hash: false }
 }
 
 export const isUsernameValid = async (username: string): Promise<boolean> => {
@@ -184,9 +184,9 @@ export const LOBBY_IMPLEMENTATION = {
   auth: {
     init,
     register,
-    identify,
     isUsernameValid,
     isUsernameAvailable,
+    transformUsername,
     createChannel,
     checkCapability,
     delegateAccount,

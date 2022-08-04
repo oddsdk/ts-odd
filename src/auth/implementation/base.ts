@@ -1,8 +1,9 @@
-import type { Channel, ChannelOptions } from "../channel"
+import type { Channel, ChannelOptions } from "../channel.js"
 
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 import { AppState } from "../state/app.js"
 import { createAccount } from "../../lobby/index.js"
+import { toInternalUsername } from "../username.js"
 
 import * as channel from "../channel.js"
 import * as did from "../../did/index.js"
@@ -16,9 +17,10 @@ export const init = async (): Promise<AppState | null> => {
 }
 
 export const register = async (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
-  // const { success } = await createAccount(options)
-  const { success } = await createAccount({ 
-    username: identify(options.username),
+  const internalUserame = await toInternalUsername(options.username)
+
+  const { success } = await createAccount({
+    username: internalUserame,
     email: options.email
   })
 
@@ -29,8 +31,8 @@ export const register = async (options: { username: string; email?: string }): P
   return { success: false }
 }
 
-export const identify = (username: string): string => {
-  return username
+export const transformUsername = (username: string): { username: string; hash: boolean } => {
+  return { username, hash: false }
 }
 
 export const isUsernameValid = async (username: string): Promise<boolean> => {
@@ -99,9 +101,9 @@ export const BASE_IMPLEMENTATION = {
   auth: {
     init,
     register,
-    identify,
     isUsernameValid,
     isUsernameAvailable,
+    transformUsername,
     createChannel,
     checkCapability,
     delegateAccount,

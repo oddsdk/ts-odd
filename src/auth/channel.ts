@@ -1,5 +1,4 @@
 import * as did from "../did/index.js"
-import { impl as auth } from "./implementation.js"
 import { setup } from "../setup/internal.js"
 import { LinkingError } from "./linking.js"
 
@@ -18,15 +17,11 @@ export type ChannelOptions = {
 export type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView
 
 export const createWssChannel = async (options: ChannelOptions): Promise<Channel> => {
-  // const { username, handleMessage } = options
   const { username, handleMessage } = options
-  const identifier = auth.identify(username)
 
-  // const rootDid = await waitForRootDid(username)
-  const rootDid = await waitForRootDid(identifier)
+  const rootDid = await waitForRootDid(username)
   if (!rootDid) {
-    // throw new LinkingError(`Failed to lookup DID for ${username}`)
-    throw new LinkingError(`Failed to lookup DID for ${username} identified as ${identifier}`)
+    throw new LinkingError(`Failed to lookup DID for ${username}`)
   }
 
   const apiEndpoint = setup.getApiEndpoint()
