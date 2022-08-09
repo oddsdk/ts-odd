@@ -1,7 +1,7 @@
 import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
 import { CID } from "multiformats/cid"
-import { SymmAlg } from "keystore-idb/lib/types.js"
+import { SymmAlg } from "keystore-idb/types.js"
 import { throttle } from "throttle-debounce"
 
 import { Links } from "./types.js"

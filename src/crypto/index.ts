@@ -1,8 +1,8 @@
 import * as uint8arrays from "uint8arrays"
 import { webcrypto } from "one-webcrypto"
-import { SymmAlg } from "keystore-idb/lib/types.js"
-import { importKey, encryptBytes, decryptBytes, makeKey, exportKey } from "keystore-idb/lib/aes/index.js"
-import { SymmKeyLength } from "keystore-idb/lib/types.js"
+import { SymmAlg } from "keystore-idb/types.js"
+import { importKey, encryptBytes, decryptBytes, makeKey, exportKey } from "keystore-idb/aes/index.js"
+import { SymmKeyLength } from "keystore-idb/types.js"
 
 import { impl } from "./implementation.js"
 

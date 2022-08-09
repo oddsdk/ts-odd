@@ -1,5 +1,5 @@
 import * as cbor from "@ipld/dag-cbor"
-import { SymmAlg } from "keystore-idb/lib/types.js"
+import { SymmAlg } from "keystore-idb/types.js"
 
 import * as basic from "./protocol/basic.js"
 import * as crypto from "../crypto/index.js"

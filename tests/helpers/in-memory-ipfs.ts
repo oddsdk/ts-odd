@@ -40,14 +40,7 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
       }
     },
     libp2p: {
-      peerStore: {
-        persistence: false
-      },
-      config: {
-        peerDiscovery: {
-          autoDial: false
-        }
-      }
+      peerDiscovery: []
     },
     repo: createRepo(
       dir,

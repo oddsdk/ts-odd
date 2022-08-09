@@ -1,8 +1,8 @@
-import aes from "keystore-idb/lib/aes/index.js"
-import config from "keystore-idb/lib/config.js"
-import rsa from "keystore-idb/lib/rsa/index.js"
-import utils from "keystore-idb/lib/utils.js"
-import { KeyUse, SymmAlg } from "keystore-idb/lib/types.js"
+import aes from "keystore-idb/aes/index.js"
+import config from "keystore-idb/config.js"
+import rsa from "keystore-idb/rsa/index.js"
+import utils from "keystore-idb/utils.js"
+import { KeyUse, SymmAlg } from "keystore-idb/types.js"
 
 import { webcrypto } from "one-webcrypto"
 import * as uint8arrays from "uint8arrays"

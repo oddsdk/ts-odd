@@ -9,6 +9,8 @@
 - Make email optional at registration
 - Add reset option to bootstrapFileSystem
 - Add dependency-injected DNS lookup implementation
+- No longer uses a locally-shared IPFS client (was originally using a shared worker). This fixes various error messages you may have seen relating to CIDs.
+
 
 ### v0.32.0
 
