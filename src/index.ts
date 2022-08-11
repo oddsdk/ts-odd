@@ -1,6 +1,5 @@
 import localforage from "localforage"
 
-import * as auth from "./auth/internal.js"
 import * as cidLog from "./common/cid-log.js"
 import * as common from "./common/index.js"
 import * as dataRoot from "./data-root.js"
@@ -8,12 +7,12 @@ import * as pathing from "./path.js"
 import * as ucan from "./ucan/internal.js"
 
 import { AppInitOptions, InitialisationError, PermissionedAppInitOptions } from "./init/types.js"
-import { Permissions } from "./ucan/permissions.js"
 import { validateSecrets } from "./auth/state.js"
 import { bootstrapFileSystem, loadFileSystem } from "./filesystem.js"
 
 import FileSystem from "./fs/index.js"
 
+import { impl as auth } from "./auth/implementation.js"
 import { isPermissionedAppState } from "./auth/state.js"
 import { setImplementations } from "./setup.js"
 import { BASE_IMPLEMENTATION } from "./auth/implementation/base.js"
