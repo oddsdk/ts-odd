@@ -1,7 +1,6 @@
 import FileSystem from "../../fs/index.js"
 
 import type { Channel, ChannelOptions } from "../channel"
-import { Implementation } from "../implementation/types.js"
 import { PermissionedAppInitOptions } from "../../init/types.js"
 
 import * as check from "../../common/type-checks.js"
