@@ -18,6 +18,8 @@ export async function root(
 ): Promise<string> {
   const domain = setup.endpoints.user
 
+  console.log("domain", domain)
+
   try {
     const maybeDid = await dns.lookupTxtRecord(`_did.${username}.${domain}`)
     if (maybeDid !== null) return maybeDid
