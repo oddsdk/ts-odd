@@ -5,7 +5,7 @@ import config from "keystore-idb/lib/config.js"
 import aes from "keystore-idb/lib/aes/index.js"
 import rsa from "keystore-idb/lib/rsa/index.js"
 
-import { Storage } from "../../tests/storage/inMemory.js"
+import { Storage } from "../../tests/helpers/in-memory-storage.js"
 
 import * as cryptoImpl from "../crypto/implementation.js"
 import * as storageImpl from "../storage/implementation.js"
