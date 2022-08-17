@@ -1,44 +1,71 @@
 import expect from "expect"
 
-// import * as did from "../../src/did/index.js"
-import { root } from "./getters.js"
-import { DNS_IMPLEMENTATION } from "../dns/implementation/dns"
-// import { endpoints, setImplementations } from "../setup.js"
 import * as setup from "../setup.js"
+import * as storage from "../storage/index.js"
+import { ownRoot, root } from "./getters.js"
+import { DNS_IMPLEMENTATION } from "../dns/implementation/dns.js"
+import { Storage } from "../../tests/storage/inMemory.js"
 
-const dnsResolver = {
-  "fissionuser.memory": {
-   "elm-owl": "did"
-  }
+
+const lookupTxtRecord = (domain: string): Promise<string | null> => {
+  const did = dnsResolver[domain] ?? null
+  return Promise.resolve(did)
 }
 
-const lookupTxtRecord = (domain: string): Promise<string| null> => {
-  const records = dnsResolver[domain]
-  console.log(records)
-
-  return Promise.resolve("sureok")
-}
+const store = new Storage()
 
 setup.setImplementations({
   dns: {
     ...DNS_IMPLEMENTATION.dns,
     lookupTxtRecord
+  },
+  storage: {
+    getItem: store.getItem,
+    setItem: store.setItem,
+    removeItem: store.removeItem,
+    clear: store.clear
   }
 })
 
-setup.endpoints({ user: "fissionuser.memory"})
+setup.endpoints({ user: "fissionuser.memory" })
 
-
-
+const dnsResolver: Record<string, string> = {
+  "_did.elm-owl.fissionuser.memory": "did:key:z6MkeTexeJLzs8HeQ1AXQVP5V26TrZ751Nin26N8NARcTGJC",
+  "_did.haskell-wizard.fissionuser.memory": "did:key:z6MktF5zxTKf6Jhc8bZ3RsYBG8yeAgt9rjJvNNWkJr9NbjiB"
+}
 
 describe("root", async () => {
   it("gets a did for a user", async () => {
-    const did = await root("elm-owl")
-    // const { temporaryRsaPair, temporaryDID } = await consumer.generateTemporaryExchangeKey()
+    const owlDid = await root("elm-owl")
+    const wizardDid = await root("haskell-wizard")
 
-    expect(did).toBeDefined()
-    // expect(temporaryRsaPair).not.toBeNull()
-    // expect(temporaryDID).toBeDefined()
-    // expect(temporaryDID).not.toBeNull()
+    expect(owlDid).toEqual(dnsResolver[ "_did.elm-owl.fissionuser.memory" ])
+    expect(wizardDid).toEqual(dnsResolver[ "_did.haskell-wizard.fissionuser.memory" ])
+  })
+
+  it("throws when a user record does not exist", async () => {
+    await expect(root("no-such-user"))
+      .rejects
+      .toThrow()
+  })
+})
+
+
+describe("ownRoot", async () => {
+  it("gets a did for an authed user", async () => {
+    await storage.setItem("webnative.auth_username", "elm-owl")
+    const owlDid = await ownRoot()
+    expect(owlDid).toEqual(dnsResolver[ "_did.elm-owl.fissionuser.memory" ])
+
+    await storage.setItem("webnative.auth_username", "haskell-wizard")
+    const wizardDid = await ownRoot()
+    expect(wizardDid).toEqual(dnsResolver[ "_did.haskell-wizard.fissionuser.memory" ])
+  })
+
+  it("throws when a user record does not exist", async () => {
+    await storage.setItem("webnative.auth_username", "no-such-user")
+    await expect(ownRoot())
+      .rejects
+      .toThrow()
   })
 })
