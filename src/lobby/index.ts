@@ -14,8 +14,8 @@ export * from "./username.js"
  */
 export async function createAccount(
   userProps: {
-    email: string
     username: string
+    email?: string
   }
 ): Promise<{ success: boolean }> {
   const apiEndpoint = setup.getApiEndpoint()

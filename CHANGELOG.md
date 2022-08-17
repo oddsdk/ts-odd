@@ -13,7 +13,10 @@ Enable new EXPERIMENTAL filesystem version 3.0.0 using rs-wnfs. Use this for exp
 
 #### Features
 
-Adds app owned WNFS.
+- Adds app owned WNFS
+- Separates initialize into app and permissionedApp entrypoints
+- Make email optional at registration
+- Add reset option to bootstrapFileSystem
 
 ### v0.32.0
 

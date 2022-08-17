@@ -1,31 +1,31 @@
-import FileSystem from "../fs/index.js"
+import FileSystem from "../../fs/index.js"
 
-import type { Channel, ChannelOptions } from "./channel"
-import { Implementation } from "./implementation/types.js"
-import { InitOptions } from "../init/types.js"
+import type { Channel, ChannelOptions } from "../channel"
+import { PermissionedAppInitOptions } from "../../init/types.js"
 
-import * as check from "../common/type-checks.js"
-import { USERNAME_STORAGE_KEY, decodeCID } from "../common/index.js"
-import { scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, State, validateSecrets } from "./state.js"
-import { loadFileSystem } from "../filesystem.js"
-import { setup } from "../setup/internal.js"
+import * as check from "../../common/type-checks.js"
+import { USERNAME_STORAGE_KEY, decodeCID } from "../../common/index.js"
+import { scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, PermissionedAppState } from "../state/permissionedApp.js"
+import { validateSecrets } from "../state.js"
+import { loadFileSystem } from "../../filesystem.js"
+import { setup } from "../../setup/internal.js"
 
-import * as crypto from "../crypto/index.js"
-import * as did from "../did/index.js"
-import * as identifiers from "../common/identifiers.js"
-import * as common from "../common/index.js"
-import * as ipfs from "../ipfs/index.js"
-import * as pathing from "../path.js"
-import * as storage from "../storage/index.js"
-import * as ucan from "../ucan/internal.js"
-import * as user from "../lobby/username.js"
-import * as token from "../ucan/token.js"
-import * as channel from "./channel.js"
-import { LinkingError } from "./linking.js"
+import * as crypto from "../../crypto/index.js"
+import * as did from "../../did/index.js"
+import * as identifiers from "../../common/identifiers.js"
+import * as common from "../../common/index.js"
+import * as ipfs from "../../ipfs/index.js"
+import * as pathing from "../../path.js"
+import * as storage from "../../storage/index.js"
+import * as ucan from "../../ucan/internal.js"
+import * as user from "../../lobby/username.js"
+import * as token from "../../ucan/token.js"
+import * as channel from "../channel.js"
+import { LinkingError } from "../linking.js"
 
 
 
-export const init = async (options: InitOptions): Promise<State | null> => {
+export const init = async (options: PermissionedAppInitOptions): Promise<PermissionedAppState | null> => {
   const permissions = options.permissions || null
   const { autoRemoveUrlParams = true, rootKey } = options
 
@@ -94,7 +94,7 @@ export const init = async (options: InitOptions): Promise<State | null> => {
   return null
 }
 
-export const register = async (options: { username: string; email: string }): Promise<{ success: boolean }> => {
+export const register = async (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
   return new Promise(resolve => resolve({ success: false }))
 }
 
@@ -175,17 +175,18 @@ export const linkDevice = async (data: Record<string, unknown>): Promise<void> =
 // 🛳
 
 
-export const IMPLEMENTATION: Implementation = {
-  init,
-  register,
-  isUsernameValid,
-  isUsernameAvailable,
-  createChannel,
-  checkCapability,
-  delegateAccount,
-  linkDevice
+export const LOBBY_IMPLEMENTATION = {
+  auth: {
+    init,
+    register,
+    isUsernameValid,
+    isUsernameAvailable,
+    createChannel,
+    checkCapability,
+    delegateAccount,
+    linkDevice
+  }
 }
-
 
 // HELPERS
 
@@ -325,3 +326,5 @@ async function getClassifiedViaPostMessage(): Promise<AuthLobbyClassifiedInfo> {
     document.body.removeChild(iframe)
   }
 }
+
+
