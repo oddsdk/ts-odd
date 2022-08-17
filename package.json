@@ -107,7 +107,7 @@
     "throttle-debounce": "^3.0.1",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^3.0.0",
-    "wnfs": "^0.1.7-alpha"
+    "wnfs": "^0.1.7-alpha3"
   },
   "tsd": {
     "directory": "lib"

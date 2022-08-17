@@ -26,7 +26,7 @@ import MMPT from "../protocol/private/mmpt.js"
 import PublicTree from "../v1/PublicTree.js"
 import PrivateTree from "../v1/PrivateTree.js"
 import PrivateFile from "../v1/PrivateFile.js"
-import { PublicTreeWasm } from "../v3/PublicTreeWasm.js"
+import { PublicRootWasm } from "../v3/PublicRootWasm.js"
 
 
 type PrivateNode = PrivateTree | PrivateFile
@@ -75,7 +75,7 @@ export default class RootTree implements Puttable {
 
   static async empty({ rootKey, wnfsWasm }: { rootKey: string; wnfsWasm?: boolean }): Promise<RootTree> {
     const publicTree = wnfsWasm
-      ? await PublicTreeWasm.empty(await getIpfs())
+      ? await PublicRootWasm.empty(await getIpfs())
       : await PublicTree.empty()
 
     const prettyTree = await BareTree.empty()
@@ -132,7 +132,7 @@ export default class RootTree implements Puttable {
     const publicTree = publicCID === null
       ? await PublicTree.empty()
       : wnfsWasm
-        ? await PublicTreeWasm.fromCID(await getIpfs(), decodeCID(publicCID))
+        ? await PublicRootWasm.fromCID(await getIpfs(), decodeCID(publicCID))
         : await PublicTree.fromCID(decodeCID(publicCID))
 
 

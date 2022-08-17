@@ -256,7 +256,7 @@ describe("the public filesystem api", function () {
             username: "test"
           })
 
-          const at = await fs.get(atPath)
+          const at = await fs.get(atPath) as PublicTree
           const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
           const followed = await fs.get(referringToPath)
 
@@ -286,7 +286,7 @@ describe("the public filesystem api", function () {
             username: "test"
           })
 
-          const at = await fs.get(atPath)
+          const at = await fs.get(atPath) as PublicTree
           const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
           const followed = await fs.get(referringToPath)
 

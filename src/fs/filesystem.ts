@@ -4,7 +4,7 @@ import { CID } from "multiformats/cid"
 import { SymmAlg } from "keystore-idb/lib/types.js"
 import { throttle } from "throttle-debounce"
 
-import { Links, Puttable, UnixTree } from "./types.js"
+import { Links, PuttableUnixTree, UnixTree } from "./types.js"
 import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
 import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
@@ -36,7 +36,6 @@ import { NoPermissionError } from "../errors.js"
 import { Permissions, appDataPath } from "../ucan/permissions.js"
 import { authenticatedUsername, decodeCID } from "../common/index.js"
 import { setup } from "../setup/internal.js"
-import { PublicTreeWasm } from "./v3/PublicTreeWasm.js"
 
 
 // TYPES
@@ -365,7 +364,7 @@ export class FileSystem {
     })
   }
 
-  async get(path: DistinctivePath): Promise<Tree | File | null> {
+  async get(path: DistinctivePath): Promise<PuttableUnixTree | File | null> {
     return this.runOnNode(path, {
       public: async (root, relPath) => {
         return await root.get(relPath)

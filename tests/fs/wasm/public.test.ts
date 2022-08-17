@@ -2,7 +2,7 @@ import expect from "expect"
 import * as uint8arrays from "uint8arrays"
 
 import "../../../src/setup/node.js"
-import { PublicTreeWasm } from "../../../src/fs/v3/PublicTreeWasm.js"
+import { PublicRootWasm } from "../../../src/fs/v3/PublicRootWasm.js"
 import * as ipfsConfig from "../../../src/ipfs/config.js"
 import { HardLinks } from "../../../src/fs/types.js"
 
@@ -12,7 +12,7 @@ describe("the wasm public tree", () => {
 
   async function simpleExample() {
     const ipfs = await ipfsConfig.get()
-    const tree = await PublicTreeWasm.empty(ipfs)
+    const tree = await PublicRootWasm.empty(ipfs)
     await tree.mkdir(["hello", "world"])
     await tree.historyStep()
     await tree.add(["hello", "actor", "James"], "Cameron?")
@@ -27,7 +27,7 @@ describe("the wasm public tree", () => {
 
     it("store- and load-roundtrips", async () => {
       const cid = await (await simpleExample()).put()
-      const tree = await PublicTreeWasm.fromCID(await ipfsConfig.get(), cid)
+      const tree = await PublicRootWasm.fromCID(await ipfsConfig.get(), cid)
       expect(await tree.exists(["hello", "world"])).toEqual(true)
     })
 

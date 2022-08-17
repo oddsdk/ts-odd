@@ -6,7 +6,7 @@ import * as ipfs from "../../ipfs/index.js"
 import * as link from "../link.js"
 
 import { AddResult, FileContent } from "../../ipfs/index.js"
-import { HardLinks, BaseLinks, Tree, File, Puttable, UpdateCallback } from "../types.js"
+import { HardLinks, BaseLinks, Tree, File, Puttable, UpdateCallback, PuttableUnixTree } from "../types.js"
 import { Maybe, decodeCID } from "../../common/index.js"
 import { isObject, hasProp } from "../../common/type-checks.js"
 import { Path } from "../../path.js"
