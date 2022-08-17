@@ -3,7 +3,7 @@ import expect from "expect"
 import * as setup from "../setup.js"
 import * as storage from "../storage/index.js"
 import { ownRoot, root } from "./getters.js"
-import { DNS_IMPLEMENTATION } from "../dns/implementation/dns.js"
+import { HTTP_IMPLEMENTATION } from "../dns/implementation/http.js"
 import { Storage } from "../../tests/helpers/in-memory-storage.js"
 
 
@@ -16,7 +16,7 @@ const store = new Storage()
 
 setup.setImplementations({
   dns: {
-    ...DNS_IMPLEMENTATION.dns,
+    ...HTTP_IMPLEMENTATION.dns,
     lookupTxtRecord
   },
   storage: {

@@ -100,7 +100,7 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
 // 🛳
 
 
-export const DNS_IMPLEMENTATION = {
+export const HTTP_IMPLEMENTATION = {
   dns: {
     lookupDnsLink,
     lookupTxtRecord
