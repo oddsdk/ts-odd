@@ -4,7 +4,7 @@ import * as setup from "../setup.js"
 import * as storage from "../storage/index.js"
 import { ownRoot, root } from "./getters.js"
 import { DNS_IMPLEMENTATION } from "../dns/implementation/dns.js"
-import { Storage } from "../../tests/storage/inMemory.js"
+import { Storage } from "../../tests/helpers/in-memory-storage.js"
 
 
 const lookupTxtRecord = (domain: string): Promise<string | null> => {
