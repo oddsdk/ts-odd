@@ -8,6 +8,7 @@
 - Separates initialize into app and permissionedApp entrypoints
 - Make email optional at registration
 - Add reset option to bootstrapFileSystem
+- Add dependency-injected DNS lookup implementation
 
 ### v0.32.0
 
