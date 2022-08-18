@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import all from "it-all"
-import { IPFS } from "ipfs-core"
+import { IPFS } from "ipfs-core-types"
 import { CID } from "multiformats"
 
 /**
@@ -19,7 +19,7 @@ export async function loadCAR(filepath: string, ipfs: IPFS): Promise<{ roots: CI
 export async function loadCARWithRoot(filepath: string, ipfs: IPFS): Promise<CID> {
   const { roots } = await loadCAR(filepath, ipfs)
   const [rootCID] = roots
-  
+
   if (rootCID == null) {
     throw new Error(`CAR file at ${filepath} doesn't have a root specified.`)
   }

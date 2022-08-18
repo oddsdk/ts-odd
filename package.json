@@ -96,7 +96,7 @@
   "dependencies": {
     "@ipld/dag-cbor": "^7.0.2",
     "@ipld/dag-pb": "^2.1.17",
-    "@libp2p/interfaces": "^2.0.4",
+    "@libp2p/interface-keys": "^1.0.3",
     "@libp2p/peer-id": "^1.1.15",
     "@multiformats/multiaddr": "^10.3.3",
     "blockstore-core": "^2.0.1",

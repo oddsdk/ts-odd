@@ -12,7 +12,7 @@ import type { libp2p } from "ipfs-core/components/network"
 import type { Options as IPFSOptions } from "ipfs-core/types"
 
 import localforage from "localforage"
-import * as keys from "@libp2p/interfaces/keys"
+import * as keys from "@libp2p/interface-keys"
 import { multiaddr, Multiaddr } from "@multiformats/multiaddr"
 import { peerIdFromString } from "@libp2p/peer-id"
 

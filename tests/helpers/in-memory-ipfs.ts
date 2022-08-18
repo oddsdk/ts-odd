@@ -1,4 +1,4 @@
-import type { IPFS } from "ipfs-core"
+import type { IPFS } from "ipfs-core-types"
 
 import * as fs from "fs"
 import * as dagPB from "@ipld/dag-pb"
@@ -18,7 +18,7 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
   const memoryDs = new MemoryDatastore()
   const memoryBs = new MemoryBlockstore()
 
-  return await Ipfs.create({
+  const ipfs = await Ipfs.create({
     offline: true,
     silent: true,
     preload: {
@@ -40,7 +40,8 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
       }
     },
     libp2p: {
-      peerDiscovery: []
+      peerDiscovery: [],
+      connectionManager: { autoDial: false }
     },
     repo: createRepo(
       dir,
@@ -66,4 +67,6 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
     }
     )
   })
+
+  return ipfs
 }
