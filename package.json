@@ -54,7 +54,7 @@
     "build": "tsc && yarn run build:minified",
     "build:minified": "node scripts/build-minified.js",
     "start": "tsc -w",
-    "test": "mocha",
+    "test": "mocha --v8-expose-gc",
     "test-wasm": "WNFS_WASM=true mocha",
     "test:imports": "madge src --ts-config tsconfig.json --extensions ts --circular --warning",
     "test:prod": "yarn run build && yarn run lint && yarn run test:imports && yarn run test:gh-action",
@@ -107,7 +107,7 @@
     "throttle-debounce": "^3.0.1",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^3.0.0",
-    "wnfs": "^0.1.7-alpha3"
+    "wnfs": "^0.1.7-alpha5"
   },
   "tsd": {
     "directory": "lib"

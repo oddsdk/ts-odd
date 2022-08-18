@@ -14,6 +14,14 @@ import { normalizeFileContent } from "../protocol/public/index.js"
 import { BaseFile } from "../base/file.js"
 import { Metadata } from "../metadata.js"
 
+let initialized = false
+async function initOnce() {
+  if (!initialized) {
+    initialized = true
+    initSync(await setupInternal.wnfsWasmLookup(WASM_WNFS_VERSION))
+  }
+}
+
 interface DirEntry {
   name: string
   metadata: {
@@ -49,14 +57,14 @@ export class PublicRootWasm implements UnixTree, Puttable {
   }
 
   static async empty(ipfs: IPFS): Promise<PublicRootWasm> {
-    initSync(await setupInternal.wnfsWasmLookup(WASM_WNFS_VERSION))
+    await initOnce()
     const store = new IpfsBlockStore(ipfs)
     const root = new PublicDirectory(new Date())
     return new PublicRootWasm(root, store, ipfs, false)
   }
 
   static async fromCID(ipfs: IPFS, cid: CID): Promise<PublicRootWasm> {
-    initSync(await setupInternal.wnfsWasmLookup(WASM_WNFS_VERSION))
+    await initOnce()
     const store = new IpfsBlockStore(ipfs)
     const root = await PublicDirectory.load(cid.bytes, store)
     return new PublicRootWasm(root, store, ipfs, false)

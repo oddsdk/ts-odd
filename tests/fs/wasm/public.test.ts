@@ -8,38 +8,38 @@ import { HardLinks } from "../../../src/fs/types.js"
 
 
 
-describe("the wasm public tree", () => {
+describe("the wasm public root", () => {
 
   async function simpleExample() {
     const ipfs = await ipfsConfig.get()
-    const tree = await PublicRootWasm.empty(ipfs)
-    await tree.mkdir(["hello", "world"])
-    await tree.historyStep()
-    await tree.add(["hello", "actor", "James"], "Cameron?")
-    return tree
+    const root = await PublicRootWasm.empty(ipfs)
+    await root.mkdir(["hello", "world"])
+    await root.historyStep()
+    await root.add(["hello", "actor", "James"], "Cameron?")
+    return root
   }
 
   describe("the simple example", () => {
     it("has a hello world directory", async () => {
-      const tree = await simpleExample()
-      expect(await tree.exists(["hello", "world"])).toEqual(true)
+      const root = await simpleExample()
+      expect(await root.exists(["hello", "world"])).toEqual(true)
     })
 
     it("store- and load-roundtrips", async () => {
       const cid = await (await simpleExample()).put()
-      const tree = await PublicRootWasm.fromCID(await ipfsConfig.get(), cid)
-      expect(await tree.exists(["hello", "world"])).toEqual(true)
+      const root = await PublicRootWasm.fromCID(await ipfsConfig.get(), cid)
+      expect(await root.exists(["hello", "world"])).toEqual(true)
     })
 
     it("has a 'James' file", async () => {
-      const tree = await simpleExample()
-      const result = await tree.cat(["hello", "actor", "James"]) as Uint8Array
+      const root = await simpleExample()
+      const result = await root.cat(["hello", "actor", "James"]) as Uint8Array
       expect(uint8arrays.toString(result)).toEqual("Cameron?")
     })
 
     it("can list the 'hello' directory contents correctly", async () => {
-      const tree = await simpleExample()
-      const lsResult = await tree.ls(["hello"]) as HardLinks
+      const root = await simpleExample()
+      const lsResult = await root.ls(["hello"]) as HardLinks
       expect(lsResult["actor"].name).toEqual("actor")
       expect(lsResult["actor"].isFile).toEqual(false)
       expect(lsResult["world"].name).toEqual("world")
@@ -47,8 +47,8 @@ describe("the wasm public tree", () => {
     })
 
     it("can list the 'hello/actor' directory contents and shows a file", async () => {
-      const tree = await simpleExample()
-      const lsResult = await tree.ls(["hello", "actor"]) as HardLinks
+      const root = await simpleExample()
+      const lsResult = await root.ls(["hello", "actor"]) as HardLinks
       expect(lsResult["James"].name).toEqual("James")
       expect(lsResult["James"].isFile).toEqual(true)
     })

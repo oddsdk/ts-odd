@@ -5327,10 +5327,10 @@ which@2.0.2, which@^2.0.1:
   dependencies:
     isexe "^2.0.0"
 
-wnfs@^0.1.7-alpha3:
-  version "0.1.7-alpha3"
-  resolved "https://registry.yarnpkg.com/wnfs/-/wnfs-0.1.7-alpha3.tgz#a12b9060d1494aa9397d89cbd8873dd5eeca0187"
-  integrity sha512-ZmbXEjW+e7R9oTwSg74uZ8Ba+WWamLg03QwnMNVCgvtwCriE0uKrfkhF8ytXfBwqIKjedRY0sj4/cEgPflYrZQ==
+wnfs@^0.1.7-alpha5:
+  version "0.1.7-alpha5"
+  resolved "https://registry.yarnpkg.com/wnfs/-/wnfs-0.1.7-alpha5.tgz#35a74edcf4895adec0806c20537a5bdcbb2ff9b2"
+  integrity sha512-wJ0SX06y/ogu1VU52Y2OvFpIR6bTgNso60w45aa3uWE5Mxf5wWnkjNgxT0VTGc9yX6ehBCUTZurKl6Mmx6BIHQ==
 
 word-wrap@^1.2.3, word-wrap@~1.2.3:
   version "1.2.3"
