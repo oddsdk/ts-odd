@@ -228,11 +228,8 @@ export class PublicDirectoryWasm implements UnixTree, Puttable {
     this.cachedDir = node.asDir()
   }
 
-  get header(): { metadata: Metadata; previous: CID } {
-    return {
-      metadata: this.cachedDir.metadata(),
-      previous: CID.decode(this.cachedDir.previousCid()),
-    }
+  get header(): { metadata: Metadata; previous?: CID } {
+    return nodeHeader(this.cachedDir)
   }
 
   async ls(path: Path): Promise<Links> {
@@ -317,11 +314,8 @@ export class PublicFileWasm extends BaseFile {
     this.cachedFile = node.asFile()
   }
 
-  get header(): { metadata: Metadata; previous: CID } {
-    return {
-      metadata: this.cachedFile.metadata(),
-      previous: CID.decode(this.cachedFile.previousCid()),
-    }
+  get header(): { metadata: Metadata; previous?: CID } {
+    return nodeHeader(this.cachedFile)
   }
 
   async updateContent(content: FileContent): Promise<this> {
@@ -352,4 +346,25 @@ export class PublicFileWasm extends BaseFile {
     }
   }
 
+}
+
+function nodeHeader(node: PublicFile | PublicDirectory): { metadata: Metadata; previous?: CID } {
+  // There's some differences between the two.
+  const meta = node.metadata()
+  const metadata: Metadata = {
+    isFile: meta.unixMeta.kind === "file",
+    version: meta.version,
+    unixMeta: {
+      _type: meta.unixMeta.kind,
+      ctime: Number(meta.unixMeta.created),
+      mtime: Number(meta.unixMeta.modified),
+      mode: meta.unixMeta.mode,
+    }
+  }
+
+  const previous = node.previousCid()
+  return previous == null ? { metadata } : {
+    metadata,
+    previous: CID.decode(previous),
+  }
 }

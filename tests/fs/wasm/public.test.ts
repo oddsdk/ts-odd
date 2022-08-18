@@ -2,7 +2,7 @@ import expect from "expect"
 import * as uint8arrays from "uint8arrays"
 
 import "../../../src/setup/node.js"
-import { PublicRootWasm } from "../../../src/fs/v3/PublicRootWasm.js"
+import { PublicFileWasm, PublicRootWasm } from "../../../src/fs/v3/PublicRootWasm.js"
 import * as ipfsConfig from "../../../src/ipfs/config.js"
 import { HardLinks } from "../../../src/fs/types.js"
 
@@ -51,6 +51,17 @@ describe("the wasm public root", () => {
       const lsResult = await root.ls(["hello", "actor"]) as HardLinks
       expect(lsResult["James"].name).toEqual("James")
       expect(lsResult["James"].isFile).toEqual(true)
+    })
+
+    it("can read the metadata of some file with .get()", async () => {
+      const root = await simpleExample()
+      const file = await root.get(["hello", "actor", "James"])
+      if (!(file instanceof PublicFileWasm)) {
+        throw new Error(`Expected file to be instance of PublicFileWasm`)
+      }
+      expect(file.header.metadata.isFile).toEqual(true)
+      expect(typeof file.header.metadata.unixMeta.ctime).toBe("number")
+      expect(typeof file.header.metadata.unixMeta.mtime).toBe("number")
     })
   })
 
