@@ -32,6 +32,12 @@ export const toString = (version: SemVer): string => {
   return `${major}.${minor}.${patch}`
 }
 
+export const equals = (a: SemVer, b: SemVer): boolean => {
+  return a.major === b.major
+    && a.minor === b.minor
+    && a.patch === b.patch
+}
+
 export const isSmallerThan = (a: SemVer, b: SemVer): boolean => {
   if (a.major != b.major) return a.major < b.major
   if (a.minor != b.minor) return a.minor < b.minor

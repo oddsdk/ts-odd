@@ -74,6 +74,10 @@ export default class RootTree implements Puttable {
   // --------------
 
   static async empty({ rootKey, wnfsWasm }: { rootKey: string; wnfsWasm?: boolean }): Promise<RootTree> {
+    if (wnfsWasm) {
+      console.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
+    }
+  
     const publicTree = wnfsWasm
       ? await PublicRootWasm.empty(await getIpfs())
       : await PublicTree.empty()
@@ -125,7 +129,11 @@ export default class RootTree implements Puttable {
     const keys = permissions ? await permissionKeys(permissions) : []
 
     const version = await parseVersionFromLinks(links)
-    const wnfsWasm = version === versions.wnfsWasm
+    const wnfsWasm = versions.equals(version, versions.wnfsWasm)
+
+    if (wnfsWasm) {
+      console.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
+    }
 
     // Load public parts
     const publicCID = links[Branch.Public]?.cid || null
@@ -384,9 +392,9 @@ export default class RootTree implements Puttable {
 
 }
 
-async function parseVersionFromLinks(links: SimpleLinks): Promise<versions.SemVer | null> {
+async function parseVersionFromLinks(links: SimpleLinks): Promise<versions.SemVer> {
   const file = await protocol.basic.getFile(decodeCID(links[Branch.Version].cid))
-  return versions.fromString(uint8arrays.toString(file))
+  return versions.fromString(uint8arrays.toString(file)) ?? versions.v0
 }
 
 
