@@ -150,7 +150,11 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
   async get(path: Path): Promise<PuttableUnixTree | File | null> {
     const root = await this.root
-    const node = await root.getNode(path, this.store) as PublicNode
+    const { result: node } = await root.getNode(path, this.store) as OpResult<PublicNode>
+
+    if (node == null) {
+      return null
+    }
 
     if (node.isFile()) {
       const cachedFile = node.asFile()
