@@ -1,7 +1,7 @@
 import expect from "expect"
 import crypto from "crypto"
 import { CID } from "multiformats/cid"
-import { IPFS } from "ipfs-core"
+import { IPFS } from "ipfs-core-types"
 
 import MMPT from "./mmpt.js"
 import { ipfsFromContext } from "../../../../tests/mocha-hook.js"

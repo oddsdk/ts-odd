@@ -1,6 +1,6 @@
 import tweetnacl from "tweetnacl"
-import rsaOperations from "keystore-idb/lib/rsa/index.js"
-import utils from "keystore-idb/lib/utils.js"
+import rsaOperations from "keystore-idb/rsa/index.js"
+import utils from "keystore-idb/utils.js"
 
 import { Implementation } from "./implementation/types.js"
 import { assertBrowser } from "../common/browser.js"

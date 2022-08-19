@@ -1,5 +1,5 @@
 import type { CID } from "multiformats/cid"
-import { SymmAlg } from "keystore-idb/lib/types.js"
+import { SymmAlg } from "keystore-idb/types.js"
 import * as cbor from "@ipld/dag-cbor"
 
 import { isBlob, isDefined, isJust, isString } from "../common/type-checks.js"
