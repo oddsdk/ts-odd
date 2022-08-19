@@ -5,6 +5,7 @@ import "../../../src/setup/node.js"
 import { PublicFileWasm, PublicRootWasm } from "../../../src/fs/v3/PublicRootWasm.js"
 import * as ipfsConfig from "../../../src/ipfs/config.js"
 import { HardLinks } from "../../../src/fs/types.js"
+import { CID } from "multiformats"
 
 
 
@@ -47,8 +48,10 @@ describe("the wasm public root", () => {
       const lsResult = await root.ls(["hello"]) as HardLinks
       expect(lsResult["actor"].name).toEqual("actor")
       expect(lsResult["actor"].isFile).toEqual(false)
+      expect(lsResult["actor"].cid).toBeInstanceOf(CID)
       expect(lsResult["world"].name).toEqual("world")
       expect(lsResult["world"].isFile).toEqual(false)
+      expect(lsResult["world"].cid).toBeInstanceOf(CID)
     })
 
     it("can list the 'hello/actor' directory contents and shows a file", async () => {

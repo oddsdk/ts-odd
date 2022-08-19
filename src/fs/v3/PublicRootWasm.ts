@@ -95,6 +95,21 @@ export class PublicRootWasm implements UnixTree, Puttable {
   async ls(path: Path): Promise<Links> {
     const root = await this.root
 
+    const { result: node } = await this.withError(
+      root.getNode(path, this.store),
+      `ls(${path.join("/")})`
+    ) as OpResult<PublicNode | null>
+
+    if (node == null) {
+      throw new Error(`Can't ls ${path.join("/")}: No such directory`)
+    }
+
+    if (!node.isDir()) {
+      throw new Error(`Can't ls ${path.join("/")}: Not a directory`)
+    }
+
+    const directory = node.asDir()
+
     const { result: entries } = await this.withError(
       root.ls(path, this.store),
       `ls(${path.join("/")})`
@@ -102,11 +117,17 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
     const result: Links = {}
     for (const entry of entries) {
+      const node = await directory.lookupNode(entry.name, this.store) as PublicNode
+
+      const cid = node.isFile()
+        ? CID.decode(await node.asFile().store(this.store))
+        : CID.decode(await node.asDir().store(this.store))
+
       result[entry.name] = {
         name: entry.name,
         isFile: entry.metadata.unixMeta.kind === "file",
         size: 0, // TODO size?
-        cid: "not provided for performance ", // TODO do we really need a CID here?
+        cid,
       }
     }
     return result
