@@ -10,7 +10,6 @@ import { MemoryDatastore } from "datastore-core/memory"
 import { MemoryBlockstore } from "blockstore-core/memory"
 
 
-
 export async function createInMemoryIPFS(): Promise<IPFS> {
   const dir = tempDir()
   fs.mkdirSync(dir)
@@ -37,6 +36,9 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
         webRTCStar: {
           Enabled: false
         }
+      },
+      Pubsub: {
+        Enabled: false
       }
     },
     libp2p: {

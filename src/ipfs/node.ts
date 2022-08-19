@@ -84,6 +84,9 @@ export const OPTIONS: IPFSOptions = {
     Bootstrap: [],
     Discovery: {
       webRTCStar: { Enabled: false }
+    },
+    Pubsub: {
+      Enabled: false
     }
   },
   preload: {
