@@ -1,9 +1,9 @@
 import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
-import { SymmAlg } from "keystore-idb/lib/types.js"
+import { SymmAlg } from "keystore-idb/types.js"
 
 import expect from "expect"
-import { getPublicKey } from "keystore-idb/lib/rsa/index.js"
+import { getPublicKey } from "keystore-idb/rsa/index.js"
 
 import "../../src/setup/node.js"
 

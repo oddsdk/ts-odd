@@ -1,7 +1,7 @@
-import aes from "keystore-idb/lib/aes/index.js"
-import rsa from "keystore-idb/lib/rsa/index.js"
-import utils from "keystore-idb/lib/utils.js"
-import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/lib/types.js"
+import aes from "keystore-idb/aes/index.js"
+import rsa from "keystore-idb/rsa/index.js"
+import utils from "keystore-idb/utils.js"
+import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/types.js"
 
 import { webcrypto } from "one-webcrypto"
 import * as uint8arrays from "uint8arrays"
@@ -150,10 +150,10 @@ export const createProducer = async (options: { username: string }): Promise<Acc
 
 /**
  * BROADCAST
- * 
+ *
  * Generate a session key and prepare a session key message to send to the consumer.
- * 
- * @param didThrowaway 
+ *
+ * @param didThrowaway
  * @returns session key and session key message
  */
 export const generateSessionKey = async (didThrowaway: string): Promise<{ sessionKey: CryptoKey; sessionKeyMessage: string }> => {
@@ -203,10 +203,10 @@ export const generateSessionKey = async (didThrowaway: string): Promise<{ sessio
 
 /**
  * NEGOTIATION
- * 
+ *
  * Decrypt the user challenge and the consumer audience DID.
- * 
- * @param data 
+ *
+ * @param data
  * @returns pin and audience
  */
 export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<Result<{ pin: number[]; audience: string }, Error>> => {
@@ -258,12 +258,12 @@ export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): 
 /**
  * DELEGATION: Delegate account
  *
- * Request delegation from the dependency injected delegateAccount function. 
+ * Request delegation from the dependency injected delegateAccount function.
  * Prepare a delegation message to send to the consumer.
- * 
- * @param sesionKey 
+ *
+ * @param sesionKey
  * @param audience
- * @param finishDelegation 
+ * @param finishDelegation
  */
 export const delegateAccount = async (
   sessionKey: CryptoKey,
@@ -298,7 +298,7 @@ export const delegateAccount = async (
  * DELEGATION: Decline delegation
  *
  * Prepare a delegation declined message to send to the consumer.
- * 
+ *
  * @param sessionKey
  * @param finishDelegation
  */

@@ -1,7 +1,7 @@
-/** In memory storage.
+/**
+ * In memory storage.
  * This in memory storage implements the methods of localForage.
  */
-
 export class Storage {
   storage: { [key: string]: any}
 
@@ -14,8 +14,8 @@ export class Storage {
       const val = this.storage[key] || null
 
       // https://localforage.github.io/localForage/#data-api-getitem
-      // "Even if undefined is saved, null will be returned by getItem(). 
-      // This is due to a limitation in localStorage, and for compatibility 
+      // "Even if undefined is saved, null will be returned by getItem().
+      // This is due to a limitation in localStorage, and for compatibility
       // reasons localForage cannot store the value undefined."
       const checkedVal = val === undefined ? null : val
 

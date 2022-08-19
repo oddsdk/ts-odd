@@ -1,14 +1,32 @@
 import esbuild from "esbuild"
 import fs from "fs"
 import zlib from "zlib"
+import { globby } from "globby"
 
 
 const globalName = "webnative"
-const outfile = "dist/index.umd.min.js"
-const outfileGz = `${outfile}.gz`
 
-// From https://github.com/umdjs/umd/blob/36fd1135ba44e758c7371e7af72295acdebce010/templates/returnExports.js
-const umd = {
+
+console.log("📦 Bundling & minifying...")
+
+await esbuild.build({
+    entryPoints: ["src/index.ts"],
+    outdir: "dist",
+    bundle: true,
+    splitting: true,
+    minify: true,
+    sourcemap: true,
+    platform: "browser",
+    format: "esm",
+    target: "es2020",
+    globalName,
+    define: {
+        "global": "globalThis",
+        "globalThis.process.env.NODE_ENV": "production"
+    }
+})
+
+const UMD = {
     banner:
 `(function (root, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -29,11 +47,9 @@ const umd = {
 }));`
 }
 
-console.log("📦 bundling & minifying...")
-
-esbuild.buildSync({
+await esbuild.build({
     entryPoints: ["src/index.ts"],
-    outfile,
+    outfile: "dist/index.umd.min.js",
     bundle: true,
     minify: true,
     sourcemap: true,
@@ -41,22 +57,23 @@ esbuild.buildSync({
     format: "iife",
     target: "es2020",
     globalName,
-    banner: {
-        js: umd.banner,
-    },
-    footer: {
-        js: umd.footer,
-    },
+    define: {
+        "global": "globalThis",
+        "globalThis.process.env.NODE_ENV": "production"
+    }
 })
 
-console.log(`📝 Wrote ${outfile} and ${outfile}.map`)
+;(await globby("dist/*.js")).forEach(jsFile => {
+    const outfile = jsFile
+    const outfileGz = `${outfile}.gz`
 
-console.log("💎 compressing into .gz")
+    console.log(`📝 Wrote ${outfile} and ${outfile}.map`)
+    console.log("💎 Compressing into .gz")
+    const fileContents = fs.createReadStream(outfile)
+    const writeStream = fs.createWriteStream(outfileGz)
+    const gzip = zlib.createGzip()
 
-const fileContents = fs.createReadStream(outfile)
-const writeStream = fs.createWriteStream(outfileGz)
-const gzip = zlib.createGzip()
+    fileContents.pipe(gzip).pipe(writeStream)
 
-fileContents.pipe(gzip).pipe(writeStream)
-
-console.log(`📝 Wrote ${outfileGz}`)
+    console.log(`📝 Wrote ${outfileGz}`)
+})

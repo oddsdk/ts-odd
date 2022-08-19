@@ -1,6 +1,7 @@
+import type { IPFS } from "ipfs-core-types"
 import * as mocha from "mocha"
 import puppeteer from "puppeteer"
-import { IPFS } from "ipfs-core"
+
 import { createInMemoryIPFS } from "./helpers/in-memory-ipfs.js"
 import * as ipfsConfig from "../src/ipfs/config.js"
 

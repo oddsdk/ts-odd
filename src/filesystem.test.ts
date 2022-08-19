@@ -1,6 +1,6 @@
 import expect from "expect"
 
-import { Storage } from "../tests/storage/inMemory.js"
+import { Storage } from "../tests/helpers/in-memory-storage.js"
 import { readKey } from "./filesystem.js"
 import { setImplementations } from "./setup.js"
 

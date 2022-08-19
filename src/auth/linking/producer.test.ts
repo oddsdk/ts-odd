@@ -2,9 +2,9 @@ import expect from "expect"
 import * as fc from "fast-check"
 import { webcrypto } from "one-webcrypto"
 import * as uint8arrays from "uint8arrays"
-import aes from "keystore-idb/lib/aes/index.js"
-import { SymmAlg } from "keystore-idb/lib/types.js"
-import utils from "keystore-idb/lib/utils.js"
+import aes from "keystore-idb/aes/index.js"
+import { SymmAlg } from "keystore-idb/types.js"
+import utils from "keystore-idb/utils.js"
 
 import * as did from "../../../src/did/index.js"
 import * as producer from "./producer.js"
@@ -217,7 +217,7 @@ describe("delegate account", async () => {
   beforeEach(async () => {
     sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
     accountDelegated = null
-    approvedMessage = null 
+    approvedMessage = null
   })
 
   it("delegates an account", async () => {
@@ -247,13 +247,13 @@ describe("decline delegation", async () => {
     approvedMessage = approved
 
     if (link.linkStatus === "DENIED") {
-      accountDelegated = false 
+      accountDelegated = false
     }
   }
 
   beforeEach(async () => {
     sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
-    accountDelegated = null 
+    accountDelegated = null
     approvedMessage = null
   })
 
