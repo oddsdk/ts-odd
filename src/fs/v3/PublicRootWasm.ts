@@ -1,7 +1,9 @@
 import * as uint8arrays from "uint8arrays"
 import { CID } from "multiformats"
 import { IPFS } from "ipfs-core-types"
-import { initSync, PublicDirectory, PublicFile, PublicNode } from "wnfs"
+import { default as init, PublicDirectory, PublicFile, PublicNode } from "wnfs"
+
+import * as debug from "../../common/debug.js"
 
 import { WASM_WNFS_VERSION } from "../../common/version.js"
 import { setup as setupInternal } from "../../setup/internal.js"
@@ -18,7 +20,12 @@ let initialized = false
 async function initOnce() {
   if (!initialized) {
     initialized = true
-    initSync(await setupInternal.wnfsWasmLookup(WASM_WNFS_VERSION))
+    debug.log(`⏬ Loading WNFS WASM`)
+    const before = performance.now()
+    // init accepts Promises as arguments
+    await init(setupInternal.wnfsWasmLookup(WASM_WNFS_VERSION))
+    const time = performance.now() - before
+    debug.log(`🧪 Loaded WNFS WASM (${time.toFixed(0)}ms)`)
   }
 }
 
