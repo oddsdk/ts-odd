@@ -1,4 +1,6 @@
+import * as dagCBOR from "@ipld/dag-cbor"
 import * as dagPB from "@ipld/dag-pb"
+import * as raw from "multiformats/codecs/raw"
 import { createRepo, Datastore, IPFSRepo } from "ipfs-repo"
 import { BlockCodec } from "multiformats/codecs/interface"
 import { BlockstoreDatastoreAdapter } from "blockstore-datastore-adapter"
@@ -14,7 +16,11 @@ export function create(): IPFSRepo {
     codeOrName => {
       const lookup: Record<string, BlockCodec<number, unknown>> = {
         [dagPB.code]: dagPB,
-        [dagPB.name]: dagPB
+        [dagPB.name]: dagPB,
+        [dagCBOR.code]: dagCBOR,
+        [dagCBOR.name]: dagCBOR,
+        [raw.code]: raw,
+        [raw.name]: raw,
       }
 
       return Promise.resolve(lookup[codeOrName])
