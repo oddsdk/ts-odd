@@ -4,7 +4,7 @@ import { CID } from "multiformats/cid"
 
 import { AddResult } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
-import { Puttable, SimpleLink, SimpleLinks } from "../types.js"
+import { Puttable, SimpleLink, SimpleLinks, UnixTree } from "../types.js"
 import { Branch, DistinctivePath } from "../../path.js"
 import { Maybe, decodeCID } from "../../common/index.js"
 import { Permissions } from "../../ucan/permissions.js"
@@ -20,12 +20,14 @@ import * as storage from "../../storage/index.js"
 import * as typeChecks from "../../common/type-checks.js"
 import * as ucanPermissions from "../../ucan/permissions.js"
 import * as versions from "../versions.js"
+import * as debug from "../../common/debug.js"
 
 import BareTree from "../bare/tree.js"
 import MMPT from "../protocol/private/mmpt.js"
 import PublicTree from "../v1/PublicTree.js"
 import PrivateTree from "../v1/PrivateTree.js"
 import PrivateFile from "../v1/PrivateFile.js"
+import { PublicRootWasm } from "../v3/PublicRootWasm.js"
 
 
 type PrivateNode = PrivateTree | PrivateFile
@@ -40,7 +42,7 @@ export default class RootTree implements Puttable {
   sharedCounter: number
   sharedLinks: SimpleLinks
 
-  publicTree: PublicTree
+  publicTree: UnixTree & Puttable
   prettyTree: BareTree
   privateNodes: Record<string, PrivateNode>
 
@@ -52,7 +54,7 @@ export default class RootTree implements Puttable {
     sharedCounter: number
     sharedLinks: SimpleLinks
 
-    publicTree: PublicTree
+    publicTree: UnixTree & Puttable
     prettyTree: BareTree
     privateNodes: Record<string, PrivateNode>
   }) {
@@ -72,8 +74,15 @@ export default class RootTree implements Puttable {
   // INITIALISATION
   // --------------
 
-  static async empty({ rootKey }: { rootKey: string }): Promise<RootTree> {
-    const publicTree = await PublicTree.empty()
+  static async empty({ rootKey, wnfsWasm }: { rootKey: string; wnfsWasm?: boolean }): Promise<RootTree> {
+    if (wnfsWasm) {
+      debug.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
+    }
+  
+    const publicTree = wnfsWasm
+      ? await PublicRootWasm.empty(await getIpfs())
+      : await PublicTree.empty()
+
     const prettyTree = await BareTree.empty()
     const mmpt = MMPT.create()
 
@@ -102,7 +111,7 @@ export default class RootTree implements Puttable {
     await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
-    await tree.setVersion(versions.latest)
+    await tree.setVersion(wnfsWasm ? versions.wnfsWasm : versions.latest)
 
     await Promise.all([
       tree.updatePuttable(Branch.Public, publicTree),
@@ -120,11 +129,21 @@ export default class RootTree implements Puttable {
     const links = await protocol.basic.getSimpleLinks(cid)
     const keys = permissions ? await permissionKeys(permissions) : []
 
+    const version = await parseVersionFromLinks(links)
+    const wnfsWasm = versions.equals(version, versions.wnfsWasm)
+
+    if (wnfsWasm) {
+      debug.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
+    }
+
     // Load public parts
     const publicCID = links[Branch.Public]?.cid || null
     const publicTree = publicCID === null
       ? await PublicTree.empty()
-      : await PublicTree.fromCID(decodeCID(publicCID))
+      : wnfsWasm
+        ? await PublicRootWasm.fromCID(await getIpfs(), decodeCID(publicCID))
+        : await PublicTree.fromCID(decodeCID(publicCID))
+
 
     const prettyTree = links[Branch.Pretty]
                          ? await BareTree.fromCID(decodeCID(links[Branch.Pretty].cid))
@@ -369,10 +388,14 @@ export default class RootTree implements Puttable {
   }
 
   async getVersion(): Promise<versions.SemVer | null> {
-    const file = await protocol.basic.getFile(decodeCID(this.links[Branch.Version].cid))
-    return versions.fromString(uint8arrays.toString(file))
+    return await parseVersionFromLinks(this.links)
   }
 
+}
+
+async function parseVersionFromLinks(links: SimpleLinks): Promise<versions.SemVer> {
+  const file = await protocol.basic.getFile(decodeCID(links[Branch.Version].cid))
+  return versions.fromString(uint8arrays.toString(file)) ?? versions.v0
 }
 
 

@@ -229,7 +229,7 @@ describe("the private filesystem api", function () {
             username: "test"
           })
 
-          const at = await fs.get(atPath)
+          const at = await fs.get(atPath) as PrivateTree
           const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
           const followed = await fs.get(referringToPath)
 
@@ -259,7 +259,7 @@ describe("the private filesystem api", function () {
             username: "test"
           })
 
-          const at = await fs.get(atPath)
+          const at = await fs.get(atPath) as PrivateTree
           const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
           const followed = await fs.get(referringToPath)
 

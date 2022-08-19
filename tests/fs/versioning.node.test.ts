@@ -12,7 +12,7 @@ describe("the filesystem versioning system", () => {
     it("throws an error if the version is too high", async function() {
         const fs = await emptyFilesystem()
         await fs.write(path.file("public", "some", "file.txt"), "Hello, World!")
-        await fs.root.setVersion(versions.encode(versions.latest.major + 1, 0, 0))
+        await fs.root.setVersion(versions.encode(versions.latest.major + 2, 0, 0)) // latest + 2, because wnfsWasm is latest + 1
         const changedCID = await fs.root.put()
 
         await expect(checkFileSystemVersion(changedCID)).rejects.toBeDefined()

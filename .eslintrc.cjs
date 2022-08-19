@@ -2,7 +2,8 @@ module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: `./tsconfig.eslint.json`
+    project: `./tsconfig.eslint.json`,
+    extraFileExtensions: "cjs",
   },
   plugins: [
     "@typescript-eslint",
@@ -27,5 +28,13 @@ module.exports = {
     }],
     // If you want to *intentionally* run a promise without awaiting, prepend it with "void " instead of "await "
     "@typescript-eslint/no-floating-promises": ["error"],
+    '@typescript-eslint/no-unused-vars': [
+      'warn', // or error
+      { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      },
+    ],
   }
 }

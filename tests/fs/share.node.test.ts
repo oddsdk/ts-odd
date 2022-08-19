@@ -22,10 +22,12 @@ import { emptyFilesystem } from "../helpers/filesystem.js"
 import PrivateFile from "../../src/fs/v1/PrivateFile.js"
 import PrivateTree from "../../src/fs/v1/PrivateTree.js"
 
+const wnfsWasmEnabled = process.env.WNFS_WASM != null
+const itSkipInWasm = wnfsWasmEnabled ? it.skip : it
 
 describe("the filesystem", () => {
 
-  it("creates shares", async function() {
+  itSkipInWasm("creates shares", async function() {
     const fs = await emptyFilesystem()
     const counter = 12345678
 

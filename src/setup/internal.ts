@@ -1,3 +1,5 @@
+import * as versions from "../fs/versions.js"
+
 export type Endpoints = {
   api: string
   apiVersion: string
@@ -19,6 +21,8 @@ type Setup = {
   getApiEndpoint: () => string
   userMessages: UserMessages
   shouldPin: boolean
+  fsVersion: string
+  wnfsWasmLookup: (wnfsVersion: string) => Promise<BufferSource | Response>
 }
 
 
@@ -51,6 +55,10 @@ export const setup: Setup = {
   },
 
   shouldPin: false,
+
+  fsVersion: versions.toString(versions.latest),
+
+  wnfsWasmLookup: wnfsVersion => fetch(`https://unpkg.com/wnfs@${wnfsVersion}/wasm_wnfs_bg.wasm`)
 }
 
 function alertIfPossible(str: string) {

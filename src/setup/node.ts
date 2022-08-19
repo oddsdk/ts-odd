@@ -1,6 +1,8 @@
 import tweetnacl from "tweetnacl"
-import utils from "keystore-idb/utils.js"
-import rsa from "keystore-idb/rsa/index.js"
+import * as path from "path"
+import * as fs from "fs"
+import utils from "keystore-idb/lib/utils.js"
+import rsa from "keystore-idb/lib/rsa/index.js"
 
 import { Storage } from "../../tests/helpers/in-memory-storage.js"
 
@@ -12,6 +14,12 @@ import InMemoryRSAKeyStore from "./node/keystore/store/memory.js"
 
 
 setup.shouldPin({ enabled: false })
+
+setup.wnfsWasmLoopkup(async () => {
+  const pathToThisModule = new URL(import.meta.url).pathname
+  const dirOfThisModule = path.parse(pathToThisModule).dir
+  return fs.readFileSync(path.join(dirOfThisModule, `../../node_modules/wnfs/wasm_wnfs_bg.wasm`))
+})
 
 
 //-------------------------------------

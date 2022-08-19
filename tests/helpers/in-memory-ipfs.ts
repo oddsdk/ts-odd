@@ -1,14 +1,26 @@
 import type { IPFS } from "ipfs-core-types"
 
 import * as fs from "fs"
-import * as dagPB from "@ipld/dag-pb"
 import * as Ipfs from "ipfs-core"
 import tempDir from "ipfs-utils/src/temp-dir.js"
 import { createRepo } from "ipfs-repo"
-import { BlockCodec } from "multiformats/codecs/interface"
 import { MemoryDatastore } from "datastore-core/memory"
 import { MemoryBlockstore } from "blockstore-core/memory"
 
+// Codecs
+import * as dagPB from "@ipld/dag-pb"
+import * as dagCBOR from "@ipld/dag-cbor"
+import * as raw from "multiformats/codecs/raw"
+import { BlockCodec } from "multiformats/codecs/interface"
+
+const CODECS: Record<string, BlockCodec<number, unknown>> = {
+  [dagPB.code]: dagPB,
+  [dagPB.name]: dagPB,
+  [dagCBOR.code]: dagCBOR,
+  [dagCBOR.name]: dagCBOR,
+  [raw.code]: raw,
+  [raw.name]: raw,
+}
 
 export async function createInMemoryIPFS(): Promise<IPFS> {
   const dir = tempDir()
@@ -47,14 +59,7 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
     },
     repo: createRepo(
       dir,
-      codeOrName => {
-        const lookup: Record<string, BlockCodec<number, unknown>> = {
-          [dagPB.code]: dagPB,
-          [dagPB.name]: dagPB
-        }
-
-        return Promise.resolve(lookup[codeOrName])
-      }, {
+      codeOrName => Promise.resolve(CODECS[codeOrName]), {
       root: memoryDs,
       blocks: memoryBs,
       keys: memoryDs,

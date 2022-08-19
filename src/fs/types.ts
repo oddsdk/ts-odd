@@ -61,7 +61,7 @@ export type UpdateCallback = () => Promise<unknown>
 export type PublishHook = (result: CID, proof: string) => unknown
 export type SharedBy = { rootDid: string; username: string }
 export type ShareDetails = { shareId: string; sharedBy: SharedBy }
-
+export type PuttableUnixTree = UnixTree & Puttable
 
 
 // TREE
@@ -71,12 +71,12 @@ export interface UnixTree {
   readOnly: boolean
 
   ls(path: Path): Promise<Links>
-  mkdir(path: Path, onUpdate?: UpdateCallback): Promise<this>
+  mkdir(path: Path): Promise<this>
   cat(path: Path): Promise<FileContent>
   add(path: Path, content: FileContent): Promise<this>
   rm(path: Path): Promise<this>
   mv(from: Path, to: Path): Promise<this>
-  get(path: Path): Promise<Tree | File | null>
+  get(path: Path): Promise<PuttableUnixTree | File | null>
   exists(path: Path): Promise<boolean>
 }
 
@@ -91,6 +91,7 @@ export interface Tree extends UnixTree, Puttable {
   updateChild(child: Tree | File, path: Path): Promise<this>
   updateDirectChild(child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
   removeDirectChild(name: string): this
+  get(path: Path): Promise<Tree | File | null>
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree | File>
 

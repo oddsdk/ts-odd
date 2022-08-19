@@ -2,7 +2,7 @@ import type { CID } from "multiformats/cid"
 
 import * as protocol from "../protocol/index.js"
 import { AddResult, FileContent } from "../../ipfs/index.js"
-import { isObject } from "../../common/index.js"
+import { isObject, hasProp } from "../../common/index.js"
 import BaseFile from "../base/file.js"
 
 
@@ -17,8 +17,8 @@ export class BareFile extends BaseFile {
     return new BareFile(content)
   }
 
-  static instanceOf (obj: any): obj is BareFile {
-    return isObject(obj) && obj.content !== undefined
+  static instanceOf(obj: unknown): obj is BareFile {
+    return isObject(obj) && hasProp(obj, "content")
   }
 
   async put(): Promise<CID> {

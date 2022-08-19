@@ -9,6 +9,7 @@ import * as authImpl from "./auth/implementation.js"
 import * as cryptoImpl from "./crypto/implementation.js"
 import * as dnsImpl from "./dns/implementation.js"
 import * as storageImpl from "./storage/implementation.js"
+import * as versions from "./fs/versions.js"
 
 
 /**
@@ -28,6 +29,37 @@ export function debug({ enabled }: { enabled: boolean }): boolean {
 export function shouldPin({ enabled }: { enabled: boolean }): boolean {
   internalSetup.shouldPin = enabled
   return internalSetup.shouldPin
+}
+
+/**
+ * Set the file system version.
+ * 
+ * This will only affect new file systems created.
+ * Existing file systems (whether loaded from another device or loaded locally) continue
+ * using the same version.
+ * If you're looking to migrate an existing file system to a new file system version,
+ * please look for migration tooling.
+ */
+export function fsVersion({ version }: { version: string }): string {
+  if (versions.fromString(version) == null) {
+    throw new Error(`Can't parse semantic version for fsVersion setup: ${version}`)
+  }
+  internalSetup.fsVersion = version
+  return internalSetup.fsVersion
+}
+
+/**
+ * Configure how the wnfs wasm module should be loaded.
+ * 
+ * This only has an effect if you're using file systems of version 3 or higher.
+ * 
+ * By default this loads the required version of the wasm wnfs module from unpkg.com.
+ */
+export function wnfsWasmLoopkup(fn: (wnfsVersion: string) => Promise<BufferSource>) {
+  if (typeof fn !== "function") {
+    throw new Error(`Expected a function as an argument to 'setup.wasmWnfsLookup', but got ${fn}`)
+  }
+  internalSetup.wnfsWasmLookup = fn
 }
 
 /**

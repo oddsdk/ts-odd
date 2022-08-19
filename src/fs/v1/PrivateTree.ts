@@ -1,5 +1,3 @@
-import { CID } from "multiformats/cid"
-
 import BaseTree from "../base/tree.js"
 import MMPT from "../protocol/private/mmpt.js"
 import PrivateFile from "./PrivateFile.js"
@@ -10,7 +8,7 @@ import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, 
 import { FileContent } from "../../ipfs/index.js"
 import { Path } from "../../path.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
-import { decodeCID, isObject, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
+import { decodeCID, isObject, hasProp, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
 import { setup } from "../../setup/internal.js"
 
 import * as check from "../protocol/private/types/check.js"
@@ -52,9 +50,10 @@ export default class PrivateTree extends BaseTree {
     this.mmpt = mmpt
   }
 
-  static instanceOf(obj: any): obj is PrivateTree {
+  static instanceOf(obj: unknown): obj is PrivateTree {
     return isObject(obj)
-      && obj.mmpt !== undefined
+      && hasProp(obj, "mmpt")
+      && hasProp(obj, "header")
       && check.isPrivateTreeInfo(obj.header)
   }
 
@@ -257,8 +256,8 @@ export default class PrivateTree extends BaseTree {
   // -----
 
   assignLink({ name, link, skeleton }: {
-    name: string,
-    link: PrivateLink | SoftLink,
+    name: string
+    link: PrivateLink | SoftLink
     skeleton: PrivateSkeletonInfo | SoftLink
   }): void {
     this.header.links[name] = link
@@ -318,7 +317,7 @@ export default class PrivateTree extends BaseTree {
     return this
   }
 
-  insertSoftLink({ name, username, key, privateName }: { name: string, username: string, key: string, privateName: PrivateName }): this {
+  insertSoftLink({ name, username, key, privateName }: { name: string; username: string; key: string; privateName: PrivateName }): this {
     const softLink = {
       ipns: `${username}.files.${setup.endpoints.user}`,
       name,
