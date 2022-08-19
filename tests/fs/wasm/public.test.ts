@@ -25,6 +25,11 @@ describe("the wasm public root", () => {
       expect(await root.exists(["hello", "world"])).toEqual(true)
     })
 
+    it("returns false with exist on non-existing directories", async () => {
+      const root = await simpleExample()
+      expect(await root.exists(["bogus", "path"])).toEqual(false)
+    })
+
     it("store- and load-roundtrips", async () => {
       const cid = await (await simpleExample()).put()
       const root = await PublicRootWasm.fromCID(await ipfsConfig.get(), cid)

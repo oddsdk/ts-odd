@@ -222,8 +222,13 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
   async exists(path: Path): Promise<boolean> {
     const root = await this.root
-    const { result } = await root.getNode(path, this.store)
-    return result != null
+
+    try {
+      await root.getNode(path, this.store)
+      return true
+    } catch {
+      return false
+    }
   }
 
   async historyStep(): Promise<PublicDirectory> {
