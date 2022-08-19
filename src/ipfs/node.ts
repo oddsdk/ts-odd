@@ -149,6 +149,9 @@ export async function createAndConnect(pkg: IPFSPackage): Promise<IPFSCore> {
 // PEERS
 // -----
 
+const STORAGE_KEY = "ipfs_peers_1660901513"
+
+
 export function fetchFissionPeers(): Promise<string[]> {
   const peersUrl = `${setup.getApiEndpoint()}/ipfs/peers`
 
@@ -162,13 +165,13 @@ export function fetchFissionPeers(): Promise<string[]> {
 
 export async function listPeers(): Promise<Multiaddr[]> {
   let peers
-  const maybePeers = await localforage.getItem("ipfsPeers")
+  const maybePeers = await localforage.getItem(STORAGE_KEY)
 
   if (t.isString(maybePeers)) {
     peers = maybePeers.split(",")
 
     fetchFissionPeers().then(list =>
-      localforage.setItem("ipfsPeers", list.join(","))
+      localforage.setItem(STORAGE_KEY, list.join(","))
     ).catch(err => {
       // don't throw
       console.error(err)
@@ -176,7 +179,7 @@ export async function listPeers(): Promise<Multiaddr[]> {
 
   } else {
     peers = await fetchFissionPeers()
-    await localforage.setItem("ipfsPeers", peers.join(","))
+    await localforage.setItem(STORAGE_KEY, peers.join(","))
 
   }
 
