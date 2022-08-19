@@ -20,6 +20,7 @@ import * as storage from "../../storage/index.js"
 import * as typeChecks from "../../common/type-checks.js"
 import * as ucanPermissions from "../../ucan/permissions.js"
 import * as versions from "../versions.js"
+import * as debug from "../../common/debug.js"
 
 import BareTree from "../bare/tree.js"
 import MMPT from "../protocol/private/mmpt.js"
@@ -75,7 +76,7 @@ export default class RootTree implements Puttable {
 
   static async empty({ rootKey, wnfsWasm }: { rootKey: string; wnfsWasm?: boolean }): Promise<RootTree> {
     if (wnfsWasm) {
-      console.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
+      debug.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
     }
   
     const publicTree = wnfsWasm
@@ -132,7 +133,7 @@ export default class RootTree implements Puttable {
     const wnfsWasm = versions.equals(version, versions.wnfsWasm)
 
     if (wnfsWasm) {
-      console.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
+      debug.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
     }
 
     // Load public parts

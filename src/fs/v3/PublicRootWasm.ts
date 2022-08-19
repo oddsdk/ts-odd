@@ -83,9 +83,23 @@ export class PublicRootWasm implements UnixTree, Puttable {
     await this.root
   }
 
+  private async withError<T>(operation: Promise<T>, opDescription: string): Promise<T> {
+    try {
+      return await operation
+    } catch (e) {
+      console.error(`Error during WASM operation ${opDescription}:`)
+      throw e
+    }
+  }
+
   async ls(path: Path): Promise<Links> {
     const root = await this.root
-    const { result: entries } = await root.ls(path, this.store) as OpResult<DirEntry[]>
+
+    const { result: entries } = await this.withError(
+      root.ls(path, this.store),
+      `ls(${path.join("/")})`
+    ) as OpResult<DirEntry[]>
+
     const result: Links = {}
     for (const entry of entries) {
       result[entry.name] = {
@@ -100,7 +114,12 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
   async mkdir(path: Path): Promise<this> {
     await this.atomically(async root => {
-      const { rootDir } = await root.mkdir(path, new Date(), this.store) as OpResult<null>
+
+      const { rootDir } = await this.withError(
+        root.mkdir(path, new Date(), this.store),
+        `mkdir(${path.join("/")})`
+      ) as OpResult<null>
+
       return rootDir
     })
 
@@ -108,7 +127,13 @@ export class PublicRootWasm implements UnixTree, Puttable {
   }
 
   async cat(path: Path): Promise<FileContent> {
-    const { result: cidBytes } = await (await this.root).read(path, this.store) as OpResult<Uint8Array>
+    const root = await this.root
+
+    const { result: cidBytes } = await this.withError(
+      root.read(path, this.store),
+      `read(${path.join("/")})`
+    ) as OpResult<Uint8Array>
+
     const cid = CID.decode(cidBytes)
 
     const chunks = []
@@ -130,7 +155,11 @@ export class PublicRootWasm implements UnixTree, Puttable {
     })
 
     await this.atomically(async root => {
-      const { rootDir } = await root.write(path, cid.bytes, new Date(), this.store) as OpResult<null>
+      const { rootDir } = await this.withError(
+        root.write(path, cid.bytes, new Date(), this.store),
+        `write(${path.join("/")})`
+      ) as OpResult<null>
+
       return rootDir
     })
 
@@ -139,7 +168,11 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
   async rm(path: Path): Promise<this> {
     await this.atomically(async root => {
-      const { rootDir } = await root.rm(path, this.store) as OpResult<null>
+      const { rootDir } = await this.withError(
+        root.rm(path, this.store),
+        `rm(${path.join("/")})`
+      ) as OpResult<null>
+
       return rootDir
     })
 
@@ -148,7 +181,11 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
   async mv(from: Path, to: Path): Promise<this> {
     await this.atomically(async root => {
-      const { rootDir } = await root.basicMv(from, to, new Date(), this.store) as OpResult<null>
+      const { rootDir } = await this.withError(
+        root.basicMv(from, to, new Date(), this.store),
+        `basicMv(${from.join("/")}, ${to.join("/")})`
+      ) as OpResult<null>
+
       return rootDir
     })
 
@@ -157,7 +194,10 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
   async get(path: Path): Promise<PuttableUnixTree | File | null> {
     const root = await this.root
-    const { result: node } = await root.getNode(path, this.store) as OpResult<PublicNode>
+    const { result: node } = await this.withError(
+      root.getNode(path, this.store),
+      `getNode(${path.join("/")})`
+    ) as OpResult<PublicNode>
 
     if (node == null) {
       return null
