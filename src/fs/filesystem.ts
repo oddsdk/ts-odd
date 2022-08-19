@@ -743,7 +743,7 @@ export class FileSystem {
       const decodedProof = proof && ucan.decode(proof)
 
       if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {
-        throw new NoPermissionError(`I don't have the necessary permissions ${operation} to the file system at "${pathing.toPosix(path)}"`)
+        throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${pathing.toPosix(path)}"`)
       }
 
       this.proofs[decodedProof.signature] = proof
