@@ -1,5 +1,6 @@
+import type { IPFS } from "ipfs-core-types"
+
 import * as uint8arrays from "uint8arrays"
-import { IPFS } from "ipfs-core"
 import { CID } from "multiformats/cid"
 
 // Codecs
