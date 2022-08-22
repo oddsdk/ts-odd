@@ -46,10 +46,22 @@ export const nodeWithPkg = (pkg: IPFSPackage): Promise<IPFS> => {
 export const pkgFromCDN = async (cdn_url: string): Promise<IPFSPackage> => {
   if (!cdn_url) throw new Error("This function requires a URL to a CDN")
   return new Promise((resolve, reject) => {
-    loadScript(cdn_url, err => {
-      if (err) return reject(err)
-      return resolve((self as any).IpfsCore as IPFSPackage)
-    })
+    if (typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope) {
+      try {
+        self.importScripts(cdn_url)
+      } catch (err) {
+        reject(err)
+      }
+
+      resolve((self as any).IpfsCore as IPFSPackage)
+
+    } else {
+      loadScript(cdn_url, err => {
+        if (err) return reject(err)
+        return resolve((self as any).IpfsCore as IPFSPackage)
+      })
+
+    }
   })
 }
 
