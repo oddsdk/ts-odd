@@ -112,7 +112,6 @@
     "it-filter": "^1.0.3",
     "it-map": "^1.0.6",
     "keystore-idb": "^0.15.5",
-    "load-script": "^2.0.0",
     "localforage": "^1.10.0",
     "multiformats": "^9.5.4",
     "one-webcrypto": "^1.0.3",

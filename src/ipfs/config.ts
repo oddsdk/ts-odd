@@ -1,5 +1,4 @@
 import type { IPFS } from "ipfs-core-types"
-import loadScript from "load-script"
 
 import * as ipfsNode from "./node.js"
 import { IPFSPackage } from "./types.js"
@@ -45,24 +44,7 @@ export const nodeWithPkg = (pkg: IPFSPackage): Promise<IPFS> => {
  */
 export const pkgFromCDN = async (cdn_url: string): Promise<IPFSPackage> => {
   if (!cdn_url) throw new Error("This function requires a URL to a CDN")
-  return new Promise((resolve, reject) => {
-    if (typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope) {
-      try {
-        self.importScripts(cdn_url)
-      } catch (err) {
-        reject(err)
-      }
-
-      resolve((self as any).IpfsCore as IPFSPackage)
-
-    } else {
-      loadScript(cdn_url, err => {
-        if (err) return reject(err)
-        return resolve((self as any).IpfsCore as IPFSPackage)
-      })
-
-    }
-  })
+  return import(cdn_url).then(_ => (self as any).IpfsCore as IPFSPackage)
 }
 
 // /**
