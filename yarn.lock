@@ -1495,7 +1495,7 @@ abortable-iterator@^4.0.2:
     get-iterator "^2.0.0"
     it-stream-types "^1.0.3"
 
-abstract-level@^1.0.2:
+abstract-level@^1.0.2, abstract-level@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/abstract-level/-/abstract-level-1.0.3.tgz#78a67d3d84da55ee15201486ab44c09560070741"
   integrity sha512-t6jv+xHy+VYwc4xqZMn2Pa9DjcdzvzZmQGRjTFc8spIbRGHgBrEKbPq+rYXc7CCo0lxgYvSgKVg9qZAhpVQSjA==
@@ -1886,6 +1886,17 @@ cids@^1.0.0, cids@^1.1.6:
     multihashes "^4.0.1"
     uint8arrays "^3.0.0"
 
+classic-level@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/classic-level/-/classic-level-1.2.0.tgz#2d52bdec8e7a27f534e67fdeb890abef3e643c27"
+  integrity sha512-qw5B31ANxSluWz9xBzklRWTUAJ1SXIdaVKTVS7HcTGKOAmExx65Wo5BUICW+YGORe2FOUaDghoI9ZDxj82QcFg==
+  dependencies:
+    abstract-level "^1.0.2"
+    catering "^2.1.0"
+    module-error "^1.0.1"
+    napi-macros "~2.0.0"
+    node-gyp-build "^4.3.0"
+
 cli-cursor@^3.1.0:
   version "3.1.0"
   resolved "https://registry.npmjs.org/cli-cursor/-/cli-cursor-3.1.0.tgz"
@@ -2069,6 +2080,20 @@ datastore-level@^8.0.0:
     it-sort "^1.0.0"
     it-take "^1.0.1"
     level "^7.0.0"
+
+datastore-level@^9.0.1:
+  version "9.0.1"
+  resolved "https://registry.yarnpkg.com/datastore-level/-/datastore-level-9.0.1.tgz#fab1748abe20ee3ee8dbbe37c1b0469587a26387"
+  integrity sha512-U23xpjtItZFCqYUNDYo7++vNI7f5/JUeedJOPxm+hyqR4TneDx9TPpuLGZRrehkaJ5v2kwfYiep0P8wyfI+clg==
+  dependencies:
+    abstract-level "^1.0.3"
+    datastore-core "^8.0.1"
+    interface-datastore "^7.0.0"
+    it-filter "^1.0.2"
+    it-map "^1.0.5"
+    it-sort "^1.0.0"
+    it-take "^1.0.1"
+    level "^8.0.0"
 
 datastore-pubsub@^4.0.2:
   version "4.0.2"
@@ -4382,6 +4407,14 @@ level@^7.0.0:
     level-js "^6.1.0"
     level-packager "^6.0.1"
     leveldown "^6.1.0"
+
+level@^8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/level/-/level-8.0.0.tgz#41b4c515dabe28212a3e881b61c161ffead14394"
+  integrity sha512-ypf0jjAk2BWI33yzEaaotpq7fkOPALKAgDBxggO6Q9HGX2MRXn0wbP1Jn/tJv1gtL867+YOjOB49WaUF3UoJNQ==
+  dependencies:
+    browser-level "^1.0.1"
+    classic-level "^1.2.0"
 
 leveldown@^6.1.0:
   version "6.1.1"

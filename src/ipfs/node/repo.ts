@@ -5,8 +5,7 @@ import { createRepo, Datastore, IPFSRepo } from "ipfs-repo"
 import { BlockCodec } from "multiformats/codecs/interface"
 import { BlockstoreDatastoreAdapter } from "blockstore-datastore-adapter"
 import { MemoryDatastore } from "datastore-core/memory"
-
-import { LevelDatastore } from "./datastore-level.js"
+import { LevelDatastore } from "datastore-level"
 
 
 export function create(): IPFSRepo {
