@@ -48,10 +48,10 @@ export const pkgFromCDN = async (cdn_url: string): Promise<IPFSPackage> => {
   return import(/* webpackIgnore: true */ cdn_url).then(_ => (self as any).IpfsCore as IPFSPackage)
 }
 
-// /**
-//  * Loads ipfs-core from the bundled `webnative/lib/vendor/ipfs.js`
-//  */
-// export const pkgFromBundle = (): Promise<IPFSPackage> => {
-//   // @ts-ignore - Vendored dependency, generated at build time
-//   return import("../vendor/ipfs.js")
-// }
+/**
+ * Loads ipfs-core from the bundled `webnative/lib/vendor/ipfs.js`
+ */
+export const pkgFromBundle = (): Promise<IPFSPackage> => {
+  // @ts-ignore - Vendored dependency, generated at build time
+  return import("../vendor/ipfs.js")
+}
