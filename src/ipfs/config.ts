@@ -44,7 +44,8 @@ export const nodeWithPkg = (pkg: IPFSPackage): Promise<IPFS> => {
  */
 export const pkgFromCDN = async (cdn_url: string): Promise<IPFSPackage> => {
   if (!cdn_url) throw new Error("This function requires a URL to a CDN")
-  return import(cdn_url).then(_ => (self as any).IpfsCore as IPFSPackage)
+  /* @vite-ignore */
+  return import(/* webpackIgnore: true */ cdn_url).then(_ => (self as any).IpfsCore as IPFSPackage)
 }
 
 // /**
