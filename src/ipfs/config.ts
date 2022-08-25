@@ -1,5 +1,4 @@
 import type { IPFS } from "ipfs-core-types"
-import loadScript from "load-script"
 
 import * as ipfsNode from "./node.js"
 import { IPFSPackage } from "./types.js"
@@ -45,18 +44,14 @@ export const nodeWithPkg = (pkg: IPFSPackage): Promise<IPFS> => {
  */
 export const pkgFromCDN = async (cdn_url: string): Promise<IPFSPackage> => {
   if (!cdn_url) throw new Error("This function requires a URL to a CDN")
-  return new Promise((resolve, reject) => {
-    loadScript(cdn_url, err => {
-      if (err) return reject(err)
-      return resolve((self as any).IpfsCore as IPFSPackage)
-    })
-  })
+  /* @vite-ignore */
+  return import(/* webpackIgnore: true */ cdn_url).then(_ => (self as any).IpfsCore as IPFSPackage)
 }
 
-/**
- * Loads ipfs-core from the bundled `webnative/lib/vendor/ipfs.js`
- */
-export const pkgFromBundle = (): Promise<IPFSPackage> => {
-  // @ts-ignore - Vendored dependency, generated at build time
-  return import("../vendor/ipfs.js")
-}
+// /**
+//  * Loads ipfs-core from the bundled `webnative/lib/vendor/ipfs.js`
+//  */
+// export const pkgFromBundle = (): Promise<IPFSPackage> => {
+//   // @ts-ignore - Vendored dependency, generated at build time
+//   return import("../vendor/ipfs.js")
+// }

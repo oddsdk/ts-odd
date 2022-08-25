@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.33.1",
+  "version": "0.34.0",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -85,7 +85,6 @@
     "ipfs-core": "0.15.5-8f351a89.0",
     "madge": "^5.0.1",
     "mocha": "^9.1.4",
-    "puppeteer": "^13.1.1",
     "rimraf": "^3.0.2",
     "ts-node": "^10.9.1",
     "tslib": "^2.3.1",
@@ -110,7 +109,6 @@
     "ipfs-unixfs": "^6.0.9",
     "ipld-dag-pb": "^0.22.3",
     "keystore-idb": "^0.15.5",
-    "load-script": "^2.0.0",
     "localforage": "^1.10.0",
     "multiformats": "^9.5.4",
     "one-webcrypto": "^1.0.3",

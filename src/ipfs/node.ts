@@ -26,7 +26,7 @@ import * as repo from "./node/repo.js"
 // GLOBAL STATE
 
 
-const latestPeerTimeoutIds: { [peer: string]: null | ReturnType<typeof setTimeout> } = {}
+const latestPeerTimeoutIds: { [ peer: string ]: null | ReturnType<typeof setTimeout> } = {}
 const isSafari = /^((?!chrome|android).)*safari/i.test(globalThis.navigator?.userAgent || "")
 
 
@@ -121,7 +121,7 @@ export async function createAndConnect(pkg: IPFSPackage): Promise<IPFSCore> {
   const ipfs: IPFSCore = await pkg.create(OPTIONS)
 
   peers.forEach(peer => {
-    latestPeerTimeoutIds[peer.toString()] = null
+    latestPeerTimeoutIds[ peer.toString() ] = null
     tryConnecting(ipfs as unknown as IPFS, peer)
   })
 
@@ -131,8 +131,8 @@ export async function createAndConnect(pkg: IPFSPackage): Promise<IPFSCore> {
       .filter(peer => {
         const peerStr = peer.toString()
         return !peerStr.includes("/localhost/") &&
-               !peerStr.includes("/127.0.0.1/") &&
-               !peerStr.includes("/0.0.0.0/")
+          !peerStr.includes("/127.0.0.1/") &&
+          !peerStr.includes("/0.0.0.0/")
       })
       .forEach(peer => {
         tryConnecting(ipfs as unknown as IPFS, peer)
@@ -140,7 +140,7 @@ export async function createAndConnect(pkg: IPFSPackage): Promise<IPFSCore> {
   })
 
   // Fin
-  console.log("🚀 Started IPFS node")
+  if (setup.debug) console.log("🚀 Started IPFS node")
   return ipfs
 }
 
@@ -205,7 +205,7 @@ function keepAlive(ipfs: IPFS, peer: Multiaddr, backoff: BackOff, status: Status
   }
 
   // Track the latest reconnect attempt
-  latestPeerTimeoutIds[peer.toString()] = timeoutId
+  latestPeerTimeoutIds[ peer.toString() ] = timeoutId
 
   ping(ipfs, peer).then(({ latency }) => {
     const updatedStatus = { connected: true, lastConnectedAt: Date.now(), latency }
@@ -215,7 +215,7 @@ function keepAlive(ipfs: IPFS, peer: Multiaddr, backoff: BackOff, status: Status
     if (timeoutId) clearTimeout(timeoutId)
 
     // Keep alive after the latest ping-reconnect race, ignore the rest
-    if (timeoutId === latestPeerTimeoutIds[peer.toString()]) {
+    if (timeoutId === latestPeerTimeoutIds[ peer.toString() ]) {
       setTimeout(() => keepAlive(ipfs, peer, BACKOFF_INIT, updatedStatus), KEEP_ALIVE_INTERVAL)
     }
   }).catch(() => {
@@ -255,7 +255,7 @@ export function tryConnecting(ipfs: IPFS, peer: Multiaddr): void {
     return ipfs.swarm
       .connect(peer, { timeout: 60 * 1000 })
       .then(() => {
-        console.log(`🪐 Connected to ${peer}`)
+        if (setup.debug) console.log(`🪐 Connected to ${peer}`)
 
         const status = { connected: true, lastConnectedAt: Date.now(), latency }
         report(peer, status)
@@ -268,7 +268,7 @@ export function tryConnecting(ipfs: IPFS, peer: Multiaddr): void {
       })
 
   }).catch(() => {
-    console.log(`🪓 Could not connect to ${peer}`)
+    if (setup.debug) console.log(`🪓 Could not connect to ${peer}`)
 
     const status = { connected: false, lastConnectedAt: null, latency: null }
 
@@ -336,7 +336,7 @@ let monitor: ReturnType<typeof setTimeout> | null = null
 
 
 export async function monitorBitswap(ipfs: IPFS, verbose: boolean): Promise<void> {
-  const cidCount: { [k: string]: number } = {}
+  const cidCount: { [ k: string ]: number } = {}
   const seen: string[] = []
   const peers = await listPeers()
 
@@ -359,14 +359,14 @@ export async function monitorBitswap(ipfs: IPFS, verbose: boolean): Promise<void
         const s = peer + "-" + c
 
         if (!seen.includes(s)) {
-          const seenCid = !!cidCount[c]
+          const seenCid = !!cidCount[ c ]
           const emoji = seenCid ? "📡" : "🔮"
           const msg = `${emoji} Peer ${peer} requested CID ${c}`
 
-          cidCount[c] = (cidCount[c] || 0) + 1
+          cidCount[ c ] = (cidCount[ c ] || 0) + 1
 
           if (seenCid) {
-            if (verbose) console.log(msg + ` (#${cidCount[c]})`)
+            if (verbose) console.log(msg + ` (#${cidCount[ c ]})`)
             return
           } else {
             console.log(msg)
@@ -382,7 +382,7 @@ export async function monitorBitswap(ipfs: IPFS, verbose: boolean): Promise<void
 
           if (dag.value.Links) {
             console.log(`🧱 ${c} is a 👉 DAG structure (${loaded})`)
-            ;(console.table || console.log)(
+              ; (console.table || console.log)(
                 dag.value.Links
                   .map((l: unknown) => {
                     if (t.isObject(l) && t.hasProp(l, "Name") && t.hasProp(l, "Hash")) {
