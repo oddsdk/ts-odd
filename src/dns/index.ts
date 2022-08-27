@@ -6,5 +6,5 @@ export const lookupTxtRecord = async (domain: string): Promise<string | null> =>
 }
 
 export const lookupDnsLink = async (domain: string): Promise<string | null> => {
-  return impl.lookupTxtRecord(domain)
+  return impl.lookupDnsLink(domain)
 }
