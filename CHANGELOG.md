@@ -6,6 +6,7 @@
 
 - Fixes the depedency-injected `lookupDnsLink` function
 - Fixes issue with IPFS peer-list storage
+- Removes Vite warning caused by a dynamic import
 
 
 ### v0.34.0
