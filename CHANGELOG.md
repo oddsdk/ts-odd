@@ -4,7 +4,8 @@
 
 #### Bug fixes
 
-Fixes the depedency-injected `lookupDnsLink` function
+- Fixes the depedency-injected `lookupDnsLink` function
+- Fixes issue with IPFS peer-list storage
 
 
 ### v0.34.0
@@ -22,6 +23,7 @@ Enable new EXPERIMENTAL public file system version 3.0.0 using rs-wnfs. Use this
 - No longer uses a locally-shared IPFS client (was originally using a shared worker). This fixes various error messages you may have seen relating to CIDs.
 
 
+
 ### v0.32.0
 
 #### Features
@@ -37,13 +39,16 @@ Fixes issue with loading private shares.
 Updated ipfs-related dependencies.
 
 
+
 ### v0.31.1
 
 Move `madge` and `typedoc-plugin-missing-exports` from `dependencies` into `devDependencies`.
 
+
 ### v0.31.0
 
 Fixes circular dependencies.
+
 
 
 ### v0.30.0
