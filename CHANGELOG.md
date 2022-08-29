@@ -1,5 +1,12 @@
 # Changelog
 
+### v0.34.1
+
+#### Bug fixes
+
+Fixes the depedency-injected `lookupDnsLink` function
+
+
 ### v0.34.0
 
 Enable new EXPERIMENTAL public file system version 3.0.0 using rs-wnfs. Use this for experimentation. File system verion 3.0.0 *will* have breaking changes.
