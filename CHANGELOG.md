@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.34.2
+
+- Fixes `LinkError: import object field '__wbg_putBlock_88cdb3be9020efb7' is not a Function` when loading WASM.
+
 ### v0.34.1
 
 #### Bug fixes

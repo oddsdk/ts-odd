@@ -1,6 +1,6 @@
 {
   "name": "webnative",
-  "version": "0.34.1",
+  "version": "0.34.2",
   "description": "Fission Webnative SDK",
   "keywords": [
     "WebCrypto",
@@ -75,6 +75,7 @@
     "@types/throttle-debounce": "^2.1.0",
     "@typescript-eslint/eslint-plugin": "^5.10.0",
     "@typescript-eslint/parser": "^5.10.0",
+    "@yarnpkg/lockfile": "^1.1.0",
     "copyfiles": "^2.4.1",
     "esbuild": "^0.15.5",
     "eslint": "^8.7.0",
@@ -115,7 +116,7 @@
     "throttle-debounce": "^3.0.1",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^3.0.0",
-    "wnfs": "^0.1.7-alpha5"
+    "wnfs": "^0.1.7"
   },
   "tsd": {
     "directory": "lib"
