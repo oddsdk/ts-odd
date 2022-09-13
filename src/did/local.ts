@@ -1,4 +1,5 @@
-import * as crypto from "../crypto/index.js"
+import * as Crypto from "../components/crypto/implementation.js"
+
 import { publicKeyToDid } from "./transformers.js"
 import { toKeyType } from "./util.js"
 
@@ -6,12 +7,12 @@ import { toKeyType } from "./util.js"
 /**
  * Create a DID based on the exchange key-pair.
  */
-export async function exchange(): Promise<string> {
-  const pubKeyB64 = await crypto.keystore.publicExchangeKey()
+export async function exchange(crypto: Crypto.Implementation): Promise<string> {
+  const pubKey = await crypto.keystore.publicExchangeKey()
   const ksAlg = await crypto.keystore.getAlg()
 
   return publicKeyToDid(
-    pubKeyB64,
+    pubKey,
     toKeyType(ksAlg)
   )
 }
@@ -24,12 +25,12 @@ export { write as ucan }
 /**
  * Create a DID based on the write key-pair.
  */
-export async function write(): Promise<string> {
-  const pubKeyB64 = await crypto.keystore.publicWriteKey()
+export async function write(crypto: Crypto.Implementation): Promise<string> {
+  const pubKey = await crypto.keystore.publicWriteKey()
   const ksAlg = await crypto.keystore.getAlg()
 
   return publicKeyToDid(
-    pubKeyB64,
+    pubKey,
     toKeyType(ksAlg)
   )
 }

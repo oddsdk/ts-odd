@@ -2,81 +2,69 @@ import { CID } from "multiformats/cid"
 
 import FileSystem from "./fs/index.js"
 
-import * as cidLog from "./common/cid-log.js"
-import * as common from "./common/index.js"
-import * as crypto from "./crypto/index.js"
-import * as debug from "./common/debug.js"
-import * as dataRoot from "./data-root.js"
-import * as did from "./did/index.js"
-import * as pathing from "./path.js"
+import * as CIDLog from "./repositories/cid-log.js"
+import * as Crypto from "./components/crypto/implementation.js"
+import * as Manners from "./components/manners/implementation.js"
+import * as Path from "./path/index.js"
+import * as Reference from "./components/reference/implementation.js"
+
 import * as protocol from "./fs/protocol/index.js"
-import * as storage from "./storage/index.js"
-import * as token from "./ucan/token.js"
-import * as ucan from "./ucan/internal.js"
 import * as versions from "./fs/versions.js"
 
-import { Branch } from "./path.js"
-import { Maybe, authenticatedUsername, decodeCID } from "./common/index.js"
-import { Permissions } from "./ucan/permissions.js"
-import { setup } from "./setup/internal.js"
+import { Branch } from "./path/index.js"
+import { Maybe, decodeCID } from "./common/index.js"
+import { Permissions } from "./permissions.js"
 
 
 /**
  * Load a user's file system.
- *
- * @param permissions The permissions from initialise.
- *                    Pass `null` if working without permissions
- * @param username Optional, username of the user to load the file system from.
- *                 Will try to load the file system of the authenticated user
- *                 by default. Throws an error if there's no authenticated user.
- * @param rootKey Optional, AES key to be the root key of a new filesystem.
- *                Will be used if a filesystem hasn't been created yet.
  */
-export async function loadFileSystem(
-  permissions: Maybe<Permissions>,
-  username?: string,
+export async function loadFileSystem({ crypto, permissions, manners, reference, rootKey, username }: {
+  crypto: Crypto.Implementation
+  permissions: Maybe<Permissions>
   rootKey?: string
-): Promise<FileSystem> {
+  manners: Manners.Implementation
+  reference: Reference.Implementation
+  username: string
+}): Promise<FileSystem> {
   let cid: Maybe<CID>
   let fs
 
-  // Look for username
-  username = username || (await authenticatedUsername() || undefined)
-  if (!username) throw new Error("User hasn't authenticated yet")
-
-  // Ensure internal UCAN dictionary
-  await ucan.store([])
+  // Repositories
+  const cidLog = reference.repositories.cidLog
 
   // Determine the correct CID of the file system to load
-  const dataCid = navigator.onLine ? await dataRoot.lookup(username) : null
-  const [ logIdx, logLength ] = dataCid ? await cidLog.index(dataCid.toString()) : [ -1, 0 ]
+  const dataCid = navigator.onLine ? await reference.dataRoot.lookup(username) : null
+  const logIdx = dataCid ? await cidLog.indexOf(dataCid) : -1
 
   if (!navigator.onLine) {
     // Offline, use local CID
-    cid = decodeCID(await cidLog.newest())
+    cid = CIDLog.newest(cidLog)
+    if (cid) manners.log("📓 Working offline, using local CID:", cid.toString())
+    else manners.log("📓 Working offline, creating a new file system")
 
   } else if (!dataCid) {
     // No DNS CID yet
-    cid = decodeCID(await cidLog.newest())
-    if (cid) debug.log("📓 No DNSLink, using local CID:", cid.toString())
-    else debug.log("📓 Creating a new file system")
+    cid = CIDLog.newest(cidLog)
+    if (cid) manners.log("📓 No DNSLink, using local CID:", cid.toString())
+    else manners.log("📓 Creating a new file system")
 
   } else if (logIdx === 0) {
     // DNS is up to date
     cid = dataCid
-    debug.log("📓 DNSLink is up to date:", cid.toString())
+    manners.log("📓 DNSLink is up to date:", cid.toString())
 
   } else if (logIdx > 0) {
     // DNS is outdated
-    cid = decodeCID(await cidLog.newest())
+    cid = CIDLog.newest(cidLog)
     const idxLog = logIdx === 1 ? "1 newer local entry" : logIdx + " newer local entries"
-    debug.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid.toString())
+    manners.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid.toString())
 
   } else {
     // DNS is newer
     cid = dataCid
-    await cidLog.add(cid.toString())
-    debug.log("📓 DNSLink is newer:", cid.toString())
+    await cidLog.add(cid)
+    manners.log("📓 DNSLink is newer:", cid.toString())
 
     // TODO: We could test the filesystem version at this DNSLink at this point to figure out whether to continue locally.
     // However, that needs a plan for reconciling local changes back into the DNSLink, once migrated. And a plan for migrating changes
@@ -87,14 +75,13 @@ export async function loadFileSystem(
   // If a file system exists, load it and return it
   const p = permissions || undefined
 
-  if (cid != null) {
+  if (cid) {
     await checkFileSystemVersion(cid)
     fs = await FileSystem.fromCID(cid, { permissions: p })
-    if (fs != null) return fs
+    if (fs) return fs
   }
 
   // Otherwise make a new one
-  if (!rootKey) throw new Error("Can't make new filesystem without a root AES key")
   fs = await FileSystem.empty({ permissions: p, rootKey })
   await addSampleData(fs)
 
@@ -103,79 +90,21 @@ export async function loadFileSystem(
 }
 
 
-/**
- * Create a new filesystem and assign it to a user.
- *
- * @param permissions The permissions to initialize the filesystem
- * @param options Optional params
- * @param options.reset Override an existing filesystem with an empty one
- */
-export const bootstrapFileSystem = async (
-  permissions: Permissions,
-  options: { reset?: boolean } = { reset: false }
-): Promise<FileSystem> => {
-  const { reset } = options
-  const authedUsername = await common.authenticatedUsername()
 
-  // Check for authed user and existing filesystem
-  if (authedUsername) {
-    if (!reset) {
-      const dataCid = navigator.onLine ? await dataRoot.lookup(authedUsername) : null // data root on server or DNS
-      const logCid = await cidLog.newest() // data root in browser
-
-      if (dataCid !== null || logCid !== undefined) {
-        throw new Error("Bootstrap operation will \"reset\" an existing filesystem. Please set reset to true if this behavior is desired.")
-      }
-    }
-
-  } else {
-    throw new Error("Cannot bootstrap filesystem because an authed user could not be found.")
-  }
-
-  // Get or create root read key
-  const rootKey = await readKey()
-
-  // Create an empty filesystem
-  const fs = await FileSystem.empty({ permissions, rootKey })
-
-  // Self-authorize a filesystem UCAN
-  const issuer = await did.write()
-  const proof: string | null = await storage.getItem("ucan")
-  const fsUcan = await token.build({
-    potency: "APPEND",
-    resource: "*",
-    proof: proof ? proof : undefined,
-    lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
-
-    audience: issuer,
-    issuer
-  })
-
-  // Add filesystem UCAN to store
-  await ucan.store([token.encode(fsUcan)])
-
-  // Update filesystem and publish data root
-  const rootCid = await fs.publish()
-
-  // Clear the CID log and update it
-  await cidLog.clear()
-  await cidLog.add(rootCid.toString())
-
-  return fs
-}
+// VERSIONING
 
 
 export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> {
   const links = await protocol.basic.getSimpleLinks(filesystemCID)
   // if there's no version link, we assume it's from a 1.0.0-compatible version
   // (from before ~ November 2020)
-  const versionStr = links[Branch.Version] == null
+  const versionStr = links[ Branch.Version ] == null
     ? "1.0.0"
     : new TextDecoder().decode(
-        await protocol.basic.getFile(
-          decodeCID(links[Branch.Version].cid)
-        )
+      await protocol.basic.getFile(
+        decodeCID(links[ Branch.Version ].cid)
       )
+    )
 
   const errorVersionBigger = async () => {
     await setup.userMessages.versionMismatch.newer(versionStr)
@@ -208,27 +137,21 @@ export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> 
 // ROOT HELPERS
 
 
-const ROOT_PERMISSIONS = { fs: { private: [pathing.root()], public: [pathing.root()] } }
+export const ROOT_PERMISSIONS = { fs: { private: [ Path.root() ], public: [ Path.root() ] } }
+
 
 /**
  * Load a user's root file system.
  */
-export const loadRootFileSystem = async (): Promise<FileSystem> => {
-  return await loadFileSystem(ROOT_PERMISSIONS)
+export const loadRootFileSystem = async (options: {
+  crypto: Crypto.Implementation
+  rootKey?: string
+  manners: Manners.Implementation
+  reference: Reference.Implementation
+  username: string
+}): Promise<FileSystem> => {
+  return await loadFileSystem({ ...options, permissions: ROOT_PERMISSIONS })
 }
-
-/**
- * Create a new filesystem with public and private roots and assign it to a user.
- *
- * @param options Optional params
- * @param options.reset Override an existing filesystem with an empty one
- */
-export const bootstrapRootFileSystem = async (
-  options: { reset?: boolean } = { reset: false }
-): Promise<FileSystem> => {
-  return await bootstrapFileSystem(ROOT_PERMISSIONS, options)
-}
-
 
 
 
@@ -242,21 +165,4 @@ async function addSampleData(fs: FileSystem): Promise<void> {
   await fs.mkdir({ directory: [ Branch.Private, "Photos" ] })
   await fs.mkdir({ directory: [ Branch.Private, "Video" ] })
   await fs.publish()
-}
-
-
-
-// 🔑
-
-
-/**
- * Create or get a read key for accessing the WNFS private root.
- */
-export async function readKey(): Promise<string> {
-  const maybeReadKey: string | null = await storage.getItem("readKey")
-  if (maybeReadKey) return maybeReadKey
-
-  const readKey = await crypto.aes.genKeyStr()
-  await storage.setItem("readKey", readKey)
-  return readKey
 }

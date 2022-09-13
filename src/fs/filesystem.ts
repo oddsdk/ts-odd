@@ -5,7 +5,7 @@ import { SymmAlg } from "keystore-idb/types.js"
 import { throttle } from "throttle-debounce"
 
 import { Links, PuttableUnixTree, UnixTree } from "./types.js"
-import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path.js"
+import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path/index.js"
 import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
 import MMPT from "./protocol/private/mmpt.js"
@@ -14,14 +14,7 @@ import PublicTree from "./v1/PublicTree.js"
 import PrivateFile from "./v1/PrivateFile.js"
 import PrivateTree from "./v1/PrivateTree.js"
 
-import * as cidLog from "../common/cid-log.js"
-import * as dataRoot from "../data-root.js"
-import * as debug from "../common/debug.js"
-import * as crypto from "../crypto/index.js"
 import * as did from "../did/index.js"
-import * as ipfs from "../ipfs/basic.js"
-import * as keystore from "../keystore.js"
-import * as pathing from "../path.js"
 import * as privateTypeChecks from "./protocol/private/types/check.js"
 import * as protocol from "./protocol/index.js"
 import * as shareKey from "./protocol/shared/key.js"
@@ -32,10 +25,9 @@ import * as ucan from "../ucan/index.js"
 import * as versions from "./versions.js"
 
 import { FileContent } from "../ipfs/index.js"
-import { NoPermissionError } from "../errors.js"
-import { Permissions, appDataPath } from "../ucan/permissions.js"
-import { authenticatedUsername, decodeCID } from "../common/index.js"
-import { setup } from "../setup/internal.js"
+import { NoPermissionError } from "./errors.js"
+import { Permissions, appDataPath } from "../permissions.js"
+import { decodeCID } from "../common/index.js"
 
 
 // TYPES
@@ -76,11 +68,11 @@ export class FileSystem {
   readonly localOnly: boolean
 
   appPath: AppPath | undefined
-  proofs: { [_: string]: string }
+  proofs: { [ _: string ]: string }
   publishHooks: Array<PublishHook>
 
-  _publishWhenOnline: Array<[CID, string]>
-  _publishing: false | [CID, true]
+  _publishWhenOnline: Array<[ CID, string ]>
+  _publishing: false | [ CID, true ]
 
 
   constructor({ root, permissions, localOnly }: ConstructorParams) {
@@ -118,15 +110,15 @@ export class FileSystem {
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
       if (globalThis.navigator.onLine) {
-        this._publishing = [cid, true]
+        this._publishing = [ cid, true ]
         return dataRoot.update(cid, proof).then(() => {
-          if (this._publishing && this._publishing[0] === cid) {
+          if (this._publishing && this._publishing[ 0 ] === cid) {
             this._publishing = false
           }
         })
       }
 
-      this._publishWhenOnline.push([cid, proof])
+      this._publishWhenOnline.push([ cid, proof ])
     }, false)
 
     this.publishHooks.push(logCid)
@@ -263,7 +255,7 @@ export class FileSystem {
             ? content
             : typeChecks.isObject(content)
               ? Object.values(content) as Array<SoftLink>
-              : [content] as Array<SoftLink>
+              : [ content ] as Array<SoftLink>
 
           await this.runOnChildTree(root as Tree, relPath, async tree => {
             links.forEach((link: SoftLink) => {
@@ -281,7 +273,7 @@ export class FileSystem {
             ? content
             : typeChecks.isObject(content)
               ? Object.values(content) as Array<SoftLink>
-              : [content] as Array<SoftLink>
+              : [ content ] as Array<SoftLink>
 
           await this.runOnChildTree(node as Tree, relPath, async tree => {
             links.forEach((link: SoftLink) => {
@@ -397,7 +389,7 @@ export class FileSystem {
 
     await this.runOnNode(from, {
       public: async (root, relPath) => {
-        const [_, ...nextPath] = pathing.unwrap(to)
+        const [ _, ...nextPath ] = pathing.unwrap(to)
         await root.mv(relPath, nextPath)
       },
       private: async (node, relPath) => {
@@ -405,7 +397,7 @@ export class FileSystem {
           throw new Error("Tried to `mv` within a file")
         }
 
-        const [_, ...nextPath] = pathing.unwrap(to)
+        const [ _, ...nextPath ] = pathing.unwrap(to)
         // TODO FIXME: nextPath is wrong if you use a node that's deeper in the tree.
         await node.mv(relPath, nextPath)
       }
@@ -531,7 +523,7 @@ export class FileSystem {
 
     const cid = await this.root.put()
 
-    proofs.forEach(([_, proof]) => {
+    proofs.forEach(([ _, proof ]) => {
       this.publishHooks.forEach(hook => hook(cid, proof))
     })
 
@@ -545,7 +537,7 @@ export class FileSystem {
    * Ensures the current version of your file system is "committed"
    * and stepped forward, so the current version will always be
    * persisted as an "step" in the history of the file system.
-   * 
+   *
    * This function is implicitly called every time your file system
    * changes are synced, so in most cases calling this is handled
    * for you.
@@ -597,11 +589,11 @@ export class FileSystem {
     if (!root) throw new Error("This user doesn't have a filesystem yet.")
 
     const rootLinks = await protocol.basic.getSimpleLinks(root)
-    const sharedLinksCid = rootLinks[Branch.Shared]?.cid || null
+    const sharedLinksCid = rootLinks[ Branch.Shared ]?.cid || null
     if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
 
     const sharedLinks = await RootTree.getSharedLinks(decodeCID(sharedLinksCid))
-    const shareLink = typeChecks.isObject(sharedLinks) ? sharedLinks[key] : null
+    const shareLink = typeChecks.isObject(sharedLinks) ? sharedLinks[ key ] : null
     if (!shareLink) throw new Error("Couldn't find a matching share.")
 
     const shareLinkCid = typeChecks.isObject(shareLink) ? shareLink.cid : null
@@ -627,9 +619,9 @@ export class FileSystem {
     const symmKeyAlgo: string = decodedPayload.algo as string
 
     // Load MMPT
-    const mmptCid = rootLinks[Branch.Private]?.cid
+    const mmptCid = rootLinks[ Branch.Private ]?.cid
     if (!mmptCid) throw new Error("This user's filesystem doesn't have a private branch")
-    const theirMmpt = await MMPT.fromCID(decodeCID(rootLinks[Branch.Private]?.cid))
+    const theirMmpt = await MMPT.fromCID(decodeCID(rootLinks[ Branch.Private ]?.cid))
 
     // Decode index
     const encryptedIndex = await ipfs.catBuf(decodeCID(entryIndexCid))
@@ -654,16 +646,16 @@ export class FileSystem {
     if (!sharedBy) {
       const username = await authenticatedUsername()
       if (!username) throw new Error("I need a username in order to use this method")
-      sharedBy = { rootDid: await did.ownRoot(), username }
+      sharedBy = { rootDid: await did.root(username), username }
     }
 
     // Get the items to share
-    const items = await verifiedPaths.reduce(async (promise: Promise<[string, PrivateFile | PrivateTree][]>, path) => {
+    const items = await verifiedPaths.reduce(async (promise: Promise<[ string, PrivateFile | PrivateTree ][]>, path) => {
       const acc = await promise
       const name = pathing.terminus(path)
       const item = await this.get(path)
       return name && (PrivateFile.instanceOf(item) || PrivateTree.instanceOf(item))
-        ? [...acc, [name, item] as [string, PrivateFile | PrivateTree]]
+        ? [ ...acc, [ name, item ] as [ string, PrivateFile | PrivateTree ] ]
         : acc
     }, Promise.resolve([]))
 
@@ -746,7 +738,7 @@ export class FileSystem {
         throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${pathing.toPosix(path)}"`)
       }
 
-      this.proofs[decodedProof.signature] = proof
+      this.proofs[ decodedProof.signature ] = proof
     }
   }
 
@@ -759,7 +751,7 @@ export class FileSystem {
     },
   ): Promise<void> {
     const parts = pathing.unwrap(path)
-    const head = parts[0]
+    const head = parts[ 0 ]
     const relPath = parts.slice(1)
 
     await this.checkMutationPermissionAndAddProof(path, true)
@@ -774,7 +766,7 @@ export class FileSystem {
       ])
 
     } else if (head === Branch.Private) {
-      const [nodePath, node] = this.root.findPrivateNode(path)
+      const [ nodePath, node ] = this.root.findPrivateNode(path)
 
       if (!node) {
         throw new NoPermissionError(`I don't have the necessary permissions to make changes to the file system at "${pathing.toPosix(path)}"`)
@@ -804,7 +796,7 @@ export class FileSystem {
     },
   ): Promise<A> {
     const parts = pathing.unwrap(path)
-    const head = parts[0]
+    const head = parts[ 0 ]
     const relPath = parts.slice(1)
 
     await this.checkMutationPermissionAndAddProof(path, false)
@@ -813,7 +805,7 @@ export class FileSystem {
       return await handlers.public(this.root.publicTree, relPath)
 
     } else if (head === Branch.Private) {
-      const [nodePath, node] = this.root.findPrivateNode(path)
+      const [ nodePath, node ] = this.root.findPrivateNode(path)
 
       if (!node) {
         throw new NoPermissionError(`I don't have the necessary permissions to query the file system at "${pathing.toPosix(path)}"`)
@@ -852,10 +844,10 @@ export class FileSystem {
 
   /** @internal */
   _whenOnline(): void {
-    const toPublish = [...this._publishWhenOnline]
+    const toPublish = [ ...this._publishWhenOnline ]
     this._publishWhenOnline = []
 
-    toPublish.forEach(([cid, proof]) => {
+    toPublish.forEach(([ cid, proof ]) => {
       this.publishHooks.forEach(hook => hook(cid, proof))
     })
   }

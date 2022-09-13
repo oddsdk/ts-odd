@@ -1,19 +1,17 @@
 import type { CID } from "multiformats/cid"
 
-import * as did from "../did/index.js"
-import * as ucan from "../ucan/index.js"
-import { api, Maybe, isString } from "../common/index.js"
-import { setup } from "../setup/internal.js"
+import * as DID from "../did/index.js"
+import * as Ucan from "../ucan/index.js"
 
 
-export type App = {
+export type AppMetadata = {
   domains: string[]
   insertedAt: string
   modifiedAt: string
 }
 
 type AppIndexResponseJson = {
-  [k: number]: {
+  [ k: number ]: {
     insertedAt: string
     modifiedAt: string
     urls: string[]
@@ -24,7 +22,7 @@ type AppIndexResponseJson = {
 /**
  * Get A list of all of your apps and their associated domain names
  */
-export async function index(): Promise<Array<App>> {
+export async function index(): Promise<Array<AppMetadata>> {
   const apiEndpoint = setup.getApiEndpoint()
 
   const localUcan = await ucan.dictionary.lookupAppUcan("*")
@@ -127,12 +125,12 @@ export async function deleteByDomain(
   })
 
   const index: AppIndexResponseJson = await appIndexResponse.json()
-  const appToDelete = Object.entries(index).find(([_, app]) => app.urls.includes(domain))
+  const appToDelete = Object.entries(index).find(([ _, app ]) => app.urls.includes(domain))
   if (appToDelete == null) {
     throw new Error(`Couldn't find an app with domain ${domain}`)
   }
 
-  await fetch(`${apiEndpoint}/app/${encodeURIComponent(appToDelete[0])}`, {
+  await fetch(`${apiEndpoint}/app/${encodeURIComponent(appToDelete[ 0 ])}`, {
     method: "DELETE",
     headers: {
       "authorization": `Bearer ${jwt}`

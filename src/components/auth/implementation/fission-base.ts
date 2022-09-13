@@ -1,0 +1,56 @@
+import type { Implementation, Dependents } from "../implementation.js"
+
+import * as Base from "./base.js"
+import * as Fission from "./fission/index.js"
+import * as Session from "../../../session.js"
+
+
+export const isUsernameAvailable = async (endpoints: Fission.Endpoints, username: string): Promise<boolean> => {
+  return Fission.isUsernameAvailable(endpoints, username)
+}
+
+export const isUsernameValid = async (username: string): Promise<boolean> => {
+  return Fission.isUsernameValid(username)
+}
+
+export const register = async (
+  endpoints: Fission.Endpoints,
+  dependents: Dependents,
+  options: { username: string; email?: string }
+): Promise<{ success: boolean }> => {
+  const { success } = await Fission.createAccount(endpoints, dependents, options)
+
+  if (success) {
+    await Session.provide(dependents.storage, { type: Base.TYPE, username: options.username })
+
+    return { success: true }
+  }
+
+  return { success: false }
+}
+
+
+
+// 🛳
+
+
+export function implementation(
+  endpoints: Fission.Endpoints,
+  dependents: Dependents
+): Implementation {
+  const base = Base.implementation(dependents)
+
+  return {
+    type: base.type,
+
+    activate: base.activate,
+    canDelegateAccount: base.canDelegateAccount,
+    createChannel: base.createChannel,
+    delegateAccount: base.delegateAccount,
+    linkDevice: base.linkDevice,
+
+    isUsernameValid,
+    isUsernameAvailable: (...args) => isUsernameAvailable(endpoints, ...args),
+    register: (...args) => register(endpoints, dependents, ...args)
+  }
+}

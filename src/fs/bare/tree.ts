@@ -18,7 +18,7 @@ import BaseTree from "../base/tree.js"
 class BareTree extends BaseTree {
 
   links: HardLinks
-  children: { [name: string]: Tree | File }
+  children: { [ name: string ]: Tree | File }
   type: "BareTree"
 
   constructor(links: HardLinks) {
@@ -33,9 +33,21 @@ class BareTree extends BaseTree {
   }
 
   static async fromCID(cid: CID): Promise<BareTree> {
-    const links = link.arrToMap(
-      (await ipfs.ls(cid)).map(link.fromFSFile)
-    )
+    // const links = link.arrToMap(
+    //   (await ipfs.ls(cid)).map(link.fromFSFile)
+    // )
+    //
+    // const newCID = typeCheckCID(cid)
+
+    // const ipfs = await getIpfs()
+    // const links = []
+    // for await (const link of ipfs.ls(newCID)) {
+    //   links.push({ ...link, cid: decodeCID(link.cid) })
+    // }
+    // return links
+    //
+    // TODO: https://www.npmjs.com/package/ipfs-unixfs-exporter
+
     return new BareTree(links)
   }
 
@@ -54,7 +66,7 @@ class BareTree extends BaseTree {
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree> {
     const child = await BareTree.empty()
 
-    const existing = this.children[name]
+    const existing = this.children[ name ]
     if (existing) {
       if (check.isFile(existing)) {
         throw new Error(`There is a file at the given path: ${name}`)
@@ -92,24 +104,24 @@ class BareTree extends BaseTree {
   }
 
   async updateDirectChild(child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
-    this.children[name] = child
+    this.children[ name ] = child
     return this.putAndUpdateLink(child, name, onUpdate)
   }
 
   removeDirectChild(name: string): this {
-    delete this.links[name]
-    if (this.children[name]) {
-      delete this.children[name]
+    delete this.links[ name ]
+    if (this.children[ name ]) {
+      delete this.children[ name ]
     }
     return this
   }
 
   async getDirectChild(name: string): Promise<Tree | File | null> {
-    if (this.children[name]) {
-      return this.children[name]
+    if (this.children[ name ]) {
+      return this.children[ name ]
     }
 
-    const link = this.links[name] || null
+    const link = this.links[ name ] || null
     if (link === null) return null
     const cid = decodeCID(link.cid)
     const child = link.isFile
@@ -117,11 +129,11 @@ class BareTree extends BaseTree {
       : await BareTree.fromCID(cid)
 
     // check that the child wasn't added while retrieving the content from the network
-    if (this.children[name]) {
-      return this.children[name]
+    if (this.children[ name ]) {
+      return this.children[ name ]
     }
 
-    this.children[name] = child
+    this.children[ name ] = child
     return child
   }
 
@@ -143,7 +155,7 @@ class BareTree extends BaseTree {
 
   updateLink(name: string, result: AddResult): this {
     const { cid, size, isFile } = result
-    this.links[name] = link.make(name, cid, isFile, size)
+    this.links[ name ] = link.make(name, cid, isFile, size)
     return this
   }
 

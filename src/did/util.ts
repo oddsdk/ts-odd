@@ -24,27 +24,27 @@ export function magicBytes(keyType: KeyType): Uint8Array | null {
  * to determine cryptosystem & the unprefixed key-buffer.
  */
 export const parseMagicBytes = (prefixedKey: Uint8Array): {
-  keyBuffer: Uint8Array
+  key: Uint8Array
   type: KeyType
 } => {
   // RSA
   if (hasPrefix(prefixedKey, RSA_DID_PREFIX)) {
     return {
-      keyBuffer: prefixedKey.slice(RSA_DID_PREFIX.byteLength),
+      key: prefixedKey.slice(RSA_DID_PREFIX.byteLength),
       type: KeyType.RSA
     }
 
-  // EDWARDS
+    // EDWARDS
   } else if (hasPrefix(prefixedKey, EDWARDS_DID_PREFIX)) {
     return {
-      keyBuffer: prefixedKey.slice(EDWARDS_DID_PREFIX.byteLength),
+      key: prefixedKey.slice(EDWARDS_DID_PREFIX.byteLength),
       type: KeyType.Edwards
     }
 
-  // BLS
+    // BLS
   } else if (hasPrefix(prefixedKey, BLS_DID_PREFIX)) {
     return {
-      keyBuffer: prefixedKey.slice(BLS_DID_PREFIX.byteLength),
+      key: prefixedKey.slice(BLS_DID_PREFIX.byteLength),
       type: KeyType.BLS
     }
 
@@ -61,7 +61,7 @@ export const hasPrefix = (prefixedKey: ArrayBuffer, prefix: ArrayBuffer): boolea
 }
 
 export const toKeyType = (str: string): KeyType => {
-  switch(str) {
+  switch (str) {
     case "rsa": return KeyType.RSA
     case "ed25519": return KeyType.Edwards
     case "bls12-381": return KeyType.BLS

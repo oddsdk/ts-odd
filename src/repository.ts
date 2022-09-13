@@ -1,0 +1,100 @@
+import * as Storage from "./components/storage/implementation"
+import * as TypeChecks from "./common/type-checks.js"
+
+
+export type RepositoryOptions {
+  storage: Storage.Implementation,
+  storageName: string
+}
+
+
+export default class Repository<T> {
+
+  dictionary: Record<string, T>
+  memoryCache: T[]
+  storage: Storage.Implementation
+  storageName: string
+
+
+  async constructor(
+    { storage, storageName }: RepositoryOptions
+  ): Promise<Repository<T>> {
+    this.memoryCache = await this.getAll()
+    this.dictionary = this.toDictionary(this.memoryCache)
+
+    this.storage = storage
+    this.storageName = storageName
+  }
+
+  async add(itemOrItems: T | T[]): Promise<void> {
+    const items = Array.isArray(itemOrItems) ? itemOrItems : [ itemOrItems ]
+
+    this.memoryCache = [ ...this.memoryCache, ...items ]
+    this.dictionary = this.toDictionary(this.memoryCache)
+
+    this.storage.setItem(
+      this.storageName,
+      // TODO: JSON.stringify(this.memoryCache.map(this.toJSON))
+      this.memoryCache.map(this.toJSON).join("|||")
+    )
+  }
+
+  clear(): Promise<void> {
+    this.memoryCache = []
+    this.dictionary = {}
+
+    return this.storage.removeItem(this.storageName)
+  }
+
+  find(predicate: (value: T, index: number) => boolean): T | null {
+    return this.memoryCache.find(predicate) || null
+  }
+
+  getByIndex(idx: number): T | null {
+    return this.memoryCache[ idx ]
+  }
+
+  async getAll(): Promise<T[]> {
+    const storage = await this.storage.getItem(this.storageName)
+    const storedItems = TypeChecks.isString(storage)
+      // TODO: ? - Need partial JSON decoding for this
+      ? storage.split("|||").map(this.fromJSON)
+      : []
+
+    return storedItems
+  }
+
+  indexOf(item: T): number {
+    return this.memoryCache.indexOf(item)
+  }
+
+  length(): number {
+    return this.memoryCache.length
+  }
+
+
+  // ENCODING
+
+  fromJSON(a: string): T {
+    return JSON.parse(a)
+  }
+
+  toJSON(a: T): string {
+    return JSON.stringify(a)
+  }
+
+
+  // DICTIONARY
+
+  getByKey(key: string): T | null {
+    return this.dictionary[ key ]
+  }
+
+  toDictionary(items: T[]): Record<string, T> {
+    return items.reduce(
+      (acc, value, idx) => ({ ...acc, [ idx.toString() ]: value }),
+      {}
+    )
+  }
+
+}

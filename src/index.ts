@@ -1,162 +1,390 @@
+/*
+
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%
+  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%
+@@@@@%     %@@@@@@%         %@@@@@@@%     %@@@@@
+@@@@@       @@@@@%            @@@@@@       @@@@@
+@@@@@%      @@@@@             %@@@@@      %@@@@@
+@@@@@@%     @@@@@     %@@%     @@@@@     %@@@@@@
+@@@@@@@     @@@@@    %@@@@%    @@@@@     @@@@@@@
+@@@@@@@     @@@@%    @@@@@@    @@@@@     @@@@@@@
+@@@@@@@    %@@@@     @@@@@@    @@@@@%    @@@@@@@
+@@@@@@@    @@@@@     @@@@@@    %@@@@@    @@@@@@@
+@@@@@@@    @@@@@@@@@@@@@@@@     @@@@@    @@@@@@@
+@@@@@@@    %@@@@@@@@@@@@@@@     @@@@%    @@@@@@@
+@@@@@@@     %@@%     @@@@@@     %@@%     @@@@@@@
+@@@@@@@              @@@@@@              @@@@@@@
+@@@@@@@%            %@@@@@@%            %@@@@@@@
+@@@@@@@@@%        %@@@@@@@@@@%        %@@@@@@@@@
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%
+  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%
+
+ */
+
 import localforage from "localforage"
 
-import * as cidLog from "./common/cid-log.js"
-import * as common from "./common/index.js"
-import * as dataRoot from "./data-root.js"
-import * as pathing from "./path.js"
-import * as ucan from "./ucan/internal.js"
+import * as Auth from "./components/auth/implementation.js"
+import * as ConfidencesImpl from "./components/confidences/implementation.js"
+import * as Confidences from "./confidences.js"
+import * as Crypto from "./components/crypto/implementation.js"
+import * as Depot from "./components/depot/implementation.js"
+import * as Manners from "./components/manners/implementation.js"
+import * as Reference from "./components/reference/implementation.js"
+import * as SessionMod from "./session.js"
+import * as Storage from "./components/storage/implementation.js"
+import * as Ucan from "./ucan/index.js"
 
-import { AppInitOptions, InitialisationError, PermissionedAppInitOptions } from "./init/types.js"
-import { validateSecrets } from "./auth/state.js"
-import { bootstrapFileSystem, loadFileSystem } from "./filesystem.js"
+import { SESSION_TYPE as CONFIDENCES_SESSION_TYPE } from "./confidences.js"
+import { Components, Configuration, extractConfig, InitialisationError } from "./configuration.js"
+import { Maybe } from "./common/index.js"
+import { Session } from "./session.js"
+import { appId, AppInfo, Permissions } from "./permissions.js"
+import { loadFileSystem } from "./filesystem.js"
 
-import FileSystem from "./fs/index.js"
 
-import { impl as auth } from "./auth/implementation.js"
-import { isPermissionedAppState } from "./auth/state.js"
-import { setImplementations } from "./setup.js"
-import { BASE_IMPLEMENTATION } from "./auth/implementation/base.js"
-import { USE_WNFS_IMPLEMENTATION } from "./auth/implementation/use-wnfs.js"
-import { LOBBY_IMPLEMENTATION } from "./auth/implementation/lobby.js"
-import { AppState } from "./auth/state/app.js"
-import { PermissionedAppState } from "./auth/state/permissionedApp.js"
-import * as appState from "./auth/state/app.js"
-import * as permissionedAppState from "./auth/state/permissionedApp.js"
+// IMPLEMENTATIONS
+
+import * as BrowserCrypto from "./components/crypto/implementation/browser.js"
+import * as BrowserStorage from "./components/storage/implementation/browser.js"
+import * as FissionIpfsProduction from "./components/depot/implementation/fission-ipfs-production.js"
+import * as FissionAuthBaseProduction from "./components/auth/implementation/fission-base-production.js"
+import * as FissionAuthBaseStaging from "./components/auth/implementation/fission-base-staging.js"
+import * as FissionAuthWnfsProduction from "./components/auth/implementation/fission-wnfs-production.js"
+import * as FissionAuthWnfsStaging from "./components/auth/implementation/fission-wnfs-staging.js"
+import * as FissionLobbyProduction from "./components/confidences/implementation/fission-lobby-production.js"
+import * as FissionLobbyStaging from "./components/confidences/implementation/fission-lobby-staging.js"
+import * as FissionReferenceProduction from "./components/reference/implementation/fission-production.js"
+import * as ProperManners from "./components/manners/implementation/base.js"
+
+
+// RE-EXPORTS
+
+
+export * from "./common/types.js"
+export * from "./common/version.js"
+
+export * as path from "./path/index.js"
+
+
+
+// ENTRY POINTS
+
+
+export type Program = {
+  auth: AuthenticationStrategies,
+  components: Components,
+  confidences: {
+    collect: () => Promise<Maybe<string>>
+    request: () => Promise<void>
+    session: (username: string) => Promise<Maybe<Session>>
+  },
+  session: Maybe<Session>
+}
+
+
+export type AuthenticationStrategies = Record<
+  string,
+  { implementation: Auth.Implementation, session: () => Promise<Maybe<Session>> }
+>
 
 
 /**
- * Check if we're authenticated and initiate the user's file system if 
+ * Check if we're authenticated and initiate the user's file system if
  * authenticated (can be disabled).
  *
  * See `loadFileSystem` if you want to load the user's file system yourself.
- * NOTE: Only works on the main/ui thread, as it uses `window.location`.
  *
  */
-export async function app(options: AppInitOptions): Promise<AppState> {
-  options = options || {}
+export async function program(settings: Partial<Components> & Configuration): Promise<Program> {
+  if (!settings) throw new Error("Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter")
 
-  const { useWnfs = false } = options
+  const components = await gatherComponents(settings)
+  return assemble(components, settings)
+}
 
-  if (useWnfs) {
-    setImplementations(USE_WNFS_IMPLEMENTATION)
-  } else {
-    setImplementations(BASE_IMPLEMENTATION)
+
+
+// PREDEFINED COMPONENT COMBINATIONS
+
+
+/**
+ * Predefined auth configurations.
+ *
+ * Note that these go hand in hand with the "reference" and "depot" components.
+ * The "auth" component registers a DID and the reference looks it up.
+ * The reference component also manages the "data root", the pointer to an account's entire filesystem.
+ * Then the depot component comes in which is responsible to get the data from, and to the other side.
+ *
+ * For example, using the Fission architecture, the data root is updated on the Fission server,
+ * which then in turn fetches the data from the depot in your app.
+ *
+ * So if you want to build a service independent of Fission's infrastructure,
+ * you will need to write your own reference and depot implementations (see source code).
+ *
+ * NOTE: This uses all the default components as the dependencies for the auth component.
+ *       If you're, for example, using a non-default storage component, you'll want to
+ *       import the auth module and produce an implementation yourself. That way you can
+ *       pass in your custom storage component.
+ */
+export const auth = {
+  /**
+   * A standalone authentication system that uses the browser's Web Crypto API
+   * to create an identity based on a RSA key-pair.
+   */
+  async webCrypto(config: Configuration, { disableWnfs, staging }: { disableWnfs: boolean, staging: boolean }): Promise<Auth.Implementation> {
+    const manners = defaultMannersComponent(config)
+    const crypto = await defaultCryptoComponent(config.appInfo)
+    const storage = defaultStorageComponent(config.appInfo)
+    const reference = defaultReferenceComponent({ crypto, manners, storage })
+
+    if (disableWnfs) {
+      if (staging) return FissionAuthBaseStaging.implementation({ crypto, reference, storage })
+      return FissionAuthBaseProduction.implementation({ crypto, reference, storage })
+    } else {
+      if (staging) return FissionAuthWnfsStaging.implementation({ crypto, reference, storage })
+      return FissionAuthWnfsProduction.implementation({ crypto, reference, storage })
+    }
   }
+}
 
+/**
+ * If you want partial read and/or write access to the filesystem you'll want
+ * a "confidences" component. This component is responsible for requesting
+ * and receiving UCANs, read keys and namefilters from other sources to enable this.
+ *
+ * NOTE: This uses all the default components as the dependencies for the confidences component.
+ *       If you're, for example, using a non-default crypto component, you'll want to
+ *       import the confidences module and produce an implementation yourself. That way you can
+ *       pass in your custom crypto component.
+ */
+export const confidences = {
+  /**
+   * A secure enclave in the form of a webnative app which serves as the root authority.
+   * Your app is redirect to the lobby where the user can create an account or link a device,
+   * and then request permissions to the user for reading or write to specific parts of the filesystem.
+   */
+  async fissionLobby(config: Configuration, { staging }: { staging?: boolean }) {
+    const crypto = await defaultCryptoComponent(config.appInfo)
+    const depot = await defaultDepotComponent()
+
+    if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
+    return FissionLobbyProduction.implementation({ crypto, depot })
+  }
+}
+
+
+
+// ASSEMBLE
+
+
+/**
+ * Initialise a Webnative App based on a given set of `Components`.
+ * These are various customisable components to determine how a Webnative app works.
+ *
+ * Normally you'll want to prefer a predefined set of components by using
+ * the functions `app` or `delegateApp`. But if you feel adventurous
+ * you can build your own path.
+ */
+export async function assemble(components: Components, config: Configuration): Promise<App> {
   // Check if browser is supported
   if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
   if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
 
-  const authedUsername = await common.authenticatedUsername()
+  // Authenticated user
+  const sessionInfo = await SessionMod.restore(components.storage)
 
-  if (authedUsername && useWnfs) {
-    const dataCid = navigator.onLine ? await dataRoot.lookup(authedUsername) : null // data root on server or DNS
-    const logCid = await cidLog.newest() // data root in browser
-    const rootPermissions = { fs: { private: [pathing.root()], public: [pathing.root()] } }
+  // Auth implementations
+  const auth = components.auth.reduce(
+    (acc: AuthenticationStrategies, method: Auth.Implementation): AuthenticationStrategies => {
+      const wrap = {
+        implementation: method,
+        async session(): Promise<Maybe<Session>> {
+          const newSessionInfo = await SessionMod.restore(components.storage)
+          if (!newSessionInfo) return null
 
-    if (dataCid === null && logCid === undefined) {
-      return appState.scenarioAuthed(
-        authedUsername,
-        await bootstrapFileSystem(rootPermissions)
+          return this.implementation.activate(
+            components,
+            newSessionInfo.username,
+            config
+          )
+        }
+      }
+
+      return {
+        ...acc,
+        [ method.type ]: wrap
+      }
+    },
+    {}
+  )
+
+  // Confidences
+  const confidences = {
+    async collect() {
+      const c = await components.confidences.collect()
+      if (!c) return null
+
+      await Confidences.collect({
+        confidences: c,
+        crypto: components.crypto,
+        reference: components.reference,
+        storage: components.storage
+      })
+
+      return c.username
+    },
+    request() {
+      return components.confidences.request({
+        permissions: config.permissions
+      })
+    },
+    async session(username: string) {
+      const permissions: Permissions = { ...config.permissions, app: config.appInfo }
+      const ucan = Confidences.validatePermissions(
+        components.reference.repositories.ucans,
+        permissions
       )
-    } else {
-      const fs = options.loadFileSystem === false ?
+
+      if (!ucan) {
+        console.warn("The present UCANs did not satisfy the configured permissions.")
+        return null
+      }
+
+      const accountDID = Ucan.rootIssuer(ucan)
+      const validSecrets = await Confidences.validateSecrets(
+        components.crypto,
+        accountDID,
+        permissions
+      )
+
+      if (!validSecrets) {
+        console.warn("The present filesystem secrets did not satisfy the configured permissions.")
+        return null
+      }
+
+      await SessionMod.provide(components.storage, { type: CONFIDENCES_SESSION_TYPE, username })
+
+      const fs = config.filesystem?.loadImmediately === false ?
         undefined :
-        await loadFileSystem(rootPermissions, authedUsername)
+        await loadFileSystem({
+          crypto: components.crypto,
+          manners: components.manners,
+          permissions: permissions,
+          reference: components.reference,
+          username,
+        })
 
-      return appState.scenarioAuthed(
-        authedUsername,
-        fs
-      )
+      return new Session({
+        fs,
+        username,
+        crypto: components.crypto,
+        storage: components.storage,
+        type: CONFIDENCES_SESSION_TYPE,
+      })
     }
-
-  } else if (authedUsername) {
-    return appState.scenarioAuthed(
-      authedUsername,
-      undefined
-    )
-
-  } else {
-    return appState.scenarioNotAuthed()
-
-  }
-}
-
-/**
- * Check if we're authenticated, process any lobby query-parameters present in the URL,
- * and initiate the user's file system if authenticated (can be disabled).
- *
- * See `loadFileSystem` if you want to load the user's file system yourself.
- * NOTE: Only works on the main/ui thread, as it uses `window.location`.
- *
- */
-export async function permissionedApp(options: PermissionedAppInitOptions): Promise<PermissionedAppState> {
-  options = options || {}
-
-  const permissions = options.permissions || null
-  const { rootKey } = options
-
-
-  setImplementations(LOBBY_IMPLEMENTATION)
-
-  const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
-    return options.loadFileSystem === false
-      ? undefined
-      : await loadFileSystem(permissions, username, rootKey)
   }
 
-  // Check if browser is supported
-  if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
-  if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
+  // Session
+  let session = null
 
+  if (config.permissions) {
+    const username = await confidences.collect()
+    if (username) session = await confidences.session(username)
+    if (sessionInfo && sessionInfo.type === CONFIDENCES_SESSION_TYPE) session = await confidences.session(sessionInfo.username)
 
-  const state = await auth.init(options)
+  } else if (sessionInfo && sessionInfo.type !== CONFIDENCES_SESSION_TYPE) {
+    session = await auth[ sessionInfo.type ]?.session()
 
-  // Allow auth implementation to return a State directly
-  if (state && isPermissionedAppState(state)) {
-    return state
   }
 
-  const authedUsername = await common.authenticatedUsername()
-
-  if (authedUsername && permissions) {
-    const validSecrets = await validateSecrets(permissions)
-    const validUcans = ucan.validatePermissions(permissions, authedUsername)
-
-    if (validSecrets && validUcans) {
-      return permissionedAppState.scenarioContinuation(
-        permissions,
-        authedUsername,
-        await maybeLoadFs(authedUsername)
-      )
-    } else {
-      return permissionedAppState.scenarioNotAuthorised(permissions)
-    }
-
-  } else if (authedUsername) {
-    return permissionedAppState.scenarioContinuation(
-      permissions,
-      authedUsername,
-      await maybeLoadFs(authedUsername),
-    )
-
-  } else {
-    return permissionedAppState.scenarioNotAuthorised(permissions)
-
-    
+  // Fin
+  return {
+    auth,
+    components,
+    confidences,
+    session
   }
 }
 
 
-/**
- * Alias for `permissionedApp`.
- */
- export { permissionedApp as initialise }
- export { permissionedApp as initialize }
+
+// COMPOSITIONS
+
+
+export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
+  const config = extractConfig(setup)
+
+  const manners = setup.manners || defaultMannersComponent(config)
+  const crypto = setup.crypto || await defaultCryptoComponent(config.appInfo)
+  const storage = setup.storage || defaultStorageComponent(config.appInfo)
+  const reference = setup.reference || defaultReferenceComponent({ crypto, manners, storage })
+  const depot = setup.depot || await defaultDepotComponent()
+  const confidences = setup.confidences || defaultConfidencesComponent({ crypto, depot })
+  const auth = setup.auth || [ defaultAuthComponent({ crypto, reference, storage }) ]
+
+  return {
+    auth,
+    confidences,
+    crypto,
+    depot,
+    manners,
+    reference,
+    storage,
+  }
+}
 
 
 
-// SUPPORTED
+// DEFAULT COMPONENTS
+
+
+export function defaultAuthComponent({ crypto, reference, storage }: Auth.Dependents): Auth.Implementation {
+  return FissionAuthWnfsProduction.implementation({
+    crypto, reference, storage,
+  })
+}
+
+export function defaultConfidencesComponent({ crypto, depot }: ConfidencesImpl.Dependents): ConfidencesImpl.Implementation {
+  return FissionLobbyProduction.implementation({ crypto, depot })
+}
+
+export function defaultCryptoComponent(appInfo: AppInfo): Promise<Crypto.Implementation> {
+  return BrowserCrypto.implementation({
+    storeName: appId(appInfo),
+    exchangeKeyName: "exchange-key",
+    writeKeyName: "write-key"
+  })
+}
+
+export function defaultDepotComponent(): Promise<Depot.Implementation> {
+  return FissionIpfsProduction.implementation()
+}
+
+export function defaultMannersComponent(config: Configuration): Manners.Implementation {
+  return ProperManners.implementation({
+    configuration: config
+  })
+}
+
+export function defaultReferenceComponent({ crypto, manners, storage }: Reference.Dependents): Reference.Implementation {
+  return FissionReferenceProduction.implementation({
+    crypto,
+    manners,
+    storage,
+  })
+}
+
+export function defaultStorageComponent(appInfo: AppInfo): Storage.Implementation {
+  return BrowserStorage.implementation({
+    name: appId(appInfo)
+  })
+}
+
+
+
+// 🛟
 
 
 export async function isSupported(): Promise<boolean> {
@@ -170,34 +398,3 @@ export async function isSupported(): Promise<boolean> {
       db.onerror = () => resolve(false)
     }))() as boolean
 }
-
-
-// EXPORT
-
-
-export * from "./auth.js"
-export * from "./filesystem.js"
-export * from "./common/version.js"
-
-export const fs = FileSystem
-export { AppScenario, AppState } from "./auth/state/app.js"
-export { AuthCancelled, AuthSucceeded, Continuation, NotAuthorised } from "./auth/state/permissionedApp.js"
-export { Authed, NotAuthed } from "./auth/state/app.js"
-export { PermissionedAppScenario as Scenario, PermissionedAppState as State } from "./auth/state/permissionedApp.js"
-export { AppInitOptions, InitialisationError, PermissionedAppInitOptions } from "./init/types.js"
-
-export * as account from "./auth/index.js"
-export * as apps from "./apps/index.js"
-export * as dataRoot from "./data-root.js"
-export * as did from "./did/index.js"
-export * as errors from "./errors.js"
-export * as lobby from "./lobby/index.js"
-export * as path from "./path.js"
-export * as setup from "./setup.js"
-export * as ucan from "./ucan/index.js"
-
-export * as dns from "./dns/index.js"
-export * as ipfs from "./ipfs/index.js"
-export * as keystore from "./keystore.js"
-export * as machinery from "./common/index.js"
-export * as crypto from "./crypto/index.js"

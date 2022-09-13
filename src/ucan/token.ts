@@ -1,3 +1,5 @@
+import * as uint8arrays from "uint8arrays"
+
 import * as did from "../did/local.js"
 import { verifySignedData } from "../did/validation.js"
 import * as crypto from "../crypto/index.js"
@@ -96,15 +98,15 @@ export async function build({
  *
  * @param ucan The encoded UCAN to decode
  */
-export function decode(ucan: string): Ucan  {
+export function decode(ucan: string): Ucan {
   const split = ucan.split(".")
-  const header = JSON.parse(base64.urlDecode(split[0]))
-  const payload = JSON.parse(base64.urlDecode(split[1]))
+  const header = JSON.parse(base64.urlDecode(split[ 0 ]))
+  const payload = JSON.parse(base64.urlDecode(split[ 1 ]))
 
   return {
     header,
     payload,
-    signature: split[2] || null
+    signature: split[ 2 ] || null
   }
 }
 
@@ -118,8 +120,8 @@ export function encode(ucan: Ucan): string {
   const encodedPayload = encodePayload(ucan.payload)
 
   return encodedHeader + "." +
-         encodedPayload + "." +
-         ucan.signature
+    encodedPayload + "." +
+    ucan.signature
 }
 
 /**
@@ -127,7 +129,7 @@ export function encode(ucan: Ucan): string {
  *
  * @param header The UcanHeader to encode
  */
- export function encodeHeader(header: UcanHeader): string {
+export function encodeHeader(header: UcanHeader): string {
   return base64.urlEncode(JSON.stringify(header))
 }
 
@@ -157,15 +159,14 @@ export function isExpired(ucan: Ucan): boolean {
  * @param ucan The decoded UCAN
  * @param did The DID associated with the signature of the UCAN
  */
- export async function isValid(ucan: Ucan): Promise<boolean> {
+export async function isValid(ucan: Ucan): Promise<boolean> {
   const encodedHeader = encodeHeader(ucan.header)
   const encodedPayload = encodePayload(ucan.payload)
 
   const a = await verifySignedData({
-    charSize: 8,
-    data: `${encodedHeader}.${encodedPayload}`,
+    data: uint8arrays.fromString(`${encodedHeader}.${encodedPayload}`, "utf8"),
     did: ucan.payload.iss,
-    signature: base64.makeUrlUnsafe(ucan.signature || "")
+    signature: uint8arrays.fromString(ucan.signature || "", "base64url")
   })
 
   if (!a) return a
@@ -188,8 +189,8 @@ export function isExpired(ucan: Ucan): boolean {
  * @param ucan A UCAN.
  * @returns The root issuer.
  */
-export function rootIssuer(ucan: string, level = 0): string {
-  const p = extractPayload(ucan, level)
+export function rootIssuer(ucan: string | Ucan, level = 0): string {
+  const p = typeof ucan === "string" ? extractPayload(ucan, level) : ucan.payload
   if (p.prf) return rootIssuer(p.prf, level + 1)
   return p.iss
 }
@@ -212,6 +213,7 @@ export async function sign(header: UcanHeader, payload: UcanPayload): Promise<st
 
 /**
  * JWT algorithm to be used in a JWT header.
+ * TODO: Remove, moved to crypto.keystore
  */
 function jwtAlgorithm(cryptoSystem: string): string | null {
   switch (cryptoSystem) {
@@ -229,7 +231,7 @@ function jwtAlgorithm(cryptoSystem: string): string | null {
  */
 function extractPayload(ucan: string, level: number): { iss: string; prf: string | null } {
   try {
-    return JSON.parse(base64.urlDecode(ucan.split(".")[1]))
+    return JSON.parse(base64.urlDecode(ucan.split(".")[ 1 ]))
   } catch (_) {
     throw new Error(`Invalid UCAN (${level} level${level === 1 ? "" : "s"} deep): \`${ucan}\``)
   }

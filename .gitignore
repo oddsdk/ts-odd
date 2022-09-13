@@ -115,4 +115,5 @@ temp/
 
 # End of https://www.toptal.com/developers/gitignore/api/yarn,node,elm
 
+.DS_Store
 /.direnv

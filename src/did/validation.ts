@@ -1,5 +1,4 @@
 import * as crypto from "../crypto/index.js"
-import * as utils from "keystore-idb/utils.js"
 import { didToPublicKey } from "./transformers.js"
 import { KeyType } from "./types.js"
 
@@ -7,26 +6,20 @@ import { KeyType } from "./types.js"
 /**
  * Verify the signature of some data (string, ArrayBuffer or Uint8Array), given a DID.
  */
-export async function verifySignedData({ charSize = 16, data, did, signature }: {
-  charSize?: number
-  data: string
+export async function verifySignedData({ data, did, signature }: {
+  data: Uint8Array
   did: string
-  signature: string
+  signature: Uint8Array
 }): Promise<boolean> {
   try {
     const { type, publicKey } = didToPublicKey(did)
-
-    const sigBytes = new Uint8Array(utils.base64ToArrBuf(signature))
-    const dataBytes = new Uint8Array(utils.normalizeUnicodeToBuf(data, charSize))
-    const keyBytes = new Uint8Array(utils.base64ToArrBuf(publicKey))
-
     switch (type) {
 
       case KeyType.Edwards:
-        return await crypto.ed25519.verify(dataBytes, sigBytes, keyBytes)
+        return await crypto.ed25519.verify(data, signature, publicKey)
 
       case KeyType.RSA:
-        return await crypto.rsa.verify(dataBytes, sigBytes, keyBytes)
+        return await crypto.rsa.verify(data, signature, publicKey)
 
       default: return false
     }
