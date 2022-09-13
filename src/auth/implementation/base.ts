@@ -3,7 +3,7 @@ import type { Channel, ChannelOptions } from "../channel.js"
 import { USERNAME_STORAGE_KEY } from "../../common/index.js"
 import { AppState } from "../state/app.js"
 import { createAccount } from "../../lobby/index.js"
-import { toInternalUsername } from "../username.js"
+import { toGlobalUsername } from "../username.js"
 
 import * as channel from "../channel.js"
 import * as did from "../../did/index.js"
@@ -17,10 +17,10 @@ export const init = async (): Promise<AppState | null> => {
 }
 
 export const register = async (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
-  const internalUserame = await toInternalUsername(options.username)
+  const globalUserame = await toGlobalUsername(options.username)
 
   const { success } = await createAccount({
-    username: internalUserame,
+    username: globalUserame,
     email: options.email
   })
 
