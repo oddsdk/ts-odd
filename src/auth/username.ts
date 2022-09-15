@@ -4,6 +4,8 @@ import { impl as auth } from "./implementation.js"
 export const toGlobalUsername = async (username: string): Promise<string> => {
   const { username: uname, hash } = auth.transformUsername(username)
 
+  const normalizedUsername = uname.normalize("NFC")
+
   if (hash) {
     return await crypto.sha256Str(uname)
   } else {
