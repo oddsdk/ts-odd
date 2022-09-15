@@ -7,7 +7,7 @@ export const toGlobalUsername = async (username: string): Promise<string> => {
   const normalizedUsername = uname.normalize("NFC")
 
   if (hash) {
-    return await crypto.sha256Str(uname)
+    return (await crypto.sha256Str(normalizedUsername)).slice(0, 32)
   } else {
     return uname
   }
