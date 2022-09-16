@@ -1,9 +1,9 @@
+import * as fc from "fast-check"
 import expect from "expect"
 
-import * as fc from "fast-check"
 import * as setup from "../setup.js"
 import { BASE_IMPLEMENTATION } from "./implementation/base.js"
-import { toGlobalUsername } from "./username.js"
+import { isUsernameSafe, toGlobalUsername } from "./username.js"
 
 
 const safeCharacters = [ ..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY0123456789" ]
@@ -68,13 +68,81 @@ describe("toGlobalUsername", async () => {
     await fc.assert(
       fc.asyncProperty(fc.string({ minLength: 1, maxLength: 32 }), async username => {
         await expect(toGlobalUsername(username))
-        .rejects
-        .toThrow()
+          .rejects
+          .toThrow()
       })
     )
   })
+
+  after(() => {
+    // Reset to avoid side effects in other test suites
+    setIdentity()
+  })
 })
 
+describe("isUsernameSafe", () => {
+
+  it("allows basic usernames", () => {
+    expect(isUsernameSafe("simple")).toBe(true)
+  })
+
+  it("allows internal hyphens", () => {
+    expect(isUsernameSafe("happy-name")).toBe(true)
+  })
+
+  it("allows numbers", () => {
+    expect(isUsernameSafe("not-the-90s-anymore")).toBe(true)
+  })
+
+  it("allows internal underscores", () => {
+    expect(isUsernameSafe("under_score")).toBe(true)
+  })
+
+  it("does not allow blocklisted words", () => {
+    expect(isUsernameSafe("recovery")).toBe(false)
+  })
+
+  it("is not case sensitive", () => {
+    expect(isUsernameSafe("reCovErY")).toBe(false)
+  })
+
+  it("does not allow empty strings", () => {
+    expect(isUsernameSafe("")).toBe(false)
+  })
+
+  it("does not allow special characters", () => {
+    expect(isUsernameSafe("plus+plus")).toBe(false)
+  })
+
+  it("does not allow prefixed hyphens", () => {
+    expect(isUsernameSafe("-startswith")).toBe(false)
+  })
+
+  it("does not allow suffixed hyphens", () => {
+    expect(isUsernameSafe("endswith-")).toBe(false)
+  })
+
+  it("does not allow prefixed underscores", () => {
+    expect(isUsernameSafe("_startswith")).toBe(false)
+  })
+
+  it("does not allow spaces", () => {
+    expect(isUsernameSafe("with space")).toBe(false)
+  })
+
+  it("does not allow dots", () => {
+    expect(isUsernameSafe("with.dot")).toBe(false)
+  })
+
+  it("does not allow two dots", () => {
+    expect(isUsernameSafe("has.two.dots")).toBe(false)
+  })
+
+  it("does not allow special characters", () => {
+    expect(isUsernameSafe("name&with#chars")).toBe(false)
+  })
+
+})
 
 // Implementations
 
