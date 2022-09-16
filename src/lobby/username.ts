@@ -1,6 +1,5 @@
+import { toGlobalUsername } from "../auth/username.js"
 import { setup } from "../setup/internal.js"
-
-import { USERNAME_BLOCKLIST } from "./blocklist.js"
 
 /**
  * Check if a username is available.
@@ -9,18 +8,21 @@ export async function isUsernameAvailable(
   username: string
 ): Promise<boolean> {
   const apiEndpoint = setup.getApiEndpoint()
+  const globalUsername = await toGlobalUsername(username)
 
-  const resp = await fetch(`${apiEndpoint}/user/data/${username}`)
+  const resp = await fetch(`${apiEndpoint}/user/data/${globalUsername}`)
   return !resp.ok
 }
 
 /**
  * Check if a username is valid.
  */
-export function isUsernameValid(username: string): boolean {
-  return !username.startsWith("-") &&
-         !username.endsWith("-") &&
-         !username.startsWith("_") &&
-         /^[a-zA-Z0-9_-]+$/.test(username) &&
-         !USERNAME_BLOCKLIST.includes(username.toLowerCase())
+export async function isUsernameValid(username: string): Promise<boolean> {
+  try {
+    await toGlobalUsername(username)
+
+    return true
+  } catch {
+    return false
+  }
 }
