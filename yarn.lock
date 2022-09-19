@@ -1480,6 +1480,11 @@
   resolved "https://registry.npmjs.org/@vascosantos/moving-average/-/moving-average-1.1.0.tgz"
   integrity sha512-MVEJ4vWAPNbrGLjz7ITnHYg+YXZ6ijAqtH5/cHwSoCpbvuJ98aLXwFfPKAUfZpJMQR5uXB58UJajbY130IRF/w==
 
+"@yarnpkg/lockfile@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@yarnpkg/lockfile/-/lockfile-1.1.0.tgz#e77a97fbd345b76d83245edcd17d393b1b41fb31"
+  integrity sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==
+
 abort-controller@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/abort-controller/-/abort-controller-3.0.0.tgz#eaf54d53b62bae4138e809ca225c8439a6efb392"
@@ -6278,10 +6283,10 @@ which@2.0.2, which@^2.0.1:
   dependencies:
     isexe "^2.0.0"
 
-wnfs@^0.1.7-alpha5:
-  version "0.1.7-alpha5"
-  resolved "https://registry.yarnpkg.com/wnfs/-/wnfs-0.1.7-alpha5.tgz#35a74edcf4895adec0806c20537a5bdcbb2ff9b2"
-  integrity sha512-wJ0SX06y/ogu1VU52Y2OvFpIR6bTgNso60w45aa3uWE5Mxf5wWnkjNgxT0VTGc9yX6ehBCUTZurKl6Mmx6BIHQ==
+wnfs@^0.1.7:
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/wnfs/-/wnfs-0.1.7.tgz#e8f85fabafbb9bb85a92fc4c3ef3d12e6c4c4712"
+  integrity sha512-WTadILZSNX7Ti+jy1QgqGtWp0pLHvPAG+ERsNWge2DuR8P8x+U/CM9QjYqJb7wqBkbSoboZgeBspetybIzNQgw==
 
 word-wrap@^1.2.3, word-wrap@~1.2.3:
   version "1.2.3"
