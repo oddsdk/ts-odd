@@ -112,6 +112,7 @@
     "localforage": "^1.10.0",
     "multiformats": "^9.5.4",
     "one-webcrypto": "^1.0.3",
+    "punycode": "^2.1.1",
     "throttle-debounce": "^3.0.1",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^3.0.0",
