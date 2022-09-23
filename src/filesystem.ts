@@ -21,6 +21,10 @@ import { Permissions } from "./ucan/permissions.js"
 import { setup } from "./setup/internal.js"
 
 
+
+// LOAD
+
+
 /**
  * Load a user's file system.
  *
@@ -35,10 +39,8 @@ import { setup } from "./setup/internal.js"
 export async function loadFileSystem(
   permissions: Maybe<Permissions>,
   username?: string,
-  rootKey?: string
 ): Promise<FileSystem> {
-  let cid: Maybe<CID>
-  let fs
+  let fs: FileSystem | null = null
 
   // Look for username
   username = username || (await authenticatedUsername() || undefined)
@@ -47,60 +49,146 @@ export async function loadFileSystem(
   // Ensure internal UCAN dictionary
   await ucan.store([])
 
-  // Determine the correct CID of the file system to load
-  const dataCid = navigator.onLine ? await dataRoot.lookup(username) : null
-  const [ logIdx, logLength ] = dataCid ? await cidLog.index(dataCid.toString()) : [ -1, 0 ]
+  // Get latest log CID
+  const logCid = await getLogCid()
 
+  // Offline
   if (!navigator.onLine) {
-    // Offline, use local CID
-    cid = decodeCID(await cidLog.newest())
+    if (logCid) {
+      // Load from log CID
+      fs = await loadFromCid(logCid, permissions)
 
-  } else if (!dataCid) {
-    // No DNS CID yet
-    cid = decodeCID(await cidLog.newest())
-    if (cid) debug.log("📓 No DNSLink, using local CID:", cid.toString())
-    else debug.log("📓 Creating a new file system")
+    } else {
+      // Might come online, poll for data root
+      const dataRoot = await getDataRoot(username, { maxRetries: 20 })
 
-  } else if (logIdx === 0) {
-    // DNS is up to date
-    cid = dataCid
-    debug.log("📓 DNSLink is up to date:", cid.toString())
+      if (dataRoot) {
+        fs = await loadFromCid(dataRoot, permissions)
+        await cidLog.add(dataRoot.toString())
+      }
+    }
 
-  } else if (logIdx > 0) {
-    // DNS is outdated
-    cid = decodeCID(await cidLog.newest())
-    const idxLog = logIdx === 1 ? "1 newer local entry" : logIdx + " newer local entries"
-    debug.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid.toString())
+    if (fs) return fs
+    throw new Error("Could not load filesystem from local CID or DNSLink")
+  }
+
+  // Online, try for data root once
+  let dataRoot = await getDataRoot(username)
+
+  if (logCid && dataRoot) {
+    const [ logIdx, logLength ] = dataRoot ? await cidLog.index(dataRoot.toString()) : [ -1, 0 ]
+
+    if (logIdx === 0) {
+      // DNS is up to date
+      fs = await loadFromCid(dataRoot, permissions)
+      debug.log("📓 DNSLink is up to date:", dataRoot.toString())
+
+    } else if (logIdx > 0) {
+      // DNS is outdated
+      fs = await loadFromCid(logCid, permissions)
+      const idxLog = logIdx === 1 ? "1 newer local entry" : logIdx + " newer local entries"
+      debug.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", logCid.toString())
+
+    } else {
+      // DNS is newer
+      fs = await loadFromCid(dataRoot, permissions)
+      await cidLog.add(dataRoot.toString())
+      debug.log("📓 DNSLink is newer:", dataRoot.toString())
+
+      // TODO: We could test the filesystem version at this DNSLink at this point to figure out whether to continue locally.
+      // However, that needs a plan for reconciling local changes back into the DNSLink, once migrated. And a plan for migrating changes
+      // that are only stored locally.
+
+    }
+
+    return fs
+  } else if (dataRoot) {
+    // No log CID, use data root
+    fs = await loadFromCid(dataRoot, permissions)
+    await cidLog.add(dataRoot.toString())
 
   } else {
-    // DNS is newer
-    cid = dataCid
-    await cidLog.add(cid.toString())
-    debug.log("📓 DNSLink is newer:", cid.toString())
+    // Poll more aggressively for data root
+    dataRoot = await getDataRoot(username, { maxRetries: 20 })
 
-    // TODO: We could test the filesystem version at this DNSLink at this point to figure out whether to continue locally.
-    // However, that needs a plan for reconciling local changes back into the DNSLink, once migrated. And a plan for migrating changes
-    // that are only stored locally.
+    if (dataRoot) {
+      fs = await loadFromCid(dataRoot, permissions)
+      await cidLog.add(dataRoot.toString())
+    } else {
+      throw new Error("Could not load filesystem from DNSLink")
+    }
 
   }
-
-  // If a file system exists, load it and return it
-  const p = permissions || undefined
-
-  if (cid != null) {
-    await checkFileSystemVersion(cid)
-    fs = await FileSystem.fromCID(cid, { permissions: p })
-    if (fs != null) return fs
-  }
-
-  // Otherwise make a new one
-  if (!rootKey) throw new Error("Can't make new filesystem without a root AES key")
-  fs = await FileSystem.empty({ permissions: p, rootKey })
-  await addSampleData(fs)
 
   // Fin
   return fs
 }
+
+/**
+ * Get the latest cidLog entry
+ *  
+ * @returns latest cidLog entry or null
+ */
+const getLogCid = async (): Promise<CID | null> => {
+  const encodedCid = await cidLog.newest()
+  return encodedCid ? decodeCID(encodedCid) : null
+}
+
+/**
+ * Get a user's data root
+ *  
+ * @param username The user's name
+ * @param options Optional parameters
+ * @param options.maxRetries Maximum number of retry attempts
+ * @param options.retryInterval Retry interval in milliseconds
+ * @returns data root CID or null
+ */
+const getDataRoot = async (
+  username: string,
+  options: { maxRetries?: number; retryInterval?: number }
+    = {}
+): Promise<CID | null> => {
+  const maxRetries = options.maxRetries ?? 0
+  const retryInterval = options.retryInterval ?? 500
+
+  let dataCid = await dataRoot.lookup(username)
+
+  if (dataCid) return dataCid
+
+  return new Promise((resolve) => {
+    let attempt = 0
+
+    const dataRootInterval = setInterval(async () => {
+      dataCid = await dataRoot.lookup(username)
+
+      if (!dataCid && attempt < maxRetries) {
+        attempt++
+        return
+      }
+
+      clearInterval(dataRootInterval)
+      resolve(dataCid)
+    }, retryInterval)
+  })
+}
+
+/**
+ * Load a filesystem from a CID
+ *  
+ * @param cid The CID to load from
+ * @param permissions Permissions to access the filesystem
+ * @returns 
+ */
+const loadFromCid = async (cid: CID, permissions: Maybe<Permissions>): Promise<FileSystem> => {
+  const p = permissions || undefined
+
+  await checkFileSystemVersion(cid)
+  return await FileSystem.fromCID(cid, { permissions: p })
+}
+
+
+
+// CREATE
 
 
 /**
@@ -152,7 +240,7 @@ export const bootstrapFileSystem = async (
   })
 
   // Add filesystem UCAN to store
-  await ucan.store([token.encode(fsUcan)])
+  await ucan.store([ token.encode(fsUcan) ])
 
   // Update filesystem and publish data root
   const rootCid = await fs.publish()
@@ -165,17 +253,21 @@ export const bootstrapFileSystem = async (
 }
 
 
+
+// VERSION
+
+
 export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> {
   const links = await protocol.basic.getSimpleLinks(filesystemCID)
   // if there's no version link, we assume it's from a 1.0.0-compatible version
   // (from before ~ November 2020)
-  const versionStr = links[Branch.Version] == null
+  const versionStr = links[ Branch.Version ] == null
     ? "1.0.0"
     : new TextDecoder().decode(
-        await protocol.basic.getFile(
-          decodeCID(links[Branch.Version].cid)
-        )
+      await protocol.basic.getFile(
+        decodeCID(links[ Branch.Version ].cid)
       )
+    )
 
   const errorVersionBigger = async () => {
     await setup.userMessages.versionMismatch.newer(versionStr)
@@ -208,7 +300,7 @@ export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> 
 // ROOT HELPERS
 
 
-const ROOT_PERMISSIONS = { fs: { private: [pathing.root()], public: [pathing.root()] } }
+const ROOT_PERMISSIONS = { fs: { private: [ pathing.root() ], public: [ pathing.root() ] } }
 
 /**
  * Load a user's root file system.
