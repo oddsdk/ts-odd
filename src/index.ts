@@ -1,14 +1,11 @@
 import localforage from "localforage"
 
-import * as cidLog from "./common/cid-log.js"
 import * as common from "./common/index.js"
-import * as dataRoot from "./data-root.js"
-import * as pathing from "./path.js"
 import * as ucan from "./ucan/internal.js"
 
 import { AppInitOptions, InitialisationError, PermissionedAppInitOptions } from "./init/types.js"
 import { validateSecrets } from "./auth/state.js"
-import { bootstrapFileSystem, loadFileSystem } from "./filesystem.js"
+import { bootstrapRootFileSystem, createFileSystem, loadFileSystem, loadRootFileSystem } from "./filesystem.js"
 
 import FileSystem from "./fs/index.js"
 
@@ -92,15 +89,28 @@ export async function permissionedApp(options: PermissionedAppInitOptions): Prom
   options = options || {}
 
   const permissions = options.permissions || null
-  const { rootKey } = options
-
 
   setImplementations(LOBBY_IMPLEMENTATION)
 
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
-    return options.loadFileSystem === false
-      ? undefined
-      : await loadFileSystem(permissions, username, rootKey)
+    let fs: FileSystem | undefined
+
+    if (options.loadFileSystem === false) {
+      return fs
+    }
+
+    try {
+      fs = await loadFileSystem(permissions, username)
+
+    } catch (err) {
+      if (options.rootKey) {
+        fs = await createFileSystem(permissions, options.rootKey)
+      } else {
+        throw err
+      }
+    }
+
+    return fs
   }
 
   // Check if browser is supported
@@ -141,7 +151,6 @@ export async function permissionedApp(options: PermissionedAppInitOptions): Prom
   } else {
     return permissionedAppState.scenarioNotAuthorised(permissions)
 
-    
   }
 }
 
@@ -149,8 +158,8 @@ export async function permissionedApp(options: PermissionedAppInitOptions): Prom
 /**
  * Alias for `permissionedApp`.
  */
- export { permissionedApp as initialise }
- export { permissionedApp as initialize }
+export { permissionedApp as initialise }
+export { permissionedApp as initialize }
 
 
 

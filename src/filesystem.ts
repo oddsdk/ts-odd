@@ -33,8 +33,6 @@ import { setup } from "./setup/internal.js"
  * @param username Optional, username of the user to load the file system from.
  *                 Will try to load the file system of the authenticated user
  *                 by default. Throws an error if there's no authenticated user.
- * @param rootKey Optional, AES key to be the root key of a new filesystem.
- *                Will be used if a filesystem hasn't been created yet.
  */
 export async function loadFileSystem(
   permissions: Maybe<Permissions>,
@@ -190,6 +188,21 @@ const loadFromCid = async (cid: CID, permissions: Maybe<Permissions>): Promise<F
 
 // CREATE
 
+/**
+ * Create a filesystem
+ *
+ * @param permissions The permissions from initialise.
+ *                    Pass `null` if working without permissions
+ * @param rootKey AES key to be the root key of a new filesystem
+ * @returns
+ */
+export const createFileSystem = async (permissions: Maybe<Permissions>, rootKey: string) => {
+  const p = permissions || undefined
+  const fs = await FileSystem.empty({ permissions: p, rootKey })
+  await addSampleData(fs)
+
+  return fs
+}
 
 /**
  * Create a new filesystem and assign it to a user.

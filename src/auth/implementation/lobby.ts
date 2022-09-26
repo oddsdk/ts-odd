@@ -7,7 +7,7 @@ import * as check from "../../common/type-checks.js"
 import { USERNAME_STORAGE_KEY, decodeCID } from "../../common/index.js"
 import { scenarioAuthCancelled, scenarioAuthSucceeded, scenarioNotAuthorised, PermissionedAppState } from "../state/permissionedApp.js"
 import { validateSecrets } from "../state.js"
-import { loadFileSystem } from "../../filesystem.js"
+import { createFileSystem, loadFileSystem } from "../../filesystem.js"
 import { setup } from "../../setup/internal.js"
 
 import * as crypto from "../../crypto/index.js"
@@ -31,9 +31,24 @@ export const init = async (options: PermissionedAppInitOptions): Promise<Permiss
 
   // TODO: should be shared?
   const maybeLoadFs = async (username: string): Promise<undefined | FileSystem> => {
-    return options.loadFileSystem === false
-      ? undefined
-      : await loadFileSystem(permissions, username, rootKey)
+    let fs: FileSystem | undefined
+
+    if (options.loadFileSystem === false) {
+      return fs
+    }
+
+    try {
+      fs = await loadFileSystem(permissions, username)
+
+    } catch (err) {
+      if (options.rootKey) {
+        fs = await createFileSystem(permissions, options.rootKey)
+      } else {
+        throw err
+      }
+    }
+
+    return fs
   }
 
   // URL things
