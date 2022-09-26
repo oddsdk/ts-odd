@@ -50,23 +50,21 @@ export async function app(options: AppInitOptions): Promise<AppState> {
   const authedUsername = await common.authenticatedUsername()
 
   if (authedUsername && useWnfs) {
-    const dataCid = navigator.onLine ? await dataRoot.lookup(authedUsername) : null // data root on server or DNS
-    const logCid = await cidLog.newest() // data root in browser
-    const rootPermissions = { fs: { private: [pathing.root()], public: [pathing.root()] } }
-
-    if (dataCid === null && logCid === undefined) {
-      return appState.scenarioAuthed(
-        authedUsername,
-        await bootstrapFileSystem(rootPermissions)
-      )
-    } else {
+    try {
       const fs = options.loadFileSystem === false ?
         undefined :
-        await loadFileSystem(rootPermissions, authedUsername)
+        await loadRootFileSystem()
 
       return appState.scenarioAuthed(
         authedUsername,
         fs
+      )
+    } catch {
+
+      // Bootstrap filesystem if one doesn't exist
+      return appState.scenarioAuthed(
+        authedUsername,
+        await bootstrapRootFileSystem()
       )
     }
 
