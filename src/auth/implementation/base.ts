@@ -19,17 +19,16 @@ export const init = async (): Promise<AppState | null> => {
 export const register = async (options: { username: string; email?: string }): Promise<{ success: boolean }> => {
   const globalUserame = await toGlobalUsername(options.username)
 
-  console.log("Global username", globalUserame)
+  const { success } = await createAccount({
+    username: globalUserame,
+    email: options.email
+  })
 
-  // const { success } = await createAccount({
-  //   username: globalUserame,
-  //   email: options.email
-  // })
+  if (success) {
+    await storage.setItem(USERNAME_STORAGE_KEY, options.username)
+    return { success: true }
+  }
 
-  // if (success) {
-  //   await storage.setItem(USERNAME_STORAGE_KEY, options.username)
-  //   return { success: true }
-  // }
   return { success: false }
 }
 

@@ -4,26 +4,17 @@ import * as crypto from "../crypto/index.js"
 import { impl as auth } from "./implementation.js"
 import { USERNAME_BLOCKLIST } from "../lobby/blocklist.js"
 import { encode as punyEncode } from "punycode"
-import { webcrypto } from "one-webcrypto"
 
 export const toGlobalUsername = async (username: string): Promise<string> => {
   const { username: uname, hash } = auth.transformUsername(username)
 
 
   if (hash) {
-
     const normalizedUsername = uname.normalize("NFC")
     const punyUsername = punyEncode(normalizedUsername)
     const hashedUsername = (await crypto.sha256Str(punyUsername)).slice(0, 32) 
     const encodedUsername = uint8arrays.toString(uint8arrays.fromString(hashedUsername), "base32")
 
-    console.log("puny username", punyUsername)
-    console.log("hashed username", hashedUsername)
-    console.log("encoded username", encodedUsername)
-
-
-    // return (await crypto.sha256Str(normalizedUsername)).slice(0, 32)
-    // return (await crypto.sha256Str(punyUsername)).slice(0, 32)
     return encodedUsername
   } else {
     if (!isUsernameSafe(uname)) {
