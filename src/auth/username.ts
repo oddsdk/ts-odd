@@ -10,7 +10,7 @@ export const toGlobalUsername = async (username: string): Promise<string> => {
 
   if (hash) {
 
-    const normalizedUsername = uname.normalize("NFC")
+    const normalizedUsername = uname.normalize("NFD")
     const hashedUsername = (await crypto.sha256Str(normalizedUsername)).slice(0, 32)
     const encodedUsername = uint8arrays.toString(uint8arrays.fromString(hashedUsername), "base32")
 
