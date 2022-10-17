@@ -3,16 +3,15 @@ import * as uint8arrays from "uint8arrays"
 import * as crypto from "../crypto/index.js"
 import { impl as auth } from "./implementation.js"
 import { USERNAME_BLOCKLIST } from "../lobby/blocklist.js"
-import { encode as punyEncode } from "punycode"
 
 export const toGlobalUsername = async (username: string): Promise<string> => {
   const { username: uname, hash } = auth.transformUsername(username)
 
 
   if (hash) {
+
     const normalizedUsername = uname.normalize("NFC")
-    const punyUsername = punyEncode(normalizedUsername)
-    const hashedUsername = (await crypto.sha256Str(punyUsername)).slice(0, 32) 
+    const hashedUsername = (await crypto.sha256Str(normalizedUsername)).slice(0, 32)
     const encodedUsername = uint8arrays.toString(uint8arrays.fromString(hashedUsername), "base32")
 
     return encodedUsername
