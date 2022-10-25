@@ -4,8 +4,10 @@ import * as Crypto from "../crypto/implementation.js"
 import * as Manners from "../manners/implementation.js"
 import * as Storage from "../storage/implementation.js"
 
+import * as CIDLog from "../../repositories/cid-log.js"
+import * as Ucans from "../../repositories/ucans.js"
+
 import { Ucan } from "../../ucan/types.js"
-import Repository from "../../repository.js"
 
 
 export type Dependents = {
@@ -29,7 +31,7 @@ export type Implementation = {
     lookupTxtRecord: (domain: string) => Promise<string | null>
   }
   repositories: {
-    cidLog: Repository<CID>
-    ucans: Repository<Ucan>
+    cidLog: CIDLog.Repo
+    ucans: Ucans.Repo
   }
 }

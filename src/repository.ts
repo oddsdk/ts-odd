@@ -8,7 +8,7 @@ export type RepositoryOptions {
 }
 
 
-export default class Repository<T> {
+export default abstract class Repository<T> {
 
   dictionary: Record<string, T>
   memoryCache: T[]

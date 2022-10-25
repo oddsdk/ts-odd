@@ -6,17 +6,24 @@ import Repository from "../repository"
 
 
 export function create({ storage }: { storage: Storage.Implementation }): Repository<CID> {
-  const repo = new Repository({
+  return new Repo({
     storage,
     storageName: storage.KEYS.CID_LOG
-  }) as Repository<CID> // TODO: Can I remove this `as` statement somehow?
-
-  repo.fromJSON = decodeCID
-
-  return repo
+  })
 }
 
 
-export function newest(repo: Repository<CID>): CID {
-  return repo.memoryCache[ repo.memoryCache.length - 1 ]
+// CLASS
+
+
+export class Repo extends Repository<CID> {
+
+  fromJSON(a: string): CID {
+    return decodeCID(a)
+  }
+
+  newest(): CID {
+    return this.memoryCache[ this.memoryCache.length - 1 ]
+  }
+
 }

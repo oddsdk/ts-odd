@@ -8,22 +8,80 @@ import { Resource } from "../ucan/index.js"
 
 
 export function create({ storage }: { storage: Storage.Implementation }): Repository<Ucan.Ucan> {
-  const repo = new Repository({
+  return new Repo({
     storage,
     storageName: storage.KEYS.UCANS
-  }) as Repository<Ucan.Ucan> // TODO: Can I remove this `as` statement somehow?
+  })
+}
 
-  repo.fromJSON = Ucan.decode
-  repo.toJSON = Ucan.encode
+
+
+// CLASS
+
+
+export class Repo extends Repository<Ucan.Ucan> {
+
+  // ENCODING
+
+  fromJSON(a: string): Ucan.Ucan { return Ucan.decode(a) }
+  toJSON(a: Ucan.Ucan): string { return Ucan.encode(a) }
 
   // `${resourceKey}:${resourceValue}`
-  repo.toDictionary = (items) => items.reduce(
-    (acc, ucan) => ({ ...acc, [ resourceLabel(ucan.payload.rsc) ]: ucan }),
-    {}
-  )
+  toDictionary(items: Ucan.Ucan[]) {
+    return items.reduce(
+      (acc, ucan) => ({ ...acc, [ resourceLabel(ucan.payload.rsc) ]: ucan }),
+      {}
+    )
+  }
 
-  return repo
+
+  // LOOKUPS
+
+  /**
+   * Look up a UCAN with a file system path.
+   */
+  async lookupFilesystemUcan(
+    path: DistinctivePath | "*"
+  ): Promise<Ucan.Ucan | null> {
+    const god = this.getByKey("*")
+    if (god) return god
+
+    const all = path === "*"
+    const isDirectory = all ? false : Path.isDirectory(path as DistinctivePath)
+    const pathParts = all ? [ "*" ] : Path.unwrap(path as DistinctivePath)
+
+    const prefix = filesystemPrefix()
+
+    return pathParts.reduce(
+      (acc: Ucan.Ucan | null, part: string, idx: number) => {
+        if (acc) return acc
+
+        const isLastPart = idx === 0
+        const partsSlice = pathParts.slice(0, pathParts.length - idx)
+
+        const partialPath = Path.toPosix(
+          isLastPart && !isDirectory
+            ? Path.file(...partsSlice)
+            : Path.directory(...partsSlice)
+        )
+
+        return this.getByKey(`${prefix}${partialPath}`) || null
+      },
+      null
+    )
+  }
+
+  /**
+   * Look up a UCAN for a platform app.
+   */
+  async lookupAppUcan(
+    domain: string
+  ): Promise<Ucan.Ucan | null> {
+    return this.getByKey("*") || this.getByKey("app:*") || this.getByKey(`app:${domain}`)
+  }
+
 }
+
 
 
 // CONSTANTS
@@ -46,51 +104,6 @@ export function filesystemPrefix(username?: string): string {
   // TODO: Waiting on API change.
   //       Should be `${WNFS_PREFIX}:${host}/`
   return WNFS_PREFIX + ":"
-}
-
-/**
- * Look up a UCAN for a platform app.
- */
-export async function lookupAppUcan(
-  repo: Repository<Ucan.Ucan>,
-  domain: string
-): Promise<Ucan.Ucan | null> {
-  return repo.getByKey("*") || repo.getByKey("app:*") || repo.getByKey(`app:${domain}`)
-}
-
-/**
- * Look up a UCAN with a file system path.
- */
-export async function lookupFilesystemUcan(
-  repo: Repository<Ucan.Ucan>,
-  path: DistinctivePath | "*"
-): Promise<Ucan.Ucan | null> {
-  const god = repo.getByKey("*")
-  if (god) return god
-
-  const all = path === "*"
-  const isDirectory = all ? false : Path.isDirectory(path as DistinctivePath)
-  const pathParts = all ? [ "*" ] : Path.unwrap(path as DistinctivePath)
-
-  const prefix = filesystemPrefix()
-
-  return pathParts.reduce(
-    (acc: Ucan.Ucan | null, part: string, idx: number) => {
-      if (acc) return acc
-
-      const isLastPart = idx === 0
-      const partsSlice = pathParts.slice(0, pathParts.length - idx)
-
-      const partialPath = Path.toPosix(
-        isLastPart && !isDirectory
-          ? Path.file(...partsSlice)
-          : Path.directory(...partsSlice)
-      )
-
-      return repo.getByKey(`${prefix}${partialPath}`) || null
-    },
-    null
-  )
 }
 
 /**
