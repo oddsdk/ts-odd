@@ -8,7 +8,7 @@ IPFS node things.
 
 // Considered dev dependency as these imports will not be present in the resulting lib code
 import type { IPFS as IPFSCore } from "ipfs-core-types"
-import type { libp2p } from "ipfs-core/components/network"
+import type { libp2p, Repo } from "ipfs-core/components/network"
 import type { Options as IPFSOptions } from "ipfs-core/types"
 
 import localforage from "localforage"
@@ -19,7 +19,7 @@ import { peerIdFromString } from "@libp2p/peer-id"
 import * as t from "../../../../common/type-checks.js"
 import { IPFSPackage } from "./types.js"
 
-import * as repo from "./node/repo.js"
+import * as IpfsRepo from "./node/repo.js"
 
 
 // GLOBAL STATE
@@ -101,7 +101,6 @@ export const OPTIONS: IPFSOptions = {
   init: {
     algorithm: isSafari ? keys.RSA : undefined
   },
-  repo: repo.create()
 }
 
 
@@ -109,7 +108,7 @@ export const OPTIONS: IPFSOptions = {
 // 🚀
 
 
-export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, logging: boolean): Promise<IPFSCore> {
+export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, logging: boolean): Promise<[ IPFSCore, Repo ]> {
   const peers = await listPeers(peersUrl)
 
   if (peers.length === 0) {
@@ -117,7 +116,8 @@ export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, loggi
   }
 
   // Start an IPFS node & connect to all the peers
-  const ipfs: IPFSCore = await pkg.create(OPTIONS)
+  const repo = IpfsRepo.create()
+  const ipfs: IPFSCore = await pkg.create({ ...OPTIONS, repo })
 
   peers.forEach(peer => {
     latestPeerTimeoutIds[ peer.toString() ] = null
@@ -140,7 +140,7 @@ export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, loggi
 
   // Fin
   if (logging) console.log("🚀 Started IPFS node")
-  return ipfs
+  return [ ipfs, repo ]
 }
 
 

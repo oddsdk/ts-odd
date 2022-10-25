@@ -2,25 +2,19 @@ import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
 import { CID } from "multiformats/cid"
 
-import { AddResult } from "../../ipfs/index.js"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
-import { Puttable, SimpleLink, SimpleLinks, UnixTree } from "../types.js"
-import { Branch, DistinctivePath } from "../../path.js"
+import { Branch, DistinctivePath } from "../../path/index.js"
 import { Maybe, decodeCID } from "../../common/index.js"
-import { Permissions } from "../../ucan/permissions.js"
-import { get as getIpfs } from "../../ipfs/config.js"
+import { Permissions } from "../../permissions.js"
+import { Puttable, SimpleLink, SimpleLinks, UnixTree } from "../types.js"
 
-import * as crypto from "../../crypto/index.js"
-import * as identifiers from "../../common/identifiers.js"
+import * as Identifiers from "../../common/identifiers.js"
+import * as Path from "../../path/index.js"
+import * as TypeChecks from "../../common/type-checks.js"
+import * as Versions from "../Versions.js"
+
 import * as link from "../link.js"
-import * as ipfs from "../../ipfs/index.js"
-import * as pathing from "../../path.js"
 import * as protocol from "../protocol/index.js"
-import * as storage from "../../storage/index.js"
-import * as typeChecks from "../../common/type-checks.js"
-import * as ucanPermissions from "../../ucan/permissions.js"
-import * as versions from "../versions.js"
-import * as debug from "../../common/debug.js"
 
 import BareTree from "../bare/tree.js"
 import MMPT from "../protocol/private/mmpt.js"
@@ -74,20 +68,22 @@ export default class RootTree implements Puttable {
   // INITIALISATION
   // --------------
 
-  static async empty({ rootKey, wnfsWasm }: { rootKey: string; wnfsWasm?: boolean }): Promise<RootTree> {
+  static async empty({ rootKey, wnfsWasm }:
+    { rootKey: string; wnfsWasm?: boolean }
+  ): Promise<RootTree> {
     if (wnfsWasm) {
       debug.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
     }
 
     const publicTree = wnfsWasm
-      ? await PublicRootWasm.empty(await getIpfs())
+      ? await PublicRootWasm.empty()
       : await PublicTree.empty()
 
     const prettyTree = await BareTree.empty()
     const mmpt = MMPT.create()
 
     // Private tree
-    const rootPath = pathing.toPosix(pathing.directory(pathing.Branch.Private))
+    const rootPath = Path.toPosix(Path.directory(Path.Branch.Private))
     const rootTree = await PrivateTree.create(mmpt, rootKey, null)
     await rootTree.put()
 
@@ -111,7 +107,7 @@ export default class RootTree implements Puttable {
     await RootTree.storeRootKey(rootKey)
 
     // Set version and store new sub trees
-    await tree.setVersion(wnfsWasm ? versions.wnfsWasm : versions.latest)
+    await tree.setVersion(wnfsWasm ? Versions.wnfsWasm : Versions.latest)
 
     await Promise.all([
       tree.updatePuttable(Branch.Public, publicTree),
@@ -130,7 +126,7 @@ export default class RootTree implements Puttable {
     const keys = permissions ? await permissionKeys(permissions) : []
 
     const version = await parseVersionFromLinks(links)
-    const wnfsWasm = versions.equals(version, versions.wnfsWasm)
+    const wnfsWasm = Versions.equals(version, Versions.wnfsWasm)
 
     if (wnfsWasm) {
       debug.log(`⚠️ Running an EXPERIMENTAL new version of the file system: 3.0.0`)
@@ -199,7 +195,7 @@ export default class RootTree implements Puttable {
 
     if (links[ Branch.Version ] == null) {
       // Old versions of WNFS didn't write a root version link
-      await tree.setVersion(versions.latest)
+      await tree.setVersion(Versions.latest)
     }
 
     // Fin
@@ -308,7 +304,6 @@ export default class RootTree implements Puttable {
       {}
     )
 
-    const ipfsClient = await getIpfs()
     const cid = await ipfsClient.block.put(
       cbor.encode(cborApprovedLinks),
       { format: cbor.name, mhtype: "sha2-256", pin: false, version: 1 }
@@ -371,20 +366,20 @@ export default class RootTree implements Puttable {
   // VERSION
   // -------
 
-  async setVersion(v: versions.SemVer): Promise<this> {
-    const result = await protocol.basic.putFile(versions.toString(v))
+  async setVersion(v: Versions.SemVer): Promise<this> {
+    const result = await protocol.basic.putFile(Versions.toString(v))
     return this.updateLink(Branch.Version, result)
   }
 
-  async getVersion(): Promise<versions.SemVer | null> {
+  async getVersion(): Promise<Versions.SemVer | null> {
     return await parseVersionFromLinks(this.links)
   }
 
 }
 
-async function parseVersionFromLinks(links: SimpleLinks): Promise<versions.SemVer> {
+async function parseVersionFromLinks(links: SimpleLinks): Promise<Versions.SemVer> {
   const file = await protocol.basic.getFile(decodeCID(links[ Branch.Version ].cid))
-  return versions.fromString(uint8arrays.toString(file)) ?? versions.v0
+  return Versions.fromString(uint8arrays.toString(file)) ?? Versions.v0
 }
 
 
@@ -399,22 +394,22 @@ async function findBareNameFilter(
   map: Record<string, PrivateNode>,
   path: DistinctivePath
 ): Promise<Maybe<BareNameFilter>> {
-  const bareNameFilterId = await identifiers.bareNameFilter({ path })
+  const bareNameFilterId = await Identifiers.bareNameFilter({ path })
   const bareNameFilter: Maybe<BareNameFilter> = await storage.getItem(bareNameFilterId)
   if (bareNameFilter) return bareNameFilter
 
   const [ nodePath, node ] = findPrivateNode(map, path)
   if (!node) return null
 
-  const unwrappedPath = pathing.unwrap(path)
-  const relativePath = unwrappedPath.slice(pathing.unwrap(nodePath).length)
+  const unwrappedPath = Path.unwrap(path)
+  const relativePath = unwrappedPath.slice(Path.unwrap(nodePath).length)
 
   if (PrivateFile.instanceOf(node)) {
     return relativePath.length === 0 ? node.header.bareNameFilter : null
   }
 
   if (!node.exists(relativePath)) {
-    if (pathing.isDirectory(path)) await node.mkdir(relativePath)
+    if (Path.isDirectory(path)) await node.mkdir(relativePath)
     else await node.add(relativePath, "")
   }
 
@@ -425,10 +420,10 @@ function findPrivateNode(
   map: Record<string, PrivateNode>,
   path: DistinctivePath
 ): [ DistinctivePath, PrivateNode | null ] {
-  const t = map[ pathing.toPosix(path) ]
+  const t = map[ Path.toPosix(path) ]
   if (t) return [ path, t ]
 
-  const parent = pathing.parent(path)
+  const parent = Path.parent(path)
 
   return parent
     ? findPrivateNode(map, parent)
@@ -443,23 +438,23 @@ function loadPrivateNodes(
     return acc.then(async map => {
       let privateNode
 
-      const unwrappedPath = pathing.unwrap(path)
+      const unwrappedPath = Path.unwrap(path)
 
       // if root, no need for bare name filter
-      if (unwrappedPath.length === 1 && unwrappedPath[ 0 ] === pathing.Branch.Private) {
+      if (unwrappedPath.length === 1 && unwrappedPath[ 0 ] === Path.Branch.Private) {
         privateNode = await PrivateTree.fromBaseKey(mmpt, key)
 
       } else {
         const bareNameFilter = await findBareNameFilter(map, path)
         if (!bareNameFilter) throw new Error(`Was trying to load the PrivateTree for the path \`${path}\`, but couldn't find the bare name filter for it.`)
-        if (pathing.isDirectory(path)) {
+        if (Path.isDirectory(path)) {
           privateNode = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, key)
         } else {
           privateNode = await PrivateFile.fromBareNameFilter(mmpt, bareNameFilter, key)
         }
       }
 
-      const posixPath = pathing.toPosix(path)
+      const posixPath = Path.toPosix(path)
       return { ...map, [ posixPath ]: privateNode }
     })
   }, Promise.resolve({}))
@@ -472,9 +467,9 @@ async function permissionKeys(
     acc: Promise<PathKey[]>,
     path: DistinctivePath
   ): Promise<PathKey[]> => {
-    if (pathing.isBranch(pathing.Branch.Public, path)) return acc
+    if (Path.isBranch(Path.Branch.Public, path)) return acc
 
-    const name = await identifiers.readKey({ path })
+    const name = await Identifiers.readKey({ path })
     const key = await crypto.keystore.exportSymmKey(name)
     const pk: PathKey = { path: path, key: key }
 
@@ -492,6 +487,6 @@ async function permissionKeys(
  */
 function sortedPathKeys(list: PathKey[]): PathKey[] {
   return list.sort(
-    (a, b) => pathing.toPosix(a.path).localeCompare(pathing.toPosix(b.path))
+    (a, b) => Path.toPosix(a.path).localeCompare(Path.toPosix(b.path))
   )
 }

@@ -39,13 +39,13 @@ export async function loadFileSystem({ crypto, permissions, manners, reference, 
 
   if (!navigator.onLine) {
     // Offline, use local CID
-    cid = CIDLog.newest(cidLog)
+    cid = cidLog.newest()
     if (cid) manners.log("📓 Working offline, using local CID:", cid.toString())
     else manners.log("📓 Working offline, creating a new file system")
 
   } else if (!dataCid) {
     // No DNS CID yet
-    cid = CIDLog.newest(cidLog)
+    cid = cidLog.newest()
     if (cid) manners.log("📓 No DNSLink, using local CID:", cid.toString())
     else manners.log("📓 Creating a new file system")
 
@@ -56,7 +56,7 @@ export async function loadFileSystem({ crypto, permissions, manners, reference, 
 
   } else if (logIdx > 0) {
     // DNS is outdated
-    cid = CIDLog.newest(cidLog)
+    cid = cidLog.newest()
     const idxLog = logIdx === 1 ? "1 newer local entry" : logIdx + " newer local entries"
     manners.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid.toString())
 

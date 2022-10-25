@@ -1,4 +1,3 @@
-/** @internal */
 import type { ImportCandidate } from "ipfs-core-types/src/utils"
 import * as dagPB from "@ipld/dag-pb"
 import { CID } from "multiformats/cid"
@@ -43,16 +42,16 @@ export const getFileSystemLinks = async (cid: CID): Promise<Links> => {
   const links = await Promise.all(topNode.Links.map(async l => {
     const innerNode = await ipfs.dagGet(l.Hash)
     const innerLinks = link.arrToMap(innerNode.Links.map(link.fromDAGLink))
-    const isSoftLink = !!innerLinks["softLink"]
+    const isSoftLink = !!innerLinks[ "softLink" ]
 
     if (isSoftLink) {
-      const a = await ipfs.catBuf(decodeCID(innerLinks["softLink"].cid))
+      const a = await ipfs.catBuf(decodeCID(innerLinks[ "softLink" ].cid))
       const b = new TextDecoder().decode(a)
       return JSON.parse(b)
     }
 
     const f = await ipfs.encoded.catAndDecode(
-      decodeCID(innerLinks["metadata"].cid),
+      decodeCID(innerLinks[ "metadata" ].cid),
       null
     )
 
@@ -74,8 +73,8 @@ export const putLinks = async (links: Links | SimpleLinks): Promise<AddResult> =
         const dagNode = await ipfs.dagPut(
           dagPB.createNode(
             DAG_NODE_DATA, [
-              dagPB.createLink("softLink", softLink.size, softLink.cid)
-            ]
+            dagPB.createLink("softLink", softLink.size, softLink.cid)
+          ]
           )
         )
         return dagPB.createLink(l.name, dagNode.size, dagNode.cid)

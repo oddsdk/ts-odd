@@ -1,4 +1,3 @@
-/** @internal */
 import { CID } from "multiformats/cid"
 
 import { Links, HardLink, SimpleLinks } from "../../types.js"
@@ -14,14 +13,14 @@ import * as basic from "../basic.js"
 
 
 export const putTree = async (
-    links: Links,
-    skeletonVal: Skeleton,
-    metadataVal: Metadata,
-    previousCID: Maybe<CID>
-  ): Promise<PutDetails> => {
+  links: Links,
+  skeletonVal: Skeleton,
+  metadataVal: Metadata,
+  previousCID: Maybe<CID>
+): Promise<PutDetails> => {
   const userlandInfo = await basic.putLinks(links)
   const userland = link.make("userland", userlandInfo.cid, true, userlandInfo.size)
-  const [metadata, skeleton] = await Promise.all([
+  const [ metadata, skeleton ] = await Promise.all([
     putAndMakeLink("metadata", metadataVal),
     putAndMakeLink("skeleton", skeletonVal),
   ])
@@ -42,10 +41,10 @@ export const putTree = async (
 }
 
 export const putFile = async (
-    content: FileContent,
-    metadataVal: Metadata,
-    previousCID: Maybe<CID>
-  ): Promise<PutDetails> => {
+  content: FileContent,
+  metadataVal: Metadata,
+  previousCID: Maybe<CID>
+): Promise<PutDetails> => {
   const userlandInfo = await basic.putFile(await normalizeFileContent(content))
   const userland = link.make("userland", userlandInfo.cid, true, userlandInfo.size)
   const metadata = await putAndMakeLink("metadata", metadataVal)
@@ -77,10 +76,10 @@ export const get = async (cid: CID): Promise<TreeInfo | FileInfo> => {
     ? undefined
     : await getAndCheckValue(links, "skeleton", check.isSkeleton)
 
-  const userland = links["userland"]?.cid || null
+  const userland = links[ "userland" ]?.cid || null
   if (!check.isCID(userland)) throw new Error("Could not find userland")
 
-  const previous = links["previous"]?.cid || undefined
+  const previous = links[ "previous" ]?.cid || undefined
   return { userland, metadata, previous, skeleton }
 }
 
@@ -103,7 +102,7 @@ export const getValueFromLinks = async (
   links: SimpleLinks,
   name: string,
 ): Promise<unknown> => {
-  const linkCID = links[name]?.cid
+  const linkCID = links[ name ]?.cid
   if (!linkCID) return null
 
   return ipfs.encoded.catAndDecode(decodeCID(linkCID), null)
@@ -126,7 +125,7 @@ export const checkValue = <T>(
   canBeNull = false
 ): T => {
   if (!isValue(val)) {
-    if(canBeNull) return val
+    if (canBeNull) return val
     throw new Error(`Could not find header value: ${name}`)
   }
   if (checkFn(val)) {

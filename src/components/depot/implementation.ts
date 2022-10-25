@@ -1,5 +1,6 @@
-import { IPFSEntry } from "ipfs-core-types/src/root"
+import { BlockCodec } from "multiformats/codecs/interface"
 import { CID } from "multiformats/cid"
+import { IPFSEntry } from "ipfs-core-types/src/root"
 
 
 export type Implementation = {
@@ -9,10 +10,11 @@ export type Implementation = {
   getUnixDirectory: (cid: CID) => Promise<IPFSEntry[]>
 
   // Keep data around
-  add: (data: Uint8Array) => Promise<AddResult>
+  putBlock: (data: Uint8Array, codec: BlockCodec<number, unknown>) => Promise<CID>
+  putChunked: (data: Uint8Array) => Promise<PutResult>
 }
 
-export type AddResult = {
+export type PutResult = {
   cid: CID
   size: number
   isFile: boolean

@@ -1,9 +1,11 @@
+import * as uint8arrays from "uint8arrays"
+import { BlockCodec } from "multiformats/codecs/interface.js"
 import { CID } from "multiformats/cid"
 import { IPFSEntry } from "ipfs-core-types/src/root"
-import * as uint8arrays from "uint8arrays"
+import { sha256 } from "multiformats/hashes/sha2"
 
-import { Implementation, AddResult } from "../implementation.js"
 import * as Ipfs from "./ipfs/index.js"
+import { Implementation, PutResult } from "../implementation.js"
 
 
 
@@ -11,7 +13,7 @@ import * as Ipfs from "./ipfs/index.js"
 
 
 export async function implementation(peersUrl: string): Promise<Implementation> {
-  const ipfs = await Ipfs.nodeWithPkg(
+  const [ ipfs, repo ] = await Ipfs.nodeWithPkg(
     await Ipfs.pkgFromCDN(Ipfs.DEFAULT_CDN_URL),
     peersUrl,
     false
@@ -39,7 +41,18 @@ export async function implementation(peersUrl: string): Promise<Implementation> 
 
       return uint8arrays.concat(chunks)
     },
-    add: async (data: Uint8Array): Promise<AddResult> => {
+    putBlock: async (data: Uint8Array, codec: BlockCodec<number, unknown>): Promise<CID> => {
+      const multihash = await sha256.digest(data)
+      const cid = new CID(1, codec.code, multihash, data)
+
+      await repo.blocks.put(
+        cid,
+        data
+      )
+
+      return cid
+    },
+    putChunked: async (data: Uint8Array): Promise<PutResult> => {
       const addResult = await ipfs.add(data)
       return { ...addResult, isFile: true }
     },

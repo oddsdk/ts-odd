@@ -1,4 +1,3 @@
-/** @internal */
 import type { CID } from "multiformats/cid"
 
 import { File } from "../types.js"

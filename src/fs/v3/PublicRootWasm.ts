@@ -3,30 +3,32 @@ import { CID } from "multiformats"
 import { IPFS } from "ipfs-core-types"
 import { default as init, PublicDirectory, PublicFile, PublicNode } from "wnfs"
 
-import * as debug from "../../common/debug.js"
+import * as Depot from "../../components/depot/implementation.js"
+import * as Manners from "../../components/manners/implementation.js"
 
 import { WASM_WNFS_VERSION } from "../../common/version.js"
-import { setup as setupInternal } from "../../setup/internal.js"
-import { FileContent } from "../../ipfs/index.js"
-import { Path } from "../../path.js"
-import { AddResult } from "../../ipfs/index.js"
+import { Path } from "../../path/index.js"
+
 import { UnixTree, Puttable, File, Links, PuttableUnixTree } from "../types.js"
 import { BlockStore, IpfsBlockStore } from "./IpfsBlockStore.js"
 import { normalizeFileContent } from "../protocol/public/index.js"
 import { BaseFile } from "../base/file.js"
 import { Metadata } from "../metadata.js"
 
-let initialized = false
-async function initOnce() {
-  if (!initialized) {
-    initialized = true
-    debug.log(`⏬ Loading WNFS WASM`)
-    const before = performance.now()
-    // init accepts Promises as arguments
-    await init(setupInternal.wnfsWasmLookup(WASM_WNFS_VERSION))
-    const time = performance.now() - before
-    debug.log(`🧪 Loaded WNFS WASM (${time.toFixed(0)}ms)`)
-  }
+
+
+async function loadWasm({ manners }: Dependents) {
+  manners.(`⏬ Loading WNFS WASM`)
+  const before = performance.now()
+  // init accepts Promises as arguments
+  await init(manners.wnfsWasmLookup(WASM_WNFS_VERSION))
+  const time = performance.now() - before
+  manners.(`🧪 Loaded WNFS WASM (${time.toFixed(0)}ms)`)
+}
+
+type Dependents = {
+  depot: Depot.Implementation
+  manners: Manners.Implementation
 }
 
 interface DirEntry {
@@ -47,34 +49,40 @@ interface OpResult<A> {
   result: A
 }
 
+
+
+// ROOT
+
+
 export class PublicRootWasm implements UnixTree, Puttable {
 
+  dependents: Dependents
   root: Promise<PublicDirectory>
   lastRoot: PublicDirectory
   store: BlockStore
   ipfs: IPFS
   readOnly: boolean
 
-  constructor(root: PublicDirectory, store: BlockStore, ipfs: IPFS, readOnly: boolean) {
+  constructor(dependents: Dependents, root: PublicDirectory, store: BlockStore, readOnly: boolean) {
+    this.dependents = dependents
     this.root = Promise.resolve(root)
     this.lastRoot = root
     this.store = store
-    this.ipfs = ipfs
     this.readOnly = readOnly
   }
 
-  static async empty(ipfs: IPFS): Promise<PublicRootWasm> {
-    await initOnce()
-    const store = new IpfsBlockStore(ipfs)
+  static async empty(dependents: Dependents): Promise<PublicRootWasm> {
+    await loadWasm(dependents)
+    const store = new IpfsBlockStore(dependents.depot)
     const root = new PublicDirectory(new Date())
-    return new PublicRootWasm(root, store, ipfs, false)
+    return new PublicRootWasm(dependents, root, store, false)
   }
 
-  static async fromCID(ipfs: IPFS, cid: CID): Promise<PublicRootWasm> {
-    await initOnce()
-    const store = new IpfsBlockStore(ipfs)
+  static async fromCID(dependents: Dependents, cid: CID): Promise<PublicRootWasm> {
+    await loadWasm(dependents)
+    const store = new IpfsBlockStore(dependents.depot)
     const root = await PublicDirectory.load(cid.bytes, store)
-    return new PublicRootWasm(root, store, ipfs, false)
+    return new PublicRootWasm(dependents, root, store, false)
   }
 
   private async atomically(fn: (root: PublicDirectory) => Promise<PublicDirectory>) {
@@ -123,7 +131,7 @@ export class PublicRootWasm implements UnixTree, Puttable {
         ? CID.decode(await node.asFile().store(this.store))
         : CID.decode(await node.asDir().store(this.store))
 
-      result[entry.name] = {
+      result[ entry.name ] = {
         name: entry.name,
         isFile: entry.metadata.unixMeta.kind === "file",
         size: 0, // TODO size?
@@ -147,7 +155,7 @@ export class PublicRootWasm implements UnixTree, Puttable {
     return this
   }
 
-  async cat(path: Path): Promise<FileContent> {
+  async cat(path: Path): Promise<Uint8Array> {
     const root = await this.root
 
     const { result: cidBytes } = await this.withError(
@@ -156,15 +164,10 @@ export class PublicRootWasm implements UnixTree, Puttable {
     ) as OpResult<Uint8Array>
 
     const cid = CID.decode(cidBytes)
-
-    const chunks = []
-    for await (const chunk of this.ipfs.cat(cid, { preload: false })) {
-      chunks.push(chunk)
-    }
-    return uint8arrays.concat(chunks)
+    return this.dependents.depot.getUnixFile(cid)
   }
 
-  async add(path: Path, content: FileContent): Promise<this> {
+  async add(path: Path, content: Uint8Array): Promise<this> {
     const normalized = await normalizeFileContent(content)
     const { cid } = await this.ipfs.add(normalized, {
       cidVersion: 1,
@@ -228,7 +231,7 @@ export class PublicRootWasm implements UnixTree, Puttable {
       const cachedFile = node.asFile()
       const content = await this.cat(path)
       const directory = path.slice(0, -1)
-      const filename = path[path.length - 1]
+      const filename = path[ path.length - 1 ]
 
       return new PublicFileWasm(content, directory, filename, this, cachedFile)
 
@@ -277,6 +280,11 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
 }
 
+
+
+// DIRECTORY
+
+
 export class PublicDirectoryWasm implements UnixTree, Puttable {
   readOnly: boolean
 
@@ -306,47 +314,47 @@ export class PublicDirectoryWasm implements UnixTree, Puttable {
   }
 
   async ls(path: Path): Promise<Links> {
-    return await this.publicRoot.ls([...this.directory, ...path])
+    return await this.publicRoot.ls([ ...this.directory, ...path ])
   }
 
   async mkdir(path: Path): Promise<this> {
-    this.checkMutability(`mkdir at ${[...this.directory, ...path].join("/")}`)
-    await this.publicRoot.mkdir([...this.directory, ...path])
+    this.checkMutability(`mkdir at ${[ ...this.directory, ...path ].join("/")}`)
+    await this.publicRoot.mkdir([ ...this.directory, ...path ])
     await this.updateCache()
     return this
   }
 
   async cat(path: Path): Promise<FileContent> {
-    return await this.publicRoot.cat([...this.directory, ...path])
+    return await this.publicRoot.cat([ ...this.directory, ...path ])
   }
 
   async add(path: Path, content: FileContent): Promise<this> {
-    this.checkMutability(`write at ${[...this.directory, ...path].join("/")}`)
-    await this.publicRoot.add([...this.directory, ...path], content)
+    this.checkMutability(`write at ${[ ...this.directory, ...path ].join("/")}`)
+    await this.publicRoot.add([ ...this.directory, ...path ], content)
     await this.updateCache()
     return this
   }
 
   async rm(path: Path): Promise<this> {
-    this.checkMutability(`remove at ${[...this.directory, ...path].join("/")}`)
-    await this.publicRoot.rm([...this.directory, ...path])
+    this.checkMutability(`remove at ${[ ...this.directory, ...path ].join("/")}`)
+    await this.publicRoot.rm([ ...this.directory, ...path ])
     await this.updateCache()
     return this
   }
 
   async mv(from: Path, to: Path): Promise<this> {
-    this.checkMutability(`mv from ${[...this.directory, ...from].join("/")} to ${[...this.directory, ...to].join("/")}`)
-    await this.publicRoot.mv([...this.directory, ...from], [...this.directory, ...to])
+    this.checkMutability(`mv from ${[ ...this.directory, ...from ].join("/")} to ${[ ...this.directory, ...to ].join("/")}`)
+    await this.publicRoot.mv([ ...this.directory, ...from ], [ ...this.directory, ...to ])
     await this.updateCache()
     return this
   }
 
   async get(path: Path): Promise<PuttableUnixTree | File | null> {
-    return await this.publicRoot.get([...this.directory, ...path])
+    return await this.publicRoot.get([ ...this.directory, ...path ])
   }
 
   async exists(path: Path): Promise<boolean> {
-    return await this.publicRoot.exists([...this.directory, ...path])
+    return await this.publicRoot.exists([ ...this.directory, ...path ])
   }
 
   async put(): Promise<CID> {
@@ -366,7 +374,12 @@ export class PublicDirectoryWasm implements UnixTree, Puttable {
 
 }
 
+
+
+// FILE
 // This is somewhat of a weird hack of providing a result for a `get()` operation.
+
+
 export class PublicFileWasm extends BaseFile {
   private directory: string[]
   private filename: string
@@ -383,7 +396,7 @@ export class PublicFileWasm extends BaseFile {
 
   private async updateCache() {
     const root = await this.publicRoot.root
-    const node = await root.getNode([...this.directory, this.filename], this.publicRoot.store)
+    const node = await root.getNode([ ...this.directory, this.filename ], this.publicRoot.store)
     this.cachedFile = node.asFile()
   }
 
@@ -399,7 +412,7 @@ export class PublicFileWasm extends BaseFile {
 
   async putDetailed(): Promise<AddResult> {
     const root = await this.publicRoot.root
-    const path = [...this.directory, this.filename]
+    const path = [ ...this.directory, this.filename ]
     const { result: node } = await root.getNode(path, this.publicRoot.store) as OpResult<PublicNode>
 
     if (node == null) {

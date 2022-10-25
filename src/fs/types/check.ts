@@ -1,4 +1,3 @@
-/** @internal */
 import { CID } from "multiformats/cid"
 
 import { isString, isObject, isNum, isBool } from "../../common/index.js"
@@ -48,22 +47,22 @@ export const isHardLink = (obj: any): obj is HardLink => {
 
 export const isLinks = (obj: any): obj is Links => {
   return isObject(obj)
-      && Object.values(obj).every(a => isHardLink(a) || isSoftLink(a))
+    && Object.values(obj).every(a => isHardLink(a) || isSoftLink(a))
 }
 
 export const isUnixMeta = (obj: any): obj is UnixMeta => {
   return isObject(obj)
-      && isNum(obj.mtime)
-      && isNum(obj.ctime)
-      && isNum(obj.mode)
-      && isString(obj._type)
+    && isNum(obj.mtime)
+    && isNum(obj.ctime)
+    && isNum(obj.mode)
+    && isString(obj._type)
 }
 
 export const isMetadata = (obj: any): obj is Metadata => {
   return isObject(obj)
-      && isUnixMeta(obj.unixMeta)
-      && isBool(obj.isFile)
-      && isSemVer(obj.version)
+    && isUnixMeta(obj.unixMeta)
+    && isBool(obj.isFile)
+    && isSemVer(obj.version)
 }
 
 export const isSkeleton = (obj: any): obj is Skeleton => {

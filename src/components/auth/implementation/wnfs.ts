@@ -1,7 +1,5 @@
 import type { Implementation, Dependents } from "../implementation.js"
 
-import * as Uint8arrays from "uint8arrays"
-
 import * as Base from "./base.js"
 import * as DID from "../../../did/index.js"
 import * as RootKey from "../../../common/root-key.js"
@@ -115,7 +113,7 @@ export async function linkDevice(
     await RootKey.store({
       accountDID: await rootDID(dependents),
       crypto: dependents.crypto,
-      readKey: Uint8arrays.fromString(readKey, "base64pad")
+      readKey: RootKey.fromString(readKey)
     })
 
     // Create and store filesystem UCAN

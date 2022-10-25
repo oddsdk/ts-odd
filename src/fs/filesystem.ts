@@ -1,11 +1,30 @@
 import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
 import { CID } from "multiformats/cid"
-import { SymmAlg } from "keystore-idb/types.js"
 import { throttle } from "throttle-debounce"
 
+import * as Crypto from "../components/crypto/implementation.js"
+import * as Depot from "../components/depot/implementation.js"
+import * as Manners from "../components/manners/implementation.js"
+import * as Reference from "../components/reference/implementation.js"
+
+import * as DID from "../did/index.js"
+import * as FsTypeChecks from "./types/check.js"
+import * as Path from "../path/index.js"
+import * as RootKey from "../common/root-key.js"
+import * as TypeChecks from "../common/type-checks.js"
+import * as Ucan from "../ucan/index.js"
+import * as Versions from "./versions.js"
+
+import { Branch, DistinctivePath, DirectoryPath, FilePath } from "../path/index.js"
+import { Permissions, appDataPath, AppInfo } from "../permissions.js"
+import { SymmAlg } from "../components/crypto/implementation.js"
+import { decodeCID } from "../common/index.js"
+
+// FILESYSTEM IMPORTS
+
 import { Links, PuttableUnixTree, UnixTree } from "./types.js"
-import { Branch, DistinctivePath, DirectoryPath, FilePath, Path } from "../path/index.js"
+import { NoPermissionError } from "./errors.js"
 import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
 import MMPT from "./protocol/private/mmpt.js"
@@ -14,20 +33,10 @@ import PublicTree from "./v1/PublicTree.js"
 import PrivateFile from "./v1/PrivateFile.js"
 import PrivateTree from "./v1/PrivateTree.js"
 
-import * as did from "../did/index.js"
-import * as privateTypeChecks from "./protocol/private/types/check.js"
-import * as protocol from "./protocol/index.js"
-import * as shareKey from "./protocol/shared/key.js"
-import * as sharing from "./share.js"
-import * as typeCheck from "./types/check.js"
-import * as typeChecks from "../common/type-checks.js"
-import * as ucan from "../ucan/index.js"
-import * as versions from "./versions.js"
-
-import { FileContent } from "../ipfs/index.js"
-import { NoPermissionError } from "./errors.js"
-import { Permissions, appDataPath } from "../permissions.js"
-import { decodeCID } from "../common/index.js"
+import * as PrivateTypeChecks from "./protocol/private/types/check.js"
+import * as Protocol from "./protocol/index.js"
+import * as ShareKey from "./protocol/shared/key.js"
+import * as Sharing from "./share.js"
 
 
 // TYPES
@@ -40,23 +49,34 @@ interface AppPath {
 }
 
 type ConstructorParams = {
+  dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
   root: RootTree
 }
 
-type FileSystemOptions = {
-  localOnly?: boolean
-  permissions?: Permissions
+type Dependents = {
+  crypto: Crypto.Implementation
+  depot: Depot.Implementation
+  manners: Manners.Implementation
+  reference: Reference.Implementation
 }
 
-type NewFileSystemOptions = FileSystemOptions & {
-  rootKey?: string
+type FileSystemOptions = {
+  dependents: Dependents
+  localOnly?: boolean
+  permissions?: Permissions
 }
 
 type MutationOptions = {
   publish?: boolean
 }
+
+type NewFileSystemOptions = FileSystemOptions & {
+  rootKey: string
+  version: string
+}
+
 
 
 // CLASS
@@ -64,18 +84,20 @@ type MutationOptions = {
 
 export class FileSystem {
 
+  dependents: Dependents
   root: RootTree
   readonly localOnly: boolean
 
-  appPath: AppPath | undefined
-  proofs: { [ _: string ]: string }
+  proofs: { [ _: string ]: Ucan.Ucan }
   publishHooks: Array<PublishHook>
 
-  _publishWhenOnline: Array<[ CID, string ]>
+  _publishWhenOnline: Array<[ CID, Ucan.Ucan ]>
   _publishing: false | [ CID, true ]
 
 
-  constructor({ root, permissions, localOnly }: ConstructorParams) {
+  constructor({ dependents, root, localOnly }: ConstructorParams) {
+    this.dependents = dependents
+
     this.localOnly = localOnly || false
     this.proofs = {}
     this.publishHooks = []
@@ -87,31 +109,18 @@ export class FileSystem {
     this._whenOnline = this._whenOnline.bind(this)
     this._beforeLeaving = this._beforeLeaving.bind(this)
 
-    const globe = (globalThis as any)
-    globe.filesystems = globe.filesystems || []
-    globe.filesystems.push(this)
-
-    if (
-      permissions &&
-      permissions.app &&
-      permissions.app.creator &&
-      permissions.app.name
-    ) {
-      this.appPath = appPath(permissions)
-    }
-
     // Add the root CID of the file system to the CID log
     // (reverse list, newest cid first)
     const logCid = async (cid: CID) => {
-      await cidLog.add(cid.toString())
-      debug.log("📓 Adding to the CID ledger:", cid.toString())
+      await this.dependents.reference.repositories.cidLog.add(cid)
+      this.dependents.manners.log("📓 Adding to the CID ledger:", cid.toString())
     }
 
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
       if (globalThis.navigator.onLine) {
         this._publishing = [ cid, true ]
-        return dataRoot.update(cid, proof).then(() => {
+        return this.dependents.reference.dataRoot.update(cid, proof).then(() => {
           if (this._publishing && this._publishing[ 0 ] === cid) {
             this._publishing = false
           }
@@ -125,6 +134,8 @@ export class FileSystem {
     this.publishHooks.push(updateDataRootWhenOnline)
 
     if (!this.localOnly) {
+      const globe = (globalThis as any)
+
       // Publish when coming back online
       globalThis.addEventListener("online", this._whenOnline)
 
@@ -140,36 +151,40 @@ export class FileSystem {
   /**
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
-  static async empty(opts: NewFileSystemOptions = {}): Promise<FileSystem> {
-    const { permissions, localOnly } = opts
-    const rootKey = opts.rootKey || await crypto.aes.genKeyStr()
-    // create a file system based on wnfs-wasm when this option is set:
-    const wnfsWasm = setup.fsVersion === versions.toString(versions.wnfsWasm)
+  static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
+    const { dependents, permissions, localOnly } = opts
+    const rootKey = opts.rootKey || await (
+      dependents
+        .crypto.aes.genKey(SymmAlg.AES_CTR)
+        .then(dependents.crypto.aes.exportKey)
+        .then(RootKey.toString)
+    )
+
+    // Create a file system based on wnfs-wasm when this option is set:
+    const wnfsWasm = opts.version === Versions.toString(Versions.wnfsWasm)
     const root = await RootTree.empty({ rootKey, wnfsWasm })
 
-    const fs = new FileSystem({
+    return new FileSystem({
+      dependents,
       root,
       permissions,
       localOnly
     })
-
-    return fs
   }
 
   /**
    * Loads an existing file system from a CID.
    */
-  static async fromCID(cid: CID, opts: FileSystemOptions = {}): Promise<FileSystem | null> {
-    const { permissions, localOnly } = opts
+  static async fromCID(cid: CID, opts: FileSystemOptions): Promise<FileSystem | null> {
+    const { dependents, permissions, localOnly } = opts
     const root = await RootTree.fromCID({ cid, permissions })
 
-    const fs = new FileSystem({
+    return new FileSystem({
+      dependents,
       root,
       permissions,
       localOnly
     })
-
-    return fs
   }
 
 
@@ -185,7 +200,6 @@ export class FileSystem {
   deactivate(): void {
     if (this.localOnly) return
     const globe = (globalThis as any)
-    globe.filesystems = globe.filesystems.filter((a: FileSystem) => a !== this)
     globe.removeEventListener("online", this._whenOnline)
     globe.removeEventListener("beforeunload", this._beforeLeaving)
   }
@@ -195,13 +209,13 @@ export class FileSystem {
   // -----------------------------
 
   async ls(path: DirectoryPath): Promise<Links> {
-    if (pathing.isFile(path)) throw new Error("`ls` only accepts directory paths")
+    if (Path.isFile(path)) throw new Error("`ls` only accepts directory paths")
     return this.runOnNode(path, {
       public: async (root, relPath) => {
         return root.ls(relPath)
       },
       private: async (node, relPath) => {
-        if (typeCheck.isFile(node)) {
+        if (FsTypeChecks.isFile(node)) {
           throw new Error("Tried to `ls` a file")
         } else {
           return node.ls(relPath)
@@ -211,14 +225,14 @@ export class FileSystem {
   }
 
   async mkdir(path: DirectoryPath, options: MutationOptions = {}): Promise<this> {
-    if (pathing.isFile(path)) throw new Error("`mkdir` only accepts directory paths")
+    if (Path.isFile(path)) throw new Error("`mkdir` only accepts directory paths")
 
     await this.runMutationOnNode(path, {
       public: async (root: BareTree, relPath) => {
         await root.mkdir(relPath)
       },
       private: async (node, relPath) => {
-        if (typeCheck.isFile(node)) {
+        if (FsTypeChecks.isFile(node)) {
           throw new Error("Tried to `mkdir` a file")
         } else {
           await node.mkdir(relPath)
@@ -237,15 +251,15 @@ export class FileSystem {
 
   async add(
     path: DistinctivePath,
-    content: FileContent | SoftLink | SoftLink[] | Record<string, SoftLink>,
+    content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options: MutationOptions = {}
   ): Promise<this> {
-    const contentIsSoftLinks = typeCheck.isSoftLink(content)
-      || typeCheck.isSoftLinkDictionary(content)
-      || typeCheck.isSoftLinkList(content)
+    const contentIsSoftLinks = FsTypeChecks.isSoftLink(content)
+      || FsTypeChecks.isSoftLinkDictionary(content)
+      || FsTypeChecks.isSoftLinkList(content)
 
     if (contentIsSoftLinks) {
-      if (pathing.isFile(path)) {
+      if (Path.isFile(path)) {
         throw new Error("Can't add soft links to a file")
       }
 
@@ -253,7 +267,7 @@ export class FileSystem {
         public: async (root, relPath) => {
           const links = Array.isArray(content)
             ? content
-            : typeChecks.isObject(content)
+            : TypeChecks.isObject(content)
               ? Object.values(content) as Array<SoftLink>
               : [ content ] as Array<SoftLink>
 
@@ -271,7 +285,7 @@ export class FileSystem {
         private: async (node, relPath) => {
           const links = Array.isArray(content)
             ? content
-            : typeChecks.isObject(content)
+            : TypeChecks.isObject(content)
               ? Object.values(content) as Array<SoftLink>
               : [ content ] as Array<SoftLink>
 
@@ -289,7 +303,7 @@ export class FileSystem {
         }
       })
     } else {
-      if (pathing.isDirectory(path)) {
+      if (Path.isDirectory(path)) {
         throw new Error("`add` only accepts file paths when working with regular files")
       }
 
@@ -298,13 +312,13 @@ export class FileSystem {
           await root.add(relPath, content)
         },
         private: async (node, relPath) => {
-          const destinationIsFile = typeCheck.isFile(node)
+          const destinationIsFile = FsTypeChecks.isFile(node)
 
           if (destinationIsFile) {
-            await node.updateContent(content as FileContent)
+            await node.updateContent(content)
 
           } else {
-            await node.add(relPath, content as FileContent)
+            await node.add(relPath, content)
           }
         }
       })
@@ -316,27 +330,27 @@ export class FileSystem {
     return this
   }
 
-  async cat(path: FilePath): Promise<FileContent> {
-    if (pathing.isDirectory(path)) throw new Error("`cat` only accepts file paths")
+  async cat(path: FilePath): Promise<Uint8Array> {
+    if (Path.isDirectory(path)) throw new Error("`cat` only accepts file paths")
     return this.runOnNode(path, {
       public: async (root, relPath) => {
         return await root.cat(relPath)
       },
       private: async (node, relPath) => {
-        return typeCheck.isFile(node)
+        return FsTypeChecks.isFile(node)
           ? node.content
           : await node.cat(relPath)
       }
     })
   }
 
-  async read(path: FilePath): Promise<FileContent | null> {
-    if (pathing.isDirectory(path)) throw new Error("`read` only accepts file paths")
+  async read(path: FilePath): Promise<Uint8Array | null> {
+    if (Path.isDirectory(path)) throw new Error("`read` only accepts file paths")
     return this.cat(path)
   }
 
-  async write(path: FilePath, content: FileContent, options: MutationOptions = {}): Promise<this> {
-    if (pathing.isDirectory(path)) throw new Error("`write` only accepts file paths")
+  async write(path: FilePath, content: Uint8Array, options: MutationOptions = {}): Promise<this> {
+    if (Path.isDirectory(path)) throw new Error("`write` only accepts file paths")
     return this.add(path, content, options)
   }
 
@@ -351,7 +365,7 @@ export class FileSystem {
       },
       private: async (node, relPath) => {
         // node is a file, then we tried to check the existance of itself
-        return typeCheck.isFile(node) || await node.exists(relPath)
+        return FsTypeChecks.isFile(node) || await node.exists(relPath)
       }
     })
   }
@@ -362,7 +376,7 @@ export class FileSystem {
         return await root.get(relPath)
       },
       private: async (node, relPath) => {
-        return typeCheck.isFile(node)
+        return FsTypeChecks.isFile(node)
           ? node // tried to get itself
           : await node.get(relPath)
       }
@@ -371,11 +385,11 @@ export class FileSystem {
 
   // This is only implemented on the same tree for now and will error otherwise
   async mv(from: DistinctivePath, to: DistinctivePath): Promise<this> {
-    const sameTree = pathing.isSameBranch(from, to)
+    const sameTree = Path.isSameBranch(from, to)
 
-    if (!pathing.isSameKind(from, to)) {
-      const kindFrom = pathing.kind(from)
-      const kindTo = pathing.kind(to)
+    if (!Path.isSameKind(from, to)) {
+      const kindFrom = Path.kind(from)
+      const kindTo = Path.kind(to)
       throw new Error(`Can't move to a different kind of path, from is a ${kindFrom} and to is a ${kindTo}`)
     }
 
@@ -389,15 +403,15 @@ export class FileSystem {
 
     await this.runOnNode(from, {
       public: async (root, relPath) => {
-        const [ _, ...nextPath ] = pathing.unwrap(to)
+        const [ _, ...nextPath ] = Path.unwrap(to)
         await root.mv(relPath, nextPath)
       },
       private: async (node, relPath) => {
-        if (typeCheck.isFile(node)) {
+        if (FsTypeChecks.isFile(node)) {
           throw new Error("Tried to `mv` within a file")
         }
 
-        const [ _, ...nextPath ] = pathing.unwrap(to)
+        const [ _, ...nextPath ] = Path.unwrap(to)
         // TODO FIXME: nextPath is wrong if you use a node that's deeper in the tree.
         await node.mv(relPath, nextPath)
       }
@@ -412,7 +426,7 @@ export class FileSystem {
         await root.rm(relPath)
       },
       private: async (node, relPath) => {
-        if (typeCheck.isFile(node)) {
+        if (FsTypeChecks.isFile(node)) {
           throw new Error("Cannot `rm` a file you've asked permission for")
         } else {
           await node.rm(relPath)
@@ -428,30 +442,23 @@ export class FileSystem {
    */
   async symlink(
     args:
-      { at: DirectoryPath; referringTo: DistinctivePath; name: string; username?: string }
+      { at: DirectoryPath; referringTo: DistinctivePath; name: string; username: string }
   ): Promise<this> {
     const { at, referringTo, name } = args
 
     if (at == null) throw new Error("Missing parameter `symlink.at`")
-    if (pathing.isFile(at)) throw new Error("`symlink.at` only accepts directory paths")
+    if (Path.isFile(at)) throw new Error("`symlink.at` only accepts directory paths")
 
-    const username = args.username || await authenticatedUsername()
-    const sameTree = pathing.isSameBranch(at, referringTo)
+    const username = args.username
+    const sameTree = Path.isSameBranch(at, referringTo)
 
     if (!username) throw new Error("I need a username in order to use this method")
     if (!sameTree) throw new Error("`link` is only supported on the same tree for now")
 
-    const canShare = ucan.dictionary.lookupFilesystemUcan(
-      pathing.directory(pathing.Branch.Shared)
-    )
-
-    if (!canShare) throw new Error("Not allowed to share private items")
-
     await this.runMutationOnNode(at, {
       public: async (root, relPath) => {
-        if (BareTree.instanceOf(root)) {
-          return // skip the pretty tree, we don't need to attach the symlink to that.
-        }
+        // Skip the pretty tree, we don't need to attach the symlink to that.
+        if (BareTree.instanceOf(root)) return
         if (!PublicTree.instanceOf(root)) {
           // TODO
           throw new Error(`Symlinks not supported in WASM-WNFS yet.`)
@@ -459,7 +466,7 @@ export class FileSystem {
           await this.runOnChildTree(root, relPath, async tree => {
             if (PublicTree.instanceOf(tree)) {
               tree.insertSoftLink({
-                path: pathing.removeBranch(referringTo),
+                path: Path.removeBranch(referringTo),
                 name,
                 username
               })
@@ -470,7 +477,7 @@ export class FileSystem {
 
       },
       private: async (node, relPath) => {
-        if (typeCheck.isFile(node)) {
+        if (FsTypeChecks.isFile(node)) {
           throw new Error("Cannot add a soft link to a file")
         }
 
@@ -482,7 +489,7 @@ export class FileSystem {
                 throw new Error(`File system hit a public node within a private node. This is not supported/this should not happen.`)
               },
               private: async (a, relPath) => {
-                const b = typeCheck.isFile(a)
+                const b = FsTypeChecks.isFile(a)
                   ? a
                   : await a.get(relPath)
 
@@ -544,7 +551,7 @@ export class FileSystem {
    */
   async historyStep(): Promise<void> {
     const publicTree = this.root.publicTree
-    if (typeChecks.hasProp(publicTree, "historyStep") && typeof publicTree.historyStep === "function") {
+    if (TypeChecks.hasProp(publicTree, "historyStep") && typeof publicTree.historyStep === "function") {
       // this function is not available in lower versions.
       await publicTree.historyStep()
     }
@@ -562,7 +569,7 @@ export class FileSystem {
   async acceptShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<this> {
     const share = await this.loadShare({ shareId, sharedBy })
     await this.add(
-      pathing.directory(Branch.Private, "Shared with me", sharedBy),
+      Path.directory(Branch.Private, "Shared with me", sharedBy),
       await share.ls([])
     )
     return this
@@ -574,48 +581,43 @@ export class FileSystem {
    * a private tree with symlinks (soft links) to the shared items.
    */
   async loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<PrivateTree> {
-    const ourExchangeDid = await did.exchange()
-    const theirRootDid = await did.root(sharedBy)
+    const ourExchangeDid = await DID.exchange(this.dependents.crypto)
+    const theirRootDid = await this.dependents.reference.didRoot.lookup(sharedBy)
 
     // Share key
-    const key = await shareKey.create({
+    const key = await ShareKey.create({
       counter: parseInt(shareId, 10),
       recipientExchangeDid: ourExchangeDid,
       senderRootDid: theirRootDid
     })
 
     // Load their shared section
-    const root = await dataRoot.lookup(sharedBy)
+    const root = await this.dependents.reference.dataRoot.lookup(sharedBy)
     if (!root) throw new Error("This user doesn't have a filesystem yet.")
 
-    const rootLinks = await protocol.basic.getSimpleLinks(root)
+    const rootLinks = await Protocol.basic.getSimpleLinks(root)
     const sharedLinksCid = rootLinks[ Branch.Shared ]?.cid || null
     if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
 
     const sharedLinks = await RootTree.getSharedLinks(decodeCID(sharedLinksCid))
-    const shareLink = typeChecks.isObject(sharedLinks) ? sharedLinks[ key ] : null
+    const shareLink = TypeChecks.isObject(sharedLinks) ? sharedLinks[ key ] : null
     if (!shareLink) throw new Error("Couldn't find a matching share.")
 
-    const shareLinkCid = typeChecks.isObject(shareLink) ? shareLink.cid : null
+    const shareLinkCid = TypeChecks.isObject(shareLink) ? shareLink.cid : null
     if (!shareLinkCid) throw new Error("Couldn't find a matching share.")
 
-    const sharePayload = await ipfs.catBuf(decodeCID(shareLinkCid))
+    const sharePayload = await this.dependents.depot.getBlock(decodeCID(shareLinkCid))
 
     // Decode payload
-    const ks = await keystore.get()
-    const exchangeKey = await ks.exchangeKey()
+    const decryptedPayload = await this.dependents.crypto.keystore.decrypt(sharePayload)
+    const decodedPayload: Record<string, unknown> = cbor.decode(decryptedPayload)
 
-    if (!exchangeKey.privateKey) throw new Error("Missing private key in exchange key-pair")
-
-    const decryptedPayload = await crypto.rsa.decrypt(sharePayload, exchangeKey.privateKey)
-    const decodedPayload: Record<string, unknown> = cbor.decode(new Uint8Array(decryptedPayload))
-
-    if (!typeChecks.hasProp(decodedPayload, "cid")) throw new Error("Share payload is missing the `cid` property")
-    if (!typeChecks.hasProp(decodedPayload, "key")) throw new Error("Share payload is missing the `key` property")
-    if (!typeChecks.hasProp(decodedPayload, "algo")) throw new Error("Share payload is missing the `algo` property")
+    if (!TypeChecks.hasProp(decodedPayload, "cid")) throw new Error("Share payload is missing the `cid` property")
+    if (!TypeChecks.hasProp(decodedPayload, "key")) throw new Error("Share payload is missing the `key` property")
+    if (!TypeChecks.hasProp(decodedPayload, "algo")) throw new Error("Share payload is missing the `algo` property")
 
     const entryIndexCid: string = decodedPayload.cid as string
-    const symmKey: string = uint8arrays.toString(decodedPayload.key as Uint8Array, "base64pad")
+    const symmKey: Uint8Array = decodedPayload.key as Uint8Array
     const symmKeyAlgo: string = decodedPayload.algo as string
 
     // Load MMPT
@@ -624,14 +626,13 @@ export class FileSystem {
     const theirMmpt = await MMPT.fromCID(decodeCID(rootLinks[ Branch.Private ]?.cid))
 
     // Decode index
-    const encryptedIndex = await ipfs.catBuf(decodeCID(entryIndexCid))
-    const indexInfoBytes = await crypto.aes.decrypt(encryptedIndex, symmKey, symmKeyAlgo as SymmAlg)
+    const encryptedIndex = await this.dependents.depot.getBlock(decodeCID(entryIndexCid))
+    const indexInfoBytes = await this.dependents.crypto.aes.decrypt(encryptedIndex, symmKey, symmKeyAlgo as SymmAlg)
     const indexInfo = JSON.parse(uint8arrays.toString(indexInfoBytes, "utf8"))
-    if (!privateTypeChecks.isDecryptedNode(indexInfo)) throw new Error("The share payload did not point to a valid entry index")
+    if (!PrivateTypeChecks.isDecryptedNode(indexInfo)) throw new Error("The share payload did not point to a valid entry index")
 
     // Load index and return it
-    const index = await PrivateTree.fromInfo(theirMmpt, symmKey, indexInfo)
-    return index
+    return PrivateTree.fromInfo(theirMmpt, uint8arrays.toString(symmKey, "base64pad"), indexInfo)
   }
 
   /**
@@ -639,7 +640,7 @@ export class FileSystem {
    */
   async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails> {
     const verifiedPaths = paths.filter(path => {
-      return pathing.isBranch(pathing.Branch.Private, path)
+      return Path.isBranch(Path.Branch.Private, path)
     })
 
     // Our username
@@ -652,7 +653,7 @@ export class FileSystem {
     // Get the items to share
     const items = await verifiedPaths.reduce(async (promise: Promise<[ string, PrivateFile | PrivateTree ][]>, path) => {
       const acc = await promise
-      const name = pathing.terminus(path)
+      const name = Path.terminus(path)
       const item = await this.get(path)
       return name && (PrivateFile.instanceOf(item) || PrivateTree.instanceOf(item))
         ? [ ...acc, [ name, item ] as [ string, PrivateFile | PrivateTree ] ]
@@ -663,7 +664,7 @@ export class FileSystem {
     if (!items.length) throw new Error("Didn't find any items to share")
 
     // Share the items
-    const shareDetails = await sharing.privateNode(
+    const shareDetails = await Sharing.privateNode(
       this.root,
       items,
       { shareWith, sharedBy }
@@ -689,10 +690,10 @@ export class FileSystem {
    * in the `/public/.well-known/exchange/DID_GOES_HERE/` directory.
    */
   async addPublicExchangeKey(): Promise<void> {
-    const publicDid = await did.exchange()
+    const publicDid = await DID.exchange(this.dependents.crypto)
 
     await this.mkdir(
-      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
+      Path.combine(Sharing.EXCHANGE_PATH, Path.directory(publicDid))
     )
   }
 
@@ -701,10 +702,10 @@ export class FileSystem {
    * See `addPublicExchangeKey()` for the exact details.
    */
   async hasPublicExchangeKey(): Promise<boolean> {
-    const publicDid = await did.exchange()
+    const publicDid = await DID.exchange(this.dependents.crypto)
 
     return this.exists(
-      pathing.combine(sharing.EXCHANGE_PATH, pathing.directory(publicDid))
+      Path.combine(Sharing.EXCHANGE_PATH, Path.directory(publicDid))
     )
   }
 
@@ -715,7 +716,7 @@ export class FileSystem {
    * you might want to use this method instead.
    */
   resolveSymlink(link: SoftLink): Promise<File | Tree | null> {
-    if (typeChecks.hasProp(link, "privateName")) {
+    if (TypeChecks.hasProp(link, "privateName")) {
       return PrivateTree.resolveSoftLink(link)
     } else {
       return PublicTree.resolveSoftLink(link)
@@ -731,14 +732,13 @@ export class FileSystem {
     const operation = isMutation ? "make changes to" : "query"
 
     if (!this.localOnly) {
-      const proof = await ucan.dictionary.lookupFilesystemUcan(path)
-      const decodedProof = proof && ucan.decode(proof)
+      const proof = await this.dependents.reference.repositories.ucans.lookupFilesystemUcan(path)
 
-      if (!proof || !decodedProof || ucan.isExpired(decodedProof) || !decodedProof.signature) {
-        throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${pathing.toPosix(path)}"`)
+      if (!proof || Ucan.isExpired(proof) || !proof.signature) {
+        throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${Path.toPosix(path)}"`)
       }
 
-      this.proofs[ decodedProof.signature ] = proof
+      this.proofs[ proof.signature ] = proof
     }
   }
 
@@ -746,11 +746,11 @@ export class FileSystem {
   async runMutationOnNode(
     path: DistinctivePath,
     handlers: {
-      public(root: UnixTree, relPath: Path): Promise<void>
-      private(node: PrivateTree | PrivateFile, relPath: Path): Promise<void>
+      public(root: UnixTree, relPath: Path.Path): Promise<void>
+      private(node: PrivateTree | PrivateFile, relPath: Path.Path): Promise<void>
     },
   ): Promise<void> {
-    const parts = pathing.unwrap(path)
+    const parts = Path.unwrap(path)
     const head = parts[ 0 ]
     const relPath = parts.slice(1)
 
@@ -769,10 +769,10 @@ export class FileSystem {
       const [ nodePath, node ] = this.root.findPrivateNode(path)
 
       if (!node) {
-        throw new NoPermissionError(`I don't have the necessary permissions to make changes to the file system at "${pathing.toPosix(path)}"`)
+        throw new NoPermissionError(`I don't have the necessary permissions to make changes to the file system at "${Path.toPosix(path)}"`)
       }
 
-      await handlers.private(node, parts.slice(pathing.unwrap(nodePath).length))
+      await handlers.private(node, parts.slice(Path.unwrap(nodePath).length))
       await node.put()
       await this.root.updatePuttable(Branch.Private, this.root.mmpt)
 
@@ -791,11 +791,11 @@ export class FileSystem {
   async runOnNode<A>(
     path: DistinctivePath,
     handlers: {
-      public(root: UnixTree, relPath: Path): Promise<A>
-      private(node: Tree | File, relPath: Path): Promise<A>
+      public(root: UnixTree, relPath: Path.Path): Promise<A>
+      private(node: Tree | File, relPath: Path.Path): Promise<A>
     },
   ): Promise<A> {
-    const parts = pathing.unwrap(path)
+    const parts = Path.unwrap(path)
     const head = parts[ 0 ]
     const relPath = parts.slice(1)
 
@@ -808,10 +808,10 @@ export class FileSystem {
       const [ nodePath, node ] = this.root.findPrivateNode(path)
 
       if (!node) {
-        throw new NoPermissionError(`I don't have the necessary permissions to query the file system at "${pathing.toPosix(path)}"`)
+        throw new NoPermissionError(`I don't have the necessary permissions to query the file system at "${Path.toPosix(path)}"`)
       }
 
-      return await handlers.private(node, parts.slice(pathing.unwrap(nodePath).length))
+      return await handlers.private(node, parts.slice(Path.unwrap(nodePath).length))
 
     } else if (head === Branch.Pretty) {
       return await handlers.public(this.root.prettyTree, relPath)
@@ -826,13 +826,13 @@ export class FileSystem {
   * `put` should be called on the node returned from the function.
   * Normally this is handled by `runOnNode`.
   */
-  async runOnChildTree(node: Tree, relPath: Path, fn: (tree: Tree) => Promise<Tree>): Promise<Tree> {
+  async runOnChildTree(node: Tree, relPath: Path.Path, fn: (tree: Tree) => Promise<Tree>): Promise<Tree> {
     let tree = node
 
     if (relPath.length) {
       if (!await tree.exists(relPath)) await tree.mkdir(relPath)
       const g = await tree.get(relPath)
-      if (typeCheck.isTree(g)) tree = g
+      if (FsTypeChecks.isTree(g)) tree = g
       else throw new Error("Path does not point to a directory")
     }
 
@@ -871,12 +871,11 @@ export default FileSystem
 // ㊙️
 
 
-function appPath(permissions: Permissions): AppPath {
-  if (!permissions.app) throw Error("Only works with app permissions")
-  const base = appDataPath(permissions.app)
+function appPath(appInfo: AppInfo): AppPath {
+  const base = appDataPath(appInfo)
 
   return ((path?: DistinctivePath) => {
-    if (path) return pathing.combine(base, path)
+    if (path) return Path.combine(base, path)
     return base
   }) as unknown as AppPath
 }
