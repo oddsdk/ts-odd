@@ -1,7 +1,7 @@
 import { CID } from "multiformats/cid"
 
 import { isString, isObject, isNum, isBool } from "../../common/index.js"
-import { Tree, File, HardLink, SoftLink, Links, BaseLink } from "../types.js"
+import { Tree, File, HardLink, SoftLink, Links, BaseLink, SimpleLink } from "../types.js"
 import { Skeleton, SkeletonInfo, TreeInfo, FileInfo, TreeHeader, FileHeader } from "../protocol/public/types.js"
 import { SemVer } from "../versions.js"
 import { Metadata, UnixMeta } from "../metadata.js"
@@ -20,6 +20,13 @@ export const isBaseLink = (obj: any): obj is BaseLink => {
     && isString(obj.name)
     && isNum(obj.size)
     && isBool(obj.isFile)
+}
+
+export const isSimpleLink = (obj: any): obj is SimpleLink => {
+  return isObject(obj)
+    && isString(obj.name)
+    && isNum(obj.size)
+    && isCID(obj.cid)
 }
 
 export const isSoftLink = (obj: any): obj is SoftLink => {

@@ -5,7 +5,6 @@ import * as cbor from "@ipld/dag-cbor"
 import { isBlob, isDefined, isJust, isString } from "../common/type-checks.js"
 import { Maybe } from "../common/types.js"
 import * as blob from "../common/blob.js"
-import * as crypto from "../crypto/index.js"
 
 // IPFS
 
@@ -27,6 +26,8 @@ export const add = async (content: FileContent, key: Maybe<string>): Promise<Add
   const toAdd = cbor.encode({ alg, cip })
   return basic.add(toAdd)
 }
+
+
 
 export const catAndDecode = async (cid: CID, key: Maybe<string>): Promise<unknown> => {
   const buf = await basic.catBuf(cid)

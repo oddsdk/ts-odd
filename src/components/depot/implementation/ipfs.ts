@@ -20,6 +20,9 @@ export async function implementation(peersUrl: string): Promise<Implementation> 
   )
 
   return {
+
+    // GET
+
     getBlock: async (cid: CID): Promise<Uint8Array> => {
       return ipfs.block.get(cid)
     },
@@ -41,6 +44,9 @@ export async function implementation(peersUrl: string): Promise<Implementation> 
 
       return uint8arrays.concat(chunks)
     },
+
+    // PUT
+
     putBlock: async (data: Uint8Array, codec: BlockCodec<number, unknown>): Promise<CID> => {
       const multihash = await sha256.digest(data)
       const cid = new CID(1, codec.code, multihash, data)
@@ -56,5 +62,12 @@ export async function implementation(peersUrl: string): Promise<Implementation> 
       const addResult = await ipfs.add(data)
       return { ...addResult, isFile: true }
     },
+
+    // STATS
+
+    size: async (cid: CID) => {
+      const stat = await ipfs.files.stat(`/ipfs/${cid}`)
+      return stat.cumulativeSize
+    }
   }
 }

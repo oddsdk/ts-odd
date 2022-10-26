@@ -1,16 +1,15 @@
-import type { ImportCandidate } from "ipfs-core-types/src/utils"
-import * as dagPB from "@ipld/dag-pb"
+import * as DagPB from "@ipld/dag-pb"
+import * as Uint8arrays from "uint8arrays"
 import { CID } from "multiformats/cid"
 
-import * as ipfs from "../../ipfs/index.js"
-import { FileContent, AddResult } from "../../ipfs/index.js"
-import { DAG_NODE_DATA } from "../../ipfs/constants.js"
+import * as DAG from "../../dag/index.js"
+import * as Depot from "../../components/depot/implementation.js"
 
-import { SimpleLinks, Links } from "../types.js"
+import * as FsTypeCheck from "../types/check.js"
+import * as Link from "../link.js"
+import * as TypeCheck from "../../common/type-checks.js"
+import { SimpleLinks, Links, SimpleLink, HardLink, SoftLink, BaseLink } from "../types.js"
 import { decodeCID } from "../../common/index.js"
-import * as check from "../types/check.js"
-import * as link from "../link.js"
-import * as typeCheck from "../../common/type-checks.js"
 
 
 export const getFile = async (cid: CID): Promise<Uint8Array> => {
@@ -21,7 +20,7 @@ export const getEncryptedFile = async (cid: CID, key: string): Promise<FileConte
   return ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent>
 }
 
-export const putFile = async (content: ImportCandidate): Promise<AddResult> => {
+export const putFile = async (content: Uint8Array): Promise<AddResult> => {
   return ipfs.add(content)
 }
 
@@ -31,21 +30,21 @@ export const putEncryptedFile = async (content: FileContent, key: string): Promi
 
 export const getSimpleLinks = async (cid: CID): Promise<SimpleLinks> => {
   const dagNode = await ipfs.dagGet(cid)
-  return link.arrToMap(
-    dagNode.Links.map(link.fromDAGLink)
+  return Link.arrToMap(
+    dagNode.Links.map(Link.fromDAGLink)
   )
 }
 
-export const getFileSystemLinks = async (cid: CID): Promise<Links> => {
-  const topNode = await ipfs.dagGet(cid)
+export const getFileSystemLinks = async (depot: Depot.Implementation, cid: CID): Promise<Links> => {
+  const topNode = await DAG.getPB(depot, cid)
 
   const links = await Promise.all(topNode.Links.map(async l => {
-    const innerNode = await ipfs.dagGet(l.Hash)
-    const innerLinks = link.arrToMap(innerNode.Links.map(link.fromDAGLink))
+    const innerNode = await DAG.getPB(depot, l.Hash)
+    const innerLinks = Link.arrToMap(innerNode.Links.map(Link.fromDAGLink))
     const isSoftLink = !!innerLinks[ "softLink" ]
 
     if (isSoftLink) {
-      const a = await ipfs.catBuf(decodeCID(innerLinks[ "softLink" ].cid))
+      const a = await depot.getUnixFile(decodeCID(innerLinks[ "softLink" ].cid))
       const b = new TextDecoder().decode(a)
       return JSON.parse(b)
     }
@@ -56,33 +55,53 @@ export const getFileSystemLinks = async (cid: CID): Promise<Links> => {
     )
 
     return {
-      ...link.fromDAGLink(l),
-      isFile: typeCheck.hasProp(f, "isFile") ? f.isFile : false
+      ...Link.fromDAGLink(l),
+      isFile: TypeCheck.hasProp(f, "isFile") ? f.isFile : false
     }
   }))
 
-  return link.arrToMap(links)
+  return Link.arrToMap(links)
 }
 
-export const putLinks = async (links: Links | SimpleLinks): Promise<AddResult> => {
-  const dagLinks = Object.values(links)
-    .filter(l => l !== undefined)
-    .map(async l => {
-      if (check.isSoftLink(l)) {
-        const softLink = await ipfs.add(JSON.stringify(l))
-        const dagNode = await ipfs.dagPut(
-          dagPB.createNode(
-            DAG_NODE_DATA, [
-            dagPB.createLink("softLink", softLink.size, softLink.cid)
-          ]
+export const putLinks = async (
+  depot: Depot.Implementation,
+  links: Links | SimpleLinks
+): Promise<Depot.PutResult> => {
+  const dagLinks: Promise<DagPB.PBLink | null>[] = Object
+    .values(links)
+    .map(async (l: HardLink | SoftLink | BaseLink | SimpleLink) => {
+      if (FsTypeCheck.isSoftLink(l)) {
+        const softLink = await depot.putChunked(
+          Uint8arrays.fromString(
+            JSON.stringify(l),
+            "utf8"
           )
         )
-        return dagPB.createLink(l.name, dagNode.size, dagNode.cid)
-      } else if (l.Hash) {
-        return l
+
+        const dagNodeCID = await DAG.putPB(depot, [
+          DagPB.createLink("softLink", softLink.size, softLink.cid)
+        ])
+
+        const dagNodeSize = await depot.size(dagNodeCID)
+
+        return DagPB.createLink(l.name, dagNodeSize, dagNodeCID)
+      } else if (TypeCheck.hasProp(l, "Hash") && l.Hash) {
+        return l as DagPB.PBLink
+      } else if (FsTypeCheck.isSimpleLink(l)) {
+        return Link.toDAGLink(l)
       } else {
-        return link.toDAGLink(l)
+        return null
       }
     })
-  return ipfs.dagPutLinks(await Promise.all(dagLinks))
+
+  const cid = await DAG.putPB(
+    depot,
+    await Promise.all(dagLinks).then(l => l.filter(a => a !== null))
+  )
+
+  return {
+    cid,
+    isFile: false,
+    size: await depot.size(cid)
+  }
 }

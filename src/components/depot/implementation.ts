@@ -12,6 +12,9 @@ export type Implementation = {
   // Keep data around
   putBlock: (data: Uint8Array, codec: BlockCodec<number, unknown>) => Promise<CID>
   putChunked: (data: Uint8Array) => Promise<PutResult>
+
+  // Stats
+  size: (cid: CID) => Promise<number>
 }
 
 export type PutResult = {

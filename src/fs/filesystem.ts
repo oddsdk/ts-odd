@@ -7,6 +7,7 @@ import * as Crypto from "../components/crypto/implementation.js"
 import * as Depot from "../components/depot/implementation.js"
 import * as Manners from "../components/manners/implementation.js"
 import * as Reference from "../components/reference/implementation.js"
+import * as Storage from "../components/storage/implementation.js"
 
 import * as DID from "../did/index.js"
 import * as FsTypeChecks from "./types/check.js"
@@ -60,9 +61,11 @@ type Dependents = {
   depot: Depot.Implementation
   manners: Manners.Implementation
   reference: Reference.Implementation
+  storage: Storage.Implementation
 }
 
 type FileSystemOptions = {
+  accountDID: string,
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
@@ -73,7 +76,7 @@ type MutationOptions = {
 }
 
 type NewFileSystemOptions = FileSystemOptions & {
-  rootKey: string
+  rootKey: Uint8Array
   version: string
 }
 
@@ -157,7 +160,6 @@ export class FileSystem {
       dependents
         .crypto.aes.genKey(SymmAlg.AES_CTR)
         .then(dependents.crypto.aes.exportKey)
-        .then(RootKey.toString)
     )
 
     // Create a file system based on wnfs-wasm when this option is set:
@@ -599,7 +601,7 @@ export class FileSystem {
     const sharedLinksCid = rootLinks[ Branch.Shared ]?.cid || null
     if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
 
-    const sharedLinks = await RootTree.getSharedLinks(decodeCID(sharedLinksCid))
+    const sharedLinks = await RootTree.getSharedLinks(this.dependents.depot, decodeCID(sharedLinksCid))
     const shareLink = TypeChecks.isObject(sharedLinks) ? sharedLinks[ key ] : null
     if (!shareLink) throw new Error("Couldn't find a matching share.")
 

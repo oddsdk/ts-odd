@@ -1,24 +1,27 @@
 import * as Uint8arrays from "uint8arrays"
 import { BlockCodec } from "multiformats/codecs/interface"
+import { CID } from "multiformats/cid"
 
-import * as dagCBOR from "@ipld/dag-cbor"
-import * as dagPB from "@ipld/dag-pb"
-import * as raw from "multiformats/codecs/raw"
+import * as DagCBOR from "@ipld/dag-cbor"
+import * as DagPB from "@ipld/dag-pb"
+import * as Raw from "multiformats/codecs/raw"
+
+import * as Depot from "../components/depot/implementation.js"
 
 
 // CONSTANTS
 
 
 export const CODECS_BY_NAME: Record<string, BlockCodec<number, unknown>> = {
-  [ dagPB.name ]: dagPB,
-  [ dagCBOR.name ]: dagCBOR,
-  [ raw.name ]: raw,
+  [ DagPB.name ]: DagPB,
+  [ DagCBOR.name ]: DagCBOR,
+  [ Raw.name ]: Raw,
 }
 
 export const CODECS_BY_CODE: Record<number, BlockCodec<number, unknown>> = {
-  [ dagPB.code ]: dagPB,
-  [ dagCBOR.code ]: dagCBOR,
-  [ raw.code ]: raw,
+  [ DagPB.code ]: DagPB,
+  [ DagCBOR.code ]: DagCBOR,
+  [ Raw.code ]: Raw,
 }
 
 export function getCodecByCode(code: number): BlockCodec<number, unknown> {
@@ -32,6 +35,9 @@ export function getCodecByName(name: string): BlockCodec<number, unknown> {
   if (!codec) throw new Error(`No codec was registered for the name: ${name}`)
   return codec
 }
+
+// These bytes in the "data" field of a DAG-PB node indicate that the node is an IPLD DAG Node
+export const PB_IPLD_DATA = new Uint8Array([ 8, 1 ])
 
 
 
@@ -56,7 +62,45 @@ export function toBytes(
 
 
 
+// GET
+
+
+export async function get(depot: Depot.Implementation, cid: CID): Promise<unknown> {
+  const codec = getCodecByCode(cid.code)
+  return codec.decode(await depot.getBlock(cid))
+}
+
+export async function getCBOR(depot: Depot.Implementation, cid: CID): Promise<unknown> {
+  expectCodec(DagCBOR, cid)
+  return DagCBOR.decode(await depot.getBlock(cid))
+}
+
+export async function getPB(depot: Depot.Implementation, cid: CID): Promise<DagPB.PBNode> {
+  expectCodec(DagPB, cid)
+  return DagPB.decode(await depot.getBlock(cid))
+}
+
+
+
+// PUT
+
+
+export function putPB(depot: Depot.Implementation, links: DagPB.PBLink[]): Promise<CID> {
+  const node = DagPB.createNode(PB_IPLD_DATA, links)
+  return depot.putBlock(DagPB.encode(node), DagPB)
+}
+
+
+
 // 🛠
+
+
+export function expectCodec(codec: BlockCodec<number, unknown>, cid: CID): void {
+  if (cid.code !== codec.code) {
+    const cidCodec = getCodecByCode(cid.code)
+    throw new Error(`Expected a ${codec.name} CID, found a ${cidCodec.name} CID instead.`)
+  }
+}
 
 
 export function numberHex(num: number): string {

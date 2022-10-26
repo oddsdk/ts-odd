@@ -25,12 +25,12 @@ export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Pro
     await mmpt.add(contentName, decodeCID(node.content))
   }
 
-  const [skeleton, isFile] = check.isPrivateFileInfo(node) ? [{}, true] : [node.skeleton, false]
+  const [ skeleton, isFile ] = check.isPrivateFileInfo(node) ? [ {}, true ] : [ node.skeleton, false ]
   return { cid, name, key, size, isFile, skeleton }
 }
 
 export const readNode = async (cid: CID, key: string): Promise<DecryptedNode> => {
-  const content = await ipfs.encoded.catAndDecode(cid, key)
+  const content = await basic.getEncryptedFile(cid, key)
   if (!check.isDecryptedNode(content)) {
     throw new Error(`Could not parse a valid filesystem object, ${cid}`)
   }
@@ -61,7 +61,7 @@ export const getLatestByCID = async (mmpt: MMPT, cid: CID, key: string): Promise
     : node
 }
 
-export const getLatestByBareNameFilter = async(mmpt: MMPT, bareName: BareNameFilter, key: string): Promise<Maybe<DecryptedNode>> => {
+export const getLatestByBareNameFilter = async (mmpt: MMPT, bareName: BareNameFilter, key: string): Promise<Maybe<DecryptedNode>> => {
   const revisionFilter = await namefilter.addRevision(bareName, key, 1)
   const name = await namefilter.toPrivateName(revisionFilter)
   return getLatestByName(mmpt, name, key)

@@ -1,7 +1,7 @@
 import type { CID } from "multiformats/cid"
 
 import { Maybe } from "../common/index.js"
-import { AddResult } from "../components/depot/implementation.js"
+import { PutResult } from "../components/depot/implementation.js"
 import { Path } from "../path/index.js"
 import { Ucan } from "../ucan/types.js"
 
@@ -55,7 +55,7 @@ export type NonEmptyPath = [ string, ...string[] ]
 
 export interface Puttable {
   put(): Promise<CID>
-  putDetailed(): Promise<AddResult>
+  putDetailed(): Promise<PutResult>
 }
 
 export type UpdateCallback = () => Promise<unknown>
@@ -96,6 +96,6 @@ export interface Tree extends UnixTree, Puttable {
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree | File>
 
-  updateLink(name: string, result: AddResult): this
+  updateLink(name: string, result: PutResult): this
   getLinks(): Links
 }
