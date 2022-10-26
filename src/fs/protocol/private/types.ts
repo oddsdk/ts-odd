@@ -1,8 +1,7 @@
 import type { CID } from "multiformats/cid"
 
 import { BaseLink, SoftLink } from "../../types.js"
-import  { Metadata } from "../../metadata.js"
-import { AddResult } from "../../../ipfs/index.js"
+import { Metadata } from "../../metadata.js"
 import { BareNameFilter, PrivateName } from "./namefilter.js"
 
 
@@ -21,7 +20,7 @@ export type PrivateLink = BaseLink & {
   pointer: PrivateName
 }
 
-export type PrivateLinks = { [name: string]: PrivateLink | SoftLink }
+export type PrivateLinks = { [ name: string ]: PrivateLink | SoftLink }
 
 export type PrivateTreeInfo = {
   metadata: Metadata
@@ -31,7 +30,7 @@ export type PrivateTreeInfo = {
   skeleton: PrivateSkeleton
 }
 
-export type PrivateSkeleton = { [name: string]: PrivateSkeletonInfo | SoftLink }
+export type PrivateSkeleton = { [ name: string ]: PrivateSkeletonInfo | SoftLink }
 
 export type PrivateSkeletonInfo = {
   cid: CID | string

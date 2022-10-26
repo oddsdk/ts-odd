@@ -59,7 +59,15 @@ export async function implementation(peersUrl: string): Promise<Implementation> 
       return cid
     },
     putChunked: async (data: Uint8Array): Promise<PutResult> => {
-      const addResult = await ipfs.add(data)
+      const addResult = await ipfs.add(data, {
+        cidVersion: 1,
+        hashAlg: "sha2-256",
+        rawLeaves: true,
+        wrapWithDirectory: false,
+        preload: false,
+        pin: false,
+      })
+
       return { ...addResult, isFile: true }
     },
 

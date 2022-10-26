@@ -1,6 +1,4 @@
-import * as uint8arrays from "uint8arrays"
 import { CID } from "multiformats"
-import { IPFS } from "ipfs-core-types"
 import { default as init, PublicDirectory, PublicFile, PublicNode } from "wnfs"
 
 import * as Depot from "../../components/depot/implementation.js"
@@ -18,12 +16,12 @@ import { Metadata } from "../metadata.js"
 
 
 async function loadWasm({ manners }: Dependents) {
-  manners.(`⏬ Loading WNFS WASM`)
+  manners.log(`⏬ Loading WNFS WASM`)
   const before = performance.now()
   // init accepts Promises as arguments
   await init(manners.wnfsWasmLookup(WASM_WNFS_VERSION))
   const time = performance.now() - before
-  manners.(`🧪 Loaded WNFS WASM (${time.toFixed(0)}ms)`)
+  manners.log(`🧪 Loaded WNFS WASM (${time.toFixed(0)}ms)`)
 }
 
 type Dependents = {
@@ -60,7 +58,6 @@ export class PublicRootWasm implements UnixTree, Puttable {
   root: Promise<PublicDirectory>
   lastRoot: PublicDirectory
   store: BlockStore
-  ipfs: IPFS
   readOnly: boolean
 
   constructor(dependents: Dependents, root: PublicDirectory, store: BlockStore, readOnly: boolean) {
@@ -169,14 +166,7 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
   async add(path: Path, content: Uint8Array): Promise<this> {
     const normalized = await normalizeFileContent(content)
-    const { cid } = await this.ipfs.add(normalized, {
-      cidVersion: 1,
-      hashAlg: "sha2-256",
-      rawLeaves: true,
-      wrapWithDirectory: false,
-      preload: false,
-      pin: false,
-    })
+    const { cid } = await this.dependents.depot.putChunked(normalized)
 
     await this.atomically(async root => {
       const { rootDir } = await this.withError(
@@ -270,7 +260,7 @@ export class PublicRootWasm implements UnixTree, Puttable {
     return CID.decode(cidBytes)
   }
 
-  async putDetailed(): Promise<AddResult> {
+  async putDetailed(): Promise<Depot.PutResult> {
     return {
       cid: await this.put(),
       size: 0, // TODO figure out size
@@ -324,11 +314,11 @@ export class PublicDirectoryWasm implements UnixTree, Puttable {
     return this
   }
 
-  async cat(path: Path): Promise<FileContent> {
+  async cat(path: Path): Promise<Uint8Array> {
     return await this.publicRoot.cat([ ...this.directory, ...path ])
   }
 
-  async add(path: Path, content: FileContent): Promise<this> {
+  async add(path: Path, content: Uint8Array): Promise<this> {
     this.checkMutability(`write at ${[ ...this.directory, ...path ].join("/")}`)
     await this.publicRoot.add([ ...this.directory, ...path ], content)
     await this.updateCache()
@@ -364,7 +354,7 @@ export class PublicDirectoryWasm implements UnixTree, Puttable {
     return CID.decode(cidBytes)
   }
 
-  async putDetailed(): Promise<AddResult> {
+  async putDetailed(): Promise<Depot.PutResult> {
     return {
       isFile: false,
       size: 0,
@@ -386,7 +376,7 @@ export class PublicFileWasm extends BaseFile {
   private publicRoot: PublicRootWasm
   private cachedFile: PublicFile
 
-  constructor(content: FileContent, directory: string[], filename: string, publicRoot: PublicRootWasm, cachedFile: PublicFile) {
+  constructor(content: Uint8Array, directory: string[], filename: string, publicRoot: PublicRootWasm, cachedFile: PublicFile) {
     super(content)
     this.directory = directory
     this.filename = filename
@@ -404,13 +394,13 @@ export class PublicFileWasm extends BaseFile {
     return nodeHeader(this.cachedFile)
   }
 
-  async updateContent(content: FileContent): Promise<this> {
+  async updateContent(content: Uint8Array): Promise<this> {
     await super.updateContent(content)
     await this.updateCache()
     return this
   }
 
-  async putDetailed(): Promise<AddResult> {
+  async putDetailed(): Promise<Depot.PutResult> {
     const root = await this.publicRoot.root
     const path = [ ...this.directory, this.filename ]
     const { result: node } = await root.getNode(path, this.publicRoot.store) as OpResult<PublicNode>

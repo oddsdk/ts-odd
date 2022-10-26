@@ -7,7 +7,7 @@ export type Implementation = {
   // Get the data behind a CID
   getBlock: (cid: CID) => Promise<Uint8Array>
   getUnixFile: (cid: CID) => Promise<Uint8Array>
-  getUnixDirectory: (cid: CID) => Promise<IPFSEntry[]>
+  getUnixDirectory: (cid: CID) => Promise<IPFSEntry[]> // TODO: Use a different return type independent of js-ipfs
 
   // Keep data around
   putBlock: (data: Uint8Array, codec: BlockCodec<number, unknown>) => Promise<CID>

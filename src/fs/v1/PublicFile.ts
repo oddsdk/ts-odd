@@ -1,7 +1,6 @@
 import type { CID } from "multiformats/cid"
 
 import { FileInfo, FileHeader, PutDetails } from "../protocol/public/types.js"
-import { FileContent } from "../../ipfs/index.js"
 import BaseFile from "../base/file.js"
 import PublicHistory from "./PublicHistory.js"
 
@@ -15,7 +14,7 @@ import { decodeCID, isObject, hasProp, Maybe } from "../../common/index.js"
 
 type ConstructorParams = {
   cid: Maybe<CID>
-  content: FileContent
+  content: Uint8Array
   header: FileHeader
 }
 
@@ -40,7 +39,7 @@ export class PublicFile extends BaseFile {
       && check.isFileHeader(obj.header)
   }
 
-  static async create(content: FileContent): Promise<PublicFile> {
+  static async create(content: Uint8Array): Promise<PublicFile> {
     return new PublicFile({
       content,
       header: { metadata: metadata.empty(true, versions.latest) },

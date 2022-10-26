@@ -1,7 +1,10 @@
+import * as DagCBOR from "@ipld/dag-cbor"
 import * as DagPB from "@ipld/dag-pb"
 import * as Uint8arrays from "uint8arrays"
 import { CID } from "multiformats/cid"
 
+import * as Blob from "../../common/blob.js"
+import * as Crypto from "../../components/crypto/implementation.js"
 import * as DAG from "../../dag/index.js"
 import * as Depot from "../../components/depot/implementation.js"
 
@@ -9,27 +12,46 @@ import * as FsTypeCheck from "../types/check.js"
 import * as Link from "../link.js"
 import * as TypeCheck from "../../common/type-checks.js"
 import { SimpleLinks, Links, SimpleLink, HardLink, SoftLink, BaseLink } from "../types.js"
+import { SymmAlg } from "../../components/crypto/implementation.js"
 import { decodeCID } from "../../common/index.js"
 
 
-export const getFile = async (cid: CID): Promise<Uint8Array> => {
-  return ipfs.catBuf(cid)
+export const getFile = async (depot: Depot.Implementation, cid: CID): Promise<Uint8Array> => {
+  return depot.getUnixFile(cid)
 }
 
-export const getEncryptedFile = async (cid: CID, key: string): Promise<FileContent> => {
-  return ipfs.encoded.catAndDecode(cid, key) as Promise<FileContent>
+export const getEncryptedFile = async (depot: Depot.Implementation, crypto: Crypto.Implementation, cid: CID, key: Uint8Array): Promise<Uint8Array> => {
+  const buf = await getFile(depot, cid)
+  const withAlgorithm = DagCBOR.decode(buf)
+
+  if (!TypeCheck.hasProp(withAlgorithm, "alg") || !TypeCheck.hasProp(withAlgorithm, "cip") || !isSymmAlg(withAlgorithm.alg) || !ArrayBuffer.isView(withAlgorithm.cip)) {
+    throw new Error(`Unexpected private block. Expected "alg" and "cip" field.`)
+  }
+
+  const alg = withAlgorithm.alg
+  const toDecode = await crypto.aes.decrypt(withAlgorithm.cip as Uint8Array, key, alg)
+
+  return DagCBOR.decode(toDecode)
 }
 
-export const putFile = async (content: Uint8Array): Promise<AddResult> => {
-  return ipfs.add(content)
+export const putFile = async (depot: Depot.Implementation, content: Uint8Array): Promise<Depot.PutResult> => {
+  return depot.putChunked(content)
 }
 
-export const putEncryptedFile = async (content: FileContent, key: string): Promise<AddResult> => {
-  return ipfs.encoded.add(content, key)
+export const putEncryptedFile = async (depot: Depot.Implementation, crypto: Crypto.Implementation, content: Uint8Array, key: Uint8Array): Promise<Depot.PutResult> => {
+  const normalized = TypeCheck.isBlob(content) ? await Blob.toUint8Array(content) : content
+  const encoded = DagCBOR.encode(normalized)
+
+  const alg = SymmAlg.AES_GCM
+  const cip = await crypto.aes.encrypt(encoded, key, alg)
+  const toAdd = DagCBOR.encode({ alg, cip })
+
+  return putFile(depot, toAdd)
 }
 
-export const getSimpleLinks = async (cid: CID): Promise<SimpleLinks> => {
-  const dagNode = await ipfs.dagGet(cid)
+export const getSimpleLinks = async (depot: Depot.Implementation, cid: CID): Promise<SimpleLinks> => {
+  const dagNode = await DAG.getPB(depot, cid)
+
   return Link.arrToMap(
     dagNode.Links.map(Link.fromDAGLink)
   )
@@ -49,9 +71,11 @@ export const getFileSystemLinks = async (depot: Depot.Implementation, cid: CID):
       return JSON.parse(b)
     }
 
-    const f = await ipfs.encoded.catAndDecode(
-      decodeCID(innerLinks[ "metadata" ].cid),
-      null
+    const f = await DagCBOR.decode(
+      await getFile(
+        depot,
+        decodeCID(innerLinks[ "metadata" ].cid)
+      )
     )
 
     return {
@@ -67,9 +91,11 @@ export const putLinks = async (
   depot: Depot.Implementation,
   links: Links | SimpleLinks
 ): Promise<Depot.PutResult> => {
-  const dagLinks: Promise<DagPB.PBLink | null>[] = Object
+  const dagLinks = Object
     .values(links)
-    .map(async (l: HardLink | SoftLink | BaseLink | SimpleLink) => {
+    .reduce(async (acc: Promise<DagPB.PBLink[]>, l: HardLink | SoftLink | BaseLink | SimpleLink) => {
+      const arr = await acc
+
       if (FsTypeCheck.isSoftLink(l)) {
         const softLink = await depot.putChunked(
           Uint8arrays.fromString(
@@ -84,19 +110,21 @@ export const putLinks = async (
 
         const dagNodeSize = await depot.size(dagNodeCID)
 
-        return DagPB.createLink(l.name, dagNodeSize, dagNodeCID)
+        return [ ...arr, DagPB.createLink(l.name, dagNodeSize, dagNodeCID) ]
       } else if (TypeCheck.hasProp(l, "Hash") && l.Hash) {
-        return l as DagPB.PBLink
+        return [ ...arr, l as DagPB.PBLink ]
       } else if (FsTypeCheck.isSimpleLink(l)) {
-        return Link.toDAGLink(l)
+        return [ ...arr, Link.toDAGLink(l) ]
       } else {
-        return null
+        return arr
       }
-    })
+    }, Promise.resolve([]))
+
+
 
   const cid = await DAG.putPB(
     depot,
-    await Promise.all(dagLinks).then(l => l.filter(a => a !== null))
+    await dagLinks
   )
 
   return {
@@ -104,4 +132,13 @@ export const putLinks = async (
     isFile: false,
     size: await depot.size(cid)
   }
+}
+
+
+
+// ㊙️
+
+
+function isSymmAlg(alg: unknown): alg is SymmAlg {
+  return TypeCheck.isString(alg) && (Object.values(SymmAlg) as string[]).includes(alg as string)
 }

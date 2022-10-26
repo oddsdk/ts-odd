@@ -8,7 +8,6 @@ import MMPT from "./mmpt.js"
 import * as basic from "../basic.js"
 import * as check from "./types/check.js"
 import * as namefilter from "./namefilter.js"
-import * as ipfs from "../../../ipfs/index.js"
 
 
 export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Promise<PrivateAddResult> => {

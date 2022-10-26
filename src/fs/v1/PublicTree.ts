@@ -1,12 +1,10 @@
 import { CID } from "multiformats/cid"
 
-import { FileContent } from "../../ipfs/index.js"
 import { Links, NonEmptyPath, SoftLink, Link, UpdateCallback } from "../types.js"
 import { Maybe } from "../../common/index.js"
 import { DistinctivePath, Path } from "../../path.js"
 import { Skeleton, SkeletonInfo, TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
 import { decodeCID } from "../../common/cid.js"
-import { setup } from "../../setup/internal.js"
 
 import BaseTree from "../base/tree.js"
 import BareTree from "../bare/tree.js"
@@ -38,7 +36,7 @@ type Child =
 
 export class PublicTree extends BaseTree {
 
-  children: { [name: string]: Child }
+  children: { [ name: string ]: Child }
   cid: Maybe<CID>
   links: Links
   header: TreeHeader
@@ -54,7 +52,7 @@ export class PublicTree extends BaseTree {
     this.history = new PublicHistory(this as unknown as history.Node)
   }
 
-  static async empty (): Promise<PublicTree> {
+  static async empty(): Promise<PublicTree> {
     return new PublicTree({
       links: {},
       header: {
@@ -65,9 +63,9 @@ export class PublicTree extends BaseTree {
     })
   }
 
-  static async fromCID (cid: CID): Promise<PublicTree> {
+  static async fromCID(cid: CID): Promise<PublicTree> {
     const info = await protocol.pub.get(cid)
-    if(!check.isTreeInfo(info)) {
+    if (!check.isTreeInfo(info)) {
       throw new Error(`Could not parse a valid public tree at: ${cid}`)
     }
     return PublicTree.fromInfo(info, cid)
@@ -93,7 +91,7 @@ export class PublicTree extends BaseTree {
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicTree> {
     const child = await PublicTree.empty()
 
-    const existing = this.children[name]
+    const existing = this.children[ name ]
     if (existing) {
       if (PublicFile.instanceOf(existing)) {
         throw new Error(`There is a file at the given path: ${name}`)
@@ -108,14 +106,14 @@ export class PublicTree extends BaseTree {
     return child
   }
 
-  async createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicFile> {
+  async createOrUpdateChildFile(content: Uint8Array, name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicFile> {
     const existing = await this.getDirectChild(name)
     let file: PublicFile
-    if(existing === null){
+    if (existing === null) {
       file = await PublicFile.create(content)
     } else if (PublicFile.instanceOf(existing)) {
       file = await existing.updateContent(content)
-    }else {
+    } else {
       throw new Error(`There is already a directory with that name: ${name}`)
     }
     await this.updateDirectChild(file, name, onUpdate)
@@ -136,7 +134,7 @@ export class PublicTree extends BaseTree {
 
   async updateDirectChild(child: PublicTree | PublicFile, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
     if (this.readOnly) throw new Error("Tree is read-only")
-    this.children[name] = child
+    this.children[ name ] = child
     const details = await child.putDetailed()
     this.updateLink(name, details)
     onUpdate && await onUpdate()
@@ -144,10 +142,10 @@ export class PublicTree extends BaseTree {
   }
 
   removeDirectChild(name: string): this {
-    delete this.links[name]
-    delete this.header.skeleton[name]
-    if(this.children[name]) {
-      delete this.children[name]
+    delete this.links[ name ]
+    delete this.header.skeleton[ name ]
+    if (this.children[ name ]) {
+      delete this.children[ name ]
     }
     return this
   }
@@ -155,11 +153,11 @@ export class PublicTree extends BaseTree {
   async getDirectChild(name: string): Promise<Child | null> {
     let child = null
 
-    if (this.children[name]) {
-      return this.children[name]
+    if (this.children[ name ]) {
+      return this.children[ name ]
     }
 
-    const childInfo = this.header.skeleton[name] || null
+    const childInfo = this.header.skeleton[ name ] || null
     if (childInfo === null) return null
 
     // Hard link
@@ -169,18 +167,18 @@ export class PublicTree extends BaseTree {
         ? await PublicFile.fromCID(cid)
         : await PublicTree.fromCID(cid)
 
-    // Soft link
+      // Soft link
     } else if (check.isSoftLink(childInfo)) {
       return PublicTree.resolveSoftLink(childInfo)
 
     }
 
     // Check that the child wasn't added while retrieving the content from the network
-    if (this.children[name]) {
-      return this.children[name]
+    if (this.children[ name ]) {
+      return this.children[ name ]
     }
 
-    if (child) this.children[name] = child
+    if (child) this.children[ name ] = child
     return child
   }
 
@@ -203,8 +201,8 @@ export class PublicTree extends BaseTree {
   }
 
   async getRecurse(skel: Skeleton, path: NonEmptyPath): Promise<SkeletonInfo | Child | null> {
-    const head = path[0]
-    const child = skel[head] || null
+    const head = path[ 0 ]
+    const child = skel[ head ] || null
     const nextPath = skeleton.nextNonEmpty(path)
 
     if (check.isSoftLink(child)) {
@@ -235,13 +233,13 @@ export class PublicTree extends BaseTree {
     link: Link
     skeleton: SkeletonInfo | SoftLink
   }): void {
-    this.links[name] = link
-    this.header.skeleton[name] = skeleton
+    this.links[ name ] = link
+    this.header.skeleton[ name ] = skeleton
     this.header.metadata.unixMeta.mtime = Date.now()
   }
 
   static async resolveSoftLink(link: SoftLink): Promise<Child | null> {
-    const [domain, ...pieces] = link.ipns.split("/")
+    const [ domain, ...pieces ] = link.ipns.split("/")
     const path = pathing.fromPosix(pieces.join("/"))
     const isPublic =
       pathing.isBranch(pathing.Branch.Public, path) ||
@@ -266,11 +264,11 @@ export class PublicTree extends BaseTree {
   getLinks(): Links {
     // add missing metadata into links
     return Object.values(this.links).reduce((acc, cur) => {
-      const s = this.header.skeleton[cur.name]
+      const s = this.header.skeleton[ cur.name ]
 
       return {
         ...acc,
-        [cur.name]: s && (s as SkeletonInfo).isFile !== undefined
+        [ cur.name ]: s && (s as SkeletonInfo).isFile !== undefined
           ? { ...cur, isFile: (s as SkeletonInfo).isFile }
           : { ...cur },
       }

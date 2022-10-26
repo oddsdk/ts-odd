@@ -1,12 +1,10 @@
 import BaseFile from "../base/file.js"
 import MMPT from "../protocol/private/mmpt.js"
 import PrivateHistory from "./PrivateHistory.js"
-import { FileContent } from "../../ipfs/index.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { DecryptedNode, PrivateAddResult, PrivateFileInfo } from "../protocol/private/types.js"
 import { hasProp, isObject } from "../../common/type-checks.js"
 import { Maybe, decodeCID } from "../../common/index.js"
-import * as crypto from "../../crypto/index.js"
 import * as check from "../protocol/private/types/check.js"
 import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
@@ -16,7 +14,7 @@ import * as versions from "../versions.js"
 
 
 type ConstructorParams = {
-  content: FileContent
+  content: Uint8Array
   key: string
   header: PrivateFileInfo
   mmpt: MMPT
@@ -47,7 +45,7 @@ export class PrivateFile extends BaseFile {
       && check.isPrivateFileInfo(obj.header)
   }
 
-  static async create(mmpt: MMPT, content: FileContent, parentNameFilter: BareNameFilter,  key: string): Promise<PrivateFile> {
+  static async create(mmpt: MMPT, content: Uint8Array, parentNameFilter: BareNameFilter, key: string): Promise<PrivateFile> {
     const bareNameFilter = await namefilter.addToBare(parentNameFilter, key)
     const contentKey = await crypto.aes.genKeyStr()
     const contentInfo = await protocol.basic.putEncryptedFile(content, contentKey)
@@ -109,7 +107,7 @@ export class PrivateFile extends BaseFile {
     return this
   }
 
-  async updateContent(content: FileContent): Promise<this> {
+  async updateContent(content: Uint8Array): Promise<this> {
     const contentInfo = await protocol.basic.putEncryptedFile(content, this.header.key)
     this.content = content
     this.header = {

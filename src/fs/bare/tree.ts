@@ -2,10 +2,8 @@ import type { CID } from "multiformats/cid"
 
 import * as check from "../types/check.js"
 import * as protocol from "../protocol/index.js"
-import * as ipfs from "../../ipfs/index.js"
 import * as link from "../link.js"
 
-import { AddResult, FileContent } from "../../ipfs/index.js"
 import { HardLinks, BaseLinks, Tree, File, Puttable, UpdateCallback, PuttableUnixTree } from "../types.js"
 import { Maybe, decodeCID } from "../../common/index.js"
 import { isObject, hasProp } from "../../common/type-checks.js"
@@ -78,7 +76,7 @@ class BareTree extends BaseTree {
     return child
   }
 
-  async createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<BareFile> {
+  async createOrUpdateChildFile(content: Uint8Array, name: string, onUpdate: Maybe<UpdateCallback>): Promise<BareFile> {
     const existing = await this.getDirectChild(name)
     let file: BareFile
     if (existing === null) {

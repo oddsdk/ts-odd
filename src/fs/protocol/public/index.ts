@@ -4,10 +4,8 @@ import { Links, HardLink, SimpleLinks } from "../../types.js"
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from "./types.js"
 import { Metadata } from "../../metadata.js"
 import { decodeCID, isValue, Maybe, blob } from "../../../common/index.js"
-import { FileContent } from "../../../ipfs/index.js"
 
 import * as check from "../../types/check.js"
-import * as ipfs from "../../../ipfs/index.js"
 import * as link from "../../link.js"
 import * as basic from "../basic.js"
 
@@ -41,7 +39,7 @@ export const putTree = async (
 }
 
 export const putFile = async (
-  content: FileContent,
+  content: Uint8Array,
   metadataVal: Metadata,
   previousCID: Maybe<CID>
 ): Promise<PutDetails> => {
@@ -64,7 +62,7 @@ export const putFile = async (
   }
 }
 
-export const putAndMakeLink = async (name: string, val: FileContent): Promise<HardLink> => {
+export const putAndMakeLink = async (name: string, val: Uint8Array): Promise<HardLink> => {
   const { cid, size } = await basic.putFile(val)
   return link.make(name, cid, true, size)
 }
@@ -134,7 +132,7 @@ export const checkValue = <T>(
   throw new Error(`Improperly formatted header value: ${name}`)
 }
 
-export async function normalizeFileContent(content: FileContent): Promise<Uint8Array> {
+export async function normalizeFileContent(content: Uint8Array): Promise<Uint8Array> {
   if (content instanceof Uint8Array) {
     return content
   }

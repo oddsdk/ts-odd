@@ -3,7 +3,6 @@ import type { CID } from "multiformats/cid"
 import * as check from "../types/check.js"
 import * as pathing from "../../path.js"
 
-import { AddResult, FileContent } from "../../ipfs/index.js"
 import { Maybe } from "../../common/index.js"
 import { Path } from "../../path.js"
 import { Tree, File, UnixTree, Links, UpdateCallback } from "../types.js"
@@ -32,7 +31,7 @@ abstract class BaseTree implements Tree, UnixTree {
     return dir.getLinks()
   }
 
-  async cat(path: Path): Promise<FileContent> {
+  async cat(path: Path): Promise<Uint8Array> {
     const file = await this.get(path)
     if (file === null) {
       throw new Error("Path does not exist")
@@ -60,18 +59,18 @@ abstract class BaseTree implements Tree, UnixTree {
     }
 
     if (nextPath.length) {
-      await child.mkdirRecurse(nextPath, () => this.updateDirectChild(child, head, onUpdate) )
+      await child.mkdirRecurse(nextPath, () => this.updateDirectChild(child, head, onUpdate))
     }
 
     return this
   }
 
-  async add(path: Path, content: FileContent): Promise<this> {
+  async add(path: Path, content: Uint8Array): Promise<this> {
     await this.addRecurse(path, content, () => this.put())
     return this
   }
 
-  async addRecurse(path: Path, content: FileContent, onUpdate: Maybe<UpdateCallback>): Promise<this> {
+  async addRecurse(path: Path, content: Uint8Array, onUpdate: Maybe<UpdateCallback>): Promise<this> {
     const [ head, ...nextPath ] = path
 
     if (!head) {
@@ -115,7 +114,7 @@ abstract class BaseTree implements Tree, UnixTree {
       const child = await this.getDirectChild(head)
       if (child === null) {
         throw new Error("Invalid path: does not exist")
-      } else if(check.isFile(child)) {
+      } else if (check.isFile(child)) {
         throw new Error(`There is a file along the given path: ${pathing.log(path)}`)
       }
       await child.rmRecurse(nextPath, async () => {
@@ -148,7 +147,7 @@ abstract class BaseTree implements Tree, UnixTree {
     }
 
     await this.rm(from)
-    await [...to].reverse().reduce((acc, part, idx) => {
+    await [ ...to ].reverse().reduce((acc, part, idx) => {
       return acc.then(async child => {
         const childParentParts = to.slice(0, -(idx + 1))
         const tree = childParentParts.length
@@ -176,7 +175,7 @@ abstract class BaseTree implements Tree, UnixTree {
     return this.get(path)
   }
 
-  write(path: Path, content: FileContent): Promise<this> {
+  write(path: Path, content: Uint8Array): Promise<this> {
     return this.add(path, content)
   }
 
@@ -192,11 +191,11 @@ abstract class BaseTree implements Tree, UnixTree {
   * Then for the outermost parent, `put` should be called manually.
   */
   async updateChild(child: Tree | File, path: Path): Promise<this> {
-    const chain: [string, Tree][] = []
+    const chain: [ string, Tree ][] = []
 
     await path.reduce(async (promise: Promise<Tree>, p, idx) => {
       const parent = await promise
-      chain.push([p, parent])
+      chain.push([ p, parent ])
 
       if (idx + 1 === path.length) {
         return parent
@@ -212,7 +211,7 @@ abstract class BaseTree implements Tree, UnixTree {
       return c
     }, Promise.resolve(this))
 
-    await chain.reverse().reduce(async (promise, [name, parent]) => {
+    await chain.reverse().reduce(async (promise, [ name, parent ]) => {
       await parent.updateDirectChild(await promise, name, null)
       return parent
     }, Promise.resolve(child))
@@ -221,11 +220,11 @@ abstract class BaseTree implements Tree, UnixTree {
   }
 
   abstract createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
-  abstract createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
+  abstract createOrUpdateChildFile(content: Uint8Array, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
 
   abstract putDetailed(): Promise<AddResult>
 
-  abstract updateDirectChild (child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  abstract updateDirectChild(child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
   abstract removeDirectChild(name: string): this
   abstract getDirectChild(name: string): Promise<Tree | File | null>
 

@@ -1,14 +1,14 @@
 import type { CID } from "multiformats/cid"
 
 import * as protocol from "../protocol/index.js"
-import { AddResult, FileContent } from "../../ipfs/index.js"
+import { PutResult } from "../../components/depot/implementation.js"
 import { isObject, hasProp } from "../../common/index.js"
 import BaseFile from "../base/file.js"
 
 
 export class BareFile extends BaseFile {
 
-  static create(content: FileContent): BareFile {
+  static create(content: Uint8Array): BareFile {
     return new BareFile(content)
   }
 
@@ -26,7 +26,7 @@ export class BareFile extends BaseFile {
     return cid
   }
 
-  async putDetailed(): Promise<AddResult> {
+  async putDetailed(): Promise<PutResult> {
     return protocol.basic.putFile(await protocol.pub.normalizeFileContent(this.content))
   }
 }

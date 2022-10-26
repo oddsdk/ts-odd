@@ -5,7 +5,6 @@ import PrivateHistory from "./PrivateHistory.js"
 
 import { Links, SoftLink, UpdateCallback } from "../types.js"
 import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, PrivateLink } from "../protocol/private/types.js"
-import { FileContent } from "../../ipfs/index.js"
 import { Path } from "../../path.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { decodeCID, isObject, hasProp, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
@@ -15,7 +14,6 @@ import * as check from "../protocol/private/types/check.js"
 import * as checkNormie from "../types/check.js"
 import * as cidLog from "../../common/cid-log.js"
 import * as common from "../../common/index.js"
-import * as crypto from "../../crypto/index.js"
 import * as dns from "../../dns/index.js"
 import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
@@ -34,7 +32,7 @@ type ConstructorParams = {
 
 export default class PrivateTree extends BaseTree {
 
-  children: { [name: string]: PrivateTree | PrivateFile }
+  children: { [ name: string ]: PrivateTree | PrivateFile }
   header: PrivateTreeInfo
   history: PrivateHistory
   key: string
@@ -106,7 +104,7 @@ export default class PrivateTree extends BaseTree {
     const key = await crypto.aes.genKeyStr()
     const child = await PrivateTree.create(this.mmpt, key, this.header.bareNameFilter)
 
-    const existing = this.children[name]
+    const existing = this.children[ name ]
     if (existing) {
       if (PrivateFile.instanceOf(existing)) {
         throw new Error(`There is a file at the given path: ${name}`)
@@ -118,7 +116,7 @@ export default class PrivateTree extends BaseTree {
     return child
   }
 
-  async createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateFile>{
+  async createOrUpdateChildFile(content: Uint8Array, name: string, onUpdate: Maybe<UpdateCallback>): Promise<PrivateFile> {
     const existing = await this.getDirectChild(name)
 
     let file: PrivateFile
@@ -143,7 +141,7 @@ export default class PrivateTree extends BaseTree {
   async updateDirectChild(child: PrivateTree | PrivateFile, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
     if (this.readOnly) throw new Error("Tree is read-only")
     await child.updateParentNameFilter(this.header.bareNameFilter)
-    this.children[name] = child
+    this.children[ name ] = child
     const details = await child.putDetailed()
     this.updateLink(name, details)
     onUpdate && await onUpdate()
@@ -157,8 +155,8 @@ export default class PrivateTree extends BaseTree {
       links: removeKeyFromObj(this.header.links, name),
       skeleton: removeKeyFromObj(this.header.skeleton, name)
     }
-    if(this.children[name]) {
-      delete this.children[name]
+    if (this.children[ name ]) {
+      delete this.children[ name ]
     }
     return this
   }
@@ -166,11 +164,11 @@ export default class PrivateTree extends BaseTree {
   async getDirectChild(name: string): Promise<PrivateTree | PrivateFile | null> {
     let child = null
 
-    if (this.children[name]) {
-      return this.children[name]
+    if (this.children[ name ]) {
+      return this.children[ name ]
     }
 
-    const childInfo = this.header.links[name]
+    const childInfo = this.header.links[ name ]
     if (childInfo === undefined) return null
 
     // Hard link
@@ -179,18 +177,18 @@ export default class PrivateTree extends BaseTree {
         ? await PrivateFile.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
         : await PrivateTree.fromLatestName(this.mmpt, childInfo.pointer, childInfo.key)
 
-    // Soft link
+      // Soft link
     } else if (checkNormie.isSoftLink(childInfo)) {
       return PrivateTree.resolveSoftLink(childInfo)
 
     }
 
     // Check that the child wasn't added while retrieving the content from the network
-    if (this.children[name]) {
-      return this.children[name]
+    if (this.children[ name ]) {
+      return this.children[ name ]
     }
 
-    if (child) this.children[name] = child
+    if (child) this.children[ name ] = child
     return child
   }
 
@@ -208,9 +206,9 @@ export default class PrivateTree extends BaseTree {
   async get(path: Path): Promise<PrivateTree | PrivateFile | null> {
     if (path.length === 0) return this
 
-    const [head, ...rest] = path
+    const [ head, ...rest ] = path
 
-    const next = this.header.skeleton[head]
+    const next = this.header.skeleton[ head ]
     if (next === undefined) return null
 
     return this.getRecurse(next, rest)
@@ -220,7 +218,7 @@ export default class PrivateTree extends BaseTree {
     nodeInfo: PrivateSkeletonInfo | SoftLink,
     parts: string[]
   ): Promise<PrivateTree | PrivateFile | null> {
-    const [head, ...rest] = parts
+    const [ head, ...rest ] = parts
 
     if (checkNormie.isSoftLink(nodeInfo)) {
       const resolved = await PrivateTree.resolveSoftLink(nodeInfo)
@@ -237,7 +235,7 @@ export default class PrivateTree extends BaseTree {
 
     if (head === undefined) return getNode(this.mmpt, nodeInfo)
 
-    const nextChild = nodeInfo.subSkeleton[head]
+    const nextChild = nodeInfo.subSkeleton[ head ]
     if (nextChild !== undefined) return this.getRecurse(nextChild, rest)
 
     const reloadedNode = await protocol.priv.getLatestByCID(
@@ -247,7 +245,7 @@ export default class PrivateTree extends BaseTree {
     )
     if (!check.isPrivateTreeInfo(reloadedNode)) return null
 
-    const reloadedNext = reloadedNode.skeleton[head]
+    const reloadedNext = reloadedNode.skeleton[ head ]
     return reloadedNext === undefined ? null : this.getRecurse(reloadedNext, rest)
   }
 
@@ -260,14 +258,14 @@ export default class PrivateTree extends BaseTree {
     link: PrivateLink | SoftLink
     skeleton: PrivateSkeletonInfo | SoftLink
   }): void {
-    this.header.links[name] = link
-    this.header.skeleton[name] = skeleton
+    this.header.links[ name ] = link
+    this.header.skeleton[ name ] = skeleton
     this.header.revision = this.header.revision + 1
     this.header.metadata.unixMeta.mtime = Date.now()
   }
 
   static async resolveSoftLink(link: SoftLink): Promise<PrivateTree | PrivateFile | null> {
-    const domain = link.ipns.split("/")[0]
+    const domain = link.ipns.split("/")[ 0 ]
 
     if (!link.privateName || !link.key) throw new Error("Mixing public and private soft links is not supported yet.")
 
@@ -301,7 +299,7 @@ export default class PrivateTree extends BaseTree {
         return { ...link }
       } else {
         const { key, ...rest } = link
-        return { ...rest  }
+        return { ...rest }
       }
     })
   }
