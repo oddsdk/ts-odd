@@ -1,8 +1,9 @@
 import type { CID } from "multiformats/cid"
 
+import { BareNameFilter, PrivateName } from "./namefilter.js"
 import { BaseLink, SoftLink } from "../../types.js"
 import { Metadata } from "../../metadata.js"
-import { BareNameFilter, PrivateName } from "./namefilter.js"
+import { PutResult } from "../../../components/depot/implementation.js"
 
 
 export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo
@@ -38,9 +39,9 @@ export type PrivateSkeletonInfo = {
   subSkeleton: PrivateSkeleton
 }
 
-export type PrivateAddResult = AddResult & {
+export type PrivateAddResult = PutResult & {
   name: PrivateName
-  key: string
+  key: Uint8Array
   skeleton: PrivateSkeleton
 }
 

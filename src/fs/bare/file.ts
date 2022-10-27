@@ -1,6 +1,8 @@
 import type { CID } from "multiformats/cid"
 
-import * as protocol from "../protocol/index.js"
+import * as Depot from "../../components/depot/implementation.js"
+import * as Protocol from "../protocol/index.js"
+
 import { PutResult } from "../../components/depot/implementation.js"
 import { isObject, hasProp } from "../../common/index.js"
 import BaseFile from "../base/file.js"
@@ -8,13 +10,20 @@ import BaseFile from "../base/file.js"
 
 export class BareFile extends BaseFile {
 
-  static create(content: Uint8Array): BareFile {
-    return new BareFile(content)
+  depot: Depot.Implementation
+
+  constructor(depot: Depot.Implementation, content: Uint8Array) {
+    super(content)
+    this.depot = depot
   }
 
-  static async fromCID(cid: CID): Promise<BareFile> {
-    const content = await protocol.basic.getFile(cid)
-    return new BareFile(content)
+  static create(depot: Depot.Implementation, content: Uint8Array): BareFile {
+    return new BareFile(depot, content)
+  }
+
+  static async fromCID(depot: Depot.Implementation, cid: CID): Promise<BareFile> {
+    const content = await Protocol.basic.getFile(depot, cid)
+    return new BareFile(depot, content)
   }
 
   static instanceOf(obj: unknown): obj is BareFile {
@@ -27,7 +36,10 @@ export class BareFile extends BaseFile {
   }
 
   async putDetailed(): Promise<PutResult> {
-    return protocol.basic.putFile(await protocol.pub.normalizeFileContent(this.content))
+    return Protocol.basic.putFile(
+      this.depot,
+      this.content
+    )
   }
 }
 

@@ -1,14 +1,20 @@
+import * as Uint8arrays from "uint8arrays"
+
+import * as Crypto from "../../components/crypto/implementation.js"
+import * as Depot from "../../components/depot/implementation.js"
+import * as Protocol from "../protocol/index.js"
+
 import MMPT from "../protocol/private/mmpt.js"
+
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { DecryptedNode, Revision } from "../protocol/private/types.js"
 import { Maybe, decodeCID } from "../../common/index.js"
 import { Metadata } from "../metadata.js"
-import * as protocol from "../protocol/index.js"
 
 
 export type Node = {
   constructor: {
-    fromInfo: (mmpt: MMPT, key: string, info: DecryptedNode) => Node
+    fromInfo: (mmpt: MMPT, key: Uint8Array, info: DecryptedNode) => Node
   }
   header: {
     bareNameFilter: BareNameFilter
@@ -22,7 +28,16 @@ export type Node = {
 
 export default class PrivateHistory {
 
-  constructor(readonly node: Node) {}
+  readonly node: Node
+
+  crypto: Crypto.Implementation
+  depot: Depot.Implementation
+
+  constructor(crypto: Crypto.Implementation, depot: Depot.Implementation, node: Node) {
+    this.crypto = crypto
+    this.depot = depot
+    this.node = node
+  }
 
   /**
    * Go back one or more versions.
@@ -85,7 +100,7 @@ export default class PrivateHistory {
     const info = await this._getRevisionInfoFromNumber(revision)
     return info && await this.node.constructor.fromInfo(
       this.node.mmpt,
-      this.node.key,
+      Uint8arrays.fromString(this.node.key, "base64pad"),
       info
     )
   }
@@ -94,17 +109,23 @@ export default class PrivateHistory {
    * @internal
    */
   _getRevisionInfo(revision: Revision): Promise<DecryptedNode> {
-    return protocol.priv.readNode(decodeCID(revision.cid), this.node.key)
+    return Protocol.priv.readNode(
+      this.depot,
+      this.crypto,
+      decodeCID(revision.cid),
+      Uint8arrays.fromString(this.node.key, "base64pad")
+    )
   }
 
   /**
    * @internal
    */
   async _getRevisionInfoFromNumber(revision: number): Promise<Maybe<DecryptedNode>> {
-    const { key, mmpt } = this.node
+    const { mmpt } = this.node
     const { bareNameFilter } = this.node.header
+    const key = Uint8arrays.fromString(this.node.key, "base64pad")
 
-    const r = await protocol.priv.getRevision(mmpt, bareNameFilter, key, revision)
+    const r = await Protocol.priv.getRevision(this.crypto, mmpt, bareNameFilter, key, revision)
     return r && this._getRevisionInfo(r)
   }
 

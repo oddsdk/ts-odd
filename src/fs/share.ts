@@ -1,16 +1,23 @@
-import * as cbor from "@ipld/dag-cbor"
+import * as DagCBOR from "@ipld/dag-cbor"
+import * as Uint8arrays from "uint8arrays"
 
-import * as basic from "./protocol/basic.js"
-import * as protocol from "./protocol/index.js"
-import * as entryIndex from "./protocol/shared/entry-index.js"
-import * as shareKey from "./protocol/shared/key.js"
+import * as Crypto from "../components/crypto/implementation.js"
+import * as Depot from "../components/depot/implementation.js"
+import * as Manners from "../components/manners/implementation.js"
+import * as Reference from "../components/reference/implementation.js"
+import * as Path from "../path/index.js"
+
+import * as Basic from "./protocol/basic.js"
+import * as Protocol from "./protocol/index.js"
+import * as EntryIndex from "./protocol/shared/entry-index.js"
+import * as ShareKey from "./protocol/shared/key.js"
 
 import { Branch, DirectoryPath } from "../path/index.js"
 import { SharedBy, ShareDetails } from "./types.js"
-import { ShareKey } from "./protocol/shared/key.js"
 import { SymmAlg } from "../components/crypto/implementation.js"
 import { decodeCID } from "../common/cid.js"
 import { didToPublicKey } from "../did/transformers.js"
+
 import BareTree from "./bare/tree.js"
 import PrivateFile from "./v1/PrivateFile.js"
 import PrivateTree from "./v1/PrivateTree.js"
@@ -20,8 +27,8 @@ import RootTree from "./root/tree.js"
 // CONSTANTS
 
 
-export const EXCHANGE_PATH: DirectoryPath = pathing.directory(
-  pathing.Branch.Public,
+export const EXCHANGE_PATH: DirectoryPath = Path.directory(
+  Path.Branch.Public,
   ".well-known",
   "exchange"
 )
@@ -32,6 +39,10 @@ export const EXCHANGE_PATH: DirectoryPath = pathing.directory(
 
 
 export async function privateNode(
+  crypto: Crypto.Implementation,
+  depot: Depot.Implementation,
+  manners: Manners.Implementation,
+  reference: Reference.Implementation,
   rootTree: RootTree,
   items: Array<[ string, PrivateTree | PrivateFile ]>,
   { shareWith, sharedBy }: {
@@ -43,26 +54,26 @@ export async function privateNode(
     ? shareWith
     : shareWith.startsWith("did:")
       ? [ shareWith ]
-      : await listExchangeDIDs(shareWith)
+      : await listExchangeDIDs(depot, reference, shareWith)
 
   const counter = rootTree.sharedCounter || 1
   const mmpt = rootTree.mmpt
 
   // Create share keys
-  const shareKeysWithDIDs: [ string, ShareKey ][] = await Promise.all(exchangeDIDs.map(async did => {
+  const shareKeysWithDIDs: [ string, ShareKey.ShareKey ][] = await Promise.all(exchangeDIDs.map(async did => {
     return [
       did,
-      await shareKey.create({
+      await ShareKey.create(crypto, {
         counter,
         recipientExchangeDid: did,
         senderRootDid: sharedBy.rootDid
       })
-    ] as [ string, ShareKey ]
+    ] as [ string, ShareKey.ShareKey ]
   }))
 
   // Create entry index
-  const indexKey = await crypto.aes.genKeyStr(SymmAlg.AES_GCM)
-  const index = await PrivateTree.create(mmpt, indexKey, null)
+  const indexKey = await crypto.aes.genKey(SymmAlg.AES_GCM).then(crypto.aes.exportKey)
+  const index = await PrivateTree.create(crypto, depot, manners, reference, mmpt, indexKey, null)
 
   await Promise.all(
     items.map(async ([ name, item ]) => {
@@ -79,9 +90,10 @@ export async function privateNode(
   // Add entry index to ipfs
   const symmKeyAlgo = SymmAlg.AES_GCM
   const indexNode = Object.assign({}, index.header)
-  const indexResult = await basic.putFile(
+  const indexResult = await Basic.putFile(
+    depot,
     await crypto.aes.encrypt(
-      new TextEncoder().encode(JSON.stringify(indexNode)),
+      Uint8arrays.fromString(JSON.stringify(indexNode), "utf8"),
       index.key,
       symmKeyAlgo
     )
@@ -89,7 +101,7 @@ export async function privateNode(
 
   // Add entry index CID to MMPT
   if (shareKeysWithDIDs.length) {
-    const namefilter = await entryIndex.namefilter({
+    const namefilter = await EntryIndex.namefilter(crypto, {
       bareFilter: indexNode.bareNameFilter,
       shareKey: shareKeysWithDIDs[ 0 ][ 1 ]
     })
@@ -98,7 +110,7 @@ export async function privateNode(
   }
 
   // Create share payload
-  const payload = cbor.encode(shareKey.payload({
+  const payload = DagCBOR.encode(ShareKey.payload({
     entryIndexCid: indexResult.cid.toString(),
     symmKey: index.key,
     symmKeyAlgo
@@ -108,7 +120,7 @@ export async function privateNode(
   const links = await Promise.all(shareKeysWithDIDs.map(async ([ did, shareKey ]) => {
     const { publicKey } = didToPublicKey(did)
     const encryptedPayload = await crypto.rsa.encrypt(payload, publicKey)
-    const result = await ipfs.add(encryptedPayload)
+    const result = await depot.putChunked(encryptedPayload)
 
     return {
       name: shareKey,
@@ -125,16 +137,19 @@ export async function privateNode(
 }
 
 
-export async function listExchangeDIDs(username: string) {
-  const root = await dataRoot.lookup(username)
+export async function listExchangeDIDs(
+  depot: Depot.Implementation,
+  reference: Reference.Implementation,
+  username: string) {
+  const root = await reference.dataRoot.lookup(username)
   if (!root) throw new Error("This person doesn't have a filesystem yet.")
 
-  const rootLinks = await protocol.basic.getSimpleLinks(root)
+  const rootLinks = await Protocol.basic.getSimpleLinks(depot, root)
   const prettyTreeCid = rootLinks[ Branch.Pretty ]?.cid || null
   if (!prettyTreeCid) throw new Error("This person's filesystem doesn't have a pretty tree.")
 
-  const tree = await BareTree.fromCID(decodeCID(prettyTreeCid))
-  const exchangePath = pathing.unwrap(pathing.removeBranch(EXCHANGE_PATH))
+  const tree = await BareTree.fromCID(depot, decodeCID(prettyTreeCid))
+  const exchangePath = Path.unwrap(Path.removeBranch(EXCHANGE_PATH))
   const exchangeTree = await tree.get(exchangePath)
 
   return exchangeTree && exchangeTree instanceof BareTree

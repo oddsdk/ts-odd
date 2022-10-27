@@ -1,6 +1,7 @@
 import type { Mtime } from "ipfs-unixfs"
 import * as versions from "./versions.js"
 
+
 export type UnixFileMode = number
 
 export enum UnixNodeType {
@@ -12,7 +13,7 @@ export enum UnixNodeType {
   HAMTShard = "hamtShard",
 }
 
-export type UnixMeta = { 
+export type UnixMeta = {
   mtime: number
   ctime: number
   mode: UnixFileMode

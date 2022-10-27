@@ -1,10 +1,11 @@
 import type { CID } from "multiformats/cid"
 
 import { Metadata } from "../../metadata.js"
+import { PutResult } from "../../../components/depot/implementation.js"
 import { SoftLink } from "../../types.js"
 
 
-export type PutDetails = AddResult & {
+export type PutDetails = PutResult & {
   userland: CID
   metadata: CID
   isFile: boolean

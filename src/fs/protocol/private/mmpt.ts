@@ -1,9 +1,12 @@
 import type { CID } from "multiformats/cid"
 
+import * as Basic from "../basic.js"
+import * as Depot from "../../../components/depot/implementation.js"
+import * as Link from "../../link.js"
+import * as Manners from "../../../components/manners/implementation.js"
+
 import { Puttable, SimpleLinks } from "../../types.js"
 import { decodeCID } from "../../../common/index.js"
-import * as basic from "../basic.js"
-import * as link from "../../link.js"
 
 
 const nibbles = {
@@ -24,25 +27,30 @@ type Member = {
  */
 export default class MMPT implements Puttable {
 
+  depot: Depot.Implementation
+  manners: Manners.Implementation
+
   links: SimpleLinks
   children: { [ name: string ]: MMPT }
 
-  constructor(links: SimpleLinks) {
+  constructor(depot: Depot.Implementation, manners: Manners.Implementation, links: SimpleLinks) {
     this.links = links
     this.children = {}
+    this.depot = depot
+    this.manners = manners
   }
 
-  static create(): MMPT {
-    return new MMPT({})
+  static create(depot: Depot.Implementation, manners: Manners.Implementation): MMPT {
+    return new MMPT(depot, manners, {})
   }
 
-  static async fromCID(cid: CID): Promise<MMPT> {
-    const links = await basic.getSimpleLinks(cid)
-    return new MMPT(links)
+  static async fromCID(depot: Depot.Implementation, manners: Manners.Implementation, cid: CID): Promise<MMPT> {
+    const links = await Basic.getSimpleLinks(depot, cid)
+    return new MMPT(depot, manners, links)
   }
 
-  async putDetailed(): Promise<AddResult> {
-    return basic.putLinks(this.links)
+  async putDetailed(): Promise<Depot.PutResult> {
+    return Basic.putLinks(this.depot, this.links)
   }
 
   async put(): Promise<CID> {
@@ -58,8 +66,8 @@ export default class MMPT implements Puttable {
 
     // if already in tree, then skip
     if (name === nextNameOrSib) {
-      if (setup.debug && this.links[ name ]?.cid !== value) {
-        console.warn(`Adding \`${name}\` to the MMPT again with a different value. This should not happen. The original value will still be used and can loading issues on other ipfs repos. Current CID is \`${this.links[ name ]?.cid}\`, new CID is \`${value}\`.`)
+      if (this.links[ name ]?.cid !== value) {
+        this.manners.warn(`Adding \`${name}\` to the MMPT again with a different value. This should not happen. The original value will still be used and can loading issues on other ipfs repos. Current CID is \`${this.links[ name ]?.cid}\`, new CID is \`${value}\`.`)
       } else {
         // skip
       }
@@ -67,7 +75,7 @@ export default class MMPT implements Puttable {
 
     // if no children starting with first char of name, then add with entire name as key
     else if (nextNameOrSib === null) {
-      this.links[ name ] = link.make(name, value, true, 0)
+      this.links[ name ] = Link.make(name, value, true, 0)
     }
 
     // if multiple children with first char of names, then add to that tree
@@ -102,11 +110,11 @@ export default class MMPT implements Puttable {
       return await this.putAndUpdateChildLink(name)
     }
 
-    this.links[ name ] = link.make(name, cid, false, size)
+    this.links[ name ] = Link.make(name, cid, false, size)
   }
 
   addEmptyChild(name: string): MMPT {
-    const tree = MMPT.create()
+    const tree = MMPT.create(this.depot, this.manners)
     this.children[ name ] = tree
     return tree
   }
@@ -132,7 +140,7 @@ export default class MMPT implements Puttable {
         if (name.length > 1) {
           return [ { name, cid: decodeCID(cid) } ]
         }
-        const child = await MMPT.fromCID(decodeCID(cid))
+        const child = await MMPT.fromCID(this.depot, this.manners, decodeCID(cid))
         const childMembers = await child.members()
         return childMembers.map(mem => ({
           ...mem,
@@ -148,7 +156,12 @@ export default class MMPT implements Puttable {
       return this.children[ name ]
     }
 
-    const child = await MMPT.fromCID(decodeCID(this.links[ name ].cid))
+    const child = await MMPT.fromCID(
+      this.depot,
+      this.manners,
+      decodeCID(this.links[ name ].cid)
+    )
+
     // check that the child wasn't added while retrieving the mmpt from the network
     if (this.children[ name ]) {
       return this.children[ name ]

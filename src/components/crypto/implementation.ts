@@ -41,9 +41,9 @@ export type Implementation = {
   }
 
   rsa: {
-    decrypt: (data: Uint8Array, privateKey: CryptoKey) => Promise<Uint8Array>
-    encrypt: (message: Uint8Array, publicKey: CryptoKey) => Promise<Uint8Array>
+    decrypt: (data: Uint8Array, privateKey: CryptoKey | Uint8Array) => Promise<Uint8Array>
+    encrypt: (message: Uint8Array, publicKey: CryptoKey | Uint8Array) => Promise<Uint8Array>
     genKey: () => Promise<CryptoKeyPair>
-    verify: (message: Uint8Array, signature: Uint8Array, publicKey: CryptoKey) => Promise<boolean>
+    verify: (message: Uint8Array, signature: Uint8Array, publicKey: CryptoKey | Uint8Array) => Promise<boolean>
   }
 }

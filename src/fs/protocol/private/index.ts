@@ -1,72 +1,124 @@
+import * as Uint8arrays from "uint8arrays"
 import type { CID } from "multiformats/cid"
+
+import * as Basic from "../basic.js"
+import * as Check from "./types/check.js"
+import * as Crypto from "../../../components/crypto/implementation.js"
+import * as Depot from "../../../components/depot/implementation.js"
+import * as Namefilter from "./namefilter.js"
 
 import { BareNameFilter, PrivateName } from "./namefilter.js"
 import { DecryptedNode, PrivateAddResult, Revision } from "./types.js"
 import { Maybe, decodeCID } from "../../../common/index.js"
 import MMPT from "./mmpt.js"
 
-import * as basic from "../basic.js"
-import * as check from "./types/check.js"
-import * as namefilter from "./namefilter.js"
 
+export const addNode = async (
+  depot: Depot.Implementation,
+  crypto: Crypto.Implementation,
+  mmpt: MMPT,
+  node: DecryptedNode,
+  key: Uint8Array
+): Promise<PrivateAddResult> => {
+  const encodedNode = Uint8arrays.fromString(JSON.stringify(node))
+  const { cid, size } = await Basic.putEncryptedFile(depot, crypto, encodedNode, key)
+  const filter = await Namefilter.addRevision(crypto, node.bareNameFilter, key, node.revision)
+  const name = await Namefilter.toPrivateName(crypto, filter)
 
-export const addNode = async (mmpt: MMPT, node: DecryptedNode, key: string): Promise<PrivateAddResult> => {
-  const { cid, size } = await basic.putEncryptedFile(node, key)
-  const filter = await namefilter.addRevision(node.bareNameFilter, key, node.revision)
-  const name = await namefilter.toPrivateName(filter)
   await mmpt.add(name, cid)
 
   // if the node is a file, we also add the content to the MMPT
-  if (check.isPrivateFileInfo(node)) {
-    const contentBareFilter = await namefilter.addToBare(node.bareNameFilter, node.key)
-    const contentFilter = await namefilter.addRevision(contentBareFilter, node.key, node.revision)
-    const contentName = await namefilter.toPrivateName(contentFilter)
+  if (Check.isPrivateFileInfo(node)) {
+    const key = Uint8arrays.fromString(node.key, "base64pad")
+    const contentBareFilter = await Namefilter.addToBare(crypto, node.bareNameFilter, key)
+    const contentFilter = await Namefilter.addRevision(crypto, contentBareFilter, key, node.revision)
+    const contentName = await Namefilter.toPrivateName(crypto, contentFilter)
     await mmpt.add(contentName, decodeCID(node.content))
   }
 
-  const [ skeleton, isFile ] = check.isPrivateFileInfo(node) ? [ {}, true ] : [ node.skeleton, false ]
+  const [ skeleton, isFile ] = Check.isPrivateFileInfo(node) ? [ {}, true ] : [ node.skeleton, false ]
   return { cid, name, key, size, isFile, skeleton }
 }
 
-export const readNode = async (cid: CID, key: string): Promise<DecryptedNode> => {
-  const content = await basic.getEncryptedFile(cid, key)
-  if (!check.isDecryptedNode(content)) {
+export const readNode = async (
+  depot: Depot.Implementation,
+  crypto: Crypto.Implementation,
+  cid: CID,
+  key: Uint8Array
+): Promise<DecryptedNode> => {
+  const content = await Basic.getEncryptedFile(depot, crypto, cid, key)
+  if (!Check.isDecryptedNode(content)) {
     throw new Error(`Could not parse a valid filesystem object, ${cid}`)
   }
   return content
 }
 
-export const getByName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
+export const getByName = async (
+  depot: Depot.Implementation,
+  crypto: Crypto.Implementation,
+  mmpt: MMPT,
+  name: PrivateName,
+  key: Uint8Array
+): Promise<Maybe<DecryptedNode>> => {
   const cid = await mmpt.get(name)
   if (cid === null) return null
-  return getByCID(cid, key)
+  return getByCID(depot, crypto, cid, key)
 }
 
-export const getByCID = async (cid: CID, key: string): Promise<DecryptedNode> => {
-  return await readNode(cid, key)
+export const getByCID = async (
+  depot: Depot.Implementation,
+  crypto: Crypto.Implementation,
+  cid: CID,
+  key: Uint8Array
+): Promise<DecryptedNode> => {
+  return await readNode(depot, crypto, cid, key)
 }
 
-export const getLatestByName = async (mmpt: MMPT, name: PrivateName, key: string): Promise<Maybe<DecryptedNode>> => {
+export const getLatestByName = async (
+  depot: Depot.Implementation,
+  crypto: Crypto.Implementation,
+  mmpt: MMPT,
+  name: PrivateName,
+  key: Uint8Array
+): Promise<Maybe<DecryptedNode>> => {
   const cid = await mmpt.get(name)
   if (cid === null) return null
-  return getLatestByCID(mmpt, cid, key)
+  return getLatestByCID(depot, crypto, mmpt, cid, key)
 }
 
-export const getLatestByCID = async (mmpt: MMPT, cid: CID, key: string): Promise<DecryptedNode> => {
-  const node = await getByCID(cid, key)
-  const latest = await findLatestRevision(mmpt, node.bareNameFilter, key, node.revision)
+export const getLatestByCID = async (
+  depot: Depot.Implementation,
+  crypto: Crypto.Implementation,
+  mmpt: MMPT,
+  cid: CID,
+  key: Uint8Array
+): Promise<DecryptedNode> => {
+  const node = await getByCID(depot, crypto, cid, key)
+  const latest = await findLatestRevision(crypto, mmpt, node.bareNameFilter, key, node.revision)
   return latest?.cid
-    ? await getByCID(decodeCID(latest?.cid), key)
+    ? await getByCID(depot, crypto, decodeCID(latest?.cid), key)
     : node
 }
 
-export const getLatestByBareNameFilter = async (mmpt: MMPT, bareName: BareNameFilter, key: string): Promise<Maybe<DecryptedNode>> => {
-  const revisionFilter = await namefilter.addRevision(bareName, key, 1)
-  const name = await namefilter.toPrivateName(revisionFilter)
-  return getLatestByName(mmpt, name, key)
+export const getLatestByBareNameFilter = async (
+  depot: Depot.Implementation,
+  crypto: Crypto.Implementation,
+  mmpt: MMPT,
+  bareName: BareNameFilter,
+  key: Uint8Array
+): Promise<Maybe<DecryptedNode>> => {
+  const revisionFilter = await Namefilter.addRevision(crypto, bareName, key, 1)
+  const name = await Namefilter.toPrivateName(crypto, revisionFilter)
+  return getLatestByName(depot, crypto, mmpt, name, key)
 }
 
-export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: string, lastKnownRevision: number): Promise<Maybe<Revision>> => {
+export const findLatestRevision = async (
+  crypto: Crypto.Implementation,
+  mmpt: MMPT,
+  bareName: BareNameFilter,
+  key: Uint8Array,
+  lastKnownRevision: number
+): Promise<Maybe<Revision>> => {
   // Exponential search forward
   let lowerBound = lastKnownRevision, upperBound = null
   let i = 0
@@ -74,7 +126,7 @@ export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, k
 
   while (upperBound === null) {
     const toCheck = lastKnownRevision + Math.pow(2, i)
-    const thisRevision = await getRevision(mmpt, bareName, key, toCheck)
+    const thisRevision = await getRevision(crypto, mmpt, bareName, key, toCheck)
 
     if (thisRevision !== null) {
       lastRevision = thisRevision
@@ -89,7 +141,7 @@ export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, k
   // Binary search back
   while (lowerBound < (upperBound - 1)) {
     const midpoint = Math.floor((upperBound + lowerBound) / 2)
-    const thisRevision = await getRevision(mmpt, bareName, key, midpoint)
+    const thisRevision = await getRevision(crypto, mmpt, bareName, key, midpoint)
 
     if (thisRevision !== null) {
       lastRevision = thisRevision
@@ -102,9 +154,15 @@ export const findLatestRevision = async (mmpt: MMPT, bareName: BareNameFilter, k
   return lastRevision
 }
 
-export const getRevision = async (mmpt: MMPT, bareName: BareNameFilter, key: string, revision: number): Promise<Maybe<Revision>> => {
-  const filter = await namefilter.addRevision(bareName, key, revision)
-  const name = await namefilter.toPrivateName(filter)
+export const getRevision = async (
+  crypto: Crypto.Implementation,
+  mmpt: MMPT,
+  bareName: BareNameFilter,
+  key: Uint8Array,
+  revision: number
+): Promise<Maybe<Revision>> => {
+  const filter = await Namefilter.addRevision(crypto, bareName, key, revision)
+  const name = await Namefilter.toPrivateName(crypto, filter)
   const cid = await mmpt.get(name)
   return cid ? { cid, name, number: revision } : null
 }

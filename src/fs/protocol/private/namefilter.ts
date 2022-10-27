@@ -1,7 +1,11 @@
+import * as Uint8arrays from "uint8arrays"
+
+import * as Crypto from "../../../components/crypto/implementation.js"
+import * as Hex from "../../../common/hex.js"
+
 import { BloomFilter } from "fission-bloom-filters"
-import * as hex from "../../../common/hex.js"
 import { Opaque } from "../../../common/types.js"
-import * as crypto from "../../../crypto/index.js"
+
 
 // CONSTANTS
 
@@ -29,50 +33,59 @@ export type SaturatedNameFilter = Opaque<"SaturatedNameFilter", string>
 // FUNCTIONS
 
 // create bare name filter with a single key
-export const createBare = async (key: string): Promise<BareNameFilter> => {
-  const empty = "0".repeat(FILTER_SIZE/4) as BareNameFilter
-  return addToBare(empty, key)
+export const createBare = async (crypto: Crypto.Implementation, key: Uint8Array): Promise<BareNameFilter> => {
+  const empty = "0".repeat(FILTER_SIZE / 4) as BareNameFilter
+  return addToBare(crypto, empty, key)
 }
 
 // add some string to a name filter
-export const addToBare = async (bareFilter: BareNameFilter, toAdd: string): Promise<BareNameFilter> =>  {
+export const addToBare = async (crypto: Crypto.Implementation, bareFilter: BareNameFilter, toAdd: Uint8Array): Promise<BareNameFilter> => {
   const filter = fromHex(bareFilter)
-  const hash = await crypto.hash.sha256Str(toAdd)
+  const hash = await crypto.hash.sha256(toAdd)
   filter.add(hash)
   return (await toHex(filter)) as BareNameFilter
 }
 
 // add the revision number to the name filter, salted with the AES key for the node
-export const addRevision = async (bareFilter: BareNameFilter, key: string, revision: number): Promise<RevisionNameFilter> => {
-  return (await addToBare(bareFilter, `${revision}${key}`)) as string as RevisionNameFilter
+export const addRevision = async (crypto: Crypto.Implementation, bareFilter: BareNameFilter, key: Uint8Array, revision: number): Promise<RevisionNameFilter> => {
+  const bytes = Uint8arrays.fromString(`${revision}${key}`, "utf8")
+  return (await addToBare(crypto, bareFilter, bytes)) as string as RevisionNameFilter
 }
 
 // saturate the filter to 320 bits and hash it with sha256 to give the private name that a node will be stored in the MMPT with
-export const toPrivateName = async (revisionFilter: RevisionNameFilter): Promise<PrivateName> => {
-  const saturated = await saturateFilter(fromHex(revisionFilter))
-  return toHash(saturated)
+export const toPrivateName = async (crypto: Crypto.Implementation, revisionFilter: RevisionNameFilter): Promise<PrivateName> => {
+  const saturated = await saturateFilter(crypto, fromHex(revisionFilter))
+  return toHash(crypto, saturated)
 }
 
 // hash a filter with sha256
-export const toHash = async (filter: BloomFilter): Promise<PrivateName> => {
+export const toHash = async (crypto: Crypto.Implementation, filter: BloomFilter): Promise<PrivateName> => {
   const filterBytes = new Uint8Array(filter.toBytes())
   const hash = await crypto.hash.sha256(filterBytes)
-  return (hex.fromBytes(hash)) as PrivateName
+  return (Hex.fromBytes(hash)) as PrivateName
 }
 
 // saturate a filter (string) to 320 bits
-export const saturate = async (filter: RevisionNameFilter | BareNameFilter, threshold = SATURATION_THRESHOLD): Promise<SaturatedNameFilter> => {
-  const saturated = await saturateFilter(fromHex(filter), threshold)
+export const saturate = async (
+  crypto: Crypto.Implementation,
+  filter: RevisionNameFilter | BareNameFilter,
+  threshold = SATURATION_THRESHOLD
+): Promise<SaturatedNameFilter> => {
+  const saturated = await saturateFilter(crypto, fromHex(filter), threshold)
   return (await toHex(saturated)) as SaturatedNameFilter
 }
 
 // saturate a filter to 320 bits
-const saturateFilter = async (filter: BloomFilter, threshold = SATURATION_THRESHOLD): Promise<BloomFilter> => {
-  if(threshold > filter.toBytes().byteLength * 8) {
+const saturateFilter = async (
+  crypto: Crypto.Implementation,
+  filter: BloomFilter,
+  threshold = SATURATION_THRESHOLD
+): Promise<BloomFilter> => {
+  if (threshold > filter.toBytes().byteLength * 8) {
     throw new Error("threshold is bigger than filter size")
   }
   const bits = countOnes(filter)
-  if(bits >= threshold){
+  if (bits >= threshold) {
     return filter
   }
 
@@ -83,40 +96,40 @@ const saturateFilter = async (filter: BloomFilter, threshold = SATURATION_THRESH
   let toHash = before
   do {
     const hash = await crypto.hash.sha256(toHash)
-    filter.add(hex.fromBytes(hash))
+    filter.add(Hex.fromBytes(hash))
     toHash = hash
   } while (bufEquals(before, filter.toBytes()))
 
-  return saturateFilter(filter, threshold)
+  return saturateFilter(crypto, filter, threshold)
 }
 
 // count the number of 1 bits in a filter
 const countOnes = (filter: BloomFilter): number => {
   const arr = new Uint32Array(filter.toBytes())
   let count = 0
-  for(let i=0; i< arr.length; i++){
-    count += bitCount32(arr[i])
+  for (let i = 0; i < arr.length; i++) {
+    count += bitCount32(arr[ i ])
   }
   return count
 }
 
 // convert a filter to hex
 export const toHex = (filter: BloomFilter): string => {
-  return hex.fromBytes(filter.toBytes())
+  return Hex.fromBytes(filter.toBytes())
 }
 
 // convert hex to a BloomFilter object
 export const fromHex = (string: string): BloomFilter => {
-  const buf = hex.toBytes(string)
+  const buf = Hex.toBytes(string)
   return BloomFilter.fromBytes(buf, HASH_COUNT)
 }
 
 const bufEquals = (buf1: ArrayBuffer, buf2: ArrayBuffer): boolean => {
-  if(buf1.byteLength !== buf2.byteLength) return false
+  if (buf1.byteLength !== buf2.byteLength) return false
   const arr1 = new Uint8Array(buf1)
   const arr2 = new Uint8Array(buf2)
-  for(let i=0; i<arr1.length; i++){
-    if(arr1[i] !== arr2[i]) {
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[ i ] !== arr2[ i ]) {
       return false
     }
   }

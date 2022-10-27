@@ -11,6 +11,7 @@ import { Puttable, SimpleLink, SimpleLinks, UnixTree } from "../types.js"
 import * as Crypto from "../../components/crypto/implementation.js"
 import * as Depot from "../../components/depot/implementation.js"
 import * as Manners from "../../components/manners/implementation.js"
+import * as Reference from "../../components/reference/implementation.js"
 import * as Storage from "../../components/storage/implementation.js"
 
 import * as DAG from "../../dag/index.js"
@@ -39,6 +40,7 @@ type Dependents = {
   crypto: Crypto.Implementation
   depot: Depot.Implementation
   manners: Manners.Implementation
+  reference: Reference.Implementation
   storage: Storage.Implementation
 }
 
@@ -108,14 +110,14 @@ export default class RootTree implements Puttable {
 
     const publicTree = wnfsWasm
       ? await PublicRootWasm.empty(dependents)
-      : await PublicTree.empty()
+      : await PublicTree.empty(dependents.depot, dependents.reference)
 
-    const prettyTree = await BareTree.empty()
-    const mmpt = MMPT.create()
+    const prettyTree = await BareTree.empty(dependents.depot)
+    const mmpt = MMPT.create(dependents.depot, dependents.manners)
 
     // Private tree
     const rootPath = Path.toPosix(Path.directory(Path.Branch.Private))
-    const rootTree = await PrivateTree.create(mmpt, RootKey.toString(rootKey), null)
+    const rootTree = await PrivateTree.create(dependents.crypto, dependents.depot, dependents.manners, dependents.reference, mmpt, rootKey, null)
     await rootTree.put()
 
     // Construct tree
@@ -159,10 +161,10 @@ export default class RootTree implements Puttable {
     permissions?: Permissions
   }): Promise<RootTree> {
     const { crypto, depot, manners } = dependents
-    const links = await protocol.basic.getSimpleLinks(cid)
+    const links = await protocol.basic.getSimpleLinks(dependents.depot, cid)
     const keys = permissions ? await permissionKeys(crypto, accountDID, permissions) : []
 
-    const version = await parseVersionFromLinks(links)
+    const version = await parseVersionFromLinks(dependents.depot, links)
     const wnfsWasm = Versions.equals(version, Versions.wnfsWasm)
 
     if (wnfsWasm) {
@@ -172,25 +174,25 @@ export default class RootTree implements Puttable {
     // Load public parts
     const publicCID = links[ Branch.Public ]?.cid || null
     const publicTree = publicCID === null
-      ? await PublicTree.empty()
+      ? await PublicTree.empty(dependents.depot, dependents.reference)
       : wnfsWasm
         ? await PublicRootWasm.fromCID({ depot, manners }, decodeCID(publicCID))
-        : await PublicTree.fromCID(decodeCID(publicCID))
+        : await PublicTree.fromCID(dependents.depot, dependents.reference, decodeCID(publicCID))
 
 
     const prettyTree = links[ Branch.Pretty ]
-      ? await BareTree.fromCID(decodeCID(links[ Branch.Pretty ].cid))
-      : await BareTree.empty()
+      ? await BareTree.fromCID(dependents.depot, decodeCID(links[ Branch.Pretty ].cid))
+      : await BareTree.empty(dependents.depot)
 
     // Load private bits
     const privateCID = links[ Branch.Private ]?.cid || null
 
     let mmpt, privateNodes
     if (privateCID === null) {
-      mmpt = MMPT.create()
+      mmpt = MMPT.create(dependents.depot, dependents.manners)
       privateNodes = {}
     } else {
-      mmpt = await MMPT.fromCID(decodeCID(privateCID))
+      mmpt = await MMPT.fromCID(dependents.depot, dependents.manners, decodeCID(privateCID))
       privateNodes = await loadPrivateNodes(dependents, accountDID, keys, mmpt)
     }
 
@@ -212,7 +214,7 @@ export default class RootTree implements Puttable {
     const sharedCounterCid = links[ Branch.SharedCounter ]?.cid || null
     const sharedCounter = sharedCounterCid
       ? await protocol.basic
-        .getFile(decodeCID(sharedCounterCid))
+        .getFile(dependents.depot, decodeCID(sharedCounterCid))
         .then(a => JSON.parse(Uint8arrays.toString(a, "utf8")))
       : 1
 
@@ -250,7 +252,7 @@ export default class RootTree implements Puttable {
   }
 
   async putDetailed(): Promise<Depot.PutResult> {
-    return protocol.basic.putLinks(this.links)
+    return protocol.basic.putLinks(this.dependents.depot, this.links)
   }
 
   updateLink(name: string, result: Depot.PutResult): this {
@@ -309,7 +311,8 @@ export default class RootTree implements Puttable {
 
     const updatedChunk = [ ...lastChunk, hashedCid ]
     const updatedChunkDeposit = await protocol.basic.putFile(
-      updatedChunk.join(",")
+      this.dependents.depot,
+      Uint8arrays.fromString(updatedChunk.join(","), "utf8")
     )
 
     log[ idx ] = {
@@ -388,7 +391,8 @@ export default class RootTree implements Puttable {
     this.sharedCounter = counter
 
     const { cid, size } = await protocol.basic.putFile(
-      JSON.stringify(counter)
+      this.dependents.depot,
+      Uint8arrays.fromString(JSON.stringify(counter), "utf8")
     )
 
     this.updateLink(Branch.SharedCounter, {
@@ -410,19 +414,15 @@ export default class RootTree implements Puttable {
   // -------
 
   async setVersion(v: Versions.SemVer): Promise<this> {
-    const result = await protocol.basic.putFile(Versions.toString(v))
+    const version = Uint8arrays.fromString(Versions.toString(v), "utf8")
+    const result = await protocol.basic.putFile(this.dependents.depot, version)
     return this.updateLink(Branch.Version, result)
   }
 
   async getVersion(): Promise<Versions.SemVer | null> {
-    return await parseVersionFromLinks(this.links)
+    return await parseVersionFromLinks(this.dependents.depot, this.links)
   }
 
-}
-
-async function parseVersionFromLinks(links: SimpleLinks): Promise<Versions.SemVer> {
-  const file = await protocol.basic.getFile(decodeCID(links[ Branch.Version ].cid))
-  return Versions.fromString(Uint8arrays.toString(file)) ?? Versions.v0
 }
 
 
@@ -456,7 +456,7 @@ async function findBareNameFilter(
 
   if (!node.exists(relativePath)) {
     if (Path.isDirectory(path)) await node.mkdir(relativePath)
-    else await node.add(relativePath, "")
+    else await node.add(relativePath, new Uint8Array())
   }
 
   return node.get(relativePath).then(t => t ? t.header.bareNameFilter : null)
@@ -487,21 +487,19 @@ function loadPrivateNodes(
   return sortedPathKeys(pathKeys).reduce((acc, { path, key }) => {
     return acc.then(async map => {
       let privateNode
-
-      const keyStr = Uint8arrays.toString(key, "base64pad")
       const unwrappedPath = Path.unwrap(path)
 
       // if root, no need for bare name filter
       if (unwrappedPath.length === 1 && unwrappedPath[ 0 ] === Path.Branch.Private) {
-        privateNode = await PrivateTree.fromBaseKey(mmpt, keyStr)
+        privateNode = await PrivateTree.fromBaseKey(dependents.crypto, dependents.depot, dependents.manners, dependents.reference, mmpt, key)
 
       } else {
         const bareNameFilter = await findBareNameFilter(crypto, storage, accountDID, map, path)
         if (!bareNameFilter) throw new Error(`Was trying to load the PrivateTree for the path \`${path}\`, but couldn't find the bare name filter for it.`)
         if (Path.isDirectory(path)) {
-          privateNode = await PrivateTree.fromBareNameFilter(mmpt, bareNameFilter, keyStr)
+          privateNode = await PrivateTree.fromBareNameFilter(dependents.crypto, dependents.depot, dependents.manners, dependents.reference, mmpt, bareNameFilter, key)
         } else {
-          privateNode = await PrivateFile.fromBareNameFilter(mmpt, bareNameFilter, keyStr)
+          privateNode = await PrivateFile.fromBareNameFilter(dependents.crypto, dependents.depot, mmpt, bareNameFilter, key)
         }
       }
 
@@ -509,6 +507,11 @@ function loadPrivateNodes(
       return { ...map, [ posixPath ]: privateNode }
     })
   }, Promise.resolve({}))
+}
+
+async function parseVersionFromLinks(depot: Depot.Implementation, links: SimpleLinks): Promise<Versions.SemVer> {
+  const file = await protocol.basic.getFile(depot, decodeCID(links[ Branch.Version ].cid))
+  return Versions.fromString(Uint8arrays.toString(file)) ?? Versions.v0
 }
 
 async function permissionKeys(

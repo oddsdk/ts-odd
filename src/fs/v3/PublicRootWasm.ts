@@ -9,7 +9,6 @@ import { Path } from "../../path/index.js"
 
 import { UnixTree, Puttable, File, Links, PuttableUnixTree } from "../types.js"
 import { BlockStore, IpfsBlockStore } from "./IpfsBlockStore.js"
-import { normalizeFileContent } from "../protocol/public/index.js"
 import { BaseFile } from "../base/file.js"
 import { Metadata } from "../metadata.js"
 
@@ -165,8 +164,7 @@ export class PublicRootWasm implements UnixTree, Puttable {
   }
 
   async add(path: Path, content: Uint8Array): Promise<this> {
-    const normalized = await normalizeFileContent(content)
-    const { cid } = await this.dependents.depot.putChunked(normalized)
+    const { cid } = await this.dependents.depot.putChunked(content)
 
     await this.atomically(async root => {
       const { rootDir } = await this.withError(

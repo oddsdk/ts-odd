@@ -23,6 +23,7 @@ import { decodeCID } from "../common/index.js"
 
 // FILESYSTEM IMPORTS
 
+import { DEFAULT_AES_ALG } from "./protocol/basic.js"
 import { Links, PuttableUnixTree, UnixTree } from "./types.js"
 import { NoPermissionError } from "./errors.js"
 import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
@@ -154,16 +155,16 @@ export class FileSystem {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
-    const { dependents, permissions, localOnly } = opts
+    const { accountDID, dependents, permissions, localOnly } = opts
     const rootKey = opts.rootKey || await (
       dependents
-        .crypto.aes.genKey(SymmAlg.AES_CTR)
+        .crypto.aes.genKey(DEFAULT_AES_ALG)
         .then(dependents.crypto.aes.exportKey)
     )
 
     // Create a file system based on wnfs-wasm when this option is set:
     const wnfsWasm = opts.version === Versions.toString(Versions.wnfsWasm)
-    const root = await RootTree.empty({ rootKey, wnfsWasm })
+    const root = await RootTree.empty({ accountDID, dependents, rootKey, wnfsWasm })
 
     return new FileSystem({
       dependents,
@@ -177,8 +178,8 @@ export class FileSystem {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions): Promise<FileSystem | null> {
-    const { dependents, permissions, localOnly } = opts
-    const root = await RootTree.fromCID({ cid, permissions })
+    const { accountDID, dependents, permissions, localOnly } = opts
+    const root = await RootTree.fromCID({ accountDID, dependents, cid, permissions })
 
     return new FileSystem({
       dependents,
@@ -586,7 +587,7 @@ export class FileSystem {
     const theirRootDid = await this.dependents.reference.didRoot.lookup(sharedBy)
 
     // Share key
-    const key = await ShareKey.create({
+    const key = await ShareKey.create(this.dependents.crypto, {
       counter: parseInt(shareId, 10),
       recipientExchangeDid: ourExchangeDid,
       senderRootDid: theirRootDid
@@ -596,7 +597,7 @@ export class FileSystem {
     const root = await this.dependents.reference.dataRoot.lookup(sharedBy)
     if (!root) throw new Error("This user doesn't have a filesystem yet.")
 
-    const rootLinks = await Protocol.basic.getSimpleLinks(root)
+    const rootLinks = await Protocol.basic.getSimpleLinks(this.dependents.depot, root)
     const sharedLinksCid = rootLinks[ Branch.Shared ]?.cid || null
     if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
 
@@ -624,7 +625,11 @@ export class FileSystem {
     // Load MMPT
     const mmptCid = rootLinks[ Branch.Private ]?.cid
     if (!mmptCid) throw new Error("This user's filesystem doesn't have a private branch")
-    const theirMmpt = await MMPT.fromCID(decodeCID(rootLinks[ Branch.Private ]?.cid))
+    const theirMmpt = await MMPT.fromCID(
+      this.dependents.depot,
+      this.dependents.manners,
+      decodeCID(rootLinks[ Branch.Private ]?.cid)
+    )
 
     // Decode index
     const encryptedIndex = await this.dependents.depot.getBlock(decodeCID(entryIndexCid))
@@ -633,7 +638,14 @@ export class FileSystem {
     if (!PrivateTypeChecks.isDecryptedNode(indexInfo)) throw new Error("The share payload did not point to a valid entry index")
 
     // Load index and return it
-    return PrivateTree.fromInfo(theirMmpt, uint8arrays.toString(symmKey, "base64pad"), indexInfo)
+    return PrivateTree.fromInfo(
+      this.dependents.crypto,
+      this.dependents.depot,
+      this.dependents.manners,
+      this.dependents.reference,
+      theirMmpt,
+      symmKey,
+      indexInfo)
   }
 
   /**
@@ -666,6 +678,10 @@ export class FileSystem {
 
     // Share the items
     const shareDetails = await Sharing.privateNode(
+      this.dependents.crypto,
+      this.dependents.depot,
+      this.dependents.manners,
+      this.dependents.reference,
       this.root,
       items,
       { shareWith, sharedBy }
@@ -718,9 +734,9 @@ export class FileSystem {
    */
   resolveSymlink(link: SoftLink): Promise<File | Tree | null> {
     if (TypeChecks.hasProp(link, "privateName")) {
-      return PrivateTree.resolveSoftLink(link)
+      return PrivateTree.resolveSoftLink(this.dependents.crypto, this.dependents.depot, this.dependents.manners, this.dependents.reference, link)
     } else {
-      return PublicTree.resolveSoftLink(link)
+      return PublicTree.resolveSoftLink(this.dependents.depot, this.dependents.reference, link)
     }
   }
 
@@ -778,7 +794,7 @@ export class FileSystem {
       await this.root.updatePuttable(Branch.Private, this.root.mmpt)
 
       const cid = await this.root.mmpt.put()
-      await this.root.addPrivateLogEntry(cid)
+      await this.root.addPrivateLogEntry(this.dependents.depot, cid)
 
     } else if (head === Branch.Pretty) {
       throw new Error("The pretty path is read only")

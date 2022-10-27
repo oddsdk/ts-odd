@@ -16,6 +16,9 @@ import { SymmAlg } from "../../components/crypto/implementation.js"
 import { decodeCID } from "../../common/index.js"
 
 
+export const DEFAULT_AES_ALG = SymmAlg.AES_CTR
+
+
 export const getFile = async (depot: Depot.Implementation, cid: CID): Promise<Uint8Array> => {
   return depot.getUnixFile(cid)
 }
