@@ -3,6 +3,7 @@ import { CID } from "multiformats/cid"
 import * as Depot from "./components/depot/implementation.js"
 import * as Path from "./path/index.js"
 import * as Permissions from "./permissions.js"
+import * as Reference from "./components/reference/implementation.js"
 
 import * as Protocol from "./fs/protocol/index.js"
 import * as Versions from "./fs/versions.js"
@@ -36,14 +37,15 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
   const account = { username, rootDID: await reference.didRoot.lookup(username) }
 
   // Determine the correct CID of the file system to load
-  const dataCid = navigator.onLine ? await reference.dataRoot.lookup(username) : null
+  const dataCid = navigator.onLine ? await getDataRoot(reference, username, { maxRetries: 20 }) : null
   const logIdx = dataCid ? await cidLog.indexOf(dataCid) : -1
 
   if (!navigator.onLine) {
     // Offline, use local CID
     cid = cidLog.newest()
     if (cid) manners.log("📓 Working offline, using local CID:", cid.toString())
-    else manners.log("📓 Working offline, creating a new file system")
+
+    throw new Error("Offline, don't have a filesystem to work with.")
 
   } else if (!dataCid) {
     // No DNS CID yet
@@ -75,7 +77,9 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
   }
 
   // If a file system exists, load it and return it
-  const p: Permissions.Permissions | undefined = permissions ? Permissions.withAppInfo(permissions, config.appInfo) : undefined
+  const p: Permissions.Permissions | undefined = permissions
+    ? Permissions.withAppInfo(permissions, config.appInfo)
+    : undefined
 
   if (cid) {
     await checkFileSystemVersion(dependents.depot, config, cid)
@@ -91,6 +95,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
     permissions: p,
     version: config.filesystem?.version
   })
+
   await addSampleData(fs)
 
   // Fin
@@ -191,4 +196,45 @@ async function addSampleData(fs: FileSystem): Promise<void> {
   await fs.mkdir({ directory: [ Branch.Private, "Photos" ] })
   await fs.mkdir({ directory: [ Branch.Private, "Video" ] })
   await fs.publish()
+}
+
+
+/**
+ * Get a user's data root
+ *
+ * @param username The user's name
+ * @param options Optional parameters
+ * @param options.maxRetries Maximum number of retry attempts
+ * @param options.retryInterval Retry interval in milliseconds
+ * @returns data root CID or null
+ */
+async function getDataRoot(
+  reference: Reference.Implementation,
+  username: string,
+  options: { maxRetries?: number; retryInterval?: number }
+    = {}
+): Promise<CID | null> {
+  const maxRetries = options.maxRetries ?? 0
+  const retryInterval = options.retryInterval ?? 500
+
+  let dataCid = await reference.dataRoot.lookup(username)
+  if (dataCid) return dataCid
+
+  return new Promise((resolve, reject) => {
+    let attempt = 0
+
+    const dataRootInterval = setInterval(async () => {
+      dataCid = await reference.dataRoot.lookup(username)
+
+      if (!dataCid && attempt < maxRetries) {
+        attempt++
+        return
+      } else if (attempt >= maxRetries) {
+        reject("Failed to load data root")
+      }
+
+      clearInterval(dataRootInterval)
+      resolve(dataCid)
+    }, retryInterval)
+  })
 }
