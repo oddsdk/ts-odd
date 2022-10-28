@@ -1,8 +1,9 @@
 import * as Storage from "./components/storage/implementation"
 import * as TypeChecks from "./common/type-checks.js"
+import { Repo } from "./repositories/ucans"
 
 
-export type RepositoryOptions {
+export type RepositoryOptions = {
   storage: Storage.Implementation,
   storageName: string
 }
@@ -16,14 +17,20 @@ export default abstract class Repository<T> {
   storageName: string
 
 
-  async constructor(
-    { storage, storageName }: RepositoryOptions
-  ): Promise<Repository<T>> {
-    this.memoryCache = await this.getAll()
-    this.dictionary = this.toDictionary(this.memoryCache)
-
+  constructor({ storage, storageName }: RepositoryOptions) {
+    this.memoryCache = []
+    this.dictionary = {}
     this.storage = storage
     this.storageName = storageName
+  }
+
+  static async create(options: RepositoryOptions) {
+    const repo = new Repo(options)
+
+    repo.memoryCache = await repo.getAll()
+    repo.dictionary = repo.toDictionary(repo.memoryCache)
+
+    return repo
   }
 
   async add(itemOrItems: T | T[]): Promise<void> {
