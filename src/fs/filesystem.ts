@@ -583,7 +583,7 @@ export class FileSystem {
     const share = await this.loadShare({ shareId, sharedBy })
     await this.add(
       Path.directory(Branch.Private, "Shared with me", sharedBy),
-      await share.ls([])
+      await share.ls([]).then(Object.values).then(links => links.filter(FsTypeChecks.isSoftLink))
     )
     return this
   }
