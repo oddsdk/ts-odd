@@ -7,7 +7,7 @@ import { DistinctivePath } from "../path/index.js"
 import { Resource } from "../ucan/index.js"
 
 
-export function create({ storage }: { storage: Storage.Implementation }): Repository<Ucan.Ucan> {
+export function create({ storage }: { storage: Storage.Implementation }): Repo {
   return new Repo({
     storage,
     storageName: storage.KEYS.UCANS

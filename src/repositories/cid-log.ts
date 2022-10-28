@@ -5,7 +5,7 @@ import { decodeCID } from "../common"
 import Repository from "../repository"
 
 
-export function create({ storage }: { storage: Storage.Implementation }): Repository<CID> {
+export function create({ storage }: { storage: Storage.Implementation }): Repo {
   return new Repo({
     storage,
     storageName: storage.KEYS.CID_LOG

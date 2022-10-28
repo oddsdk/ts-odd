@@ -19,12 +19,12 @@ export type Dependents = {
 
 export type Implementation = {
   dataRoot: {
+    domain: (username: string) => string // DNSLink domain
     lookup: (username: string) => Promise<CID | null>
     update: (cid: CID, proof: Ucan) => Promise<{ success: boolean }>
   }
   didRoot: {
     lookup: (username: string) => Promise<string>
-    // TODO: update
   }
   dns: {
     lookupDnsLink: (domain: string) => Promise<string | null>

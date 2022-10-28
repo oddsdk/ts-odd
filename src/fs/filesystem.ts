@@ -49,7 +49,13 @@ interface AppPath {
   (path: FilePath): FilePath
 }
 
+type Account = {
+  rootDID: string
+  username?: string
+}
+
 type ConstructorParams = {
+  account: Account
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
@@ -65,7 +71,7 @@ type Dependents = {
 }
 
 type FileSystemOptions = {
-  accountDID: string,
+  account: Account
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
@@ -87,7 +93,9 @@ type NewFileSystemOptions = FileSystemOptions & {
 
 export class FileSystem {
 
+  account: Account
   dependents: Dependents
+
   root: RootTree
   readonly localOnly: boolean
 
@@ -98,7 +106,8 @@ export class FileSystem {
   _publishing: false | [ CID, true ]
 
 
-  constructor({ dependents, root, localOnly }: ConstructorParams) {
+  constructor({ account, dependents, root, localOnly }: ConstructorParams) {
+    this.account = account
     this.dependents = dependents
 
     this.localOnly = localOnly || false
@@ -155,7 +164,7 @@ export class FileSystem {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
-    const { accountDID, dependents, permissions, localOnly } = opts
+    const { account, dependents, permissions, localOnly } = opts
     const rootKey = opts.rootKey || await (
       dependents
         .crypto.aes.genKey(DEFAULT_AES_ALG)
@@ -164,9 +173,10 @@ export class FileSystem {
 
     // Create a file system based on wnfs-wasm when this option is set:
     const wnfsWasm = opts.version === Versions.toString(Versions.wnfsWasm)
-    const root = await RootTree.empty({ accountDID, dependents, rootKey, wnfsWasm })
+    const root = await RootTree.empty({ accountDID: account.rootDID, dependents, rootKey, wnfsWasm })
 
     return new FileSystem({
+      account,
       dependents,
       root,
       permissions,
@@ -178,10 +188,11 @@ export class FileSystem {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions): Promise<FileSystem | null> {
-    const { accountDID, dependents, permissions, localOnly } = opts
-    const root = await RootTree.fromCID({ accountDID, dependents, cid, permissions })
+    const { account, dependents, permissions, localOnly } = opts
+    const root = await RootTree.fromCID({ accountDID: account.rootDID, dependents, cid, permissions })
 
     return new FileSystem({
+      account,
       dependents,
       root,
       permissions,
@@ -444,14 +455,14 @@ export class FileSystem {
    */
   async symlink(
     args:
-      { at: DirectoryPath; referringTo: DistinctivePath; name: string; username: string }
+      { at: DirectoryPath; referringTo: DistinctivePath; name: string }
   ): Promise<this> {
     const { at, referringTo, name } = args
+    const username = this.account.username
 
     if (at == null) throw new Error("Missing parameter `symlink.at`")
     if (Path.isFile(at)) throw new Error("`symlink.at` only accepts directory paths")
 
-    const username = args.username
     const sameTree = Path.isSameBranch(at, referringTo)
 
     if (!username) throw new Error("I need a username in order to use this method")
@@ -470,7 +481,7 @@ export class FileSystem {
               tree.insertSoftLink({
                 path: Path.removeBranch(referringTo),
                 name,
-                username
+                username,
               })
             }
             return tree
@@ -658,9 +669,8 @@ export class FileSystem {
 
     // Our username
     if (!sharedBy) {
-      const username = await authenticatedUsername()
-      if (!username) throw new Error("I need a username in order to use this method")
-      sharedBy = { rootDid: await did.root(username), username }
+      if (!this.account.username) throw new Error("I need a username in order to use this method")
+      sharedBy = { rootDid: this.account.rootDID, username: this.account.username }
     }
 
     // Get the items to share

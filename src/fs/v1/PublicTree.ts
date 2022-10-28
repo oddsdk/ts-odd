@@ -267,9 +267,7 @@ export class PublicTree extends BaseTree {
 
     if (!isPublic) throw new Error("Mixing public and private soft links is not supported yet.")
 
-    const rootCid = domain === await Common.authenticatedUserDomain({ withFiles: true })
-      ? await reference.repositories.cidLog.newest()
-      : await reference.dns.lookupDnsLink(domain)
+    const rootCid = await reference.dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
     const publicCid = (await Protocol.basic.getSimpleLinks(depot, decodeCID(rootCid))).public.cid
@@ -311,9 +309,9 @@ export class PublicTree extends BaseTree {
     return this
   }
 
-  insertSoftLink({ ipnsDomain, name, path }: { ipnsDomain: string; name: string; path: DistinctivePath; }): this {
+  insertSoftLink({ name, path, username }: { name: string; path: DistinctivePath; username: string }): this {
     const softLink = {
-      ipns: `${ipnsDomain.replace(/\/+$/, "")}/public/${Path.toPosix(path)}`, // `${username}.files.${setup.endpoints.user}/public/${Path.toPosix(path)}`,
+      ipns: this.reference.dataRoot.domain(username) + `/public/${Path.toPosix(path)}`,
       name
     }
     this.assignLink({
