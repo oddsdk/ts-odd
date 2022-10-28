@@ -43,15 +43,39 @@ import * as Sharing from "./share.js"
 // TYPES
 
 
-interface AppPath {
+export interface AppPath {
   (): DirectoryPath
   (path: DirectoryPath): DirectoryPath
   (path: FilePath): FilePath
 }
 
-type Account = {
+export type Account = {
   rootDID: string
   username?: string
+}
+
+export type Dependents = {
+  crypto: Crypto.Implementation
+  depot: Depot.Implementation
+  manners: Manners.Implementation
+  reference: Reference.Implementation
+  storage: Storage.Implementation
+}
+
+export type FileSystemOptions = {
+  account: Account
+  dependents: Dependents
+  localOnly?: boolean
+  permissions?: Permissions
+}
+
+export type MutationOptions = {
+  publish?: boolean
+}
+
+export type NewFileSystemOptions = FileSystemOptions & {
+  rootKey?: Uint8Array
+  version?: string
 }
 
 type ConstructorParams = {
@@ -60,30 +84,6 @@ type ConstructorParams = {
   localOnly?: boolean
   permissions?: Permissions
   root: RootTree
-}
-
-type Dependents = {
-  crypto: Crypto.Implementation
-  depot: Depot.Implementation
-  manners: Manners.Implementation
-  reference: Reference.Implementation
-  storage: Storage.Implementation
-}
-
-type FileSystemOptions = {
-  account: Account
-  dependents: Dependents
-  localOnly?: boolean
-  permissions?: Permissions
-}
-
-type MutationOptions = {
-  publish?: boolean
-}
-
-type NewFileSystemOptions = FileSystemOptions & {
-  rootKey: Uint8Array
-  version: string
 }
 
 
@@ -165,7 +165,7 @@ export class FileSystem {
    */
   static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
     const { account, dependents, permissions, localOnly } = opts
-    const rootKey = opts.rootKey || await (
+    const rootKey: Uint8Array = opts.rootKey || await (
       dependents
         .crypto.aes.genKey(DEFAULT_AES_ALG)
         .then(dependents.crypto.aes.exportKey)

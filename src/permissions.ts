@@ -76,3 +76,8 @@ export function paths(permissions: Permissions): DistinctivePath[] {
 
   return list
 }
+
+
+export function withAppInfo(a: PermissionsWithoutAppInfo, appInfo: AppInfo): Permissions {
+  return { ...a, app: appInfo }
+}

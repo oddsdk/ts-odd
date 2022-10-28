@@ -1,37 +1,39 @@
 import { CID } from "multiformats/cid"
 
-import FileSystem from "./fs/index.js"
-
-import * as CIDLog from "./repositories/cid-log.js"
-import * as Crypto from "./components/crypto/implementation.js"
-import * as Manners from "./components/manners/implementation.js"
+import * as Depot from "./components/depot/implementation.js"
 import * as Path from "./path/index.js"
-import * as Reference from "./components/reference/implementation.js"
+import * as Permissions from "./permissions.js"
 
-import * as protocol from "./fs/protocol/index.js"
-import * as versions from "./fs/versions.js"
+import * as Protocol from "./fs/protocol/index.js"
+import * as Versions from "./fs/versions.js"
+
+import FileSystem, { Dependents } from "./fs/filesystem.js"
 
 import { Branch } from "./path/index.js"
+import { Configuration } from "./configuration.js"
 import { Maybe, decodeCID } from "./common/index.js"
-import { Permissions } from "./permissions.js"
 
 
 /**
  * Load a user's file system.
  */
-export async function loadFileSystem({ crypto, permissions, manners, reference, rootKey, username }: {
-  crypto: Crypto.Implementation
-  permissions: Maybe<Permissions>
-  rootKey?: string
-  manners: Manners.Implementation
-  reference: Reference.Implementation
+export async function loadFileSystem({ config, dependents, rootKey, username }: {
+  config: Configuration,
+  dependents: Dependents,
+  rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> {
+  const { manners, reference } = dependents
+  const { permissions } = config
+
   let cid: Maybe<CID>
   let fs
 
   // Repositories
   const cidLog = reference.repositories.cidLog
+
+  // Account
+  const account = { username, rootDID: await reference.didRoot.lookup(username) }
 
   // Determine the correct CID of the file system to load
   const dataCid = navigator.onLine ? await reference.dataRoot.lookup(username) : null
@@ -73,16 +75,22 @@ export async function loadFileSystem({ crypto, permissions, manners, reference, 
   }
 
   // If a file system exists, load it and return it
-  const p = permissions || undefined
+  const p: Permissions.Permissions | undefined = permissions ? Permissions.withAppInfo(permissions, config.appInfo) : undefined
 
   if (cid) {
-    await checkFileSystemVersion(cid)
-    fs = await FileSystem.fromCID(cid, { permissions: p })
+    await checkFileSystemVersion(dependents.depot, config, cid)
+    fs = await FileSystem.fromCID(cid, { account, dependents, permissions: p })
     if (fs) return fs
   }
 
   // Otherwise make a new one
-  fs = await FileSystem.empty({ permissions: p, rootKey })
+  fs = await FileSystem.empty({
+    account,
+    dependents,
+    rootKey,
+    permissions: p,
+    version: config.filesystem?.version
+  })
   await addSampleData(fs)
 
   // Fin
@@ -94,35 +102,48 @@ export async function loadFileSystem({ crypto, permissions, manners, reference, 
 // VERSIONING
 
 
-export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> {
-  const links = await protocol.basic.getSimpleLinks(filesystemCID)
+const DEFAULT_USER_MESSAGES = {
+  versionMismatch: {
+    newer: async () => alertIfPossible(`Sorry, we can't sync your filesystem with this app. This app only understands older versions of filesystems.\n\nPlease try to hard refresh this site or let this app's developer know.\n\nFeel free to contact Fission support: support@fission.codes`),
+    older: async () => alertIfPossible(`Sorry, we can't sync your filesystem with this app. Your filesystem version is out-dated and it needs to be migrated.\n\nRun a migration (https://guide.fission.codes/accounts/account-signup/account-migration) or talk to Fission support: support@fission.codes`),
+  }
+}
+
+
+export async function checkFileSystemVersion(
+  depot: Depot.Implementation,
+  config: Configuration,
+  filesystemCID: CID
+): Promise<void> {
+  const links = await Protocol.basic.getSimpleLinks(depot, filesystemCID)
   // if there's no version link, we assume it's from a 1.0.0-compatible version
   // (from before ~ November 2020)
   const versionStr = links[ Branch.Version ] == null
     ? "1.0.0"
     : new TextDecoder().decode(
-      await protocol.basic.getFile(
+      await Protocol.basic.getFile(
+        depot,
         decodeCID(links[ Branch.Version ].cid)
       )
     )
 
   const errorVersionBigger = async () => {
-    await setup.userMessages.versionMismatch.newer(versionStr)
-    return new Error(`Incompatible filesystem version. Version: ${versionStr} Supported versions: ${versions.supported.map(v => versions.toString(v)).join(", ")}. Please upgrade this app's webnative version.`)
+    await (config.userMessages || DEFAULT_USER_MESSAGES).versionMismatch.newer(versionStr)
+    return new Error(`Incompatible filesystem version. Version: ${versionStr} Supported versions: ${Versions.supported.map(v => Versions.toString(v)).join(", ")}. Please upgrade this app's webnative version.`)
   }
 
   const errorVersionSmaller = async () => {
-    await setup.userMessages.versionMismatch.older(versionStr)
-    return new Error(`Incompatible filesystem version. Version: ${versionStr} Supported versions: ${versions.supported.map(v => versions.toString(v)).join(", ")}. The user should migrate their filesystem.`)
+    await (config.userMessages || DEFAULT_USER_MESSAGES).versionMismatch.older(versionStr)
+    return new Error(`Incompatible filesystem version. Version: ${versionStr} Supported versions: ${Versions.supported.map(v => Versions.toString(v)).join(", ")}. The user should migrate their filesystem.`)
   }
 
-  const versionParsed = versions.fromString(versionStr)
+  const versionParsed = Versions.fromString(versionStr)
 
   if (versionParsed == null) {
     throw await errorVersionBigger()
   }
 
-  const support = versions.isSupported(versionParsed)
+  const support = Versions.isSupported(versionParsed)
 
   if (support === "too-high") {
     throw await errorVersionBigger()
@@ -130,6 +151,11 @@ export async function checkFileSystemVersion(filesystemCID: CID): Promise<void> 
   if (support === "too-low") {
     throw await errorVersionSmaller()
   }
+}
+
+
+function alertIfPossible(str: string) {
+  if (globalThis.alert != null) globalThis.alert(str)
 }
 
 
@@ -144,13 +170,13 @@ export const ROOT_PERMISSIONS = { fs: { private: [ Path.root() ], public: [ Path
  * Load a user's root file system.
  */
 export const loadRootFileSystem = async (options: {
-  crypto: Crypto.Implementation
-  rootKey?: string
-  manners: Manners.Implementation
-  reference: Reference.Implementation
+  config: Configuration,
+  dependents: Dependents,
+  rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> => {
-  return await loadFileSystem({ ...options, permissions: ROOT_PERMISSIONS })
+  const config = { ...options.config, permissions: { ...options.config.permissions, ...ROOT_PERMISSIONS } }
+  return await loadFileSystem({ ...options, config })
 }
 
 

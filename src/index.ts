@@ -31,6 +31,7 @@ import * as Confidences from "./confidences.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as Manners from "./components/manners/implementation.js"
+import * as Permissions from "./permissions.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as SessionMod from "./session.js"
 import * as Storage from "./components/storage/implementation.js"
@@ -40,8 +41,8 @@ import { SESSION_TYPE as CONFIDENCES_SESSION_TYPE } from "./confidences.js"
 import { Components, Configuration, extractConfig, InitialisationError } from "./configuration.js"
 import { Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { appId, AppInfo, Permissions } from "./permissions.js"
-import { loadFileSystem } from "./filesystem.js"
+import { appId, AppInfo } from "./permissions.js"
+import { loadFileSystem, loadRootFileSystem } from "./filesystem.js"
 
 
 // IMPLEMENTATIONS
@@ -76,7 +77,7 @@ export type Program = {
   auth: AuthenticationStrategies,
   components: Components,
   confidences: {
-    collect: () => Promise<Maybe<string>>
+    collect: () => Promise<Maybe<string>> // returns username
     request: () => Promise<void>
     session: (username: string) => Promise<Maybe<Session>>
   },
@@ -187,7 +188,7 @@ export const confidences = {
  * the functions `app` or `delegateApp`. But if you feel adventurous
  * you can build your own path.
  */
-export async function assemble(components: Components, config: Configuration): Promise<App> {
+export async function assemble(components: Components, config: Configuration): Promise<Program> {
   // Check if browser is supported
   if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
   if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
@@ -241,7 +242,7 @@ export async function assemble(components: Components, config: Configuration): P
       })
     },
     async session(username: string) {
-      const permissions: Permissions = { ...config.permissions, app: config.appInfo }
+      const permissions = Permissions.withAppInfo(config.permissions || {}, config.appInfo)
       const ucan = Confidences.validatePermissions(
         components.reference.repositories.ucans,
         permissions
@@ -269,10 +270,8 @@ export async function assemble(components: Components, config: Configuration): P
       const fs = config.filesystem?.loadImmediately === false ?
         undefined :
         await loadFileSystem({
-          crypto: components.crypto,
-          manners: components.manners,
-          permissions: permissions,
-          reference: components.reference,
+          config,
+          dependents: components,
           username,
         })
 
@@ -299,12 +298,19 @@ export async function assemble(components: Components, config: Configuration): P
 
   }
 
+  // Shorthands
+  const shorthands = {
+    loadFileSystem: (username: string) => loadFileSystem({ config, username, dependents: components }),
+    loadRootFileSystem: (username: string) => loadRootFileSystem({ config, username, dependents: components }),
+  }
+
   // Fin
   return {
+    ...shorthands,
     auth,
     components,
     confidences,
-    session
+    session,
   }
 }
 
