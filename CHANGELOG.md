@@ -1,8 +1,31 @@
 # Changelog
 
+### v0.35.0
+
+Full rewrite of webnative.
+
+We've removed all global state from webnative as to avoid some bundler issues and to enable a component system. This system allows webnative to be much more customisable and independent of Fission infrastructure. The documentation should give you some information on how the various components fit together. If you want to write implementations for a component, see the directories in `src/components` (or the lib folder). We previously had dependency injection, this is basically more of the same without global state. All existing components have been expanded and refactored.
+
+- Introduction of a `depot` component: All IPFS functionality has been moved into here. Can now be swapped out with something else. Note that webnative still uses CIDs & IPLD.
+- Introduction of a `reference` component: Data root lookups & updating, DID root lookups, DNS and various repositories (cid log & UCANs) have been moved in here.
+- Introduction of a `manners` component: Debug functionality has moved to here.
+- Introduction of a `confidences` components: Responsible for accepting UCANs and filesystem secrets from external sources (eg. Fission Lobby)
+
+- Removal of the `webnative.initialise`, `app` and `permissionedApp` functions. These have been replaced by the the `program` function which serves as the single entrypoint. You can customise all components and configuration via this function. It'll give you a `Program` with possibly a `Session` (and many other things) instead of the `State` we had before. Basically, when you get a session you're "logged in", otherwise you're not.
+
+- Webnative can now have many apps run on the same domain without any conflicts. This should help a lot when developing apps on the same localhost port. All storage and filesystems are namespaced by default.
+
+- Allows for multiple filesystems to be loaded at the same time (conflicts with identifiers have been resolved) and allows for a temporary filesystem (progressive login).
+
+- Removal of various confusing filesystem parameters, all data and read keys are `Uint8Array`s now.
+- When loading a filesystem the data root is tried multiple times (to get around the DNS issue)
+
+
+
 ### v0.34.2
 
 - Fixes `LinkError: import object field '__wbg_putBlock_88cdb3be9020efb7' is not a Function` when loading WASM.
+
 
 ### v0.34.1
 
