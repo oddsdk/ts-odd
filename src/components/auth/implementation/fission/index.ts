@@ -1,13 +1,13 @@
-import * as did from "../../../../did/index.js"
-import * as ucan from "../../../../ucan/index.js"
-import * as ucanStore from "../../../../ucan/store.js"
-import { ShareDetails } from "../../../../fs/types.js"
-import { api } from "../../../../common/index.js"
-
 import * as Crypto from "../../../crypto/implementation.js"
+import * as DID from "../../../../did/index.js"
+import * as Fission from "../../../../common/fission.js"
+import * as Reference from "../../../reference/implementation.js"
+import * as Ucan from "../../../../ucan/index.js"
+
 import { USERNAME_BLOCKLIST } from "./blocklist.js"
-import { Endpoints } from "../../../../common/fission.js"
 import { Dependents } from "../../implementation.js"
+import { Endpoints } from "../../../../common/fission.js"
+import { ShareDetails } from "../../../../fs/types.js"
 
 
 export * from "../../../../common/fission.js"
@@ -24,12 +24,13 @@ export async function createAccount(
     email?: string
   }
 ): Promise<{ success: boolean }> {
-  const jwt = ucan.encode(await ucan.build({
-    audience: await api.did(endpoints),
-    issuer: await did.ucan(dependents.crypto),
+  const jwt = Ucan.encode(await Ucan.build({
+    audience: await Fission.did(endpoints),
+    dependents: dependents,
+    issuer: await DID.ucan(dependents.crypto),
   }))
 
-  const response = await fetch(`${endpoints.api}/user`, {
+  const response = await fetch(Fission.apiUrl(endpoints, "/user"), {
     method: "PUT",
     headers: {
       "authorization": `Bearer ${jwt}`,
@@ -51,7 +52,10 @@ export async function isUsernameAvailable(
   endpoints: Endpoints,
   username: string
 ): Promise<boolean> {
-  const resp = await fetch(`${endpoints.api}/user/data/${username}`)
+  const resp = await fetch(
+    Fission.apiUrl(endpoints, `/user/data/${username}`)
+  )
+
   return !resp.ok
 }
 
@@ -76,28 +80,34 @@ export function isUsernameValid(username: string): boolean {
  */
 export async function resendVerificationEmail(
   endpoints: Endpoints,
-  crypto: Crypto.Implementation
+  crypto: Crypto.Implementation,
+  reference: Reference.Implementation
 ): Promise<{ success: boolean }> {
   // We've not implemented an "administer account" resource/ucan, so authenticating
   // with any kind of ucan will work server-side
-  const localUcan = Object.values(ucanStore.getDictionary())[ 0 ]
+  const localUcan = (await reference.repositories.ucans.getAll())[ 0 ]
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
 
-  const jwt = ucan.encode(await ucan.build({
-    audience: await api.did(),
-    issuer: await did.ucan(crypto),
+  const jwt = Ucan.encode(await Ucan.build({
+    audience: await Fission.did(endpoints),
+    dependents: { crypto },
+    issuer: await DID.ucan(crypto),
     proof: localUcan,
     potency: null
   }))
 
-  const response = await fetch(`${endpoints.api}/user/email/resend`, {
-    method: "POST",
-    headers: {
-      "authorization": `Bearer ${jwt}`
+  const response = await fetch(
+    Fission.apiUrl(endpoints, "/user/email/resend"),
+    {
+      method: "POST",
+      headers: {
+        "authorization": `Bearer ${jwt}`
+      }
     }
-  })
+  )
+
   return {
     success: response.status < 300
   }

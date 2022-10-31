@@ -1,10 +1,10 @@
-import * as uint8arrays from "uint8arrays"
+import * as Uint8arrays from "uint8arrays"
 
-import * as did from "../did/local.js"
-import { verifySignedData } from "../did/validation.js"
-import * as crypto from "../crypto/index.js"
-import { base64 } from "../common/index.js"
+import * as Crypto from "../components/crypto/implementation.js"
+
 import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from "./types.js"
+import { base64 } from "../common/index.js"
+import { verifySignedData } from "../did/validation.js"
 
 
 /**
@@ -31,6 +31,7 @@ import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from "./types.
 export async function build({
   addSignature = true,
   audience,
+  dependents,
   facts = [],
   issuer,
   lifetimeInSeconds = 30,
@@ -41,21 +42,23 @@ export async function build({
 }: {
   addSignature?: boolean
   audience: string
+  dependents: { crypto: Crypto.Implementation },
   facts?: Array<Fact>
-  issuer?: string
+  issuer: string
   lifetimeInSeconds?: number
   expiration?: number
   potency?: Potency
-  proof?: string
+  proof?: string | Ucan
   resource?: Resource
 }): Promise<Ucan> {
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
-  const decodedProof = proof && decode(proof)
-  const ksAlg = await crypto.keystore.getAlg()
+  const decodedProof = proof
+    ? (typeof proof === "string" ? decode(proof) : proof)
+    : null
 
   // Header
   const header = {
-    alg: jwtAlgorithm(ksAlg) || "UnknownAlgorithm",
+    alg: await dependents.crypto.keystore.getUcanAlg(),
     typ: "JWT",
     uav: "1.0.0" // actually 0.3.1 but server isn't updated yet
   }
@@ -76,14 +79,14 @@ export async function build({
     aud: audience,
     exp: exp,
     fct: facts,
-    iss: issuer || await did.ucan(),
+    iss: issuer,
     nbf: nbf,
-    prf: proof || null,
+    prf: proof ? (typeof proof === "string" ? proof : encode(proof)) : null,
     ptc: potency,
     rsc: resource ? resource : (decodedProof ? decodedProof.payload.rsc : "*"),
   }
 
-  const signature = addSignature ? await sign(header, payload) : null
+  const signature = addSignature ? await sign(dependents.crypto, header, payload) : null
 
   return {
     header,
@@ -159,14 +162,15 @@ export function isExpired(ucan: Ucan): boolean {
  * @param ucan The decoded UCAN
  * @param did The DID associated with the signature of the UCAN
  */
-export async function isValid(ucan: Ucan): Promise<boolean> {
+export async function isValid(crypto: Crypto.Implementation, ucan: Ucan): Promise<boolean> {
   const encodedHeader = encodeHeader(ucan.header)
   const encodedPayload = encodePayload(ucan.payload)
 
   const a = await verifySignedData({
-    data: uint8arrays.fromString(`${encodedHeader}.${encodedPayload}`, "utf8"),
+    data: Uint8arrays.fromString(`${encodedHeader}.${encodedPayload}`, "utf8"),
+    dependents: { crypto },
     did: ucan.payload.iss,
-    signature: uint8arrays.fromString(ucan.signature || "", "base64url")
+    signature: Uint8arrays.fromString(ucan.signature || "", "base64url")
   })
 
   if (!a) return a
@@ -177,7 +181,7 @@ export async function isValid(ucan: Ucan): Promise<boolean> {
   const b = prf.payload.aud === ucan.payload.iss
   if (!b) return b
 
-  return await isValid(prf)
+  return await isValid(crypto, prf)
 }
 
 /**
@@ -198,12 +202,19 @@ export function rootIssuer(ucan: string | Ucan, level = 0): string {
 /**
  * Generate UCAN signature.
  */
-export async function sign(header: UcanHeader, payload: UcanPayload): Promise<string> {
+export async function sign(
+  crypto: Crypto.Implementation,
+  header: UcanHeader,
+  payload: UcanPayload
+): Promise<string> {
   const encodedHeader = encodeHeader(header)
   const encodedPayload = encodePayload(payload)
 
-  return base64.makeUrlSafe(
-    await crypto.keystore.sign(`${encodedHeader}.${encodedPayload}`, 8)
+  return Uint8arrays.toString(
+    await crypto.keystore.sign(
+      Uint8arrays.fromString(`${encodedHeader}.${encodedPayload}`, "utf8")
+    ),
+    "base64url"
   )
 }
 

@@ -107,7 +107,7 @@ export async function linkDevice(
   const { readKey, ucan: encodedToken } = data
   const ucan = Ucan.decode(encodedToken as string)
 
-  if (await Ucan.isValid(ucan)) {
+  if (await Ucan.isValid(dependents.crypto, ucan)) {
     await dependents.storage.setItem(dependents.storage.KEYS.ACCOUNT_UCAN, encodedToken)
 
     await RootKey.store({

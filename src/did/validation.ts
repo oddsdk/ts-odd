@@ -1,13 +1,15 @@
-import * as crypto from "../crypto/index.js"
+import * as Crypto from "../components/crypto/implementation.js"
+
 import { didToPublicKey } from "./transformers.js"
 import { KeyType } from "./types.js"
 
 
 /**
- * Verify the signature of some data (string, ArrayBuffer or Uint8Array), given a DID.
+ * Verify the signature of some data given a DID.
  */
-export async function verifySignedData({ data, did, signature }: {
+export async function verifySignedData({ data, dependents, did, signature }: {
   data: Uint8Array
+  dependents: { crypto: Crypto.Implementation }
   did: string
   signature: Uint8Array
 }): Promise<boolean> {
@@ -16,10 +18,10 @@ export async function verifySignedData({ data, did, signature }: {
     switch (type) {
 
       case KeyType.Edwards:
-        return await crypto.ed25519.verify(data, signature, publicKey)
+        return await dependents.crypto.ed25519.verify(data, signature, publicKey)
 
       case KeyType.RSA:
-        return await crypto.rsa.verify(data, signature, publicKey)
+        return await dependents.crypto.rsa.verify(data, signature, publicKey)
 
       default: return false
     }

@@ -99,7 +99,7 @@ export async function linkDevice(
   const { token } = data
   const u = Ucan.decode(token as string)
 
-  if (await Ucan.isValid(u)) {
+  if (await Ucan.isValid(dependents.crypto, u)) {
     await dependents.storage.setItem(dependents.storage.KEYS.ACCOUNT_UCAN, token)
     await SessionMod.provide(dependents.storage, { type: TYPE, username })
   }
