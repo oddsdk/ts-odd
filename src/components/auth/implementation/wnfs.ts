@@ -38,6 +38,7 @@ export async function activate(
       )
 
       const fsUcan = await Ucan.build({
+        dependents: components,
         potency: "APPEND",
         resource: "*",
         proof: proof ? proof : undefined,
@@ -119,6 +120,7 @@ export async function linkDevice(
     // Create and store filesystem UCAN
     const issuer = await DID.write(dependents.crypto)
     const fsUcan = await Ucan.build({
+      dependents: dependents,
       potency: "APPEND",
       resource: "*",
       proof: encodedToken,

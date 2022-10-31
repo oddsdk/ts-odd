@@ -1,10 +1,16 @@
 import type { CID } from "multiformats/cid"
 
+import * as Crypto from "../components/crypto/implementation.js"
 import * as DID from "../did/index.js"
+import * as Fission from "../common/fission.js"
+import * as Reference from "../components/reference/implementation.js"
 import * as Ucan from "../ucan/index.js"
 
+import { Maybe } from "../common/types.js"
+import { isString } from "../common/type-checks.js"
 
-export type AppMetadata = {
+
+export type App = {
   domains: string[]
   insertedAt: string
   modifiedAt: string
@@ -19,25 +25,33 @@ type AppIndexResponseJson = {
 }
 
 
+export type Dependents = {
+  crypto: Crypto.Implementation
+  reference: Reference.Implementation
+}
+
+
 /**
  * Get A list of all of your apps and their associated domain names
  */
-export async function index(): Promise<Array<AppMetadata>> {
-  const apiEndpoint = setup.getApiEndpoint()
-
-  const localUcan = await ucan.dictionary.lookupAppUcan("*")
+export async function index(
+  endpoints: Fission.Endpoints,
+  dependents: Dependents
+): Promise<Array<App>> {
+  const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
 
-  const jwt = ucan.encode(await ucan.build({
-    audience: await api.did(),
-    issuer: await did.ucan(),
+  const jwt = Ucan.encode(await Ucan.build({
+    dependents: dependents,
+    audience: await Fission.did(endpoints),
+    issuer: await DID.ucan(dependents.crypto),
     proof: localUcan,
     potency: null
   }))
 
-  const response = await fetch(`${apiEndpoint}/app`, {
+  const response = await fetch(Fission.apiUrl(endpoints, "/app"), {
     method: "GET",
     headers: {
       "authorization": `Bearer ${jwt}`
@@ -58,25 +72,27 @@ export async function index(): Promise<Array<AppMetadata>> {
  * @param subdomain Subdomain to create the fission app with
  */
 export async function create(
+  endpoints: Fission.Endpoints,
+  dependents: Dependents,
   subdomain: Maybe<string>
 ): Promise<App> {
-  const apiEndpoint = setup.getApiEndpoint()
-
-  const localUcan = await ucan.dictionary.lookupAppUcan("*")
+  const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
 
-  const jwt = ucan.encode(await ucan.build({
-    audience: await api.did(),
-    issuer: await did.ucan(),
+  const jwt = Ucan.encode(await Ucan.build({
+    dependents,
+
+    audience: await Fission.did(endpoints),
+    issuer: await DID.ucan(dependents.crypto),
     proof: localUcan,
     potency: null
   }))
 
   const url = isString(subdomain)
-    ? `${apiEndpoint}/app?subdomain=${encodeURIComponent(subdomain)}`
-    : `${apiEndpoint}/app`
+    ? Fission.apiUrl(endpoints, `/app?subdomain=${encodeURIComponent(subdomain)}`)
+    : Fission.apiUrl(endpoints, `/app`)
 
   const response = await fetch(url, {
     method: "POST",
@@ -101,23 +117,25 @@ export async function create(
  * @param domain The domain associated with the app we want to delete
  */
 export async function deleteByDomain(
+  endpoints: Fission.Endpoints,
+  dependents: Dependents,
   domain: string
 ): Promise<void> {
-  const apiEndpoint = setup.getApiEndpoint()
-
-  const localUcan = await ucan.dictionary.lookupAppUcan(domain)
+  const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan(domain)
   if (localUcan === null) {
     throw new Error("Could not find your local UCAN")
   }
 
-  const jwt = ucan.encode(await ucan.build({
-    audience: await api.did(),
-    issuer: await did.ucan(),
+  const jwt = Ucan.encode(await Ucan.build({
+    dependents,
+
+    audience: await Fission.did(endpoints),
+    issuer: await DID.ucan(dependents.crypto),
     proof: localUcan,
     potency: null
   }))
 
-  const appIndexResponse = await fetch(`${apiEndpoint}/app`, {
+  const appIndexResponse = await fetch(Fission.apiUrl(endpoints, "/app"), {
     method: "GET",
     headers: {
       "authorization": `Bearer ${jwt}`
@@ -130,12 +148,15 @@ export async function deleteByDomain(
     throw new Error(`Couldn't find an app with domain ${domain}`)
   }
 
-  await fetch(`${apiEndpoint}/app/${encodeURIComponent(appToDelete[ 0 ])}`, {
-    method: "DELETE",
-    headers: {
-      "authorization": `Bearer ${jwt}`
+  await fetch(
+    Fission.apiUrl(endpoints, `/app/${encodeURIComponent(appToDelete[ 0 ])}`),
+    {
+      method: "DELETE",
+      headers: {
+        "authorization": `Bearer ${jwt}`
+      }
     }
-  })
+  )
 }
 
 /**
@@ -144,24 +165,26 @@ export async function deleteByDomain(
  * @param subdomain Subdomain to create the fission app with
  */
 export async function publish(
+  endpoints: Fission.Endpoints,
+  dependents: Dependents,
   domain: string,
   cid: CID,
 ): Promise<void> {
-  const apiEndpoint = setup.getApiEndpoint()
-
-  const localUcan = await ucan.dictionary.lookupAppUcan(domain)
+  const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan(domain)
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
 
-  const jwt = ucan.encode(await ucan.build({
-    audience: await api.did(),
-    issuer: await did.ucan(),
+  const jwt = Ucan.encode(await Ucan.build({
+    dependents,
+
+    audience: await Fission.did(endpoints),
+    issuer: await DID.ucan(dependents.crypto),
     proof: localUcan,
     potency: null
   }))
 
-  const url = `${apiEndpoint}/app/${domain}/${cid}`
+  const url = Fission.apiUrl(endpoints, `/app/${domain}/${cid}`)
 
   await fetch(url, {
     method: "PUT",

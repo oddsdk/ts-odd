@@ -78,6 +78,8 @@ export async function delegateAccount(
 
   // UCAN
   const u = await Ucan.build({
+    dependents,
+
     audience,
     issuer: await Did.write(dependents.crypto),
     lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
