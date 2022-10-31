@@ -19,7 +19,7 @@ The API reference can be found at [webnative.fission.app](https://webnative.fiss
 
 ## What you'll find here
 
-The Fission webnative SDK offers tools for:
+The Fission Webnative SDK offers tools for:
 - authenticating through a Fission **authentication lobby**  
   (a lobby is where you can make a Fission account or link an account)
 - managing your web native **file system**  
@@ -100,9 +100,9 @@ switch (state.scenario) {
 
 
 
-# Web Native File System
+# Webnative File System
 
-The Web Native File System (WNFS) is built on top of the InterPlanetary File System (IPFS). It's structured and functions similarly to a Unix-style file system, with one notable exception: it's a Directed Acyclic Graph (DAG), meaning that a given child can have more than one parent (think symlinks but without the "sym").
+The Webnative File System (WNFS) is built on top of the InterPlanetary File System (IPFS). It's structured and functions similarly to a Unix-style file system, with one notable exception: it's a Directed Acyclic Graph (DAG), meaning that a given child can have more than one parent (think symlinks but without the "sym").
 
 Each file system has a public tree and a private tree, much like your MacOS, Windows, or Linux desktop file system. The public tree is "live" and publically accessible on the Internet. The private tree is encrypted so that only the owner can see the contents.
 
