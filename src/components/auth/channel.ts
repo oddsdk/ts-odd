@@ -1,7 +1,4 @@
-import * as did from "../../did/index.js"
 import * as Reference from "../reference/implementation.js"
-import { LinkingError } from "./linking.js"
-
 import type { Maybe } from "../../common/types.js"
 
 
@@ -14,7 +11,6 @@ export type Channel = {
 }
 
 export type ChannelOptions = {
-  socketEndpoint: ({ rootDID }: { rootDID: string }) => string
   handleMessage: (event: MessageEvent) => void
   username: string
 }
@@ -28,19 +24,20 @@ export type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView
 
 export const createWssChannel = async (
   reference: Reference.Implementation,
+  socketEndpoint: ({ rootDID }: { rootDID: string }) => string,
   options: ChannelOptions
 ): Promise<Channel> => {
   const { username, handleMessage } = options
 
   const rootDID = await waitForRootDid(reference, username)
   if (!rootDID) {
-    throw new LinkingError(`Failed to lookup DID for ${username}`)
+    throw new Error(`Failed to lookup DID for ${username}`)
   }
 
   const topic = `deviceLink#${rootDID}`
   console.log("Opening channel", topic)
 
-  const socket: Maybe<WebSocket> = new WebSocket(options.socketEndpoint({ rootDID }))
+  const socket: Maybe<WebSocket> = new WebSocket(socketEndpoint({ rootDID }))
   await waitForOpenConnection(socket)
   socket.onmessage = handleMessage
 

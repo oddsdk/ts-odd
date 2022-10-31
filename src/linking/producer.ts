@@ -1,25 +1,23 @@
-import aes from "keystore-idb/aes/index.js"
-import rsa from "keystore-idb/rsa/index.js"
-import utils from "keystore-idb/utils.js"
-import { KeyUse, SymmAlg, HashAlg, CharSize } from "keystore-idb/types.js"
+import * as Uint8arrays from "uint8arrays"
 
-import { webcrypto } from "one-webcrypto"
-import * as uint8arrays from "uint8arrays"
+import * as Auth from "../components/auth/implementation.js"
+import * as Crypto from "../components/crypto/implementation.js"
 
-import * as check from "../../common/type-checks.js"
-import * as did from "../../did/index.js"
-import * as ucan from "../../ucan/index.js"
-import { impl as auth } from "../implementation.js"
-import { EventEmitter, EventListener } from "../../common/event-emitter.js"
+import * as Check from "../common/type-checks.js"
+import * as DID from "../did/index.js"
+import * as Ucan from "../ucan/index.js"
+
+import { EventEmitter, EventListener } from "../common/event-emitter.js"
 import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
-import type { Maybe, Result } from "../../common/index.js"
+import type { Maybe, Result } from "../common/index.js"
 
 
 export type AccountLinkingProducer = {
   on: <K extends keyof ProducerEventMap>(eventName: K, listener: EventListener<ProducerEventMap[ K ]>) => void
   cancel: () => void
 }
+
 export interface ProducerEventMap {
   "challenge": {
     pin: number[]
@@ -30,6 +28,10 @@ export interface ProducerEventMap {
   "done": undefined
 }
 
+export type Dependents = {
+  auth: Auth.Implementation
+  crypto: Crypto.Implementation
+}
 
 type LinkingState = {
   username: Maybe<string>
@@ -44,9 +46,12 @@ type LinkingState = {
  * @param options.username username of the account
  * @returns an account linking event emitter and cancel function
  */
-export const createProducer = async (options: { username: string }): Promise<AccountLinkingProducer> => {
+export const createProducer = async (
+  dependents: Dependents,
+  options: { username: string }
+): Promise<AccountLinkingProducer> => {
   const { username } = options
-  const canDelegateAccount = await auth.canDelegateAccount(username)
+  const canDelegateAccount = await dependents.auth.canDelegateAccount(username)
 
   if (!canDelegateAccount) {
     throw new LinkingError(`Producer cannot delegate account for username ${username}`)
@@ -64,13 +69,13 @@ export const createProducer = async (options: { username: string }): Promise<Acc
     const message = data.arrayBuffer ? new TextDecoder().decode(await data.arrayBuffer()) : data
 
     if (ls.step === LinkingStep.Broadcast) {
-      const { sessionKey, sessionKeyMessage } = await generateSessionKey(message)
+      const { sessionKey, sessionKeyMessage } = await generateSessionKey(dependents.crypto, message)
       ls.sessionKey = sessionKey
       ls.step = LinkingStep.Negotiation
       channel.send(sessionKeyMessage)
     } else if (ls.step === LinkingStep.Negotiation) {
       if (ls.sessionKey) {
-        const userChallengeResult = await handleUserChallenge(ls.sessionKey, message)
+        const userChallengeResult = await handleUserChallenge(dependents.crypto, ls.sessionKey, message)
         ls.step = LinkingStep.Delegation
 
         if (userChallengeResult.ok) {
@@ -85,7 +90,14 @@ export const createProducer = async (options: { username: string }): Promise<Acc
                   called = true
 
                   if (ls.sessionKey) {
-                    await delegateAccount(ls.sessionKey, username, audience, finishDelegation)
+                    await delegateAccount(
+                      dependents.auth,
+                      dependents.crypto,
+                      ls.sessionKey,
+                      username,
+                      audience,
+                      finishDelegation
+                    )
                   } else {
                     handleLinkingError(new LinkingError("Producer missing session key when delegating account"))
                   }
@@ -96,7 +108,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
                   called = true
 
                   if (ls.sessionKey) {
-                    await declineDelegation(ls.sessionKey, finishDelegation)
+                    await declineDelegation(dependents.crypto, ls.sessionKey, finishDelegation)
                   } else {
                     handleLinkingError(new LinkingError("Producer missing session key when declining account delegation"))
                   }
@@ -139,7 +151,7 @@ export const createProducer = async (options: { username: string }): Promise<Acc
     channel.close()
   }
 
-  const channel = await auth.createChannel({ username, handleMessage })
+  const channel = await dependents.auth.createChannel({ username, handleMessage })
 
   return {
     on: (...args) => eventEmitter?.on(...args),
@@ -156,42 +168,38 @@ export const createProducer = async (options: { username: string }): Promise<Acc
  * @param didThrowaway
  * @returns session key and session key message
  */
-export const generateSessionKey = async (didThrowaway: string): Promise<{ sessionKey: CryptoKey; sessionKeyMessage: string }> => {
-  const sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
+export const generateSessionKey = async (
+  crypto: Crypto.Implementation,
+  didThrowaway: string
+): Promise<{ sessionKey: CryptoKey; sessionKeyMessage: string }> => {
+  const sessionKey = await crypto.aes.genKey(Crypto.SymmAlg.AES_GCM)
+  const exportedSessionKey = await crypto.aes.exportKey(sessionKey)
 
-  const exportedSessionKey = await aes.exportKey(sessionKey)
+  const { publicKey } = DID.didToPublicKey(didThrowaway)
 
-  const { publicKey } = did.didToPublicKey(didThrowaway)
-  const publicCryptoKey = await rsa.importPublicKey(publicKey, HashAlg.SHA_256, KeyUse.Exchange)
+  const encryptedSessionKey = await crypto.rsa.encrypt(exportedSessionKey, publicKey)
 
-  // Note: rsa.encrypt expects a B16 string
-  const rawSessionKey = utils.arrBufToStr(utils.base64ToArrBuf(exportedSessionKey), CharSize.B16)
-  const encryptedSessionKey = await rsa.encrypt(rawSessionKey, publicCryptoKey)
+  const u = await Ucan.build({
+    dependents: { crypto },
 
-  const u = await ucan.build({
-    issuer: await did.ucan(),
+    issuer: await DID.ucan(crypto),
     audience: didThrowaway,
     lifetimeInSeconds: 60 * 5, // 5 minutes
-    facts: [ { sessionKey: exportedSessionKey } ],
+    facts: [ { sessionKey: Uint8arrays.toString(exportedSessionKey, "base64pad") } ],
     potency: null
   })
 
-  const iv = utils.randomBuf(16)
-  const msg = utils.arrBufToBase64(
-    await webcrypto.subtle.encrypt(
-      {
-        name: "AES-GCM",
-        iv,
-      },
-      sessionKey,
-      uint8arrays.fromString(ucan.encode(u), "utf8"),
-    ),
+  const iv = crypto.misc.randomNumbers({ amount: 16 })
+  const msg = crypto.aes.encrypt(
+    Uint8arrays.fromString(Ucan.encode(u), "utf8"),
+    sessionKey,
+    Crypto.SymmAlg.AES_GCM
   )
 
   const sessionKeyMessage = JSON.stringify({
-    iv: utils.arrBufToBase64(iv),
+    iv: Uint8arrays.toString(iv, "base64pad"),
     msg,
-    sessionKey: utils.arrBufToBase64(encryptedSessionKey)
+    sessionKey: Uint8arrays.toString(encryptedSessionKey, "base64pad")
   })
 
   return {
@@ -209,9 +217,13 @@ export const generateSessionKey = async (didThrowaway: string): Promise<{ sessio
  * @param data
  * @returns pin and audience
  */
-export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): Promise<Result<{ pin: number[]; audience: string }, Error>> => {
+export const handleUserChallenge = async (
+  crypto: Crypto.Implementation,
+  sessionKey: CryptoKey,
+  data: string
+): Promise<Result<{ pin: number[]; audience: string }, Error>> => {
   const typeGuard = (message: unknown): message is { iv: string; msg: string } => {
-    return check.isObject(message)
+    return Check.isObject(message)
       && "iv" in message && typeof message.iv === "string"
       && "msg" in message && typeof message.msg === "string"
   }
@@ -220,26 +232,20 @@ export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): 
 
   if (parseResult.ok) {
     const { iv: encodedIV, msg } = parseResult.value
-    const iv = utils.base64ToArrBuf(encodedIV)
+    const iv = Uint8arrays.fromString(encodedIV, "base64pad")
 
     let message = null
     try {
-      message = uint8arrays.toString(
-        await webcrypto.subtle.decrypt(
-          {
-            name: "AES-GCM",
-            iv,
-          },
-          sessionKey,
-          utils.base64ToArrBuf(msg),
-        ),
-        "utf8"
+      message = await crypto.aes.decrypt(
+        Uint8arrays.fromString(msg, "base64pad"),
+        sessionKey,
+        Crypto.SymmAlg.AES_GCM
       )
     } catch {
       return { ok: false, error: new LinkingWarning("Ignoring message that could not be decrypted.") }
     }
 
-    const json = JSON.parse(message)
+    const json = JSON.parse(Uint8arrays.toString(message, "utf8"))
     const pin = json.pin as number[] ?? null
     const audience = json.did as string ?? null
 
@@ -266,6 +272,8 @@ export const handleUserChallenge = async (sessionKey: CryptoKey, data: string): 
  * @param finishDelegation
  */
 export const delegateAccount = async (
+  auth: Auth.Implementation,
+  crypto: Crypto.Implementation,
   sessionKey: CryptoKey,
   username: string,
   audience: string,
@@ -273,21 +281,16 @@ export const delegateAccount = async (
 ): Promise<void> => {
   const delegation = await auth.delegateAccount(username, audience)
   const message = JSON.stringify(delegation)
+  const iv = crypto.misc.randomNumbers({ amount: 16 })
 
-  const iv = utils.randomBuf(16)
-  const msg = utils.arrBufToBase64(
-    await webcrypto.subtle.encrypt(
-      {
-        name: "AES-GCM",
-        iv,
-      },
-      sessionKey,
-      uint8arrays.fromString(message, "utf8"),
-    ),
+  const msg = crypto.aes.encrypt(
+    Uint8arrays.fromString(message, "utf8"),
+    sessionKey,
+    Crypto.SymmAlg.AES_GCM
   )
 
   const delegationMessage = JSON.stringify({
-    iv: utils.arrBufToBase64(iv),
+    iv: Uint8arrays.toString(iv, "base64pad"),
     msg
   })
 
@@ -303,25 +306,21 @@ export const delegateAccount = async (
  * @param finishDelegation
  */
 export const declineDelegation = async (
+  crypto: Crypto.Implementation,
   sessionKey: CryptoKey,
   finishDelegation: (delegationMessage: string, approved: boolean) => Promise<void>
 ): Promise<void> => {
   const message = JSON.stringify({ linkStatus: "DENIED" })
+  const iv = crypto.misc.randomNumbers({ amount: 16 })
 
-  const iv = utils.randomBuf(16)
-  const msg = utils.arrBufToBase64(
-    await webcrypto.subtle.encrypt(
-      {
-        name: "AES-GCM",
-        iv,
-      },
-      sessionKey,
-      uint8arrays.fromString(message, "utf8"),
-    ),
+  const msg = crypto.aes.encrypt(
+    Uint8arrays.fromString(message, "utf8"),
+    sessionKey,
+    Crypto.SymmAlg.AES_GCM
   )
 
   const delegationMessage = JSON.stringify({
-    iv: utils.arrBufToBase64(iv),
+    iv: Uint8arrays.toString(iv, "base64pad"),
     msg
   })
 

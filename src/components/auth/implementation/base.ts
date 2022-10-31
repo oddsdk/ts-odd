@@ -1,6 +1,3 @@
-import type { Channel, ChannelOptions } from "../channel.js"
-
-import * as ChannelMod from "../channel.js"
 import * as Did from "../../../did/index.js"
 import * as SessionMod from "../../../session.js"
 import * as Ucan from "../../../ucan/index.js"
@@ -60,13 +57,6 @@ export async function canDelegateAccount(
   }
 }
 
-export function createChannel(
-  dependents: Dependents,
-  options: ChannelOptions
-): Promise<Channel> {
-  return ChannelMod.createWssChannel(dependents.reference, options)
-}
-
 export async function delegateAccount(
   dependents: Dependents,
   username: string,
@@ -120,7 +110,7 @@ export function implementation(dependents: Dependents): Implementation {
 
     activate: withDependents(activate),
     canDelegateAccount: withDependents(canDelegateAccount),
-    createChannel: withDependents(createChannel),
+    createChannel: () => { throw new Error("Not implemented") },
     delegateAccount: withDependents(delegateAccount),
     linkDevice: withDependents(linkDevice),
 

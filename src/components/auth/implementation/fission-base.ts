@@ -1,9 +1,26 @@
+import type { Channel, ChannelOptions } from "../channel.js"
 import type { Implementation, Dependents } from "../implementation.js"
 
 import * as Base from "./base.js"
+import * as ChannelFission from "./fission/channel.js"
+import * as ChannelMod from "../channel.js"
 import * as Fission from "./fission/index.js"
 import * as Session from "../../../session.js"
 
+
+export function createChannel(
+  endpoints: Fission.Endpoints,
+  dependents: Dependents,
+  options: ChannelOptions
+): Promise<Channel> {
+  return ChannelMod.createWssChannel(
+    dependents.reference,
+    ChannelFission.endpoint(
+      `${endpoints.server}/${endpoints.apiPath}`.replace(/^https?:\/\//, "wss://")
+    ),
+    options
+  )
+}
 
 export const isUsernameAvailable = async (endpoints: Fission.Endpoints, username: string): Promise<boolean> => {
   return Fission.isUsernameAvailable(endpoints, username)
@@ -45,11 +62,12 @@ export function implementation(
 
     activate: base.activate,
     canDelegateAccount: base.canDelegateAccount,
-    createChannel: base.createChannel,
     delegateAccount: base.delegateAccount,
     linkDevice: base.linkDevice,
 
     isUsernameValid,
+
+    createChannel: (...args) => createChannel(endpoints, dependents, ...args),
     isUsernameAvailable: (...args) => isUsernameAvailable(endpoints, ...args),
     register: (...args) => register(endpoints, dependents, ...args)
   }

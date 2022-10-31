@@ -34,15 +34,21 @@ export type Implementation = {
     getAlg: () => Promise<string>
     getUcanAlg: () => Promise<string>
     importSymmKey: (key: Uint8Array, name: string) => Promise<void>
-    keyExists: (keyName: string) => Promise<boolean> // TODO: Rename to symmKeyExists
+    keyExists: (keyName: string) => Promise<boolean>
     publicExchangeKey: () => Promise<Uint8Array>
     publicWriteKey: () => Promise<Uint8Array>
     sign: (message: Uint8Array) => Promise<Uint8Array>
   }
 
+  misc: {
+    randomNumbers: (options: { amount: number }) => Uint8Array
+  }
+
   rsa: {
+    // Used for exchange keys only
     decrypt: (data: Uint8Array, privateKey: CryptoKey | Uint8Array) => Promise<Uint8Array>
     encrypt: (message: Uint8Array, publicKey: CryptoKey | Uint8Array) => Promise<Uint8Array>
+    exportPublicKey: (key: CryptoKey) => Promise<Uint8Array>
     genKey: () => Promise<CryptoKeyPair>
     verify: (message: Uint8Array, signature: Uint8Array, publicKey: CryptoKey | Uint8Array) => Promise<boolean>
   }

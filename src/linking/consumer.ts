@@ -1,36 +1,37 @@
-import aes from "keystore-idb/aes/index.js"
-import config from "keystore-idb/config.js"
-import rsa from "keystore-idb/rsa/index.js"
-import utils from "keystore-idb/utils.js"
-import { KeyUse, SymmAlg } from "keystore-idb/types.js"
+import * as Uint8arrays from "uint8arrays"
 
-import { webcrypto } from "one-webcrypto"
-import * as uint8arrays from "uint8arrays"
+import * as Auth from "../components/auth/implementation.js"
+import * as Crypto from "../components/crypto/implementation.js"
 
-import * as check from "../../common/type-checks.js"
-import * as did from "../../did/index.js"
-import * as storage from "../../storage/index.js"
-import * as ucan from "../../ucan/index.js"
-import { impl as auth } from "../implementation.js"
-import { EventEmitter, EventListener } from "../../common/event-emitter.js"
+import * as Check from "../common/type-checks.js"
+import * as DID from "../did/index.js"
+import * as Ucan from "../ucan/index.js"
+
+import { EventEmitter, EventListener } from "../common/event-emitter.js"
 import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
-import type { Maybe, Result } from "../../common/index.js"
+import type { Maybe, Result } from "../common/index.js"
 
 
 export type AccountLinkingConsumer = {
   on: <K extends keyof ConsumerEventMap>(eventName: K, listener: EventListener<ConsumerEventMap[ K ]>) => void
   cancel: () => void
 }
+
 export interface ConsumerEventMap {
   "challenge": { pin: number[] }
   "link": { approved: boolean; username: string }
   "done": undefined
 }
 
+export type Dependents = {
+  auth: Auth.Implementation
+  crypto: Crypto.Implementation
+}
+
 type LinkingState = {
   username: Maybe<string>
-  sessionKey: Maybe<CryptoKey>
+  sessionKey: Maybe<Uint8Array>
   temporaryRsaPair: Maybe<CryptoKeyPair>
   step: Maybe<LinkingStep>
 }
@@ -42,7 +43,10 @@ type LinkingState = {
  * @param options.username username of the account
  * @returns an account linking event emitter and cancel function
  */
-export const createConsumer = async (options: { username: string }): Promise<AccountLinkingConsumer> => {
+export const createConsumer = async (
+  dependents: Dependents,
+  options: { username: string }
+): Promise<AccountLinkingConsumer> => {
   const { username } = options
   let eventEmitter: Maybe<EventEmitter<ConsumerEventMap>> = new EventEmitter()
   const ls: LinkingState = {
@@ -64,12 +68,16 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
       } else if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) {
         handleLinkingError(new LinkingError("Consumer missing RSA key pair when handling session key message"))
       } else {
-        const sessionKeyResult = await handleSessionKey(ls.temporaryRsaPair.privateKey, message)
+        const sessionKeyResult = await handleSessionKey(
+          dependents.crypto,
+          ls.temporaryRsaPair.privateKey,
+          message
+        )
 
         if (sessionKeyResult.ok) {
           ls.sessionKey = sessionKeyResult.value
 
-          const { pin, challenge } = await generateUserChallenge(ls.sessionKey)
+          const { pin, challenge } = await generateUserChallenge(dependents.crypto, ls.sessionKey)
           channel.send(challenge)
           eventEmitter?.emit("challenge", { pin: Array.from(pin) })
           ls.step = LinkingStep.Delegation
@@ -83,7 +91,13 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
       } else if (!ls.username) {
         handleLinkingError(new LinkingError("Consumer was missing username when linking device"))
       } else {
-        const linkingResult = await linkDevice(ls.sessionKey, ls.username, message)
+        const linkingResult = await linkDevice(
+          dependents.auth,
+          dependents.crypto,
+          ls.sessionKey,
+          ls.username,
+          message
+        )
 
         if (linkingResult.ok) {
           const { approved } = linkingResult.value
@@ -103,11 +117,11 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
     clearInterval(rsaExchangeInterval)
   }
 
-  const channel = await auth.createChannel({ username, handleMessage })
+  const channel = await dependents.auth.createChannel({ handleMessage, username })
 
   const rsaExchangeInterval = setInterval(async () => {
     if (!ls.sessionKey) {
-      const { temporaryRsaPair, temporaryDID } = await generateTemporaryExchangeKey()
+      const { temporaryRsaPair, temporaryDID } = await generateTemporaryExchangeKey(dependents.crypto)
       ls.temporaryRsaPair = temporaryRsaPair
       ls.step = LinkingStep.Negotiation
 
@@ -134,13 +148,13 @@ export const createConsumer = async (options: { username: string }): Promise<Acc
  *
  * @returns temporary RSA key pair and temporary DID
  */
-export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair: CryptoKeyPair; temporaryDID: string }> => {
-  const cfg = config.normalize()
+export const generateTemporaryExchangeKey = async (
+  crypto: Crypto.Implementation
+): Promise<{ temporaryRsaPair: CryptoKeyPair; temporaryDID: string }> => {
+  const temporaryRsaPair = await crypto.rsa.genKey()
+  const pubKey = await crypto.rsa.exportPublicKey(temporaryRsaPair.publicKey)
 
-  const { rsaSize, hashAlg } = cfg
-  const temporaryRsaPair = await rsa.makeKeypair(rsaSize, hashAlg, KeyUse.Exchange)
-  const pubKey = await rsa.getPublicKey(temporaryRsaPair)
-  const temporaryDID = did.publicKeyToDid(pubKey, did.KeyType.RSA)
+  const temporaryDID = DID.publicKeyToDid(pubKey, DID.KeyType.RSA)
   return { temporaryRsaPair, temporaryDID }
 }
 
@@ -155,9 +169,13 @@ export const generateTemporaryExchangeKey = async (): Promise<{ temporaryRsaPair
  * @param data
  * @returns AES session key
  */
-export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: string): Promise<Result<CryptoKey, Error>> => {
+export const handleSessionKey = async (
+  crypto: Crypto.Implementation,
+  temporaryRsaPrivateKey: CryptoKey,
+  data: string
+): Promise<Result<Uint8Array, Error>> => {
   const typeGuard = (message: unknown): message is { iv: string; msg: string; sessionKey: string } => {
-    return check.isObject(message)
+    return Check.isObject(message)
       && "iv" in message && typeof message.iv === "string"
       && "msg" in message && typeof message.msg === "string"
       && "sessionKey" in message && typeof message.sessionKey === "string"
@@ -167,37 +185,32 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
 
   if (parseResult.ok) {
     const { iv: encodedIV, msg, sessionKey: encodedSessionKey } = parseResult.value
-    const iv = utils.base64ToArrBuf(encodedIV)
+    const iv = Uint8arrays.fromString(encodedIV, "base64pad")
 
-    let sessionKey, rawSessionKey
+    let sessionKey
     try {
-      const encryptedSessionKey = utils.base64ToArrBuf(encodedSessionKey)
-      rawSessionKey = await rsa.decrypt(encryptedSessionKey, temporaryRsaPrivateKey)
-      sessionKey = await aes.importKey(utils.arrBufToBase64(rawSessionKey), { alg: SymmAlg.AES_GCM, length: 256 })
+      const encryptedSessionKey = Uint8arrays.fromString(encodedSessionKey, "base64pad")
+      sessionKey = await crypto.rsa.decrypt(encryptedSessionKey, temporaryRsaPrivateKey)
     } catch {
       return { ok: false, error: new LinkingWarning(`Consumer received a session key in handleSessionKey that it could not decrypt: ${data}. Ignoring message`) }
     }
 
     let encodedUcan = null
     try {
-      encodedUcan = uint8arrays.toString(
-        await webcrypto.subtle.decrypt(
-          {
-            name: "AES-GCM",
-            iv,
-          },
-          sessionKey,
-          utils.base64ToArrBuf(msg),
-        ),
-        "utf8"
+      encodedUcan = await crypto.aes.decrypt(
+        Uint8arrays.fromString(msg, "base64pad"),
+        sessionKey,
+        Crypto.SymmAlg.AES_GCM
       )
     } catch {
       return { ok: false, error: new LinkingError("Consumer could not decrypt closed UCAN with provided session key.") }
     }
 
-    const decodedUcan = ucan.decode(encodedUcan)
+    const decodedUcan = Ucan.decode(
+      Uint8arrays.toString(encodedUcan, "utf8")
+    )
 
-    if (await ucan.isValid(decodedUcan) === false) {
+    if (await Ucan.isValid(crypto, decodedUcan) === false) {
       return { ok: false, error: new LinkingError("Consumer received an invalid closed UCAN") }
     }
 
@@ -210,7 +223,7 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
       return { ok: false, error: new LinkingError("Consumer received a closed UCAN that was missing a session key in facts.") }
     }
 
-    const sessionKeyWeAlreadyGot = utils.arrBufToBase64(rawSessionKey)
+    const sessionKeyWeAlreadyGot = Uint8arrays.toString(sessionKey, "base64pad")
     if (sessionKeyFromFact !== sessionKeyWeAlreadyGot) {
       return { ok: false, error: new LinkingError("Consumer received a closed UCAN session key does not match the session key") }
     }
@@ -230,29 +243,28 @@ export const handleSessionKey = async (temporaryRsaPrivateKey: CryptoKey, data: 
  * @param sessionKey
  * @returns pin and challenge message
  */
-export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pin: number[]; challenge: string }> => {
-  const pin = Array.from(new Uint8Array(utils.randomBuf(6, { max: 9 })))
+export const generateUserChallenge = async (
+  crypto: Crypto.Implementation,
+  sessionKey: Uint8Array
+): Promise<{ pin: number[]; challenge: string }> => {
+  const pin = Array.from(crypto.misc.randomNumbers({ amount: 6 })).map(n => n % 9)
+  const iv = crypto.misc.randomNumbers({ amount: 16 })
 
-  const iv = utils.randomBuf(16)
-  const msg = utils.arrBufToBase64(
-    await webcrypto.subtle.encrypt(
-      {
-        name: "AES-GCM",
-        iv,
-      },
-      sessionKey,
-      uint8arrays.fromString(
-        JSON.stringify({
-          did: await did.ucan(),
-          pin
-        }),
-        "utf8"
-      ),
-    )
+  const msg = crypto.aes.encrypt(
+    Uint8arrays.fromString(
+      JSON.stringify({
+        did: await DID.ucan(crypto),
+        pin
+      }),
+      "utf8"
+    ),
+    sessionKey,
+    Crypto.SymmAlg.AES_GCM,
+    iv
   )
 
   const challenge = JSON.stringify({
-    iv: utils.arrBufToBase64(iv),
+    iv: Uint8arrays.toString(iv, "base64pad"),
     msg
   })
 
@@ -270,9 +282,15 @@ export const generateUserChallenge = async (sessionKey: CryptoKey): Promise<{ pi
  * @param data
  * @returns linking result
  */
-export const linkDevice = async (sessionKey: CryptoKey, username: string, data: string): Promise<Result<{ approved: boolean }, Error>> => {
+export const linkDevice = async (
+  auth: Auth.Implementation,
+  crypto: Crypto.Implementation,
+  sessionKey: Uint8Array,
+  username: string,
+  data: string
+): Promise<Result<{ approved: boolean }, Error>> => {
   const typeGuard = (message: unknown): message is { iv: string; msg: string } => {
-    return check.isObject(message)
+    return Check.isObject(message)
       && "iv" in message && typeof message.iv === "string"
       && "msg" in message && typeof message.msg === "string"
   }
@@ -281,26 +299,26 @@ export const linkDevice = async (sessionKey: CryptoKey, username: string, data: 
 
   if (parseResult.ok) {
     const { iv: encodedIV, msg } = parseResult.value
-    const iv = utils.base64ToArrBuf(encodedIV)
+    const iv = Uint8arrays.fromString(encodedIV, "base64")
 
     let message = null
     try {
-      message = uint8arrays.toString(
-        await webcrypto.subtle.decrypt(
-          {
-            name: "AES-GCM",
-            iv,
-          },
-          sessionKey,
-          utils.base64ToArrBuf(msg),
-        ),
-        "utf8"
+      message = await crypto.aes.decrypt(
+        Uint8arrays.fromString(msg, "base64pad"),
+        sessionKey,
+        Crypto.SymmAlg.AES_GCM,
+        iv
       )
     } catch {
       return { ok: false, error: new LinkingWarning("Consumer ignoring message that could not be decrypted in linkDevice.") }
     }
 
-    const response = tryParseMessage(message, check.isObject, { participant: "Consumer", callSite: "linkDevice" })
+    const response = tryParseMessage(
+      Uint8arrays.toString(message, "utf8"),
+      Check.isObject,
+      { participant: "Consumer", callSite: "linkDevice" }
+    )
+
     if (!response.ok) {
       return response
     }

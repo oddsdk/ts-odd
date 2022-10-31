@@ -145,6 +145,15 @@ export async function ksSign(ks: RSAKeyStore, message: Uint8Array): Promise<Uint
 
 
 
+// MISC
+
+
+export function randomNumbers(options: { amount: number }): Uint8Array {
+  return webcrypto.getRandomValues(new Uint8Array(options.amount))
+}
+
+
+
 // RSA
 
 
@@ -191,6 +200,11 @@ export async function rsaEncrypt(message: Uint8Array, publicKey: CryptoKey | Uin
   )
 
   return new Uint8Array(arrayBuffer)
+}
+
+export async function rsaExportPublicKey(key: CryptoKey): Promise<Uint8Array> {
+  const buffer = await webcrypto.subtle.exportKey("spki", key)
+  return new Uint8Array(buffer)
 }
 
 export function rsaGenKey(): Promise<CryptoKeyPair> {
@@ -263,9 +277,13 @@ export async function implementation(
       publicWriteKey: withKeyStore(ksPublicWriteKey),
       sign: withKeyStore(ksSign),
     },
+    misc: {
+      randomNumbers,
+    },
     rsa: {
       decrypt: rsaDecrypt,
       encrypt: rsaEncrypt,
+      exportPublicKey: rsaExportPublicKey,
       genKey: rsaGenKey,
       verify: rsaVerify
     },

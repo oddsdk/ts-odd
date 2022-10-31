@@ -1,5 +1,4 @@
-import type { Result } from "../../common/types.js"
-import * as debug from "../../common/debug.js"
+import type { Result } from "./common/types.js"
 
 
 export enum LinkingStep {
@@ -25,7 +24,7 @@ export class LinkingWarning extends Error {
 export const handleLinkingError = (error: LinkingError | LinkingWarning): void => {
   switch (error.name) {
     case "LinkingWarning":
-      debug.warn(error.message)
+      console.warn(error.message)
       break
 
     case "LinkingError":
