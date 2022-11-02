@@ -87,7 +87,7 @@ export async function privateNode(
     })
   )
 
-  // Add entry index to ipfs
+  // Add entry index to depot
   const symmKeyAlgo = SymmAlg.AES_GCM
   const indexNode = Object.assign({}, index.header)
   const indexResult = await Basic.putFile(
@@ -116,7 +116,7 @@ export async function privateNode(
     symmKeyAlgo
   }))
 
-  // Add encrypted payloads to ipfs
+  // Add encrypted payloads to depot
   const links = await Promise.all(shareKeysWithDIDs.map(async ([ did, shareKey ]) => {
     const { publicKey } = didToPublicKey(did)
     const encryptedPayload = await crypto.rsa.encrypt(payload, publicKey)

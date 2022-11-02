@@ -35,7 +35,7 @@ class BareTree extends BaseTree {
 
   static async fromCID(depot: Depot.Implementation, cid: CID): Promise<BareTree> {
     const links = Link.arrToMap(
-      (await depot.getUnixDirectory(cid)).map(Link.fromFSFile)
+      (await depot.getUnixDirectory(cid))
     )
 
     return new BareTree(depot, links)

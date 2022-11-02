@@ -107,7 +107,6 @@
     "fission-bloom-filters": "1.7.1",
     "ipfs-core-types": "0.11.2-8f351a89.0",
     "ipfs-repo": "^15.0.1",
-    "ipfs-unixfs": "^6.0.9",
     "ipld-dag-pb": "^0.22.3",
     "keystore-idb": "^0.15.5",
     "localforage": "^1.10.0",

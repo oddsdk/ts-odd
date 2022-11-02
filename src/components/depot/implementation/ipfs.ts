@@ -1,11 +1,10 @@
 import * as uint8arrays from "uint8arrays"
 import { BlockCodec } from "multiformats/codecs/interface.js"
 import { CID } from "multiformats/cid"
-import { IPFSEntry } from "ipfs-core-types/src/root"
 import { sha256 } from "multiformats/hashes/sha2"
 
 import * as Ipfs from "./ipfs/index.js"
-import { Implementation, PutResult } from "../implementation.js"
+import { DirectoryItem, Implementation, PutResult } from "../implementation.js"
 
 
 
@@ -26,11 +25,18 @@ export async function implementation(peersUrl: string): Promise<Implementation> 
     getBlock: async (cid: CID): Promise<Uint8Array> => {
       return ipfs.block.get(cid)
     },
-    getUnixDirectory: async (cid: CID): Promise<IPFSEntry[]> => {
+    getUnixDirectory: async (cid: CID): Promise<DirectoryItem[]> => {
       const entries = []
 
       for await (const entry of ipfs.ls(cid)) {
-        entries.push(entry)
+        const { name = "", cid, size, type } = entry
+
+        entries.push({
+          name,
+          cid: cid,
+          size,
+          isFile: type !== "dir"
+        })
       }
 
       return entries
