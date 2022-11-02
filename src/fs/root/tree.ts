@@ -20,7 +20,7 @@ import * as Link from "../link.js"
 import * as Path from "../../path/index.js"
 import * as RootKey from "../../common/root-key.js"
 import * as TypeChecks from "../../common/type-checks.js"
-import * as Versions from "../Versions.js"
+import * as Versions from "../versions.js"
 
 import * as protocol from "../protocol/index.js"
 

@@ -1,4 +1,4 @@
-import { Maybe } from "./common/types.js"
+import { Maybe } from "../common/types.js"
 
 
 export enum Branch {
@@ -113,7 +113,7 @@ export function combine(a: any, b: any): any {
  * Is this `DistinctivePath` of the given `Branch`?
  */
 export function isBranch(branch: Branch, path: DistinctivePath): boolean {
-  return unwrap(path)[0] === branch
+  return unwrap(path)[ 0 ] === branch
 }
 
 /**
@@ -141,7 +141,7 @@ export function isRootDirectory(path: DirectoryPath): boolean {
  * Check if two `DistinctivePath` have the same `Branch`.
  */
 export function isSameBranch(a: DistinctivePath, b: DistinctivePath): boolean {
-  return unwrap(a)[0] === unwrap(b)[0]
+  return unwrap(a)[ 0 ] === unwrap(b)[ 0 ]
 }
 
 /**
@@ -195,7 +195,7 @@ export function removeBranch(path: DistinctivePath): DistinctivePath {
 export function terminus(path: DistinctivePath): Maybe<string> {
   const u = unwrap(path)
   if (u.length < 1) return null
-  return u[u.length - 1]
+  return u[ u.length - 1 ]
 }
 
 /**

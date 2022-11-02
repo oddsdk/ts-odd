@@ -2,7 +2,7 @@ import type { IPFS } from "ipfs-core-types"
 import { Repo } from "ipfs-core/components/network"
 
 import * as ipfsNode from "./node.js"
-import { IPFSPackage } from "./types.js"
+import { IPFSPackage } from "./package.js"
 
 
 export const DEFAULT_CDN_URL = "https://unpkg.com/ipfs-core@0.15.4/dist/index.min.js"

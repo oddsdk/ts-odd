@@ -8,7 +8,7 @@ import * as TypeChecks from "../../../common/type-checks.js"
 import * as Ucan from "../../../ucan/index.js"
 
 import { Components, Configuration } from "../../../configuration.js"
-import { LinkingError } from "../linking.js"
+import { LinkingError } from "../../../linking.js"
 import { Maybe } from "../../../common/types.js"
 import { Session } from "../../../session.js"
 import { loadRootFileSystem } from "../../../filesystem.js"
@@ -55,9 +55,14 @@ export async function activate(
     const fs = config.filesystem?.loadImmediately === false ?
       undefined :
       await loadRootFileSystem({
-        crypto: components.crypto,
-        manners: components.manners,
-        reference: components.reference,
+        config,
+        dependents: {
+          crypto: components.crypto,
+          depot: components.depot,
+          manners: components.manners,
+          reference: components.reference,
+          storage: components.storage,
+        },
         username: authedUsername,
       })
 

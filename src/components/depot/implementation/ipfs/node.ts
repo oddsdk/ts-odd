@@ -17,7 +17,7 @@ import { multiaddr, Multiaddr } from "@multiformats/multiaddr"
 import { peerIdFromString } from "@libp2p/peer-id"
 
 import * as t from "../../../../common/type-checks.js"
-import { IPFSPackage } from "./types.js"
+import { IPFSPackage } from "./package.js"
 
 import * as IpfsRepo from "./node/repo.js"
 
@@ -332,10 +332,10 @@ export function stopMonitoringPeers() {
 let monitor: ReturnType<typeof setTimeout> | null = null
 
 
-export async function monitorBitswap(ipfs: IPFS, verbose: boolean): Promise<void> {
+export async function monitorBitswap(ipfs: IPFS, peersUrl: string, verbose: boolean): Promise<void> {
   const cidCount: { [ k: string ]: number } = {}
   const seen: string[] = []
-  const peers = await listPeers()
+  const peers = await listPeers(peersUrl)
 
   verbose = verbose === undefined ? false : true
 

@@ -5,7 +5,7 @@ import { CID } from "multiformats/cid"
 import * as Check from "../../types/check.js"
 import * as Depot from "../../../components/depot/implementation.js"
 import * as Link from "../../link.js"
-import * as Basic from "../Basic.js"
+import * as Basic from "../basic.js"
 
 import { Links, HardLink, SimpleLinks } from "../../types.js"
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from "./types.js"

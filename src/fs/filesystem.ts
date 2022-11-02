@@ -64,6 +64,7 @@ export type Dependents = {
 
 export type FileSystemOptions = {
   account: Account
+  // appInfo: AppInfo
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
