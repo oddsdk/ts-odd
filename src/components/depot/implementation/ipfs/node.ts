@@ -8,7 +8,8 @@ IPFS node things.
 
 // Considered dev dependency as these imports will not be present in the resulting lib code
 import type { IPFS as IPFSCore } from "ipfs-core-types"
-import type { libp2p, Repo } from "ipfs-core/components/network"
+import type { IPFSRepo } from "ipfs-repo"
+import type { libp2p } from "ipfs-core/components/network"
 import type { Options as IPFSOptions } from "ipfs-core/types"
 
 import localforage from "localforage"
@@ -108,7 +109,7 @@ export const OPTIONS: IPFSOptions = {
 // 🚀
 
 
-export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, logging: boolean): Promise<[ IPFSCore, Repo ]> {
+export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, logging: boolean): Promise<[ IPFSCore, IPFSRepo ]> {
   const peers = await listPeers(peersUrl)
 
   if (peers.length === 0) {

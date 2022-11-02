@@ -9,7 +9,7 @@ export type Implementation = {
   getUnixDirectory: (cid: CID) => Promise<DirectoryItem[]>
 
   // Keep data around
-  putBlock: (data: Uint8Array, codec: BlockCodec<number, unknown>) => Promise<CID>
+  putBlock: (data: Uint8Array, codec: BlockCodec<number, any>) => Promise<CID>
   putChunked: (data: Uint8Array) => Promise<PutResult>
 
   // Stats

@@ -12,25 +12,25 @@ import * as Depot from "../components/depot/implementation.js"
 // CONSTANTS
 
 
-export const CODECS_BY_NAME: Record<string, BlockCodec<number, unknown>> = {
+export const CODECS_BY_NAME: Record<string, BlockCodec<number, any>> = {
   [ DagPB.name ]: DagPB,
   [ DagCBOR.name ]: DagCBOR,
   [ Raw.name ]: Raw,
 }
 
-export const CODECS_BY_CODE: Record<number, BlockCodec<number, unknown>> = {
+export const CODECS_BY_CODE: Record<number, BlockCodec<number, any>> = {
   [ DagPB.code ]: DagPB,
   [ DagCBOR.code ]: DagCBOR,
   [ Raw.code ]: Raw,
 }
 
-export function getCodecByCode(code: number): BlockCodec<number, unknown> {
+export function getCodecByCode(code: number): BlockCodec<number, any> {
   const codec = CODECS_BY_CODE[ code ]
   if (!codec) throw new Error(`No codec was registered for the code: ${numberHex(code)}. Is it part of the multicodec table (https://github.com/multiformats/multicodec/blob/master/table.csv)?`)
   return codec
 }
 
-export function getCodecByName(name: string): BlockCodec<number, unknown> {
+export function getCodecByName(name: string): BlockCodec<number, any> {
   const codec = CODECS_BY_NAME[ name ]
   if (!codec) throw new Error(`No codec was registered for the name: ${name}`)
   return codec
@@ -95,7 +95,7 @@ export function putPB(depot: Depot.Implementation, links: DagPB.PBLink[]): Promi
 // 🛠
 
 
-export function expectCodec(codec: BlockCodec<number, unknown>, cid: CID): void {
+export function expectCodec(codec: BlockCodec<number, any>, cid: CID): void {
   if (cid.code !== codec.code) {
     const cidCodec = getCodecByCode(cid.code)
     throw new Error(`Expected a ${codec.name} CID, found a ${cidCodec.name} CID instead.`)

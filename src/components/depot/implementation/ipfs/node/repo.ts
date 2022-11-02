@@ -14,7 +14,7 @@ export function create(): IPFSRepo {
   return createRepo(
     "fission-ipfs",
     codeOrName => {
-      const lookup: Record<string, BlockCodec<number, unknown>> = {
+      const lookup: Record<string | number, BlockCodec<number, any>> = {
         [ dagPB.code ]: dagPB,
         [ dagPB.name ]: dagPB,
         [ dagCBOR.code ]: dagCBOR,

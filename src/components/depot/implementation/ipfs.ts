@@ -53,7 +53,7 @@ export async function implementation(peersUrl: string): Promise<Implementation> 
 
     // PUT
 
-    putBlock: async (data: Uint8Array, codec: BlockCodec<number, unknown>): Promise<CID> => {
+    putBlock: async (data: Uint8Array, codec: BlockCodec<number, any>): Promise<CID> => {
       const multihash = await sha256.digest(data)
       const cid = new CID(1, codec.code, multihash, data)
 
