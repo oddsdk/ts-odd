@@ -83,7 +83,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
 
   if (cid) {
     await checkFileSystemVersion(dependents.depot, config, cid)
-    fs = await FileSystem.fromCID(cid, { account, dependents, permissions: p })
+    fs = await FileSystem.fromCID(cid, { account, dependents, appInfo: config.appInfo, permissions: p })
     if (fs) return fs
   }
 
@@ -92,6 +92,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
     account,
     dependents,
     rootKey,
+    appInfo: config.appInfo,
     permissions: p,
     version: config.filesystem?.version
   })
