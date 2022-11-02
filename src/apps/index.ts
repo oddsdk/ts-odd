@@ -10,7 +10,7 @@ import { Maybe } from "../common/types.js"
 import { isString } from "../common/type-checks.js"
 
 
-export type App = {
+export type AppMetadata = {
   domains: string[]
   insertedAt: string
   modifiedAt: string
@@ -24,7 +24,6 @@ type AppIndexResponseJson = {
   }
 }
 
-
 export type Dependents = {
   crypto: Crypto.Implementation
   reference: Reference.Implementation
@@ -37,7 +36,7 @@ export type Dependents = {
 export async function index(
   endpoints: Fission.Endpoints,
   dependents: Dependents
-): Promise<Array<App>> {
+): Promise<Array<AppMetadata>> {
   const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
@@ -75,7 +74,7 @@ export async function create(
   endpoints: Fission.Endpoints,
   dependents: Dependents,
   subdomain: Maybe<string>
-): Promise<App> {
+): Promise<AppMetadata> {
   const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
