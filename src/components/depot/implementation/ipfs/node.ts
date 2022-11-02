@@ -258,7 +258,7 @@ export function tryConnecting(ipfs: IPFS, peer: Multiaddr, logging: boolean): vo
         report(peer, status)
 
         // Ensure permanent connection to a peer
-        // TODO: This is a temporary solution while we wait for
+        // NOTE: This is a temporary solution while we wait for
         //       https://github.com/libp2p/js-libp2p/issues/744
         //       (see "Keep alive" bit)
         setTimeout(() => keepAlive(ipfs, peer, BACKOFF_INIT, status), KEEP_ALIVE_INTERVAL)

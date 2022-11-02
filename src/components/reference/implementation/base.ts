@@ -12,7 +12,6 @@ import * as DOH from "../dns-over-https.js"
 
 export function implementation(dependents: Dependents): Implementation {
   return {
-    // TODO: Can I extract pieces from the Fission implementation?
     dataRoot: {
       domain: () => { throw new Error("Not implemented") },
       lookup: () => { throw new Error("Not implemented") },

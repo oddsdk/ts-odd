@@ -223,19 +223,6 @@ export async function sign(
 
 
 /**
- * JWT algorithm to be used in a JWT header.
- * TODO: Remove, moved to crypto.keystore
- */
-function jwtAlgorithm(cryptoSystem: string): string | null {
-  switch (cryptoSystem) {
-    case "ed25519": return "EdDSA"
-    case "rsa": return "RS256"
-    default: return null
-  }
-}
-
-
-/**
  * Extract the payload of a UCAN.
  *
  * Throws when given an improperly formatted UCAN.
