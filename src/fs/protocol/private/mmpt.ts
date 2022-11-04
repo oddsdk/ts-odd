@@ -122,7 +122,6 @@ export default class MMPT implements Puttable {
   async get(name: string): Promise<CID | null> {
     const nextName = this.nextTreeName(name)
     if (nextName === null) return null
-
     if (nextName.length > 1) {
       return decodeCID(this.links[ nextName ].cid)
     }

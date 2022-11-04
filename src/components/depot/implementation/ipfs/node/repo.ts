@@ -8,11 +8,11 @@ import { MemoryDatastore } from "datastore-core/memory"
 import { LevelDatastore } from "datastore-level"
 
 
-export function create(): IPFSRepo {
+export function create(repoName: string): IPFSRepo {
   const memoryDs = new MemoryDatastore()
 
   return createRepo(
-    "fission-ipfs",
+    repoName,
     codeOrName => {
       const lookup: Record<string | number, BlockCodec<number, any>> = {
         [ dagPB.code ]: dagPB,
@@ -25,11 +25,11 @@ export function create(): IPFSRepo {
 
       return Promise.resolve(lookup[ codeOrName ])
     }, {
-    root: new LevelDatastore("fission-ipfs/root", { prefix: "", version: 2 }),
-    blocks: new BlockstoreDatastoreAdapter(new LevelDatastore("fission-ipfs/blocks", { prefix: "", version: 2 })),
-    keys: new LevelDatastore("fission-ipfs/keys", { prefix: "", version: 2 }),
+    root: new LevelDatastore(`${repoName}/root`, { prefix: "", version: 2 }),
+    blocks: new BlockstoreDatastoreAdapter(new LevelDatastore(`${repoName}/blocks`, { prefix: "", version: 2 })),
+    keys: new LevelDatastore(`${repoName}/keys`, { prefix: "", version: 2 }),
     datastore: memoryDs,
-    pins: new LevelDatastore("fission-ipfs/pins", { prefix: "", version: 2 }),
+    pins: new LevelDatastore(`${repoName}/pins`, { prefix: "", version: 2 }),
   }, {
     repoLock: {
       lock: async () => ({ close: async () => { return } }),

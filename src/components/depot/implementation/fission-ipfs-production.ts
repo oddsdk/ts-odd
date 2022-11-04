@@ -7,6 +7,6 @@ import * as IPFS from "./ipfs.js"
 // 🛳
 
 
-export async function implementation(): Promise<Implementation> {
-  return IPFS.implementation(FissionEndpoints.PRODUCTION.server + "/ipfs/peers")
+export async function implementation(repoName: string): Promise<Implementation> {
+  return IPFS.implementation(FissionEndpoints.PRODUCTION.server + "/ipfs/peers", repoName)
 }

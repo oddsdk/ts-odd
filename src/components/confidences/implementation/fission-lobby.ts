@@ -141,6 +141,7 @@ async function getClassifiedViaPostMessage(
   endpoints: Fission.Endpoints,
   crypto: Crypto.Implementation
 ): Promise<LobbyClassifiedInfo> {
+  const didExchange = await DID.exchange(crypto)
   const iframe: HTMLIFrameElement = await new Promise(resolve => {
     const iframe = document.createElement("iframe")
     iframe.id = "webnative-secret-exchange"
@@ -157,61 +158,41 @@ async function getClassifiedViaPostMessage(
     iframe.src = `${endpoints.lobby}/exchange.html`
   })
 
-  try {
-    const answer: Promise<LobbyClassifiedInfo> = new Promise((resolve, reject) => {
-      let tries = 10
-      window.addEventListener("message", listen)
+  return new Promise((resolve, reject) => {
+    function stop() {
+      window.removeEventListener("message", listen)
+      document.body.removeChild(iframe)
+      reject()
+    }
 
-      function retryOrReject(eventData?: string) {
-        console.warn(`When importing UCANs & readKey(s): Can't parse: ${eventData}. Might be due to extensions.`)
-        if (--tries === 0) {
-          window.removeEventListener("message", listen)
-          reject(new Error("Couldn't parse message from auth lobby after 10 tries. See warnings above."))
-        }
-      }
+    function listen(event: MessageEvent<string>) {
+      if (new URL(event.origin).host !== new URL(endpoints.lobby).host) return stop()
+      if (event.data == null) return stop()
 
-      function listen(event: MessageEvent<string>) {
-        if (new URL(event.origin).host !== new URL(endpoints.lobby).host) {
-          console.log(`Got a message from ${event.origin} while waiting for login credentials. Ignoring.`)
-          return
-        }
-
-        if (event.data == null) {
-          // Might be an extension sending a message without data
-          return
-        }
-
-        let classifiedInfo: unknown = null
-        try {
-          classifiedInfo = JSON.parse(event.data)
-        } catch {
-          retryOrReject(event.data)
-          return
-        }
-
-        if (!isLobbyClassifiedInfo(classifiedInfo)) {
-          retryOrReject(event.data)
-          return
-        }
-
+      try {
+        const classifiedInfo = JSON.parse(event.data)
+        if (!isLobbyClassifiedInfo(classifiedInfo)) stop()
         window.removeEventListener("message", listen)
+        document.body.removeChild(iframe)
         resolve(classifiedInfo)
+      } catch {
+        stop()
       }
-    })
+    }
 
-    if (iframe.contentWindow == null) throw new Error("Can't import UCANs & readKey(s): No access to its contentWindow")
+    window.addEventListener("message", listen)
+
+    if (iframe.contentWindow == null) {
+      throw new Error("Can't import UCANs & readKey(s): No access to its contentWindow")
+    }
+
     const message = {
       webnative: "exchange-secrets",
-      didExchange: await DID.exchange(crypto)
+      didExchange
     }
+
     iframe.contentWindow.postMessage(message, iframe.src)
-
-    return await answer
-
-  } finally {
-    document.body.removeChild(iframe)
-
-  }
+  })
 }
 
 function isLobbyClassifiedInfo(obj: unknown): obj is LobbyClassifiedInfo {
@@ -233,15 +214,30 @@ async function translateClassifiedInfo(
   { crypto }: Dependents,
   classifiedInfo: LobbyClassifiedInfo
 ): Promise<{ fileSystemSecrets: Confidences.FileSystemSecret[], ucans: Ucan.Ucan[] }> {
-  // Extract session key and its iv
+  // Extract session key
   const rawSessionKey = await crypto.keystore.decrypt(
     Uint8arrays.fromString(classifiedInfo.sessionKey, "base64pad")
   )
 
+  // The encrypted session key and read keys can be encoded in both UTF-16 and UTF-8.
+  // This is because keystore-idb is to UTF-16 by default, and that's what webnative used before.
+  // ---
+  // This easy way of detection works because the decrypted session key is encoded in base 64.
+  // That means it'll only ever use the first byte to encode it, and if it were UTF-16 it would
+  // split up the two bytes. Hence we check for the second byte here.
+  const isUtf16 = rawSessionKey[ 1 ] === 0
+
+  const sessionKey = Uint8arrays.fromString(
+    isUtf16
+      ? new TextDecoder("utf-16").decode(rawSessionKey)
+      : Uint8arrays.toString(rawSessionKey, "utf8"),
+    "base64pad"
+  )
+
   // Decrypt secrets
   const secretsStr = await crypto.aes.decrypt(
-    Uint8arrays.fromString(classifiedInfo.secrets, "utf8"),
-    rawSessionKey,
+    Uint8arrays.fromString(classifiedInfo.secrets, "base64pad"),
+    sessionKey,
     Crypto.SymmAlg.AES_GCM,
     Uint8arrays.fromString(classifiedInfo.iv, "base64pad")
   )

@@ -9,7 +9,6 @@ import rsaOperations from "keystore-idb/rsa/index.js"
 
 import * as typeChecks from "../../../common/type-checks.js"
 import { Implementation, ImplementationOptions } from "../implementation.js"
-import { assertBrowser } from "../../../common/browser.js"
 
 
 // AES
@@ -30,13 +29,30 @@ export function importAesKey(key: Uint8Array, alg: SymmAlg): Promise<CryptoKey> 
 
 export async function aesDecrypt(encrypted: Uint8Array, key: CryptoKey | Uint8Array, alg: SymmAlg, iv?: Uint8Array): Promise<Uint8Array> {
   const cryptoKey = typeChecks.isCryptoKey(key) ? key : await importAesKey(key, alg)
-  const decrypted = await aes.decryptBytes(encrypted, cryptoKey, { alg, iv })
+  const decrypted = iv
+    ? await webcrypto.subtle.decrypt(
+      { name: alg, iv },
+      cryptoKey,
+      encrypted
+    )
+    // the keystore version prefixes the `iv` into the cipher text
+    : await aes.decryptBytes(encrypted, cryptoKey, { alg })
+
   return new Uint8Array(decrypted)
 }
 
 export async function aesEncrypt(data: Uint8Array, key: CryptoKey | Uint8Array, alg: SymmAlg, iv?: Uint8Array): Promise<Uint8Array> {
   const cryptoKey = typeChecks.isCryptoKey(key) ? key : await importAesKey(key, alg)
-  const encrypted = await aes.encryptBytes(data, cryptoKey, { alg, iv })
+
+  // the keystore version prefixes the `iv` into the cipher text
+  const encrypted = iv
+    ? await webcrypto.subtle.encrypt(
+      { name: alg, iv },
+      cryptoKey,
+      data
+    )
+    : await aes.encryptBytes(data, cryptoKey, { alg })
+
   return new Uint8Array(encrypted)
 }
 
@@ -73,24 +89,20 @@ export async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
 
 
 export function ksClearStore(ks: RSAKeyStore): Promise<void> {
-  assertBrowser("keystore.clearStore")
   return ks.destroy()
 }
 
 
 export async function ksDecrypt(ks: RSAKeyStore, cipherText: Uint8Array): Promise<Uint8Array> {
-  assertBrowser("keystore.decrypt")
   const exchangeKey = await ks.exchangeKey()
-  const arrayBuffer = await rsaOperations.decrypt(
-    cipherText,
-    exchangeKey.privateKey,
-  )
 
-  return new Uint8Array(arrayBuffer)
+  return rsaDecrypt(
+    cipherText,
+    exchangeKey.privateKey
+  )
 }
 
 export async function ksExportSymmKey(ks: RSAKeyStore, keyName: string): Promise<Uint8Array> {
-
   if (await ks.keyExists(keyName) === false) {
     throw new Error(`Expected a key under the name '${keyName}', but couldn't find anything`)
     // We're throwing an error here so that the function `getSymmKey` below doesn't create a key.
@@ -155,6 +167,8 @@ export function randomNumbers(options: { amount: number }): Uint8Array {
 
 
 // RSA
+// ---
+// Exchange keys only.
 
 
 export const RSA_ALGORITHM = "RSA-OAEP"

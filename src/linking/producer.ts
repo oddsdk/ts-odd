@@ -193,7 +193,8 @@ export const generateSessionKey = async (
   const msg = crypto.aes.encrypt(
     Uint8arrays.fromString(Ucan.encode(u), "utf8"),
     sessionKey,
-    Crypto.SymmAlg.AES_GCM
+    Crypto.SymmAlg.AES_GCM,
+    iv
   )
 
   const sessionKeyMessage = JSON.stringify({
@@ -286,7 +287,8 @@ export const delegateAccount = async (
   const msg = crypto.aes.encrypt(
     Uint8arrays.fromString(message, "utf8"),
     sessionKey,
-    Crypto.SymmAlg.AES_GCM
+    Crypto.SymmAlg.AES_GCM,
+    iv
   )
 
   const delegationMessage = JSON.stringify({
@@ -316,7 +318,8 @@ export const declineDelegation = async (
   const msg = crypto.aes.encrypt(
     Uint8arrays.fromString(message, "utf8"),
     sessionKey,
-    Crypto.SymmAlg.AES_GCM
+    Crypto.SymmAlg.AES_GCM,
+    iv
   )
 
   const delegationMessage = JSON.stringify({

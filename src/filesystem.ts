@@ -25,7 +25,6 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
   username: string
 }): Promise<FileSystem> {
   const { manners, reference } = dependents
-  const { permissions } = config
 
   let cid: Maybe<CID>
   let fs
@@ -77,9 +76,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
   }
 
   // If a file system exists, load it and return it
-  const p: Permissions.Permissions | undefined = permissions
-    ? Permissions.withAppInfo(permissions, config.appInfo)
-    : undefined
+  const p = Permissions.fromConfig(config.permissions, config.appInfo)
 
   if (cid) {
     await checkFileSystemVersion(dependents.depot, config, cid)

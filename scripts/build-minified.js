@@ -1,7 +1,8 @@
+import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill"
+import { globby } from "globby"
 import esbuild from "esbuild"
 import fs from "fs"
 import zlib from "zlib"
-import { globby } from "globby"
 
 
 const globalName = "webnative"
@@ -10,7 +11,7 @@ const globalName = "webnative"
 console.log("📦 Bundling & minifying...")
 
 await esbuild.build({
-    entryPoints: ["src/index.ts"],
+    entryPoints: [ "src/index.ts" ],
     outdir: "dist",
     bundle: true,
     splitting: true,
@@ -23,12 +24,17 @@ await esbuild.build({
     define: {
         "global": "globalThis",
         "globalThis.process.env.NODE_ENV": "production"
-    }
+    },
+    plugins: [
+        NodeGlobalsPolyfillPlugin({
+            buffer: true
+        })
+    ]
 })
 
 const UMD = {
     banner:
-`(function (root, factory) {
+        `(function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
         define([], factory);
@@ -43,12 +49,12 @@ const UMD = {
   }
 }(typeof self !== 'undefined' ? self : this, function () {  `,
     footer:
-`return ${globalName};
+        `return ${globalName};
 }));`
 }
 
 await esbuild.build({
-    entryPoints: ["src/index.ts"],
+    entryPoints: [ "src/index.ts" ],
     outfile: "dist/index.umd.min.js",
     bundle: true,
     minify: true,
@@ -60,20 +66,25 @@ await esbuild.build({
     define: {
         "global": "globalThis",
         "globalThis.process.env.NODE_ENV": "production"
-    }
+    },
+    plugins: [
+        NodeGlobalsPolyfillPlugin({
+            buffer: true
+        })
+    ]
 })
 
-;(await globby("dist/*.js")).forEach(jsFile => {
-    const outfile = jsFile
-    const outfileGz = `${outfile}.gz`
+    ; (await globby("dist/*.js")).forEach(jsFile => {
+        const outfile = jsFile
+        const outfileGz = `${outfile}.gz`
 
-    console.log(`📝 Wrote ${outfile} and ${outfile}.map`)
-    console.log("💎 Compressing into .gz")
-    const fileContents = fs.createReadStream(outfile)
-    const writeStream = fs.createWriteStream(outfileGz)
-    const gzip = zlib.createGzip()
+        console.log(`📝 Wrote ${outfile} and ${outfile}.map`)
+        console.log("💎 Compressing into .gz")
+        const fileContents = fs.createReadStream(outfile)
+        const writeStream = fs.createWriteStream(outfileGz)
+        const gzip = zlib.createGzip()
 
-    fileContents.pipe(gzip).pipe(writeStream)
+        fileContents.pipe(gzip).pipe(writeStream)
 
-    console.log(`📝 Wrote ${outfileGz}`)
-})
+        console.log(`📝 Wrote ${outfileGz}`)
+    })

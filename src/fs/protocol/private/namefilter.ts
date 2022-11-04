@@ -48,7 +48,8 @@ export const addToBare = async (crypto: Crypto.Implementation, bareFilter: BareN
 
 // add the revision number to the name filter, salted with the AES key for the node
 export const addRevision = async (crypto: Crypto.Implementation, bareFilter: BareNameFilter, key: Uint8Array, revision: number): Promise<RevisionNameFilter> => {
-  const bytes = Uint8arrays.fromString(`${revision}${key}`, "utf8")
+  const keyStr = Uint8arrays.toString(key, "base64pad")
+  const bytes = Uint8arrays.fromString(`${revision}${keyStr}`, "utf8")
   return (await addToBare(crypto, bareFilter, bytes)) as string as RevisionNameFilter
 }
 

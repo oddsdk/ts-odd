@@ -6,7 +6,7 @@ import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as Storage from "./components/storage/implementation.js"
 
-import { AppInfo, PermissionsWithoutAppInfo } from "./permissions.js"
+import { AppInfo, ConfigurablePermissions } from "./permissions.js"
 
 
 // COMPONENTS
@@ -62,7 +62,7 @@ export type Configuration = {
   /**
    * Permissions to ask a root authority.
    */
-  permissions?: PermissionsWithoutAppInfo
+  permissions?: ConfigurablePermissions
 
   /**
    * Configure messages that webnative sends to users.
@@ -87,6 +87,11 @@ export function extractConfig(opts: Partial<Components> & Configuration): Config
     filesystem: opts.filesystem,
     userMessages: opts.userMessages,
   }
+}
+
+
+export function isConfidentialAuthConfiguration(config: Configuration): boolean {
+  return !!config.permissions
 }
 
 

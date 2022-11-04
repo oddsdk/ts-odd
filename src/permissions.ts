@@ -8,15 +8,20 @@ export type AppInfo = {
   creator: string
 }
 
-export type PermissionsWithoutAppInfo = {
+export type ConfigurablePermissions = {
+  app?: boolean,
   fs?: FileSystemPermissions
   platform?: PlatformPermissions
   raw?: RawPermissions
   sharing?: boolean
 }
 
-export type Permissions = PermissionsWithoutAppInfo & {
-  app?: AppInfo
+export type Permissions = {
+  app?: AppInfo,
+  fs?: FileSystemPermissions
+  platform?: PlatformPermissions
+  raw?: RawPermissions
+  sharing?: boolean
 }
 
 export type FileSystemPermissions = {
@@ -77,7 +82,6 @@ export function paths(permissions: Permissions): DistinctivePath[] {
   return list
 }
 
-
-export function withAppInfo(a: PermissionsWithoutAppInfo, appInfo: AppInfo): Permissions {
-  return { ...a, app: appInfo }
+export function fromConfig(obj: ConfigurablePermissions | undefined, appInfo: AppInfo): Permissions | undefined {
+  return obj ? { ...obj, app: obj.app === true ? appInfo : undefined } : undefined
 }

@@ -13,7 +13,12 @@ export type ImplementationOptions = {
 
 export type Implementation = {
   aes: {
+    // Related to AES-GCM, this should be able to decrypt both:
+    // (a) with the `iv` prefixed in the cipher text (first 16 bytes), and (b) with a given `iv`
     decrypt: (encrypted: Uint8Array, key: CryptoKey | Uint8Array, alg: SymmAlg, iv?: Uint8Array) => Promise<Uint8Array>
+
+    // Related to AES-GCM, this will produce a cipher text with
+    // a random `iv` prefixed into it. Unless, you provide the `iv` as a parameter.
     encrypt: (data: Uint8Array, key: CryptoKey | Uint8Array, alg: SymmAlg, iv?: Uint8Array) => Promise<Uint8Array>
     exportKey: (key: CryptoKey) => Promise<Uint8Array>
     genKey: (alg: SymmAlg) => Promise<CryptoKey>

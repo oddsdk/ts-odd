@@ -35,10 +35,10 @@ export function implementation({ name }: ImplementationOptions): Implementation 
 
   return {
     KEYS: {
-      ACCOUNT_UCAN: "webnative.account_ucan",
-      CID_LOG: "webnative.cid_log",
-      SESSION: "webnative.session",
-      UCANS: "webnative.permissioned_ucans",
+      ACCOUNT_UCAN: "account-ucan",
+      CID_LOG: "cid-log",
+      SESSION: "session",
+      UCANS: "permissioned-ucans",
     },
 
     getItem: withDb(getItem),

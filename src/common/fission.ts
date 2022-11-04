@@ -18,7 +18,7 @@ export type Endpoints = {
 
 
 export const PRODUCTION: Endpoints = {
-  apiPath: "/api/v2",
+  apiPath: "/v2/api",
   lobby: "https://auth.fission.codes",
   server: "https://runfission.com",
   userDomain: "fission.name"

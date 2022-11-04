@@ -109,7 +109,7 @@ export const OPTIONS: IPFSOptions = {
 // 🚀
 
 
-export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, logging: boolean): Promise<[ IPFSCore, IPFSRepo ]> {
+export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, repoName: string, logging: boolean): Promise<[ IPFSCore, IPFSRepo ]> {
   const peers = await listPeers(peersUrl)
 
   if (peers.length === 0) {
@@ -117,7 +117,7 @@ export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, loggi
   }
 
   // Start an IPFS node & connect to all the peers
-  const repo = IpfsRepo.create()
+  const repo = IpfsRepo.create(repoName)
   const ipfs: IPFSCore = await pkg.create({ ...OPTIONS, repo })
 
   peers.forEach(peer => {

@@ -11,10 +11,11 @@ import { DirectoryItem, Implementation, PutResult } from "../implementation.js"
 // 🛳
 
 
-export async function implementation(peersUrl: string): Promise<Implementation> {
+export async function implementation(peersUrl: string, repoName: string): Promise<Implementation> {
   const [ ipfs, repo ] = await Ipfs.nodeWithPkg(
     await Ipfs.pkgFromCDN(Ipfs.DEFAULT_CDN_URL),
     peersUrl,
+    repoName,
     false
   )
 
