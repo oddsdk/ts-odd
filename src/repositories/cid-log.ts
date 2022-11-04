@@ -1,8 +1,8 @@
 import { CID } from "multiformats/cid"
 
 import * as Storage from "../components/storage/implementation"
-import { decodeCID } from "../common"
-import Repository from "../repository"
+import { decodeCID } from "../common/cid.js"
+import Repository from "../repository.js"
 
 
 export function create({ storage }: { storage: Storage.Implementation }): Repo {

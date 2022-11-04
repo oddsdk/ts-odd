@@ -1,6 +1,5 @@
 import * as Storage from "./components/storage/implementation"
 import * as TypeChecks from "./common/type-checks.js"
-import { Repo } from "./repositories/ucans"
 
 
 export type RepositoryOptions = {
@@ -25,7 +24,7 @@ export default abstract class Repository<T> {
   }
 
   static async create(options: RepositoryOptions) {
-    const repo = new Repo(options)
+    const repo = this.prototype.constructor(options)
 
     repo.memoryCache = await repo.getAll()
     repo.dictionary = repo.toDictionary(repo.memoryCache)

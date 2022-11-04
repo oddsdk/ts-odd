@@ -25,5 +25,11 @@
     "src/**/*.test.ts",
     "tests/**/*",
     "src/setup/node.ts"
-  ]
+  ],
+  "ts-node": {
+    "compilerOptions": {
+      "target": "es2022",
+      "module": "es2022"
+    }
+  }
 }

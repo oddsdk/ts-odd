@@ -2,7 +2,7 @@ import * as Path from "../path/index.js"
 import * as Storage from "../components/storage/implementation"
 import * as Ucan from "../ucan/index.js"
 
-import Repository from "../repository"
+import Repository from "../repository.js"
 import { DistinctivePath } from "../path/index.js"
 import { Resource } from "../ucan/index.js"
 

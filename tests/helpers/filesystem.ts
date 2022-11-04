@@ -1,37 +1,48 @@
 import { CID } from "multiformats/cid"
 
+import * as Identifiers from "../../src/common/identifiers.js"
+import * as Path from "../../src/path/index.js"
 import FileSystem from "../../src/fs/filesystem.js"
-import * as path from "../../src/path.js"
-import * as identifiers from "../../src/common/identifiers.js"
-import * as crypto from "../../src/crypto/index.js"
+import { account, components, configuration, crypto } from "./components.js"
 
 
 export const emptyFilesystem: () => Promise<FileSystem> = async () => {
-  const rootKey = await crypto.aes.genKeyStr()
   return FileSystem.empty({
+    account,
+    appInfo: configuration.appInfo,
+    dependents: components,
     localOnly: true,
     permissions: {
       fs: {
-        public: [path.root()],
-        private: [path.root()]
+        public: [ Path.root() ],
+        private: [ Path.root() ]
       }
     },
-    rootKey
   })
 }
 
 
-export async function loadFilesystem(cid: CID, readKey?: string): Promise<FileSystem> {
+export async function loadFilesystem(cid: CID, readKey?: Uint8Array): Promise<FileSystem> {
   if (readKey != null) {
-    await crypto.keystore.importSymmKey(readKey, await identifiers.readKey({ path: path.directory("private") }))
+    await crypto.keystore.importSymmKey(
+      readKey,
+      await Identifiers.readKey({
+        accountDID: account.rootDID,
+        crypto,
+        path: Path.directory(Path.Branch.Private)
+      })
+    )
   }
 
   const fs = await FileSystem.fromCID(cid, {
+    account,
+    appInfo: configuration.appInfo,
+    dependents: components,
     localOnly: true,
     permissions: {
       fs: {
-        public: [path.root()],
-        private: [path.root()]
+        public: [ Path.root() ],
+        private: [ Path.root() ]
       }
     }
   })

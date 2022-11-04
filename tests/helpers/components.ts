@@ -24,7 +24,7 @@ import { decodeCID, EMPTY_CID } from "../../src/common/cid.js"
 // 🚀
 
 
-const configuration: Configuration = {
+export const configuration: Configuration = {
   appInfo: { name: "Webnative Tests", creator: "Fission" },
   debug: true,
   filesystem: {
@@ -40,7 +40,7 @@ const manners = ProperManners.implementation({ configuration })
 // DEPOT
 
 
-const inMemoryDepot = {}
+const inMemoryDepot: Record<string, Uint8Array> = {}
 
 
 const depot: Depot.Implementation = {
@@ -99,7 +99,7 @@ const depot: Depot.Implementation = {
 // STORAGE
 
 
-let inMemoryStorage = {}
+let inMemoryStorage: Record<string, any> = {}
 
 
 const storage: Storage.Implementation = {
@@ -127,7 +127,6 @@ const baseReference = BaseReference.implementation({
 const inMemoryReference = {
   dataRoot: decodeCID(EMPTY_CID)
 }
-
 
 const reference: Reference.Implementation = {
   ...baseReference,
@@ -162,14 +161,34 @@ const auth: Auth.Implementation = WnfsAuth.implementation({
 })
 
 
+export const username = "test"
+export const account = {
+  rootDID: await reference.didRoot.lookup(username),
+  username
+}
+
+
 
 // 🛳
 
 
-export {
+const components = {
   auth,
   confidences,
   crypto,
+  depot,
+  manners,
+  reference,
+  storage
+}
+
+export {
+  components,
+
+  auth,
+  confidences,
+  crypto,
+  depot,
   manners,
   reference,
   storage
