@@ -44,9 +44,6 @@ export type Configuration = {
     /* Should I load the filesystem immediately? True by default. */
     loadImmediately?: boolean
 
-    /* Configure whether webnative should aggressively pin everything, or pin nothing at all. */
-    shouldPin?: boolean
-
     /**
      * Set the file system version.
      *
