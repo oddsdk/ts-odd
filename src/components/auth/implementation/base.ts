@@ -1,10 +1,14 @@
+import * as Crypto from "../../crypto/implementation.js"
+import * as Reference from "../../reference/implementation.js"
+import * as Storage from "../../storage/implementation.js"
+
 import * as Did from "../../../did/index.js"
 import * as SessionMod from "../../../session.js"
 import * as Ucan from "../../../ucan/index.js"
 
 import { Components } from "../../../components.js"
 import { Configuration } from "../../../configuration.js"
-import { Implementation, Dependents } from "../implementation.js"
+import { Implementation } from "../implementation.js"
 import { Maybe } from "../../../common/types.js"
 import { Session } from "../../../session.js"
 
@@ -13,6 +17,13 @@ import { Session } from "../../../session.js"
 
 
 export const TYPE = "webCrypto"
+
+
+export type Dependents = {
+  crypto: Crypto.Implementation,
+  reference: Reference.Implementation
+  storage: Storage.Implementation
+}
 
 
 
@@ -103,7 +114,7 @@ export async function linkDevice(
 // 🛳
 
 
-export function implementation(dependents: Dependents): Implementation {
+export function implementation(dependents: Dependents): Implementation<Components> {
   const withDependents = (func: Function) => (...args: unknown[]) => func(dependents, ...args)
 
   return {

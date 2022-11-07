@@ -7,6 +7,7 @@ import * as Check from "../common/type-checks.js"
 import * as DID from "../did/index.js"
 import * as Ucan from "../ucan/index.js"
 
+import { Components } from "../components.js"
 import { EventEmitter, EventListener } from "../common/event-emitter.js"
 import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
@@ -25,7 +26,7 @@ export interface ConsumerEventMap {
 }
 
 export type Dependents = {
-  auth: Auth.Implementation
+  auth: Auth.Implementation<Components>
   crypto: Crypto.Implementation
 }
 
@@ -283,7 +284,7 @@ export const generateUserChallenge = async (
  * @returns linking result
  */
 export const linkDevice = async (
-  auth: Auth.Implementation,
+  auth: Auth.Implementation<Components>,
   crypto: Crypto.Implementation,
   sessionKey: Uint8Array,
   username: string,

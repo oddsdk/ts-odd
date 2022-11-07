@@ -7,6 +7,7 @@ import * as Check from "../common/type-checks.js"
 import * as DID from "../did/index.js"
 import * as Ucan from "../ucan/index.js"
 
+import { Components } from "../components.js"
 import { EventEmitter, EventListener } from "../common/event-emitter.js"
 import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
 
@@ -29,7 +30,7 @@ export interface ProducerEventMap {
 }
 
 export type Dependents = {
-  auth: Auth.Implementation
+  auth: Auth.Implementation<Components>
   crypto: Crypto.Implementation
 }
 
@@ -273,7 +274,7 @@ export const handleUserChallenge = async (
  * @param finishDelegation
  */
 export const delegateAccount = async (
-  auth: Auth.Implementation,
+  auth: Auth.Implementation<Components>,
   crypto: Crypto.Implementation,
   sessionKey: CryptoKey,
   username: string,

@@ -1,4 +1,6 @@
-import type { Dependents, Implementation } from "../implementation.js"
+import type { Dependents } from "./base.js"
+import type { Implementation } from "../implementation.js"
+
 import { Endpoints } from "../../../common/fission.js"
 
 import * as Base from "./base.js"

@@ -1,4 +1,3 @@
-import { Components } from "./components.js"
 import { AppInfo, ConfigurablePermissions } from "./permissions.js"
 
 
@@ -39,25 +38,6 @@ export type Configuration = {
    *  filesystem is older than what this version of webnative supports.
    */
   userMessages?: UserMessages
-}
-
-
-
-// OPTIONS
-
-
-export function extractConfig(opts: Partial<Components> & Configuration): Configuration {
-  return {
-    appInfo: opts.appInfo,
-    debug: opts.debug,
-    filesystem: opts.filesystem,
-    userMessages: opts.userMessages,
-  }
-}
-
-
-export function isConfidentialAuthConfiguration(config: Configuration): boolean {
-  return !!config.permissions
 }
 
 

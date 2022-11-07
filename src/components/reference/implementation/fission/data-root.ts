@@ -7,7 +7,7 @@ import * as TypeChecks from "../../../../common/type-checks.js"
 import * as Ucan from "../../../../ucan/index.js"
 
 import { EMPTY_CID, decodeCID } from "../../../../common/cid.js"
-import { Dependents } from "../../implementation.js"
+import { Dependents } from "../base.js"
 
 
 /**

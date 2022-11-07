@@ -1,3 +1,5 @@
+import type { Dependents } from "../base.js"
+
 import * as Crypto from "../../../crypto/implementation.js"
 import * as DID from "../../../../did/index.js"
 import * as Fission from "../../../../common/fission.js"
@@ -5,7 +7,6 @@ import * as Reference from "../../../reference/implementation.js"
 import * as Ucan from "../../../../ucan/index.js"
 
 import { USERNAME_BLOCKLIST } from "./blocklist.js"
-import { Dependents } from "../../implementation.js"
 import { Endpoints } from "../../../../common/fission.js"
 import { ShareDetails } from "../../../../fs/types.js"
 

@@ -1,4 +1,6 @@
-import { Dependents, Implementation } from "../implementation.js"
+import type { Dependents } from "./fission-lobby.js"
+import type { Implementation } from "../implementation.js"
+
 import * as FissionLobby from "./fission-lobby.js"
 import * as Fission from "../../../common/fission.js"
 

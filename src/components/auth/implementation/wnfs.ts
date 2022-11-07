@@ -1,4 +1,6 @@
-import type { Implementation, Dependents } from "../implementation.js"
+import type { Components } from "../../../components.js"
+import type { Dependents } from "./base.js"
+import type { Implementation } from "../implementation.js"
 
 import * as Base from "./base.js"
 import * as DID from "../../../did/index.js"
@@ -7,7 +9,6 @@ import * as SessionMod from "../../../session.js"
 import * as TypeChecks from "../../../common/type-checks.js"
 import * as Ucan from "../../../ucan/index.js"
 
-import { Components } from "../../../components.js"
 import { Configuration } from "../../../configuration.js"
 import { LinkingError } from "../../../linking.js"
 import { Maybe } from "../../../common/types.js"
@@ -170,7 +171,7 @@ export async function rootDID(dependents: Dependents): Promise<string> {
 
 export function implementation(
   dependents: Dependents
-): Implementation {
+): Implementation<Components> {
   const base = Base.implementation(dependents)
 
   return {

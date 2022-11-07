@@ -1,5 +1,7 @@
+import type { Components } from "../../../components.js"
+import type { Dependents } from "./base.js"
 import type { Channel, ChannelOptions } from "../channel.js"
-import type { Implementation, Dependents } from "../implementation.js"
+import type { Implementation } from "../implementation.js"
 
 import * as Base from "./base.js"
 import * as ChannelFission from "./fission/channel.js"
@@ -54,7 +56,7 @@ export const register = async (
 export function implementation(
   endpoints: Fission.Endpoints,
   dependents: Dependents
-): Implementation {
+): Implementation<Components> {
   const base = Base.implementation(dependents)
 
   return {

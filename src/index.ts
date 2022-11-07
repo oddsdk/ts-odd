@@ -42,7 +42,7 @@ import * as Ucan from "./ucan/index.js"
 import { SESSION_TYPE as CONFIDENCES_SESSION_TYPE } from "./confidences.js"
 import { TYPE as WEB_CRYPTO_SESSION_TYPE } from "./components/auth/implementation/base.js"
 import { Components } from "./components.js"
-import { Configuration, extractConfig, InitialisationError, isConfidentialAuthConfiguration } from "./configuration.js"
+import { Configuration, InitialisationError } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
 import { appId, AppInfo } from "./permissions.js"
@@ -51,6 +51,8 @@ import { loadFileSystem, loadRootFileSystem } from "./filesystem.js"
 
 // IMPLEMENTATIONS
 
+import * as BaseAuth from "./components/auth/implementation/base.js"
+import * as BaseReference from "./components/reference/implementation/base.js"
 import * as BrowserCrypto from "./components/crypto/implementation/browser.js"
 import * as BrowserStorage from "./components/storage/implementation/browser.js"
 import * as FissionIpfsProduction from "./components/depot/implementation/fission-ipfs-production.js"
@@ -58,6 +60,7 @@ import * as FissionAuthBaseProduction from "./components/auth/implementation/fis
 import * as FissionAuthBaseStaging from "./components/auth/implementation/fission-base-staging.js"
 import * as FissionAuthWnfsProduction from "./components/auth/implementation/fission-wnfs-production.js"
 import * as FissionAuthWnfsStaging from "./components/auth/implementation/fission-wnfs-staging.js"
+import * as FissionLobbyBase from "./components/confidences/implementation/fission-lobby.js"
 import * as FissionLobbyProduction from "./components/confidences/implementation/fission-lobby-production.js"
 import * as FissionLobbyStaging from "./components/confidences/implementation/fission-lobby-staging.js"
 import * as FissionReferenceProduction from "./components/reference/implementation/fission-production.js"
@@ -91,7 +94,7 @@ export type Program = {
 
 export type AuthenticationStrategies = Record<
   string,
-  { implementation: Auth.Implementation, session: () => Promise<Maybe<Session>> }
+  { implementation: Auth.Implementation<Components>, session: () => Promise<Maybe<Session>> }
 >
 
 
@@ -138,7 +141,7 @@ export const auth = {
    * A standalone authentication system that uses the browser's Web Crypto API
    * to create an identity based on a RSA key-pair.
    */
-  async webCrypto(config: Configuration, { disableWnfs, staging }: { disableWnfs: boolean, staging: boolean }): Promise<Auth.Implementation> {
+  async webCrypto(config: Configuration, { disableWnfs, staging }: { disableWnfs: boolean, staging: boolean }): Promise<Auth.Implementation<Components>> {
     const manners = defaultMannersComponent(config)
     const crypto = await defaultCryptoComponent(config.appInfo)
     const storage = defaultStorageComponent(config.appInfo)
@@ -207,7 +210,7 @@ export async function assemble(components: Components, config: Configuration): P
 
   // Auth implementations
   const auth = components.auth.reduce(
-    (acc: AuthenticationStrategies, method: Auth.Implementation): AuthenticationStrategies => {
+    (acc: AuthenticationStrategies, method: Auth.Implementation<Components>): AuthenticationStrategies => {
       const wrap = {
         implementation: method,
         async session(): Promise<Maybe<Session>> {
@@ -354,13 +357,13 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
 // DEFAULT COMPONENTS
 
 
-export function defaultAuthComponent({ crypto, reference, storage }: Auth.Dependents): Auth.Implementation {
+export function defaultAuthComponent({ crypto, reference, storage }: BaseAuth.Dependents): Auth.Implementation<Components> {
   return FissionAuthWnfsProduction.implementation({
     crypto, reference, storage,
   })
 }
 
-export function defaultConfidencesComponent({ crypto, depot }: ConfidencesImpl.Dependents): ConfidencesImpl.Implementation {
+export function defaultConfidencesComponent({ crypto, depot }: FissionLobbyBase.Dependents): ConfidencesImpl.Implementation {
   return FissionLobbyProduction.implementation({ crypto, depot })
 }
 
@@ -384,7 +387,7 @@ export function defaultMannersComponent(config: Configuration): Manners.Implemen
   })
 }
 
-export function defaultReferenceComponent({ crypto, manners, storage }: Reference.Dependents): Reference.Implementation {
+export function defaultReferenceComponent({ crypto, manners, storage }: BaseReference.Dependents): Reference.Implementation {
   return FissionReferenceProduction.implementation({
     crypto,
     manners,
@@ -523,4 +526,23 @@ function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
       resolve(req.result)
     }
   })
+}
+
+
+
+// ㊙️
+
+
+export function extractConfig(opts: Partial<Components> & Configuration): Configuration {
+  return {
+    appInfo: opts.appInfo,
+    debug: opts.debug,
+    filesystem: opts.filesystem,
+    userMessages: opts.userMessages,
+  }
+}
+
+
+export function isConfidentialAuthConfiguration(config: Configuration): boolean {
+  return !!config.permissions
 }

@@ -3,16 +3,26 @@ import * as Uint8arrays from "uint8arrays"
 import * as Base64 from "../../../common/base64.js"
 import * as Confidences from "../../../confidences.js"
 import * as Crypto from "../../../components/crypto/implementation.js"
+import * as Depot from "../../../components/depot/implementation.js"
 import * as DID from "../../../did/index.js"
 import * as Fission from "../../../common/fission.js"
 import * as Path from "../../../path/index.js"
 import * as TypeChecks from "../../../common/type-checks.js"
 import * as Ucan from "../../../ucan/index.js"
 
-import { Dependents, Implementation, RequestOptions } from "../implementation.js"
+import { Implementation, RequestOptions } from "../implementation.js"
 import { Maybe } from "../../../common/types.js"
 import { VERSION } from "../../../common/version.js"
 import { decodeCID } from "../../../common/cid.js"
+
+
+// 🧩
+
+
+export type Dependents = {
+  crypto: Crypto.Implementation
+  depot: Depot.Implementation
+}
 
 
 
