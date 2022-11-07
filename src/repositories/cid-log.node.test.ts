@@ -1,11 +1,11 @@
-import { CID } from "multiformats/cid"
-import { sha256 } from "multiformats/hashes/sha2"
 import * as dagPB from "@ipld/dag-pb"
 import * as fc from "fast-check"
+import { CID } from "multiformats/cid"
+import { sha256 } from "multiformats/hashes/sha2"
 import expect from "expect"
 
 import * as cidLog from "./cid-log.js"
-import * as storage from "../storage/index.js"
+
 
 async function generateCids(data: Uint8Array[]): Promise<string[]> {
   const promisedCids = data.map(async bytes => {
@@ -15,6 +15,7 @@ async function generateCids(data: Uint8Array[]): Promise<string[]> {
   })
   return Promise.all(promisedCids)
 }
+
 
 describe("cid-log", () => {
 
@@ -60,12 +61,12 @@ describe("cid-log", () => {
           }, Promise.resolve())
 
           const idx = Math.floor(Math.random() * data.length)
-          const cid = cids[idx]
+          const cid = cids[ idx ]
 
           // Get the index of test cid after all CIDs have been added
           const index = await doneAdding.then(async () => await cidLog.index(cid.toString()))
 
-          expect(index).toEqual([idx, data.length])
+          expect(index).toEqual([ idx, data.length ])
         })
     )
   })
@@ -81,7 +82,7 @@ describe("cid-log", () => {
             return acc.then(() => cidLog.add(cid))
           }, Promise.resolve())
 
-          const cid = cids[0]
+          const cid = cids[ 0 ]
 
           // Get the newest cid after all CIDs have been added
           const newest = await doneAdding.then(async () => await cidLog.newest())

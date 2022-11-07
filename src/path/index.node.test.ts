@@ -1,6 +1,6 @@
 import expect from "expect"
 import * as fc from "fast-check"
-import * as pathing from "./path.js"
+import * as pathing from "./index.js"
 
 
 describe("the path helpers", () => {

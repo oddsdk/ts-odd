@@ -6,7 +6,7 @@ import FileSystem from "../../src/fs/filesystem.js"
 import { account, components, configuration, crypto } from "./components.js"
 
 
-export const emptyFilesystem: () => Promise<FileSystem> = async () => {
+export function emptyFilesystem(version?: string): Promise<FileSystem> {
   return FileSystem.empty({
     account,
     appInfo: configuration.appInfo,
@@ -18,6 +18,7 @@ export const emptyFilesystem: () => Promise<FileSystem> = async () => {
         private: [ Path.root() ]
       }
     },
+    version
   })
 }
 

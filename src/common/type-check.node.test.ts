@@ -5,7 +5,7 @@ import * as check from "./type-checks.js"
 
 describe("is defined", () => {
   fc.assert(
-    fc.property(fc.frequency(
+    fc.property(fc.oneof(
       { arbitrary: fc.object(), weight: 10 },
       { arbitrary: fc.string(), weight: 5 },
       { arbitrary: fc.integer(), weight: 1 },
@@ -35,7 +35,7 @@ describe("is defined", () => {
 
 describe("not null", () => {
   fc.assert(
-    fc.property(fc.frequency(
+    fc.property(fc.oneof(
       { arbitrary: fc.object(), weight: 10 },
       { arbitrary: fc.string(), weight: 5 },
       { arbitrary: fc.integer(), weight: 1 },
@@ -64,7 +64,7 @@ describe("not null", () => {
 
 describe("is just", () => {
   fc.assert(
-    fc.property(fc.frequency(
+    fc.property(fc.oneof(
       { arbitrary: fc.object(), weight: 10 },
       { arbitrary: fc.string(), weight: 5 },
       { arbitrary: fc.integer(), weight: 1 },
@@ -93,7 +93,7 @@ describe("is just", () => {
 
 describe("is value", () => {
   fc.assert(
-    fc.property(fc.frequency(
+    fc.property(fc.oneof(
       { arbitrary: fc.object(), weight: 10 },
       { arbitrary: fc.string(), weight: 5 },
       { arbitrary: fc.integer(), weight: 1 },
@@ -130,7 +130,7 @@ describe("is boolean", () => {
   })
 
   fc.assert(
-    fc.property(fc.frequency(
+    fc.property(fc.oneof(
       { arbitrary: fc.object(), weight: 10 },
       { arbitrary: fc.string(), weight: 5 },
       { arbitrary: fc.integer(), weight: 1 },
@@ -151,7 +151,7 @@ describe("is boolean", () => {
 
 describe("is num", () => {
   fc.assert(
-    fc.property(fc.frequency(
+    fc.property(fc.oneof(
       { arbitrary: fc.integer(), weight: 1 },
       { arbitrary: fc.float(), weight: 1 },
       { arbitrary: fc.double(), weight: 1 }
@@ -173,7 +173,7 @@ describe("is num", () => {
   })
 
   fc.assert(
-    fc.property(fc.frequency(
+    fc.property(fc.oneof(
       { arbitrary: fc.object(), weight: 10 },
       { arbitrary: fc.string(), weight: 5 },
     ), data => {
@@ -207,7 +207,7 @@ describe("is string", () => {
   )
 
   fc.assert(
-    fc.property(fc.frequency(
+    fc.property(fc.oneof(
       { arbitrary: fc.object(), weight: 10 },
       { arbitrary: fc.integer(), weight: 1 },
       { arbitrary: fc.double(), weight: 1 }
@@ -241,7 +241,7 @@ describe("is object", () => {
   )
 
   fc.assert(
-    fc.property(fc.frequency(
+    fc.property(fc.oneof(
       { arbitrary: fc.string(), weight: 5 },
       { arbitrary: fc.integer(), weight: 1 },
       { arbitrary: fc.double(), weight: 1 }

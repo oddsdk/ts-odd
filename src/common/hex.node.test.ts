@@ -1,18 +1,20 @@
-import expect from "expect"
 import * as fc from "fast-check"
 import { fromBytes, toBytes } from "./hex.js"
+import expect from "expect"
+
 
 describe("hex", () => {
 
   it("round trips to bytes and back out", () => {
     fc.assert(
-      fc.property(fc.array(fc.integer(16, 255)), data => {
-        const hexData = []
-        const buffers = []
-        const returnData = []
+      fc.property(fc.array(fc.integer()), data => {
+        const hexData: string[] = []
+        const buffers: Uint8Array[] = []
+        const returnData: string[] = []
 
         for (const num of data) {
-          hexData.push(num.toString(16))
+          const n = (16 + num) % 255
+          hexData.push(n.toString(16))
         }
 
         for (const hex of hexData) {

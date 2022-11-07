@@ -1,6 +1,7 @@
 import expect from "expect"
 import * as util from "./util.js"
 
+
 describe("removes a key from an object", () => {
   it("removes a key from an object", () => {
     const obj = { a: 1, b: 2 }
@@ -90,12 +91,12 @@ describe("async maps over an object", () => {
 
 describe("array contains", () => {
   it("returns true when an array contains an entry", () => {
-    const arr = [1, 2, 3]
+    const arr = [ 1, 2, 3 ]
     expect(util.arrContains(arr, 2)).toBe(true)
   })
 
   it("returns false when an array does not contain an entry", () => {
-    const arr = [1, 2, 3]
+    const arr = [ 1, 2, 3 ]
     expect(util.arrContains(arr, 0)).toBe(false)
   })
 
@@ -110,14 +111,14 @@ describe("async waterfall", () => {
     async function addOne(val: number) { return val + 1 }
     async function addTwo(val: number) { return val + 2 }
     async function addThree(val: number) { return val + 3 }
-    expect(await util.asyncWaterfall(0, [addOne, addTwo, addThree])).toEqual(6)
+    expect(await util.asyncWaterfall(0, [ addOne, addTwo, addThree ])).toEqual(6)
   })
 
   it("concatenates characters returned from async calls", async () => {
     async function concatB(val: string) { return val + "b" }
     async function concatC(val: string) { return val + "c" }
     async function concatD(val: string) { return val + "d" }
-    expect(await util.asyncWaterfall("a", [concatB, concatC, concatD])).toEqual("abcd")
+    expect(await util.asyncWaterfall("a", [ concatB, concatC, concatD ])).toEqual("abcd")
   })
 
   it("returns the initial value when no waterfall", async () => {

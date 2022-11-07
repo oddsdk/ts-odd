@@ -1,6 +1,7 @@
-import expect from "expect"
-import * as fc from "fast-check"
 import * as base64 from "./base64.js"
+import * as fc from "fast-check"
+import expect from "expect"
+
 
 describe("base64", () => {
 

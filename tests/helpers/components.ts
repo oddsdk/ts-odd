@@ -1,6 +1,9 @@
 // import * as memoryDriver from "localforage-driver-memory"
 import localforage from "localforage"
 
+import NodeFs from "fs"
+import NodePath from "path"
+
 import { CryptoSystem, HashAlg, KeyUse } from "keystore-idb/types.js"
 import { default as KeystoreConfig } from "keystore-idb/config.js"
 import IDB from "keystore-idb/idb.js"
@@ -44,14 +47,11 @@ export const configuration: Configuration = {
 }
 
 
-const manners = ProperManners.implementation({ configuration })
-
-
 
 // CRYPTO
 
 
-const crypto = await (async () => {
+export async function createCryptoComponent() {
   const cfg = KeystoreConfig.normalize({
     type: CryptoSystem.RSA,
 
@@ -119,7 +119,10 @@ const crypto = await (async () => {
       verify: BrowserCrypto.rsaVerify
     },
   }
-})()
+}
+
+
+const crypto = await createCryptoComponent()
 
 
 
@@ -201,6 +204,22 @@ const storage: Storage.Implementation = {
   removeItem: (key: string) => { delete inMemoryStorage[ key ]; return Promise.resolve() },
   setItem: <T>(key: string, val: T) => { inMemoryStorage[ key ] = val; return Promise.resolve(val) },
 }
+
+
+
+// MANNERS
+
+
+const manners = {
+  ...ProperManners.implementation({ configuration }),
+
+  wnfsWasmLookup: async () => {
+    const pathToThisModule = new URL(import.meta.url).pathname
+    const dirOfThisModule = NodePath.parse(pathToThisModule).dir
+    return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wasm_wnfs_bg.wasm`))
+  }
+}
+
 
 
 // REFERENCE
