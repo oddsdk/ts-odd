@@ -1,3 +1,12 @@
+// import * as memoryDriver from "localforage-driver-memory"
+import localforage from "localforage"
+
+import { CryptoSystem, HashAlg, KeyUse } from "keystore-idb/types.js"
+import { default as KeystoreConfig } from "keystore-idb/config.js"
+import IDB from "keystore-idb/idb.js"
+import RSAKeys from "keystore-idb/rsa/keys.js"
+import RSAKeyStore from "keystore-idb/rsa/keystore.js"
+
 import * as DagPB from "@ipld/dag-pb"
 import * as Raw from "multiformats/codecs/raw"
 import { sha256 } from "multiformats/hashes/sha2"
@@ -16,9 +25,11 @@ import * as WnfsAuth from "../../src/components/auth/implementation/wnfs.js"
 import * as DID from "../../src/did/index.js"
 
 import { BlockCodec, CID } from "multiformats"
+import { Components } from "../../src/components.js"
 import { Configuration } from "../../src/configuration.js"
 import { Ucan } from "../../src/ucan/types.js"
 import { decodeCID, EMPTY_CID } from "../../src/common/cid.js"
+import { Storage as LocalForageStore } from "./localforage/in-memory-storage.js"
 
 
 // 🚀
@@ -32,8 +43,83 @@ export const configuration: Configuration = {
   },
 }
 
-const crypto = await BrowserCrypto.implementation({ storeName: "tests", exchangeKeyName: "exchange-key", writeKeyName: "write-key" })
+
 const manners = ProperManners.implementation({ configuration })
+
+
+
+// CRYPTO
+
+
+const crypto = await (async () => {
+  const cfg = KeystoreConfig.normalize({
+    type: CryptoSystem.RSA,
+
+    charSize: 8,
+    hashAlg: HashAlg.SHA_256,
+    storeName: "tests",
+    exchangeKeyName: "exchange-key",
+    writeKeyName: "write-key",
+  })
+
+  const { rsaSize, hashAlg, storeName, exchangeKeyName, writeKeyName } = cfg
+  const store = new LocalForageStore() as unknown as LocalForage
+
+  // NOTE: This would be a more type safe solution,
+  //       but somehow localforage won't accept the driver.
+  // await store.defineDriver(memoryDriver)
+  // const store = localforage.createInstance({ name: storeName, driver: memoryDriver._driver })
+
+  await IDB.createIfDoesNotExist(exchangeKeyName, () => (
+    RSAKeys.makeKeypair(rsaSize, hashAlg, KeyUse.Exchange)
+  ), store)
+  await IDB.createIfDoesNotExist(writeKeyName, () => (
+    RSAKeys.makeKeypair(rsaSize, hashAlg, KeyUse.Write)
+  ), store)
+
+  const ks = new RSAKeyStore(cfg, store)
+
+  const withKeyStore = (func: Function) => {
+    return (...args: unknown[]) => func(ks, ...args)
+  }
+
+  return {
+    aes: {
+      decrypt: BrowserCrypto.aesDecrypt,
+      encrypt: BrowserCrypto.aesEncrypt,
+      exportKey: BrowserCrypto.aesExportKey,
+      genKey: BrowserCrypto.aesGenKey,
+    },
+    ed25519: {
+      verify: BrowserCrypto.ed25519Verify
+    },
+    hash: {
+      sha256: BrowserCrypto.sha256,
+    },
+    keystore: {
+      clearStore: withKeyStore(BrowserCrypto.ksClearStore),
+      decrypt: withKeyStore(BrowserCrypto.ksDecrypt),
+      exportSymmKey: withKeyStore(BrowserCrypto.ksExportSymmKey),
+      getAlg: withKeyStore(BrowserCrypto.ksGetAlg),
+      getUcanAlg: withKeyStore(BrowserCrypto.ksGetUcanAlg),
+      importSymmKey: withKeyStore(BrowserCrypto.ksImportSymmKey),
+      keyExists: withKeyStore(BrowserCrypto.ksKeyExists),
+      publicExchangeKey: withKeyStore(BrowserCrypto.ksPublicExchangeKey),
+      publicWriteKey: withKeyStore(BrowserCrypto.ksPublicWriteKey),
+      sign: withKeyStore(BrowserCrypto.ksSign),
+    },
+    misc: {
+      randomNumbers: BrowserCrypto.randomNumbers,
+    },
+    rsa: {
+      decrypt: BrowserCrypto.rsaDecrypt,
+      encrypt: BrowserCrypto.rsaEncrypt,
+      exportPublicKey: BrowserCrypto.rsaExportPublicKey,
+      genKey: BrowserCrypto.rsaGenKey,
+      verify: BrowserCrypto.rsaVerify
+    },
+  }
+})()
 
 
 
@@ -156,7 +242,7 @@ const confidences: Confidences.Implementation = {
 // AUTH
 
 
-const auth: Auth.Implementation = WnfsAuth.implementation({
+const auth: Auth.Implementation<Components> = WnfsAuth.implementation({
   crypto, reference, storage
 })
 

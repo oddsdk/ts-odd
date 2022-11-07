@@ -132,14 +132,14 @@ export function ksKeyExists(ks: RSAKeyStore, keyName: string): Promise<boolean> 
 
 export async function ksPublicExchangeKey(ks: RSAKeyStore): Promise<Uint8Array> {
   const keypair = await ks.exchangeKey()
-  const spki = await globalThis.crypto.subtle.exportKey("spki", keypair.publicKey)
+  const spki = await webcrypto.subtle.exportKey("spki", keypair.publicKey)
 
   return new Uint8Array(spki)
 }
 
 export async function ksPublicWriteKey(ks: RSAKeyStore): Promise<Uint8Array> {
   const keypair = await ks.writeKey()
-  const spki = await globalThis.crypto.subtle.exportKey("spki", keypair.publicKey)
+  const spki = await webcrypto.subtle.exportKey("spki", keypair.publicKey)
 
   return new Uint8Array(spki)
 }

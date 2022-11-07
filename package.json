@@ -83,6 +83,7 @@
     "fast-check": "^3.3.0",
     "globby": "^13.1.2",
     "ipfs-core": "0.17.0",
+    "localforage-driver-memory": "^1.0.5",
     "madge": "^5.0.1",
     "mocha": "^10.1.0",
     "rimraf": "^3.0.2",
