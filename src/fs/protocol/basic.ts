@@ -32,7 +32,8 @@ export const getEncryptedFile = async (depot: Depot.Implementation, crypto: Cryp
   }
 
   const alg = withAlgorithm.alg
-  const toDecode = await crypto.aes.decrypt(withAlgorithm.cip as Uint8Array, key, alg)
+  const cip = new Uint8Array(withAlgorithm.cip.buffer)
+  const toDecode = await crypto.aes.decrypt(cip, key, alg)
 
   return DagCBOR.decode(toDecode)
 }

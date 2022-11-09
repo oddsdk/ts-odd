@@ -394,7 +394,7 @@ export default class PrivateTree extends BaseTree {
     this.assignLink({
       name,
       link: { name, key, pointer, size, isFile: isFile },
-      skeleton: { cid, key, subSkeleton: skeleton }
+      skeleton: { cid: cid.toString(), key, subSkeleton: skeleton }
     })
     return this
   }

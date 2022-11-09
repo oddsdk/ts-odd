@@ -20,7 +20,7 @@ export const addNode = async (
   node: DecryptedNode,
   key: Uint8Array
 ): Promise<PrivateAddResult> => {
-  const encodedNode = Uint8arrays.fromString(JSON.stringify(node))
+  const encodedNode = Uint8arrays.fromString(JSON.stringify(node), "utf8")
   const { cid, size } = await Basic.putEncryptedFile(depot, crypto, encodedNode, key)
   const filter = await Namefilter.addRevision(crypto, node.bareNameFilter, key, node.revision)
   const name = await Namefilter.toPrivateName(crypto, filter)
@@ -46,9 +46,10 @@ export const readNode = async (
   cid: CID,
   key: Uint8Array
 ): Promise<DecryptedNode> => {
-  const content = await Basic.getEncryptedFile(depot, crypto, cid, key)
+  const contentBytes = await Basic.getEncryptedFile(depot, crypto, cid, key)
+  const content = JSON.parse(Uint8arrays.toString(contentBytes, "utf8"))
   if (!Check.isDecryptedNode(content)) {
-    throw new Error(`Could not parse a valid filesystem object, ${cid}`)
+    throw new Error(`Could not parse a valid filesystem object: ${content}`)
   }
   return content
 }

@@ -90,7 +90,7 @@ export class PrivateFile extends BaseFile {
         key: Uint8arrays.toString(contentKey, "base64pad"),
         revision: 1,
         metadata: metadata.empty(true, versions.latest),
-        content: contentInfo.cid
+        content: contentInfo.cid.toString()
       }
     })
   }
@@ -184,12 +184,13 @@ export class PrivateFile extends BaseFile {
     this.header = {
       ...this.header,
       revision: this.header.revision + 1,
-      content: contentInfo.cid
+      content: contentInfo.cid.toString()
     }
     return this
   }
 
   async putDetailed(): Promise<PrivateAddResult> {
+    console.log(this.header.content)
     return protocol.priv.addNode(this.depot, this.crypto, this.mmpt, {
       ...this.header,
       metadata: metadata.updateMtime(this.header.metadata)
