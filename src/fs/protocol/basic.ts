@@ -35,14 +35,18 @@ export const getEncryptedFile = async (depot: Depot.Implementation, crypto: Cryp
   const cip = new Uint8Array(withAlgorithm.cip.buffer)
   const toDecode = await crypto.aes.decrypt(cip, key, alg)
 
-  return DagCBOR.decode(toDecode)
+  const decoded = DagCBOR.decode(toDecode)
+  if (decoded instanceof Uint8Array) return decoded
+
+  // Legacy
+  return Uint8arrays.fromString(JSON.stringify(decoded), "utf8")
 }
 
 export const putFile = async (depot: Depot.Implementation, content: Uint8Array): Promise<Depot.PutResult> => {
   return depot.putChunked(content)
 }
 
-export const putEncryptedFile = async (depot: Depot.Implementation, crypto: Crypto.Implementation, content: Uint8Array, key: Uint8Array): Promise<Depot.PutResult> => {
+export const putEncryptedFile = async (depot: Depot.Implementation, crypto: Crypto.Implementation, content: Uint8Array | Object, key: Uint8Array): Promise<Depot.PutResult> => {
   const normalized = TypeCheck.isBlob(content) ? await Blob.toUint8Array(content) : content
   const encoded = DagCBOR.encode(normalized)
 

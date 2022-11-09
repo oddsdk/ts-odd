@@ -16,7 +16,7 @@ import { Links, SoftLink, UpdateCallback } from "../types.js"
 import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, PrivateLink } from "../protocol/private/types.js"
 import { Path } from "../../path/index.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
-import { decodeCID, isObject, hasProp, mapObj, Maybe, removeKeyFromObj } from "../../common/index.js"
+import { decodeCID, isObject, hasProp, mapObj, Maybe, removeKeyFromObj, encodeCID } from "../../common/index.js"
 
 import * as check from "../protocol/private/types/check.js"
 import * as checkNormie from "../types/check.js"
@@ -394,7 +394,7 @@ export default class PrivateTree extends BaseTree {
     this.assignLink({
       name,
       link: { name, key, pointer, size, isFile: isFile },
-      skeleton: { cid: cid.toString(), key, subSkeleton: skeleton }
+      skeleton: { cid: encodeCID(cid), key, subSkeleton: skeleton }
     })
     return this
   }

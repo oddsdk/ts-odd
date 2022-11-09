@@ -42,7 +42,7 @@ export const createBare = async (crypto: Crypto.Implementation, key: Uint8Array)
 export const addToBare = async (crypto: Crypto.Implementation, bareFilter: BareNameFilter, toAdd: Uint8Array): Promise<BareNameFilter> => {
   const filter = fromHex(bareFilter)
   const hash = await crypto.hash.sha256(toAdd)
-  filter.add(hash)
+  filter.add(Uint8arrays.toString(hash, "hex"))
   return (await toHex(filter)) as BareNameFilter
 }
 
@@ -61,7 +61,7 @@ export const toPrivateName = async (crypto: Crypto.Implementation, revisionFilte
 
 // hash a filter with sha256
 export const toHash = async (crypto: Crypto.Implementation, filter: BloomFilter): Promise<PrivateName> => {
-  const filterBytes = new Uint8Array(filter.toBytes())
+  const filterBytes = filter.toBytes()
   const hash = await crypto.hash.sha256(filterBytes)
   return (Hex.fromBytes(hash)) as PrivateName
 }

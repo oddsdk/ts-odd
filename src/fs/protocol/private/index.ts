@@ -20,8 +20,7 @@ export const addNode = async (
   node: DecryptedNode,
   key: Uint8Array
 ): Promise<PrivateAddResult> => {
-  const encodedNode = Uint8arrays.fromString(JSON.stringify(node), "utf8")
-  const { cid, size } = await Basic.putEncryptedFile(depot, crypto, encodedNode, key)
+  const { cid, size } = await Basic.putEncryptedFile(depot, crypto, node, key)
   const filter = await Namefilter.addRevision(crypto, node.bareNameFilter, key, node.revision)
   const name = await Namefilter.toPrivateName(crypto, filter)
 

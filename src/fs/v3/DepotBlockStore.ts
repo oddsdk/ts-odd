@@ -9,7 +9,7 @@ export interface BlockStore {
   getBlock(cid: Uint8Array): Promise<Uint8Array | undefined>
 }
 
-export class IpfsBlockStore implements BlockStore {
+export class DepotBlockStore implements BlockStore {
   private depot: Depot.Implementation
 
   constructor(depot: Depot.Implementation) {

@@ -4,7 +4,7 @@ import { CID } from "multiformats/cid"
 
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Branch, DistinctivePath } from "../../path/index.js"
-import { Maybe, decodeCID } from "../../common/index.js"
+import { Maybe, decodeCID, encodeCID } from "../../common/index.js"
 import { Permissions, paths as permissionPaths } from "../../permissions.js"
 import { Puttable, SimpleLink, SimpleLinks, UnixTree } from "../types.js"
 
@@ -306,7 +306,7 @@ export default class RootTree implements Puttable {
 
     // add to chunk
     const hashedCid = await this.dependents.crypto.hash.sha256(
-      Uint8arrays.fromString(cid.toString(), "utf8")
+      Uint8arrays.fromString(encodeCID(cid), "utf8")
     )
 
     const updatedChunk = [ ...lastChunk, hashedCid ]

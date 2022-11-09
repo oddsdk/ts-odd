@@ -31,7 +31,6 @@ export async function clear(db: LocalForage): Promise<void> {
 
 export function implementation({ name }: ImplementationOptions): Implementation {
   const db = localforage.createInstance({ name })
-  const withDb = (func: Function) => (...args: unknown[]) => func(db, ...args)
 
   return {
     KEYS: {
@@ -41,9 +40,9 @@ export function implementation({ name }: ImplementationOptions): Implementation 
       UCANS: "permissioned-ucans",
     },
 
-    getItem: withDb(getItem),
-    setItem: withDb(setItem),
-    removeItem: withDb(removeItem),
-    clear: withDb(clear),
+    getItem: (...args) => getItem(db, ...args),
+    setItem: (...args) => setItem(db, ...args),
+    removeItem: (...args) => removeItem(db, ...args),
+    clear: (...args) => clear(db, ...args),
   }
 }

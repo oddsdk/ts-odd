@@ -8,7 +8,7 @@ import { WASM_WNFS_VERSION } from "../../common/version.js"
 import { Path } from "../../path/index.js"
 
 import { UnixTree, Puttable, File, Links, PuttableUnixTree } from "../types.js"
-import { BlockStore, IpfsBlockStore } from "./IpfsBlockStore.js"
+import { BlockStore, DepotBlockStore } from "./DepotBlockStore.js"
 import { BaseFile } from "../base/file.js"
 import { Metadata } from "../metadata.js"
 
@@ -69,14 +69,14 @@ export class PublicRootWasm implements UnixTree, Puttable {
 
   static async empty(dependents: Dependents): Promise<PublicRootWasm> {
     await loadWasm(dependents)
-    const store = new IpfsBlockStore(dependents.depot)
+    const store = new DepotBlockStore(dependents.depot)
     const root = new PublicDirectory(new Date())
     return new PublicRootWasm(dependents, root, store, false)
   }
 
   static async fromCID(dependents: Dependents, cid: CID): Promise<PublicRootWasm> {
     await loadWasm(dependents)
-    const store = new IpfsBlockStore(dependents.depot)
+    const store = new DepotBlockStore(dependents.depot)
     const root = await PublicDirectory.load(cid.bytes, store)
     return new PublicRootWasm(dependents, root, store, false)
   }

@@ -10,7 +10,7 @@ import * as Basic from "../basic.js"
 import { Links, HardLink, SimpleLinks } from "../../types.js"
 import { TreeInfo, FileInfo, Skeleton, PutDetails } from "./types.js"
 import { Metadata } from "../../metadata.js"
-import { decodeCID, isValue, Maybe } from "../../../common/index.js"
+import { decodeCID, encodeCID, isValue, Maybe } from "../../../common/index.js"
 
 
 export const putTree = async (
@@ -105,9 +105,20 @@ export const getValueFromLinks = async (
   const linkCID = links[ name ]?.cid
   if (!linkCID) return null
 
-  return DagCBOR.decode(
-    await Basic.getFile(depot, decodeCID(linkCID))
-  )
+  const file = await Basic.getFile(depot, decodeCID(linkCID))
+  const a = DagCBOR.decode(file)
+
+  let b
+
+  if (a instanceof Uint8Array) {
+    b = JSON.parse(Uint8arrays.toString(
+      a as Uint8Array, "utf8"
+    ))
+  } else {
+    b = a
+  }
+
+  return b
 }
 
 export const getAndCheckValue = async <T>(
@@ -144,6 +155,6 @@ export const checkValue = <T>(
 
 async function putAndMakeLink(depot: Depot.Implementation, name: string, val: Object): Promise<HardLink> {
   const bytes = Uint8arrays.fromString(JSON.stringify(val), "utf8")
-  const { cid, size } = await Basic.putFile(depot, bytes)
+  const { cid, size } = await Basic.putFile(depot, DagCBOR.encode(bytes))
   return Link.make(name, cid, true, size)
 }

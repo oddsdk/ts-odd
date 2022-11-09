@@ -1,24 +1,17 @@
 import * as uint8arrays from "uint8arrays"
 import { BlockCodec } from "multiformats/codecs/interface.js"
 import { CID } from "multiformats/cid"
+import { IPFS } from "ipfs-core-types"
 import { sha256 } from "multiformats/hashes/sha2"
 
-import * as Ipfs from "./ipfs/index.js"
 import { DirectoryItem, Implementation, PutResult } from "../implementation.js"
-
+import { Repo } from "ipfs-core/components/network.js"
 
 
 // 🛳
 
 
-export async function implementation(peersUrl: string, repoName: string): Promise<Implementation> {
-  const [ ipfs, repo ] = await Ipfs.nodeWithPkg(
-    await Ipfs.pkgFromCDN(Ipfs.DEFAULT_CDN_URL),
-    peersUrl,
-    repoName,
-    false
-  )
-
+export async function implementation(ipfs: IPFS, repo: Repo): Promise<Implementation> {
   return {
 
     // GET
@@ -56,7 +49,7 @@ export async function implementation(peersUrl: string, repoName: string): Promis
 
     putBlock: async (data: Uint8Array, codec: BlockCodec<number, any>): Promise<CID> => {
       const multihash = await sha256.digest(data)
-      const cid = new CID(1, codec.code, multihash, data)
+      const cid = CID.createV1(codec.code, multihash)
 
       await repo.blocks.put(
         cid,

@@ -1,7 +1,7 @@
 import { Implementation } from "../implementation.js"
 
 import * as FissionEndpoints from "../../../common/fission.js"
-import * as IPFS from "./ipfs.js"
+import * as IPFS from "./ipfs-default-pkg.js"
 
 
 // 🛳

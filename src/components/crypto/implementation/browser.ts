@@ -276,10 +276,6 @@ export async function implementation(
     writeKeyName,
   })
 
-  const withKeyStore = (func: Function) => {
-    return (...args: unknown[]) => func(ks, ...args)
-  }
-
   return {
     aes: {
       decrypt: aesDecrypt,
@@ -294,16 +290,16 @@ export async function implementation(
       sha256,
     },
     keystore: {
-      clearStore: withKeyStore(ksClearStore),
-      decrypt: withKeyStore(ksDecrypt),
-      exportSymmKey: withKeyStore(ksExportSymmKey),
-      getAlg: withKeyStore(ksGetAlg),
-      getUcanAlg: withKeyStore(ksGetUcanAlg),
-      importSymmKey: withKeyStore(ksImportSymmKey),
-      keyExists: withKeyStore(ksKeyExists),
-      publicExchangeKey: withKeyStore(ksPublicExchangeKey),
-      publicWriteKey: withKeyStore(ksPublicWriteKey),
-      sign: withKeyStore(ksSign),
+      clearStore: (...args) => ksClearStore(ks, ...args),
+      decrypt: (...args) => ksDecrypt(ks, ...args),
+      exportSymmKey: (...args) => ksExportSymmKey(ks, ...args),
+      getAlg: (...args) => ksGetAlg(ks, ...args),
+      getUcanAlg: (...args) => ksGetUcanAlg(ks, ...args),
+      importSymmKey: (...args) => ksImportSymmKey(ks, ...args),
+      keyExists: (...args) => ksKeyExists(ks, ...args),
+      publicExchangeKey: (...args) => ksPublicExchangeKey(ks, ...args),
+      publicWriteKey: (...args) => ksPublicWriteKey(ks, ...args),
+      sign: (...args) => ksSign(ks, ...args),
     },
     misc: {
       randomNumbers,

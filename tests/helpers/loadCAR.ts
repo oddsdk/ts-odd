@@ -1,6 +1,7 @@
 import * as fs from "fs"
-import { CarReader, CarWriter } from "@ipld/car"
+import { CarBlockIterator, CarReader } from "@ipld/car"
 import { CID } from "multiformats"
+import { depot, inMemoryDepot } from "./components.js"
 
 
 /**
@@ -8,10 +9,15 @@ import { CID } from "multiformats"
  */
 export async function loadCAR(filepath: string): Promise<{ roots: CID[] }> {
   const inStream = fs.createReadStream(filepath)
-  const reader = await CarReader.fromIterable(inStream)
+  const reader = await CarBlockIterator.fromIterable(inStream)
 
   try {
     const roots = await reader.getRoots()
+
+    for await (const { cid, bytes } of reader) {
+      inMemoryDepot[ cid.toString() ] = bytes
+    }
+
     return { roots }
   } finally {
     inStream.close()

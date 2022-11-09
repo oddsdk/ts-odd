@@ -3,7 +3,7 @@ import { CID } from "multiformats/cid"
 import { PBLink } from "@ipld/dag-pb"
 
 import { HardLink, SimpleLink } from "./types.js"
-import { decodeCID } from "../common/cid.js"
+import { decodeCID, encodeCID } from "../common/cid.js"
 
 
 type HasName = { name: string }
@@ -26,7 +26,7 @@ export const fromDAGLink = (link: PBLink): SimpleLink => {
 export const make = (name: string, cid: CID, isFile: boolean, size: number): HardLink => {
   return {
     name,
-    cid,
+    cid: encodeCID(cid),
     size,
     isFile
   }

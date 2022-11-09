@@ -15,7 +15,7 @@ import { Link, Links, NonEmptyPath, SoftLink, UpdateCallback } from "../types.js
 import { Maybe } from "../../common/index.js"
 import { DistinctivePath } from "../../path/index.js"
 import { Skeleton, SkeletonInfo, TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
-import { decodeCID } from "../../common/cid.js"
+import { decodeCID, encodeCID } from "../../common/cid.js"
 import { nextNonEmpty } from "../protocol/public/skeleton.js"
 
 import BaseTree from "../base/tree.js"
@@ -299,7 +299,7 @@ export class PublicTree extends BaseTree {
       name,
       link: LinkMod.make(name, cid, false, size),
       skeleton: {
-        cid,
+        cid: encodeCID(cid),
         metadata,
         userland,
         subSkeleton: skeleton,

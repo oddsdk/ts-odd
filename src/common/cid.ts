@@ -1,4 +1,6 @@
 import { CID } from "multiformats/cid"
+import { decode as decodeMultihash } from "multiformats/hashes/digest"
+import { hasProp, isNum, isObject } from "./type-checks.js"
 
 
 /**
@@ -16,17 +18,26 @@ export function decodeCID(val: CID | object | string): CID {
   const cid = CID.asCID(val)
   if (cid) return cid
 
-  if (typeof val === "string") return CID.parse(val as string)
+  if (typeof val === "string") return CID.parse(val)
   if (typeof val === "object" && "version" in val && "code" in val && "multihash" in val) {
     return CID.create(val.version, val.code, val.multihash)
   }
 
-  throw new Error(`Could not decode CID: ${val}`)
+  // Result of CID.toJSON()
+  if (typeof val === "object" && hasProp(val, "version") && val.version === 1 && hasProp(val, "code") && isNum(val.code) && hasProp(val, "hash") && isObject(val.hash) && Object.values(val.hash).every(isNum)) {
+    const multihash = decodeMultihash(new Uint8Array(
+      Object.values(val.hash) as number[]
+    ))
+
+    return CID.create(val.version, val.code, multihash)
+  }
+
+  throw new Error(`Could not decode CID: ${JSON.stringify(val)}`)
 }
 
 /**
  * Encode a CID as a string.
  */
 export function encodeCID(cid: CID | string): string {
-  return cid.toString()
+  return typeof cid === "string" ? cid : cid.toString()
 }

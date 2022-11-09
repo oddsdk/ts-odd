@@ -18,7 +18,7 @@ import { DEFAULT_AES_ALG } from "../protocol/basic.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { DecryptedNode, PrivateAddResult, PrivateFileInfo } from "../protocol/private/types.js"
 import { hasProp, isObject } from "../../common/type-checks.js"
-import { Maybe, decodeCID } from "../../common/index.js"
+import { Maybe, decodeCID, encodeCID } from "../../common/index.js"
 
 
 type ConstructorParams = {
@@ -90,7 +90,7 @@ export class PrivateFile extends BaseFile {
         key: Uint8arrays.toString(contentKey, "base64pad"),
         revision: 1,
         metadata: metadata.empty(true, versions.latest),
-        content: contentInfo.cid.toString()
+        content: encodeCID(contentInfo.cid)
       }
     })
   }
@@ -184,13 +184,12 @@ export class PrivateFile extends BaseFile {
     this.header = {
       ...this.header,
       revision: this.header.revision + 1,
-      content: contentInfo.cid.toString()
+      content: encodeCID(contentInfo.cid)
     }
     return this
   }
 
   async putDetailed(): Promise<PrivateAddResult> {
-    console.log(this.header.content)
     return protocol.priv.addNode(this.depot, this.crypto, this.mmpt, {
       ...this.header,
       metadata: metadata.updateMtime(this.header.metadata)

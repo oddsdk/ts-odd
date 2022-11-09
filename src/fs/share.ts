@@ -15,7 +15,7 @@ import * as ShareKey from "./protocol/shared/key.js"
 import { Branch, DirectoryPath } from "../path/index.js"
 import { SharedBy, ShareDetails } from "./types.js"
 import { SymmAlg } from "../components/crypto/implementation.js"
-import { decodeCID } from "../common/cid.js"
+import { decodeCID, encodeCID } from "../common/cid.js"
 import { didToPublicKey } from "../did/transformers.js"
 
 import BareTree from "./bare/tree.js"
@@ -111,7 +111,7 @@ export async function privateNode(
 
   // Create share payload
   const payload = DagCBOR.encode(ShareKey.payload({
-    entryIndexCid: indexResult.cid.toString(),
+    entryIndexCid: encodeCID(indexResult.cid),
     symmKey: index.key,
     symmKeyAlgo
   }))

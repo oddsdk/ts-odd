@@ -115,16 +115,14 @@ export async function linkDevice(
 
 
 export function implementation(dependents: Dependents): Implementation<Components> {
-  const withDependents = (func: Function) => (...args: unknown[]) => func(dependents, ...args)
-
   return {
     type: TYPE,
 
-    activate: withDependents(activate),
-    canDelegateAccount: withDependents(canDelegateAccount),
+    activate: activate,
+    canDelegateAccount: (...args) => canDelegateAccount(dependents, ...args),
     createChannel: () => { throw new Error("Not implemented") },
-    delegateAccount: withDependents(delegateAccount),
-    linkDevice: withDependents(linkDevice),
+    delegateAccount: (...args) => delegateAccount(dependents, ...args),
+    linkDevice: (...args) => linkDevice(dependents, ...args),
 
     // Have to be implemented properly by other implementations
     isUsernameValid: () => Promise.resolve(false),

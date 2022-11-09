@@ -4,6 +4,7 @@ import localforage from "localforage"
 import NodeFs from "fs"
 import NodePath from "path"
 
+import { BlockCodec, CID } from "multiformats"
 import { CryptoSystem, HashAlg, KeyUse } from "keystore-idb/types.js"
 import { default as KeystoreConfig } from "keystore-idb/config.js"
 import IDB from "keystore-idb/idb.js"
@@ -15,6 +16,7 @@ import * as Raw from "multiformats/codecs/raw"
 import { sha256 } from "multiformats/hashes/sha2"
 
 import * as Auth from "../../src/components/auth/implementation.js"
+import * as Crypto from "../../src/components/crypto/implementation.js"
 import * as Confidences from "../../src/components/confidences/implementation.js"
 import * as Depot from "../../src/components/depot/implementation.js"
 import * as Reference from "../../src/components/reference/implementation.js"
@@ -23,16 +25,17 @@ import * as Storage from "../../src/components/storage/implementation.js"
 import * as BaseReference from "../../src/components/reference/implementation/base.js"
 import * as BrowserCrypto from "../../src/components/crypto/implementation/browser.js"
 import * as ProperManners from "../../src/components/manners/implementation/base.js"
+import * as IpfsDepot from "../../src/components/depot/implementation/ipfs.js"
 import * as WnfsAuth from "../../src/components/auth/implementation/wnfs.js"
 
 import * as DID from "../../src/did/index.js"
 
-import { BlockCodec, CID } from "multiformats"
 import { Components } from "../../src/components.js"
 import { Configuration } from "../../src/configuration.js"
 import { Ucan } from "../../src/ucan/types.js"
 import { decodeCID, EMPTY_CID } from "../../src/common/cid.js"
 import { Storage as LocalForageStore } from "./localforage/in-memory-storage.js"
+import { createInMemoryIPFS } from "./in-memory-ipfs.js"
 
 
 // 🚀
@@ -51,7 +54,7 @@ export const configuration: Configuration = {
 // CRYPTO
 
 
-export async function createCryptoComponent() {
+export async function createCryptoComponent(): Promise<Crypto.Implementation> {
   const cfg = KeystoreConfig.normalize({
     type: CryptoSystem.RSA,
 
@@ -79,10 +82,6 @@ export async function createCryptoComponent() {
 
   const ks = new RSAKeyStore(cfg, store)
 
-  const withKeyStore = (func: Function) => {
-    return (...args: unknown[]) => func(ks, ...args)
-  }
-
   return {
     aes: {
       decrypt: BrowserCrypto.aesDecrypt,
@@ -97,16 +96,16 @@ export async function createCryptoComponent() {
       sha256: BrowserCrypto.sha256,
     },
     keystore: {
-      clearStore: withKeyStore(BrowserCrypto.ksClearStore),
-      decrypt: withKeyStore(BrowserCrypto.ksDecrypt),
-      exportSymmKey: withKeyStore(BrowserCrypto.ksExportSymmKey),
-      getAlg: withKeyStore(BrowserCrypto.ksGetAlg),
-      getUcanAlg: withKeyStore(BrowserCrypto.ksGetUcanAlg),
-      importSymmKey: withKeyStore(BrowserCrypto.ksImportSymmKey),
-      keyExists: withKeyStore(BrowserCrypto.ksKeyExists),
-      publicExchangeKey: withKeyStore(BrowserCrypto.ksPublicExchangeKey),
-      publicWriteKey: withKeyStore(BrowserCrypto.ksPublicWriteKey),
-      sign: withKeyStore(BrowserCrypto.ksSign),
+      clearStore: () => BrowserCrypto.ksClearStore(ks),
+      decrypt: (...args) => BrowserCrypto.ksDecrypt(ks, ...args),
+      exportSymmKey: (...args) => BrowserCrypto.ksExportSymmKey(ks, ...args),
+      getAlg: (...args) => BrowserCrypto.ksGetAlg(ks, ...args),
+      getUcanAlg: (...args) => BrowserCrypto.ksGetUcanAlg(ks, ...args),
+      importSymmKey: (...args) => BrowserCrypto.ksImportSymmKey(ks, ...args),
+      keyExists: (...args) => BrowserCrypto.ksKeyExists(ks, ...args),
+      publicExchangeKey: (...args) => BrowserCrypto.ksPublicExchangeKey(ks, ...args),
+      publicWriteKey: (...args) => BrowserCrypto.ksPublicWriteKey(ks, ...args),
+      sign: (...args) => BrowserCrypto.ksSign(ks, ...args),
     },
     misc: {
       randomNumbers: BrowserCrypto.randomNumbers,
@@ -129,7 +128,11 @@ const crypto = await createCryptoComponent()
 // DEPOT
 
 
-const inMemoryDepot: Record<string, Uint8Array> = {}
+// const [ ipfs, repo ] = await createInMemoryIPFS()
+// const depot: Depot.Implementation = await IpfsDepot.implementation(ipfs, repo)
+
+
+export const inMemoryDepot: Record<string, Uint8Array> = {}
 
 
 const depot: Depot.Implementation = {
@@ -155,7 +158,7 @@ const depot: Depot.Implementation = {
   // Keep data around
   putBlock: async (data: Uint8Array, codec: BlockCodec<number, any>) => {
     const multihash = await sha256.digest(data)
-    const cid = new CID(1, codec.code, multihash, data)
+    const cid = CID.createV1(codec.code, multihash)
 
     inMemoryDepot[ cid.toString() ] = data
 
@@ -165,7 +168,7 @@ const depot: Depot.Implementation = {
     // Not sure what the max size is here, this might not work.
     // Might need to use https://github.com/ipfs/js-ipfs-unixfs/tree/master/packages/ipfs-unixfs-importer instead.
     const multihash = await sha256.digest(data)
-    const cid = new CID(1, Raw.code, multihash, data)
+    const cid = CID.createV1(Raw.code, multihash)
 
     inMemoryDepot[ cid.toString() ] = data
 
@@ -237,7 +240,7 @@ const reference: Reference.Implementation = {
   ...baseReference,
 
   dataRoot: {
-    domain: () => { throw new Error("Not implemented") },
+    domain: () => "localhost",
     lookup: () => Promise.resolve(inMemoryReference.dataRoot),
     update: (cid: CID, proof: Ucan) => { inMemoryReference.dataRoot = cid; return Promise.resolve({ success: true }) }
   },
