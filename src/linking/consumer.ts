@@ -251,7 +251,7 @@ export const generateUserChallenge = async (
   const pin = Array.from(crypto.misc.randomNumbers({ amount: 6 })).map(n => n % 9)
   const iv = crypto.misc.randomNumbers({ amount: 16 })
 
-  const msg = crypto.aes.encrypt(
+  const msg = await crypto.aes.encrypt(
     Uint8arrays.fromString(
       JSON.stringify({
         did: await DID.ucan(crypto),
@@ -266,7 +266,7 @@ export const generateUserChallenge = async (
 
   const challenge = JSON.stringify({
     iv: Uint8arrays.toString(iv, "base64pad"),
-    msg
+    msg: Uint8arrays.toString(msg, "base64pad")
   })
 
   return { pin, challenge }

@@ -55,6 +55,8 @@ export type Implementation = {
     encrypt: (message: Uint8Array, publicKey: CryptoKey | Uint8Array) => Promise<Uint8Array>
     exportPublicKey: (key: CryptoKey) => Promise<Uint8Array>
     genKey: () => Promise<CryptoKeyPair>
+
+    // Used for write keys only
     verify: (message: Uint8Array, signature: Uint8Array, publicKey: CryptoKey | Uint8Array) => Promise<boolean>
   }
 }

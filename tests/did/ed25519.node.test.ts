@@ -19,7 +19,7 @@ describe("Ed25519 Signatures", () => {
       dependents: components,
       data: Uint8arrays.fromString(`${encodedHeader}.${encodedPayload}`, "utf8"),
       did: u.payload.iss,
-      signature: Uint8arrays.fromString(u.signature || "", "base64pad")
+      signature: Uint8arrays.fromString(u.signature || "", "base64url")
     })
 
     expect(isValid).toBe(true)
@@ -36,7 +36,7 @@ describe("Ed25519 Signatures", () => {
         Uint8arrays.fromString("11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo", "base64pad"),
         DID.KeyType.Edwards
       ),
-      signature: Uint8arrays.fromString(s[ 2 ], "base64pad")
+      signature: Uint8arrays.fromString(s[ 2 ], "base64url")
     })
 
     expect(isValid).toBe(true)

@@ -1,9 +1,10 @@
+import * as Uint8arrays from "uint8arrays"
 import * as fc from "fast-check"
+import { BloomFilter } from "fission-bloom-filters"
 import expect from "expect"
 
-import { BloomFilter } from "fission-bloom-filters"
-
 import * as namefilter from "./namefilter.js"
+import { crypto } from "../../../../tests/helpers/components.js"
 
 
 describe("hex bloom filter conversion", () => {
@@ -36,7 +37,7 @@ describe("bare filters", () => {
   it("a new filter with one entry has 16 bits set", async () => {
     fc.assert(
       fc.asyncProperty(fc.string({ minLength: 1 }), async key => {
-        const filter = await namefilter.createBare(key)
+        const filter = await namefilter.createBare(crypto, Uint8arrays.fromString(key, "utf8"))
 
         const bloomFilter = namefilter.fromHex(filter)
         const onesCount = countOnes(bloomFilter)
@@ -50,9 +51,9 @@ describe("bare filters", () => {
       fc.asyncProperty(fc.tuple(
         fc.string({ minLength: 1 }),
         fc.string({ minLength: 1 })
-      ), async ([first, second]) => {
-        let filter = await namefilter.createBare(first)
-        filter = await namefilter.addToBare(filter, second)
+      ), async ([ first, second ]) => {
+        let filter = await namefilter.createBare(crypto, Uint8arrays.fromString(first, "utf8"))
+        filter = await namefilter.addToBare(crypto, filter, Uint8arrays.fromString(second, "utf8"))
 
         const bloomFilter = namefilter.fromHex(filter)
         const onesCount = countOnes(bloomFilter)
@@ -69,9 +70,9 @@ describe("bare filters", () => {
       ), async keys => {
         const n = keys.length
 
-        let filter = await namefilter.createBare(keys[0])
+        let filter = await namefilter.createBare(crypto, Uint8arrays.fromString(keys[ 0 ], "utf8"))
         keys.slice(1).forEach(async key => {
-          filter = await namefilter.addToBare(filter, key)
+          filter = await namefilter.addToBare(crypto, filter, Uint8arrays.fromString(key, "utf8"))
         })
 
         const bloomFilter = namefilter.fromHex(filter)
@@ -90,8 +91,8 @@ describe("revision filters", () => {
         fc.string({ minLength: 1 }),
         fc.integer({ min: 1 }),
         async (key, revision) => {
-          const filter = await namefilter.createBare(key)
-          const revisionFilter = await namefilter.addRevision(filter, key, revision)
+          const filter = await namefilter.createBare(crypto, Uint8arrays.fromString(key, "utf8"))
+          const revisionFilter = await namefilter.addRevision(crypto, filter, Uint8arrays.fromString(key, "utf8"), revision)
 
           const bloomFilter = namefilter.fromHex(revisionFilter)
           const onesCount = countOnes(bloomFilter)
@@ -111,7 +112,7 @@ const countOnes = (filter: BloomFilter): number => {
   const arr = new Uint32Array(filter.toBytes())
   let count = 0
   for (let i = 0; i < arr.length; i++) {
-    count += bitCount32(arr[i])
+    count += bitCount32(arr[ i ])
   }
   return count
 }

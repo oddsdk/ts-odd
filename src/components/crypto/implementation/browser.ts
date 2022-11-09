@@ -3,6 +3,7 @@ import { webcrypto } from "one-webcrypto"
 import tweetnacl from "tweetnacl"
 
 import * as aes from "keystore-idb/aes/index.js"
+import * as keystoreIDB from "keystore-idb/constants.js"
 import { HashAlg, SymmAlg, SymmKeyLength } from "keystore-idb/types.js"
 import { RSAKeyStore } from "keystore-idb/rsa/index.js"
 import rsaOperations from "keystore-idb/rsa/index.js"
@@ -168,7 +169,7 @@ export function randomNumbers(options: { amount: number }): Uint8Array {
 
 // RSA
 // ---
-// Exchange keys only.
+// Exchange keys:
 
 
 export const RSA_ALGORITHM = "RSA-OAEP"
@@ -234,13 +235,26 @@ export function rsaGenKey(): Promise<CryptoKeyPair> {
   )
 }
 
+
+
+// RSA
+// ---
+// Write keys:
+
+
 export async function rsaVerify(message: Uint8Array, signature: Uint8Array, publicKey: CryptoKey | Uint8Array): Promise<boolean> {
   return rsaOperations.verify(
     message,
     signature,
     typeChecks.isCryptoKey(publicKey)
       ? publicKey
-      : await importRsaKey(publicKey, [ "verify" ]),
+      : await webcrypto.subtle.importKey(
+        "spki",
+        publicKey,
+        { name: keystoreIDB.RSA_WRITE_ALG, hash: RSA_HASHING_ALGORITHM },
+        false,
+        [ "verify" ]
+      ),
     8
   )
 }
@@ -299,7 +313,7 @@ export async function implementation(
       encrypt: rsaEncrypt,
       exportPublicKey: rsaExportPublicKey,
       genKey: rsaGenKey,
-      verify: rsaVerify
+      verify: rsaVerify,
     },
   }
 }

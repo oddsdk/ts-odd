@@ -191,7 +191,7 @@ export const generateSessionKey = async (
   })
 
   const iv = crypto.misc.randomNumbers({ amount: 16 })
-  const msg = crypto.aes.encrypt(
+  const msg = await crypto.aes.encrypt(
     Uint8arrays.fromString(Ucan.encode(u), "utf8"),
     sessionKey,
     Crypto.SymmAlg.AES_GCM,
@@ -285,7 +285,7 @@ export const delegateAccount = async (
   const message = JSON.stringify(delegation)
   const iv = crypto.misc.randomNumbers({ amount: 16 })
 
-  const msg = crypto.aes.encrypt(
+  const msg = await crypto.aes.encrypt(
     Uint8arrays.fromString(message, "utf8"),
     sessionKey,
     Crypto.SymmAlg.AES_GCM,
@@ -316,7 +316,7 @@ export const declineDelegation = async (
   const message = JSON.stringify({ linkStatus: "DENIED" })
   const iv = crypto.misc.randomNumbers({ amount: 16 })
 
-  const msg = crypto.aes.encrypt(
+  const msg = await crypto.aes.encrypt(
     Uint8arrays.fromString(message, "utf8"),
     sessionKey,
     Crypto.SymmAlg.AES_GCM,
@@ -325,7 +325,7 @@ export const declineDelegation = async (
 
   const delegationMessage = JSON.stringify({
     iv: Uint8arrays.toString(iv, "base64pad"),
-    msg
+    msg: Uint8arrays.toString(msg, "base64pad")
   })
 
   await finishDelegation(delegationMessage, false)

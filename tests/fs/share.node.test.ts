@@ -1,21 +1,17 @@
-import * as cbor from "@ipld/dag-cbor"
-import * as uint8arrays from "uint8arrays"
-import { SymmAlg } from "keystore-idb/types.js"
-
+import * as CBOR from "@ipld/dag-cbor"
+import * as Uint8arrays from "uint8arrays"
 import expect from "expect"
-import { getPublicKey } from "keystore-idb/rsa/index.js"
 
-import "../../src/setup/node.js"
+import * as PrivateCheck from "../../src/fs/protocol/private/types/check.js"
+import * as DID from "../../src/did/index.js"
+import * as Path from "../../src/path/index.js"
+import * as Protocol from "../../src/fs/protocol/index.js"
+import * as SharingKey from "../../src/fs/protocol/shared/key.js"
 
-import * as privateCheck from "../../src/fs/protocol/private/types/check.js"
-import * as crypto from "../../src/crypto/index.js"
-import * as did from "../../src/did/index.js"
-import * as pathing from "../../src/path.js"
-import * as protocol from "../../src/fs/protocol/index.js"
-import * as sharingKey from "../../src/fs/protocol/shared/key.js"
-
-import { Branch } from "../../src/path.js"
+import { Branch } from "../../src/path/index.js"
 import { KeyType } from "../../src/did/types.js"
+import { SymmAlg } from "../../src/components/crypto/implementation.js"
+import { components } from "../helpers/components.js"
 import { decodeCID } from "../../src/common/index.js"
 import { emptyFilesystem } from "../helpers/filesystem.js"
 
@@ -25,42 +21,43 @@ import PrivateTree from "../../src/fs/v1/PrivateTree.js"
 const wnfsWasmEnabled = process.env.WNFS_WASM != null
 const itSkipInWasm = wnfsWasmEnabled ? it.skip : it
 
+
 describe("the filesystem", () => {
 
-  itSkipInWasm("creates shares", async function() {
+  itSkipInWasm("creates shares", async function () {
     const fs = await emptyFilesystem()
     const counter = 12345678
 
     await fs.root.setSharedCounter(counter)
 
     // Test items
-    const C = "🕵️‍♀️"
-    const F = "🍻"
+    const C = Uint8arrays.fromString("🕵️‍♀️", "utf8")
+    const F = Uint8arrays.fromString("🍻", "utf8")
 
-    await fs.write(pathing.file(Branch.Private, "a", "b", "c.txt"), C)
-    await fs.write(pathing.file(Branch.Private, "a", "d", "e", "f.txt"), F)
+    await fs.write(Path.file(Branch.Private, "a", "b", "c.txt"), C)
+    await fs.write(Path.file(Branch.Private, "a", "d", "e", "f.txt"), F)
 
     // Test identifiers
-    const exchangeKeyPair = await crypto.rsa.genKey()
-    const exchangePubKey = await getPublicKey(exchangeKeyPair)
-    const exchangeDID = did.publicKeyToDid(exchangePubKey, KeyType.RSA)
+    const exchangeKeyPair = await components.crypto.rsa.genKey()
+    const exchangePubKey = await components.crypto.rsa.exportPublicKey(exchangeKeyPair.publicKey)
+    const exchangeDID = DID.publicKeyToDid(exchangePubKey, KeyType.RSA)
     if (!exchangeKeyPair.privateKey) throw new Error("Missing private key in exchange key-pair")
 
-    const senderKeyPair = await crypto.rsa.genKey()
-    const senderPubKey = await getPublicKey(senderKeyPair)
-    const senderDID = did.publicKeyToDid(senderPubKey, KeyType.RSA)
+    const senderKeyPair = await components.crypto.rsa.genKey()
+    const senderPubKey = await components.crypto.rsa.exportPublicKey(senderKeyPair.publicKey)
+    const senderDID = DID.publicKeyToDid(senderPubKey, KeyType.RSA)
 
     // Create the `/shared` entries
-    const itemC = await fs.get(pathing.file(Branch.Private, "a", "b", "c.txt"))
-    const itemE = await fs.get(pathing.directory(Branch.Private, "a", "d", "e"))
+    const itemC = await fs.get(Path.file(Branch.Private, "a", "b", "c.txt"))
+    const itemE = await fs.get(Path.directory(Branch.Private, "a", "d", "e"))
 
     if (!PrivateFile.instanceOf(itemC)) throw new Error("Not a PrivateFile")
     if (!PrivateTree.instanceOf(itemE)) throw new Error("Not a PrivateTree")
 
     await fs.sharePrivate(
       [
-        pathing.file(Branch.Private, "a", "b", "c.txt"),
-        pathing.directory(Branch.Private, "a", "d", "e")
+        Path.file(Branch.Private, "a", "b", "c.txt"),
+        Path.directory(Branch.Private, "a", "d", "e")
       ],
       {
         sharedBy: { rootDid: senderDID, username: "anonymous" },
@@ -69,39 +66,48 @@ describe("the filesystem", () => {
     )
 
     // Test
-    const shareKey = await sharingKey.create({
+    const shareKey = await SharingKey.create(components.crypto, {
       counter: counter,
       recipientExchangeDid: exchangeDID,
       senderRootDid: senderDID
     })
 
-    const createdLink = fs.root.sharedLinks[shareKey]
-    const sharePayload = await protocol.basic.getFile(decodeCID(createdLink.cid))
-    const decryptedPayload: Record<string, any> = await crypto.rsa.decrypt(
+    const createdLink = fs.root.sharedLinks[ shareKey ]
+    const sharePayload = await Protocol.basic.getFile(components.depot, decodeCID(createdLink.cid))
+    const decryptedPayload: Record<string, any> = await components.crypto.rsa.decrypt(
       sharePayload,
       exchangeKeyPair.privateKey
-    ).then(a => cbor.decode(
+    ).then(a => CBOR.decode(
       new Uint8Array(a)
     ))
 
-    const entryIndexInfo = JSON.parse(new TextDecoder().decode(await crypto.aes.decrypt(
-      await protocol.basic.getFile(decodeCID(decryptedPayload.cid)),
-      uint8arrays.toString(decryptedPayload.key, "base64pad"),
-      SymmAlg.AES_GCM
-    )))
+    const entryIndexInfo = JSON.parse(
+      new TextDecoder().decode(
+        await components.crypto.aes.decrypt(
+          await Protocol.basic.getFile(components.depot, decodeCID(decryptedPayload.cid)),
+          decryptedPayload.key,
+          SymmAlg.AES_GCM
+        )
+      )
+    )
 
-    if (!privateCheck.isPrivateTreeInfo(entryIndexInfo)) {
+    if (!PrivateCheck.isPrivateTreeInfo(entryIndexInfo)) {
       throw new Error("Entry index is not a PrivateTree")
     }
 
     const entryIndex = await PrivateTree.fromInfo(
+      components.crypto,
+      components.depot,
+      components.manners,
+      components.reference,
+
       fs.root.mmpt,
       decryptedPayload.symmKey,
       entryIndexInfo
     )
 
-    const resultC: any = entryIndex.header.links["c.txt"]
-    const resultE: any = entryIndex.header.links["e"]
+    const resultC: any = entryIndex.header.links[ "c.txt" ]
+    const resultE: any = entryIndex.header.links[ "e" ]
 
     expect(resultC.privateName).toEqual(await itemC.getName())
     expect(resultE.privateName).toEqual(await itemE.getName())

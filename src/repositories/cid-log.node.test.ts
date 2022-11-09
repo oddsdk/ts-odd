@@ -4,14 +4,14 @@ import { CID } from "multiformats/cid"
 import { sha256 } from "multiformats/hashes/sha2"
 import expect from "expect"
 
-import * as cidLog from "./cid-log.js"
+import * as CIDLog from "./cid-log.js"
+import { storage } from "../../tests/helpers/components.js"
 
 
-async function generateCids(data: Uint8Array[]): Promise<string[]> {
+async function generateCids(data: Uint8Array[]): Promise<CID[]> {
   const promisedCids = data.map(async bytes => {
     const mhash = await sha256.digest(bytes)
-    const cid = CID.createV1(dagPB.code, mhash)
-    return cid.toString()
+    return CID.createV1(dagPB.code, mhash)
   })
   return Promise.all(promisedCids)
 }
@@ -19,10 +19,14 @@ async function generateCids(data: Uint8Array[]): Promise<string[]> {
 
 describe("cid-log", () => {
 
-  it("gets an empty log when key is missing", async () => {
-    await storage.clear()
+  let cidLog: CIDLog.Repo
 
-    const log = await cidLog.get()
+  before(() => {
+    cidLog = CIDLog.create({ storage })
+  })
+
+  it("gets an empty log when key is missing", async () => {
+    const log = await cidLog.getAll()
     expect(log).toEqual([])
   })
 
@@ -30,10 +34,10 @@ describe("cid-log", () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(fc.uint8Array({ maxLength: 100 }), { maxLength: 10 }), async data => {
-          await storage.clear()
+          await cidLog.clear()
 
           // Generate CIDs from test data
-          const cids: string[] = await generateCids(data)
+          const cids: CID[] = await generateCids(data)
 
           // Sequence add operations to keep the CIDs in order
           // Start from the right because add prepends cids
@@ -42,7 +46,7 @@ describe("cid-log", () => {
           }, Promise.resolve())
 
           // Get the log after all CIDs have been added
-          const log = await doneAdding.then(async () => await cidLog.get())
+          const log = await doneAdding.then(async () => await cidLog.getAll())
 
           expect(log).toEqual(cids)
         })
@@ -53,9 +57,9 @@ describe("cid-log", () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(fc.uint8Array({ minLength: 1, maxLength: 100 }), { minLength: 1, maxLength: 10 }), async data => {
-          await storage.clear()
+          await cidLog.clear()
 
-          const cids: string[] = await generateCids(data)
+          const cids: CID[] = await generateCids(data)
           const doneAdding = cids.reduceRight(async (acc, cid) => {
             return acc.then(() => cidLog.add(cid))
           }, Promise.resolve())
@@ -64,7 +68,7 @@ describe("cid-log", () => {
           const cid = cids[ idx ]
 
           // Get the index of test cid after all CIDs have been added
-          const index = await doneAdding.then(async () => await cidLog.index(cid.toString()))
+          const index = await doneAdding.then(async () => await cidLog.indexOf(cid))
 
           expect(index).toEqual([ idx, data.length ])
         })
@@ -75,9 +79,9 @@ describe("cid-log", () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(fc.uint8Array({ maxLength: 100 }), { minLength: 1, maxLength: 10 }), async data => {
-          await storage.clear()
+          await cidLog.clear()
 
-          const cids: string[] = await generateCids(data)
+          const cids: CID[] = await generateCids(data)
           const doneAdding = cids.reduceRight(async (acc, cid) => {
             return acc.then(() => cidLog.add(cid))
           }, Promise.resolve())
@@ -96,15 +100,15 @@ describe("cid-log", () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(fc.uint8Array({ maxLength: 100 }), { minLength: 1001, maxLength: 1003 }), async data => {
-          await storage.clear()
+          await cidLog.clear()
 
-          const cids: string[] = await generateCids(data)
+          const cids: CID[] = await generateCids(data)
           const doneAdding = cids.reduceRight(async (acc, cid) => {
             return acc.then(() => cidLog.add(cid))
           }, Promise.resolve())
 
           // Get the log after all CIDs have been added
-          const log = await doneAdding.then(async () => await cidLog.get())
+          const log = await doneAdding.then(async () => await cidLog.getAll())
 
           // Expect only the newest 1000 CIDs to be left
           expect(log).toEqual(cids.slice(0, 1000))
@@ -117,9 +121,9 @@ describe("cid-log", () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(fc.uint8Array({ maxLength: 100 }), { maxLength: 5 }), async data => {
-          await storage.clear()
+          await cidLog.clear()
 
-          const cids: string[] = await generateCids(data)
+          const cids: CID[] = await generateCids(data)
           const doneAdding = cids.reduceRight(async (acc, cid) => {
             return acc.then(() => cidLog.add(cid))
           }, Promise.resolve())
@@ -127,7 +131,7 @@ describe("cid-log", () => {
           // Clear the log and get it after all CIDs have been added
           const log = await doneAdding.then(async () => {
             await cidLog.clear()
-            return cidLog.get()
+            return cidLog.getAll()
           })
 
           expect(log).toEqual([])

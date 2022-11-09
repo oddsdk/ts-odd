@@ -1,26 +1,23 @@
-import expect from "expect"
 import * as fc from "fast-check"
-import { webcrypto } from "one-webcrypto"
-import * as uint8arrays from "uint8arrays"
-import aes from "keystore-idb/aes/index.js"
-import { SymmAlg } from "keystore-idb/types.js"
-import utils from "keystore-idb/utils.js"
+import * as Uint8arrays from "uint8arrays"
+import expect from "expect"
 
-import * as did from "../../../src/did/index.js"
+import * as DID from "../did/index.js"
 import * as producer from "./producer.js"
-import * as ucan from "../../ucan/index.js"
-import { BASE_IMPLEMENTATION } from "../implementation/base.js"
-import { setImplementations } from "../../setup.js"
+import * as ucan from "../ucan/index.js"
+import { SymmAlg } from "../components/crypto/implementation.js"
+import { components, crypto } from "../../tests/helpers/components.js"
+
 
 describe("generate session key", async () => {
-  let DID: string
+  let did: string
 
   beforeEach(async () => {
-    DID = await did.ucan()
+    did = await DID.ucan(crypto)
   })
 
   it("generates a session key and a session key message", async () => {
-    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(DID)
+    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(crypto, did)
 
     expect(sessionKey).toBeDefined()
     expect(sessionKey).not.toBeNull()
@@ -29,23 +26,23 @@ describe("generate session key", async () => {
   })
 
   it("generates a session key message that can be decrypted with the session key", async () => {
-    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(DID)
+    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(crypto, did)
     const { iv, msg } = JSON.parse(sessionKeyMessage)
 
     await expect(aesDecrypt(msg, sessionKey, iv)).resolves.toBeDefined()
   })
 
   it("generates a valid closed UCAN", async () => {
-    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(DID)
+    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(crypto, did)
     const { iv, msg } = JSON.parse(sessionKeyMessage)
     const encodedUcan = await aesDecrypt(msg, sessionKey, iv)
     const decodedUcan = ucan.decode(encodedUcan)
 
-    expect(await ucan.isValid(decodedUcan)).toBe(true)
+    expect(await ucan.isValid(crypto, decodedUcan)).toBe(true)
   })
 
   it("generates a closed UCAN without any potency", async () => {
-    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(DID)
+    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(crypto, did)
     const { iv, msg } = JSON.parse(sessionKeyMessage)
     const encodedUcan = await aesDecrypt(msg, sessionKey, iv)
     const decodedUcan = ucan.decode(encodedUcan)
@@ -54,12 +51,12 @@ describe("generate session key", async () => {
   })
 
   it("generates a closed UCAN with the session key in its facts", async () => {
-    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(DID)
+    const { sessionKey, sessionKeyMessage } = await producer.generateSessionKey(crypto, did)
     const { iv, msg } = JSON.parse(sessionKeyMessage)
     const encodedUcan = await aesDecrypt(msg, sessionKey, iv)
     const decodedUcan = ucan.decode(encodedUcan)
-    const sessionKeyFromFact = decodedUcan.payload.fct[0] && decodedUcan.payload.fct[0].sessionKey
-    const exportedSessionKey = await aes.exportKey(sessionKey)
+    const sessionKeyFromFact = decodedUcan.payload.fct[ 0 ] && decodedUcan.payload.fct[ 0 ].sessionKey
+    const exportedSessionKey = Uint8arrays.toString(await crypto.aes.exportKey(sessionKey), "base64pad")
 
     expect(sessionKeyFromFact).not.toBe(null)
     expect(exportedSessionKey === sessionKeyFromFact).toBe(true)
@@ -67,14 +64,14 @@ describe("generate session key", async () => {
 })
 
 describe("handle user challenge", async () => {
-  let DID: string
+  let did: string
   let sessionKey: CryptoKey
   let sessionKeyNoise: CryptoKey
 
   beforeEach(async () => {
-    DID = await did.ucan()
-    sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
-    sessionKeyNoise = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
+    did = await DID.ucan(crypto)
+    sessionKey = await crypto.aes.genKey(SymmAlg.AES_GCM)
+    sessionKeyNoise = await crypto.aes.genKey(SymmAlg.AES_GCM)
   })
 
   it("challenge message pin and audience match original pin and audience", async () => {
@@ -82,11 +79,11 @@ describe("handle user challenge", async () => {
       fc.asyncProperty(
         fc.record({
           pin: fc.uint8Array({ min: 0, max: 9, minLength: 6, maxLength: 6 }).map(arr => Array.from(arr)),
-          iv: fc.uint8Array({ minLength: 16, maxLength: 16 }).map(arr => arr.buffer)
+          iv: fc.uint8Array({ minLength: 16, maxLength: 16 })
         }), async ({ pin, iv }) => {
           const msg = await aesEncrypt(JSON.stringify({ did: DID, pin }), sessionKey, iv)
-          const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
-          const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
+          const challenge = JSON.stringify({ iv: Uint8arrays.toString(iv, "base64pad"), msg })
+          const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKey, challenge)
 
           if (!userChallengeResult.ok) {
             expect(userChallengeResult.ok).toBe(true)
@@ -100,13 +97,13 @@ describe("handle user challenge", async () => {
   })
 
   it("returns a warning when it receives a temporary DID", async () => {
-    const temporaryDID = await did.ucan()
+    const temporaryDID = await DID.ucan(crypto)
 
     // A producer may be be partway through linking when another temporary DID arrives. This event will
     // trigger a warning but will otherwise ignore the message.
-    const userChallengeResult = await producer.handleUserChallenge(sessionKey, temporaryDID)
+    const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKey, temporaryDID)
 
-    let err = null
+    let err: Error | null = null
     if (userChallengeResult.ok === false) { err = userChallengeResult.error }
 
     expect(userChallengeResult.ok).toBe(false)
@@ -114,13 +111,13 @@ describe("handle user challenge", async () => {
   })
 
   it("returns a warning when the message received has the wrong shape", async () => {
-    const pin = [0, 0, 0, 0, 0, 0]
-    const iv = utils.randomBuf(16)
+    const pin = [ 0, 0, 0, 0, 0, 0 ]
+    const iv = crypto.misc.randomNumbers({ amount: 16 })
     const msg = await aesEncrypt(JSON.stringify({ did: DID, pin }), sessionKey, iv)
     const challenge = JSON.stringify({ msg }) // initialization vector missing
-    const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
+    const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKey, challenge)
 
-    let err = null
+    let err: Error | null = null
     if (userChallengeResult.ok === false) { err = userChallengeResult.error }
 
     expect(userChallengeResult.ok).toBe(false)
@@ -128,12 +125,12 @@ describe("handle user challenge", async () => {
   })
 
   it("returns an error when pin is missing", async () => {
-    const iv = utils.randomBuf(16)
+    const iv = crypto.misc.randomNumbers({ amount: 16 })
     const msg = await aesEncrypt(JSON.stringify({ did: DID }), sessionKey, iv) // pin missing
-    const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
-    const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
+    const challenge = JSON.stringify({ iv: Uint8arrays.toString(iv, "base64pad"), msg })
+    const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKey, challenge)
 
-    let err = null
+    let err: Error | null = null
     if (userChallengeResult.ok === false) { err = userChallengeResult.error }
 
     expect(userChallengeResult.ok).toBe(false)
@@ -141,13 +138,13 @@ describe("handle user challenge", async () => {
   })
 
   it("returns an error when audience DID is missing", async () => {
-    const pin = [0, 0, 0, 0, 0, 0]
-    const iv = utils.randomBuf(16)
+    const pin = [ 0, 0, 0, 0, 0, 0 ]
+    const iv = crypto.misc.randomNumbers({ amount: 16 })
     const msg = await aesEncrypt(JSON.stringify({ pin }), sessionKey, iv) // DID missing
-    const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
-    const userChallengeResult = await producer.handleUserChallenge(sessionKey, challenge)
+    const challenge = JSON.stringify({ iv: Uint8arrays.toString(iv, "base64pad"), msg })
+    const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKey, challenge)
 
-    let err = null
+    let err: Error | null = null
     if (userChallengeResult.ok === false) { err = userChallengeResult.error }
 
     expect(userChallengeResult.ok).toBe(false)
@@ -155,13 +152,13 @@ describe("handle user challenge", async () => {
   })
 
   it("ignores challenge messages it cannot decrypt", async () => {
-    const pin = [0, 0, 0, 0, 0, 0]
-    const iv = utils.randomBuf(16)
+    const pin = [ 0, 0, 0, 0, 0, 0 ]
+    const iv = crypto.misc.randomNumbers({ amount: 16 })
     const msg = await aesEncrypt(JSON.stringify({ did: DID, pin }), sessionKey, iv)
-    const challenge = JSON.stringify({ iv: utils.arrBufToBase64(iv), msg })
-    const userChallengeResult = await producer.handleUserChallenge(sessionKeyNoise, challenge)
+    const challenge = JSON.stringify({ iv: Uint8arrays.toString(iv, "base64pad"), msg })
+    const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKeyNoise, challenge)
 
-    let err = null
+    let err: Error | null = null
     if (userChallengeResult.ok === false) { err = userChallengeResult.error }
 
     expect(userChallengeResult.ok).toBe(false)
@@ -174,6 +171,7 @@ describe("delegate account", async () => {
   let sessionKey: CryptoKey
   let accountDelegated: boolean | null
   let approvedMessage: boolean | null
+
   const username = "snakecase"
   const audience = "audie"
 
@@ -183,14 +181,12 @@ describe("delegate account", async () => {
 
   const finishDelegation = async (delegationMessage: string, approved: boolean): Promise<void> => {
     const { iv, msg } = JSON.parse(delegationMessage)
-    const message = uint8arrays.toString(
-      await webcrypto.subtle.decrypt(
-        {
-          name: "AES-GCM",
-          iv: uint8arrays.fromString(iv, "base64"),
-        },
+    const message = Uint8arrays.toString(
+      await crypto.aes.decrypt(
+        Uint8arrays.fromString(msg, "base64pad"),
         sessionKey,
-        utils.base64ToArrBuf(msg),
+        SymmAlg.AES_GCM,
+        Uint8arrays.fromString(iv, "base64")
       ),
       "utf8"
     )
@@ -205,29 +201,22 @@ describe("delegate account", async () => {
     }
   }
 
-  before(async () => {
-    setImplementations({
-      auth: {
-        ...BASE_IMPLEMENTATION.auth,
-        delegateAccount
-      }
-    })
-  })
+  const customAuthComponent = { ...components.auth, delegateAccount }
 
   beforeEach(async () => {
-    sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
+    sessionKey = await crypto.aes.genKey(SymmAlg.AES_GCM)
     accountDelegated = null
     approvedMessage = null
   })
 
   it("delegates an account", async () => {
-    await producer.delegateAccount(sessionKey, username, audience, finishDelegation)
+    await producer.delegateAccount(customAuthComponent, crypto, sessionKey, username, audience, finishDelegation)
 
     expect(accountDelegated).toBe(true)
   })
 
   it("calls finish delegation with an approved message", async () => {
-    await producer.delegateAccount(sessionKey, username, audience, finishDelegation)
+    await producer.delegateAccount(customAuthComponent, crypto, sessionKey, username, audience, finishDelegation)
 
     expect(approvedMessage).toBe(true)
   })
@@ -252,19 +241,19 @@ describe("decline delegation", async () => {
   }
 
   beforeEach(async () => {
-    sessionKey = await aes.makeKey({ alg: SymmAlg.AES_GCM, length: 256 })
+    sessionKey = await crypto.aes.genKey(SymmAlg.AES_GCM)
     accountDelegated = null
     approvedMessage = null
   })
 
   it("declines to delegate an account", async () => {
-    await producer.declineDelegation(sessionKey, finishDelegation)
+    await producer.declineDelegation(crypto, sessionKey, finishDelegation)
 
     expect(accountDelegated).toBe(false)
   })
 
   it("calls finish delegation with a declined message", async () => {
-    await producer.declineDelegation(sessionKey, finishDelegation)
+    await producer.declineDelegation(crypto, sessionKey, finishDelegation)
 
     expect(approvedMessage).toBe(false)
   })
@@ -272,25 +261,26 @@ describe("decline delegation", async () => {
 
 
 async function aesEncrypt(payload: string, key: CryptoKey, ivStr: string | ArrayBuffer): Promise<string> {
-  const iv = typeof ivStr === "string" ? uint8arrays.fromString(ivStr, "base64") : ivStr
-  return utils.arrBufToBase64(
-    await webcrypto.subtle.encrypt(
-      { name: "AES-GCM", iv },
+  const iv = typeof ivStr === "string" ? Uint8arrays.fromString(ivStr, "base64") : ivStr
+
+  return Uint8arrays.toString(
+    await crypto.aes.encrypt(
+      Uint8arrays.fromString(payload, "utf8"),
       key,
-      uint8arrays.fromString(payload, "utf8")
-    )
+      SymmAlg.AES_GCM,
+      new Uint8Array(iv)
+    ),
+    "base64pad"
   )
 }
 
 async function aesDecrypt(cipher: string, key: CryptoKey, ivStr: string): Promise<string> {
-  return uint8arrays.toString(
-    await webcrypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: uint8arrays.fromString(ivStr, "base64"),
-      },
+  return Uint8arrays.toString(
+    await crypto.aes.decrypt(
+      Uint8arrays.fromString(cipher, "base64pad"),
       key,
-      utils.base64ToArrBuf(cipher),
+      SymmAlg.AES_GCM,
+      Uint8arrays.fromString(ivStr, "base64")
     ),
     "utf8"
   )
