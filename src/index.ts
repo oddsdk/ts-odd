@@ -147,8 +147,12 @@ export const auth = {
   /**
    * A standalone authentication system that uses the browser's Web Crypto API
    * to create an identity based on a RSA key-pair.
+   *
+   * NOTE: This uses a Fission server to register an account (DID).
+   *       Check out the `wnfs` and `base` auth implementations if
+   *       you want to build something without the Fission infrastructure.
    */
-  async webCrypto(
+  async fissionWebCrypto(
     config: Configuration,
     options: {
       disableWnfs?: boolean
@@ -464,7 +468,7 @@ export const compositions = {
     const r = await reference.fission(config, { crypto, manners, staging, storage })
     const d = await depot.fissionIPFS(config, { staging })
     const c = await confidences.fissionLobby(config, { depot: d, crypto, staging })
-    const a = await auth.webCrypto(config, { reference: r, crypto, disableWnfs, manners, staging, storage })
+    const a = await auth.fissionWebCrypto(config, { reference: r, crypto, disableWnfs, manners, staging, storage })
 
     return {
       auth: [ a ],
