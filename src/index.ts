@@ -56,6 +56,7 @@ import * as BaseReference from "./components/reference/implementation/base.js"
 import * as BrowserCrypto from "./components/crypto/implementation/browser.js"
 import * as BrowserStorage from "./components/storage/implementation/browser.js"
 import * as FissionIpfsProduction from "./components/depot/implementation/fission-ipfs-production.js"
+import * as FissionIpfsStaging from "./components/depot/implementation/fission-ipfs-staging.js"
 import * as FissionAuthBaseProduction from "./components/auth/implementation/fission-base-production.js"
 import * as FissionAuthBaseStaging from "./components/auth/implementation/fission-base-staging.js"
 import * as FissionAuthWnfsProduction from "./components/auth/implementation/fission-wnfs-production.js"
@@ -64,6 +65,7 @@ import * as FissionLobbyBase from "./components/confidences/implementation/fissi
 import * as FissionLobbyProduction from "./components/confidences/implementation/fission-lobby-production.js"
 import * as FissionLobbyStaging from "./components/confidences/implementation/fission-lobby-staging.js"
 import * as FissionReferenceProduction from "./components/reference/implementation/fission-production.js"
+import * as FissionReferenceStaging from "./components/reference/implementation/fission-staging.js"
 import * as ProperManners from "./components/manners/implementation/base.js"
 
 
@@ -99,17 +101,21 @@ export type AuthenticationStrategies = Record<
 
 
 /**
- * Check if we're authenticated and initiate the user's file system if
- * authenticated (can be disabled).
+ * Build a webnative program.
  *
- * See `loadFileSystem` if you want to load the user's file system yourself.
+ * This will give you a `Program` object which has the following properties:
+ * - `session`, a `Session` object if a session was created before.
+ * - `auth`, a means to control the various auth strategies you configured. Use this to create sessions. Read more about auth components in the toplevel `auth` object documention.
+ * - `confidences`, a means to control confidences. Use this to collect & request confidences, and to create a session based on them. Read more about confidences in the toplevel `confidences` object documentation.
+ * - `components`, your full set of `Components`.
  *
+ * See `assemble` for more information.
  */
 export async function program(settings: Partial<Components> & Configuration): Promise<Program> {
   if (!settings) throw new Error("Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter")
 
   const components = await gatherComponents(settings)
-  return assemble(components, settings)
+  return assemble(settings, components)
 }
 
 
@@ -120,7 +126,7 @@ export async function program(settings: Partial<Components> & Configuration): Pr
 /**
  * Predefined auth configurations.
  *
- * Note that these go hand in hand with the "reference" and "depot" components.
+ * This component goes hand in hand with the "reference" and "depot" components.
  * The "auth" component registers a DID and the reference looks it up.
  * The reference component also manages the "data root", the pointer to an account's entire filesystem.
  * Then the depot component comes in which is responsible to get the data from, and to the other side.
@@ -133,19 +139,34 @@ export async function program(settings: Partial<Components> & Configuration): Pr
  *
  * NOTE: This uses all the default components as the dependencies for the auth component.
  *       If you're, for example, using a non-default storage component, you'll want to
- *       import the auth module and produce an implementation yourself. That way you can
- *       pass in your custom storage component.
+ *       pass that in here as a parameter as well.
+ *
+ *       Dependents: crypto, manners, reference, storage.
  */
 export const auth = {
   /**
    * A standalone authentication system that uses the browser's Web Crypto API
    * to create an identity based on a RSA key-pair.
    */
-  async webCrypto(config: Configuration, { disableWnfs, staging }: { disableWnfs: boolean, staging: boolean }): Promise<Auth.Implementation<Components>> {
-    const manners = defaultMannersComponent(config)
-    const crypto = await defaultCryptoComponent(config.appInfo)
-    const storage = defaultStorageComponent(config.appInfo)
-    const reference = defaultReferenceComponent({ crypto, manners, storage })
+  async webCrypto(
+    config: Configuration,
+    options: {
+      disableWnfs?: boolean
+      staging?: boolean
+
+      // Dependents
+      crypto?: Crypto.Implementation
+      manners?: Manners.Implementation
+      reference?: Reference.Implementation
+      storage?: Storage.Implementation
+    } = {}
+  ): Promise<Auth.Implementation<Components>> {
+    const { disableWnfs, staging } = options
+
+    const manners = options.manners || defaultMannersComponent(config)
+    const crypto = options.crypto || await defaultCryptoComponent(config.appInfo)
+    const storage = options.storage || defaultStorageComponent(config.appInfo)
+    const reference = options.reference || defaultReferenceComponent({ crypto, manners, storage })
 
     if (disableWnfs) {
       if (staging) return FissionAuthBaseStaging.implementation({ crypto, reference, storage })
@@ -158,14 +179,17 @@ export const auth = {
 }
 
 /**
+ * Predefined confidences configurations.
+ *
  * If you want partial read and/or write access to the filesystem you'll want
  * a "confidences" component. This component is responsible for requesting
  * and receiving UCANs, read keys and namefilters from other sources to enable this.
  *
  * NOTE: This uses all the default components as the dependencies for the confidences component.
  *       If you're, for example, using a non-default crypto component, you'll want to
- *       import the confidences module and produce an implementation yourself. That way you can
- *       pass in your custom crypto component.
+ *       pass that in here as a parameter as well.
+ *
+ *       Dependents: crypto, depot.
  */
 export const confidences = {
   /**
@@ -173,12 +197,88 @@ export const confidences = {
    * Your app is redirect to the lobby where the user can create an account or link a device,
    * and then request permissions to the user for reading or write to specific parts of the filesystem.
    */
-  async fissionLobby(config: Configuration, { staging }: { staging?: boolean }) {
-    const crypto = await defaultCryptoComponent(config.appInfo)
-    const depot = await defaultDepotComponent(config.appInfo)
+  async fissionLobby(
+    config: Configuration,
+    options: {
+      staging?: boolean
+
+      // Dependents
+      crypto?: Crypto.Implementation
+      depot?: Depot.Implementation
+    } = {}
+  ): Promise<ConfidencesImpl.Implementation> {
+    const { staging } = options
+
+    const crypto = options.crypto || await defaultCryptoComponent(config.appInfo)
+    const depot = options.depot || await defaultDepotComponent(config.appInfo)
 
     if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
     return FissionLobbyProduction.implementation({ crypto, depot })
+  }
+}
+
+/**
+ * Predefined depot configurations.
+ *
+ * The depot component gets data in and out your program.
+ * For example, say I want to load and then update a file system.
+ * The depot will get that file system data for me,
+ * and when updating it, bring the data to where it needs to be.
+ */
+export const depot = {
+  /**
+   * This depot uses IPFS and the Fission servers.
+   * The data is transferred to the Fission IPFS node,
+   * where all of your encrypted and public data lives.
+   * Other webnative programs with this depot fetch the data from there.
+   */
+  async fissionIPFS(
+    config: Configuration,
+    { staging }: { staging?: boolean } = {}
+  ): Promise<Depot.Implementation> {
+    const repoName = `${appId(config.appInfo)}/ipfs`
+    if (staging) return FissionIpfsStaging.implementation(repoName)
+    return FissionIpfsProduction.implementation(repoName)
+  }
+}
+
+
+/**
+ * Predefined reference configurations.
+ *
+ * The reference component is responsible for looking up and updating various pointers.
+ * Specifically, the data root, a user's DID root, DNSLinks, DNS TXT records.
+ * It also holds repositories (see `Repository` class), which contain UCANs and CIDs.
+ *
+ * NOTE: This uses all the default components as the dependencies for the reference component.
+ *       If you're, for example, using a non-default storage component, you'll want to
+ *       pass that in here as a parameter as well.
+ *
+ *       Dependents: crypto, manners, storage.
+ */
+export const reference = {
+  /**
+   * Use the Fission servers as your reference.
+   */
+  async fission(
+    config: Configuration,
+    options: {
+      staging?: boolean
+
+      // Dependents
+      crypto?: Crypto.Implementation
+      manners?: Manners.Implementation
+      storage?: Storage.Implementation
+    } = {}
+  ): Promise<Reference.Implementation> {
+    const { staging } = options
+
+    const manners = options.manners || defaultMannersComponent(config)
+    const crypto = options.crypto || await defaultCryptoComponent(config.appInfo)
+    const storage = options.storage || defaultStorageComponent(config.appInfo)
+
+    if (staging) return FissionReferenceStaging.implementation({ crypto, manners, storage })
+    return FissionReferenceProduction.implementation({ crypto, manners, storage })
   }
 }
 
@@ -188,14 +288,20 @@ export const confidences = {
 
 
 /**
- * Initialise a Webnative App based on a given set of `Components`.
- * These are various customisable components to determine how a Webnative app works.
+ * Build a Webnative Program based on a given set of `Components`.
+ * These are various customisable components that determine how a Webnative app works.
+ * Use `program` to work with a default, or partial, set of components.
  *
- * Normally you'll want to prefer a predefined set of components by using
- * the functions `app` or `delegateApp`. But if you feel adventurous
- * you can build your own path.
+ * Additionally this does a few other things:
+ * - Checks if the browser is supported.
+ * - Restores a session if one was made before, and load the user's file system if needed.
+ * - Attempts to collect confidences if the configuration has permissions.
+ * - Provides shorthands to functions so you don't have to pass in components.
+ * - Ensure backwards compatibility with older Webnative clients.
+ *
+ * See `loadFileSystem` if you want to load the user's file system yourself.
  */
-export async function assemble(components: Components, config: Configuration): Promise<Program> {
+export async function assemble(config: Configuration, components: Components): Promise<Program> {
   const permissions = Permissions.fromConfig(config.permissions, config.appInfo)
 
   // Check if browser is supported
@@ -330,12 +436,56 @@ export async function assemble(components: Components, config: Configuration): P
 // COMPOSITIONS
 
 
+/**
+ * Full component sets.
+ */
+export const compositions = {
+  /**
+   * The default Fission stack using web crypto auth.
+   */
+  async fission(
+    config: Configuration,
+    options: {
+      disableWnfs?: boolean
+      staging?: boolean
+
+      // Dependents
+      crypto?: Crypto.Implementation
+      manners?: Manners.Implementation
+      storage?: Storage.Implementation
+    }
+  ): Promise<Components> {
+    const { disableWnfs, staging } = options
+
+    const crypto = options.crypto || await defaultCryptoComponent(config.appInfo)
+    const manners = options.manners || defaultMannersComponent(config)
+    const storage = options.storage || defaultStorageComponent(config.appInfo)
+
+    const r = await reference.fission(config, { crypto, manners, staging, storage })
+    const d = await depot.fissionIPFS(config, { staging })
+    const c = await confidences.fissionLobby(config, { depot: d, crypto, staging })
+    const a = await auth.webCrypto(config, { reference: r, crypto, disableWnfs, manners, staging, storage })
+
+    return {
+      auth: [ a ],
+      confidences: c,
+      depot: d,
+      reference: r,
+      crypto,
+      manners,
+      storage,
+    }
+  }
+}
+
+
 export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
   const config = extractConfig(setup)
 
-  const manners = setup.manners || defaultMannersComponent(config)
   const crypto = setup.crypto || await defaultCryptoComponent(config.appInfo)
+  const manners = setup.manners || defaultMannersComponent(config)
   const storage = setup.storage || defaultStorageComponent(config.appInfo)
+
   const reference = setup.reference || defaultReferenceComponent({ crypto, manners, storage })
   const depot = setup.depot || await defaultDepotComponent(config.appInfo)
   const confidences = setup.confidences || defaultConfidencesComponent({ crypto, depot })
