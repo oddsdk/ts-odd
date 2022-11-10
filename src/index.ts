@@ -457,7 +457,7 @@ export const compositions = {
       crypto?: Crypto.Implementation
       manners?: Manners.Implementation
       storage?: Storage.Implementation
-    }
+    } = {}
   ): Promise<Components> {
     const { disableWnfs, staging } = options
 
