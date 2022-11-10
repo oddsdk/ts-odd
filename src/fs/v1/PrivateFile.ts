@@ -74,7 +74,7 @@ export class PrivateFile extends BaseFile {
       await crypto.aes.genKey(DEFAULT_AES_ALG)
     )
 
-    const bareNameFilter = await namefilter.addToBare(crypto, parentNameFilter, key)
+    const bareNameFilter = await namefilter.addToBare(crypto, parentNameFilter, namefilter.legacyEncodingMistake(key, "base64pad"))
     const contentInfo = await protocol.basic.putEncryptedFile(depot, crypto, content, contentKey)
 
     return new PrivateFile({
@@ -167,7 +167,10 @@ export class PrivateFile extends BaseFile {
     this.header.bareNameFilter = await namefilter.addToBare(
       this.crypto,
       parentNameFilter,
-      Uint8arrays.fromString(this.header.key, "base64pad")
+      namefilter.legacyEncodingMistake(
+        Uint8arrays.fromString(this.header.key, "base64pad"),
+        "base64pad"
+      )
     )
     return this
   }

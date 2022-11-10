@@ -25,6 +25,12 @@ export const getFile = async (depot: Depot.Implementation, cid: CID): Promise<Ui
 
 export const getEncryptedFile = async (depot: Depot.Implementation, crypto: Crypto.Implementation, cid: CID, key: Uint8Array): Promise<Uint8Array> => {
   const buf = await getFile(depot, cid)
+
+  // NOTE: Somehow this is needed by the integration test with the CAR file.
+  //       Maybe a mistake in the CAR file or how the file system code worked before?
+  if (cid.code === DagPB.code) return buf
+
+  // Continue as normal
   const withAlgorithm = DagCBOR.decode(buf)
 
   if (!TypeCheck.hasProp(withAlgorithm, "alg") || !TypeCheck.hasProp(withAlgorithm, "cip") || !isSymmAlg(withAlgorithm.alg) || !ArrayBuffer.isView(withAlgorithm.cip)) {

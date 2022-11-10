@@ -85,7 +85,7 @@ export default class PrivateTree extends BaseTree {
     parentNameFilter: Maybe<BareNameFilter>
   ): Promise<PrivateTree> {
     const bareNameFilter = parentNameFilter
-      ? await namefilter.addToBare(crypto, parentNameFilter, key)
+      ? await namefilter.addToBare(crypto, parentNameFilter, namefilter.legacyEncodingMistake(key, "base64pad"))
       : await namefilter.createBare(crypto, key)
     return new PrivateTree({
       crypto,
@@ -273,7 +273,7 @@ export default class PrivateTree extends BaseTree {
   }
 
   async updateParentNameFilter(parentNameFilter: BareNameFilter): Promise<this> {
-    this.header.bareNameFilter = await namefilter.addToBare(this.crypto, parentNameFilter, this.key)
+    this.header.bareNameFilter = await namefilter.addToBare(this.crypto, parentNameFilter, namefilter.legacyEncodingMistake(this.key, "base64pad"))
     return this
   }
 

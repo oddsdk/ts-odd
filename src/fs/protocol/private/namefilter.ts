@@ -1,4 +1,5 @@
 import * as Uint8arrays from "uint8arrays"
+import { SupportedEncodings } from "uint8arrays/util/bases.js"
 
 import * as Crypto from "../../../components/crypto/implementation.js"
 import * as Hex from "../../../common/hex.js"
@@ -35,7 +36,7 @@ export type SaturatedNameFilter = Opaque<"SaturatedNameFilter", string>
 // create bare name filter with a single key
 export const createBare = async (crypto: Crypto.Implementation, key: Uint8Array): Promise<BareNameFilter> => {
   const empty = "0".repeat(FILTER_SIZE / 4) as BareNameFilter
-  return addToBare(crypto, empty, key)
+  return addToBare(crypto, empty, legacyEncodingMistake(key, "base64pad"))
 }
 
 // add some string to a name filter
@@ -143,4 +144,16 @@ const bitCount32 = (num: number): number => {
   const a = num - ((num >> 1) & 0x55555555)
   const b = (a & 0x33333333) + ((a >> 2) & 0x33333333)
   return ((b + (b >> 4) & 0xF0F0F0F) * 0x1010101) >> 24
+}
+
+
+
+// 🛠
+
+
+export function legacyEncodingMistake(input: Uint8Array, inputEncoding: SupportedEncodings): Uint8Array {
+  return Uint8arrays.fromString(
+    Uint8arrays.toString(input, inputEncoding),
+    "utf8"
+  )
 }

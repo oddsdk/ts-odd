@@ -91,8 +91,8 @@ describe("revision filters", () => {
         fc.string({ minLength: 1 }),
         fc.integer({ min: 1 }),
         async (key, revision) => {
-          const filter = await namefilter.createBare(crypto, Uint8arrays.fromString(key, "utf8"))
-          const revisionFilter = await namefilter.addRevision(crypto, filter, Uint8arrays.fromString(key, "utf8"), revision)
+          const filter = await namefilter.createBare(crypto, Uint8arrays.fromString(key, "base64pad"))
+          const revisionFilter = await namefilter.addRevision(crypto, filter, Uint8arrays.fromString(key, "base64pad"), revision)
 
           const bloomFilter = namefilter.fromHex(revisionFilter)
           const onesCount = countOnes(bloomFilter)

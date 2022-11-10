@@ -21,7 +21,7 @@ export async function namefilter(
     await Namefilters.addToBare(
       crypto,
       bareFilter,
-      hashedKey
+      Namefilters.legacyEncodingMistake(hashedKey, "hex")
     )
   )
 }

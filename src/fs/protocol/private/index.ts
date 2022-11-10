@@ -29,7 +29,7 @@ export const addNode = async (
   // if the node is a file, we also add the content to the MMPT
   if (Check.isPrivateFileInfo(node)) {
     const key = Uint8arrays.fromString(node.key, "base64pad")
-    const contentBareFilter = await Namefilter.addToBare(crypto, node.bareNameFilter, key)
+    const contentBareFilter = await Namefilter.addToBare(crypto, node.bareNameFilter, Namefilter.legacyEncodingMistake(key, "base64pad"))
     const contentFilter = await Namefilter.addRevision(crypto, contentBareFilter, key, node.revision)
     const contentName = await Namefilter.toPrivateName(crypto, contentFilter)
     await mmpt.add(contentName, decodeCID(node.content))
