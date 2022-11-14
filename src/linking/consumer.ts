@@ -2,14 +2,16 @@ import * as Uint8arrays from "uint8arrays"
 
 import * as Auth from "../components/auth/implementation.js"
 import * as Crypto from "../components/crypto/implementation.js"
+import * as Manners from "../components/manners/implementation.js"
 
 import * as Check from "../common/type-checks.js"
 import * as DID from "../did/index.js"
+import * as Linking from "../linking.js"
 import * as Ucan from "../ucan/index.js"
 
 import { Components } from "../components.js"
 import { EventEmitter, EventListener } from "../common/event-emitter.js"
-import { LinkingError, LinkingStep, LinkingWarning, handleLinkingError, tryParseMessage } from "../linking.js"
+import { LinkingError, LinkingStep, LinkingWarning, tryParseMessage } from "../linking.js"
 
 import type { Maybe, Result } from "../common/index.js"
 
@@ -28,6 +30,7 @@ export interface ConsumerEventMap {
 export type Dependents = {
   auth: Auth.Implementation<Components>
   crypto: Crypto.Implementation
+  manners: Manners.Implementation
 }
 
 type LinkingState = {
@@ -49,7 +52,10 @@ export const createConsumer = async (
   options: { username: string }
 ): Promise<AccountLinkingConsumer> => {
   const { username } = options
+  const handleLinkingError = (errorOrWarning: LinkingError | LinkingWarning) => Linking.handleLinkingError(dependents.manners, errorOrWarning)
+
   let eventEmitter: Maybe<EventEmitter<ConsumerEventMap>> = new EventEmitter()
+
   const ls: LinkingState = {
     username,
     sessionKey: null,

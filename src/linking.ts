@@ -1,4 +1,5 @@
 import type { Result } from "./common/types.js"
+import * as Manners from "./components/manners/implementation.js"
 
 
 export enum LinkingStep {
@@ -21,10 +22,10 @@ export class LinkingWarning extends Error {
   }
 }
 
-export const handleLinkingError = (error: LinkingError | LinkingWarning): void => {
+export const handleLinkingError = (manners: Manners.Implementation, error: LinkingError | LinkingWarning): void => {
   switch (error.name) {
     case "LinkingWarning":
-      console.warn(error.message)
+      manners.warn(error.message)
       break
 
     case "LinkingError":
