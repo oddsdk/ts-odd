@@ -1,4 +1,5 @@
 import { CID } from "multiformats/cid"
+import { base32 } from "multiformats/bases/base32"
 
 import * as Storage from "../components/storage/implementation"
 import { decodeCID } from "../common/cid.js"
@@ -20,6 +21,10 @@ export class Repo extends Repository<CID> {
 
   fromJSON(a: string): CID {
     return decodeCID(a)
+  }
+
+  toJSON(a: CID): string {
+    return a.toString(base32.encoder)
   }
 
   newest(): CID {
