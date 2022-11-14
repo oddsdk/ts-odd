@@ -47,6 +47,7 @@ import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
 import { appId, AppInfo } from "./permissions.js"
 import { loadFileSystem, loadRootFileSystem } from "./filesystem.js"
+import FileSystem from "./fs/filesystem.js"
 
 
 // IMPLEMENTATIONS
@@ -88,10 +89,10 @@ export { Session } from "./session.js"
 
 
 
-// ENTRY POINTS
+// TYPES & CONSTANTS
 
 
-export type Program = {
+export type Program = ShortHands & {
   auth: AuthenticationStrategies
   components: Components
   confidences: {
@@ -109,6 +110,12 @@ export enum ProgramError {
 }
 
 
+export type ShortHands = {
+  loadFileSystem: (username: string) => Promise<FileSystem>
+  loadRootFileSystem: (username: string) => Promise<FileSystem>
+}
+
+
 export type AuthenticationStrategies = Record<
   string,
   Auth.Implementation<Components> &
@@ -118,7 +125,14 @@ export type AuthenticationStrategies = Record<
 >
 
 
-export const DEFAULT_AUTH_STRATEGY_TYPE = BaseAuth.TYPE
+export const strategyTypes = {
+  default: BaseAuth.TYPE,
+  webCrypto: BaseAuth.TYPE
+}
+
+
+
+// ENTRY POINTS
 
 
 /**
@@ -441,7 +455,7 @@ export async function assemble(config: Configuration, components: Components): P
   }
 
   // Shorthands
-  const shorthands = {
+  const shorthands: ShortHands = {
     loadFileSystem: (username: string) => loadFileSystem({ config, username, dependents: components }),
     loadRootFileSystem: (username: string) => loadRootFileSystem({ config, username, dependents: components }),
   }

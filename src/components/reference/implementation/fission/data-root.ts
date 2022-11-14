@@ -22,12 +22,12 @@ export async function lookup(
   username: string
 ): Promise<CID | null> {
   const maybeRoot = await lookupOnFisson(endpoints, dependents, username)
-  if (!maybeRoot || maybeRoot.toString() === EMPTY_CID) return null
+  if (!maybeRoot) return null
   if (maybeRoot !== null) return maybeRoot
 
   try {
     const cid = await DNS.lookupDnsLink(username + ".files." + endpoints.userDomain)
-    return !cid || cid === EMPTY_CID ? null : decodeCID(cid)
+    return !cid ? null : decodeCID(cid)
   } catch (err) {
     console.error(err)
     throw new Error("Could not locate user root in DNS")

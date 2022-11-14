@@ -12,7 +12,7 @@ import FileSystem, { Dependents } from "./fs/filesystem.js"
 
 import { Branch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
-import { Maybe, decodeCID } from "./common/index.js"
+import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
 
 
 /**
@@ -216,7 +216,7 @@ async function getDataRoot(
   const retryInterval = options.retryInterval ?? 500
 
   let dataCid = await reference.dataRoot.lookup(username)
-  if (dataCid) return dataCid
+  if (dataCid) return (dataCid.toString() === EMPTY_CID ? null : dataCid)
 
   return new Promise((resolve, reject) => {
     let attempt = 0
@@ -232,7 +232,7 @@ async function getDataRoot(
       }
 
       clearInterval(dataRootInterval)
-      resolve(dataCid)
+      resolve(dataCid?.toString() === EMPTY_CID ? null : dataCid)
     }, retryInterval)
   })
 }
