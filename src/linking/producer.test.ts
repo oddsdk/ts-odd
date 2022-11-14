@@ -81,7 +81,7 @@ describe("handle user challenge", async () => {
           pin: fc.uint8Array({ min: 0, max: 9, minLength: 6, maxLength: 6 }).map(arr => Array.from(arr)),
           iv: fc.uint8Array({ minLength: 16, maxLength: 16 })
         }), async ({ pin, iv }) => {
-          const msg = await aesEncrypt(JSON.stringify({ did: DID, pin }), sessionKey, iv)
+          const msg = await aesEncrypt(JSON.stringify({ did, pin }), sessionKey, iv)
           const challenge = JSON.stringify({ iv: Uint8arrays.toString(iv, "base64pad"), msg })
           const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKey, challenge)
 
@@ -91,7 +91,7 @@ describe("handle user challenge", async () => {
           }
 
           expect(userChallengeResult.value.pin).toEqual(pin)
-          expect(userChallengeResult.value.audience).toEqual(DID)
+          expect(userChallengeResult.value.audience).toEqual(did)
         })
     )
   })
@@ -113,7 +113,7 @@ describe("handle user challenge", async () => {
   it("returns a warning when the message received has the wrong shape", async () => {
     const pin = [ 0, 0, 0, 0, 0, 0 ]
     const iv = crypto.misc.randomNumbers({ amount: 16 })
-    const msg = await aesEncrypt(JSON.stringify({ did: DID, pin }), sessionKey, iv)
+    const msg = await aesEncrypt(JSON.stringify({ did, pin }), sessionKey, iv)
     const challenge = JSON.stringify({ msg }) // initialization vector missing
     const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKey, challenge)
 
@@ -126,7 +126,7 @@ describe("handle user challenge", async () => {
 
   it("returns an error when pin is missing", async () => {
     const iv = crypto.misc.randomNumbers({ amount: 16 })
-    const msg = await aesEncrypt(JSON.stringify({ did: DID }), sessionKey, iv) // pin missing
+    const msg = await aesEncrypt(JSON.stringify({ did }), sessionKey, iv) // pin missing
     const challenge = JSON.stringify({ iv: Uint8arrays.toString(iv, "base64pad"), msg })
     const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKey, challenge)
 
@@ -154,7 +154,7 @@ describe("handle user challenge", async () => {
   it("ignores challenge messages it cannot decrypt", async () => {
     const pin = [ 0, 0, 0, 0, 0, 0 ]
     const iv = crypto.misc.randomNumbers({ amount: 16 })
-    const msg = await aesEncrypt(JSON.stringify({ did: DID, pin }), sessionKey, iv)
+    const msg = await aesEncrypt(JSON.stringify({ did, pin }), sessionKey, iv)
     const challenge = JSON.stringify({ iv: Uint8arrays.toString(iv, "base64pad"), msg })
     const userChallengeResult = await producer.handleUserChallenge(crypto, sessionKeyNoise, challenge)
 

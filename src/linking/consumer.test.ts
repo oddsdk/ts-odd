@@ -34,6 +34,7 @@ describe("handle session key", async () => {
   let exportedSessionKey: Uint8Array
   let exportedSessionKeyBase64: string
   let encryptedSessionKey: Uint8Array
+  let encryptedSessionKeyBase64: string
   let iv: Uint8Array
 
   beforeEach(async () => {
@@ -48,6 +49,7 @@ describe("handle session key", async () => {
     if (!temporaryRsaPair.publicKey) throw new Error("Temporary RSA public key missing")
     encryptedSessionKey = await crypto.rsa.encrypt(exportedSessionKey, temporaryRsaPair.publicKey)
     exportedSessionKeyBase64 = Uint8arrays.toString(exportedSessionKey, "base64pad")
+    encryptedSessionKeyBase64 = Uint8arrays.toString(encryptedSessionKey, "base64pad")
   })
 
   it("returns a session key after validating a closed UCAN", async () => {
@@ -74,7 +76,7 @@ describe("handle session key", async () => {
     if (sessionKeyResult.ok) { val = sessionKeyResult.value }
 
     expect(sessionKeyResult.ok).toBe(true)
-    expect(val).toEqual(sessionKey)
+    expect(val).toEqual(await crypto.aes.exportKey(sessionKey))
   })
 
   it("returns a warning when the message received has the wrong shape", async () => {
@@ -150,7 +152,7 @@ describe("handle session key", async () => {
     const message = JSON.stringify({
       iv: Uint8arrays.toString(iv, "base64pad"),
       msg,
-      sessionKey: exportedSessionKeyBase64
+      sessionKey: encryptedSessionKeyBase64
     })
     if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
@@ -177,7 +179,7 @@ describe("handle session key", async () => {
     const message = JSON.stringify({
       iv: Uint8arrays.toString(iv, "base64pad"),
       msg,
-      sessionKey: exportedSessionKeyBase64
+      sessionKey: encryptedSessionKeyBase64
     })
     if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
@@ -204,7 +206,7 @@ describe("handle session key", async () => {
     const message = JSON.stringify({
       iv: Uint8arrays.toString(iv, "base64pad"),
       msg,
-      sessionKey: exportedSessionKeyBase64
+      sessionKey: encryptedSessionKeyBase64
     })
     if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
@@ -231,7 +233,7 @@ describe("handle session key", async () => {
     const message = JSON.stringify({
       iv: Uint8arrays.toString(iv, "base64pad"),
       msg,
-      sessionKey: exportedSessionKeyBase64
+      sessionKey: encryptedSessionKeyBase64
     })
     if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 
@@ -258,7 +260,7 @@ describe("handle session key", async () => {
     const message = JSON.stringify({
       iv: Uint8arrays.toString(iv, "base64pad"),
       msg,
-      sessionKey: exportedSessionKeyBase64
+      sessionKey: encryptedSessionKeyBase64
     })
     if (!temporaryRsaPair.privateKey) throw new Error("Temporary RSA private key missing")
 

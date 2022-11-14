@@ -69,66 +69,79 @@ export const createProducer = async (
     const { data } = event
     const message = data.arrayBuffer ? new TextDecoder().decode(await data.arrayBuffer()) : data
 
-    if (ls.step === LinkingStep.Broadcast) {
-      const { sessionKey, sessionKeyMessage } = await generateSessionKey(dependents.crypto, message)
-      ls.sessionKey = sessionKey
-      ls.step = LinkingStep.Negotiation
-      channel.send(sessionKeyMessage)
-    } else if (ls.step === LinkingStep.Negotiation) {
-      if (ls.sessionKey) {
-        const userChallengeResult = await handleUserChallenge(dependents.crypto, ls.sessionKey, message)
-        ls.step = LinkingStep.Delegation
+    switch (ls.step) {
 
-        if (userChallengeResult.ok) {
-          const { pin, audience } = userChallengeResult.value
+      // Broadcast
+      // ---------
+      case LinkingStep.Broadcast:
+        const { sessionKey, sessionKeyMessage } = await generateSessionKey(dependents.crypto, message)
+        ls.sessionKey = sessionKey
+        ls.step = LinkingStep.Negotiation
+        return channel.send(sessionKeyMessage)
 
-          const challengeOnce = () => {
-            let called = false
+      // Negotiation
+      // -----------
+      case LinkingStep.Negotiation:
+        if (ls.sessionKey) {
+          const userChallengeResult = await handleUserChallenge(dependents.crypto, ls.sessionKey, message)
+          ls.step = LinkingStep.Delegation
 
-            return {
-              confirmPin: async () => {
-                if (!called) {
-                  called = true
+          if (userChallengeResult.ok) {
+            const { pin, audience } = userChallengeResult.value
 
-                  if (ls.sessionKey) {
-                    await delegateAccount(
-                      dependents.auth,
-                      dependents.crypto,
-                      ls.sessionKey,
-                      username,
-                      audience,
-                      finishDelegation
-                    )
-                  } else {
-                    handleLinkingError(new LinkingError("Producer missing session key when delegating account"))
+            const challengeOnce = () => {
+              let called = false
+
+              return {
+                confirmPin: async () => {
+                  if (!called) {
+                    called = true
+
+                    if (ls.sessionKey) {
+                      await delegateAccount(
+                        dependents.auth,
+                        dependents.crypto,
+                        ls.sessionKey,
+                        username,
+                        audience,
+                        finishDelegation
+                      )
+                    } else {
+                      handleLinkingError(new LinkingError("Producer missing session key when delegating account"))
+                    }
                   }
-                }
-              },
-              rejectPin: async () => {
-                if (!called) {
-                  called = true
+                },
+                rejectPin: async () => {
+                  if (!called) {
+                    called = true
 
-                  if (ls.sessionKey) {
-                    await declineDelegation(dependents.crypto, ls.sessionKey, finishDelegation)
-                  } else {
-                    handleLinkingError(new LinkingError("Producer missing session key when declining account delegation"))
+                    if (ls.sessionKey) {
+                      await declineDelegation(dependents.crypto, ls.sessionKey, finishDelegation)
+                    } else {
+                      handleLinkingError(new LinkingError("Producer missing session key when declining account delegation"))
+                    }
                   }
                 }
               }
             }
-          }
-          const { confirmPin, rejectPin } = challengeOnce()
+            const { confirmPin, rejectPin } = challengeOnce()
 
-          eventEmitter?.emit("challenge", { pin, confirmPin, rejectPin })
+            eventEmitter?.emit("challenge", { pin, confirmPin, rejectPin })
+          } else {
+            handleLinkingError(userChallengeResult.error)
+          }
+
         } else {
-          handleLinkingError(userChallengeResult.error)
+          handleLinkingError(new LinkingError("Producer missing session key when handling user challenge"))
         }
 
-      } else {
-        handleLinkingError(new LinkingError("Producer missing session key when handling user challenge"))
-      }
-    } else if (ls.step === LinkingStep.Delegation) {
-      handleLinkingError(new LinkingWarning("Producer received an unexpected message while delegating an account. The message will be ignored."))
+        break;
+
+      // Delegation
+      // ----------
+      case LinkingStep.Delegation:
+        return handleLinkingError(new LinkingWarning("Producer received an unexpected message while delegating an account. The message will be ignored."))
+
     }
   }
 
@@ -200,7 +213,7 @@ export const generateSessionKey = async (
 
   const sessionKeyMessage = JSON.stringify({
     iv: Uint8arrays.toString(iv, "base64pad"),
-    msg,
+    msg: Uint8arrays.toString(msg, "base64pad"),
     sessionKey: Uint8arrays.toString(encryptedSessionKey, "base64pad")
   })
 
@@ -241,7 +254,8 @@ export const handleUserChallenge = async (
       message = await crypto.aes.decrypt(
         Uint8arrays.fromString(msg, "base64pad"),
         sessionKey,
-        Crypto.SymmAlg.AES_GCM
+        Crypto.SymmAlg.AES_GCM,
+        iv
       )
     } catch {
       return { ok: false, error: new LinkingWarning("Ignoring message that could not be decrypted.") }
@@ -294,7 +308,7 @@ export const delegateAccount = async (
 
   const delegationMessage = JSON.stringify({
     iv: Uint8arrays.toString(iv, "base64pad"),
-    msg
+    msg: Uint8arrays.toString(msg, "base64pad")
   })
 
   await finishDelegation(delegationMessage, true)

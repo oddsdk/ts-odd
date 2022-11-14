@@ -61,53 +61,68 @@ export const createConsumer = async (
     const { data } = event
     const message = data.arrayBuffer ? new TextDecoder().decode(await data.arrayBuffer()) : data
 
-    if (ls.step === LinkingStep.Broadcast) {
-      handleLinkingError(new LinkingWarning("Consumer is not ready to start linking"))
-    } else if (ls.step === LinkingStep.Negotiation) {
-      if (ls.sessionKey) {
-        handleLinkingError(new LinkingWarning("Consumer already received a session key"))
-      } else if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) {
-        handleLinkingError(new LinkingError("Consumer missing RSA key pair when handling session key message"))
-      } else {
-        const sessionKeyResult = await handleSessionKey(
-          dependents.crypto,
-          ls.temporaryRsaPair.privateKey,
-          message
-        )
+    switch (ls.step) {
 
-        if (sessionKeyResult.ok) {
-          ls.sessionKey = sessionKeyResult.value
+      // Broadcast
+      // ---------
+      case LinkingStep.Broadcast:
+        return handleLinkingError(new LinkingWarning("Consumer is not ready to start linking"))
 
-          const { pin, challenge } = await generateUserChallenge(dependents.crypto, ls.sessionKey)
-          channel.send(challenge)
-          eventEmitter?.emit("challenge", { pin: Array.from(pin) })
-          ls.step = LinkingStep.Delegation
+      // Negotiation
+      // -----------
+      case LinkingStep.Negotiation:
+        if (ls.sessionKey) {
+          handleLinkingError(new LinkingWarning("Consumer already received a session key"))
+        } else if (!ls.temporaryRsaPair || !ls.temporaryRsaPair.privateKey) {
+          handleLinkingError(new LinkingError("Consumer missing RSA key pair when handling session key message"))
         } else {
-          handleLinkingError(sessionKeyResult.error)
-        }
-      }
-    } else if (ls.step === LinkingStep.Delegation) {
-      if (!ls.sessionKey) {
-        handleLinkingError(new LinkingError("Consumer was missing session key when linking device"))
-      } else if (!ls.username) {
-        handleLinkingError(new LinkingError("Consumer was missing username when linking device"))
-      } else {
-        const linkingResult = await linkDevice(
-          dependents.auth,
-          dependents.crypto,
-          ls.sessionKey,
-          ls.username,
-          message
-        )
+          const sessionKeyResult = await handleSessionKey(
+            dependents.crypto,
+            ls.temporaryRsaPair.privateKey,
+            message
+          )
 
-        if (linkingResult.ok) {
-          const { approved } = linkingResult.value
-          eventEmitter?.emit("link", { approved, username: ls.username })
-          await done()
-        } else {
-          handleLinkingError(linkingResult.error)
+          if (sessionKeyResult.ok) {
+            ls.sessionKey = sessionKeyResult.value
+
+            const { pin, challenge } = await generateUserChallenge(dependents.crypto, ls.sessionKey)
+            channel.send(challenge)
+            eventEmitter?.emit("challenge", { pin: Array.from(pin) })
+            ls.step = LinkingStep.Delegation
+          } else {
+            handleLinkingError(sessionKeyResult.error)
+          }
         }
-      }
+
+        break;
+
+      // Delegation
+      // ----------
+      case LinkingStep.Delegation:
+        if (!ls.sessionKey) {
+          handleLinkingError(new LinkingError("Consumer was missing session key when linking device"))
+        } else if (!ls.username) {
+          handleLinkingError(new LinkingError("Consumer was missing username when linking device"))
+        } else {
+          const linkingResult = await linkDevice(
+            dependents.auth,
+            dependents.crypto,
+            ls.sessionKey,
+            ls.username,
+            message
+          )
+
+          if (linkingResult.ok) {
+            const { approved } = linkingResult.value
+            eventEmitter?.emit("link", { approved, username: ls.username })
+            await done()
+          } else {
+            handleLinkingError(linkingResult.error)
+          }
+        }
+
+        break;
+
     }
   }
 
@@ -201,7 +216,8 @@ export const handleSessionKey = async (
       encodedUcan = await crypto.aes.decrypt(
         Uint8arrays.fromString(msg, "base64pad"),
         sessionKey,
-        Crypto.SymmAlg.AES_GCM
+        Crypto.SymmAlg.AES_GCM,
+        iv
       )
     } catch {
       return { ok: false, error: new LinkingError("Consumer could not decrypt closed UCAN with provided session key.") }
