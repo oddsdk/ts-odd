@@ -2,13 +2,13 @@ import * as Path from "../path/index.js"
 import * as Storage from "../components/storage/implementation"
 import * as Ucan from "../ucan/index.js"
 
-import Repository from "../repository.js"
+import Repository, { RepositoryOptions } from "../repository.js"
 import { DistinctivePath } from "../path/index.js"
 import { Resource } from "../ucan/index.js"
 
 
-export function create({ storage }: { storage: Storage.Implementation }): Repo {
-  return new Repo({
+export function create({ storage }: { storage: Storage.Implementation }): Promise<Repo> {
+  return Repo.create({
     storage,
     storageName: storage.KEYS.UCANS
   })
@@ -20,6 +20,11 @@ export function create({ storage }: { storage: Storage.Implementation }): Repo {
 
 
 export class Repo extends Repository<Ucan.Ucan> {
+
+  private constructor(options: RepositoryOptions) {
+    super(options)
+  }
+
 
   // ENCODING
 

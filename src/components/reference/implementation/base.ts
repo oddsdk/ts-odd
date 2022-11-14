@@ -24,7 +24,7 @@ export type Dependents = {
 // 🛳
 
 
-export function implementation(dependents: Dependents): Implementation {
+export async function implementation(dependents: Dependents): Promise<Implementation> {
   return {
     dataRoot: {
       domain: () => { throw new Error("Not implemented") },
@@ -39,8 +39,8 @@ export function implementation(dependents: Dependents): Implementation {
       lookupTxtRecord: DOH.lookupTxtRecord,
     },
     repositories: {
-      cidLog: CIDLogRepo.create({ storage: dependents.storage }),
-      ucans: UcansRepo.create({ storage: dependents.storage })
+      cidLog: await CIDLogRepo.create({ storage: dependents.storage }),
+      ucans: await UcansRepo.create({ storage: dependents.storage })
     },
   }
 }

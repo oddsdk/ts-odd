@@ -11,8 +11,8 @@ import * as DID from "./fission/did.js"
 // 🛳
 
 
-export function implementation(endpoints: Endpoints, dependents: Dependents): Implementation {
-  const base = Base.implementation(dependents)
+export async function implementation(endpoints: Endpoints, dependents: Dependents): Promise<Implementation> {
+  const base = await Base.implementation(dependents)
 
   base.dataRoot.domain = (username: string) => `${username}.files.${endpoints.userDomain}`
   base.dataRoot.lookup = (...args) => DataRoot.lookup(endpoints, dependents, ...args)

@@ -28,8 +28,8 @@ describe("cid-log", () => {
 
   let cidLog: CIDLog.Repo
 
-  before(() => {
-    cidLog = CIDLog.create({ storage })
+  before(async () => {
+    cidLog = await CIDLog.create({ storage })
   })
 
   it("gets an empty log when key is missing", async () => {

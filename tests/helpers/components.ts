@@ -228,7 +228,7 @@ const manners = {
 // REFERENCE
 
 
-const baseReference = BaseReference.implementation({
+const baseReference = await BaseReference.implementation({
   crypto, manners, storage
 })
 

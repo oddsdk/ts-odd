@@ -170,7 +170,7 @@ export const auth = {
     const manners = options.manners || defaultMannersComponent(config)
     const crypto = options.crypto || await defaultCryptoComponent(config.appInfo)
     const storage = options.storage || defaultStorageComponent(config.appInfo)
-    const reference = options.reference || defaultReferenceComponent({ crypto, manners, storage })
+    const reference = options.reference || await defaultReferenceComponent({ crypto, manners, storage })
 
     if (disableWnfs) {
       if (staging) return FissionAuthBaseStaging.implementation({ crypto, reference, storage })
@@ -490,7 +490,7 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
   const manners = setup.manners || defaultMannersComponent(config)
   const storage = setup.storage || defaultStorageComponent(config.appInfo)
 
-  const reference = setup.reference || defaultReferenceComponent({ crypto, manners, storage })
+  const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
   const depot = setup.depot || await defaultDepotComponent(config.appInfo)
   const confidences = setup.confidences || defaultConfidencesComponent({ crypto, depot })
   const auth = setup.auth || [ defaultAuthComponent({ crypto, reference, storage }) ]
@@ -541,7 +541,7 @@ export function defaultMannersComponent(config: Configuration): Manners.Implemen
   })
 }
 
-export function defaultReferenceComponent({ crypto, manners, storage }: BaseReference.Dependents): Reference.Implementation {
+export function defaultReferenceComponent({ crypto, manners, storage }: BaseReference.Dependents): Promise<Reference.Implementation> {
   return FissionReferenceProduction.implementation({
     crypto,
     manners,

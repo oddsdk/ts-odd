@@ -23,8 +23,9 @@ export default abstract class Repository<T> {
     this.storageName = storageName
   }
 
-  static async create(options: RepositoryOptions) {
-    const repo = this.prototype.constructor(options)
+  static async create<T>(options: RepositoryOptions) {
+    // @ts-ignore
+    const repo = new this.prototype.constructor(options)
 
     repo.memoryCache = await repo.getAll()
     repo.dictionary = repo.toDictionary(repo.memoryCache)
