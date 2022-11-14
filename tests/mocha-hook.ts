@@ -1,6 +1,6 @@
-declare module "mocha" {
-  export interface Context { }
-}
+// declare module "mocha" {
+//   export interface Context {}
+// }
 
 export const mochaHooks = {}
 

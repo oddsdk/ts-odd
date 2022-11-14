@@ -1,4 +1,3 @@
-import * as Uint8arrays from "uint8arrays"
 import expect from "expect"
 import { webcrypto } from "one-webcrypto"
 

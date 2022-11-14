@@ -100,7 +100,7 @@ export const createConsumer = async (
           }
         }
 
-        break;
+        break
 
       // Delegation
       // ----------
@@ -127,7 +127,7 @@ export const createConsumer = async (
           }
         }
 
-        break;
+        break
 
     }
   }

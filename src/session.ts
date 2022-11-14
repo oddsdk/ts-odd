@@ -54,7 +54,7 @@ export class Session {
 
 
 type SessionInfo = {
-  type: string,
+  type: string
   username: string
 }
 

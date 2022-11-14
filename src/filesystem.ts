@@ -19,8 +19,8 @@ import { Maybe, decodeCID } from "./common/index.js"
  * Load a user's file system.
  */
 export async function loadFileSystem({ config, dependents, rootKey, username }: {
-  config: Configuration,
-  dependents: Dependents,
+  config: Configuration
+  dependents: Dependents
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> {
@@ -173,8 +173,8 @@ export const ROOT_PERMISSIONS = { fs: { private: [ Path.root() ], public: [ Path
  * Load a user's root file system.
  */
 export const loadRootFileSystem = async (options: {
-  config: Configuration,
-  dependents: Dependents,
+  config: Configuration
+  dependents: Dependents
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> => {

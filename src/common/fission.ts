@@ -10,9 +10,9 @@ import * as DOH from "../components/reference/dns-over-https.js"
  * `userDomain` User's domain to use, will be prefixed by username.
  */
 export type Endpoints = {
-  apiPath: string,
-  lobby: string,
-  server: string,
+  apiPath: string
+  lobby: string
+  server: string
   userDomain: string
 }
 

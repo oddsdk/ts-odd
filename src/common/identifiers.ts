@@ -7,7 +7,7 @@ import * as Path from "../path/index.js"
 
 
 type Arguments = {
-  crypto: Crypto.Implementation,
+  crypto: Crypto.Implementation
   accountDID: string
   path: DistinctivePath
 }

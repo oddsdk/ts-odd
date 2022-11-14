@@ -83,20 +83,20 @@ export * as path from "./path/index.js"
 
 
 export type Program = {
-  auth: AuthenticationStrategies,
-  components: Components,
+  auth: AuthenticationStrategies
+  components: Components
   confidences: {
     collect: () => Promise<Maybe<string>> // returns username
     request: () => Promise<void>
     session: (username: string) => Promise<Maybe<Session>>
-  },
+  }
   session: Maybe<Session>
 }
 
 
 export type AuthenticationStrategies = Record<
   string,
-  { implementation: Auth.Implementation<Components>, session: () => Promise<Maybe<Session>> }
+  { implementation: Auth.Implementation<Components>; session: () => Promise<Maybe<Session>> }
 >
 
 

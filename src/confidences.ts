@@ -56,7 +56,7 @@ export async function collect({ confidences, crypto, reference, storage }: {
 
   const accountDID = Ucan.rootIssuer(confidences.ucans[ 0 ])
 
-  confidences.fileSystemSecrets.reduce(
+  await confidences.fileSystemSecrets.reduce(
     async (acc: Promise<void>, fsSecret: FileSystemSecret) => {
       await acc
       await collectSecret({
@@ -89,7 +89,7 @@ export async function collectSecret({ accountDID, bareNameFilter, crypto, path, 
 }
 
 export async function collectPermissions({ reference, ucans }: {
-  reference: Reference.Implementation,
+  reference: Reference.Implementation
   ucans: Ucan.Ucan[]
 }): Promise<void> {
   await reference.repositories.ucans.add(ucans)

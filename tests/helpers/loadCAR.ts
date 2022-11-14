@@ -1,7 +1,7 @@
 import * as fs from "fs"
-import { CarBlockIterator, CarReader } from "@ipld/car"
+import { CarBlockIterator } from "@ipld/car"
 import { CID } from "multiformats"
-import { depot, inMemoryDepot } from "./components.js"
+import { inMemoryDepot } from "./components.js"
 
 
 /**

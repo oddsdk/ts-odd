@@ -3,7 +3,7 @@ import * as TypeChecks from "./common/type-checks.js"
 
 
 export type RepositoryOptions = {
-  storage: Storage.Implementation,
+  storage: Storage.Implementation
   storageName: string
 }
 
@@ -38,7 +38,7 @@ export default abstract class Repository<T> {
     this.memoryCache = [ ...this.memoryCache, ...items ]
     this.dictionary = this.toDictionary(this.memoryCache)
 
-    this.storage.setItem(
+    await this.storage.setItem(
       this.storageName,
       // TODO: JSON.stringify(this.memoryCache.map(this.toJSON))
       this.memoryCache.map(this.toJSON).join("|||")

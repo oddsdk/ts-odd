@@ -77,11 +77,12 @@ export const createProducer = async (
 
       // Broadcast
       // ---------
-      case LinkingStep.Broadcast:
+      case LinkingStep.Broadcast: {
         const { sessionKey, sessionKeyMessage } = await generateSessionKey(dependents.crypto, message)
         ls.sessionKey = sessionKey
         ls.step = LinkingStep.Negotiation
         return channel.send(sessionKeyMessage)
+      }
 
       // Negotiation
       // -----------
@@ -139,7 +140,7 @@ export const createProducer = async (
           handleLinkingError(new LinkingError("Producer missing session key when handling user challenge"))
         }
 
-        break;
+        break
 
       // Delegation
       // ----------

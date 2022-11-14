@@ -42,7 +42,7 @@ export async function build({
 }: {
   addSignature?: boolean
   audience: string
-  dependents: { crypto: Crypto.Implementation },
+  dependents: { crypto: Crypto.Implementation }
   facts?: Array<Fact>
   issuer: string
   lifetimeInSeconds?: number

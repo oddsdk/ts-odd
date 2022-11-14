@@ -9,7 +9,7 @@ export type AppInfo = {
 }
 
 export type ConfigurablePermissions = {
-  app?: boolean,
+  app?: boolean
   fs?: FileSystemPermissions
   platform?: PlatformPermissions
   raw?: RawPermissions
@@ -17,7 +17,7 @@ export type ConfigurablePermissions = {
 }
 
 export type Permissions = {
-  app?: AppInfo,
+  app?: AppInfo
   fs?: FileSystemPermissions
   platform?: PlatformPermissions
   raw?: RawPermissions
