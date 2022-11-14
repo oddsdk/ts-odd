@@ -13,14 +13,13 @@ import PrivateHistory from "./PrivateHistory.js"
 
 import { DEFAULT_AES_ALG } from "../protocol/basic.js"
 import { Links, SoftLink, UpdateCallback } from "../types.js"
-import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, PrivateLink } from "../protocol/private/types.js"
+import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, PrivateLink, PrivateSkeleton } from "../protocol/private/types.js"
 import { Path } from "../../path/index.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { decodeCID, isObject, hasProp, mapObj, Maybe, removeKeyFromObj, encodeCID } from "../../common/index.js"
 
 import * as check from "../protocol/private/types/check.js"
 import * as checkNormie from "../types/check.js"
-import * as common from "../../common/index.js"
 import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
 import * as namefilter from "../protocol/private/namefilter.js"
@@ -207,6 +206,10 @@ export default class PrivateTree extends BaseTree {
   async putDetailed(): Promise<PrivateAddResult> {
     // copy the object, so we're putting the current version & don't include any revisions
     const nodeCopy = Object.assign({}, this.header)
+
+    // ensure all CIDs in skeleton are in string form, not sure where these CID objects are coming from
+    nodeCopy.skeleton = ensureSkeletonStringCIDs(nodeCopy.skeleton)
+
     return protocol.priv.addNode(this.depot, this.crypto, this.mmpt, nodeCopy, this.key)
   }
 
@@ -441,6 +444,23 @@ async function getNode(
   return check.isPrivateFileInfo(node)
     ? await PrivateFile.fromInfo(crypto, depot, mmpt, key, node)
     : await PrivateTree.fromInfo(crypto, depot, manners, reference, mmpt, key, node)
+}
+
+
+function ensureSkeletonStringCIDs(skeleton: PrivateSkeleton): PrivateSkeleton {
+  return Object.entries(skeleton).reduce(
+    (acc, [ k, skeletonOrSoftLink ]) => {
+      let newValue = skeletonOrSoftLink
+
+      if (check.isPrivateSkeletonInfo(skeletonOrSoftLink)) {
+        skeletonOrSoftLink.cid = decodeCID(skeletonOrSoftLink.cid).toString()
+        skeletonOrSoftLink.subSkeleton = ensureSkeletonStringCIDs(skeletonOrSoftLink.subSkeleton)
+      }
+
+      return { ...acc, [ k ]: newValue }
+    },
+    {}
+  )
 }
 
 

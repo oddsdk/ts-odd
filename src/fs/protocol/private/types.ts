@@ -9,7 +9,7 @@ import { PutResult } from "../../../components/depot/implementation.js"
 export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo
 
 export type PrivateFileInfo = {
-  content: CID | string
+  content: string
   metadata: Metadata
   bareNameFilter: BareNameFilter
   revision: number
@@ -34,7 +34,7 @@ export type PrivateTreeInfo = {
 export type PrivateSkeleton = { [ name: string ]: PrivateSkeletonInfo | SoftLink }
 
 export type PrivateSkeletonInfo = {
-  cid: CID | string
+  cid: string
   key: string
   subSkeleton: PrivateSkeleton
 }
