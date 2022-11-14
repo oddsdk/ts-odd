@@ -66,11 +66,11 @@ export default class MMPT implements Puttable {
 
     // if already in tree, then skip
     if (name === nextNameOrSib) {
-      if (this.links[ name ]?.cid !== value) {
-        this.manners.warn(`Adding \`${name}\` to the MMPT again with a different value. This should not happen. The original value will still be used and can loading issues. Current CID is \`${this.links[ name ]?.cid}\`, new CID is \`${value}\`.`)
-      } else {
-        // skip
-      }
+      // if (this.links[ name ]?.cid !== value) {
+      //   this.manners.warn(`Adding \`${name}\` to the MMPT again with a different value. This should not happen. The original value will still be used and can loading issues. Current CID is \`${this.links[ name ]?.cid}\`, new CID is \`${value}\`.`)
+      // } else {
+      //   // skip
+      // }
     }
 
     // if no children starting with first char of name, then add with entire name as key
