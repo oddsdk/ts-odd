@@ -19,12 +19,3 @@ export type Components = {
   reference: Reference.Implementation
   storage: Storage.Implementation
 }
-
-
-export type ComponentsWithoutAuth = {
-  crypto: Crypto.Implementation
-  depot: Depot.Implementation
-  manners: Manners.Implementation
-  reference: Reference.Implementation
-  storage: Storage.Implementation
-}

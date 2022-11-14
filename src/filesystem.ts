@@ -76,7 +76,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
   }
 
   // If a file system exists, load it and return it
-  const p = Permissions.fromConfig(config.permissions, config.appInfo)
+  const p = Permissions.permissionsFromConfig(config.permissions, config.appInfo)
 
   if (cid) {
     await checkFileSystemVersion(dependents.depot, config, cid)

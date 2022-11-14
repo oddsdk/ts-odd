@@ -42,13 +42,8 @@ export type Configuration = {
 
 
 
-// OTHER
+// PIECES
 
-
-export enum InitialisationError {
-  InsecureContext = "INSECURE_CONTEXT",
-  UnsupportedBrowser = "UNSUPPORTED_BROWSER"
-}
 
 export type UserMessages = {
   versionMismatch: {

@@ -42,7 +42,7 @@ import * as Ucan from "./ucan/index.js"
 import { SESSION_TYPE as CONFIDENCES_SESSION_TYPE } from "./confidences.js"
 import { TYPE as WEB_CRYPTO_SESSION_TYPE } from "./components/auth/implementation/base.js"
 import { Components } from "./components.js"
-import { Configuration, InitialisationError } from "./configuration.js"
+import { Configuration } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
 import { appId, AppInfo } from "./permissions.js"
@@ -72,10 +72,19 @@ import * as ProperManners from "./components/manners/implementation/base.js"
 // RE-EXPORTS
 
 
+export * from "./components.js"
+export * from "./configuration.js"
 export * from "./common/types.js"
 export * from "./common/version.js"
+export * from "./permissions.js"
 
+export * as did from "./did/index.js"
 export * as path from "./path/index.js"
+export * as ucan from "./ucan/index.js"
+
+export { Confidences, FileSystemSecret } from "./confidences.js"
+export { FileSystem } from "./fs/filesystem.js"
+export { Session } from "./session.js"
 
 
 
@@ -94,10 +103,22 @@ export type Program = {
 }
 
 
+export enum ProgramError {
+  InsecureContext = "INSECURE_CONTEXT",
+  UnsupportedBrowser = "UNSUPPORTED_BROWSER"
+}
+
+
 export type AuthenticationStrategies = Record<
   string,
-  { implementation: Auth.Implementation<Components>; session: () => Promise<Maybe<Session>> }
+  Auth.Implementation<Components> &
+  {
+    session: () => Promise<Maybe<Session>>
+  }
 >
+
+
+export const DEFAULT_AUTH_STRATEGY_TYPE = BaseAuth.TYPE
 
 
 /**
@@ -306,11 +327,11 @@ export const reference = {
  * See `loadFileSystem` if you want to load the user's file system yourself.
  */
 export async function assemble(config: Configuration, components: Components): Promise<Program> {
-  const permissions = Permissions.fromConfig(config.permissions, config.appInfo)
+  const permissions = Permissions.permissionsFromConfig(config.permissions, config.appInfo)
 
   // Check if browser is supported
-  if (globalThis.isSecureContext === false) throw InitialisationError.InsecureContext
-  if (await isSupported() === false) throw InitialisationError.UnsupportedBrowser
+  if (globalThis.isSecureContext === false) throw ProgramError.InsecureContext
+  if (await isSupported() === false) throw ProgramError.UnsupportedBrowser
 
   // Backwards compatibility (data)
   await ensureBackwardsCompatibility(components, config)
@@ -322,12 +343,12 @@ export async function assemble(config: Configuration, components: Components): P
   const auth = components.auth.reduce(
     (acc: AuthenticationStrategies, method: Auth.Implementation<Components>): AuthenticationStrategies => {
       const wrap = {
-        implementation: method,
+        ...method,
         async session(): Promise<Maybe<Session>> {
           const newSessionInfo = await SessionMod.restore(components.storage)
           if (!newSessionInfo) return null
 
-          return this.implementation.activate(
+          return this.activate(
             components,
             newSessionInfo.username,
             config
@@ -684,7 +705,7 @@ function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
 
 
 
-// ㊙️
+// 🛠
 
 
 export function extractConfig(opts: Partial<Components> & Configuration): Configuration {

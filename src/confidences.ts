@@ -165,7 +165,7 @@ export async function validateSecrets(
   accountDID: string,
   permissions: Permissions.Permissions
 ): Promise<boolean> {
-  return Permissions.paths(permissions).reduce(
+  return Permissions.permissionPaths(permissions).reduce(
     (acc: Promise<boolean>, path: Path.DistinctivePath): Promise<boolean> =>
       acc.then(async (bool: boolean) => {
         if (bool === false) return bool

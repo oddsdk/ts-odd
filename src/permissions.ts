@@ -62,7 +62,7 @@ export function appId(app: AppInfo): string {
  * Lists the filesystems paths for a set of `Permissions`.
  * This'll return a list of `DistinctivePath`s.
  */
-export function paths(permissions: Permissions): DistinctivePath[] {
+export function permissionPaths(permissions: Permissions): DistinctivePath[] {
   let list = [] as DistinctivePath[]
 
   if (permissions.app) list.push(appDataPath(permissions.app))
@@ -82,6 +82,6 @@ export function paths(permissions: Permissions): DistinctivePath[] {
   return list
 }
 
-export function fromConfig(obj: ConfigurablePermissions | undefined, appInfo: AppInfo): Permissions | undefined {
+export function permissionsFromConfig(obj: ConfigurablePermissions | undefined, appInfo: AppInfo): Permissions | undefined {
   return obj ? { ...obj, app: obj.app === true ? appInfo : undefined } : undefined
 }
