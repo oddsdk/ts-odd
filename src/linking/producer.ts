@@ -6,12 +6,12 @@ import * as Manners from "../components/manners/implementation.js"
 
 import * as Check from "../common/type-checks.js"
 import * as DID from "../did/index.js"
-import * as Linking from "../linking.js"
+import * as Linking from "./common.js"
 import * as Ucan from "../ucan/index.js"
 
 import { Components } from "../components.js"
 import { EventEmitter, EventListener } from "../common/event-emitter.js"
-import { LinkingError, LinkingStep, LinkingWarning, tryParseMessage } from "../linking.js"
+import { LinkingError, LinkingStep, LinkingWarning, tryParseMessage } from "./common.js"
 
 import type { Maybe, Result } from "../common/index.js"
 

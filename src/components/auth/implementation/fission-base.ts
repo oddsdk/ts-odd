@@ -18,7 +18,7 @@ export function createChannel(
   return ChannelMod.createWssChannel(
     dependents.reference,
     ChannelFission.endpoint(
-      `${endpoints.server}/${endpoints.apiPath}`.replace(/^https?:\/\//, "wss://")
+      `${endpoints.server}${endpoints.apiPath}`.replace(/^https?:\/\//, "wss://")
     ),
     options
   )

@@ -1,3 +1,5 @@
+import * as Uint8arrays from "uint8arrays"
+
 import type { Components } from "../../../components.js"
 import type { Dependents } from "./base.js"
 import type { Implementation } from "../implementation.js"
@@ -10,7 +12,7 @@ import * as TypeChecks from "../../../common/type-checks.js"
 import * as Ucan from "../../../ucan/index.js"
 
 import { Configuration } from "../../../configuration.js"
-import { LinkingError } from "../../../linking.js"
+import { LinkingError } from "../../../linking/common.js"
 import { Maybe } from "../../../common/types.js"
 import { Session } from "../../../session.js"
 import { loadRootFileSystem } from "../../../filesystem.js"
@@ -100,7 +102,7 @@ export async function delegateAccount(
   const accountDID = await rootDID(dependents)
   const readKey = await RootKey.retrieve({ crypto: dependents.crypto, accountDID })
   const { token } = await Base.delegateAccount(dependents, username, audience)
-  return { readKey, ucan: token }
+  return { readKey: Uint8arrays.toString(readKey, "base64pad"), ucan: token }
 }
 
 export async function linkDevice(
@@ -177,15 +179,16 @@ export function implementation(
   return {
     type: base.type,
 
-    createChannel: base.createChannel,
-    isUsernameValid: base.isUsernameValid,
-    isUsernameAvailable: base.isUsernameAvailable,
-    register: base.register,
-
     activate,
 
     canDelegateAccount: (...args) => canDelegateAccount(dependents, ...args),
     delegateAccount: (...args) => delegateAccount(dependents, ...args),
     linkDevice: (...args) => linkDevice(dependents, ...args),
+
+    // Have to be implemented properly by other implementations
+    createChannel: base.createChannel,
+    isUsernameValid: base.isUsernameValid,
+    isUsernameAvailable: base.isUsernameAvailable,
+    register: base.register,
   }
 }

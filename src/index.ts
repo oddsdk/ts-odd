@@ -41,6 +41,7 @@ import * as Ucan from "./ucan/index.js"
 
 import { SESSION_TYPE as CONFIDENCES_SESSION_TYPE } from "./confidences.js"
 import { TYPE as WEB_CRYPTO_SESSION_TYPE } from "./components/auth/implementation/base.js"
+import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
 import { Configuration } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
@@ -83,6 +84,7 @@ export * as did from "./did/index.js"
 export * as path from "./path/index.js"
 export * as ucan from "./ucan/index.js"
 
+export { AccountLinkingConsumer, AccountLinkingProducer } from "./linking/index.js"
 export { Confidences, FileSystemSecret } from "./confidences.js"
 export { FileSystem } from "./fs/filesystem.js"
 export { Session } from "./session.js"
@@ -118,8 +120,14 @@ export type ShortHands = {
 
 export type AuthenticationStrategies = Record<
   string,
-  Auth.Implementation<Components> &
   {
+    implementation: Auth.Implementation<Components>
+
+    accountConsumer: (username: string) => Promise<AccountLinkingConsumer>
+    accountProducer: (username: string) => Promise<AccountLinkingProducer>
+    isUsernameAvailable: (username: string) => Promise<boolean>
+    isUsernameValid: (username: string) => Promise<boolean>
+    register: (options: { username: string; email?: string }) => Promise<{ success: boolean }>
     session: () => Promise<Maybe<Session>>
   }
 >
@@ -357,12 +365,31 @@ export async function assemble(config: Configuration, components: Components): P
   const auth = components.auth.reduce(
     (acc: AuthenticationStrategies, method: Auth.Implementation<Components>): AuthenticationStrategies => {
       const wrap = {
-        ...method,
+        implementation: method,
+
+        accountConsumer(username: string) {
+          return createConsumer(
+            { auth: method, crypto: components.crypto, manners: components.manners },
+            { username }
+          )
+        },
+
+        accountProducer(username: string) {
+          return createProducer(
+            { auth: method, crypto: components.crypto, manners: components.manners },
+            { username }
+          )
+        },
+
+        isUsernameAvailable: method.isUsernameAvailable,
+        isUsernameValid: method.isUsernameValid,
+        register: method.register,
+
         async session(): Promise<Maybe<Session>> {
           const newSessionInfo = await SessionMod.restore(components.storage)
           if (!newSessionInfo) return null
 
-          return this.activate(
+          return this.implementation.activate(
             components,
             newSessionInfo.username,
             config

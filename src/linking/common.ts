@@ -1,5 +1,5 @@
-import type { Result } from "./common/types.js"
-import * as Manners from "./components/manners/implementation.js"
+import type { Result } from "../common/types.js"
+import * as Manners from "../components/manners/implementation.js"
 
 
 export enum LinkingStep {

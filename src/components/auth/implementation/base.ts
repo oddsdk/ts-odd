@@ -120,13 +120,13 @@ export function implementation(dependents: Dependents): Implementation<Component
 
     activate: activate,
     canDelegateAccount: (...args) => canDelegateAccount(dependents, ...args),
-    createChannel: () => { throw new Error("Not implemented") },
     delegateAccount: (...args) => delegateAccount(dependents, ...args),
     linkDevice: (...args) => linkDevice(dependents, ...args),
 
     // Have to be implemented properly by other implementations
-    isUsernameValid: () => Promise.resolve(false),
-    isUsernameAvailable: () => Promise.resolve(false),
-    register: () => Promise.resolve({ success: false })
+    createChannel: () => { throw new Error("Not implemented") },
+    isUsernameValid: () => { throw new Error("Not implemented") },
+    isUsernameAvailable: () => { throw new Error("Not implemented") },
+    register: () => { throw new Error("Not implemented") }
   }
 }

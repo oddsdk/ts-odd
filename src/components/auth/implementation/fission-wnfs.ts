@@ -22,10 +22,10 @@ export function implementation(
 
     activate: wnfs.activate,
     canDelegateAccount: wnfs.canDelegateAccount,
-    createChannel: wnfs.createChannel,
     delegateAccount: wnfs.delegateAccount,
     linkDevice: wnfs.linkDevice,
 
+    createChannel: fissionBase.createChannel,
     isUsernameValid: fissionBase.isUsernameValid,
     isUsernameAvailable: fissionBase.isUsernameAvailable,
     register: fissionBase.register,
