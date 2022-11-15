@@ -152,6 +152,10 @@ export const strategyTypes = {
  * - `confidences`, a means to control confidences. Use this to collect & request confidences, and to create a session based on them. Read more about confidences in the toplevel `confidences` object documentation.
  * - `components`, your full set of `Components`.
  *
+ * This object also has a few other functions, eg. to load a filesystem.
+ * These are called "shorthands" because they're the same functions available
+ * through other places in webnative, but you don't have to pass in the components.
+ *
  * See `assemble` for more information.
  */
 export async function program(settings: Partial<Components> & Configuration): Promise<Program> {
@@ -622,6 +626,9 @@ export function defaultStorageComponent(appInfo: AppInfo): Storage.Implementatio
 // 🛟
 
 
+/**
+ * Is this browser supported?
+ */
 export async function isSupported(): Promise<boolean> {
   return localforage.supports(localforage.INDEXEDDB)
 
@@ -759,6 +766,9 @@ export function extractConfig(opts: Partial<Components> & Configuration): Config
 }
 
 
+/**
+ * Is this a configuration that uses confidences?
+ */
 export function isConfidentialAuthConfiguration(config: Configuration): boolean {
   return !!config.permissions
 }

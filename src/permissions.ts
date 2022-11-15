@@ -3,6 +3,9 @@ import { DirectoryPath, DistinctivePath } from "./path/index.js"
 import { Potency, Resource } from "./ucan/index.js"
 
 
+/**
+ * Information about your app.
+ */
 export type AppInfo = {
   name: string
   creator: string
