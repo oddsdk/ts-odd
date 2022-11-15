@@ -1,15 +1,12 @@
 {
   "entryPoints": [
-    "./src/"
+    "./src/index.ts"
   ],
   "exclude": [
     "**/*.test.ts"
   ],
   "excludeExternals": true,
-  "excludeInternal": true,
-  "excludePrivate": true,
-  "excludeProtected": true,
-  "name": "Fission SDK",
+  "name": "Webnative SDK",
   "out": "docs",
-  "readme": "./scripts/TYPEDOC.md"
+  "theme": "default"
 }
