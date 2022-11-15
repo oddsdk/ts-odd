@@ -26,12 +26,16 @@ export const getFile = async (depot: Depot.Implementation, cid: CID): Promise<Ui
 export const getEncryptedFile = async (depot: Depot.Implementation, crypto: Crypto.Implementation, cid: CID, key: Uint8Array): Promise<Uint8Array> => {
   const buf = await getFile(depot, cid)
 
-  // NOTE: Somehow this is needed by the integration test with the CAR file.
+  // NOTE: Somehow the try/catch is needed by the integration test with the CAR file.
   //       Maybe a mistake in the CAR file or how the file system code worked before?
-  if (cid.code === DagPB.code) return buf
+  let withAlgorithm
 
-  // Continue as normal
-  const withAlgorithm = DagCBOR.decode(buf)
+  try {
+    withAlgorithm = DagCBOR.decode(buf)
+  } catch {
+    // Not CBOR?
+    return buf
+  }
 
   if (!TypeCheck.hasProp(withAlgorithm, "alg") || !TypeCheck.hasProp(withAlgorithm, "cip") || !isSymmAlg(withAlgorithm.alg) || !ArrayBuffer.isView(withAlgorithm.cip)) {
     throw new Error(`Unexpected private block. Expected "alg" and "cip" field.`)
@@ -43,6 +47,7 @@ export const getEncryptedFile = async (depot: Depot.Implementation, crypto: Cryp
 
   const decoded = DagCBOR.decode(toDecode)
   if (decoded instanceof Uint8Array) return decoded
+  if (typeof decoded === "string") return Uint8arrays.fromString(decoded, "utf8")
 
   // Legacy
   return Uint8arrays.fromString(JSON.stringify(decoded), "utf8")
