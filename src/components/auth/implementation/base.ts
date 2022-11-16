@@ -110,6 +110,15 @@ export async function linkDevice(
 }
 
 
+export async function register(
+  dependents: Dependents,
+  options: { username: string; email?: string, type?: string }
+): Promise<{ success: boolean }> {
+  await SessionMod.provide(dependents.storage, { type: options.type || TYPE, username: options.username })
+  return { success: true }
+}
+
+
 
 // 🛳
 
@@ -122,11 +131,11 @@ export function implementation(dependents: Dependents): Implementation<Component
     canDelegateAccount: (...args) => canDelegateAccount(dependents, ...args),
     delegateAccount: (...args) => delegateAccount(dependents, ...args),
     linkDevice: (...args) => linkDevice(dependents, ...args),
+    register: (...args) => register(dependents, ...args),
 
     // Have to be implemented properly by other implementations
     createChannel: () => { throw new Error("Not implemented") },
     isUsernameValid: () => { throw new Error("Not implemented") },
     isUsernameAvailable: () => { throw new Error("Not implemented") },
-    register: () => { throw new Error("Not implemented") }
   }
 }

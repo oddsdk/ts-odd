@@ -7,7 +7,6 @@ import * as Base from "./base.js"
 import * as ChannelFission from "./fission/channel.js"
 import * as ChannelMod from "../channel.js"
 import * as Fission from "./fission/index.js"
-import * as Session from "../../../session.js"
 
 
 export function createChannel(
@@ -38,13 +37,7 @@ export const register = async (
   options: { username: string; email?: string }
 ): Promise<{ success: boolean }> => {
   const { success } = await Fission.createAccount(endpoints, dependents, options)
-
-  if (success) {
-    await Session.provide(dependents.storage, { type: Base.TYPE, username: options.username })
-
-    return { success: true }
-  }
-
+  if (success) return Base.register(dependents, { ...options, type: Base.TYPE })
   return { success: false }
 }
 
