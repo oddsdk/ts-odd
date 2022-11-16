@@ -76,11 +76,11 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
   }
 
   // If a file system exists, load it and return it
-  const p = Permissions.permissionsFromConfig(config.permissions, config.appInfo)
+  const p = config.permissions
 
   if (cid) {
     await checkFileSystemVersion(dependents.depot, config, cid)
-    fs = await FileSystem.fromCID(cid, { account, dependents, appInfo: config.appInfo, permissions: p })
+    fs = await FileSystem.fromCID(cid, { account, dependents, permissions: p })
     if (fs) return fs
   }
 
@@ -89,7 +89,6 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
     account,
     dependents,
     rootKey,
-    appInfo: config.appInfo,
     permissions: p,
     version: config.filesystem?.version
   })

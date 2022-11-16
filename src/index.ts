@@ -32,7 +32,6 @@ import * as Confidences from "./confidences.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as Manners from "./components/manners/implementation.js"
-import * as Permissions from "./permissions.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as RootKey from "./common/root-key.js"
 import * as SessionMod from "./session.js"
@@ -215,8 +214,8 @@ export const auth = {
     const { disableWnfs, staging } = options
 
     const manners = options.manners || defaultMannersComponent(config)
-    const crypto = options.crypto || await defaultCryptoComponent(config.appInfo)
-    const storage = options.storage || defaultStorageComponent(config.appInfo)
+    const crypto = options.crypto || await defaultCryptoComponent(config.id)
+    const storage = options.storage || defaultStorageComponent(config.id)
     const reference = options.reference || await defaultReferenceComponent({ crypto, manners, storage })
 
     if (disableWnfs) {
@@ -260,8 +259,8 @@ export const confidences = {
   ): Promise<ConfidencesImpl.Implementation> {
     const { staging } = options
 
-    const crypto = options.crypto || await defaultCryptoComponent(config.appInfo)
-    const depot = options.depot || await defaultDepotComponent(config.appInfo)
+    const crypto = options.crypto || await defaultCryptoComponent(config.id)
+    const depot = options.depot || await defaultDepotComponent(config.id)
 
     if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
     return FissionLobbyProduction.implementation({ crypto, depot })
@@ -287,7 +286,7 @@ export const depot = {
     config: Configuration,
     { staging }: { staging?: boolean } = {}
   ): Promise<Depot.Implementation> {
-    const repoName = `${appId(config.appInfo)}/ipfs`
+    const repoName = `${config.id}/ipfs`
     if (staging) return FissionIpfsStaging.implementation(repoName)
     return FissionIpfsProduction.implementation(repoName)
   }
@@ -325,8 +324,8 @@ export const reference = {
     const { staging } = options
 
     const manners = options.manners || defaultMannersComponent(config)
-    const crypto = options.crypto || await defaultCryptoComponent(config.appInfo)
-    const storage = options.storage || defaultStorageComponent(config.appInfo)
+    const crypto = options.crypto || await defaultCryptoComponent(config.id)
+    const storage = options.storage || defaultStorageComponent(config.id)
 
     if (staging) return FissionReferenceStaging.implementation({ crypto, manners, storage })
     return FissionReferenceProduction.implementation({ crypto, manners, storage })
@@ -353,7 +352,7 @@ export const reference = {
  * See `loadFileSystem` if you want to load the user's file system yourself.
  */
 export async function assemble(config: Configuration, components: Components): Promise<Program> {
-  const permissions = Permissions.permissionsFromConfig(config.permissions, config.appInfo)
+  const permissions = config.permissions
 
   // Check if browser is supported
   if (globalThis.isSecureContext === false) throw ProgramError.InsecureContext
@@ -527,9 +526,9 @@ export const compositions = {
   ): Promise<Components> {
     const { disableWnfs, staging } = options
 
-    const crypto = options.crypto || await defaultCryptoComponent(config.appInfo)
+    const crypto = options.crypto || await defaultCryptoComponent(config.id)
     const manners = options.manners || defaultMannersComponent(config)
-    const storage = options.storage || defaultStorageComponent(config.appInfo)
+    const storage = options.storage || defaultStorageComponent(config.id)
 
     const r = await reference.fission(config, { crypto, manners, staging, storage })
     const d = await depot.fissionIPFS(config, { staging })
@@ -552,12 +551,12 @@ export const compositions = {
 export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
   const config = extractConfig(setup)
 
-  const crypto = setup.crypto || await defaultCryptoComponent(config.appInfo)
+  const crypto = setup.crypto || await defaultCryptoComponent(config.id)
   const manners = setup.manners || defaultMannersComponent(config)
-  const storage = setup.storage || defaultStorageComponent(config.appInfo)
+  const storage = setup.storage || defaultStorageComponent(config.id)
 
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
-  const depot = setup.depot || await defaultDepotComponent(config.appInfo)
+  const depot = setup.depot || await defaultDepotComponent(config.id)
   const confidences = setup.confidences || defaultConfidencesComponent({ crypto, depot })
   const auth = setup.auth || [ defaultAuthComponent({ crypto, reference, storage }) ]
 
@@ -587,17 +586,17 @@ export function defaultConfidencesComponent({ crypto, depot }: FissionLobbyBase.
   return FissionLobbyProduction.implementation({ crypto, depot })
 }
 
-export function defaultCryptoComponent(appInfo: AppInfo): Promise<Crypto.Implementation> {
+export function defaultCryptoComponent(idOrInfo: string | AppInfo): Promise<Crypto.Implementation> {
   return BrowserCrypto.implementation({
-    storeName: appId(appInfo),
+    storeName: idOrInfoToString(idOrInfo),
     exchangeKeyName: "exchange-key",
     writeKeyName: "write-key"
   })
 }
 
-export function defaultDepotComponent(appInfo: AppInfo): Promise<Depot.Implementation> {
+export function defaultDepotComponent(idOrInfo: string | AppInfo): Promise<Depot.Implementation> {
   return FissionIpfsProduction.implementation(
-    `${appId(appInfo)}/ipfs`
+    `${idOrInfoToString(idOrInfo)}/ipfs`
   )
 }
 
@@ -615,9 +614,9 @@ export function defaultReferenceComponent({ crypto, manners, storage }: BaseRefe
   })
 }
 
-export function defaultStorageComponent(appInfo: AppInfo): Storage.Implementation {
+export function defaultStorageComponent(idOrInfo: string | AppInfo): Storage.Implementation {
   return BrowserStorage.implementation({
-    name: appId(appInfo)
+    name: idOrInfoToString(idOrInfo)
   })
 }
 
@@ -758,7 +757,7 @@ function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
 
 export function extractConfig(opts: Partial<Components> & Configuration): Configuration {
   return {
-    appInfo: opts.appInfo,
+    id: opts.id,
     debug: opts.debug,
     filesystem: opts.filesystem,
     userMessages: opts.userMessages,
@@ -771,4 +770,13 @@ export function extractConfig(opts: Partial<Components> & Configuration): Config
  */
 export function isConfidentialAuthConfiguration(config: Configuration): boolean {
   return !!config.permissions
+}
+
+
+
+// ㊙️
+
+
+function idOrInfoToString(idOrInfo: string | AppInfo): string {
+  return isString(idOrInfo) ? idOrInfo : appId(idOrInfo)
 }

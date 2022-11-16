@@ -1,11 +1,11 @@
-import { AppInfo, ConfigurablePermissions } from "./permissions.js"
+import { AppInfo, Permissions } from "./permissions.js"
 
 
 // CONFIGURATION
 
 
 export type Configuration = {
-  appInfo: AppInfo
+  id: string | AppInfo
   debug?: boolean
 
   filesystem?: {
@@ -27,7 +27,7 @@ export type Configuration = {
   /**
    * Permissions to ask a root authority.
    */
-  permissions?: ConfigurablePermissions
+  permissions?: Permissions
 
   /**
    * Configure messages that webnative sends to users.

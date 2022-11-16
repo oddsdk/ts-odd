@@ -17,7 +17,7 @@ import * as Ucan from "../ucan/index.js"
 import * as Versions from "./versions.js"
 
 import { Branch, DistinctivePath, DirectoryPath, FilePath } from "../path/index.js"
-import { Permissions, appDataPath, AppInfo } from "../permissions.js"
+import { Permissions } from "../permissions.js"
 import { SymmAlg } from "../components/crypto/implementation.js"
 import { decodeCID } from "../common/index.js"
 
@@ -64,7 +64,6 @@ export type Dependents = {
 
 export type FileSystemOptions = {
   account: Account
-  appInfo: AppInfo
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
@@ -81,7 +80,6 @@ export type NewFileSystemOptions = FileSystemOptions & {
 
 type ConstructorParams = {
   account: Account
-  appInfo: AppInfo
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
@@ -96,7 +94,6 @@ type ConstructorParams = {
 export class FileSystem {
 
   account: Account
-  appPath: AppPath
   dependents: Dependents
 
   root: RootTree
@@ -109,9 +106,8 @@ export class FileSystem {
   _publishing: false | [ CID, true ]
 
 
-  constructor({ account, appInfo, dependents, root, localOnly }: ConstructorParams) {
+  constructor({ account, dependents, root, localOnly }: ConstructorParams) {
     this.account = account
-    this.appPath = appPath(appInfo)
     this.dependents = dependents
 
     this.localOnly = localOnly || false
@@ -168,7 +164,7 @@ export class FileSystem {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
-    const { account, appInfo, dependents, permissions, localOnly } = opts
+    const { account, dependents, permissions, localOnly } = opts
     const rootKey: Uint8Array = opts.rootKey || await (
       dependents
         .crypto.aes.genKey(DEFAULT_AES_ALG)
@@ -181,7 +177,6 @@ export class FileSystem {
 
     return new FileSystem({
       account,
-      appInfo,
       dependents,
       root,
       permissions,
@@ -193,12 +188,11 @@ export class FileSystem {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions): Promise<FileSystem> {
-    const { account, appInfo, dependents, permissions, localOnly } = opts
+    const { account, dependents, permissions, localOnly } = opts
     const root = await RootTree.fromCID({ accountDID: account.rootDID, dependents, cid, permissions })
 
     return new FileSystem({
       account,
-      appInfo,
       dependents,
       root,
       permissions,
@@ -898,17 +892,3 @@ export class FileSystem {
 
 
 export default FileSystem
-
-
-
-// ㊙️
-
-
-function appPath(appInfo: AppInfo): AppPath {
-  const base = appDataPath(appInfo)
-
-  return ((path?: DistinctivePath) => {
-    if (path) return Path.combine(base, path)
-    return base
-  }) as AppPath
-}

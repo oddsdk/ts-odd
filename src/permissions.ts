@@ -1,3 +1,4 @@
+import { hasProp } from "./common/type-checks.js"
 import * as Path from "./path/index.js"
 import { DirectoryPath, DistinctivePath } from "./path/index.js"
 import { Potency, Resource } from "./ucan/index.js"
@@ -9,14 +10,6 @@ import { Potency, Resource } from "./ucan/index.js"
 export type AppInfo = {
   name: string
   creator: string
-}
-
-export type ConfigurablePermissions = {
-  app?: boolean
-  fs?: FileSystemPermissions
-  platform?: PlatformPermissions
-  raw?: RawPermissions
-  sharing?: boolean
 }
 
 export type Permissions = {
@@ -48,8 +41,11 @@ export type RawPermission = {
 /**
  * Path for `AppInfo`.
  */
-export function appDataPath(app: AppInfo): DirectoryPath {
-  return Path.directory(Path.Branch.Private, "Apps", app.creator, app.name)
+export function appDataPath(app: AppInfo, suffix?: DistinctivePath): DistinctivePath {
+  const parent = Path.directory(Path.Branch.Private, "Apps", app.creator, app.name)
+
+  if (suffix) return Path.combine(parent, suffix)
+  return parent
 }
 
 
@@ -83,8 +79,4 @@ export function permissionPaths(permissions: Permissions): DistinctivePath[] {
   )
 
   return list
-}
-
-export function permissionsFromConfig(obj: ConfigurablePermissions | undefined, appInfo: AppInfo): Permissions | undefined {
-  return obj ? { ...obj, app: obj.app === true ? appInfo : undefined } : undefined
 }
