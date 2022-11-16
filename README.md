@@ -1,129 +1,177 @@
 # Webnative SDK
 
 [![NPM](https://img.shields.io/npm/v/webnative)](https://www.npmjs.com/package/webnative)
-[![Build Status](https://travis-ci.org/fission-suite/webnative.svg?branch=master)](https://travis-ci.org/fission-suite/webnative)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/fission-suite/blob/master/LICENSE)
-[![Maintainability](https://api.codeclimate.com/v1/badges/524fbe384bb6c312fa11/maintainability)](https://codeclimate.com/github/fission-suite/webnative/maintainability)
 [![Built by FISSION](https://img.shields.io/badge/⌘-Built_by_FISSION-purple.svg)](https://fission.codes)
 [![Discord](https://img.shields.io/discord/478735028319158273.svg)](https://discord.gg/zAQBDEq)
 [![Discourse](https://img.shields.io/discourse/https/talk.fission.codes/topics)](https://talk.fission.codes)
 
-Fission helps developers build and scale their apps. We’re building a web native file system that combines files, encryption, and identity, like an open source iCloud.
+The Webnative SDK empowers developers to build fully distributed web applications without needing a complex back-end. The SDK provides:
 
----
+- **User accounts** via the browser's [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) or by using a blockchain wallet as a [webnative plugin](https://github.com/fission-codes/webnative-walletauth).
+- **Authorization** using [UCAN](https://ucan.xyz/).
+- **Encrypted file storage** via the [Webnative File System](https://guide.fission.codes/developers/webnative/file-system-wnfs) backed by [IPLD](https://ipld.io/).
+- **Key management** via websockets and a two-factor auth-like flow.
 
-**[Read the Guide for extended documentation and getting started information](https://guide.fission.codes/developers/webnative)**.  
-The API reference can be found at [webnative.fission.app](https://webnative.fission.app)
+Webnative applications work offline and store data encrypted for the user by leveraging the power of the web platform. You can read more about Webnative in Fission's [Webnative Guide](https://guide.fission.codes/developers/webnative). There's also an API reference which can be found at [webnative.fission.app](https://webnative.fission.app)
 
----
 
-## What you'll find here
 
-The Fission Webnative SDK offers tools for:
-- authenticating through a Fission **authentication lobby**  
-  (a lobby is where you can make a Fission account or link an account)
-- managing your web native **file system**  
-  (this is where a user's data lives)
-- tools for building DIDs and UCANs.
-- interacting with the users apps via the **platform APIs**
+# Getting started
 
 ```ts
-// ES6
+// ESM
 import * as wn from 'webnative'
 
 // Browser/UMD build
 const wn = globalThis.webnative
 ```
 
-# Authentication
+## Creating a Program
+
+A Webnative program is an assembly that makes up a part of, or a whole distributed web application. It consists out of several components that can be customised. _We'll stick with the default components for now, which means we'll be using the Web Crypto API._
 
 ```ts
-const state = await wn.initialise({
-  permissions: {
-    // Will ask the user permission to store
-    // your apps data in `private/Apps/Nullsoft/Winamp`
-    app: {
-      name: "Winamp",
-      creator: "Nullsoft"
-    },
+const program = await wn.program({
+  // Can also be a string, used as an identifier for caches.
+  // If you're developing multiple apps on the same localhost port,
+  // make sure these are different.
+  id: { creator: "Nullsoft", name: "Winamp" }
 
-    // Ask the user permission to additional filesystem paths
-    fs: {
-      private: [ wn.path.directory("Audio", "Music") ],
-      public: [ wn.path.directory("Audio", "Mixtapes") ]
-    }
-  }
-
-}).catch(err => {
-  switch (err) {
-    case wn.InitialisationError.InsecureContext:
-      // We need a secure context to do cryptography
-      // Usually this means we need HTTPS or localhost
-
-    case wn.InitialisationError.UnsupportedBrowser:
-      // Browser not supported.
-      // Example: Firefox private mode can't use indexedDB.
+}).catch(error => {
+  switch (error) {
+    case webnative.ProgramError.InsecureContext:
+      // Webnative requires HTTPS
+      break;
+    case webnative.ProgramError.UnsupportedBrowser:
+      break;
   }
 
 })
+```
 
+That gives a `Program` object, with this we can create a new user session or reuse the existing session. There's two distinctive ways to create a user session, either by using an authentication strategy or by using something we call "confidences". More on the latter in a bit, let's start with the default authentication strategy.
 
-switch (state.scenario) {
+```ts
+// Do we have an existing session?
+if (program.session) {
+  ...
 
-  case wn.Scenario.AuthCancelled:
-    // User was redirected to lobby,
-    // but cancelled the authorisation
-    break;
+// If not, let's authenticate.
+// (a) new user, register a new Fission account
+} else if (registerNewUser) {
+  const { success } = await program.auth.webCrypto.register({ username: "llama" })
+  const session = success ? program.auth.webCrypto.session() : null
 
-  case wn.Scenario.AuthSucceeded:
-  case wn.Scenario.Continuation:
-    // State:
-    // state.authenticated    -  Will always be `true` in these scenarios
-    // state.newUser          -  If the user is new to Fission
-    // state.throughLobby     -  If the user authenticated through the lobby, or just came back.
-    // state.username         -  The user's username.
-    //
-    // ☞ We can now interact with our file system (more on that later)
-    state.fs
-    break;
+// (b) existing user, link a new device
+} else {
+  // On device with existing session:
+  const producer = program.auth.webCrypto.accountProducer(session.username)
 
-  case wn.Scenario.NotAuthorised:
-    wn.redirectToLobby(state.permissions)
-    break;
+  producer.on("challenge", challenge => {
+    // Either show `challenge.pin` or have the user input a PIN and see if they're equal.
+    if (userInput === challenge.pin) challenge.confirmPin()
+    else challenge.rejectPin()
+  })
 
+  producer.on("link", ({ approved }) => {
+    if (approved) console.log("Link device successfully")
+  })
+
+  // On device without session:
+  //     Somehow you'll need to get a hold of the username.
+  //     Few ideas: URL query param, QR code, manual input.
+  const consumer = program.auth.webCrypto.accountConsumer(username)
+
+  consumer.on("challenge", ({ pin }) => {
+    showPinOnUI(pin)
+  })
+
+  consumer.on("link", ({ approved, username }) => {
+    if (approved) {
+      console.log(`Successfully authenticated as ${username}`)
+      const session = program.auth.webCrypto.session()
+    }
+  })
 }
 ```
 
-`redirectToLobby` will redirect you to [auth.fission.codes](https://auth.fission.codes) our authentication lobby, where you'll be able to make a Fission an account and link with another account that's on another device or browser. The function takes a second, optional, parameter, the url that the lobby should redirect back to (the default is `location.href`).
+Alternatively you can use "confidences", this system is used when you want partial access to a file system. At the moment of writing this only supported through the "Fission auth lobby", which is a Webnative app that uses the auth strategy shown above.
 
-`initialise` will return a rejected Promise if the browser, or context, is not supported.
-
-
-
-# Webnative File System
-
-The Webnative File System (WNFS) is built on top of the InterPlanetary File System (IPFS). It's structured and functions similarly to a Unix-style file system, with one notable exception: it's a Directed Acyclic Graph (DAG), meaning that a given child can have more than one parent (think symlinks but without the "sym").
-
-Each file system has a public tree and a private tree, much like your MacOS, Windows, or Linux desktop file system. The public tree is "live" and publically accessible on the Internet. The private tree is encrypted so that only the owner can see the contents.
-
-All information (links, data, metadata, etc) in the private tree is encrypted. Decryption keys are stored in such a manner that access to a given folder grants access to all of its subfolders.
+This Fission auth lobby flow works as follows:
+1. You get redirected to the Fission lobby from your app.
+2. Here you create an account like in the normal auth strategy flow as shown above.
+3. The lobby shows what your app wants to access in your file system.
+4. You approve or deny these permissions and get redirected back to your app.
+5. Your app collects the encrypted information (UCANs & file system secrets).
+6. You can create a user session.
 
 ```ts
-// After initialising …
-const fs = state.fs
+// We define a `Permissions` object,
+// this represents what permissions to ask the user.
+const permissions = {
+  // App folder: /private/Apps/Nullsoft/Winamp
+  app: { creator: "Nullsoft", name: "Winamp" }
+}
 
-// List the user's private files that belong to this app
-await fs.ls(fs.appPath())
+// We need to pass this to our program
+const program = await webnative.program({
+  permissions
+})
 
-// Create a sub directory and add some content
-await fs.write(
-  fs.appPath(wn.path.file("Sub Directory", "hello.txt")),
-  "👋"
+// (a) Whenever you are ready to redirect to the lobby, call this:
+program.confidences.request(permissions)
+
+// (b) When you get redirected back and your program is ready,
+// you will have access to your user session.
+console.log(program.session)
+```
+
+Once you have your `Session`, you have access to the file system 🎉
+
+```ts
+const fs = session.fs
+```
+
+Notes:
+- You can use alternative authentication strategies, such as [webnative-walletauth](https://github.com/fission-codes/webnative-walletauth).
+- The default type of the auth strategy (ie. `webCrypto`) is also available through `wn.strategyTypes.default`
+- You can remove all traces of the user using `await session.destroy()`
+- You can load the file system separately, in case you're using web worker. This is done using the combination of `configuration.filesystem.loadImmediately = false` and `program.loadFileSystem()`
+
+
+## Working with the file system
+
+The Web Native File System (WNFS) is a file system built on top of [IPLD](https://ipld.io/). Each file system has a public side and a private side, much like your macOS, Windows, or Linux desktop file system. The public side is "live" and publicly accessible on the Internet. The private side is encrypted so that only the owner can see the contents. Read more about [here](https://github.com/wnfs-wg).
+
+```ts
+const { Branch } = wn.path
+
+// List the user's private files
+await fs.ls(
+  wn.path.directory(Branch.Private)
 )
 
-// Announce the changes to the server
+// Create a sub directory and add some content
+const contentPath = wn.file(
+  Branch.Private, "Sub Directory", "hello.txt"
+)
+
+await fs.write(
+  contentPath,
+  new TextEncoder().encode("👋") // Uint8Array
+)
+
+// Announce the changes to your other devices
 await fs.publish()
+
+// Read the file
+const content = new TextDecoder().decode(
+  await fs.read(contentPath)
+)
 ```
+
+That's it, you have successfully created a Webnative app! 🚀
 
 
 ## Basics
@@ -138,11 +186,6 @@ WNFS exposes a familiar POSIX-style interface:
 - `read`: alias for `cat`
 - `rm`: remove a file or directory
 - `write`: alias for `add`
-
-
-## Publish
-
-The `publish` function synchronises your file system with the Fission API and IPFS. We don't do this automatically because if you add a large set of data, you only want to do this after everything is added. Otherwise it would be too slow and we would have too many network requests to the API.
 
 
 ## Versioning
@@ -169,27 +212,7 @@ file.history.prior(1606236743)
 ```
 
 
+## Sharing Private Data
 
-# Development
 
-```
-# install dependencies
-yarn
-
-# run development server
-yarn start
-
-# build
-yarn build
-
-# test
-yarn test:prod
-yarn test:unit
-
-# generate docs
-yarn docs
-
-# publish
-yarn publish-latest
-yarn publish-alpha
-```
+[https://guide.fission.codes/developers/webnative/sharing-private-data](https://guide.fission.codes/developers/webnative/sharing-private-data)
