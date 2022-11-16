@@ -83,18 +83,12 @@ export async function createCryptoComponent(): Promise<Crypto.Implementation> {
   const ks = new RSAKeyStore(cfg, store)
 
   return {
-    aes: {
-      decrypt: BrowserCrypto.aesDecrypt,
-      encrypt: BrowserCrypto.aesEncrypt,
-      exportKey: BrowserCrypto.aesExportKey,
-      genKey: BrowserCrypto.aesGenKey,
-    },
-    ed25519: {
-      verify: BrowserCrypto.ed25519Verify
-    },
-    hash: {
-      sha256: BrowserCrypto.sha256,
-    },
+    aes: BrowserCrypto.aes,
+    ed25519: BrowserCrypto.ed25519,
+    hash: BrowserCrypto.hash,
+    misc: BrowserCrypto.misc,
+    rsa: BrowserCrypto.rsa,
+
     keystore: {
       clearStore: () => BrowserCrypto.ksClearStore(ks),
       decrypt: (...args) => BrowserCrypto.ksDecrypt(ks, ...args),
@@ -106,16 +100,6 @@ export async function createCryptoComponent(): Promise<Crypto.Implementation> {
       publicExchangeKey: (...args) => BrowserCrypto.ksPublicExchangeKey(ks, ...args),
       publicWriteKey: (...args) => BrowserCrypto.ksPublicWriteKey(ks, ...args),
       sign: (...args) => BrowserCrypto.ksSign(ks, ...args),
-    },
-    misc: {
-      randomNumbers: BrowserCrypto.randomNumbers,
-    },
-    rsa: {
-      decrypt: BrowserCrypto.rsaDecrypt,
-      encrypt: BrowserCrypto.rsaEncrypt,
-      exportPublicKey: BrowserCrypto.rsaExportPublicKey,
-      genKey: BrowserCrypto.rsaGenKey,
-      verify: BrowserCrypto.rsaVerify
     },
   }
 }

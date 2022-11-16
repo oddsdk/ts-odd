@@ -2,7 +2,7 @@ import * as uint8arrays from "uint8arrays"
 import { webcrypto } from "one-webcrypto"
 import tweetnacl from "tweetnacl"
 
-import * as aes from "keystore-idb/aes/index.js"
+import * as keystoreAES from "keystore-idb/aes/index.js"
 import * as keystoreIDB from "keystore-idb/constants.js"
 import { HashAlg, SymmAlg, SymmKeyLength } from "keystore-idb/types.js"
 import { RSAKeyStore } from "keystore-idb/rsa/index.js"
@@ -13,6 +13,14 @@ import { Implementation, ImplementationOptions } from "../implementation.js"
 
 
 // AES
+
+
+export const aes = {
+  decrypt: aesDecrypt,
+  encrypt: aesEncrypt,
+  exportKey: aesExportKey,
+  genKey: aesGenKey,
+}
 
 
 export function importAesKey(key: Uint8Array, alg: SymmAlg): Promise<CryptoKey> {
@@ -37,7 +45,7 @@ export async function aesDecrypt(encrypted: Uint8Array, key: CryptoKey | Uint8Ar
       encrypted
     )
     // the keystore version prefixes the `iv` into the cipher text
-    : await aes.decryptBytes(encrypted, cryptoKey, { alg })
+    : await keystoreAES.decryptBytes(encrypted, cryptoKey, { alg })
 
   return new Uint8Array(decrypted)
 }
@@ -52,7 +60,7 @@ export async function aesEncrypt(data: Uint8Array, key: CryptoKey | Uint8Array, 
       cryptoKey,
       data
     )
-    : await aes.encryptBytes(data, cryptoKey, { alg })
+    : await keystoreAES.encryptBytes(data, cryptoKey, { alg })
 
   return new Uint8Array(encrypted)
 }
@@ -63,12 +71,17 @@ export async function aesExportKey(key: CryptoKey): Promise<Uint8Array> {
 }
 
 export function aesGenKey(alg: SymmAlg): Promise<CryptoKey> {
-  return aes.makeKey({ length: SymmKeyLength.B256, alg })
+  return keystoreAES.makeKey({ length: SymmKeyLength.B256, alg })
 }
 
 
 
 // ED25519
+
+
+export const ed25519 = {
+  verify: ed25519Verify
+}
 
 
 export async function ed25519Verify(message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> {
@@ -78,6 +91,11 @@ export async function ed25519Verify(message: Uint8Array, signature: Uint8Array, 
 
 
 // HASH
+
+
+export const hash = {
+  sha256
+}
 
 
 export async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
@@ -161,8 +179,26 @@ export async function ksSign(ks: RSAKeyStore, message: Uint8Array): Promise<Uint
 // MISC
 
 
+export const misc = {
+  randomNumbers,
+}
+
+
 export function randomNumbers(options: { amount: number }): Uint8Array {
   return webcrypto.getRandomValues(new Uint8Array(options.amount))
+}
+
+
+
+// RSA
+
+
+export const rsa = {
+  decrypt: rsaDecrypt,
+  encrypt: rsaEncrypt,
+  exportPublicKey: rsaExportPublicKey,
+  genKey: rsaGenKey,
+  verify: rsaVerify,
 }
 
 
@@ -277,18 +313,12 @@ export async function implementation(
   })
 
   return {
-    aes: {
-      decrypt: aesDecrypt,
-      encrypt: aesEncrypt,
-      exportKey: aesExportKey,
-      genKey: aesGenKey,
-    },
-    ed25519: {
-      verify: ed25519Verify
-    },
-    hash: {
-      sha256,
-    },
+    aes,
+    ed25519,
+    hash,
+    misc,
+    rsa,
+
     keystore: {
       clearStore: (...args) => ksClearStore(ks, ...args),
       decrypt: (...args) => ksDecrypt(ks, ...args),
@@ -300,16 +330,6 @@ export async function implementation(
       publicExchangeKey: (...args) => ksPublicExchangeKey(ks, ...args),
       publicWriteKey: (...args) => ksPublicWriteKey(ks, ...args),
       sign: (...args) => ksSign(ks, ...args),
-    },
-    misc: {
-      randomNumbers,
-    },
-    rsa: {
-      decrypt: rsaDecrypt,
-      encrypt: rsaEncrypt,
-      exportPublicKey: rsaExportPublicKey,
-      genKey: rsaGenKey,
-      verify: rsaVerify,
     },
   }
 }
