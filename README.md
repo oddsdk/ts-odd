@@ -21,7 +21,7 @@ Webnative applications work offline and store data encrypted for the user by lev
 
 ```ts
 // ESM
-import * as wn from 'webnative'
+import * as wn from "webnative"
 
 // Browser/UMD build
 const wn = globalThis.webnative
@@ -35,7 +35,7 @@ A Webnative program is an assembly that makes up a part of, or a whole distribut
 const program = await wn.program({
   // Can also be a string, used as an identifier for caches.
   // If you're developing multiple apps on the same localhost port,
-  // make sure these are different.
+  // make sure these differ.
   id: { creator: "Nullsoft", name: "Winamp" }
 
 }).catch(error => {
@@ -50,23 +50,25 @@ const program = await wn.program({
 })
 ```
 
-That gives a `Program` object, with this we can create a new user session or reuse the existing session. There's two distinctive ways to create a user session, either by using an authentication strategy or by using something we call "confidences". More on the latter in a bit, let's start with the default authentication strategy.
+That gives us a `Program` object, with this we can create a new user session or reuse the existing session. There's two distinctive ways to create a user session, either by using an authentication strategy or by using something we call "confidences". More on the latter in a bit, let's start with the default authentication strategy.
 
 ```ts
+let session
+
 // Do we have an existing session?
 if (program.session) {
-  ...
+  session = program.session
 
 // If not, let's authenticate.
 // (a) new user, register a new Fission account
 } else if (registerNewUser) {
   const { success } = await program.auth.webCrypto.register({ username: "llama" })
-  const session = success ? program.auth.webCrypto.session() : null
+  session = success ? program.auth.webCrypto.session() : null
 
 // (b) existing user, link a new device
 } else {
   // On device with existing session:
-  const producer = program.auth.webCrypto.accountProducer(session.username)
+  const producer = program.auth.webCrypto.accountProducer(program.session.username)
 
   producer.on("challenge", challenge => {
     // Either show `challenge.pin` or have the user input a PIN and see if they're equal.
@@ -90,7 +92,7 @@ if (program.session) {
   consumer.on("link", ({ approved, username }) => {
     if (approved) {
       console.log(`Successfully authenticated as ${username}`)
-      const session = program.auth.webCrypto.session()
+      session = program.auth.webCrypto.session()
     }
   })
 }
@@ -100,7 +102,7 @@ Alternatively you can use "confidences", this system is used when you want parti
 
 This Fission auth lobby flow works as follows:
 1. You get redirected to the Fission lobby from your app.
-2. Here you create an account like in the normal auth strategy flow as shown above.
+2. Here you create an account like in the normal auth strategy flow shown above.
 3. The lobby shows what your app wants to access in your file system.
 4. You approve or deny these permissions and get redirected back to your app.
 5. Your app collects the encrypted information (UCANs & file system secrets).
@@ -110,11 +112,12 @@ This Fission auth lobby flow works as follows:
 // We define a `Permissions` object,
 // this represents what permissions to ask the user.
 const permissions = {
-  // App folder: /private/Apps/Nullsoft/Winamp
+  // Ask permission to write to and read from the directory:
+  // private/Apps/Nullsoft/Winamp
   app: { creator: "Nullsoft", name: "Winamp" }
 }
 
-// We need to pass this to our program
+// We need to pass this object to our program
 const program = await webnative.program({
   permissions
 })
@@ -124,7 +127,7 @@ program.confidences.request(permissions)
 
 // (b) When you get redirected back and your program is ready,
 // you will have access to your user session.
-console.log(program.session)
+session = program.session
 ```
 
 Once you have your `Session`, you have access to the file system 🎉
@@ -133,7 +136,8 @@ Once you have your `Session`, you have access to the file system 🎉
 const fs = session.fs
 ```
 
-Notes:
+__Notes:__
+
 - You can use alternative authentication strategies, such as [webnative-walletauth](https://github.com/fission-codes/webnative-walletauth).
 - The default type of the auth strategy (ie. `webCrypto`) is also available through `wn.strategyTypes.default`
 - You can remove all traces of the user using `await session.destroy()`
@@ -142,7 +146,7 @@ Notes:
 
 ## Working with the file system
 
-The Web Native File System (WNFS) is a file system built on top of [IPLD](https://ipld.io/). Each file system has a public side and a private side, much like your macOS, Windows, or Linux desktop file system. The public side is "live" and publicly accessible on the Internet. The private side is encrypted so that only the owner can see the contents. Read more about [here](https://github.com/wnfs-wg).
+The Web Native File System (WNFS) is a file system built on top of [IPLD](https://ipld.io/). Each file system has a public side and a private side, much like your macOS, Windows, or Linux desktop file system. The public side is "live" and publicly accessible on the Internet. The private side is encrypted so that only the owner can see the contents. Read more about it [here](https://github.com/wnfs-wg).
 
 ```ts
 const { Branch } = wn.path
