@@ -11,7 +11,6 @@ import FileSystem from "./fs/index.js"
 
 export class Session {
 
-  additionalData?: Record<string, unknown>
   crypto: Crypto.Implementation
   fs?: FileSystem
   storage: Storage.Implementation
@@ -19,14 +18,12 @@ export class Session {
   username: string
 
   constructor(props: {
-    additionalData?: Record<string, unknown>
     crypto: Crypto.Implementation
     fs?: FileSystem
     storage: Storage.Implementation
     type: string
     username: string
   }) {
-    this.additionalData = props.additionalData
     this.crypto = props.crypto
     this.fs = props.fs
     this.storage = props.storage
