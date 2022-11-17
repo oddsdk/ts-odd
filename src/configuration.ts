@@ -5,7 +5,7 @@ import { AppInfo, Permissions } from "./permissions.js"
 
 
 export type Configuration = {
-  id: string | AppInfo
+  tag: string | AppInfo
   debug?: boolean
 
   filesystem?: {

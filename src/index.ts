@@ -211,8 +211,8 @@ export const auth = {
     const { disableWnfs, staging } = options
 
     const manners = options.manners || defaultMannersComponent(config)
-    const crypto = options.crypto || await defaultCryptoComponent(config.id)
-    const storage = options.storage || defaultStorageComponent(config.id)
+    const crypto = options.crypto || await defaultCryptoComponent(config.tag)
+    const storage = options.storage || defaultStorageComponent(config.tag)
     const reference = options.reference || await defaultReferenceComponent({ crypto, manners, storage })
 
     if (disableWnfs) {
@@ -256,8 +256,8 @@ export const confidences = {
   ): Promise<ConfidencesImpl.Implementation> {
     const { staging } = options
 
-    const crypto = options.crypto || await defaultCryptoComponent(config.id)
-    const depot = options.depot || await defaultDepotComponent(config.id)
+    const crypto = options.crypto || await defaultCryptoComponent(config.tag)
+    const depot = options.depot || await defaultDepotComponent(config.tag)
 
     if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
     return FissionLobbyProduction.implementation({ crypto, depot })
@@ -283,7 +283,7 @@ export const depot = {
     config: Configuration,
     { staging }: { staging?: boolean } = {}
   ): Promise<Depot.Implementation> {
-    const repoName = `${config.id}/ipfs`
+    const repoName = `${config.tag}/ipfs`
     if (staging) return FissionIpfsStaging.implementation(repoName)
     return FissionIpfsProduction.implementation(repoName)
   }
@@ -321,8 +321,8 @@ export const reference = {
     const { staging } = options
 
     const manners = options.manners || defaultMannersComponent(config)
-    const crypto = options.crypto || await defaultCryptoComponent(config.id)
-    const storage = options.storage || defaultStorageComponent(config.id)
+    const crypto = options.crypto || await defaultCryptoComponent(config.tag)
+    const storage = options.storage || defaultStorageComponent(config.tag)
 
     if (staging) return FissionReferenceStaging.implementation({ crypto, manners, storage })
     return FissionReferenceProduction.implementation({ crypto, manners, storage })
@@ -526,9 +526,9 @@ export const compositions = {
   ): Promise<Components> {
     const { disableWnfs, staging } = options
 
-    const crypto = options.crypto || await defaultCryptoComponent(config.id)
+    const crypto = options.crypto || await defaultCryptoComponent(config.tag)
     const manners = options.manners || defaultMannersComponent(config)
-    const storage = options.storage || defaultStorageComponent(config.id)
+    const storage = options.storage || defaultStorageComponent(config.tag)
 
     const r = await reference.fission(config, { crypto, manners, staging, storage })
     const d = await depot.fissionIPFS(config, { staging })
@@ -551,12 +551,12 @@ export const compositions = {
 export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
   const config = extractConfig(setup)
 
-  const crypto = setup.crypto || await defaultCryptoComponent(config.id)
+  const crypto = setup.crypto || await defaultCryptoComponent(config.tag)
   const manners = setup.manners || defaultMannersComponent(config)
-  const storage = setup.storage || defaultStorageComponent(config.id)
+  const storage = setup.storage || defaultStorageComponent(config.tag)
 
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
-  const depot = setup.depot || await defaultDepotComponent(config.id)
+  const depot = setup.depot || await defaultDepotComponent(config.tag)
   const confidences = setup.confidences || defaultConfidencesComponent({ crypto, depot })
   const auth = setup.auth || [ defaultAuthComponent({ crypto, reference, storage }) ]
 
@@ -757,7 +757,7 @@ function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
 
 export function extractConfig(opts: Partial<Components> & Configuration): Configuration {
   return {
-    id: opts.id,
+    tag: opts.tag,
     debug: opts.debug,
     filesystem: opts.filesystem,
     userMessages: opts.userMessages,
