@@ -42,10 +42,10 @@ import { SESSION_TYPE as CONFIDENCES_SESSION_TYPE } from "./confidences.js"
 import { TYPE as WEB_CRYPTO_SESSION_TYPE } from "./components/auth/implementation/base.js"
 import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
-import { Configuration } from "./configuration.js"
+import { Configuration, tagToString } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { appId, AppInfo } from "./permissions.js"
+import { AppInfo } from "./permissions.js"
 import { loadFileSystem, loadRootFileSystem } from "./filesystem.js"
 import FileSystem from "./fs/filesystem.js"
 
@@ -586,17 +586,17 @@ export function defaultConfidencesComponent({ crypto, depot }: FissionLobbyBase.
   return FissionLobbyProduction.implementation({ crypto, depot })
 }
 
-export function defaultCryptoComponent(idOrInfo: string | AppInfo): Promise<Crypto.Implementation> {
+export function defaultCryptoComponent(tag: string | AppInfo): Promise<Crypto.Implementation> {
   return BrowserCrypto.implementation({
-    storeName: idOrInfoToString(idOrInfo),
+    storeName: tagToString(tag),
     exchangeKeyName: "exchange-key",
     writeKeyName: "write-key"
   })
 }
 
-export function defaultDepotComponent(idOrInfo: string | AppInfo): Promise<Depot.Implementation> {
+export function defaultDepotComponent(tag: string | AppInfo): Promise<Depot.Implementation> {
   return FissionIpfsProduction.implementation(
-    `${idOrInfoToString(idOrInfo)}/ipfs`
+    `${tagToString(tag)}/ipfs`
   )
 }
 
@@ -614,9 +614,9 @@ export function defaultReferenceComponent({ crypto, manners, storage }: BaseRefe
   })
 }
 
-export function defaultStorageComponent(idOrInfo: string | AppInfo): Storage.Implementation {
+export function defaultStorageComponent(tag: string | AppInfo): Storage.Implementation {
   return BrowserStorage.implementation({
-    name: idOrInfoToString(idOrInfo)
+    name: tagToString(tag)
   })
 }
 
@@ -770,13 +770,4 @@ export function extractConfig(opts: Partial<Components> & Configuration): Config
  */
 export function isConfidentialAuthConfiguration(config: Configuration): boolean {
   return !!config.permissions
-}
-
-
-
-// ㊙️
-
-
-function idOrInfoToString(idOrInfo: string | AppInfo): string {
-  return isString(idOrInfo) ? idOrInfo : appId(idOrInfo)
 }

@@ -4,6 +4,7 @@ import expect from "expect"
 import * as DID from "../../src/did/index.js"
 import * as Ucan from "../../src/ucan/index.js"
 import { components } from "../helpers/components.js"
+import { didToPublicKey } from "../../src/did/index.js"
 
 
 describe("Ed25519 Signatures", () => {
@@ -15,10 +16,9 @@ describe("Ed25519 Signatures", () => {
     const encodedHeader = Ucan.encodeHeader(u.header)
     const encodedPayload = Ucan.encodePayload(u.payload)
 
-    const isValid = await DID.verifySignedData({
-      dependents: components,
-      data: Uint8arrays.fromString(`${encodedHeader}.${encodedPayload}`, "utf8"),
-      did: u.payload.iss,
+    const isValid = await components.crypto.did.keyTypes[ "ed25519" ].verify({
+      message: Uint8arrays.fromString(`${encodedHeader}.${encodedPayload}`, "utf8"),
+      publicKey: didToPublicKey(components.crypto, u.payload.iss).publicKey,
       signature: Uint8arrays.fromString(u.signature || "", "base64url")
     })
 
@@ -29,13 +29,9 @@ describe("Ed25519 Signatures", () => {
     const jwt = "eyJhbGciOiJFZERTQSJ9.RXhhbXBsZSBvZiBFZDI1NTE5IHNpZ25pbmc.hgyY0il_MGCjP0JzlnLWG1PPOt7-09PGcvMg3AIbQR6dWbhijcNR4ki4iylGjg5BhVsPt9g7sVvpAr_MuM0KAg"
     const s = jwt.split(".")
 
-    const isValid = await DID.verifySignedData({
-      dependents: components,
-      data: Uint8arrays.fromString(s.slice(0, 2).join("."), "utf8"),
-      did: DID.publicKeyToDid(
-        Uint8arrays.fromString("11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo", "base64pad"),
-        DID.KeyType.Edwards
-      ),
+    const isValid = await components.crypto.did.keyTypes[ "ed25519" ].verify({
+      message: Uint8arrays.fromString(s.slice(0, 2).join("."), "utf8"),
+      publicKey: Uint8arrays.fromString("11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo", "base64pad"),
       signature: Uint8arrays.fromString(s[ 2 ], "base64url")
     })
 

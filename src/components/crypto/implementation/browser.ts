@@ -9,7 +9,7 @@ import { RSAKeyStore } from "keystore-idb/rsa/index.js"
 import rsaOperations from "keystore-idb/rsa/index.js"
 
 import * as typeChecks from "../../../common/type-checks.js"
-import { Implementation, ImplementationOptions } from "../implementation.js"
+import { Implementation, ImplementationOptions, VerifyArgs } from "../implementation.js"
 
 
 // AES
@@ -76,16 +76,45 @@ export function aesGenKey(alg: SymmAlg): Promise<CryptoKey> {
 
 
 
-// ED25519
+// DID
 
 
-export const ed25519 = {
-  verify: ed25519Verify
+export const did: Implementation[ "did" ] = {
+  keyTypes: {
+    "bls12-381": {
+      magicBytes: new Uint8Array([ 0xea, 0x01 ]),
+      verify: () => { throw new Error("Not implemented") },
+    },
+    "ed25519": {
+      magicBytes: new Uint8Array([ 0xed, 0x01 ]),
+      verify: ed25519Verify,
+    },
+    "rsa": {
+      magicBytes: new Uint8Array([ 0x00, 0xf5, 0x02 ]),
+      verify: rsaVerify,
+    },
+  }
 }
 
 
-export async function ed25519Verify(message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> {
+export async function ed25519Verify({ message, publicKey, signature }: VerifyArgs): Promise<boolean> {
   return tweetnacl.sign.detached.verify(message, signature, publicKey)
+}
+
+
+export async function rsaVerify({ message, publicKey, signature }: VerifyArgs): Promise<boolean> {
+  return rsaOperations.verify(
+    message,
+    signature,
+    await webcrypto.subtle.importKey(
+      "spki",
+      publicKey,
+      { name: keystoreIDB.RSA_WRITE_ALG, hash: RSA_HASHING_ALGORITHM },
+      false,
+      [ "verify" ]
+    ),
+    8
+  )
 }
 
 
@@ -133,11 +162,11 @@ export async function ksExportSymmKey(ks: RSAKeyStore, keyName: string): Promise
   return new Uint8Array(raw)
 }
 
-export function ksGetAlg(ks: RSAKeyStore): Promise<string> {
+export function ksGetAlgorithm(ks: RSAKeyStore): Promise<string> {
   return Promise.resolve("rsa")
 }
 
-export function ksGetUcanAlg(ks: RSAKeyStore): Promise<string> {
+export function ksGetUcanAlgorithm(ks: RSAKeyStore): Promise<string> {
   return Promise.resolve("RS256")
 }
 
@@ -198,7 +227,6 @@ export const rsa = {
   encrypt: rsaEncrypt,
   exportPublicKey: rsaExportPublicKey,
   genKey: rsaGenKey,
-  verify: rsaVerify,
 }
 
 
@@ -273,30 +301,6 @@ export function rsaGenKey(): Promise<CryptoKeyPair> {
 
 
 
-// RSA
-// ---
-// Write keys:
-
-
-export async function rsaVerify(message: Uint8Array, signature: Uint8Array, publicKey: CryptoKey | Uint8Array): Promise<boolean> {
-  return rsaOperations.verify(
-    message,
-    signature,
-    typeChecks.isCryptoKey(publicKey)
-      ? publicKey
-      : await webcrypto.subtle.importKey(
-        "spki",
-        publicKey,
-        { name: keystoreIDB.RSA_WRITE_ALG, hash: RSA_HASHING_ALGORITHM },
-        false,
-        [ "verify" ]
-      ),
-    8
-  )
-}
-
-
-
 // 🛳
 
 
@@ -314,7 +318,7 @@ export async function implementation(
 
   return {
     aes,
-    ed25519,
+    did,
     hash,
     misc,
     rsa,
@@ -323,8 +327,8 @@ export async function implementation(
       clearStore: (...args) => ksClearStore(ks, ...args),
       decrypt: (...args) => ksDecrypt(ks, ...args),
       exportSymmKey: (...args) => ksExportSymmKey(ks, ...args),
-      getAlg: (...args) => ksGetAlg(ks, ...args),
-      getUcanAlg: (...args) => ksGetUcanAlg(ks, ...args),
+      getAlgorithm: (...args) => ksGetAlgorithm(ks, ...args),
+      getUcanAlgorithm: (...args) => ksGetUcanAlgorithm(ks, ...args),
       importSymmKey: (...args) => ksImportSymmKey(ks, ...args),
       keyExists: (...args) => ksKeyExists(ks, ...args),
       publicExchangeKey: (...args) => ksPublicExchangeKey(ks, ...args),

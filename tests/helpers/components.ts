@@ -84,7 +84,7 @@ export async function createCryptoComponent(): Promise<Crypto.Implementation> {
 
   return {
     aes: BrowserCrypto.aes,
-    ed25519: BrowserCrypto.ed25519,
+    did: BrowserCrypto.did,
     hash: BrowserCrypto.hash,
     misc: BrowserCrypto.misc,
     rsa: BrowserCrypto.rsa,
@@ -93,8 +93,8 @@ export async function createCryptoComponent(): Promise<Crypto.Implementation> {
       clearStore: () => BrowserCrypto.ksClearStore(ks),
       decrypt: (...args) => BrowserCrypto.ksDecrypt(ks, ...args),
       exportSymmKey: (...args) => BrowserCrypto.ksExportSymmKey(ks, ...args),
-      getAlg: (...args) => BrowserCrypto.ksGetAlg(ks, ...args),
-      getUcanAlg: (...args) => BrowserCrypto.ksGetUcanAlg(ks, ...args),
+      getAlgorithm: (...args) => BrowserCrypto.ksGetAlgorithm(ks, ...args),
+      getUcanAlgorithm: (...args) => BrowserCrypto.ksGetUcanAlgorithm(ks, ...args),
       importSymmKey: (...args) => BrowserCrypto.ksImportSymmKey(ks, ...args),
       keyExists: (...args) => BrowserCrypto.ksKeyExists(ks, ...args),
       publicExchangeKey: (...args) => BrowserCrypto.ksPublicExchangeKey(ks, ...args),

@@ -9,7 +9,6 @@ import * as Protocol from "../../src/fs/protocol/index.js"
 import * as SharingKey from "../../src/fs/protocol/shared/key.js"
 
 import { Branch } from "../../src/path/index.js"
-import { KeyType } from "../../src/did/types.js"
 import { SymmAlg } from "../../src/components/crypto/implementation.js"
 import { components } from "../helpers/components.js"
 import { decodeCID } from "../../src/common/index.js"
@@ -40,12 +39,12 @@ describe("the filesystem", () => {
     // Test identifiers
     const exchangeKeyPair = await components.crypto.rsa.genKey()
     const exchangePubKey = await components.crypto.rsa.exportPublicKey(exchangeKeyPair.publicKey)
-    const exchangeDID = DID.publicKeyToDid(exchangePubKey, KeyType.RSA)
+    const exchangeDID = DID.publicKeyToDid(components.crypto, exchangePubKey, "rsa")
     if (!exchangeKeyPair.privateKey) throw new Error("Missing private key in exchange key-pair")
 
     const senderKeyPair = await components.crypto.rsa.genKey()
     const senderPubKey = await components.crypto.rsa.exportPublicKey(senderKeyPair.publicKey)
-    const senderDID = DID.publicKeyToDid(senderPubKey, KeyType.RSA)
+    const senderDID = DID.publicKeyToDid(components.crypto, senderPubKey, "rsa")
 
     // Create the `/shared` entries
     const itemC = await fs.get(Path.file(Branch.Private, "a", "b", "c.txt"))

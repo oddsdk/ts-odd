@@ -118,7 +118,7 @@ export async function privateNode(
 
   // Add encrypted payloads to depot
   const links = await Promise.all(shareKeysWithDIDs.map(async ([ did, shareKey ]) => {
-    const { publicKey } = didToPublicKey(did)
+    const { publicKey } = didToPublicKey(crypto, did)
     const encryptedPayload = await crypto.rsa.encrypt(payload, publicKey)
     const result = await depot.putChunked(encryptedPayload)
 

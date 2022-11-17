@@ -24,8 +24,28 @@ export type Implementation = {
     genKey: (alg: SymmAlg) => Promise<CryptoKey>
   }
 
-  ed25519: {
-    verify: (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => Promise<boolean>
+  did: {
+    /**
+     * Using the key type as the record property name (ie. string = key type)
+     *
+     * The magic bytes are the `code` found in https://github.com/multiformats/multicodec/blob/master/table.csv
+     * encoded as a variable integer (more info about that at https://github.com/multiformats/unsigned-varint).
+     *
+     * The key type is also found in that table.
+     * It's the name of the codec minus the `-pub` suffix.
+     *
+     * Example
+     * -------
+     * Ed25519 public key
+     * Key type: "ed25519"
+     * Magic bytes: [ 0xed, 0x01 ]
+     */
+    keyTypes: Record<
+      string, {
+        magicBytes: Uint8Array
+        verify: (args: VerifyArgs) => Promise<boolean>
+      }
+    >
   }
 
   hash: {
@@ -36,8 +56,8 @@ export type Implementation = {
     clearStore: () => Promise<void>
     decrypt: (encrypted: Uint8Array) => Promise<Uint8Array>
     exportSymmKey: (name: string) => Promise<Uint8Array>
-    getAlg: () => Promise<string>
-    getUcanAlg: () => Promise<string>
+    getAlgorithm: () => Promise<string> // This goes hand in hand with the DID keyTypes record
+    getUcanAlgorithm: () => Promise<string>
     importSymmKey: (key: Uint8Array, name: string) => Promise<void>
     keyExists: (keyName: string) => Promise<boolean>
     publicExchangeKey: () => Promise<Uint8Array>
@@ -55,8 +75,12 @@ export type Implementation = {
     encrypt: (message: Uint8Array, publicKey: CryptoKey | Uint8Array) => Promise<Uint8Array>
     exportPublicKey: (key: CryptoKey) => Promise<Uint8Array>
     genKey: () => Promise<CryptoKeyPair>
-
-    // Used for write keys only
-    verify: (message: Uint8Array, signature: Uint8Array, publicKey: CryptoKey | Uint8Array) => Promise<boolean>
   }
+}
+
+
+export type VerifyArgs = {
+  message: Uint8Array
+  publicKey: Uint8Array
+  signature: Uint8Array
 }

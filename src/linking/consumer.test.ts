@@ -21,7 +21,7 @@ describe("generate temporary exchange key", async () => {
   it("returns a DID that matches the temporary RSA public key", async () => {
     const { temporaryRsaPair, temporaryDID } = await Consumer.generateTemporaryExchangeKey(crypto)
     const temporaryPublicKey = await crypto.rsa.exportPublicKey(temporaryRsaPair.publicKey)
-    const didPublicKey = DID.didToPublicKey(temporaryDID).publicKey
+    const didPublicKey = DID.didToPublicKey(crypto, temporaryDID).publicKey
 
     expect(didPublicKey).toEqual(temporaryPublicKey)
   })
@@ -44,7 +44,7 @@ describe("handle session key", async () => {
     iv = crypto.misc.randomNumbers({ amount: 16 })
 
     const exportedPubKey = await crypto.rsa.exportPublicKey(temporaryRsaPair.publicKey)
-    temporaryDID = DID.publicKeyToDid(exportedPubKey, DID.KeyType.RSA)
+    temporaryDID = DID.publicKeyToDid(crypto, exportedPubKey, "rsa")
 
     if (!temporaryRsaPair.publicKey) throw new Error("Temporary RSA public key missing")
     encryptedSessionKey = await crypto.rsa.encrypt(exportedSessionKey, temporaryRsaPair.publicKey)

@@ -84,7 +84,8 @@ async function randomRsaDid(): Promise<string> {
   const exportedKey = await webcrypto.subtle.exportKey("spki", key.publicKey)
 
   return DID.publicKeyToDid(
+    components.crypto,
     new Uint8Array(exportedKey),
-    DID.KeyType.RSA
+    "rsa"
   )
 }

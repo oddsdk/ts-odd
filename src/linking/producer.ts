@@ -194,7 +194,7 @@ export const generateSessionKey = async (
   const sessionKey = await crypto.aes.genKey(Crypto.SymmAlg.AES_GCM)
   const exportedSessionKey = await crypto.aes.exportKey(sessionKey)
 
-  const { publicKey } = DID.didToPublicKey(didThrowaway)
+  const { publicKey } = DID.didToPublicKey(crypto, didThrowaway)
 
   const encryptedSessionKey = await crypto.rsa.encrypt(exportedSessionKey, publicKey)
 

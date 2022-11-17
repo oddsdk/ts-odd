@@ -1,7 +1,6 @@
 import * as Crypto from "../components/crypto/implementation.js"
 
 import { publicKeyToDid } from "./transformers.js"
-import { toKeyType } from "./util.js"
 
 
 /**
@@ -9,11 +8,12 @@ import { toKeyType } from "./util.js"
  */
 export async function exchange(crypto: Crypto.Implementation): Promise<string> {
   const pubKey = await crypto.keystore.publicExchangeKey()
-  const ksAlg = await crypto.keystore.getAlg()
+  const ksAlg = await crypto.keystore.getAlgorithm()
 
   return publicKeyToDid(
+    crypto,
     pubKey,
-    toKeyType(ksAlg)
+    ksAlg
   )
 }
 
@@ -27,10 +27,11 @@ export { write as ucan }
  */
 export async function write(crypto: Crypto.Implementation): Promise<string> {
   const pubKey = await crypto.keystore.publicWriteKey()
-  const ksAlg = await crypto.keystore.getAlg()
+  const ksAlg = await crypto.keystore.getAlgorithm()
 
   return publicKeyToDid(
+    crypto,
     pubKey,
-    toKeyType(ksAlg)
+    ksAlg
   )
 }

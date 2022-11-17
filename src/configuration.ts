@@ -1,4 +1,5 @@
-import { AppInfo, Permissions } from "./permissions.js"
+import { isString } from "./common/type-checks.js"
+import { appId, AppInfo, Permissions } from "./permissions.js"
 
 
 // CONFIGURATION
@@ -50,4 +51,13 @@ export type UserMessages = {
     newer(version: string): Promise<void>
     older(version: string): Promise<void>
   }
+}
+
+
+
+// 🛠
+
+
+export function tagToString(tag: string | AppInfo): string {
+  return isString(tag) ? tag : appId(tag)
 }

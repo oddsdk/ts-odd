@@ -176,7 +176,7 @@ export const generateTemporaryExchangeKey = async (
   const temporaryRsaPair = await crypto.rsa.genKey()
   const pubKey = await crypto.rsa.exportPublicKey(temporaryRsaPair.publicKey)
 
-  const temporaryDID = DID.publicKeyToDid(pubKey, DID.KeyType.RSA)
+  const temporaryDID = DID.publicKeyToDid(crypto, pubKey, "rsa")
   return { temporaryRsaPair, temporaryDID }
 }
 
