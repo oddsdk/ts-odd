@@ -93,8 +93,20 @@ export { Session } from "./session.js"
 // TYPES & CONSTANTS
 
 
+export type AuthenticationStrategy = {
+  implementation: Auth.Implementation<Components>
+
+  accountConsumer: (username: string) => Promise<AccountLinkingConsumer>
+  accountProducer: (username: string) => Promise<AccountLinkingProducer>
+  isUsernameAvailable: (username: string) => Promise<boolean>
+  isUsernameValid: (username: string) => Promise<boolean>
+  register: (options: { username: string; email?: string }) => Promise<{ success: boolean }>
+  session: () => Promise<Maybe<Session>>
+}
+
+
 export type Program = ShortHands & {
-  auth: AuthenticationStrategies
+  auth: Record<string, AuthenticationStrategy>
   components: Components
   confidences: {
     collect: () => Promise<Maybe<string>> // returns username
@@ -115,21 +127,6 @@ export type ShortHands = {
   loadFileSystem: (username: string) => Promise<FileSystem>
   loadRootFileSystem: (username: string) => Promise<FileSystem>
 }
-
-
-export type AuthenticationStrategies = Record<
-  string,
-  {
-    implementation: Auth.Implementation<Components>
-
-    accountConsumer: (username: string) => Promise<AccountLinkingConsumer>
-    accountProducer: (username: string) => Promise<AccountLinkingProducer>
-    isUsernameAvailable: (username: string) => Promise<boolean>
-    isUsernameValid: (username: string) => Promise<boolean>
-    register: (options: { username: string; email?: string }) => Promise<{ success: boolean }>
-    session: () => Promise<Maybe<Session>>
-  }
->
 
 
 export const strategyTypes = {
@@ -366,7 +363,10 @@ export async function assemble(config: Configuration, components: Components): P
 
   // Auth implementations
   const auth = components.auth.reduce(
-    (acc: AuthenticationStrategies, method: Auth.Implementation<Components>): AuthenticationStrategies => {
+    (
+      acc: Record<string, AuthenticationStrategy>,
+      method: Auth.Implementation<Components>
+    ): Record<string, AuthenticationStrategy> => {
       const wrap = {
         implementation: method,
 
