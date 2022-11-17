@@ -62,13 +62,13 @@ if (program.session) {
 // If not, let's authenticate.
 // (a) new user, register a new Fission account
 } else if (registerNewUser) {
-  const { success } = await program.auth.webCrypto.register({ username: "llama" })
-  session = success ? program.auth.webCrypto.session() : null
+  const { success } = await program.auth.register({ username: "llama" })
+  session = success ? program.auth.session() : null
 
 // (b) existing user, link a new device
 } else {
   // On device with existing session:
-  const producer = program.auth.webCrypto.accountProducer(program.session.username)
+  const producer = program.auth.accountProducer(program.session.username)
 
   producer.on("challenge", challenge => {
     // Either show `challenge.pin` or have the user input a PIN and see if they're equal.
@@ -83,7 +83,7 @@ if (program.session) {
   // On device without session:
   //     Somehow you'll need to get a hold of the username.
   //     Few ideas: URL query param, QR code, manual input.
-  const consumer = program.auth.webCrypto.accountConsumer(username)
+  const consumer = program.auth.accountConsumer(username)
 
   consumer.on("challenge", ({ pin }) => {
     showPinOnUI(pin)
@@ -92,7 +92,7 @@ if (program.session) {
   consumer.on("link", ({ approved, username }) => {
     if (approved) {
       console.log(`Successfully authenticated as ${username}`)
-      session = program.auth.webCrypto.session()
+      session = program.auth.session()
     }
   })
 }
@@ -139,7 +139,6 @@ const fs = session.fs
 __Notes:__
 
 - You can use alternative authentication strategies, such as [webnative-walletauth](https://github.com/fission-codes/webnative-walletauth).
-- The default type of the auth strategy (ie. `webCrypto`) is also available through `wn.strategyTypes.default`
 - You can remove all traces of the user using `await session.destroy()`
 - You can load the file system separately, in case you're using web worker. This is done using the combination of `configuration.filesystem.loadImmediately = false` and `program.loadFileSystem()`
 
