@@ -106,7 +106,7 @@ export type AuthenticationStrategy = {
 
 
 export type Program = ShortHands & {
-  auth: Record<string, AuthenticationStrategy>
+  auth: AuthenticationStrategy
   components: Components
   confidences: {
     collect: () => Promise<Maybe<string>> // returns username
@@ -126,12 +126,6 @@ export enum ProgramError {
 export type ShortHands = {
   loadFileSystem: (username: string) => Promise<FileSystem>
   loadRootFileSystem: (username: string) => Promise<FileSystem>
-}
-
-
-export const strategyTypes = {
-  default: BaseAuth.TYPE,
-  webCrypto: BaseAuth.TYPE
 }
 
 
@@ -362,51 +356,40 @@ export async function assemble(config: Configuration, components: Components): P
   const sessionInfo = await SessionMod.restore(components.storage)
 
   // Auth implementations
-  const auth = components.auth.reduce(
-    (
-      acc: Record<string, AuthenticationStrategy>,
-      method: Auth.Implementation<Components>
-    ): Record<string, AuthenticationStrategy> => {
-      const wrap = {
-        implementation: method,
+  const auth: AuthenticationStrategy = (method => {
+    return {
+      implementation: method,
 
-        accountConsumer(username: string) {
-          return createConsumer(
-            { auth: method, crypto: components.crypto, manners: components.manners },
-            { username }
-          )
-        },
+      accountConsumer(username: string) {
+        return createConsumer(
+          { auth: method, crypto: components.crypto, manners: components.manners },
+          { username }
+        )
+      },
 
-        accountProducer(username: string) {
-          return createProducer(
-            { auth: method, crypto: components.crypto, manners: components.manners },
-            { username }
-          )
-        },
+      accountProducer(username: string) {
+        return createProducer(
+          { auth: method, crypto: components.crypto, manners: components.manners },
+          { username }
+        )
+      },
 
-        isUsernameAvailable: method.isUsernameAvailable,
-        isUsernameValid: method.isUsernameValid,
-        register: method.register,
+      isUsernameAvailable: method.isUsernameAvailable,
+      isUsernameValid: method.isUsernameValid,
+      register: method.register,
 
-        async session(): Promise<Maybe<Session>> {
-          const newSessionInfo = await SessionMod.restore(components.storage)
-          if (!newSessionInfo) return null
+      async session(): Promise<Maybe<Session>> {
+        const newSessionInfo = await SessionMod.restore(components.storage)
+        if (!newSessionInfo) return null
 
-          return this.implementation.activate(
-            components,
-            newSessionInfo.username,
-            config
-          )
-        }
+        return this.implementation.activate(
+          components,
+          newSessionInfo.username,
+          config
+        )
       }
-
-      return {
-        ...acc,
-        [ method.type ]: wrap
-      }
-    },
-    {}
-  )
+    }
+  })(components.auth)
 
   // Confidences
   const confidences = {
@@ -480,7 +463,7 @@ export async function assemble(config: Configuration, components: Components): P
     if (sessionInfo && sessionInfo.type === CONFIDENCES_SESSION_TYPE) session = await confidences.session(sessionInfo.username)
 
   } else if (sessionInfo && sessionInfo.type !== CONFIDENCES_SESSION_TYPE) {
-    session = await auth[ sessionInfo.type ]?.session()
+    session = await auth.session()
 
   }
 
@@ -536,7 +519,7 @@ export const compositions = {
     const a = await auth.fissionWebCrypto(config, { reference: r, crypto, disableWnfs, manners, staging, storage })
 
     return {
-      auth: [ a ],
+      auth: a,
       confidences: c,
       depot: d,
       reference: r,
@@ -558,7 +541,7 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
   const depot = setup.depot || await defaultDepotComponent(config.tag)
   const confidences = setup.confidences || defaultConfidencesComponent({ crypto, depot })
-  const auth = setup.auth || [ defaultAuthComponent({ crypto, reference, storage }) ]
+  const auth = setup.auth || defaultAuthComponent({ crypto, reference, storage })
 
   return {
     auth,

@@ -11,7 +11,7 @@ import * as Storage from "./components/storage/implementation.js"
 
 
 export type Components = {
-  auth: Auth.Implementation<Components>[]
+  auth: Auth.Implementation<Components>
   confidences: Confidences.Implementation
   crypto: Crypto.Implementation
   depot: Depot.Implementation
