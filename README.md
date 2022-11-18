@@ -146,7 +146,7 @@ __Notes:__
 
 ## Working with the file system
 
-The Web Native File System (WNFS) is a file system built on top of [IPLD](https://ipld.io/). Each file system has a public side and a private side, much like your macOS, Windows, or Linux desktop file system. The public side is "live" and publicly accessible on the Internet. The private side is encrypted so that only the owner can see the contents. Read more about it [here](https://github.com/wnfs-wg).
+The Web Native File System (WNFS) is a file system built on top of [IPLD](https://ipld.io/). It supports operations similar to your macOS, Windows, or Linux desktop file system. It consists of a public and private branch: The public branch is "live" and publicly accessible on the Internet. The private branch is encrypted so that only the owner can see the contents. Read more about it [here](https://github.com/wnfs-wg).
 
 ```ts
 const { Branch } = wn.path
