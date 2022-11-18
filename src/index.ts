@@ -42,7 +42,7 @@ import { SESSION_TYPE as CONFIDENCES_SESSION_TYPE } from "./confidences.js"
 import { TYPE as WEB_CRYPTO_SESSION_TYPE } from "./components/auth/implementation/base.js"
 import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
-import { Configuration, tagToString } from "./configuration.js"
+import { Configuration, namespaceToString } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
 import { AppInfo } from "./permissions.js"
@@ -205,8 +205,8 @@ export const auth = {
     const { disableWnfs, staging } = options
 
     const manners = options.manners || defaultMannersComponent(config)
-    const crypto = options.crypto || await defaultCryptoComponent(config.tag)
-    const storage = options.storage || defaultStorageComponent(config.tag)
+    const crypto = options.crypto || await defaultCryptoComponent(config.namespace)
+    const storage = options.storage || defaultStorageComponent(config.namespace)
     const reference = options.reference || await defaultReferenceComponent({ crypto, manners, storage })
 
     if (disableWnfs) {
@@ -250,8 +250,8 @@ export const confidences = {
   ): Promise<ConfidencesImpl.Implementation> {
     const { staging } = options
 
-    const crypto = options.crypto || await defaultCryptoComponent(config.tag)
-    const depot = options.depot || await defaultDepotComponent(config.tag)
+    const crypto = options.crypto || await defaultCryptoComponent(config.namespace)
+    const depot = options.depot || await defaultDepotComponent(config.namespace)
 
     if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
     return FissionLobbyProduction.implementation({ crypto, depot })
@@ -277,7 +277,7 @@ export const depot = {
     config: Configuration,
     { staging }: { staging?: boolean } = {}
   ): Promise<Depot.Implementation> {
-    const repoName = `${config.tag}/ipfs`
+    const repoName = `${config.namespace}/ipfs`
     if (staging) return FissionIpfsStaging.implementation(repoName)
     return FissionIpfsProduction.implementation(repoName)
   }
@@ -315,8 +315,8 @@ export const reference = {
     const { staging } = options
 
     const manners = options.manners || defaultMannersComponent(config)
-    const crypto = options.crypto || await defaultCryptoComponent(config.tag)
-    const storage = options.storage || defaultStorageComponent(config.tag)
+    const crypto = options.crypto || await defaultCryptoComponent(config.namespace)
+    const storage = options.storage || defaultStorageComponent(config.namespace)
 
     if (staging) return FissionReferenceStaging.implementation({ crypto, manners, storage })
     return FissionReferenceProduction.implementation({ crypto, manners, storage })
@@ -509,9 +509,9 @@ export const compositions = {
   ): Promise<Components> {
     const { disableWnfs, staging } = options
 
-    const crypto = options.crypto || await defaultCryptoComponent(config.tag)
+    const crypto = options.crypto || await defaultCryptoComponent(config.namespace)
     const manners = options.manners || defaultMannersComponent(config)
-    const storage = options.storage || defaultStorageComponent(config.tag)
+    const storage = options.storage || defaultStorageComponent(config.namespace)
 
     const r = await reference.fission(config, { crypto, manners, staging, storage })
     const d = await depot.fissionIPFS(config, { staging })
@@ -534,12 +534,12 @@ export const compositions = {
 export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
   const config = extractConfig(setup)
 
-  const crypto = setup.crypto || await defaultCryptoComponent(config.tag)
+  const crypto = setup.crypto || await defaultCryptoComponent(config.namespace)
   const manners = setup.manners || defaultMannersComponent(config)
-  const storage = setup.storage || defaultStorageComponent(config.tag)
+  const storage = setup.storage || defaultStorageComponent(config.namespace)
 
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
-  const depot = setup.depot || await defaultDepotComponent(config.tag)
+  const depot = setup.depot || await defaultDepotComponent(config.namespace)
   const confidences = setup.confidences || defaultConfidencesComponent({ crypto, depot })
   const auth = setup.auth || defaultAuthComponent({ crypto, reference, storage })
 
@@ -569,17 +569,17 @@ export function defaultConfidencesComponent({ crypto, depot }: FissionLobbyBase.
   return FissionLobbyProduction.implementation({ crypto, depot })
 }
 
-export function defaultCryptoComponent(tag: string | AppInfo): Promise<Crypto.Implementation> {
+export function defaultCryptoComponent(namespace: string | AppInfo): Promise<Crypto.Implementation> {
   return BrowserCrypto.implementation({
-    storeName: tagToString(tag),
+    storeName: namespaceToString(namespace),
     exchangeKeyName: "exchange-key",
     writeKeyName: "write-key"
   })
 }
 
-export function defaultDepotComponent(tag: string | AppInfo): Promise<Depot.Implementation> {
+export function defaultDepotComponent(namespace: string | AppInfo): Promise<Depot.Implementation> {
   return FissionIpfsProduction.implementation(
-    `${tagToString(tag)}/ipfs`
+    `${namespaceToString(namespace)}/ipfs`
   )
 }
 
@@ -597,9 +597,9 @@ export function defaultReferenceComponent({ crypto, manners, storage }: BaseRefe
   })
 }
 
-export function defaultStorageComponent(tag: string | AppInfo): Storage.Implementation {
+export function defaultStorageComponent(namespace: string | AppInfo): Storage.Implementation {
   return BrowserStorage.implementation({
-    name: tagToString(tag)
+    name: namespaceToString(namespace)
   })
 }
 
@@ -740,7 +740,7 @@ function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
 
 export function extractConfig(opts: Partial<Components> & Configuration): Configuration {
   return {
-    tag: opts.tag,
+    namespace: opts.namespace,
     debug: opts.debug,
     filesystem: opts.filesystem,
     userMessages: opts.userMessages,

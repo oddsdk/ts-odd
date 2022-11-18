@@ -8,6 +8,15 @@ import * as Path from "../path/index.js"
 // STORAGE
 
 
+export async function exists({ crypto, accountDID }: {
+  crypto: Crypto.Implementation
+  accountDID: string
+}): Promise<boolean> {
+  const rootKeyId = await identifier(crypto, accountDID)
+  return crypto.keystore.keyExists(rootKeyId)
+}
+
+
 export async function retrieve({ crypto, accountDID }: {
   crypto: Crypto.Implementation
   accountDID: string

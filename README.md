@@ -36,7 +36,7 @@ const program = await wn.program({
   // Can also be a string, used as an identifier for caches.
   // If you're developing multiple apps on the same localhost port,
   // make sure these differ.
-  id: { creator: "Nullsoft", name: "Winamp" }
+  namespace: { creator: "Nullsoft", name: "Winamp" }
 
 }).catch(error => {
   switch (error) {
@@ -119,6 +119,7 @@ const permissions = {
 
 // We need to pass this object to our program
 const program = await webnative.program({
+  namespace: { creator: "Nullsoft", name: "Winamp" },
   permissions
 })
 

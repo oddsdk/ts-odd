@@ -6,7 +6,7 @@ import { appId, AppInfo, Permissions } from "./permissions.js"
 
 
 export type Configuration = {
-  tag: string | AppInfo
+  namespace: string | AppInfo
   debug?: boolean
 
   filesystem?: {
@@ -58,6 +58,6 @@ export type UserMessages = {
 // 🛠
 
 
-export function tagToString(tag: string | AppInfo): string {
-  return isString(tag) ? tag : appId(tag)
+export function namespaceToString(namespace: string | AppInfo): string {
+  return isString(namespace) ? namespace : appId(namespace)
 }
