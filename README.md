@@ -130,7 +130,7 @@ program.confidences.request(permissions)
 session = program.session
 ```
 
-Once you have your `Session`, you have access to the file system 🎉
+Once you have your `Session`, you have access to your file system 🎉
 
 ```ts
 const fs = session.fs
