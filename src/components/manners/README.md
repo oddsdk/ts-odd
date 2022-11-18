@@ -1,1 +1,0 @@
-Behaviour changes based on the configuration given to an entry point.
