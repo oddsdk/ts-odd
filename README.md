@@ -141,7 +141,7 @@ __Notes:__
 
 - You can use alternative authentication strategies, such as [webnative-walletauth](https://github.com/fission-codes/webnative-walletauth).
 - You can remove all traces of the user using `await session.destroy()`
-- You can load the file system separately, in case you're using web worker. This is done using the combination of `configuration.filesystem.loadImmediately = false` and `program.loadFileSystem()`
+- You can load the file system separately if you're using a web worker. This is done using the combination of `configuration.filesystem.loadImmediately = false` and `program.loadFileSystem()`
 
 
 ## Working with the file system
