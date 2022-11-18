@@ -61,7 +61,7 @@ if (program.session) {
 
 // If not, let's authenticate.
 // (a) new user, register a new Fission account
-} else if (registerNewUser) {
+} else if (userChoseToRegister) {
   const { success } = await program.auth.register({ username: "llama" })
   session = success ? program.auth.session() : null
 
