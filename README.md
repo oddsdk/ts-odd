@@ -166,7 +166,7 @@ await fs.write(
   new TextEncoder().encode("👋") // Uint8Array
 )
 
-// Announce the changes to your other devices
+// Persist changes and announce them to your other devices
 await fs.publish()
 
 // Read the file
