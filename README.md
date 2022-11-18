@@ -29,7 +29,7 @@ const wn = globalThis.webnative
 
 ## Creating a Program
 
-A Webnative program is an assembly that makes up a part of, or a whole distributed web application. It consists out of several components that can be customised. _We'll stick with the default components for now, which means we'll be using the Web Crypto API._
+A Webnative program is an assembly of components that make up a distributed web application. Several of the components can be customized. _Let's stick with the default components for now, which means we'll be using the Web Crypto API._
 
 ```ts
 const program = await wn.program({
