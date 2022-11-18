@@ -81,7 +81,7 @@ if (program.session) {
   })
 
   // On device without session:
-  //     Somehow you'll need to get a hold of the username.
+  //     Somehow you'll need to get ahold of the username.
   //     Few ideas: URL query param, QR code, manual input.
   const consumer = program.auth.accountConsumer(username)
 
