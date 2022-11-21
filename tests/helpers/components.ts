@@ -24,8 +24,9 @@ import * as Storage from "../../src/components/storage/implementation.js"
 
 import * as BaseReference from "../../src/components/reference/implementation/base.js"
 import * as BrowserCrypto from "../../src/components/crypto/implementation/browser.js"
-import * as ProperManners from "../../src/components/manners/implementation/base.js"
 import * as IpfsDepot from "../../src/components/depot/implementation/ipfs.js"
+import * as MemoryStorage from "../../src/components/storage/implementation/memory.js"
+import * as ProperManners from "../../src/components/manners/implementation/base.js"
 import * as WnfsAuth from "../../src/components/auth/implementation/wnfs.js"
 
 import * as DID from "../../src/did/index.js"
@@ -175,22 +176,7 @@ const depot: Depot.Implementation = {
 // STORAGE
 
 
-let inMemoryStorage: Record<string, any> = {}
-
-
-const storage: Storage.Implementation = {
-  KEYS: {
-    ACCOUNT_UCAN: "account-ucan",
-    CID_LOG: "cid-log",
-    SESSION: "session",
-    UCANS: "permissioned-ucans",
-  },
-
-  clear: () => { inMemoryStorage = {}; return Promise.resolve() },
-  getItem: (key: string) => Promise.resolve(inMemoryStorage[ key ]),
-  removeItem: (key: string) => { delete inMemoryStorage[ key ]; return Promise.resolve() },
-  setItem: <T>(key: string, val: T) => { inMemoryStorage[ key ] = val; return Promise.resolve(val) },
-}
+const storage: Storage.Implementation = MemoryStorage.implementation()
 
 
 

@@ -1,5 +1,6 @@
 import localforage from "localforage"
 
+import { KEYS } from "./keys/default.js"
 import { Implementation, ImplementationOptions } from "../implementation.js"
 import { assertBrowser } from "../../../common/browser.js"
 
@@ -33,12 +34,7 @@ export function implementation({ name }: ImplementationOptions): Implementation 
   const db = localforage.createInstance({ name })
 
   return {
-    KEYS: {
-      ACCOUNT_UCAN: "account-ucan",
-      CID_LOG: "cid-log",
-      SESSION: "session",
-      UCANS: "permissioned-ucans",
-    },
+    KEYS,
 
     getItem: (...args) => getItem(db, ...args),
     setItem: (...args) => setItem(db, ...args),
