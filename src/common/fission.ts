@@ -26,7 +26,7 @@ export const PRODUCTION: Endpoints = {
 
 
 export const STAGING: Endpoints = {
-  apiPath: "/api/v2",
+  apiPath: "/v2/api",
   lobby: "https://auth.runfission.net",
   server: "https://runfission.net",
   userDomain: "fissionuser.net"
