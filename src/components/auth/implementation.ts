@@ -6,7 +6,7 @@ import { Session } from "../../session.js"
 
 
 export type Implementation<C> = {
-  type: string,
+  type: string
 
   // Function that produces a `Session`
   activate: (components: C, authenticatedUsername: Maybe<string>, config: Configuration) => Promise<Maybe<Session>>

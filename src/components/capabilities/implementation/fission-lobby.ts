@@ -37,7 +37,7 @@ export async function collect(
   const authorised = url.searchParams.get("authorised")
   if (!authorised) return null
 
-  const username = url.searchParams.get("username") || ""
+  const username = url.searchParams.get("username") ?? ""
   const secrets = await retry(
     async () => translateClassifiedInfo(
       dependents,
@@ -223,14 +223,14 @@ function isLobbySecrets(obj: unknown): obj is LobbySecrets {
 async function translateClassifiedInfo(
   { crypto }: Dependents,
   classifiedInfo: LobbyClassifiedInfo
-): Promise<{ fileSystemSecrets: Capabilities.FileSystemSecret[], ucans: Ucan.Ucan[] }> {
+): Promise<{ fileSystemSecrets: Capabilities.FileSystemSecret[]; ucans: Ucan.Ucan[] }> {
   // Extract session key
   const rawSessionKey = await crypto.keystore.decrypt(
     Uint8arrays.fromString(classifiedInfo.sessionKey, "base64pad")
   )
 
   // The encrypted session key and read keys can be encoded in both UTF-16 and UTF-8.
-  // This is because keystore-idb is to UTF-16 by default, and that's what webnative used before.
+  // This is because keystore-idb uses UTF-16 by default, and that's what webnative used before.
   // ---
   // This easy way of detection works because the decrypted session key is encoded in base 64.
   // That means it'll only ever use the first byte to encode it, and if it were UTF-16 it would

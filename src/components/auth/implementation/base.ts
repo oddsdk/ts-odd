@@ -20,7 +20,7 @@ export const TYPE = "webCrypto"
 
 
 export type Dependents = {
-  crypto: Crypto.Implementation,
+  crypto: Crypto.Implementation
   reference: Reference.Implementation
   storage: Storage.Implementation
 }
@@ -76,7 +76,7 @@ export async function delegateAccount(
 ): Promise<Record<string, unknown>> {
   const proof: string | undefined = await dependents.storage.getItem(
     dependents.storage.KEYS.ACCOUNT_UCAN
-  ) || undefined
+  ) ?? undefined
 
   // UCAN
   const u = await Ucan.build({
@@ -112,7 +112,7 @@ export async function linkDevice(
 
 export async function register(
   dependents: Dependents,
-  options: { username: string; email?: string, type?: string }
+  options: { username: string; email?: string; type?: string }
 ): Promise<{ success: boolean }> {
   await SessionMod.provide(dependents.storage, { type: options.type || TYPE, username: options.username })
   return { success: true }
