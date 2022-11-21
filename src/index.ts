@@ -142,7 +142,7 @@ export type ShortHands = {
  * - `confidences`, a means to control confidences. Use this to collect & request confidences, and to create a session based on them. Read more about confidences in the toplevel `confidences` object documentation.
  * - `components`, your full set of `Components`.
  *
- * This object also has a few other functions, eg. to load a filesystem.
+ * This object also has a few other functions, for example to load a filesystem.
  * These are called "shorthands" because they're the same functions available
  * through other places in webnative, but you don't have to pass in the components.
  *
@@ -166,10 +166,10 @@ export async function program(settings: Partial<Components> & Configuration): Pr
  * This component goes hand in hand with the "reference" and "depot" components.
  * The "auth" component registers a DID and the reference looks it up.
  * The reference component also manages the "data root", the pointer to an account's entire filesystem.
- * Then the depot component comes in which is responsible to get the data from, and to the other side.
+ * The depot component is responsible for getting data to and from the other side.
  *
- * For example, using the Fission architecture, the data root is updated on the Fission server,
- * which then in turn fetches the data from the depot in your app.
+ * For example, using the Fission architecture, when a data root is updated on the Fission server,
+ * the server fetches the data from the depot in your app.
  *
  * So if you want to build a service independent of Fission's infrastructure,
  * you will need to write your own reference and depot implementations (see source code).
@@ -235,8 +235,8 @@ export const auth = {
 export const confidences = {
   /**
    * A secure enclave in the form of a webnative app which serves as the root authority.
-   * Your app is redirect to the lobby where the user can create an account or link a device,
-   * and then request permissions to the user for reading or write to specific parts of the filesystem.
+   * Your app is redirected to the lobby where the user can create an account or link a device,
+   * and then request permissions from the user for reading or write to specific parts of the filesystem.
    */
   async fissionLobby(
     config: Configuration,
@@ -264,7 +264,7 @@ export const confidences = {
  * The depot component gets data in and out your program.
  * For example, say I want to load and then update a file system.
  * The depot will get that file system data for me,
- * and when updating it, bring the data to where it needs to be.
+ * and after updating it, send the data to where it needs to be.
  */
 export const depot = {
   /**
@@ -335,7 +335,7 @@ export const reference = {
  *
  * Additionally this does a few other things:
  * - Checks if the browser is supported.
- * - Restores a session if one was made before, and load the user's file system if needed.
+ * - Restores a session if one was made before and loads the user's file system if needed.
  * - Attempts to collect confidences if the configuration has permissions.
  * - Provides shorthands to functions so you don't have to pass in components.
  * - Ensure backwards compatibility with older Webnative clients.
