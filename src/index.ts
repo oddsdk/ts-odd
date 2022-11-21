@@ -189,25 +189,22 @@ export const auth = {
    *       Check out the `wnfs` and `base` auth implementations if
    *       you want to build something without the Fission infrastructure.
    */
-  async fissionWebCrypto(
-    config: Configuration,
-    options: {
-      disableWnfs?: boolean
-      staging?: boolean
+  async fissionWebCrypto(settings: Configuration & {
+    disableWnfs?: boolean
+    staging?: boolean
 
-      // Dependents
-      crypto?: Crypto.Implementation
-      manners?: Manners.Implementation
-      reference?: Reference.Implementation
-      storage?: Storage.Implementation
-    } = {}
-  ): Promise<Auth.Implementation<Components>> {
-    const { disableWnfs, staging } = options
+    // Dependents
+    crypto?: Crypto.Implementation
+    manners?: Manners.Implementation
+    reference?: Reference.Implementation
+    storage?: Storage.Implementation
+  }): Promise<Auth.Implementation<Components>> {
+    const { disableWnfs, staging } = settings
 
-    const manners = options.manners || defaultMannersComponent(config)
-    const crypto = options.crypto || await defaultCryptoComponent(config.namespace)
-    const storage = options.storage || defaultStorageComponent(config.namespace)
-    const reference = options.reference || await defaultReferenceComponent({ crypto, manners, storage })
+    const manners = settings.manners || defaultMannersComponent(settings)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
+    const storage = settings.storage || defaultStorageComponent(settings.namespace)
+    const reference = settings.reference || await defaultReferenceComponent({ crypto, manners, storage })
 
     if (disableWnfs) {
       if (staging) return FissionAuthBaseStaging.implementation({ crypto, reference, storage })
@@ -238,20 +235,17 @@ export const capabilities = {
    * Your app is redirected to the lobby where the user can create an account or link a device,
    * and then request permissions from the user for reading or write to specific parts of the filesystem.
    */
-  async fissionLobby(
-    config: Configuration,
-    options: {
-      staging?: boolean
+  async fissionLobby(settings: Configuration & {
+    staging?: boolean
 
-      // Dependents
-      crypto?: Crypto.Implementation
-      depot?: Depot.Implementation
-    } = {}
-  ): Promise<CapabilitiesImpl.Implementation> {
-    const { staging } = options
+    // Dependents
+    crypto?: Crypto.Implementation
+    depot?: Depot.Implementation
+  }): Promise<CapabilitiesImpl.Implementation> {
+    const { staging } = settings
 
-    const crypto = options.crypto || await defaultCryptoComponent(config.namespace)
-    const depot = options.depot || await defaultDepotComponent(config.namespace)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
+    const depot = settings.depot || await defaultDepotComponent(settings.namespace)
 
     if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
     return FissionLobbyProduction.implementation({ crypto, depot })
@@ -274,11 +268,10 @@ export const depot = {
    * Other webnative programs with this depot fetch the data from there.
    */
   async fissionIPFS(
-    config: Configuration,
-    { staging }: { staging?: boolean } = {}
+    settings: Configuration & { staging?: boolean }
   ): Promise<Depot.Implementation> {
-    const repoName = `${config.namespace}/ipfs`
-    if (staging) return FissionIpfsStaging.implementation(repoName)
+    const repoName = `${settings.namespace}/ipfs`
+    if (settings.staging) return FissionIpfsStaging.implementation(repoName)
     return FissionIpfsProduction.implementation(repoName)
   }
 }
@@ -301,22 +294,19 @@ export const reference = {
   /**
    * Use the Fission servers as your reference.
    */
-  async fission(
-    config: Configuration,
-    options: {
-      staging?: boolean
+  async fission(settings: Configuration & {
+    staging?: boolean
 
-      // Dependents
-      crypto?: Crypto.Implementation
-      manners?: Manners.Implementation
-      storage?: Storage.Implementation
-    } = {}
-  ): Promise<Reference.Implementation> {
-    const { staging } = options
+    // Dependents
+    crypto?: Crypto.Implementation
+    manners?: Manners.Implementation
+    storage?: Storage.Implementation
+  }): Promise<Reference.Implementation> {
+    const { staging } = settings
 
-    const manners = options.manners || defaultMannersComponent(config)
-    const crypto = options.crypto || await defaultCryptoComponent(config.namespace)
-    const storage = options.storage || defaultStorageComponent(config.namespace)
+    const manners = settings.manners || defaultMannersComponent(settings)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
+    const storage = settings.storage || defaultStorageComponent(settings.namespace)
 
     if (staging) return FissionReferenceStaging.implementation({ crypto, manners, storage })
     return FissionReferenceProduction.implementation({ crypto, manners, storage })
@@ -495,28 +485,25 @@ export const compositions = {
   /**
    * The default Fission stack using web crypto auth.
    */
-  async fission(
-    config: Configuration,
-    options: {
-      disableWnfs?: boolean
-      staging?: boolean
+  async fission(settings: Configuration & {
+    disableWnfs?: boolean
+    staging?: boolean
 
-      // Dependents
-      crypto?: Crypto.Implementation
-      manners?: Manners.Implementation
-      storage?: Storage.Implementation
-    } = {}
-  ): Promise<Components> {
-    const { disableWnfs, staging } = options
+    // Dependents
+    crypto?: Crypto.Implementation
+    manners?: Manners.Implementation
+    storage?: Storage.Implementation
+  }): Promise<Components> {
+    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
+    const manners = settings.manners || defaultMannersComponent(settings)
+    const storage = settings.storage || defaultStorageComponent(settings.namespace)
 
-    const crypto = options.crypto || await defaultCryptoComponent(config.namespace)
-    const manners = options.manners || defaultMannersComponent(config)
-    const storage = options.storage || defaultStorageComponent(config.namespace)
+    const settingsWithComponents = { ...settings, crypto, manners, storage }
 
-    const r = await reference.fission(config, { crypto, manners, staging, storage })
-    const d = await depot.fissionIPFS(config, { staging })
-    const c = await capabilities.fissionLobby(config, { depot: d, crypto, staging })
-    const a = await auth.fissionWebCrypto(config, { reference: r, crypto, disableWnfs, manners, staging, storage })
+    const r = await reference.fission(settingsWithComponents)
+    const d = await depot.fissionIPFS(settingsWithComponents)
+    const c = await capabilities.fissionLobby({ ...settingsWithComponents, depot: d })
+    const a = await auth.fissionWebCrypto({ ...settingsWithComponents, reference: r })
 
     return {
       auth: a,
