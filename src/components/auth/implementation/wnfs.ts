@@ -56,7 +56,7 @@ export async function activate(
     }
 
     // Load filesystem
-    const fs = config.filesystem?.loadImmediately === false ?
+    const fs = config.fileSystem?.loadImmediately === false ?
       undefined :
       await loadRootFileSystem({
         config,

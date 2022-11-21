@@ -45,7 +45,7 @@ import { createInMemoryIPFS } from "./in-memory-ipfs.js"
 export const configuration: Configuration = {
   namespace: { name: "Webnative Tests", creator: "Fission" },
   debug: false,
-  filesystem: {
+  fileSystem: {
     loadImmediately: false
   },
 }

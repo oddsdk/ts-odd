@@ -2,7 +2,6 @@ import { CID } from "multiformats/cid"
 
 import * as Depot from "./components/depot/implementation.js"
 import * as Path from "./path/index.js"
-import * as Permissions from "./permissions.js"
 import * as Reference from "./components/reference/implementation.js"
 
 import * as Protocol from "./fs/protocol/index.js"
@@ -90,7 +89,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
     dependents,
     rootKey,
     permissions: p,
-    version: config.filesystem?.version
+    version: config.fileSystem?.version
   })
 
   await addSampleData(fs)

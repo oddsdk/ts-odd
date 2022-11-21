@@ -417,7 +417,7 @@ export async function assemble(config: Configuration, components: Components): P
 
       await SessionMod.provide(components.storage, { type: CAPABILITIES_SESSION_TYPE, username })
 
-      const fs = config.filesystem?.loadImmediately === false ?
+      const fs = config.fileSystem?.loadImmediately === false ?
         undefined :
         await loadFileSystem({
           config,
@@ -720,7 +720,7 @@ export function extractConfig(opts: Partial<Components> & Configuration): Config
   return {
     namespace: opts.namespace,
     debug: opts.debug,
-    filesystem: opts.filesystem,
+    fileSystem: opts.fileSystem,
     userMessages: opts.userMessages,
   }
 }

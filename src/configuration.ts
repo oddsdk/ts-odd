@@ -9,7 +9,7 @@ export type Configuration = {
   namespace: string | AppInfo
   debug?: boolean
 
-  filesystem?: {
+  fileSystem?: {
     /* Should I load the filesystem immediately? True by default. */
     loadImmediately?: boolean
 
