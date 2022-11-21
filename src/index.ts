@@ -174,10 +174,7 @@ export async function program(settings: Partial<Components> & Configuration): Pr
  * So if you want to build a service independent of Fission's infrastructure,
  * you will need to write your own reference and depot implementations (see source code).
  *
- * NOTE: This uses all the default components as the dependencies for the auth component.
- *       If you're, for example, using a non-default storage component, you'll want to
- *       pass that in here as a parameter as well.
- *
+ * NOTE: If you're using a non-default component, you'll want to pass that in here as a parameter as well.
  *       Dependents: crypto, manners, reference, storage.
  */
 export const auth = {
@@ -223,10 +220,7 @@ export const auth = {
  * a "capabilities" component. This component is responsible for requesting
  * and receiving UCANs, read keys and namefilters from other sources to enable this.
  *
- * NOTE: This uses all the default components as the dependencies for the capabilities component.
- *       If you're, for example, using a non-default crypto component, you'll want to
- *       pass that in here as a parameter as well.
- *
+ * NOTE: If you're using a non-default component, you'll want to pass that in here as a parameter as well.
  *       Dependents: crypto, depot.
  */
 export const capabilities = {
@@ -284,10 +278,7 @@ export const depot = {
  * Specifically, the data root, a user's DID root, DNSLinks, DNS TXT records.
  * It also holds repositories (see `Repository` class), which contain UCANs and CIDs.
  *
- * NOTE: This uses all the default components as the dependencies for the reference component.
- *       If you're, for example, using a non-default storage component, you'll want to
- *       pass that in here as a parameter as well.
- *
+ * NOTE: If you're using a non-default component, you'll want to pass that in here as a parameter as well.
  *       Dependents: crypto, manners, storage.
  */
 export const reference = {
