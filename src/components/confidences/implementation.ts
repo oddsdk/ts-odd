@@ -10,6 +10,6 @@ export type RequestOptions = {
 }
 
 export type Implementation = {
-  collect: () => Promise<Maybe<Confidences>>,
+  collect: () => Promise<Maybe<Confidences>>
   request: (options: RequestOptions) => Promise<void>
 }
