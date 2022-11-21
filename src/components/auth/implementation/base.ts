@@ -110,6 +110,13 @@ export async function linkDevice(
 }
 
 
+/**
+ * Doesn't quite register an account yet,
+ * needs to be implemented properly by other implementations.
+ *
+ * NOTE: This base function should be called by other implementations,
+ *       because it's the foundation for sessions.
+ */
 export async function register(
   dependents: Dependents,
   options: { username: string; email?: string; type?: string }
