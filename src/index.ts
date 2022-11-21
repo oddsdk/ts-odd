@@ -27,8 +27,8 @@ import * as Uint8arrays from "uint8arrays"
 import localforage from "localforage"
 
 import * as Auth from "./components/auth/implementation.js"
-import * as ConfidencesImpl from "./components/confidences/implementation.js"
-import * as Confidences from "./confidences.js"
+import * as CapabilitiesImpl from "./components/capabilities/implementation.js"
+import * as Capabilities from "./capabilities.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as Manners from "./components/manners/implementation.js"
@@ -38,7 +38,7 @@ import * as SessionMod from "./session.js"
 import * as Storage from "./components/storage/implementation.js"
 import * as Ucan from "./ucan/index.js"
 
-import { SESSION_TYPE as CONFIDENCES_SESSION_TYPE } from "./confidences.js"
+import { SESSION_TYPE as CAPABILITIES_SESSION_TYPE } from "./capabilities.js"
 import { TYPE as WEB_CRYPTO_SESSION_TYPE } from "./components/auth/implementation/base.js"
 import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
@@ -62,9 +62,9 @@ import * as FissionAuthBaseProduction from "./components/auth/implementation/fis
 import * as FissionAuthBaseStaging from "./components/auth/implementation/fission-base-staging.js"
 import * as FissionAuthWnfsProduction from "./components/auth/implementation/fission-wnfs-production.js"
 import * as FissionAuthWnfsStaging from "./components/auth/implementation/fission-wnfs-staging.js"
-import * as FissionLobbyBase from "./components/confidences/implementation/fission-lobby.js"
-import * as FissionLobbyProduction from "./components/confidences/implementation/fission-lobby-production.js"
-import * as FissionLobbyStaging from "./components/confidences/implementation/fission-lobby-staging.js"
+import * as FissionLobbyBase from "./components/capabilities/implementation/fission-lobby.js"
+import * as FissionLobbyProduction from "./components/capabilities/implementation/fission-lobby-production.js"
+import * as FissionLobbyStaging from "./components/capabilities/implementation/fission-lobby-staging.js"
 import * as FissionReferenceProduction from "./components/reference/implementation/fission-production.js"
 import * as FissionReferenceStaging from "./components/reference/implementation/fission-staging.js"
 import * as ProperManners from "./components/manners/implementation/base.js"
@@ -84,7 +84,7 @@ export * as path from "./path/index.js"
 export * as ucan from "./ucan/index.js"
 
 export { AccountLinkingConsumer, AccountLinkingProducer } from "./linking/index.js"
-export { Confidences, FileSystemSecret } from "./confidences.js"
+export { Capabilities, FileSystemSecret } from "./capabilities.js"
 export { FileSystem } from "./fs/filesystem.js"
 export { Session } from "./session.js"
 
@@ -107,12 +107,12 @@ export type AuthenticationStrategy = {
 
 export type Program = ShortHands & {
   auth: AuthenticationStrategy
-  components: Components
-  confidences: {
+  capabilities: {
     collect: () => Promise<Maybe<string>> // returns username
     request: () => Promise<void>
     session: (username: string) => Promise<Maybe<Session>>
   }
+  components: Components
   session: Maybe<Session>
 }
 
@@ -139,7 +139,7 @@ export type ShortHands = {
  * This will give you a `Program` object which has the following properties:
  * - `session`, a `Session` object if a session was created before.
  * - `auth`, a means to control the various auth strategies you configured. Use this to create sessions. Read more about auth components in the toplevel `auth` object documention.
- * - `confidences`, a means to control confidences. Use this to collect & request confidences, and to create a session based on them. Read more about confidences in the toplevel `confidences` object documentation.
+ * - `capabilities`, a means to control capabilities. Use this to collect & request capabilities, and to create a session based on them. Read more about capabilities in the toplevel `capabilities` object documentation.
  * - `components`, your full set of `Components`.
  *
  * This object also has a few other functions, for example to load a filesystem.
@@ -220,19 +220,19 @@ export const auth = {
 }
 
 /**
- * Predefined confidences configurations.
+ * Predefined capabilities configurations.
  *
  * If you want partial read and/or write access to the filesystem you'll want
- * a "confidences" component. This component is responsible for requesting
+ * a "capabilities" component. This component is responsible for requesting
  * and receiving UCANs, read keys and namefilters from other sources to enable this.
  *
- * NOTE: This uses all the default components as the dependencies for the confidences component.
+ * NOTE: This uses all the default components as the dependencies for the capabilities component.
  *       If you're, for example, using a non-default crypto component, you'll want to
  *       pass that in here as a parameter as well.
  *
  *       Dependents: crypto, depot.
  */
-export const confidences = {
+export const capabilities = {
   /**
    * A secure enclave in the form of a webnative app which serves as the root authority.
    * Your app is redirected to the lobby where the user can create an account or link a device,
@@ -247,7 +247,7 @@ export const confidences = {
       crypto?: Crypto.Implementation
       depot?: Depot.Implementation
     } = {}
-  ): Promise<ConfidencesImpl.Implementation> {
+  ): Promise<CapabilitiesImpl.Implementation> {
     const { staging } = options
 
     const crypto = options.crypto || await defaultCryptoComponent(config.namespace)
@@ -336,7 +336,7 @@ export const reference = {
  * Additionally this does a few other things:
  * - Checks if the browser is supported.
  * - Restores a session if one was made before and loads the user's file system if needed.
- * - Attempts to collect confidences if the configuration has permissions.
+ * - Attempts to collect capabilities if the configuration has permissions.
  * - Provides shorthands to functions so you don't have to pass in components.
  * - Ensure backwards compatibility with older Webnative clients.
  *
@@ -391,14 +391,14 @@ export async function assemble(config: Configuration, components: Components): P
     }
   })(components.auth)
 
-  // Confidences
-  const confidences = {
+  // Capabilities
+  const capabilities = {
     async collect() {
-      const c = await components.confidences.collect()
+      const c = await components.capabilities.collect()
       if (!c) return null
 
-      await Confidences.collect({
-        confidences: c,
+      await Capabilities.collect({
+        capabilities: c,
         crypto: components.crypto,
         reference: components.reference,
         storage: components.storage
@@ -407,12 +407,12 @@ export async function assemble(config: Configuration, components: Components): P
       return c.username
     },
     request() {
-      return components.confidences.request({
+      return components.capabilities.request({
         permissions
       })
     },
     async session(username: string) {
-      const ucan = Confidences.validatePermissions(
+      const ucan = Capabilities.validatePermissions(
         components.reference.repositories.ucans,
         permissions || {}
       )
@@ -423,7 +423,7 @@ export async function assemble(config: Configuration, components: Components): P
       }
 
       const accountDID = Ucan.rootIssuer(ucan)
-      const validSecrets = await Confidences.validateSecrets(
+      const validSecrets = await Capabilities.validateSecrets(
         components.crypto,
         accountDID,
         permissions || {}
@@ -434,7 +434,7 @@ export async function assemble(config: Configuration, components: Components): P
         return null
       }
 
-      await SessionMod.provide(components.storage, { type: CONFIDENCES_SESSION_TYPE, username })
+      await SessionMod.provide(components.storage, { type: CAPABILITIES_SESSION_TYPE, username })
 
       const fs = config.filesystem?.loadImmediately === false ?
         undefined :
@@ -449,7 +449,7 @@ export async function assemble(config: Configuration, components: Components): P
         username,
         crypto: components.crypto,
         storage: components.storage,
-        type: CONFIDENCES_SESSION_TYPE,
+        type: CAPABILITIES_SESSION_TYPE,
       })
     }
   }
@@ -457,12 +457,12 @@ export async function assemble(config: Configuration, components: Components): P
   // Session
   let session = null
 
-  if (isConfidentialAuthConfiguration(config)) {
-    const username = await confidences.collect()
-    if (username) session = await confidences.session(username)
-    if (sessionInfo && sessionInfo.type === CONFIDENCES_SESSION_TYPE) session = await confidences.session(sessionInfo.username)
+  if (isCapabilityBasedAuthConfiguration(config)) {
+    const username = await capabilities.collect()
+    if (username) session = await capabilities.session(username)
+    if (sessionInfo && sessionInfo.type === CAPABILITIES_SESSION_TYPE) session = await capabilities.session(sessionInfo.username)
 
-  } else if (sessionInfo && sessionInfo.type !== CONFIDENCES_SESSION_TYPE) {
+  } else if (sessionInfo && sessionInfo.type !== CAPABILITIES_SESSION_TYPE) {
     session = await auth.session()
 
   }
@@ -478,7 +478,7 @@ export async function assemble(config: Configuration, components: Components): P
     ...shorthands,
     auth,
     components,
-    confidences,
+    capabilities,
     session,
   }
 }
@@ -515,12 +515,12 @@ export const compositions = {
 
     const r = await reference.fission(config, { crypto, manners, staging, storage })
     const d = await depot.fissionIPFS(config, { staging })
-    const c = await confidences.fissionLobby(config, { depot: d, crypto, staging })
+    const c = await capabilities.fissionLobby(config, { depot: d, crypto, staging })
     const a = await auth.fissionWebCrypto(config, { reference: r, crypto, disableWnfs, manners, staging, storage })
 
     return {
       auth: a,
-      confidences: c,
+      capabilities: c,
       depot: d,
       reference: r,
       crypto,
@@ -540,12 +540,12 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
 
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
   const depot = setup.depot || await defaultDepotComponent(config.namespace)
-  const confidences = setup.confidences || defaultConfidencesComponent({ crypto, depot })
+  const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto, depot })
   const auth = setup.auth || defaultAuthComponent({ crypto, reference, storage })
 
   return {
     auth,
-    confidences,
+    capabilities,
     crypto,
     depot,
     manners,
@@ -565,7 +565,7 @@ export function defaultAuthComponent({ crypto, reference, storage }: BaseAuth.De
   })
 }
 
-export function defaultConfidencesComponent({ crypto, depot }: FissionLobbyBase.Dependents): ConfidencesImpl.Implementation {
+export function defaultCapabilitiesComponent({ crypto, depot }: FissionLobbyBase.Dependents): CapabilitiesImpl.Implementation {
   return FissionLobbyProduction.implementation({ crypto, depot })
 }
 
@@ -680,7 +680,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
       await components.storage.setItem(
         components.storage.KEYS.SESSION,
         JSON.stringify({
-          type: isConfidentialAuthConfiguration(config) ? CONFIDENCES_SESSION_TYPE : WEB_CRYPTO_SESSION_TYPE,
+          type: isCapabilityBasedAuthConfiguration(config) ? CAPABILITIES_SESSION_TYPE : WEB_CRYPTO_SESSION_TYPE,
           username: authedUser
         })
       )
@@ -749,8 +749,8 @@ export function extractConfig(opts: Partial<Components> & Configuration): Config
 
 
 /**
- * Is this a configuration that uses confidences?
+ * Is this a configuration that uses capabilities?
  */
-export function isConfidentialAuthConfiguration(config: Configuration): boolean {
+export function isCapabilityBasedAuthConfiguration(config: Configuration): boolean {
   return !!config.permissions
 }

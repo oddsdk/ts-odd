@@ -17,7 +17,7 @@ import { sha256 } from "multiformats/hashes/sha2"
 
 import * as Auth from "../../src/components/auth/implementation.js"
 import * as Crypto from "../../src/components/crypto/implementation.js"
-import * as Confidences from "../../src/components/confidences/implementation.js"
+import * as Capabilities from "../../src/components/capabilities/implementation.js"
 import * as Depot from "../../src/components/depot/implementation.js"
 import * as Reference from "../../src/components/reference/implementation.js"
 import * as Storage from "../../src/components/storage/implementation.js"
@@ -235,12 +235,12 @@ const reference: Reference.Implementation = {
 
 
 
-// CONFIDENCES
+// CAPABILITIES
 
 
-const confidences: Confidences.Implementation = {
+const capabilities: Capabilities.Implementation = {
   collect: () => { throw new Error("Not implemented") },
-  request: (options: Confidences.RequestOptions) => { throw new Error("Not implemented") },
+  request: (options: Capabilities.RequestOptions) => { throw new Error("Not implemented") },
 }
 
 
@@ -266,7 +266,7 @@ export const account = {
 
 const components = {
   auth,
-  confidences,
+  capabilities,
   crypto,
   depot,
   manners,
@@ -278,7 +278,7 @@ export {
   components,
 
   auth,
-  confidences,
+  capabilities,
   crypto,
   depot,
   manners,

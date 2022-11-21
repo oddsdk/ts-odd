@@ -1,7 +1,7 @@
 import * as Uint8arrays from "uint8arrays"
 
 import * as Base64 from "../../../common/base64.js"
-import * as Confidences from "../../../confidences.js"
+import * as Capabilities from "../../../capabilities.js"
 import * as Crypto from "../../../components/crypto/implementation.js"
 import * as Depot from "../../../components/depot/implementation.js"
 import * as DID from "../../../did/index.js"
@@ -32,7 +32,7 @@ export type Dependents = {
 export async function collect(
   endpoints: Fission.Endpoints,
   dependents: Dependents
-): Promise<Maybe<Confidences.Confidences>> {
+): Promise<Maybe<Capabilities.Capabilities>> {
   const url = new URL(window.location.href)
   const authorised = url.searchParams.get("authorised")
   if (!authorised) return null
@@ -223,7 +223,7 @@ function isLobbySecrets(obj: unknown): obj is LobbySecrets {
 async function translateClassifiedInfo(
   { crypto }: Dependents,
   classifiedInfo: LobbyClassifiedInfo
-): Promise<{ fileSystemSecrets: Confidences.FileSystemSecret[], ucans: Ucan.Ucan[] }> {
+): Promise<{ fileSystemSecrets: Capabilities.FileSystemSecret[], ucans: Ucan.Ucan[] }> {
   // Extract session key
   const rawSessionKey = await crypto.keystore.decrypt(
     Uint8arrays.fromString(classifiedInfo.sessionKey, "base64pad")
@@ -258,7 +258,7 @@ async function translateClassifiedInfo(
 
   if (!isLobbySecrets(secrets)) throw new Error("Invalid secrets received")
 
-  const fileSystemSecrets: Confidences.FileSystemSecret[] =
+  const fileSystemSecrets: Capabilities.FileSystemSecret[] =
     isLobbySecrets(secrets)
       ? Object
         .entries(secrets.fs)

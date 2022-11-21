@@ -19,7 +19,7 @@ import { Maybe } from "./common/types.js"
 // 🧩
 
 
-export type Confidences = {
+export type Capabilities = {
   fileSystemSecrets: FileSystemSecret[]
   ucans: Ucan.Ucan[]
   username: string
@@ -44,19 +44,19 @@ export const SESSION_TYPE = "confidential"
 // 🛠
 
 
-export async function collect({ confidences, crypto, reference, storage }: {
-  confidences: Confidences
+export async function collect({ capabilities, crypto, reference, storage }: {
+  capabilities: Capabilities
   crypto: Crypto.Implementation
   reference: Reference.Implementation
   storage: Storage.Implementation
 }): Promise<void> {
-  if (confidences.ucans.length === 0) throw new Error("Expected at least one UCAN")
+  if (capabilities.ucans.length === 0) throw new Error("Expected at least one UCAN")
 
-  await collectPermissions({ reference, ucans: confidences.ucans })
+  await collectPermissions({ reference, ucans: capabilities.ucans })
 
-  const accountDID = Ucan.rootIssuer(confidences.ucans[ 0 ])
+  const accountDID = Ucan.rootIssuer(capabilities.ucans[ 0 ])
 
-  await confidences.fileSystemSecrets.reduce(
+  await capabilities.fileSystemSecrets.reduce(
     async (acc: Promise<void>, fsSecret: FileSystemSecret) => {
       await acc
       await collectSecret({
