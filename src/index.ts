@@ -45,7 +45,7 @@ import { Components } from "./components.js"
 import { Configuration, namespaceToString } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { AppInfo } from "./permissions.js"
+import { appId, AppInfo } from "./permissions.js"
 import { loadFileSystem, loadRootFileSystem } from "./filesystem.js"
 import FileSystem from "./fs/filesystem.js"
 
@@ -270,7 +270,7 @@ export const depot = {
   async fissionIPFS(
     settings: Configuration & { staging?: boolean }
   ): Promise<Depot.Implementation> {
-    const repoName = `${settings.namespace}/ipfs`
+    const repoName = `${namespaceToString(settings.namespace)}/ipfs`
     if (settings.staging) return FissionIpfsStaging.implementation(repoName)
     return FissionIpfsProduction.implementation(repoName)
   }
