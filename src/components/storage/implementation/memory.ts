@@ -16,7 +16,7 @@ export async function removeItem<T>(mem: Record<string, T>, key: string): Promis
 }
 
 export async function clear<T>(mem: Record<string, T>): Promise<void> {
-  for (var k in mem) delete mem[ k ]
+  for (const k in mem) delete mem[ k ]
 }
 
 

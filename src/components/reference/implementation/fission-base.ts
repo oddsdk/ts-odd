@@ -1,7 +1,6 @@
 import type { Dependents } from "./base.js"
+import type { Endpoints } from "../../../common/fission.js"
 import type { Implementation } from "../implementation.js"
-
-import { Endpoints } from "../../../common/fission.js"
 
 import * as Base from "./base.js"
 import * as DataRoot from "./fission/data-root.js"
