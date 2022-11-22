@@ -146,8 +146,6 @@ export class FileSystem {
     this.publishHooks.push(updateDataRootWhenOnline)
 
     if (!this.localOnly) {
-      const globe = (globalThis as any)
-
       // Publish when coming back online
       globalThis.addEventListener("online", this._whenOnline)
 
@@ -212,9 +210,8 @@ export class FileSystem {
    */
   deactivate(): void {
     if (this.localOnly) return
-    const globe = (globalThis as any)
-    globe.removeEventListener("online", this._whenOnline)
-    globe.removeEventListener("beforeunload", this._beforeLeaving)
+    globalThis.removeEventListener("online", this._whenOnline)
+    globalThis.removeEventListener("beforeunload", this._beforeLeaving)
   }
 
 
