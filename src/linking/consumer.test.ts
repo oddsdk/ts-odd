@@ -107,7 +107,7 @@ describe("handle session key", async () => {
 
   it("returns a warning when it receives a session key it cannot decrypt with its temporary private key", async () => {
     const temporaryRsaPairNoise = await crypto.rsa.genKey()
-    const rawSessionKeyNoise = exportedSessionKey // utils.arrBufToStr(utils.base64ToArrBuf(exportedSessionKey), CharSize.B16)
+    const rawSessionKeyNoise = exportedSessionKey
 
     if (!temporaryRsaPairNoise.publicKey) throw new Error("Temporary RSA public key missing")
     const encryptedSessionKeyNoise = await crypto.rsa.encrypt(rawSessionKeyNoise, temporaryRsaPairNoise.publicKey)
