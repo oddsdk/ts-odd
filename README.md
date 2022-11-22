@@ -50,7 +50,7 @@ const program = await wn.program({
 })
 ```
 
-`wn.program` returns a `Program` object, which can create a new user session or reuse an existing session. There are two ways to create a user session, either by using an authentication strategy or by requesting access from another app through the "confidences" system. Let's start with the default authentication strategy.
+`wn.program` returns a `Program` object, which can create a new user session or reuse an existing session. There are two ways to create a user session, either by using an authentication strategy or by requesting access from another app through the "capabilities" system. Let's start with the default authentication strategy.
 
 ```ts
 let session
@@ -98,7 +98,7 @@ if (program.session) {
 }
 ```
 
-Alternatively you can use the "confidences" system when you want partial access to a file system. At the moment of writing, confidences are only supported through the "Fission auth lobby", which is a Webnative app that uses the auth strategy shown above.
+Alternatively you can use the "capabilities" system when you want partial access to a file system. At the moment of writing, capabilities are only supported through the "Fission auth lobby", which is a Webnative app that uses the auth strategy shown above.
 
 This Fission auth lobby flow works as follows:
 1. You get redirected to the Fission lobby from your app.
@@ -124,7 +124,7 @@ const program = await webnative.program({
 })
 
 // (a) Whenever you are ready to redirect to the lobby, call this:
-program.confidences.request(permissions)
+program.capabilities.request(permissions)
 
 // (b) When you get redirected back and your program is ready,
 // you will have access to your user session.

@@ -13,7 +13,7 @@ The documentation should give you some information on how the various components
 - Introduction of a `depot` component: All IPFS functionality has been moved into here. Can now be swapped out with something else. Note that webnative still uses CIDs & IPLD.
 - Introduction of a `reference` component: Data root lookups & updating, DID root lookups, DNS and various repositories (cid log & UCANs) have been moved in here.
 - Introduction of a `manners` component: Debug functionality has moved to here.
-- Introduction of a `confidences` components: Responsible for accepting UCANs and filesystem secrets from external sources (eg. Fission Lobby)
+- Introduction of a `capabilities` components: Responsible for accepting UCANs and filesystem secrets from external sources (eg. Fission Lobby)
 
 **Improvements**
 
