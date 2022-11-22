@@ -79,11 +79,18 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
 
   if (cid) {
     await checkFileSystemVersion(dependents.depot, config, cid)
+    await manners.fileSystem.hooks.beforeLoadExisting()
+
     fs = await FileSystem.fromCID(cid, { account, dependents, permissions: p })
-    if (fs) return fs
+
+    await manners.fileSystem.hooks.afterLoadExisting(fs)
+
+    return fs
   }
 
   // Otherwise make a new one
+  await manners.fileSystem.hooks.beforeLoadNew()
+
   fs = await FileSystem.empty({
     account,
     dependents,
@@ -92,7 +99,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
     version: config.fileSystem?.version
   })
 
-  await addSampleData(fs)
+  await manners.fileSystem.hooks.afterLoadNew(fs)
 
   // Fin
   return fs
@@ -178,20 +185,6 @@ export const loadRootFileSystem = async (options: {
 }): Promise<FileSystem> => {
   const config = { ...options.config, permissions: { ...options.config.permissions, ...ROOT_PERMISSIONS } }
   return await loadFileSystem({ ...options, config })
-}
-
-
-
-// ㊙️
-
-
-async function addSampleData(fs: FileSystem): Promise<void> {
-  await fs.mkdir({ directory: [ Branch.Private, "Apps" ] })
-  await fs.mkdir({ directory: [ Branch.Private, "Audio" ] })
-  await fs.mkdir({ directory: [ Branch.Private, "Documents" ] })
-  await fs.mkdir({ directory: [ Branch.Private, "Photos" ] })
-  await fs.mkdir({ directory: [ Branch.Private, "Video" ] })
-  await fs.publish()
 }
 
 

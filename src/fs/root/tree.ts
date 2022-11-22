@@ -39,7 +39,7 @@ import { PublicRootWasm } from "../v3/PublicRootWasm.js"
 type Dependents = {
   crypto: Crypto.Implementation
   depot: Depot.Implementation
-  manners: Manners.Implementation
+  manners: Manners.Implementation<any>
   reference: Reference.Implementation
   storage: Storage.Implementation
 }
@@ -113,7 +113,7 @@ export default class RootTree implements Puttable {
       : await PublicTree.empty(dependents.depot, dependents.reference)
 
     const prettyTree = await BareTree.empty(dependents.depot)
-    const mmpt = MMPT.create(dependents.depot, dependents.manners)
+    const mmpt = MMPT.create(dependents.depot)
 
     // Private tree
     const rootPath = Path.toPosix(Path.directory(Path.Branch.Private))
@@ -189,10 +189,10 @@ export default class RootTree implements Puttable {
 
     let mmpt, privateNodes
     if (privateCID === null) {
-      mmpt = MMPT.create(dependents.depot, dependents.manners)
+      mmpt = MMPT.create(dependents.depot)
       privateNodes = {}
     } else {
-      mmpt = await MMPT.fromCID(dependents.depot, dependents.manners, decodeCID(privateCID))
+      mmpt = await MMPT.fromCID(dependents.depot, decodeCID(privateCID))
       privateNodes = await loadPrivateNodes(dependents, accountDID, keys, mmpt)
     }
 

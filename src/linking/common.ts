@@ -22,7 +22,7 @@ export class LinkingWarning extends Error {
   }
 }
 
-export const handleLinkingError = (manners: Manners.Implementation, error: LinkingError | LinkingWarning): void => {
+export const handleLinkingError = (manners: Manners.Implementation<any>, error: LinkingError | LinkingWarning): void => {
   switch (error.name) {
     case "LinkingWarning":
       manners.warn(error.message)

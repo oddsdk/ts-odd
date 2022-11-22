@@ -8,6 +8,7 @@ import * as CIDLogRepo from "../../../repositories/cid-log.js"
 import * as UcansRepo from "../../../repositories/ucans.js"
 
 import * as DOH from "../dns-over-https.js"
+import FileSystem from "../../../fs"
 
 
 // 🧩
@@ -15,7 +16,7 @@ import * as DOH from "../dns-over-https.js"
 
 export type Dependents = {
   crypto: Crypto.Implementation
-  manners: Manners.Implementation
+  manners: Manners.Implementation<FileSystem>
   storage: Storage.Implementation
 }
 

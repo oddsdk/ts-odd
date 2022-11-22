@@ -192,7 +192,7 @@ export const auth = {
 
     // Dependents
     crypto?: Crypto.Implementation
-    manners?: Manners.Implementation
+    manners?: Manners.Implementation<any>
     reference?: Reference.Implementation
     storage?: Storage.Implementation
   }): Promise<Auth.Implementation<Components>> {
@@ -290,7 +290,7 @@ export const reference = {
 
     // Dependents
     crypto?: Crypto.Implementation
-    manners?: Manners.Implementation
+    manners?: Manners.Implementation<any>
     storage?: Storage.Implementation
   }): Promise<Reference.Implementation> {
     const { staging } = settings
@@ -482,7 +482,7 @@ export const compositions = {
 
     // Dependents
     crypto?: Crypto.Implementation
-    manners?: Manners.Implementation
+    manners?: Manners.Implementation<any>
     storage?: Storage.Implementation
   }): Promise<Components> {
     const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
@@ -561,7 +561,7 @@ export function defaultDepotComponent(namespace: string | AppInfo): Promise<Depo
   )
 }
 
-export function defaultMannersComponent(config: Configuration): Manners.Implementation {
+export function defaultMannersComponent(config: Configuration): Manners.Implementation<any> {
   return ProperManners.implementation({
     configuration: config
   })

@@ -57,7 +57,7 @@ export type Account = {
 export type Dependents = {
   crypto: Crypto.Implementation
   depot: Depot.Implementation
-  manners: Manners.Implementation
+  manners: Manners.Implementation<FileSystem>
   reference: Reference.Implementation
   storage: Storage.Implementation
 }
@@ -635,7 +635,6 @@ export class FileSystem {
     if (!mmptCid) throw new Error("This user's filesystem doesn't have a private branch")
     const theirMmpt = await MMPT.fromCID(
       this.dependents.depot,
-      this.dependents.manners,
       decodeCID(rootLinks[ Branch.Private ]?.cid)
     )
 

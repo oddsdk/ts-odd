@@ -6,7 +6,7 @@ export type ImplementationOptions = {
 }
 
 
-export type Implementation = {
+export type Implementation<FileSystem> = {
   log: (...args: unknown[]) => void
   warn: (...args: unknown[]) => void
 
@@ -18,4 +18,19 @@ export type Implementation = {
    * By default this loads the required version of the wasm wnfs module from unpkg.com.
    */
   wnfsWasmLookup: (wnfsVersion: string) => Promise<BufferSource | Response>
+
+  /**
+   * File system.
+   */
+  fileSystem: {
+    /**
+     * Various file system hooks.
+     */
+    hooks: {
+      afterLoadExisting: (fs: FileSystem) => Promise<void>
+      afterLoadNew: (fs: FileSystem) => Promise<void>
+      beforeLoadExisting: () => Promise<void>
+      beforeLoadNew: () => Promise<void>
+    }
+  }
 }
