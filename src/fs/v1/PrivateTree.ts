@@ -27,13 +27,10 @@ import * as protocol from "../protocol/index.js"
 import * as versions from "../versions.js"
 
 
-type Manners = Manners.Implementation
-
-
 type ConstructorParams = {
   crypto: Crypto.Implementation
   depot: Depot.Implementation
-  manners: Manners
+  manners: Manners.Implementation
   reference: Reference.Implementation
 
   header: PrivateTreeInfo
@@ -46,7 +43,7 @@ export default class PrivateTree extends BaseTree {
 
   crypto: Crypto.Implementation
   depot: Depot.Implementation
-  manners: Manners
+  manners: Manners.Implementation
   reference: Reference.Implementation
 
   children: { [ name: string ]: PrivateTree | PrivateFile }
@@ -80,7 +77,7 @@ export default class PrivateTree extends BaseTree {
   static async create(
     crypto: Crypto.Implementation,
     depot: Depot.Implementation,
-    manners: Manners,
+    manners: Manners.Implementation,
     reference: Reference.Implementation,
     mmpt: MMPT,
     key: Uint8Array,
@@ -110,7 +107,7 @@ export default class PrivateTree extends BaseTree {
   static async fromBaseKey(
     crypto: Crypto.Implementation,
     depot: Depot.Implementation,
-    manners: Manners,
+    manners: Manners.Implementation,
     reference: Reference.Implementation,
     mmpt: MMPT,
     key: Uint8Array
@@ -122,7 +119,7 @@ export default class PrivateTree extends BaseTree {
   static async fromBareNameFilter(
     crypto: Crypto.Implementation,
     depot: Depot.Implementation,
-    manners: Manners,
+    manners: Manners.Implementation,
     reference: Reference.Implementation,
     mmpt: MMPT,
     bareNameFilter: BareNameFilter,
@@ -135,7 +132,7 @@ export default class PrivateTree extends BaseTree {
   static async fromLatestName(
     crypto: Crypto.Implementation,
     depot: Depot.Implementation,
-    manners: Manners,
+    manners: Manners.Implementation,
     reference: Reference.Implementation,
     mmpt: MMPT,
     name: PrivateName,
@@ -148,7 +145,7 @@ export default class PrivateTree extends BaseTree {
   static async fromName(
     crypto: Crypto.Implementation,
     depot: Depot.Implementation,
-    manners: Manners,
+    manners: Manners.Implementation,
     reference: Reference.Implementation,
     mmpt: MMPT,
     name: PrivateName,
@@ -161,7 +158,7 @@ export default class PrivateTree extends BaseTree {
   static async fromInfo(
     crypto: Crypto.Implementation,
     depot: Depot.Implementation,
-    manners: Manners,
+    manners: Manners.Implementation,
     reference: Reference.Implementation,
     mmpt: MMPT,
     key: Uint8Array,
@@ -349,7 +346,7 @@ export default class PrivateTree extends BaseTree {
   static async resolveSoftLink(
     crypto: Crypto.Implementation,
     depot: Depot.Implementation,
-    manners: Manners,
+    manners: Manners.Implementation,
     reference: Reference.Implementation,
     link: SoftLink
   ): Promise<PrivateTree | PrivateFile | null> {
@@ -430,7 +427,7 @@ export default class PrivateTree extends BaseTree {
 async function getNode(
   crypto: Crypto.Implementation,
   depot: Depot.Implementation,
-  manners: Manners,
+  manners: Manners.Implementation,
   reference: Reference.Implementation,
   mmpt: MMPT,
   nodeInfo: PrivateSkeletonInfo
