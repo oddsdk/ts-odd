@@ -1,10 +1,21 @@
 import { CID } from "multiformats"
+
 import type { Configuration } from "../../configuration.js"
+
+import * as Depot from "../../components/depot/implementation.js"
+import * as Reference from "../../components/reference/implementation.js"
+
 import * as FileSystem from "../../fs/types.js"
 
 
 export type ImplementationOptions = {
   configuration: Configuration
+}
+
+
+export type DataFlowComponents = {
+  depot: Depot.Implementation
+  reference: Reference.Implementation
 }
 
 
@@ -29,10 +40,10 @@ export type Implementation = {
      * Various file system hooks.
      */
     hooks: {
-      afterLoadExisting: (fs: FileSystem.API) => Promise<void>
-      afterLoadNew: (fs: FileSystem.API) => Promise<void>
-      beforeLoadExisting: (cid: CID) => Promise<void>
-      beforeLoadNew: () => Promise<void>
+      afterLoadExisting: (fs: FileSystem.API, dataFlowComponents: DataFlowComponents) => Promise<void>
+      afterLoadNew: (fs: FileSystem.API, dataFlowComponents: DataFlowComponents) => Promise<void>
+      beforeLoadExisting: (cid: CID, dataFlowComponents: DataFlowComponents) => Promise<void>
+      beforeLoadNew: (dataFlowComponents: DataFlowComponents) => Promise<void>
     }
   }
 }
