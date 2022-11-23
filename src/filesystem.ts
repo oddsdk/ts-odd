@@ -80,17 +80,17 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
 
   if (cid) {
     await checkFileSystemVersion(dependents.depot, config, cid)
-    await manners.fileSystem.hooks.beforeLoadExisting(cid, dataFlowComponents)
+    await manners.fileSystem.hooks.beforeLoadExisting(cid, account, dataFlowComponents)
 
     fs = await FileSystem.fromCID(cid, { account, dependents, permissions: p })
 
-    await manners.fileSystem.hooks.afterLoadExisting(fs, dataFlowComponents)
+    await manners.fileSystem.hooks.afterLoadExisting(fs, account, dataFlowComponents)
 
     return fs
   }
 
   // Otherwise make a new one
-  await manners.fileSystem.hooks.beforeLoadNew(dataFlowComponents)
+  await manners.fileSystem.hooks.beforeLoadNew(account, dataFlowComponents)
 
   fs = await FileSystem.empty({
     account,
@@ -100,7 +100,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
     version: config.fileSystem?.version
   })
 
-  await manners.fileSystem.hooks.afterLoadNew(fs, dataFlowComponents)
+  await manners.fileSystem.hooks.afterLoadNew(fs, account, dataFlowComponents)
 
   // Fin
   return fs

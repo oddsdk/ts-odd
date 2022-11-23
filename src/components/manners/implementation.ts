@@ -40,10 +40,10 @@ export type Implementation = {
      * Various file system hooks.
      */
     hooks: {
-      afterLoadExisting: (fs: FileSystem.API, dataFlowComponents: DataFlowComponents) => Promise<void>
-      afterLoadNew: (fs: FileSystem.API, dataFlowComponents: DataFlowComponents) => Promise<void>
-      beforeLoadExisting: (cid: CID, dataFlowComponents: DataFlowComponents) => Promise<void>
-      beforeLoadNew: (dataFlowComponents: DataFlowComponents) => Promise<void>
+      afterLoadExisting: (fs: FileSystem.API, account: FileSystem.AssociatedIdentity, dataFlowComponents: DataFlowComponents) => Promise<void>
+      afterLoadNew: (fs: FileSystem.API, account: FileSystem.AssociatedIdentity, dataFlowComponents: DataFlowComponents) => Promise<void>
+      beforeLoadExisting: (cid: CID, account: FileSystem.AssociatedIdentity, dataFlowComponents: DataFlowComponents) => Promise<void>
+      beforeLoadNew: (account: FileSystem.AssociatedIdentity, dataFlowComponents: DataFlowComponents) => Promise<void>
     }
   }
 }
