@@ -24,7 +24,7 @@ import { decodeCID } from "../common/index.js"
 // FILESYSTEM IMPORTS
 
 import { DEFAULT_AES_ALG } from "./protocol/basic.js"
-import { API, Links, PuttableUnixTree, UnixTree } from "./types.js"
+import { API, AssociatedIdentity, Links, PuttableUnixTree, UnixTree } from "./types.js"
 import { NoPermissionError } from "./errors.js"
 import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
@@ -49,11 +49,6 @@ export interface AppPath {
   (path: FilePath): FilePath
 }
 
-export type Account = {
-  rootDID: string
-  username?: string
-}
-
 export type Dependents = {
   crypto: Crypto.Implementation
   depot: Depot.Implementation
@@ -63,7 +58,7 @@ export type Dependents = {
 }
 
 export type FileSystemOptions = {
-  account: Account
+  account: AssociatedIdentity
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
@@ -79,7 +74,7 @@ export type NewFileSystemOptions = FileSystemOptions & {
 }
 
 type ConstructorParams = {
-  account: Account
+  account: AssociatedIdentity
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
@@ -93,7 +88,7 @@ type ConstructorParams = {
 
 export class FileSystem implements API {
 
-  account: Account
+  account: AssociatedIdentity
   dependents: Dependents
 
   root: RootTree

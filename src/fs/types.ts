@@ -9,7 +9,7 @@ import { Ucan } from "../ucan/types.js"
 // 💾 TOP LEVEL
 // ------------
 
-export type API = Exchange & Persistence & Posix & Sharing
+export type API = Exchange & Persistence & Properties & Posix & Sharing
 
 export interface Exchange {
   addPublicExchangeKey(): Promise<void>
@@ -19,6 +19,10 @@ export interface Exchange {
 export interface Persistence {
   historyStep(): Promise<void>
   publish(): Promise<CID>
+}
+
+export interface Properties {
+  account: AssociatedIdentity
 }
 
 export interface Posix {
@@ -97,6 +101,11 @@ export interface Links { [ name: string ]: Link }
 
 // MISC
 // ----
+
+export type AssociatedIdentity = {
+  rootDID: string
+  username?: string
+}
 
 export type NonEmptyPath = [ string, ...string[] ]
 
