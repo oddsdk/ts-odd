@@ -21,7 +21,7 @@ export function publicKeyToDid(
   const prefixedBuf = uint8arrays.concat([ prefix, publicKey ])
 
   // Encode prefixed
-  return BASE58_DID_PREFIX + uint8arrays.toString(new Uint8Array(prefixedBuf), "base58btc")
+  return BASE58_DID_PREFIX + uint8arrays.toString(prefixedBuf, "base58btc")
 }
 
 /**
