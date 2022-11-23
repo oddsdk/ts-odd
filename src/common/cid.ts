@@ -3,6 +3,9 @@ import { decode as decodeMultihash } from "multiformats/hashes/digest"
 import { hasProp, isNum, isObject } from "./type-checks.js"
 
 
+export { CID }
+
+
 /**
  * CID representing an empty string. We use this to speed up DNS propagation
  * However, we treat that as a null value in the code
