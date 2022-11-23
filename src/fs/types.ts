@@ -9,12 +9,7 @@ import { Ucan } from "../ucan/types.js"
 // 💾 TOP LEVEL
 // ------------
 
-export type API = Exchange & Persistence & Properties & Posix & Sharing
-
-export interface Exchange {
-  addPublicExchangeKey(): Promise<void>
-  hasPublicExchangeKey(): Promise<boolean>
-}
+export type API = Persistence & Properties & Posix & Sharing
 
 export interface Persistence {
   historyStep(): Promise<void>
