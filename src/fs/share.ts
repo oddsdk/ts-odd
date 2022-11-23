@@ -41,7 +41,7 @@ export const EXCHANGE_PATH: DirectoryPath = Path.directory(
 export async function privateNode(
   crypto: Crypto.Implementation,
   depot: Depot.Implementation,
-  manners: Manners.Implementation<any>,
+  manners: Manners.Implementation,
   reference: Reference.Implementation,
   rootTree: RootTree,
   items: Array<[ string, PrivateTree | PrivateFile ]>,

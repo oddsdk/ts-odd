@@ -1,4 +1,5 @@
 import type { Configuration } from "../../configuration.js"
+import * as FileSystem from "../../fs/types.js"
 
 
 export type ImplementationOptions = {
@@ -6,7 +7,7 @@ export type ImplementationOptions = {
 }
 
 
-export type Implementation<FileSystem> = {
+export type Implementation = {
   log: (...args: unknown[]) => void
   warn: (...args: unknown[]) => void
 
@@ -27,8 +28,8 @@ export type Implementation<FileSystem> = {
      * Various file system hooks.
      */
     hooks: {
-      afterLoadExisting: (fs: FileSystem) => Promise<void>
-      afterLoadNew: (fs: FileSystem) => Promise<void>
+      afterLoadExisting: (fs: FileSystem.API) => Promise<void>
+      afterLoadNew: (fs: FileSystem.API) => Promise<void>
       beforeLoadExisting: () => Promise<void>
       beforeLoadNew: () => Promise<void>
     }

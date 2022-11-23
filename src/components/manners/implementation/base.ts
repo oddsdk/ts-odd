@@ -1,12 +1,12 @@
 import type { Implementation, ImplementationOptions } from "../implementation.js"
+import * as FileSystem from "../../../fs/types.js"
 import { addSampleData } from "../../../fs/sample.js"
-import FileSystem from "../../../fs/filesystem.js"
 
 
 // 🛳
 
 
-export function implementation(opts: ImplementationOptions): Implementation<FileSystem> {
+export function implementation(opts: ImplementationOptions): Implementation {
   return {
     log: opts.configuration.debug ? console.log : () => { },
     warn: opts.configuration.debug ? console.warn : () => { },
@@ -17,8 +17,8 @@ export function implementation(opts: ImplementationOptions): Implementation<File
     // File system
     fileSystem: {
       hooks: {
-        afterLoadExisting: (fs: FileSystem) => addSampleData(fs),
-        afterLoadNew: async (fs: FileSystem) => { },
+        afterLoadExisting: (fs: FileSystem.API) => addSampleData(fs),
+        afterLoadNew: async (fs: FileSystem.API) => { },
         beforeLoadExisting: async () => { },
         beforeLoadNew: async () => { },
       },

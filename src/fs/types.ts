@@ -2,8 +2,55 @@ import type { CID } from "multiformats/cid"
 
 import { Maybe } from "../common/index.js"
 import { PutResult } from "../components/depot/implementation.js"
-import { Path } from "../path/index.js"
+import { DirectoryPath, DistinctivePath, FilePath, Path } from "../path/index.js"
 import { Ucan } from "../ucan/types.js"
+
+
+// 💾 TOP LEVEL
+// ------------
+
+export type API = Exchange & Persistence & Posix & Sharing
+
+export interface Exchange {
+  addPublicExchangeKey(): Promise<void>
+  hasPublicExchangeKey(): Promise<boolean>
+}
+
+export interface Persistence {
+  historyStep(): Promise<void>
+  publish(): Promise<CID>
+}
+
+export interface Posix {
+  exists(path: DistinctivePath): Promise<boolean>
+  get(path: DistinctivePath): Promise<PuttableUnixTree | File | null>
+  mv(from: DistinctivePath, to: DistinctivePath): Promise<this>
+  rm(path: DistinctivePath): Promise<this>
+
+  resolveSymlink(link: SoftLink): Promise<File | Tree | null>
+  symlink(args: { at: DirectoryPath; referringTo: DistinctivePath; name: string }): Promise<this>
+
+  // Directories
+  ls(path: DirectoryPath): Promise<Links>
+  mkdir(path: DirectoryPath, options?: MutationOptions): Promise<this>
+
+  // Files
+  add(
+    path: DistinctivePath,
+    content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
+    options?: MutationOptions
+  ): Promise<this>
+
+  read(path: FilePath): Promise<Uint8Array | null>
+  write(path: FilePath, content: Uint8Array, options?: MutationOptions): Promise<this>
+}
+
+export interface Sharing {
+  acceptShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<this>
+  loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<UnixTree>
+  sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails>
+}
+
 
 
 // FILE
@@ -63,6 +110,16 @@ export type PublishHook = (result: CID, proof: Ucan) => unknown
 export type SharedBy = { rootDid: string; username: string }
 export type ShareDetails = { shareId: string; sharedBy: SharedBy }
 export type PuttableUnixTree = UnixTree & Puttable
+
+
+
+// OPTIONS
+// -------
+
+export type MutationOptions = {
+  publish?: boolean
+}
+
 
 
 // TREE

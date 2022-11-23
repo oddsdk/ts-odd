@@ -34,7 +34,7 @@ export interface ProducerEventMap {
 export type Dependents = {
   auth: Auth.Implementation<Components>
   crypto: Crypto.Implementation
-  manners: Manners.Implementation<any>
+  manners: Manners.Implementation
 }
 
 type LinkingState = {

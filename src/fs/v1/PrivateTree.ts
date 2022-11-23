@@ -27,7 +27,7 @@ import * as protocol from "../protocol/index.js"
 import * as versions from "../versions.js"
 
 
-type Manners = Manners.Implementation<any>
+type Manners = Manners.Implementation
 
 
 type ConstructorParams = {

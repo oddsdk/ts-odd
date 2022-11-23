@@ -39,7 +39,7 @@ import { PublicRootWasm } from "../v3/PublicRootWasm.js"
 type Dependents = {
   crypto: Crypto.Implementation
   depot: Depot.Implementation
-  manners: Manners.Implementation<any>
+  manners: Manners.Implementation
   reference: Reference.Implementation
   storage: Storage.Implementation
 }

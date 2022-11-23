@@ -25,7 +25,7 @@ async function loadWasm({ manners }: Dependents) {
 
 type Dependents = {
   depot: Depot.Implementation
-  manners: Manners.Implementation<any>
+  manners: Manners.Implementation
 }
 
 interface DirEntry {

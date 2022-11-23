@@ -6,8 +6,6 @@ import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as Storage from "./components/storage/implementation.js"
 
-import FileSystem from "./fs/filesystem.js"
-
 
 // COMPONENTS
 
@@ -17,7 +15,7 @@ export type Components = {
   capabilities: Capabilities.Implementation
   crypto: Crypto.Implementation
   depot: Depot.Implementation
-  manners: Manners.Implementation<FileSystem>
+  manners: Manners.Implementation
   reference: Reference.Implementation
   storage: Storage.Implementation
 }
