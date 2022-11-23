@@ -1,3 +1,4 @@
+import { CID } from "multiformats"
 import type { Configuration } from "../../configuration.js"
 import * as FileSystem from "../../fs/types.js"
 
@@ -30,7 +31,7 @@ export type Implementation = {
     hooks: {
       afterLoadExisting: (fs: FileSystem.API) => Promise<void>
       afterLoadNew: (fs: FileSystem.API) => Promise<void>
-      beforeLoadExisting: () => Promise<void>
+      beforeLoadExisting: (cid: CID) => Promise<void>
       beforeLoadNew: () => Promise<void>
     }
   }

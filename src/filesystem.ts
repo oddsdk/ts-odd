@@ -79,7 +79,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
 
   if (cid) {
     await checkFileSystemVersion(dependents.depot, config, cid)
-    await manners.fileSystem.hooks.beforeLoadExisting()
+    await manners.fileSystem.hooks.beforeLoadExisting(cid)
 
     fs = await FileSystem.fromCID(cid, { account, dependents, permissions: p })
 
