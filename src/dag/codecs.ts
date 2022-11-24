@@ -15,7 +15,6 @@ export type CodecIdentifier = (
   typeof DagCBOR.code | typeof DagCBOR.name |
   typeof DagPB.code | typeof DagPB.name |
   typeof Raw.code | typeof Raw.name
-
 )
 
 

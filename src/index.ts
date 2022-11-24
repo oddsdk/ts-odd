@@ -613,6 +613,16 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   // - Root read key of the filesystem: IndexedDB → localforage → readKey
   // - Authenticated username: IndexedDB → localforage → webnative.auth_username
 
+  const [ migK, migV ] = [ "migrated", "true" ]
+
+  // If already migrated, stop here.
+  const migrationOccurred = await components.storage.getItem(migK) === migV
+  if (migrationOccurred) return
+
+  // Only try to migrate if environment supports indexedDB
+  if (!window.indexedDB) return
+
+  // Migration
   const keystoreDB = await bwOpenDatabase("keystore")
 
   if (keystoreDB) {
@@ -623,8 +633,6 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
       await components.storage.setItem("exchange-key", exchangeKeyPair)
       await components.storage.setItem("write-key", writeKeyPair)
     }
-
-    bwDeleteDatabase(keystoreDB)
   }
 
   const localforageDB = await bwOpenDatabase("localforage")
@@ -663,16 +671,9 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
         })
       )
     }
-
-    bwDeleteDatabase(localforageDB)
   }
-}
 
-
-function bwDeleteDatabase(db: IDBDatabase): void {
-  const name = db.name
-  db.close()
-  indexedDB.deleteDatabase(name)
+  await components.storage.setItem(migK, migV)
 }
 
 
