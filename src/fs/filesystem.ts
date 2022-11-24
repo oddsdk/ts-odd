@@ -49,7 +49,7 @@ export interface AppPath {
   (path: FilePath): FilePath
 }
 
-export type Dependents = {
+export type Dependencies = {
   crypto: Crypto.Implementation
   depot: Depot.Implementation
   manners: Manners.Implementation
@@ -59,7 +59,7 @@ export type Dependents = {
 
 export type FileSystemOptions = {
   account: AssociatedIdentity
-  dependents: Dependents
+  dependencies: Dependencies
   localOnly?: boolean
   permissions?: Permissions
 }
@@ -75,7 +75,7 @@ export type NewFileSystemOptions = FileSystemOptions & {
 
 type ConstructorParams = {
   account: AssociatedIdentity
-  dependents: Dependents
+  dependencies: Dependencies
   localOnly?: boolean
   permissions?: Permissions
   root: RootTree
@@ -89,7 +89,7 @@ type ConstructorParams = {
 export class FileSystem implements API {
 
   account: AssociatedIdentity
-  dependents: Dependents
+  dependencies: Dependencies
 
   root: RootTree
   readonly localOnly: boolean
@@ -101,9 +101,9 @@ export class FileSystem implements API {
   _publishing: false | [ CID, true ]
 
 
-  constructor({ account, dependents, root, localOnly }: ConstructorParams) {
+  constructor({ account, dependencies, root, localOnly }: ConstructorParams) {
     this.account = account
-    this.dependents = dependents
+    this.dependencies = dependencies
 
     this.localOnly = localOnly || false
     this.proofs = {}
@@ -119,15 +119,15 @@ export class FileSystem implements API {
     // Add the root CID of the file system to the CID log
     // (reverse list, newest cid first)
     const logCid = async (cid: CID) => {
-      await this.dependents.reference.repositories.cidLog.add(cid)
-      this.dependents.manners.log("📓 Adding to the CID ledger:", cid.toString())
+      await this.dependencies.reference.repositories.cidLog.add(cid)
+      this.dependencies.manners.log("📓 Adding to the CID ledger:", cid.toString())
     }
 
     // Update the user's data root when making changes
     const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
       if (globalThis.navigator.onLine) {
         this._publishing = [ cid, true ]
-        return this.dependents.reference.dataRoot.update(cid, proof).then(() => {
+        return this.dependencies.reference.dataRoot.update(cid, proof).then(() => {
           if (this._publishing && this._publishing[ 0 ] === cid) {
             this._publishing = false
           }
@@ -157,20 +157,20 @@ export class FileSystem implements API {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
-    const { account, dependents, permissions, localOnly } = opts
+    const { account, dependencies, permissions, localOnly } = opts
     const rootKey: Uint8Array = opts.rootKey || await (
-      dependents
+      dependencies
         .crypto.aes.genKey(DEFAULT_AES_ALG)
-        .then(dependents.crypto.aes.exportKey)
+        .then(dependencies.crypto.aes.exportKey)
     )
 
     // Create a file system based on wnfs-wasm when this option is set:
     const wnfsWasm = opts.version === Versions.toString(Versions.wnfsWasm)
-    const root = await RootTree.empty({ accountDID: account.rootDID, dependents, rootKey, wnfsWasm })
+    const root = await RootTree.empty({ accountDID: account.rootDID, dependencies, rootKey, wnfsWasm })
 
     return new FileSystem({
       account,
-      dependents,
+      dependencies,
       root,
       permissions,
       localOnly
@@ -181,12 +181,12 @@ export class FileSystem implements API {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions): Promise<FileSystem> {
-    const { account, dependents, permissions, localOnly } = opts
-    const root = await RootTree.fromCID({ accountDID: account.rootDID, dependents, cid, permissions })
+    const { account, dependencies, permissions, localOnly } = opts
+    const root = await RootTree.fromCID({ accountDID: account.rootDID, dependencies, cid, permissions })
 
     return new FileSystem({
       account,
-      dependents,
+      dependencies,
       root,
       permissions,
       localOnly
@@ -433,9 +433,9 @@ export class FileSystem implements API {
    */
   resolveSymlink(link: SoftLink): Promise<File | Tree | null> {
     if (TypeChecks.hasProp(link, "privateName")) {
-      return PrivateTree.resolveSoftLink(this.dependents.crypto, this.dependents.depot, this.dependents.manners, this.dependents.reference, link)
+      return PrivateTree.resolveSoftLink(this.dependencies.crypto, this.dependencies.depot, this.dependencies.manners, this.dependencies.reference, link)
     } else {
-      return PublicTree.resolveSoftLink(this.dependents.depot, this.dependents.reference, link)
+      return PublicTree.resolveSoftLink(this.dependencies.depot, this.dependencies.reference, link)
     }
   }
 
@@ -600,35 +600,35 @@ export class FileSystem implements API {
    * a private tree with symlinks (soft links) to the shared items.
    */
   async loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<UnixTree> {
-    const ourExchangeDid = await DID.exchange(this.dependents.crypto)
-    const theirRootDid = await this.dependents.reference.didRoot.lookup(sharedBy)
+    const ourExchangeDid = await DID.exchange(this.dependencies.crypto)
+    const theirRootDid = await this.dependencies.reference.didRoot.lookup(sharedBy)
 
     // Share key
-    const key = await ShareKey.create(this.dependents.crypto, {
+    const key = await ShareKey.create(this.dependencies.crypto, {
       counter: parseInt(shareId, 10),
       recipientExchangeDid: ourExchangeDid,
       senderRootDid: theirRootDid
     })
 
     // Load their shared section
-    const root = await this.dependents.reference.dataRoot.lookup(sharedBy)
+    const root = await this.dependencies.reference.dataRoot.lookup(sharedBy)
     if (!root) throw new Error("This user doesn't have a filesystem yet.")
 
-    const rootLinks = await Protocol.basic.getSimpleLinks(this.dependents.depot, root)
+    const rootLinks = await Protocol.basic.getSimpleLinks(this.dependencies.depot, root)
     const sharedLinksCid = rootLinks[ Branch.Shared ]?.cid || null
     if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
 
-    const sharedLinks = await RootTree.getSharedLinks(this.dependents.depot, decodeCID(sharedLinksCid))
+    const sharedLinks = await RootTree.getSharedLinks(this.dependencies.depot, decodeCID(sharedLinksCid))
     const shareLink = TypeChecks.isObject(sharedLinks) ? sharedLinks[ key ] : null
     if (!shareLink) throw new Error("Couldn't find a matching share.")
 
     const shareLinkCid = TypeChecks.isObject(shareLink) ? shareLink.cid : null
     if (!shareLinkCid) throw new Error("Couldn't find a matching share.")
 
-    const sharePayload = await this.dependents.depot.getBlock(decodeCID(shareLinkCid))
+    const sharePayload = await this.dependencies.depot.getBlock(decodeCID(shareLinkCid))
 
     // Decode payload
-    const decryptedPayload = await this.dependents.crypto.keystore.decrypt(sharePayload)
+    const decryptedPayload = await this.dependencies.crypto.keystore.decrypt(sharePayload)
     const decodedPayload: Record<string, unknown> = cbor.decode(decryptedPayload)
 
     if (!TypeChecks.hasProp(decodedPayload, "cid")) throw new Error("Share payload is missing the `cid` property")
@@ -643,22 +643,22 @@ export class FileSystem implements API {
     const mmptCid = rootLinks[ Branch.Private ]?.cid
     if (!mmptCid) throw new Error("This user's filesystem doesn't have a private branch")
     const theirMmpt = await MMPT.fromCID(
-      this.dependents.depot,
+      this.dependencies.depot,
       decodeCID(rootLinks[ Branch.Private ]?.cid)
     )
 
     // Decode index
-    const encryptedIndex = await this.dependents.depot.getBlock(decodeCID(entryIndexCid))
-    const indexInfoBytes = await this.dependents.crypto.aes.decrypt(encryptedIndex, symmKey, symmKeyAlgo as SymmAlg)
+    const encryptedIndex = await this.dependencies.depot.getBlock(decodeCID(entryIndexCid))
+    const indexInfoBytes = await this.dependencies.crypto.aes.decrypt(encryptedIndex, symmKey, symmKeyAlgo as SymmAlg)
     const indexInfo = JSON.parse(uint8arrays.toString(indexInfoBytes, "utf8"))
     if (!PrivateTypeChecks.isDecryptedNode(indexInfo)) throw new Error("The share payload did not point to a valid entry index")
 
     // Load index and return it
     return PrivateTree.fromInfo(
-      this.dependents.crypto,
-      this.dependents.depot,
-      this.dependents.manners,
-      this.dependents.reference,
+      this.dependencies.crypto,
+      this.dependencies.depot,
+      this.dependencies.manners,
+      this.dependencies.reference,
       theirMmpt,
       symmKey,
       indexInfo)
@@ -693,10 +693,10 @@ export class FileSystem implements API {
 
     // Share the items
     const shareDetails = await Sharing.privateNode(
-      this.dependents.crypto,
-      this.dependents.depot,
-      this.dependents.manners,
-      this.dependents.reference,
+      this.dependencies.crypto,
+      this.dependencies.depot,
+      this.dependencies.manners,
+      this.dependencies.reference,
       this.root,
       items,
       { shareWith, sharedBy }
@@ -722,7 +722,7 @@ export class FileSystem implements API {
    * in the `/public/.well-known/exchange/DID_GOES_HERE/` directory.
    */
   async addPublicExchangeKey(): Promise<void> {
-    const publicDid = await DID.exchange(this.dependents.crypto)
+    const publicDid = await DID.exchange(this.dependencies.crypto)
 
     await this.mkdir(
       Path.combine(Sharing.EXCHANGE_PATH, Path.directory(publicDid))
@@ -734,7 +734,7 @@ export class FileSystem implements API {
    * See `addPublicExchangeKey()` for the exact details.
    */
   async hasPublicExchangeKey(): Promise<boolean> {
-    const publicDid = await DID.exchange(this.dependents.crypto)
+    const publicDid = await DID.exchange(this.dependencies.crypto)
 
     return this.exists(
       Path.combine(Sharing.EXCHANGE_PATH, Path.directory(publicDid))
@@ -750,7 +750,7 @@ export class FileSystem implements API {
     const operation = isMutation ? "make changes to" : "query"
 
     if (!this.localOnly) {
-      const proof = await this.dependents.reference.repositories.ucans.lookupFilesystemUcan(path)
+      const proof = await this.dependencies.reference.repositories.ucans.lookupFilesystemUcan(path)
 
       if (!proof || Ucan.isExpired(proof) || !proof.signature) {
         throw new NoPermissionError(`I don't have the necessary permissions to ${operation} the file system at "${Path.toPosix(path)}"`)
@@ -795,7 +795,7 @@ export class FileSystem implements API {
       await this.root.updatePuttable(Branch.Private, this.root.mmpt)
 
       const cid = await this.root.mmpt.put()
-      await this.root.addPrivateLogEntry(this.dependents.depot, cid)
+      await this.root.addPrivateLogEntry(this.dependencies.depot, cid)
 
     } else if (head === Branch.Pretty) {
       throw new Error("The pretty path is read only")

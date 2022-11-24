@@ -7,7 +7,7 @@ import * as TypeChecks from "../../../../common/type-checks.js"
 import * as Ucan from "../../../../ucan/index.js"
 
 import { decodeCID } from "../../../../common/cid.js"
-import { Dependents } from "../base.js"
+import { Dependencies } from "../base.js"
 
 
 /**
@@ -18,10 +18,10 @@ import { Dependents } from "../base.js"
  */
 export async function lookup(
   endpoints: Fission.Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   username: string
 ): Promise<CID | null> {
-  const maybeRoot = await lookupOnFisson(endpoints, dependents, username)
+  const maybeRoot = await lookupOnFisson(endpoints, dependencies, username)
   if (!maybeRoot) return null
   if (maybeRoot !== null) return maybeRoot
 
@@ -41,7 +41,7 @@ export async function lookup(
  */
 export async function lookupOnFisson(
   endpoints: Fission.Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   username: string
 ): Promise<CID | null> {
   try {
@@ -53,7 +53,7 @@ export async function lookupOnFisson(
     return decodeCID(cid)
 
   } catch (err) {
-    dependents.manners.log(
+    dependencies.manners.log(
       "Could not locate user root on Fission server: ",
       TypeChecks.hasProp(err, "toString") ? (err as any).toString() : err
     )
@@ -70,23 +70,23 @@ export async function lookupOnFisson(
  */
 export async function update(
   endpoints: Fission.Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   cidInstance: CID,
   proof: Ucan.Ucan
 ): Promise<{ success: boolean }> {
   const cid = cidInstance.toString()
 
   // Debug
-  dependents.manners.log("🌊 Updating your DNSLink:", cid)
+  dependencies.manners.log("🌊 Updating your DNSLink:", cid)
 
   // Make API call
   return await fetchWithRetry(Fission.apiUrl(endpoints, `user/data/${cid}`), {
     headers: async () => {
       const jwt = Ucan.encode(await Ucan.build({
-        dependents: dependents,
+        dependencies: dependencies,
 
         audience: await Fission.did(endpoints),
-        issuer: await DID.ucan(dependents.crypto),
+        issuer: await DID.ucan(dependencies.crypto),
         potency: "APPEND",
         proof: Ucan.encode(proof),
 
@@ -105,12 +105,12 @@ export async function update(
     method: "PUT"
 
   }).then((response: Response) => {
-    if (response.status < 300) dependents.manners.log("🪴 DNSLink updated:", cid)
-    else dependents.manners.log("🔥 Failed to update DNSLink for:", cid)
+    if (response.status < 300) dependencies.manners.log("🪴 DNSLink updated:", cid)
+    else dependencies.manners.log("🔥 Failed to update DNSLink for:", cid)
     return { success: response.status < 300 }
 
   }).catch(err => {
-    dependents.manners.log("🔥 Failed to update DNSLink for:", cid)
+    dependencies.manners.log("🔥 Failed to update DNSLink for:", cid)
     console.error(err)
     return { success: false }
 

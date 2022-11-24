@@ -1,7 +1,7 @@
 import * as Uint8arrays from "uint8arrays"
 
 import type { Components } from "../../../components.js"
-import type { Dependents } from "./base.js"
+import type { Dependencies } from "./base.js"
 import type { Implementation } from "../implementation.js"
 
 import * as Base from "./base.js"
@@ -42,7 +42,7 @@ export async function activate(
       )
 
       const fsUcan = await Ucan.build({
-        dependents: components,
+        dependencies: components,
         potency: "APPEND",
         resource: "*",
         proof: proof ? proof : undefined,
@@ -60,7 +60,7 @@ export async function activate(
       undefined :
       await loadRootFileSystem({
         config,
-        dependents: {
+        dependencies: {
           crypto: components.crypto,
           depot: components.depot,
           manners: components.manners,
@@ -84,29 +84,29 @@ export async function activate(
 }
 
 export async function canDelegateAccount(
-  dependents: Dependents,
+  dependencies: Dependencies,
   username: string
 ): Promise<boolean> {
-  const accountDID = await rootDID(dependents)
-  const readKey = await RootKey.retrieve({ crypto: dependents.crypto, accountDID })
+  const accountDID = await rootDID(dependencies)
+  const readKey = await RootKey.retrieve({ crypto: dependencies.crypto, accountDID })
   if (!readKey) return false
 
-  return Base.canDelegateAccount(dependents, username)
+  return Base.canDelegateAccount(dependencies, username)
 }
 
 export async function delegateAccount(
-  dependents: Dependents,
+  dependencies: Dependencies,
   username: string,
   audience: string
 ): Promise<Record<string, unknown>> {
-  const accountDID = await rootDID(dependents)
-  const readKey = await RootKey.retrieve({ crypto: dependents.crypto, accountDID })
-  const { token } = await Base.delegateAccount(dependents, username, audience)
+  const accountDID = await rootDID(dependencies)
+  const readKey = await RootKey.retrieve({ crypto: dependencies.crypto, accountDID })
+  const { token } = await Base.delegateAccount(dependencies, username, audience)
   return { readKey: Uint8arrays.toString(readKey, "base64pad"), ucan: token }
 }
 
 export async function linkDevice(
-  dependents: Dependents,
+  dependencies: Dependencies,
   username: string,
   data: Record<string, unknown>
 ): Promise<void> {
@@ -117,19 +117,19 @@ export async function linkDevice(
   const { readKey, ucan: encodedToken } = data
   const ucan = Ucan.decode(encodedToken as string)
 
-  if (await Ucan.isValid(dependents.crypto, ucan)) {
-    await dependents.storage.setItem(dependents.storage.KEYS.ACCOUNT_UCAN, encodedToken)
+  if (await Ucan.isValid(dependencies.crypto, ucan)) {
+    await dependencies.storage.setItem(dependencies.storage.KEYS.ACCOUNT_UCAN, encodedToken)
 
     await RootKey.store({
-      accountDID: await rootDID(dependents),
-      crypto: dependents.crypto,
+      accountDID: await rootDID(dependencies),
+      crypto: dependencies.crypto,
       readKey: RootKey.fromString(readKey)
     })
 
     // Create and store filesystem UCAN
-    const issuer = await DID.write(dependents.crypto)
+    const issuer = await DID.write(dependencies.crypto)
     const fsUcan = await Ucan.build({
-      dependents: dependents,
+      dependencies: dependencies,
       potency: "APPEND",
       resource: "*",
       proof: encodedToken,
@@ -139,14 +139,14 @@ export async function linkDevice(
       issuer
     })
 
-    await dependents.reference.repositories.ucans.add(fsUcan)
+    await dependencies.reference.repositories.ucans.add(fsUcan)
 
   } else {
     throw new LinkingError(`Consumer received invalid link device response from producer. Given ucan is invalid: ${data.ucan}`)
 
   }
 
-  await SessionMod.provide(dependents.storage, { type: Base.TYPE, username })
+  await SessionMod.provide(dependencies.storage, { type: Base.TYPE, username })
 }
 
 
@@ -161,9 +161,9 @@ export function isWnfsLinkingData(data: unknown): data is { readKey: string; uca
 }
 
 
-export async function rootDID(dependents: Dependents): Promise<string> {
-  const maybeUcan: string | null = await dependents.storage.getItem(dependents.storage.KEYS.ACCOUNT_UCAN)
-  return maybeUcan ? Ucan.rootIssuer(maybeUcan) : await DID.write(dependents.crypto)
+export async function rootDID(dependencies: Dependencies): Promise<string> {
+  const maybeUcan: string | null = await dependencies.storage.getItem(dependencies.storage.KEYS.ACCOUNT_UCAN)
+  return maybeUcan ? Ucan.rootIssuer(maybeUcan) : await DID.write(dependencies.crypto)
 }
 
 
@@ -172,18 +172,18 @@ export async function rootDID(dependents: Dependents): Promise<string> {
 
 
 export function implementation(
-  dependents: Dependents
+  dependencies: Dependencies
 ): Implementation<Components> {
-  const base = Base.implementation(dependents)
+  const base = Base.implementation(dependencies)
 
   return {
     type: base.type,
 
     activate,
 
-    canDelegateAccount: (...args) => canDelegateAccount(dependents, ...args),
-    delegateAccount: (...args) => delegateAccount(dependents, ...args),
-    linkDevice: (...args) => linkDevice(dependents, ...args),
+    canDelegateAccount: (...args) => canDelegateAccount(dependencies, ...args),
+    delegateAccount: (...args) => delegateAccount(dependencies, ...args),
+    linkDevice: (...args) => linkDevice(dependencies, ...args),
 
     // Have to be implemented properly by other implementations
     createChannel: base.createChannel,

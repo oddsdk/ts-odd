@@ -8,11 +8,11 @@ import { components, createCryptoComponent } from "../helpers/components.js"
 
 describe("UCAN", () => {
 
-  const dependents = { crypto: components.crypto }
+  const dependencies = { crypto: components.crypto }
 
   it("can be built", async function () {
     const u = await Ucan.build({
-      dependents,
+      dependencies,
       audience: await randomRsaDid(),
       issuer: await DID.ucan(components.crypto)
     })
@@ -29,14 +29,14 @@ describe("UCAN", () => {
     // Proof
     const issA = await DID.ucan(cryptoOther)
     const prf = await Ucan.build({
-      dependents: { crypto: cryptoOther },
+      dependencies: { crypto: cryptoOther },
       audience: issB,
       issuer: issA
     })
 
     // Shell
     const u = await Ucan.build({
-      dependents: { crypto: cryptoMain },
+      dependencies: { crypto: cryptoMain },
       audience: await randomRsaDid(),
       issuer: issB,
       proof: Ucan.encode(prf)
@@ -48,7 +48,7 @@ describe("UCAN", () => {
   it("can validate a UCAN with a sessionKey fact", async function () {
     const sessionKey = "RANDOM KEY"
     const u = await Ucan.build({
-      dependents,
+      dependencies,
       issuer: await DID.ucan(components.crypto),
       audience: await randomRsaDid(),
       lifetimeInSeconds: 60 * 5, // 5 minutes

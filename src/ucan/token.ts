@@ -31,7 +31,7 @@ import { didToPublicKey } from "../did/transformers.js"
 export async function build({
   addSignature = true,
   audience,
-  dependents,
+  dependencies,
   facts = [],
   issuer,
   lifetimeInSeconds = 30,
@@ -42,7 +42,7 @@ export async function build({
 }: {
   addSignature?: boolean
   audience: string
-  dependents: { crypto: Crypto.Implementation }
+  dependencies: { crypto: Crypto.Implementation }
   facts?: Array<Fact>
   issuer: string
   lifetimeInSeconds?: number
@@ -58,7 +58,7 @@ export async function build({
 
   // Header
   const header = {
-    alg: await dependents.crypto.keystore.getUcanAlgorithm(),
+    alg: await dependencies.crypto.keystore.getUcanAlgorithm(),
     typ: "JWT",
     uav: "1.0.0" // actually 0.3.1 but server isn't updated yet
   }
@@ -86,7 +86,7 @@ export async function build({
     rsc: resource ? resource : (decodedProof ? decodedProof.payload.rsc : "*"),
   }
 
-  const signature = addSignature ? await sign(dependents.crypto, header, payload) : null
+  const signature = addSignature ? await sign(dependencies.crypto, header, payload) : null
 
   return {
     header,

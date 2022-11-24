@@ -14,7 +14,7 @@ import { Metadata } from "../metadata.js"
 
 
 
-async function loadWasm({ manners }: Dependents) {
+async function loadWasm({ manners }: Dependencies) {
   manners.log(`⏬ Loading WNFS WASM`)
   const before = performance.now()
   // init accepts Promises as arguments
@@ -23,7 +23,7 @@ async function loadWasm({ manners }: Dependents) {
   manners.log(`🧪 Loaded WNFS WASM (${time.toFixed(0)}ms)`)
 }
 
-type Dependents = {
+type Dependencies = {
   depot: Depot.Implementation
   manners: Manners.Implementation
 }
@@ -53,32 +53,32 @@ interface OpResult<A> {
 
 export class PublicRootWasm implements UnixTree, Puttable {
 
-  dependents: Dependents
+  dependencies: Dependencies
   root: Promise<PublicDirectory>
   lastRoot: PublicDirectory
   store: BlockStore
   readOnly: boolean
 
-  constructor(dependents: Dependents, root: PublicDirectory, store: BlockStore, readOnly: boolean) {
-    this.dependents = dependents
+  constructor(dependencies: Dependencies, root: PublicDirectory, store: BlockStore, readOnly: boolean) {
+    this.dependencies = dependencies
     this.root = Promise.resolve(root)
     this.lastRoot = root
     this.store = store
     this.readOnly = readOnly
   }
 
-  static async empty(dependents: Dependents): Promise<PublicRootWasm> {
-    await loadWasm(dependents)
-    const store = new DepotBlockStore(dependents.depot)
+  static async empty(dependencies: Dependencies): Promise<PublicRootWasm> {
+    await loadWasm(dependencies)
+    const store = new DepotBlockStore(dependencies.depot)
     const root = new PublicDirectory(new Date())
-    return new PublicRootWasm(dependents, root, store, false)
+    return new PublicRootWasm(dependencies, root, store, false)
   }
 
-  static async fromCID(dependents: Dependents, cid: CID): Promise<PublicRootWasm> {
-    await loadWasm(dependents)
-    const store = new DepotBlockStore(dependents.depot)
+  static async fromCID(dependencies: Dependencies, cid: CID): Promise<PublicRootWasm> {
+    await loadWasm(dependencies)
+    const store = new DepotBlockStore(dependencies.depot)
     const root = await PublicDirectory.load(cid.bytes, store)
-    return new PublicRootWasm(dependents, root, store, false)
+    return new PublicRootWasm(dependencies, root, store, false)
   }
 
   private async atomically(fn: (root: PublicDirectory) => Promise<PublicDirectory>) {
@@ -160,11 +160,11 @@ export class PublicRootWasm implements UnixTree, Puttable {
     ) as OpResult<Uint8Array>
 
     const cid = CID.decode(cidBytes)
-    return this.dependents.depot.getUnixFile(cid)
+    return this.dependencies.depot.getUnixFile(cid)
   }
 
   async add(path: Path, content: Uint8Array): Promise<this> {
-    const { cid } = await this.dependents.depot.putChunked(content)
+    const { cid } = await this.dependencies.depot.putChunked(content)
 
     await this.atomically(async root => {
       const { rootDir } = await this.withError(

@@ -1,5 +1,5 @@
 import type { Components } from "../../../components.js"
-import type { Dependents } from "./base.js"
+import type { Dependencies } from "./base.js"
 import type { Channel, ChannelOptions } from "../channel.js"
 import type { Implementation } from "../implementation.js"
 
@@ -11,11 +11,11 @@ import * as Fission from "./fission/index.js"
 
 export function createChannel(
   endpoints: Fission.Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   options: ChannelOptions
 ): Promise<Channel> {
   return ChannelMod.createWssChannel(
-    dependents.reference,
+    dependencies.reference,
     ChannelFission.endpoint(
       `${endpoints.server}${endpoints.apiPath}`.replace(/^https?:\/\//, "wss://")
     ),
@@ -33,11 +33,11 @@ export const isUsernameValid = async (username: string): Promise<boolean> => {
 
 export const register = async (
   endpoints: Fission.Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   options: { username: string; email?: string }
 ): Promise<{ success: boolean }> => {
-  const { success } = await Fission.createAccount(endpoints, dependents, options)
-  if (success) return Base.register(dependents, { ...options, type: Base.TYPE })
+  const { success } = await Fission.createAccount(endpoints, dependencies, options)
+  if (success) return Base.register(dependencies, { ...options, type: Base.TYPE })
   return { success: false }
 }
 
@@ -48,9 +48,9 @@ export const register = async (
 
 export function implementation(
   endpoints: Fission.Endpoints,
-  dependents: Dependents
+  dependencies: Dependencies
 ): Implementation<Components> {
-  const base = Base.implementation(dependents)
+  const base = Base.implementation(dependencies)
 
   return {
     type: base.type,
@@ -62,8 +62,8 @@ export function implementation(
 
     isUsernameValid,
 
-    createChannel: (...args) => createChannel(endpoints, dependents, ...args),
+    createChannel: (...args) => createChannel(endpoints, dependencies, ...args),
     isUsernameAvailable: (...args) => isUsernameAvailable(endpoints, ...args),
-    register: (...args) => register(endpoints, dependents, ...args)
+    register: (...args) => register(endpoints, dependencies, ...args)
   }
 }

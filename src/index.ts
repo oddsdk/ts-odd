@@ -176,7 +176,7 @@ export async function program(settings: Partial<Components> & Configuration): Pr
  * you will need to write your own reference and depot implementations (see source code).
  *
  * NOTE: If you're using a non-default component, you'll want to pass that in here as a parameter as well.
- *       Dependents: crypto, manners, reference, storage.
+ *       Dependencies: crypto, manners, reference, storage.
  */
 export const auth = {
   /**
@@ -191,7 +191,7 @@ export const auth = {
     disableWnfs?: boolean
     staging?: boolean
 
-    // Dependents
+    // Dependencies
     crypto?: Crypto.Implementation
     manners?: Manners.Implementation
     reference?: Reference.Implementation
@@ -222,7 +222,7 @@ export const auth = {
  * and receiving UCANs, read keys and namefilters from other sources to enable this.
  *
  * NOTE: If you're using a non-default component, you'll want to pass that in here as a parameter as well.
- *       Dependents: crypto, depot.
+ *       Dependencies: crypto, depot.
  */
 export const capabilities = {
   /**
@@ -233,7 +233,7 @@ export const capabilities = {
   async fissionLobby(settings: Configuration & {
     staging?: boolean
 
-    // Dependents
+    // Dependencies
     crypto?: Crypto.Implementation
     depot?: Depot.Implementation
   }): Promise<CapabilitiesImpl.Implementation> {
@@ -280,7 +280,7 @@ export const depot = {
  * It also holds repositories (see `Repository` class), which contain UCANs and CIDs.
  *
  * NOTE: If you're using a non-default component, you'll want to pass that in here as a parameter as well.
- *       Dependents: crypto, manners, storage.
+ *       Dependencies: crypto, manners, storage.
  */
 export const reference = {
   /**
@@ -289,7 +289,7 @@ export const reference = {
   async fission(settings: Configuration & {
     staging?: boolean
 
-    // Dependents
+    // Dependencies
     crypto?: Crypto.Implementation
     manners?: Manners.Implementation
     storage?: Storage.Implementation
@@ -422,7 +422,7 @@ export async function assemble(config: Configuration, components: Components): P
         undefined :
         await loadFileSystem({
           config,
-          dependents: components,
+          dependencies: components,
           username,
         })
 
@@ -451,8 +451,8 @@ export async function assemble(config: Configuration, components: Components): P
 
   // Shorthands
   const shorthands: ShortHands = {
-    loadFileSystem: (username: string) => loadFileSystem({ config, username, dependents: components }),
-    loadRootFileSystem: (username: string) => loadRootFileSystem({ config, username, dependents: components }),
+    loadFileSystem: (username: string) => loadFileSystem({ config, username, dependencies: components }),
+    loadRootFileSystem: (username: string) => loadRootFileSystem({ config, username, dependencies: components }),
   }
 
   // Fin
@@ -481,7 +481,7 @@ export const compositions = {
     disableWnfs?: boolean
     staging?: boolean
 
-    // Dependents
+    // Dependencies
     crypto?: Crypto.Implementation
     manners?: Manners.Implementation
     storage?: Storage.Implementation
@@ -538,13 +538,13 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
 // DEFAULT COMPONENTS
 
 
-export function defaultAuthComponent({ crypto, reference, storage }: BaseAuth.Dependents): Auth.Implementation<Components> {
+export function defaultAuthComponent({ crypto, reference, storage }: BaseAuth.Dependencies): Auth.Implementation<Components> {
   return FissionAuthWnfsProduction.implementation({
     crypto, reference, storage,
   })
 }
 
-export function defaultCapabilitiesComponent({ crypto, depot }: FissionLobbyBase.Dependents): CapabilitiesImpl.Implementation {
+export function defaultCapabilitiesComponent({ crypto, depot }: FissionLobbyBase.Dependencies): CapabilitiesImpl.Implementation {
   return FissionLobbyProduction.implementation({ crypto, depot })
 }
 
@@ -568,7 +568,7 @@ export function defaultMannersComponent(config: Configuration): Manners.Implemen
   })
 }
 
-export function defaultReferenceComponent({ crypto, manners, storage }: BaseReference.Dependents): Promise<Reference.Implementation> {
+export function defaultReferenceComponent({ crypto, manners, storage }: BaseReference.Dependencies): Promise<Reference.Implementation> {
   return FissionReferenceProduction.implementation({
     crypto,
     manners,

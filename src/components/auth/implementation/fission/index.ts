@@ -1,4 +1,4 @@
-import type { Dependents } from "../base.js"
+import type { Dependencies } from "../base.js"
 
 import * as Crypto from "../../../crypto/implementation.js"
 import * as DID from "../../../../did/index.js"
@@ -19,7 +19,7 @@ export * from "../../../../common/fission.js"
  */
 export async function createAccount(
   endpoints: Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   userProps: {
     username: string
     email?: string
@@ -27,8 +27,8 @@ export async function createAccount(
 ): Promise<{ success: boolean }> {
   const jwt = Ucan.encode(await Ucan.build({
     audience: await Fission.did(endpoints),
-    dependents: dependents,
-    issuer: await DID.ucan(dependents.crypto),
+    dependencies: dependencies,
+    issuer: await DID.ucan(dependencies.crypto),
   }))
 
   const response = await fetch(Fission.apiUrl(endpoints, "/user"), {
@@ -93,7 +93,7 @@ export async function resendVerificationEmail(
 
   const jwt = Ucan.encode(await Ucan.build({
     audience: await Fission.did(endpoints),
-    dependents: { crypto },
+    dependencies: { crypto },
     issuer: await DID.ucan(crypto),
     proof: localUcan,
     potency: null

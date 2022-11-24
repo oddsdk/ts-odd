@@ -30,7 +30,7 @@ describe("account linking", () => {
   let channel: EventEmitter<Record<string, ChannelData>> = new EventEmitter()
   let producerAccounts: Record<string, string[]> = {}
   let consumerAccounts: Record<string, string[]> = {}
-  let dependents = components
+  let dependencies = components
 
   before(() => {
     const createChannel = async (options: ChannelOptions): Promise<Channel> => {
@@ -72,7 +72,7 @@ describe("account linking", () => {
       linkDevice,
     }
 
-    dependents = { ...components, auth: authComponent }
+    dependencies = { ...components, auth: authComponent }
   })
 
   afterEach(() => {
@@ -84,13 +84,13 @@ describe("account linking", () => {
   it("links an account", async () => {
     let consumerDone = false
 
-    const producer = await createProducer(dependents, { username: "elm-owl" })
+    const producer = await createProducer(dependencies, { username: "elm-owl" })
 
     producer.on("challenge", ({ confirmPin }) => {
       confirmPin()
     })
 
-    const consumer = await createConsumer(dependents, { username: "elm-owl" })
+    const consumer = await createConsumer(dependencies, { username: "elm-owl" })
 
     consumer.on("done", () => {
       consumerDone = true
@@ -109,13 +109,13 @@ describe("account linking", () => {
   it("links when consumer starts first", async () => {
     let consumerDone = false
 
-    const consumer = await createConsumer(dependents, { username: "elm-owl" })
+    const consumer = await createConsumer(dependencies, { username: "elm-owl" })
 
     consumer.on("done", () => {
       consumerDone = true
     })
 
-    const producer = await createProducer(dependents, { username: "elm-owl" })
+    const producer = await createProducer(dependencies, { username: "elm-owl" })
 
     producer.on("challenge", ({ confirmPin }) => {
       confirmPin()
@@ -134,13 +134,13 @@ describe("account linking", () => {
   it("declines to link an account", async () => {
     let consumerDone = false
 
-    const producer = await createProducer(dependents, { username: "elm-owl" })
+    const producer = await createProducer(dependencies, { username: "elm-owl" })
 
     producer.on("challenge", ({ rejectPin }) => {
       rejectPin()
     })
 
-    const consumer = await createConsumer(dependents, { username: "elm-owl" })
+    const consumer = await createConsumer(dependencies, { username: "elm-owl" })
 
     consumer.on("done", () => {
       consumerDone = true
@@ -158,14 +158,14 @@ describe("account linking", () => {
   // TODO: Run this test when we have implemented a message queue
   it.skip("links with one producer and multiple consumers", async () => {
     const numConsumers = Math.round(Math.random() * 2 + 2)
-    const producer = await createProducer(dependents, { username: "elm-owl" })
+    const producer = await createProducer(dependencies, { username: "elm-owl" })
 
     producer.on("challenge", ({ confirmPin }) => {
       confirmPin()
     })
 
     const promisedConsumers = Array.from(Array(numConsumers)).map(async () => {
-      const emitter = await createConsumer(dependents, { username: "elm-owl" })
+      const emitter = await createConsumer(dependencies, { username: "elm-owl" })
       const consumer = { emitter, done: false }
 
       consumer.emitter.on("done", () => {

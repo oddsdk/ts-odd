@@ -19,7 +19,7 @@ import { Session } from "../../../session.js"
 export const TYPE = "webCrypto"
 
 
-export type Dependents = {
+export type Dependencies = {
   crypto: Crypto.Implementation
   reference: Reference.Implementation
   storage: Storage.Implementation
@@ -50,11 +50,11 @@ export async function activate(
 }
 
 export async function canDelegateAccount(
-  dependents: Dependents,
+  dependencies: Dependencies,
   username: string
 ): Promise<boolean> {
-  const didFromDNS = await dependents.reference.didRoot.lookup(username)
-  const maybeUcan: string | null = await dependents.storage.getItem(dependents.storage.KEYS.ACCOUNT_UCAN)
+  const didFromDNS = await dependencies.reference.didRoot.lookup(username)
+  const maybeUcan: string | null = await dependencies.storage.getItem(dependencies.storage.KEYS.ACCOUNT_UCAN)
 
   if (maybeUcan) {
     const rootIssuerDid = Ucan.rootIssuer(maybeUcan)
@@ -63,49 +63,49 @@ export async function canDelegateAccount(
 
     return didFromDNS === rootIssuerDid && ptc === "SUPER_USER"
   } else {
-    const rootDid = await Did.write(dependents.crypto)
+    const rootDid = await Did.write(dependencies.crypto)
 
     return didFromDNS === rootDid
   }
 }
 
 export async function delegateAccount(
-  dependents: Dependents,
+  dependencies: Dependencies,
   username: string,
   audience: string
 ): Promise<Record<string, unknown>> {
-  const proof: string | undefined = await dependents.storage.getItem(
-    dependents.storage.KEYS.ACCOUNT_UCAN
+  const proof: string | undefined = await dependencies.storage.getItem(
+    dependencies.storage.KEYS.ACCOUNT_UCAN
   ) ?? undefined
 
   // UCAN
   const u = await Ucan.build({
-    dependents,
+    dependencies,
 
     audience,
-    issuer: await Did.write(dependents.crypto),
+    issuer: await Did.write(dependencies.crypto),
     lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
     potency: "SUPER_USER",
     proof,
 
     // TODO: UCAN v0.7.0
-    // proofs: [ await localforage.getItem(dependents.storage.KEYS.ACCOUNT_UCAN) ]
+    // proofs: [ await localforage.getItem(dependencies.storage.KEYS.ACCOUNT_UCAN) ]
   })
 
   return { token: Ucan.encode(u) }
 }
 
 export async function linkDevice(
-  dependents: Dependents,
+  dependencies: Dependencies,
   username: string,
   data: Record<string, unknown>
 ): Promise<void> {
   const { token } = data
   const u = Ucan.decode(token as string)
 
-  if (await Ucan.isValid(dependents.crypto, u)) {
-    await dependents.storage.setItem(dependents.storage.KEYS.ACCOUNT_UCAN, token)
-    await SessionMod.provide(dependents.storage, { type: TYPE, username })
+  if (await Ucan.isValid(dependencies.crypto, u)) {
+    await dependencies.storage.setItem(dependencies.storage.KEYS.ACCOUNT_UCAN, token)
+    await SessionMod.provide(dependencies.storage, { type: TYPE, username })
   }
 }
 
@@ -118,10 +118,10 @@ export async function linkDevice(
  *       because it's the foundation for sessions.
  */
 export async function register(
-  dependents: Dependents,
+  dependencies: Dependencies,
   options: { username: string; email?: string; type?: string }
 ): Promise<{ success: boolean }> {
-  await SessionMod.provide(dependents.storage, { type: options.type || TYPE, username: options.username })
+  await SessionMod.provide(dependencies.storage, { type: options.type || TYPE, username: options.username })
   return { success: true }
 }
 
@@ -130,15 +130,15 @@ export async function register(
 // 🛳
 
 
-export function implementation(dependents: Dependents): Implementation<Components> {
+export function implementation(dependencies: Dependencies): Implementation<Components> {
   return {
     type: TYPE,
 
     activate: activate,
-    canDelegateAccount: (...args) => canDelegateAccount(dependents, ...args),
-    delegateAccount: (...args) => delegateAccount(dependents, ...args),
-    linkDevice: (...args) => linkDevice(dependents, ...args),
-    register: (...args) => register(dependents, ...args),
+    canDelegateAccount: (...args) => canDelegateAccount(dependencies, ...args),
+    delegateAccount: (...args) => delegateAccount(dependencies, ...args),
+    linkDevice: (...args) => linkDevice(dependencies, ...args),
+    register: (...args) => register(dependencies, ...args),
 
     // Have to be implemented properly by other implementations
     createChannel: () => { throw new Error("Not implemented") },

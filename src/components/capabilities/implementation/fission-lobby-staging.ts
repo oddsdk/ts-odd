@@ -1,4 +1,4 @@
-import type { Dependents } from "./fission-lobby.js"
+import type { Dependencies } from "./fission-lobby.js"
 import type { Implementation } from "../implementation.js"
 
 import * as FissionLobby from "./fission-lobby.js"
@@ -9,10 +9,10 @@ import * as Fission from "../../../common/fission.js"
 
 
 export function implementation(
-  dependents: Dependents
+  dependencies: Dependencies
 ): Implementation {
   return FissionLobby.implementation(
     Fission.STAGING,
-    dependents
+    dependencies
   )
 }

@@ -7,7 +7,7 @@ import * as Reference from "./components/reference/implementation.js"
 import * as Protocol from "./fs/protocol/index.js"
 import * as Versions from "./fs/versions.js"
 
-import FileSystem, { Dependents } from "./fs/filesystem.js"
+import FileSystem, { Dependencies } from "./fs/filesystem.js"
 
 import { Branch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
@@ -17,13 +17,13 @@ import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
 /**
  * Load a user's file system.
  */
-export async function loadFileSystem({ config, dependents, rootKey, username }: {
+export async function loadFileSystem({ config, dependencies, rootKey, username }: {
   config: Configuration
-  dependents: Dependents
+  dependencies: Dependencies
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> {
-  const { crypto, depot, manners, reference, storage } = dependents
+  const { crypto, depot, manners, reference, storage } = dependencies
 
   let cid: Maybe<CID>
   let fs
@@ -79,10 +79,10 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
   const dataComponents = { crypto, depot, reference, storage }
 
   if (cid) {
-    await checkFileSystemVersion(dependents.depot, config, cid)
+    await checkFileSystemVersion(dependencies.depot, config, cid)
     await manners.fileSystem.hooks.beforeLoadExisting(cid, account, dataComponents)
 
-    fs = await FileSystem.fromCID(cid, { account, dependents, permissions: p })
+    fs = await FileSystem.fromCID(cid, { account, dependencies, permissions: p })
 
     await manners.fileSystem.hooks.afterLoadExisting(fs, account, dataComponents)
 
@@ -94,7 +94,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
 
   fs = await FileSystem.empty({
     account,
-    dependents,
+    dependencies,
     rootKey,
     permissions: p,
     version: config.fileSystem?.version
@@ -180,7 +180,7 @@ export const ROOT_PERMISSIONS = { fs: { private: [ Path.root() ], public: [ Path
  */
 export const loadRootFileSystem = async (options: {
   config: Configuration
-  dependents: Dependents
+  dependencies: Dependencies
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> => {

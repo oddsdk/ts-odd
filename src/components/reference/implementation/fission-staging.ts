@@ -1,10 +1,10 @@
-import type { Dependents } from "./base.js"
+import type { Dependencies } from "./base.js"
 import type { Implementation } from "../implementation.js"
 
 import * as FissionBase from "./fission-base.js"
 import * as FissionEndpoints from "../../../common/fission.js"
 
 
-export function implementation(dependents: Dependents): Promise<Implementation> {
-  return FissionBase.implementation(FissionEndpoints.STAGING, dependents)
+export function implementation(dependencies: Dependencies): Promise<Implementation> {
+  return FissionBase.implementation(FissionEndpoints.STAGING, dependencies)
 }

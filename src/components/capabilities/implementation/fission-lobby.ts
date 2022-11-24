@@ -19,7 +19,7 @@ import { decodeCID } from "../../../common/cid.js"
 // 🧩
 
 
-export type Dependents = {
+export type Dependencies = {
   crypto: Crypto.Implementation
   depot: Depot.Implementation
 }
@@ -31,7 +31,7 @@ export type Dependents = {
 
 export async function collect(
   endpoints: Fission.Endpoints,
-  dependents: Dependents
+  dependencies: Dependencies
 ): Promise<Maybe<Capabilities.Capabilities>> {
   const url = new URL(window.location.href)
   const authorised = url.searchParams.get("authorised")
@@ -40,12 +40,12 @@ export async function collect(
   const username = url.searchParams.get("username") ?? ""
   const secrets = await retry(
     async () => translateClassifiedInfo(
-      dependents,
+      dependencies,
       authorised === "via-postmessage"
-        ? await getClassifiedViaPostMessage(endpoints, dependents.crypto)
+        ? await getClassifiedViaPostMessage(endpoints, dependencies.crypto)
         : JSON.parse(
           Uint8arrays.toString(
-            await dependents.depot.getUnixFile(
+            await dependencies.depot.getUnixFile(
               decodeCID(authorised)
             ),
             "utf8"
@@ -81,7 +81,7 @@ export async function collect(
  */
 export async function request(
   endpoints: Fission.Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   options: RequestOptions = {}
 ): Promise<void> {
   const { permissions } = options
@@ -92,8 +92,8 @@ export async function request(
   const raw = permissions?.raw
   const sharing = permissions?.sharing
 
-  const exchangeDid = await DID.exchange(dependents.crypto)
-  const writeDid = await DID.write(dependents.crypto)
+  const exchangeDid = await DID.exchange(dependencies.crypto)
+  const writeDid = await DID.write(dependencies.crypto)
   const sharedRepo = !!document.body.querySelector("iframe#webnative-ipfs") && typeof SharedWorker === "function"
   const redirectTo = options.returnUrl || window.location.href
 
@@ -221,7 +221,7 @@ function isLobbySecrets(obj: unknown): obj is LobbySecrets {
 }
 
 async function translateClassifiedInfo(
-  { crypto }: Dependents,
+  { crypto }: Dependencies,
   classifiedInfo: LobbyClassifiedInfo
 ): Promise<{ fileSystemSecrets: Capabilities.FileSystemSecret[]; ucans: Ucan.Ucan[] }> {
   // Extract session key
@@ -320,10 +320,10 @@ async function retry<T>(
 
 export function implementation(
   endpoints: Fission.Endpoints,
-  dependents: Dependents
+  dependencies: Dependencies
 ): Implementation {
   return {
-    collect: () => collect(endpoints, dependents),
-    request: (...args) => request(endpoints, dependents, ...args)
+    collect: () => collect(endpoints, dependencies),
+    request: (...args) => request(endpoints, dependencies, ...args)
   }
 }

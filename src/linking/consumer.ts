@@ -27,7 +27,7 @@ export interface ConsumerEventMap {
   "done": undefined
 }
 
-export type Dependents = {
+export type Dependencies = {
   auth: Auth.Implementation<Components>
   crypto: Crypto.Implementation
   manners: Manners.Implementation
@@ -48,11 +48,11 @@ type LinkingState = {
  * @returns an account linking event emitter and cancel function
  */
 export const createConsumer = async (
-  dependents: Dependents,
+  dependencies: Dependencies,
   options: { username: string }
 ): Promise<AccountLinkingConsumer> => {
   const { username } = options
-  const handleLinkingError = (errorOrWarning: LinkingError | LinkingWarning) => Linking.handleLinkingError(dependents.manners, errorOrWarning)
+  const handleLinkingError = (errorOrWarning: LinkingError | LinkingWarning) => Linking.handleLinkingError(dependencies.manners, errorOrWarning)
 
   let eventEmitter: Maybe<EventEmitter<ConsumerEventMap>> = new EventEmitter()
 
@@ -83,7 +83,7 @@ export const createConsumer = async (
           handleLinkingError(new LinkingError("Consumer missing RSA key pair when handling session key message"))
         } else {
           const sessionKeyResult = await handleSessionKey(
-            dependents.crypto,
+            dependencies.crypto,
             ls.temporaryRsaPair.privateKey,
             message
           )
@@ -91,7 +91,7 @@ export const createConsumer = async (
           if (sessionKeyResult.ok) {
             ls.sessionKey = sessionKeyResult.value
 
-            const { pin, challenge } = await generateUserChallenge(dependents.crypto, ls.sessionKey)
+            const { pin, challenge } = await generateUserChallenge(dependencies.crypto, ls.sessionKey)
             channel.send(challenge)
             eventEmitter?.emit("challenge", { pin: Array.from(pin) })
             ls.step = LinkingStep.Delegation
@@ -111,8 +111,8 @@ export const createConsumer = async (
           handleLinkingError(new LinkingError("Consumer was missing username when linking device"))
         } else {
           const linkingResult = await linkDevice(
-            dependents.auth,
-            dependents.crypto,
+            dependencies.auth,
+            dependencies.crypto,
             ls.sessionKey,
             ls.username,
             message
@@ -139,11 +139,11 @@ export const createConsumer = async (
     clearInterval(rsaExchangeInterval)
   }
 
-  const channel = await dependents.auth.createChannel({ handleMessage, username })
+  const channel = await dependencies.auth.createChannel({ handleMessage, username })
 
   const rsaExchangeInterval = setInterval(async () => {
     if (!ls.sessionKey) {
-      const { temporaryRsaPair, temporaryDID } = await generateTemporaryExchangeKey(dependents.crypto)
+      const { temporaryRsaPair, temporaryDID } = await generateTemporaryExchangeKey(dependencies.crypto)
       ls.temporaryRsaPair = temporaryRsaPair
       ls.step = LinkingStep.Negotiation
 

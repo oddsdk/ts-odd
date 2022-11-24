@@ -31,7 +31,7 @@ export interface ProducerEventMap {
   "done": undefined
 }
 
-export type Dependents = {
+export type Dependencies = {
   auth: Auth.Implementation<Components>
   crypto: Crypto.Implementation
   manners: Manners.Implementation
@@ -51,12 +51,12 @@ type LinkingState = {
  * @returns an account linking event emitter and cancel function
  */
 export const createProducer = async (
-  dependents: Dependents,
+  dependencies: Dependencies,
   options: { username: string }
 ): Promise<AccountLinkingProducer> => {
   const { username } = options
-  const handleLinkingError = (errorOrWarning: LinkingError | LinkingWarning) => Linking.handleLinkingError(dependents.manners, errorOrWarning)
-  const canDelegateAccount = await dependents.auth.canDelegateAccount(username)
+  const handleLinkingError = (errorOrWarning: LinkingError | LinkingWarning) => Linking.handleLinkingError(dependencies.manners, errorOrWarning)
+  const canDelegateAccount = await dependencies.auth.canDelegateAccount(username)
 
   if (!canDelegateAccount) {
     throw new LinkingError(`Producer cannot delegate account for username ${username}`)
@@ -78,7 +78,7 @@ export const createProducer = async (
       // Broadcast
       // ---------
       case LinkingStep.Broadcast: {
-        const { sessionKey, sessionKeyMessage } = await generateSessionKey(dependents.crypto, message)
+        const { sessionKey, sessionKeyMessage } = await generateSessionKey(dependencies.crypto, message)
         ls.sessionKey = sessionKey
         ls.step = LinkingStep.Negotiation
         return channel.send(sessionKeyMessage)
@@ -88,7 +88,7 @@ export const createProducer = async (
       // -----------
       case LinkingStep.Negotiation:
         if (ls.sessionKey) {
-          const userChallengeResult = await handleUserChallenge(dependents.crypto, ls.sessionKey, message)
+          const userChallengeResult = await handleUserChallenge(dependencies.crypto, ls.sessionKey, message)
           ls.step = LinkingStep.Delegation
 
           if (userChallengeResult.ok) {
@@ -104,8 +104,8 @@ export const createProducer = async (
 
                     if (ls.sessionKey) {
                       await delegateAccount(
-                        dependents.auth,
-                        dependents.crypto,
+                        dependencies.auth,
+                        dependencies.crypto,
                         ls.sessionKey,
                         username,
                         audience,
@@ -121,7 +121,7 @@ export const createProducer = async (
                     called = true
 
                     if (ls.sessionKey) {
-                      await declineDelegation(dependents.crypto, ls.sessionKey, finishDelegation)
+                      await declineDelegation(dependencies.crypto, ls.sessionKey, finishDelegation)
                     } else {
                       handleLinkingError(new LinkingError("Producer missing session key when declining account delegation"))
                     }
@@ -170,7 +170,7 @@ export const createProducer = async (
     channel.close()
   }
 
-  const channel = await dependents.auth.createChannel({ username, handleMessage })
+  const channel = await dependencies.auth.createChannel({ username, handleMessage })
 
   return {
     on: (...args) => eventEmitter?.on(...args),
@@ -199,7 +199,7 @@ export const generateSessionKey = async (
   const encryptedSessionKey = await crypto.rsa.encrypt(exportedSessionKey, publicKey)
 
   const u = await Ucan.build({
-    dependents: { crypto },
+    dependencies: { crypto },
 
     issuer: await DID.ucan(crypto),
     audience: didThrowaway,

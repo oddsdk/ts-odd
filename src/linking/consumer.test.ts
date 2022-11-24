@@ -54,7 +54,7 @@ describe("handle session key", async () => {
 
   it("returns a session key after validating a closed UCAN", async () => {
     const closedUcan = await Ucan.build({
-      dependents: { crypto },
+      dependencies: { crypto },
 
       issuer: await DID.ucan(crypto),
       audience: temporaryDID,
@@ -81,7 +81,7 @@ describe("handle session key", async () => {
 
   it("returns a warning when the message received has the wrong shape", async () => {
     const closedUcan = await Ucan.build({
-      dependents: { crypto },
+      dependencies: { crypto },
 
       issuer: await DID.ucan(crypto),
       audience: temporaryDID,
@@ -113,7 +113,7 @@ describe("handle session key", async () => {
     const encryptedSessionKeyNoise = await crypto.rsa.encrypt(rawSessionKeyNoise, temporaryRsaPairNoise.publicKey)
 
     const closedUcan = await Ucan.build({
-      dependents: { crypto },
+      dependencies: { crypto },
 
       issuer: await DID.ucan(crypto),
       audience: temporaryDID,
@@ -140,7 +140,7 @@ describe("handle session key", async () => {
   it("returns an error when closed UCAN cannot be decrypted with the provided session key", async () => {
     const mismatchedSessionKey = await crypto.aes.genKey(SymmAlg.AES_GCM)
     const closedUcan = await Ucan.build({
-      dependents: { crypto },
+      dependencies: { crypto },
 
       issuer: await DID.ucan(crypto),
       audience: temporaryDID,
@@ -167,7 +167,7 @@ describe("handle session key", async () => {
 
   it("returns an error when the closed UCAN is invalid", async () => {
     const closedUcan = await Ucan.build({
-      dependents: { crypto },
+      dependencies: { crypto },
 
       issuer: "invalidIssuer", // Invalid issuer DID
       audience: temporaryDID,
@@ -194,7 +194,7 @@ describe("handle session key", async () => {
 
   it("returns an error if the closed UCAN has potency", async () => {
     const closedUcan = await Ucan.build({
-      dependents: { crypto },
+      dependencies: { crypto },
 
       issuer: await DID.ucan(crypto),
       audience: temporaryDID,
@@ -221,7 +221,7 @@ describe("handle session key", async () => {
 
   it("returns an error if session key missing in closed UCAN", async () => {
     const closedUcan = await Ucan.build({
-      dependents: { crypto },
+      dependencies: { crypto },
 
       issuer: await DID.ucan(crypto),
       audience: temporaryDID,
@@ -248,7 +248,7 @@ describe("handle session key", async () => {
 
   it("returns an error if session key in closed UCAN does not match session key", async () => {
     const closedUcan = await Ucan.build({
-      dependents: { crypto },
+      dependencies: { crypto },
 
       issuer: await DID.ucan(crypto),
       audience: temporaryDID,

@@ -9,7 +9,7 @@ import { account, components, configuration, crypto } from "./components.js"
 export function emptyFilesystem(version?: string): Promise<FileSystem> {
   return FileSystem.empty({
     account,
-    dependents: components,
+    dependencies: components,
     localOnly: true,
     permissions: {
       fs: {
@@ -36,7 +36,7 @@ export async function loadFilesystem(cid: CID, readKey?: Uint8Array): Promise<Fi
 
   const fs = await FileSystem.fromCID(cid, {
     account,
-    dependents: components,
+    dependencies: components,
     localOnly: true,
     permissions: {
       fs: {

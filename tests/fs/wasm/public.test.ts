@@ -12,10 +12,10 @@ import { components } from "../../helpers/components.js"
 // TODO: Fix GC issues
 describe.skip("the wasm public root", () => {
 
-  const dependents = components
+  const dependencies = components
 
   async function simpleExample() {
-    const root = await PublicRootWasm.empty(dependents)
+    const root = await PublicRootWasm.empty(dependencies)
     await root.mkdir([ "hello", "world" ])
     await root.historyStep()
     await root.add([ "hello", "actor", "James" ], Uint8arrays.fromString("Cameron?"))
@@ -35,7 +35,7 @@ describe.skip("the wasm public root", () => {
 
     it("store- and load-roundtrips", async () => {
       const cid = await (await simpleExample()).put()
-      const root = await PublicRootWasm.fromCID(dependents, cid)
+      const root = await PublicRootWasm.fromCID(dependencies, cid)
       expect(await root.exists([ "hello", "world" ])).toEqual(true)
     })
 

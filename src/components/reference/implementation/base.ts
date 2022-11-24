@@ -13,7 +13,7 @@ import * as DOH from "../dns-over-https.js"
 // 🧩
 
 
-export type Dependents = {
+export type Dependencies = {
   crypto: Crypto.Implementation
   manners: Manners.Implementation
   storage: Storage.Implementation
@@ -24,7 +24,7 @@ export type Dependents = {
 // 🛳
 
 
-export async function implementation(dependents: Dependents): Promise<Implementation> {
+export async function implementation(dependencies: Dependencies): Promise<Implementation> {
   return {
     dataRoot: {
       domain: () => { throw new Error("Not implemented") },
@@ -39,8 +39,8 @@ export async function implementation(dependents: Dependents): Promise<Implementa
       lookupTxtRecord: DOH.lookupTxtRecord,
     },
     repositories: {
-      cidLog: await CIDLogRepo.create({ storage: dependents.storage }),
-      ucans: await UcansRepo.create({ storage: dependents.storage })
+      cidLog: await CIDLogRepo.create({ storage: dependencies.storage }),
+      ucans: await UcansRepo.create({ storage: dependencies.storage })
     },
   }
 }

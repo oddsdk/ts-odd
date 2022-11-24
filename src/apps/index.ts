@@ -24,7 +24,7 @@ type AppIndexResponseJson = {
   }
 }
 
-export type Dependents = {
+export type Dependencies = {
   crypto: Crypto.Implementation
   reference: Reference.Implementation
 }
@@ -35,17 +35,17 @@ export type Dependents = {
  */
 export async function index(
   endpoints: Fission.Endpoints,
-  dependents: Dependents
+  dependencies: Dependencies
 ): Promise<Array<AppMetadata>> {
-  const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan("*")
+  const localUcan = await dependencies.reference.repositories.ucans.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
 
   const jwt = Ucan.encode(await Ucan.build({
-    dependents: dependents,
+    dependencies: dependencies,
     audience: await Fission.did(endpoints),
-    issuer: await DID.ucan(dependents.crypto),
+    issuer: await DID.ucan(dependencies.crypto),
     proof: localUcan,
     potency: null
   }))
@@ -72,19 +72,19 @@ export async function index(
  */
 export async function create(
   endpoints: Fission.Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   subdomain: Maybe<string>
 ): Promise<AppMetadata> {
-  const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan("*")
+  const localUcan = await dependencies.reference.repositories.ucans.lookupAppUcan("*")
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
 
   const jwt = Ucan.encode(await Ucan.build({
-    dependents,
+    dependencies,
 
     audience: await Fission.did(endpoints),
-    issuer: await DID.ucan(dependents.crypto),
+    issuer: await DID.ucan(dependencies.crypto),
     proof: localUcan,
     potency: null
   }))
@@ -117,19 +117,19 @@ export async function create(
  */
 export async function deleteByDomain(
   endpoints: Fission.Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   domain: string
 ): Promise<void> {
-  const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan(domain)
+  const localUcan = await dependencies.reference.repositories.ucans.lookupAppUcan(domain)
   if (localUcan === null) {
     throw new Error("Could not find your local UCAN")
   }
 
   const jwt = Ucan.encode(await Ucan.build({
-    dependents,
+    dependencies,
 
     audience: await Fission.did(endpoints),
-    issuer: await DID.ucan(dependents.crypto),
+    issuer: await DID.ucan(dependencies.crypto),
     proof: localUcan,
     potency: null
   }))
@@ -165,20 +165,20 @@ export async function deleteByDomain(
  */
 export async function publish(
   endpoints: Fission.Endpoints,
-  dependents: Dependents,
+  dependencies: Dependencies,
   domain: string,
   cid: CID,
 ): Promise<void> {
-  const localUcan = await dependents.reference.repositories.ucans.lookupAppUcan(domain)
+  const localUcan = await dependencies.reference.repositories.ucans.lookupAppUcan(domain)
   if (localUcan === null) {
     throw "Could not find your local UCAN"
   }
 
   const jwt = Ucan.encode(await Ucan.build({
-    dependents,
+    dependencies,
 
     audience: await Fission.did(endpoints),
-    issuer: await DID.ucan(dependents.crypto),
+    issuer: await DID.ucan(dependencies.crypto),
     proof: localUcan,
     potency: null
   }))
