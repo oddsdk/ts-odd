@@ -13,8 +13,7 @@ describe("hex", () => {
         const returnData: string[] = []
 
         for (const num of data) {
-          const n = Math.min(16 + Math.abs(num % 255), 255)
-          hexData.push(n.toString(16))
+          hexData.push(num.toString(16))
         }
 
         for (const hex of hexData) {

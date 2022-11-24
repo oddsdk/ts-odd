@@ -21,7 +21,7 @@ export const isBool = (val: unknown): val is boolean => {
 }
 
 export function isCryptoKey(val: unknown): val is CryptoKey {
-  return val instanceof CryptoKey
+  return hasProp(val, "algorithm") && hasProp(val, "extractable") && hasProp(val, "type")
 }
 
 export const isNum = (val: unknown): val is number => {
