@@ -353,7 +353,7 @@ export default class RootTree implements Puttable {
 
     const cid = await this.dependents.depot.putBlock(
       DagCBOR.encode(cborApprovedLinks),
-      DagCBOR
+      DagCBOR.code
     )
 
     this.updateLink(Branch.Shared, {

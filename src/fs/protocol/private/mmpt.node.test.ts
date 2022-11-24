@@ -30,7 +30,7 @@ async function generateExampleEntries(amount: number): Promise<{ name: string; c
   for (const i of Array(amount).keys()) {
     const hash = sha256Str(`${i}`)
     const node = { Data: encode(hash), Links: [] }
-    const cid = await depot.putBlock(DagPB.encode(node), DagPB)
+    const cid = await depot.putBlock(DagPB.encode(node), DagPB.code)
     entries.push({
       name: hash,
       cid: cid,

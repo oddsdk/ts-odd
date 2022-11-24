@@ -29,8 +29,10 @@ import * as MemoryStorage from "../../src/components/storage/implementation/memo
 import * as ProperManners from "../../src/components/manners/implementation/base.js"
 import * as WnfsAuth from "../../src/components/auth/implementation/wnfs.js"
 
+import * as Codecs from "../../src/dag/codecs.js"
 import * as DID from "../../src/did/index.js"
 
+import { CodecIdentifier } from "../../src/dag/codecs.js"
 import { Components } from "../../src/components.js"
 import { Configuration } from "../../src/configuration.js"
 import { Ucan } from "../../src/ucan/types.js"
@@ -141,7 +143,8 @@ const depot: Depot.Implementation = {
   },
 
   // Keep data around
-  putBlock: async (data: Uint8Array, codec: BlockCodec<number, any>) => {
+  putBlock: async (data: Uint8Array, codecId: CodecIdentifier) => {
+    const codec = Codecs.getByIdentifier(codecId)
     const multihash = await sha256.digest(data)
     const cid = CID.createV1(codec.code, multihash)
 

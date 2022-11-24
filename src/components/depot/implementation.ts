@@ -1,5 +1,5 @@
-import { BlockCodec } from "multiformats/codecs/interface"
 import { CID } from "multiformats/cid"
+import { CodecIdentifier } from "../../dag/codecs.js"
 
 
 export type Implementation = {
@@ -9,7 +9,7 @@ export type Implementation = {
   getUnixDirectory: (cid: CID) => Promise<DirectoryItem[]>
 
   // Keep data around
-  putBlock: (data: Uint8Array, codec: BlockCodec<number, any>) => Promise<CID>
+  putBlock: (data: Uint8Array, codec: CodecIdentifier) => Promise<CID>
   putChunked: (data: Uint8Array) => Promise<PutResult>
 
   // Stats

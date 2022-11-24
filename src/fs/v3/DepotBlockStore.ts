@@ -1,6 +1,6 @@
 import { CID } from "multiformats/cid"
 
-import * as DAG from "../../dag/index.js"
+import * as Codecs from "../../dag/codecs.js"
 import * as Depot from "../../components/depot/implementation.js"
 
 
@@ -24,8 +24,9 @@ export class DepotBlockStore implements BlockStore {
 
   /** Retrieves an array of bytes from the block store with given CID. */
   async putBlock(bytes: Uint8Array, code: number): Promise<Uint8Array> {
-    const codec = DAG.getCodecByCode(code)
-    const cid = await this.depot.putBlock(bytes, codec)
+    if (!Codecs.isIdentifier(code)) throw new Error(`No codec was registered for the code: ${Codecs.numberHex(code)}`)
+
+    const cid = await this.depot.putBlock(bytes, code)
     return cid.bytes
   }
 }

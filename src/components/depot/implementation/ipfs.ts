@@ -1,9 +1,10 @@
 import * as uint8arrays from "uint8arrays"
-import { BlockCodec } from "multiformats/codecs/interface.js"
 import { CID } from "multiformats/cid"
 import { IPFS } from "ipfs-core-types"
 import { sha256 } from "multiformats/hashes/sha2"
 
+import * as Codecs from "../../../dag/codecs.js"
+import { CodecIdentifier } from "../../../dag/codecs.js"
 import { DirectoryItem, Implementation, PutResult } from "../implementation.js"
 import { Repo } from "ipfs-core/components/network.js"
 
@@ -47,7 +48,8 @@ export async function implementation(ipfs: IPFS, repo: Repo): Promise<Implementa
 
     // PUT
 
-    putBlock: async (data: Uint8Array, codec: BlockCodec<number, any>): Promise<CID> => {
+    putBlock: async (data: Uint8Array, codecId: CodecIdentifier): Promise<CID> => {
+      const codec = Codecs.getByIdentifier(codecId)
       const multihash = await sha256.digest(data)
       const cid = CID.createV1(codec.code, multihash)
 
