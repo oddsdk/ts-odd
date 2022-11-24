@@ -37,7 +37,7 @@ export type FileSystemSecret = {
 // 🏔
 
 
-export const SESSION_TYPE = "confidential"
+export const SESSION_TYPE = "capabilities"
 
 
 
