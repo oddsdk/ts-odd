@@ -85,7 +85,6 @@ export * as path from "./path/index.js"
 export * as ucan from "./ucan/index.js"
 
 export { AccountLinkingConsumer, AccountLinkingProducer } from "./linking/index.js"
-export { Capabilities, FileSystemSecret } from "./capabilities.js"
 export { FileSystem } from "./fs/filesystem.js"
 export { Session } from "./session.js"
 
