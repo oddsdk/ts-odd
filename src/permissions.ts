@@ -1,6 +1,5 @@
-import { hasProp } from "./common/type-checks.js"
 import * as Path from "./path/index.js"
-import { DirectoryPath, DistinctivePath } from "./path/index.js"
+import { DistinctivePath } from "./path/index.js"
 import { Potency, Resource } from "./ucan/index.js"
 
 
