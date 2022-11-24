@@ -116,7 +116,7 @@ export function validatePermissions(
 
   // Check permissions
   if (app) {
-    const k = prefix + Path.toPosix(Permissions.appDataPath(app))
+    const k = prefix + Path.toPosix(Path.appData(app))
     const u = repo.getByKey(k)
     if (!u || Ucan.isExpired(u)) return null
     ucan = u

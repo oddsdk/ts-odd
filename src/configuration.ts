@@ -1,5 +1,6 @@
+import { AppInfo } from "./appInfo.js"
 import { isString } from "./common/type-checks.js"
-import { appId, AppInfo, Permissions } from "./permissions.js"
+import { appId, Permissions } from "./permissions.js"
 
 
 // CONFIGURATION

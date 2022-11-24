@@ -1,3 +1,4 @@
+import { AppInfo } from "../appInfo.js"
 import { Maybe } from "../common/types.js"
 
 
@@ -56,6 +57,16 @@ export function file(...args: Path): FilePath {
  */
 export function root(): DirectoryPath {
   return { directory: [] }
+}
+
+/**
+ * Utility function create an app data path.
+ */
+export function appData(app: AppInfo, suffix?: DistinctivePath): DistinctivePath {
+  const parent = directory(Branch.Private, "Apps", app.creator, app.name)
+
+  if (suffix) return combine(parent, suffix)
+  return parent
 }
 
 

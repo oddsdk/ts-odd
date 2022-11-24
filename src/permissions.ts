@@ -1,15 +1,8 @@
 import * as Path from "./path/index.js"
+import { AppInfo } from "./appInfo.js"
 import { DistinctivePath } from "./path/index.js"
 import { Potency, Resource } from "./ucan/index.js"
 
-
-/**
- * Information about your app.
- */
-export type AppInfo = {
-  name: string
-  creator: string
-}
 
 export type Permissions = {
   app?: AppInfo
@@ -38,17 +31,6 @@ export type RawPermission = {
 
 
 /**
- * Path for `AppInfo`.
- */
-export function appDataPath(app: AppInfo, suffix?: DistinctivePath): DistinctivePath {
-  const parent = Path.directory(Path.Branch.Private, "Apps", app.creator, app.name)
-
-  if (suffix) return Path.combine(parent, suffix)
-  return parent
-}
-
-
-/**
  * App identifier.
  */
 export function appId(app: AppInfo): string {
@@ -63,7 +45,7 @@ export function appId(app: AppInfo): string {
 export function permissionPaths(permissions: Permissions): DistinctivePath[] {
   let list = [] as DistinctivePath[]
 
-  if (permissions.app) list.push(appDataPath(permissions.app))
+  if (permissions.app) list.push(Path.appData(permissions.app))
   if (permissions.fs?.private) list = list.concat(
     permissions.fs?.private.map(p => Path.combine(
       Path.directory(Path.Branch.Private),
