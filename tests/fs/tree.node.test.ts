@@ -1,25 +1,28 @@
+import * as Uint8arrays from "uint8arrays"
 import expect from "expect"
 
-import * as path from "../../src/path.js"
+import * as Path from "../../src/path/index.js"
 import { emptyFilesystem } from "../helpers/filesystem.js"
 
 
 describe("the filesystem", () => {
 
-  it("creates parent directories automatically", async function() {
+  it("creates parent directories automatically", async function () {
     const fs = await emptyFilesystem()
-    const expected = "content"
+    const expected = Uint8arrays.fromString("content", "utf8")
 
-    const privatePath = path.file(path.Branch.Private, "a", "b", "c.txt")
-    const publicPath = path.file(path.Branch.Public, "a", "b", "c.txt")
+    const privatePath = Path.file(Path.Branch.Private, "a", "b", "c.txt")
+    const publicPath = Path.file(Path.Branch.Public, "a", "b", "c.txt")
 
     await fs.write(privatePath, expected)
     await fs.write(publicPath, expected)
 
     const string = [
       await fs.read(privatePath),
-      await fs.read(publicPath).then(a => a ? new TextDecoder().decode(a as any) : "")
-    ].join("/")
+      await fs.read(publicPath)
+    ].map(
+      a => a ? Uint8arrays.toString(a, "utf8") : ""
+    ).join("/")
 
     expect(string).toEqual("content/content")
   })

@@ -1,5 +1,5 @@
-import expect from "expect"
 import * as fc from "fast-check"
+import expect from "expect"
 import { equal } from "./arrbufs.js"
 
 
@@ -20,7 +20,7 @@ describe("arrbufs", () => {
           fc.uint8Array({ minLength: 3 }),
           fc.uint8Array({ minLength: 3 })
         ), data => {
-          expect(equal(data[0].buffer, data[1].buffer)).toBe(false)
+          expect(equal(data[ 0 ].buffer, data[ 1 ].buffer)).toBe(false)
         })
     )
   })

@@ -1,19 +1,24 @@
-import expect from "expect"
 import * as fc from "fast-check"
 import * as check from "./type-checks.js"
+import expect from "expect"
+
+
+const IT_FC = "property tests"
 
 
 describe("is defined", () => {
-  fc.assert(
-    fc.property(fc.frequency(
-      { arbitrary: fc.object(), weight: 10 },
-      { arbitrary: fc.string(), weight: 5 },
-      { arbitrary: fc.integer(), weight: 1 },
-      { arbitrary: fc.double(), weight: 1 }
-    ), data => {
-      expect(check.isDefined(data)).toEqual(true)
-    })
-  )
+  it(IT_FC, () => {
+    fc.assert(
+      fc.property(fc.oneof(
+        { arbitrary: fc.object(), weight: 10 },
+        { arbitrary: fc.string(), weight: 5 },
+        { arbitrary: fc.integer(), weight: 1 },
+        { arbitrary: fc.double(), weight: 1 }
+      ), data => {
+        expect(check.isDefined(data)).toEqual(true)
+      })
+    )
+  })
 
   it("returns true when passed true", () => {
     expect(check.isDefined(true)).toBe(true)
@@ -34,16 +39,18 @@ describe("is defined", () => {
 
 
 describe("not null", () => {
-  fc.assert(
-    fc.property(fc.frequency(
-      { arbitrary: fc.object(), weight: 10 },
-      { arbitrary: fc.string(), weight: 5 },
-      { arbitrary: fc.integer(), weight: 1 },
-      { arbitrary: fc.double(), weight: 1 }
-    ), data => {
-      expect(check.notNull(data)).toEqual(true)
-    })
-  )
+  it(IT_FC, () => {
+    fc.assert(
+      fc.property(fc.oneof(
+        { arbitrary: fc.object(), weight: 10 },
+        { arbitrary: fc.string(), weight: 5 },
+        { arbitrary: fc.integer(), weight: 1 },
+        { arbitrary: fc.double(), weight: 1 }
+      ), data => {
+        expect(check.notNull(data)).toEqual(true)
+      })
+    )
+  })
 
   it("returns true when passed true", () => {
     expect(check.notNull(true)).toBe(true)
@@ -63,16 +70,18 @@ describe("not null", () => {
 })
 
 describe("is just", () => {
-  fc.assert(
-    fc.property(fc.frequency(
-      { arbitrary: fc.object(), weight: 10 },
-      { arbitrary: fc.string(), weight: 5 },
-      { arbitrary: fc.integer(), weight: 1 },
-      { arbitrary: fc.double(), weight: 1 }
-    ), data => {
-      expect(check.isJust(data)).toEqual(true)
-    })
-  )
+  it(IT_FC, () => {
+    fc.assert(
+      fc.property(fc.oneof(
+        { arbitrary: fc.object(), weight: 10 },
+        { arbitrary: fc.string(), weight: 5 },
+        { arbitrary: fc.integer(), weight: 1 },
+        { arbitrary: fc.double(), weight: 1 }
+      ), data => {
+        expect(check.isJust(data)).toEqual(true)
+      })
+    )
+  })
 
   it("returns true when passed true", () => {
     expect(check.isJust(true)).toBe(true)
@@ -92,16 +101,18 @@ describe("is just", () => {
 })
 
 describe("is value", () => {
-  fc.assert(
-    fc.property(fc.frequency(
-      { arbitrary: fc.object(), weight: 10 },
-      { arbitrary: fc.string(), weight: 5 },
-      { arbitrary: fc.integer(), weight: 1 },
-      { arbitrary: fc.double(), weight: 1 }
-    ), data => {
-      expect(check.isValue(data)).toEqual(true)
-    })
-  )
+  it(IT_FC, () => {
+    fc.assert(
+      fc.property(fc.oneof(
+        { arbitrary: fc.object(), weight: 10 },
+        { arbitrary: fc.string(), weight: 5 },
+        { arbitrary: fc.integer(), weight: 1 },
+        { arbitrary: fc.double(), weight: 1 }
+      ), data => {
+        expect(check.isValue(data)).toEqual(true)
+      })
+    )
+  })
 
   it("returns true when passed true", () => {
     expect(check.isValue(true)).toBe(true)
@@ -129,16 +140,18 @@ describe("is boolean", () => {
     expect(check.isBool(false)).toBe(true)
   })
 
-  fc.assert(
-    fc.property(fc.frequency(
-      { arbitrary: fc.object(), weight: 10 },
-      { arbitrary: fc.string(), weight: 5 },
-      { arbitrary: fc.integer(), weight: 1 },
-      { arbitrary: fc.double(), weight: 1 }
-    ), data => {
-      expect(check.isBool(data)).toEqual(false)
-    })
-  )
+  it(IT_FC, () => {
+    fc.assert(
+      fc.property(fc.oneof(
+        { arbitrary: fc.object(), weight: 10 },
+        { arbitrary: fc.string(), weight: 5 },
+        { arbitrary: fc.integer(), weight: 1 },
+        { arbitrary: fc.double(), weight: 1 }
+      ), data => {
+        expect(check.isBool(data)).toEqual(false)
+      })
+    )
+  })
 
   it("returns false when passed a null", () => {
     expect(check.isBool(null)).toBe(false)
@@ -150,15 +163,17 @@ describe("is boolean", () => {
 })
 
 describe("is num", () => {
-  fc.assert(
-    fc.property(fc.frequency(
-      { arbitrary: fc.integer(), weight: 1 },
-      { arbitrary: fc.float(), weight: 1 },
-      { arbitrary: fc.double(), weight: 1 }
-    ), data => {
-      expect(check.isNum(data)).toEqual(true)
-    })
-  )
+  it(IT_FC, () => {
+    fc.assert(
+      fc.property(fc.oneof(
+        { arbitrary: fc.integer(), weight: 1 },
+        { arbitrary: fc.float(), weight: 1 },
+        { arbitrary: fc.double(), weight: 1 }
+      ), data => {
+        expect(check.isNum(data)).toEqual(true)
+      })
+    )
+  })
 
   it("returns true when passed infinity", () => {
     expect(check.isNum(Infinity)).toBe(true)
@@ -172,14 +187,16 @@ describe("is num", () => {
     expect(check.isNum(NaN)).toBe(true)
   })
 
-  fc.assert(
-    fc.property(fc.frequency(
-      { arbitrary: fc.object(), weight: 10 },
-      { arbitrary: fc.string(), weight: 5 },
-    ), data => {
-      expect(check.isNum(data)).toEqual(false)
-    })
-  )
+  it(IT_FC, () => {
+    fc.assert(
+      fc.property(fc.oneof(
+        { arbitrary: fc.object(), weight: 10 },
+        { arbitrary: fc.string(), weight: 5 },
+      ), data => {
+        expect(check.isNum(data)).toEqual(false)
+      })
+    )
+  })
 
   it("returns false when passed true", () => {
     expect(check.isNum(true)).toBe(false)
@@ -200,21 +217,23 @@ describe("is num", () => {
 
 
 describe("is string", () => {
-  fc.assert(
-    fc.property(fc.string(), data => {
-      expect(check.isString(data)).toEqual(true)
-    })
-  )
+  it(IT_FC, () => {
+    fc.assert(
+      fc.property(fc.string(), data => {
+        expect(check.isString(data)).toEqual(true)
+      })
+    )
 
-  fc.assert(
-    fc.property(fc.frequency(
-      { arbitrary: fc.object(), weight: 10 },
-      { arbitrary: fc.integer(), weight: 1 },
-      { arbitrary: fc.double(), weight: 1 }
-    ), data => {
-      expect(check.isString(data)).toEqual(false)
-    })
-  )
+    fc.assert(
+      fc.property(fc.oneof(
+        { arbitrary: fc.object(), weight: 10 },
+        { arbitrary: fc.integer(), weight: 1 },
+        { arbitrary: fc.double(), weight: 1 }
+      ), data => {
+        expect(check.isString(data)).toEqual(false)
+      })
+    )
+  })
 
   it("returns false when passed true", () => {
     expect(check.isString(true)).toBe(false)
@@ -234,21 +253,23 @@ describe("is string", () => {
 })
 
 describe("is object", () => {
-  fc.assert(
-    fc.property(fc.object(), data => {
-      expect(check.isObject(data)).toEqual(true)
-    })
-  )
+  it(IT_FC, () => {
+    fc.assert(
+      fc.property(fc.object(), data => {
+        expect(check.isObject(data)).toEqual(true)
+      })
+    )
 
-  fc.assert(
-    fc.property(fc.frequency(
-      { arbitrary: fc.string(), weight: 5 },
-      { arbitrary: fc.integer(), weight: 1 },
-      { arbitrary: fc.double(), weight: 1 }
-    ), data => {
-      expect(check.isObject(data)).toEqual(false)
-    })
-  )
+    fc.assert(
+      fc.property(fc.oneof(
+        { arbitrary: fc.string(), weight: 5 },
+        { arbitrary: fc.integer(), weight: 1 },
+        { arbitrary: fc.double(), weight: 1 }
+      ), data => {
+        expect(check.isObject(data)).toEqual(false)
+      })
+    )
+  })
 
   it("returns false when passed true", () => {
     expect(check.isObject(true)).toBe(false)

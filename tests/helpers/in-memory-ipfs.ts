@@ -12,22 +12,40 @@ import * as dagPB from "@ipld/dag-pb"
 import * as dagCBOR from "@ipld/dag-cbor"
 import * as raw from "multiformats/codecs/raw"
 import { BlockCodec } from "multiformats/codecs/interface"
+import { Repo } from "ipfs-core/components/network.js"
 
-const CODECS: Record<string, BlockCodec<number, unknown>> = {
-  [dagPB.code]: dagPB,
-  [dagPB.name]: dagPB,
-  [dagCBOR.code]: dagCBOR,
-  [dagCBOR.name]: dagCBOR,
-  [raw.code]: raw,
-  [raw.name]: raw,
+
+const CODECS: Record<string, BlockCodec<number, any>> = {
+  [ dagPB.code ]: dagPB,
+  [ dagPB.name ]: dagPB,
+  [ dagCBOR.code ]: dagCBOR,
+  [ dagCBOR.name ]: dagCBOR,
+  [ raw.code ]: raw,
+  [ raw.name ]: raw,
 }
 
-export async function createInMemoryIPFS(): Promise<IPFS> {
+export async function createInMemoryIPFS(): Promise<[ IPFS, Repo ]> {
   const dir = tempDir()
   fs.mkdirSync(dir)
 
   const memoryDs = new MemoryDatastore()
   const memoryBs = new MemoryBlockstore()
+
+  const repo = createRepo(
+    dir,
+    codeOrName => Promise.resolve(CODECS[ codeOrName ]), {
+    root: memoryDs,
+    blocks: memoryBs,
+    keys: memoryDs,
+    datastore: memoryDs,
+    pins: memoryDs
+  }, {
+    repoLock: {
+      lock: async () => ({ close: async () => { return } }),
+      locked: async () => false
+    },
+    autoMigrate: false,
+  })
 
   const ipfs = await Ipfs.create({
     offline: true,
@@ -37,7 +55,7 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
     },
     config: {
       Addresses: {
-        Swarm: ["/ip4/0.0.0.0/tcp/4002"],
+        Swarm: [ "/ip4/0.0.0.0/tcp/4002" ],
         API: "/ip4/127.0.0.1/tcp/5002",
         Gateway: "/ip4/127.0.0.1/tcp/9090"
       },
@@ -57,23 +75,8 @@ export async function createInMemoryIPFS(): Promise<IPFS> {
       peerDiscovery: [],
       connectionManager: { autoDial: false }
     },
-    repo: createRepo(
-      dir,
-      codeOrName => Promise.resolve(CODECS[codeOrName]), {
-      root: memoryDs,
-      blocks: memoryBs,
-      keys: memoryDs,
-      datastore: memoryDs,
-      pins: memoryDs
-    }, {
-      repoLock: {
-        lock: async () => ({ close: async () => { return } }),
-        locked: async () => false
-      },
-      autoMigrate: false,
-    }
-    )
+    repo
   })
 
-  return ipfs
+  return [ ipfs, repo ]
 }

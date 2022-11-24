@@ -1,16 +1,63 @@
 import type { CID } from "multiformats/cid"
 
 import { Maybe } from "../common/index.js"
-import { FileContent, AddResult } from "../ipfs/index.js"
-import { Path } from "../path.js"
+import { PutResult } from "../components/depot/implementation.js"
+import { DirectoryPath, DistinctivePath, FilePath, Path } from "../path/index.js"
+import { Ucan } from "../ucan/types.js"
+
+
+// 💾 TOP LEVEL
+// ------------
+
+export type API = Persistence & Properties & Posix & Sharing
+
+export interface Persistence {
+  historyStep(): Promise<void>
+  publish(): Promise<CID>
+}
+
+export interface Properties {
+  account: AssociatedIdentity
+}
+
+export interface Posix {
+  exists(path: DistinctivePath): Promise<boolean>
+  get(path: DistinctivePath): Promise<PuttableUnixTree | File | null>
+  mv(from: DistinctivePath, to: DistinctivePath): Promise<this>
+  rm(path: DistinctivePath): Promise<this>
+
+  resolveSymlink(link: SoftLink): Promise<File | Tree | null>
+  symlink(args: { at: DirectoryPath; referringTo: DistinctivePath; name: string }): Promise<this>
+
+  // Directories
+  ls(path: DirectoryPath): Promise<Links>
+  mkdir(path: DirectoryPath, options?: MutationOptions): Promise<this>
+
+  // Files
+  add(
+    path: DistinctivePath,
+    content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
+    options?: MutationOptions
+  ): Promise<this>
+
+  read(path: FilePath): Promise<Uint8Array | null>
+  write(path: FilePath, content: Uint8Array, options?: MutationOptions): Promise<this>
+}
+
+export interface Sharing {
+  acceptShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<this>
+  loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<UnixTree>
+  sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails>
+}
+
 
 
 // FILE
 // -----
 
 export interface File extends Puttable {
-  content: FileContent
-  updateContent(content: FileContent): Promise<this>
+  content: Uint8Array
+  updateContent(content: Uint8Array): Promise<this>
 }
 
 
@@ -37,31 +84,46 @@ export interface SoftLink {
   privateName?: string
 }
 
-export interface HardLink extends SimpleLink, BaseLink {}
+export interface HardLink extends SimpleLink, BaseLink { }
 export type Link = HardLink | SoftLink | BaseLink
 
-export interface SimpleLinks { [name: string]: SimpleLink }
-export interface BaseLinks { [name: string]: BaseLink }
-export interface HardLinks { [name: string]: HardLink }
-export interface Links { [name: string]: Link }
+export interface SimpleLinks { [ name: string ]: SimpleLink }
+export interface BaseLinks { [ name: string ]: BaseLink }
+export interface HardLinks { [ name: string ]: HardLink }
+export interface Links { [ name: string ]: Link }
 
 
 
 // MISC
 // ----
 
-export type NonEmptyPath = [string, ...string[]]
+export type AssociatedIdentity = {
+  rootDID: string
+  username?: string
+}
+
+export type NonEmptyPath = [ string, ...string[] ]
 
 export interface Puttable {
   put(): Promise<CID>
-  putDetailed(): Promise<AddResult>
+  putDetailed(): Promise<PutResult>
 }
 
 export type UpdateCallback = () => Promise<unknown>
-export type PublishHook = (result: CID, proof: string) => unknown
+export type PublishHook = (result: CID, proof: Ucan) => unknown
 export type SharedBy = { rootDid: string; username: string }
 export type ShareDetails = { shareId: string; sharedBy: SharedBy }
 export type PuttableUnixTree = UnixTree & Puttable
+
+
+
+// OPTIONS
+// -------
+
+export type MutationOptions = {
+  publish?: boolean
+}
+
 
 
 // TREE
@@ -72,8 +134,8 @@ export interface UnixTree {
 
   ls(path: Path): Promise<Links>
   mkdir(path: Path): Promise<this>
-  cat(path: Path): Promise<FileContent>
-  add(path: Path, content: FileContent): Promise<this>
+  cat(path: Path): Promise<Uint8Array>
+  add(path: Path, content: Uint8Array): Promise<this>
   rm(path: Path): Promise<this>
   mv(from: Path, to: Path): Promise<this>
   get(path: Path): Promise<PuttableUnixTree | File | null>
@@ -82,10 +144,10 @@ export interface UnixTree {
 
 export interface Tree extends UnixTree, Puttable {
   createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
-  createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
+  createOrUpdateChildFile(content: Uint8Array, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
 
   mkdirRecurse(path: Path, onUpdate: Maybe<UpdateCallback>): Promise<this>
-  addRecurse(path: Path, content: FileContent, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  addRecurse(path: Path, content: Uint8Array, onUpdate: Maybe<UpdateCallback>): Promise<this>
   rmRecurse(path: Path, onUpdate: Maybe<UpdateCallback>): Promise<this>
 
   updateChild(child: Tree | File, path: Path): Promise<this>
@@ -95,6 +157,6 @@ export interface Tree extends UnixTree, Puttable {
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree | File>
 
-  updateLink(name: string, result: AddResult): this
+  updateLink(name: string, result: PutResult): this
   getLinks(): Links
 }

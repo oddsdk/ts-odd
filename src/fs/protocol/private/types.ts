@@ -1,15 +1,15 @@
 import type { CID } from "multiformats/cid"
 
-import { BaseLink, SoftLink } from "../../types.js"
-import  { Metadata } from "../../metadata.js"
-import { AddResult } from "../../../ipfs/index.js"
 import { BareNameFilter, PrivateName } from "./namefilter.js"
+import { BaseLink, SoftLink } from "../../types.js"
+import { Metadata } from "../../metadata.js"
+import { PutResult } from "../../../components/depot/implementation.js"
 
 
 export type DecryptedNode = PrivateFileInfo | PrivateTreeInfo
 
 export type PrivateFileInfo = {
-  content: CID | string
+  content: string
   metadata: Metadata
   bareNameFilter: BareNameFilter
   revision: number
@@ -21,7 +21,7 @@ export type PrivateLink = BaseLink & {
   pointer: PrivateName
 }
 
-export type PrivateLinks = { [name: string]: PrivateLink | SoftLink }
+export type PrivateLinks = { [ name: string ]: PrivateLink | SoftLink }
 
 export type PrivateTreeInfo = {
   metadata: Metadata
@@ -31,17 +31,17 @@ export type PrivateTreeInfo = {
   skeleton: PrivateSkeleton
 }
 
-export type PrivateSkeleton = { [name: string]: PrivateSkeletonInfo | SoftLink }
+export type PrivateSkeleton = { [ name: string ]: PrivateSkeletonInfo | SoftLink }
 
 export type PrivateSkeletonInfo = {
-  cid: CID | string
+  cid: string
   key: string
   subSkeleton: PrivateSkeleton
 }
 
-export type PrivateAddResult = AddResult & {
+export type PrivateAddResult = PutResult & {
   name: PrivateName
-  key: string
+  key: Uint8Array
   skeleton: PrivateSkeleton
 }
 

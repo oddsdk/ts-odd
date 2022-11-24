@@ -1,68 +1,67 @@
 import expect from "expect"
-import RSAKeyStore from "keystore-idb/rsa/keystore.js"
 import { webcrypto } from "one-webcrypto"
 
-import * as base64 from "../../src/common/base64.js"
-import * as did from "../../src/did/index.js"
-import * as keystore from "../../src/keystore.js"
-import * as ucan from "../../src/ucan/index.js"
-
-import InMemoryRSAKeyStore from "../../src/setup/node/keystore/store/memory.js"
+import * as DID from "../../src/did/index.js"
+import * as Ucan from "../../src/ucan/index.js"
+import { components, createCryptoComponent } from "../helpers/components.js"
 
 
 describe("UCAN", () => {
 
-  it("can be built", async function() {
-    const u = await ucan.build({
+  const dependencies = { crypto: components.crypto }
+
+  it("can be built", async function () {
+    const u = await Ucan.build({
+      dependencies,
       audience: await randomRsaDid(),
-      issuer: await did.ucan()
+      issuer: await DID.ucan(components.crypto)
     })
 
-    expect(await ucan.isValid(u)).toBe(true)
+    expect(await Ucan.isValid(components.crypto, u)).toBe(true)
   })
 
-  it("can validate a UCAN with a valid proof", async function() {
-    const storeA = (await InMemoryRSAKeyStore.init()) as unknown as RSAKeyStore
-    const storeB = (await InMemoryRSAKeyStore.init()) as unknown as RSAKeyStore
+  it("can validate a UCAN with a valid proof", async function () {
+    const cryptoOther = await createCryptoComponent()
+    const cryptoMain = components.crypto
 
-    await keystore.set(storeB)
-    const issB = await did.ucan()
+    const issB = await DID.ucan(cryptoMain)
 
     // Proof
-    await keystore.set(storeA)
-    const issA = await did.ucan()
-    const prf = await ucan.build({
+    const issA = await DID.ucan(cryptoOther)
+    const prf = await Ucan.build({
+      dependencies: { crypto: cryptoOther },
       audience: issB,
       issuer: issA
     })
 
     // Shell
-    await keystore.set(storeB)
-    const u = await ucan.build({
+    const u = await Ucan.build({
+      dependencies: { crypto: cryptoMain },
       audience: await randomRsaDid(),
       issuer: issB,
-      proof: ucan.encode(prf)
+      proof: Ucan.encode(prf)
     })
 
-    expect(await ucan.isValid(u)).toBe(true)
+    expect(await Ucan.isValid(components.crypto, u)).toBe(true)
   })
 
-  it("can validate a UCAN with a sessionKey fact", async function() {
+  it("can validate a UCAN with a sessionKey fact", async function () {
     const sessionKey = "RANDOM KEY"
-    const u = await ucan.build({
-      issuer: await did.ucan(),
+    const u = await Ucan.build({
+      dependencies,
+      issuer: await DID.ucan(components.crypto),
       audience: await randomRsaDid(),
       lifetimeInSeconds: 60 * 5, // 5 minutes
-      facts: [{ sessionKey }]
+      facts: [ { sessionKey } ]
     })
 
-    expect(await ucan.isValid(u)).toBe(true)
+    expect(await Ucan.isValid(components.crypto, u)).toBe(true)
   })
 
-  it("decodes and reencodes UCAN to the same value", async function() {
+  it("decodes and reencodes UCAN to the same value", async function () {
     const u = "eyJ1YXYiOiIxLjAuMCIsImFsZyI6IkVkRFNBIiwiY3R5IjpudWxsLCJ0eXAiOiJKV1QifQ.eyJwdGMiOiJBUFBFTkQiLCJuYmYiOjE2MTg0MjU4NzYsInJzYyI6eyJ3bmZzIjoiLyJ9LCJleHAiOjE2MTg0MjU5MzYsImlzcyI6ImRpZDprZXk6ejZNa3BoTWtYc24ybzVnN2E4M292MndjalBOeXNkZXlNMm9CdEVaUlphRXJqSlU1IiwicHJmIjpudWxsLCJhdWQiOiJkaWQ6a2V5Ono2TWtnWUdGM3RobjhrMUZ2NHA0ZFdYS3RzWENuTEg3cTl5dzRRZ05QVUxEbURLQiIsImZjdCI6W119.DItB729fJHKYhVuhjpXFOyqJeJwSpa8y5cAvbkdzzTbKTUEpKv5YfgKn5FWKzY_cnCeCLjqL_Zw9gto7kPqVCw"
-    const decoded = ucan.decode(u)
-    const reencoded = ucan.encode(decoded)
+    const decoded = Ucan.decode(u)
+    const reencoded = Ucan.encode(decoded)
 
     expect(u === reencoded).toBe(true)
   })
@@ -82,9 +81,11 @@ async function randomRsaDid(): Promise<string> {
     [ "sign", "verify" ]
   )
 
-  const a = await webcrypto.subtle.exportKey("spki", key.publicKey)
-  const b = String.fromCharCode(...(new Uint8Array(a)))
-  const c = base64.encode(b)
+  const exportedKey = await webcrypto.subtle.exportKey("spki", key.publicKey)
 
-  return did.publicKeyToDid(c, did.KeyType.RSA)
+  return DID.publicKeyToDid(
+    components.crypto,
+    new Uint8Array(exportedKey),
+    "rsa"
+  )
 }

@@ -1,13 +1,12 @@
+import * as Uint8arrays from "uint8arrays"
 import expect from "expect"
 
 import { loadCARWithRoot } from "../helpers/loadCAR.js"
 
-import "../../src/setup/node.js"
 import FileSystem from "../../src/fs/filesystem.js"
 import { File } from "../../src/fs/types.js"
-import * as path from "../../src/path.js"
+import * as path from "../../src/path/index.js"
 
-import { ipfsFromContext } from "../mocha-hook.js"
 import { loadFilesystem } from "../helpers/filesystem.js"
 import { isSoftLink } from "../../src/fs/types/check.js"
 
@@ -15,10 +14,8 @@ import { isSoftLink } from "../../src/fs/types/check.js"
 describe("the filesystem", () => {
 
   it("can load filesystem fixtures", async function () {
-    const ipfs = ipfsFromContext(this)
-
-    const rootCID = await loadCARWithRoot("tests/fixtures/webnative-integration-test-v2-0-0.car", ipfs)
-    const readKey = "pJW/xgBGck9/ZXwQHNPhV3zSuqGlUpXiChxwigwvUws="
+    const rootCID = await loadCARWithRoot("tests/fixtures/webnative-integration-test-v2-0-0.car")
+    const readKey = Uint8arrays.fromString("pJW/xgBGck9/ZXwQHNPhV3zSuqGlUpXiChxwigwvUws=", "base64pad")
     const fs = await loadFilesystem(rootCID, readKey)
 
     let files = await listFiles(fs, path.directory("public"))
@@ -30,7 +27,7 @@ describe("the filesystem", () => {
 
 async function listFiles(fs: FileSystem, searchPath: path.DirectoryPath): Promise<File[]> {
   let files: File[] = []
-  for (const [subName, sub] of Object.entries(await fs.ls(searchPath))) {
+  for (const [ subName, sub ] of Object.entries(await fs.ls(searchPath))) {
     if (isSoftLink(sub)) continue
     if (sub.isFile) {
       const file = await fs.get(path.combine(searchPath, path.file(subName))) as File

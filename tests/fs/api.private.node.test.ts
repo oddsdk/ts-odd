@@ -1,15 +1,14 @@
-import expect from "expect"
 import * as fc from "fast-check"
+import expect from "expect"
 
-import "../../src/setup/node.js"
-import * as check from "../../src/fs/types/check.js"
-import * as path from "../../src/path.js"
+import * as Check from "../../src/fs/types/check.js"
+import * as Path from "../../src/path/index.js"
 import PrivateFile from "../../src/fs/v1/PrivateFile.js"
 import PrivateTree from "../../src/fs/v1/PrivateTree.js"
 
-import { pathSegment, pathSegmentPair } from "../helpers/paths.js"
 import { emptyFilesystem } from "../helpers/filesystem.js"
-import { privateFileContent as fileContent, privateDecode as decode } from "../helpers/fileContent.js"
+import { pathSegment, pathSegmentPair } from "../helpers/paths.js"
+import { fileContent } from "../helpers/fileContent.js"
 
 
 describe("the private filesystem api", function () {
@@ -30,7 +29,7 @@ describe("the private filesystem api", function () {
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("private", pathSegment)
+          const filepath = Path.file("private", pathSegment)
 
           await fs.write(filepath, fileContent.val)
 
@@ -45,7 +44,7 @@ describe("the private filesystem api", function () {
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("private", pathSegment)
+          const filepath = Path.file("private", pathSegment)
 
           await fs.write(filepath, fileContent.val)
           await fs.rm(filepath)
@@ -62,7 +61,7 @@ describe("the private filesystem api", function () {
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("private", pathSegment)
+          const filepath = Path.file("private", pathSegment)
 
           await fs.write(filepath, fileContent.val)
           const file = await fs.read(filepath)
@@ -70,9 +69,7 @@ describe("the private filesystem api", function () {
             expect(file).not.toBe(null)
             return
           }
-          const content = decode(file, fileContent.type)
-
-          expect(content).toEqual(fileContent.val)
+          expect(file).toEqual(fileContent.val)
         })
     )
   })
@@ -84,8 +81,8 @@ describe("the private filesystem api", function () {
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {
-          const fromPath = path.file("private", pathSegmentPair.first)
-          const toPath = path.file("private", pathSegmentPair.second)
+          const fromPath = Path.file("private", pathSegmentPair.first)
+          const toPath = Path.file("private", pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
           await fs.mv(fromPath, toPath)
@@ -104,8 +101,8 @@ describe("the private filesystem api", function () {
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {
-          const fromPath = path.file("private", pathSegmentPair.first)
-          const toPath = path.file("private", pathSegmentPair.second)
+          const fromPath = Path.file("private", pathSegmentPair.first)
+          const toPath = Path.file("private", pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
           await fs.mv(fromPath, toPath)
@@ -115,9 +112,8 @@ describe("the private filesystem api", function () {
             expect(file).not.toBe(null)
             return
           }
-          const content = decode(file, fileContent.type)
 
-          expect(content).toEqual(fileContent.val)
+          expect(file).toEqual(fileContent.val)
         })
     )
   })
@@ -128,7 +124,7 @@ describe("the private filesystem api", function () {
     await fc.assert(
       fc.asyncProperty(
         pathSegment(), async pathSegment => {
-          const dirpath = path.directory("private", pathSegment)
+          const dirpath = Path.directory("private", pathSegment)
 
           await fs.mkdir(dirpath)
 
@@ -143,7 +139,7 @@ describe("the private filesystem api", function () {
     await fc.assert(
       fc.asyncProperty(
         pathSegment(), async pathSegment => {
-          const dirpath = path.directory("private", pathSegment)
+          const dirpath = Path.directory("private", pathSegment)
 
           await fs.mkdir(dirpath)
           await fs.rm(dirpath)
@@ -160,7 +156,7 @@ describe("the private filesystem api", function () {
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("private", pathSegment)
+          const filepath = Path.file("private", pathSegment)
 
           await fs.write(filepath, fileContent.val)
 
@@ -171,14 +167,14 @@ describe("the private filesystem api", function () {
 
   it("lists files written to a directory", async () => {
     const fs = await emptyFilesystem()
-    const dirpath = path.directory("private", "testDir")
+    const dirpath = Path.directory("private", "testDir")
     await fs.mkdir(dirpath)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("private", "testDir", pathSegment)
+          const filepath = Path.file("private", "testDir", pathSegment)
 
           await fs.write(filepath, fileContent.val)
           const listing = await fs.ls(dirpath)
@@ -190,15 +186,15 @@ describe("the private filesystem api", function () {
 
   it("moves files into a directory", async () => {
     const fs = await emptyFilesystem()
-    const dirpath = path.directory("private", "testDir")
+    const dirpath = Path.directory("private", "testDir")
     await fs.mkdir(dirpath)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {
-          const fromPath = path.file("private", pathSegmentPair.first)
-          const toPath = path.file("private", pathSegmentPair.second)
+          const fromPath = Path.file("private", pathSegmentPair.first)
+          const toPath = Path.file("private", pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
           await fs.mv(fromPath, toPath)
@@ -217,24 +213,23 @@ describe("the private filesystem api", function () {
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair }) => {
-          const atPath = path.directory("private", pathSegmentPair.first)
-          const referringToPath = path.directory("private", pathSegmentPair.second)
-          const name = path.terminus(referringToPath) || "Symlink"
+          const atPath = Path.directory("private", pathSegmentPair.first)
+          const referringToPath = Path.directory("private", pathSegmentPair.second)
+          const name = Path.terminus(referringToPath) || "Symlink"
 
           await fs.mkdir(referringToPath)
           await fs.symlink({
             at: atPath,
             referringTo: referringToPath,
-            name,
-            username: "test"
+            name
           })
 
           const at = await fs.get(atPath) as PrivateTree
-          const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+          const symlink = Check.isFile(at) || at === null ? null : at.getLinks()[ name ]
           const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)
-          expect(check.isSoftLink(symlink)).toEqual(true)
+          expect(Check.isSoftLink(symlink)).toEqual(true)
           expect(followed).toBeInstanceOf(PrivateTree)
         })
     )
@@ -247,24 +242,23 @@ describe("the private filesystem api", function () {
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair }) => {
-          const atPath = path.directory("private", pathSegmentPair.first)
-          const referringToPath = path.file("private", pathSegmentPair.second)
-          const name = path.terminus(referringToPath) || "Symlink"
+          const atPath = Path.directory("private", pathSegmentPair.first)
+          const referringToPath = Path.file("private", pathSegmentPair.second)
+          const name = Path.terminus(referringToPath) || "Symlink"
 
-          await fs.write(referringToPath, "")
+          await fs.write(referringToPath, new Uint8Array())
           await fs.symlink({
             at: atPath,
             referringTo: referringToPath,
             name,
-            username: "test"
           })
 
           const at = await fs.get(atPath) as PrivateTree
-          const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+          const symlink = Check.isFile(at) || at === null ? null : at.getLinks()[ name ]
           const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)
-          expect(check.isSoftLink(symlink)).toEqual(true)
+          expect(Check.isSoftLink(symlink)).toEqual(true)
           expect(followed).toBeInstanceOf(PrivateFile)
         })
     )

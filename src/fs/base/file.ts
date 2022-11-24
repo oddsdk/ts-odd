@@ -1,16 +1,15 @@
-/** @internal */
 import type { CID } from "multiformats/cid"
 
 import { File } from "../types.js"
-import { AddResult, FileContent } from "../../ipfs/index.js"
+import { PutResult } from "../../components/depot/implementation.js"
 
 
 export abstract class BaseFile implements File {
 
-  content: FileContent
+  content: Uint8Array
   readOnly: boolean
 
-  constructor(content: FileContent) {
+  constructor(content: Uint8Array) {
     this.content = content
     this.readOnly = false
   }
@@ -20,13 +19,13 @@ export abstract class BaseFile implements File {
     return cid
   }
 
-  async updateContent(content: FileContent): Promise<this> {
+  async updateContent(content: Uint8Array): Promise<this> {
     if (this.readOnly) throw new Error("File is read-only")
     this.content = content
     return this
   }
 
-  abstract putDetailed(): Promise<AddResult>
+  abstract putDetailed(): Promise<PutResult>
 }
 
 

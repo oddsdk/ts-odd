@@ -1,8 +1,10 @@
-import * as did from "../did/local.js"
-import { verifySignedData } from "../did/validation.js"
-import * as crypto from "../crypto/index.js"
-import { base64 } from "../common/index.js"
+import * as Uint8arrays from "uint8arrays"
+
+import * as Crypto from "../components/crypto/implementation.js"
+
 import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from "./types.js"
+import { base64 } from "../common/index.js"
+import { didToPublicKey } from "../did/transformers.js"
 
 
 /**
@@ -29,6 +31,7 @@ import { Potency, Fact, Resource, Ucan, UcanHeader, UcanPayload } from "./types.
 export async function build({
   addSignature = true,
   audience,
+  dependencies,
   facts = [],
   issuer,
   lifetimeInSeconds = 30,
@@ -39,21 +42,23 @@ export async function build({
 }: {
   addSignature?: boolean
   audience: string
+  dependencies: { crypto: Crypto.Implementation }
   facts?: Array<Fact>
-  issuer?: string
+  issuer: string
   lifetimeInSeconds?: number
   expiration?: number
   potency?: Potency
-  proof?: string
+  proof?: string | Ucan
   resource?: Resource
 }): Promise<Ucan> {
   const currentTimeInSeconds = Math.floor(Date.now() / 1000)
-  const decodedProof = proof && decode(proof)
-  const ksAlg = await crypto.keystore.getAlg()
+  const decodedProof = proof
+    ? (typeof proof === "string" ? decode(proof) : proof)
+    : null
 
   // Header
   const header = {
-    alg: jwtAlgorithm(ksAlg) || "UnknownAlgorithm",
+    alg: await dependencies.crypto.keystore.getUcanAlgorithm(),
     typ: "JWT",
     uav: "1.0.0" // actually 0.3.1 but server isn't updated yet
   }
@@ -74,14 +79,14 @@ export async function build({
     aud: audience,
     exp: exp,
     fct: facts,
-    iss: issuer || await did.ucan(),
+    iss: issuer,
     nbf: nbf,
-    prf: proof || null,
+    prf: proof ? (typeof proof === "string" ? proof : encode(proof)) : null,
     ptc: potency,
     rsc: resource ? resource : (decodedProof ? decodedProof.payload.rsc : "*"),
   }
 
-  const signature = addSignature ? await sign(header, payload) : null
+  const signature = addSignature ? await sign(dependencies.crypto, header, payload) : null
 
   return {
     header,
@@ -96,15 +101,15 @@ export async function build({
  *
  * @param ucan The encoded UCAN to decode
  */
-export function decode(ucan: string): Ucan  {
+export function decode(ucan: string): Ucan {
   const split = ucan.split(".")
-  const header = JSON.parse(base64.urlDecode(split[0]))
-  const payload = JSON.parse(base64.urlDecode(split[1]))
+  const header = JSON.parse(base64.urlDecode(split[ 0 ]))
+  const payload = JSON.parse(base64.urlDecode(split[ 1 ]))
 
   return {
     header,
     payload,
-    signature: split[2] || null
+    signature: split[ 2 ] || null
   }
 }
 
@@ -118,8 +123,8 @@ export function encode(ucan: Ucan): string {
   const encodedPayload = encodePayload(ucan.payload)
 
   return encodedHeader + "." +
-         encodedPayload + "." +
-         ucan.signature
+    encodedPayload + "." +
+    ucan.signature
 }
 
 /**
@@ -127,7 +132,7 @@ export function encode(ucan: Ucan): string {
  *
  * @param header The UcanHeader to encode
  */
- export function encodeHeader(header: UcanHeader): string {
+export function encodeHeader(header: UcanHeader): string {
   return base64.urlEncode(JSON.stringify(header))
 }
 
@@ -157,26 +162,34 @@ export function isExpired(ucan: Ucan): boolean {
  * @param ucan The decoded UCAN
  * @param did The DID associated with the signature of the UCAN
  */
- export async function isValid(ucan: Ucan): Promise<boolean> {
-  const encodedHeader = encodeHeader(ucan.header)
-  const encodedPayload = encodePayload(ucan.payload)
+export async function isValid(crypto: Crypto.Implementation, ucan: Ucan): Promise<boolean> {
+  try {
+    const encodedHeader = encodeHeader(ucan.header)
+    const encodedPayload = encodePayload(ucan.payload)
 
-  const a = await verifySignedData({
-    charSize: 8,
-    data: `${encodedHeader}.${encodedPayload}`,
-    did: ucan.payload.iss,
-    signature: base64.makeUrlUnsafe(ucan.signature || "")
-  })
+    const { publicKey, type } = didToPublicKey(crypto, ucan.payload.iss)
+    const algo = crypto.did.keyTypes[ type ]
 
-  if (!a) return a
-  if (!ucan.payload.prf) return true
+    const a = await algo.verify({
+      publicKey,
+      message: Uint8arrays.fromString(`${encodedHeader}.${encodedPayload}`, "utf8"),
+      signature: Uint8arrays.fromString(ucan.signature || "", "base64url")
+    })
 
-  // Verify proofs
-  const prf = decode(ucan.payload.prf)
-  const b = prf.payload.aud === ucan.payload.iss
-  if (!b) return b
+    if (!a) return a
+    if (!ucan.payload.prf) return true
 
-  return await isValid(prf)
+    // Verify proofs
+    const prf = decode(ucan.payload.prf)
+    const b = prf.payload.aud === ucan.payload.iss
+    if (!b) return b
+
+    return await isValid(crypto, prf)
+
+  } catch {
+    return false
+
+  }
 }
 
 /**
@@ -188,8 +201,8 @@ export function isExpired(ucan: Ucan): boolean {
  * @param ucan A UCAN.
  * @returns The root issuer.
  */
-export function rootIssuer(ucan: string, level = 0): string {
-  const p = extractPayload(ucan, level)
+export function rootIssuer(ucan: string | Ucan, level = 0): string {
+  const p = typeof ucan === "string" ? extractPayload(ucan, level) : ucan.payload
   if (p.prf) return rootIssuer(p.prf, level + 1)
   return p.iss
 }
@@ -197,29 +210,24 @@ export function rootIssuer(ucan: string, level = 0): string {
 /**
  * Generate UCAN signature.
  */
-export async function sign(header: UcanHeader, payload: UcanPayload): Promise<string> {
+export async function sign(
+  crypto: Crypto.Implementation,
+  header: UcanHeader,
+  payload: UcanPayload
+): Promise<string> {
   const encodedHeader = encodeHeader(header)
   const encodedPayload = encodePayload(payload)
 
-  return base64.makeUrlSafe(
-    await crypto.keystore.sign(`${encodedHeader}.${encodedPayload}`, 8)
+  return Uint8arrays.toString(
+    await crypto.keystore.sign(
+      Uint8arrays.fromString(`${encodedHeader}.${encodedPayload}`, "utf8")
+    ),
+    "base64url"
   )
 }
 
 
 // ㊙️
-
-
-/**
- * JWT algorithm to be used in a JWT header.
- */
-function jwtAlgorithm(cryptoSystem: string): string | null {
-  switch (cryptoSystem) {
-    case "ed25519": return "EdDSA"
-    case "rsa": return "RS256"
-    default: return null
-  }
-}
 
 
 /**
@@ -229,7 +237,7 @@ function jwtAlgorithm(cryptoSystem: string): string | null {
  */
 function extractPayload(ucan: string, level: number): { iss: string; prf: string | null } {
   try {
-    return JSON.parse(base64.urlDecode(ucan.split(".")[1]))
+    return JSON.parse(base64.urlDecode(ucan.split(".")[ 1 ]))
   } catch (_) {
     throw new Error(`Invalid UCAN (${level} level${level === 1 ? "" : "s"} deep): \`${ucan}\``)
   }

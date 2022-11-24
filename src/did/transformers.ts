@@ -1,37 +1,35 @@
 import * as uint8arrays from "uint8arrays"
-import * as utils from "keystore-idb/utils.js"
+import * as Crypto from "../components/crypto/implementation.js"
 
-import { BASE58_DID_PREFIX, magicBytes, parseMagicBytes } from "./util.js"
-import { KeyType } from "./types.js"
+import { BASE58_DID_PREFIX, hasPrefix } from "./util.js"
 
 
 /**
  * Convert a base64 public key to a DID (did:key).
  */
 export function publicKeyToDid(
-  publicKey: string,
-  type: KeyType
+  crypto: Crypto.Implementation,
+  publicKey: Uint8Array,
+  keyType: string
 ): string {
-  const pubKeyBuf = utils.base64ToArrBuf(publicKey)
-
   // Prefix public-write key
-  const prefix = magicBytes(type)
+  const prefix = crypto.did.keyTypes[ keyType ]?.magicBytes
   if (prefix === null) {
-    throw new Error(`Key type '${type}' not supported`)
+    throw new Error(`Key type '${keyType}' not supported, available types: ${Object.keys(crypto.did.keyTypes).join(", ")}`)
   }
 
-  const prefixedBuf = utils.joinBufs(prefix, pubKeyBuf)
+  const prefixedBuf = uint8arrays.concat([ prefix, publicKey ])
 
   // Encode prefixed
-  return BASE58_DID_PREFIX + uint8arrays.toString(new Uint8Array(prefixedBuf), "base58btc")
+  return BASE58_DID_PREFIX + uint8arrays.toString(prefixedBuf, "base58btc")
 }
 
 /**
  * Convert a DID (did:key) to a base64 public key.
  */
-export function didToPublicKey(did: string): {
-  publicKey: string
-  type: KeyType
+export function didToPublicKey(crypto: Crypto.Implementation, did: string): {
+  publicKey: Uint8Array
+  type: string
 } {
   if (!did.startsWith(BASE58_DID_PREFIX)) {
     throw new Error("Please use a base58-encoded DID formatted `did:key:z...`")
@@ -39,10 +37,16 @@ export function didToPublicKey(did: string): {
 
   const didWithoutPrefix = did.substr(BASE58_DID_PREFIX.length)
   const magicalBuf = uint8arrays.fromString(didWithoutPrefix, "base58btc")
-  const { keyBuffer, type } = parseMagicBytes(magicalBuf)
+  const result = Object.entries(crypto.did.keyTypes).find(
+    ([ _key, attr ]) => hasPrefix(magicalBuf, attr.magicBytes)
+  )
+
+  if (!result) {
+    throw new Error("Unsupported key algorithm.")
+  }
 
   return {
-    publicKey: utils.arrBufToBase64(keyBuffer),
-    type
+    publicKey: magicalBuf.slice(result[ 1 ].magicBytes.length),
+    type: result[ 0 ]
   }
 }

@@ -1,5 +1,5 @@
-import type { Mtime } from "ipfs-unixfs"
 import * as versions from "./versions.js"
+
 
 export type UnixFileMode = number
 
@@ -12,7 +12,7 @@ export enum UnixNodeType {
   HAMTShard = "hamtShard",
 }
 
-export type UnixMeta = { 
+export type UnixMeta = {
   mtime: number
   ctime: number
   mode: UnixFileMode
@@ -45,11 +45,3 @@ export const updateMtime = (metadata: Metadata): Metadata => ({
     mtime: Date.now()
   }
 })
-
-export function mtimeFromMs(ms: number): Mtime {
-  const secs = Math.floor(ms / 1000)
-  return {
-    secs: secs,
-    nsecs: (ms - (secs * 1000)) * 1000
-  }
-}

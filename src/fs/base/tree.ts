@@ -1,11 +1,11 @@
 import type { CID } from "multiformats/cid"
 
-import * as check from "../types/check.js"
-import * as pathing from "../../path.js"
+import * as Check from "../types/check.js"
+import * as Pathing from "../../path/index.js"
 
-import { AddResult, FileContent } from "../../ipfs/index.js"
 import { Maybe } from "../../common/index.js"
-import { Path } from "../../path.js"
+import { Path } from "../../path/index.js"
+import { PutResult } from "../../components/depot/implementation.js"
 import { Tree, File, UnixTree, Links, UpdateCallback } from "../types.js"
 
 
@@ -26,17 +26,17 @@ abstract class BaseTree implements Tree, UnixTree {
     const dir = await this.get(path)
     if (dir === null) {
       throw new Error("Path does not exist")
-    } else if (check.isFile(dir)) {
+    } else if (Check.isFile(dir)) {
       throw new Error("Can not `ls` a file")
     }
     return dir.getLinks()
   }
 
-  async cat(path: Path): Promise<FileContent> {
+  async cat(path: Path): Promise<Uint8Array> {
     const file = await this.get(path)
     if (file === null) {
       throw new Error("Path does not exist")
-    } else if (!check.isFile(file)) {
+    } else if (!Check.isFile(file)) {
       throw new Error("Can not `cat` a directory")
     }
     return file.content
@@ -55,23 +55,23 @@ abstract class BaseTree implements Tree, UnixTree {
 
     const child = await this.getOrCreateDirectChild(head, onUpdate)
 
-    if (check.isFile(child)) {
-      throw new Error(`There is a file along the given path: ${pathing.log(path)}`)
+    if (Check.isFile(child)) {
+      throw new Error(`There is a file along the given path: ${Pathing.log(path)}`)
     }
 
     if (nextPath.length) {
-      await child.mkdirRecurse(nextPath, () => this.updateDirectChild(child, head, onUpdate) )
+      await child.mkdirRecurse(nextPath, () => this.updateDirectChild(child, head, onUpdate))
     }
 
     return this
   }
 
-  async add(path: Path, content: FileContent): Promise<this> {
+  async add(path: Path, content: Uint8Array): Promise<this> {
     await this.addRecurse(path, content, () => this.put())
     return this
   }
 
-  async addRecurse(path: Path, content: FileContent, onUpdate: Maybe<UpdateCallback>): Promise<this> {
+  async addRecurse(path: Path, content: Uint8Array, onUpdate: Maybe<UpdateCallback>): Promise<this> {
     const [ head, ...nextPath ] = path
 
     if (!head) {
@@ -83,8 +83,8 @@ abstract class BaseTree implements Tree, UnixTree {
 
     } else {
       const child = await this.getOrCreateDirectChild(head, onUpdate)
-      if (check.isFile(child)) {
-        throw new Error(`There is a file along the given path: ${pathing.log(path)}`)
+      if (Check.isFile(child)) {
+        throw new Error(`There is a file along the given path: ${Pathing.log(path)}`)
       }
       await child.addRecurse(nextPath, content, async () => {
         await this.updateDirectChild(child, head, onUpdate)
@@ -115,8 +115,8 @@ abstract class BaseTree implements Tree, UnixTree {
       const child = await this.getDirectChild(head)
       if (child === null) {
         throw new Error("Invalid path: does not exist")
-      } else if(check.isFile(child)) {
-        throw new Error(`There is a file along the given path: ${pathing.log(path)}`)
+      } else if (Check.isFile(child)) {
+        throw new Error(`There is a file along the given path: ${Pathing.log(path)}`)
       }
       await child.rmRecurse(nextPath, async () => {
         await this.updateDirectChild(child, head, onUpdate)
@@ -130,11 +130,11 @@ abstract class BaseTree implements Tree, UnixTree {
   async mv(from: Path, to: Path): Promise<this> {
     const node = await this.get(from)
     if (node === null) {
-      throw new Error(`Path does not exist: ${pathing.log(from)}`)
+      throw new Error(`Path does not exist: ${Pathing.log(from)}`)
     }
 
     if (to.length < 1) {
-      throw new Error(`Path does not exist: ${pathing.log(to)}`)
+      throw new Error(`Path does not exist: ${Pathing.log(to)}`)
     }
 
     const parentPath = to.slice(0, -1)
@@ -143,19 +143,19 @@ abstract class BaseTree implements Tree, UnixTree {
     if (!parent) {
       await this.mkdir(parentPath)
       parent = await this.get(parentPath)
-    } else if (check.isFile(parent)) {
-      throw new Error(`Can not \`mv\` to a file: ${pathing.log(parentPath)}`)
+    } else if (Check.isFile(parent)) {
+      throw new Error(`Can not \`mv\` to a file: ${Pathing.log(parentPath)}`)
     }
 
     await this.rm(from)
-    await [...to].reverse().reduce((acc, part, idx) => {
+    await [ ...to ].reverse().reduce((acc, part, idx) => {
       return acc.then(async child => {
         const childParentParts = to.slice(0, -(idx + 1))
         const tree = childParentParts.length
           ? await this.get(childParentParts)
           : this
 
-        if (tree && !check.isFile(tree)) {
+        if (tree && !Check.isFile(tree)) {
           await tree.updateDirectChild(child, part, null)
           return tree
         } else {
@@ -176,7 +176,7 @@ abstract class BaseTree implements Tree, UnixTree {
     return this.get(path)
   }
 
-  write(path: Path, content: FileContent): Promise<this> {
+  write(path: Path, content: Uint8Array): Promise<this> {
     return this.add(path, content)
   }
 
@@ -192,11 +192,11 @@ abstract class BaseTree implements Tree, UnixTree {
   * Then for the outermost parent, `put` should be called manually.
   */
   async updateChild(child: Tree | File, path: Path): Promise<this> {
-    const chain: [string, Tree][] = []
+    const chain: [ string, Tree ][] = []
 
     await path.reduce(async (promise: Promise<Tree>, p, idx) => {
       const parent = await promise
-      chain.push([p, parent])
+      chain.push([ p, parent ])
 
       if (idx + 1 === path.length) {
         return parent
@@ -204,15 +204,15 @@ abstract class BaseTree implements Tree, UnixTree {
 
       const c = await parent.getDirectChild(p)
 
-      if (!check.isTree(c)) {
+      if (!Check.isTree(c)) {
         const pathSoFar = path.slice(idx + 1)
-        throw new Error(`Expected a tree at the given path: ${pathing.log(pathSoFar)}`)
+        throw new Error(`Expected a tree at the given path: ${Pathing.log(pathSoFar)}`)
       }
 
       return c
     }, Promise.resolve(this))
 
-    await chain.reverse().reduce(async (promise, [name, parent]) => {
+    await chain.reverse().reduce(async (promise, [ name, parent ]) => {
       await parent.updateDirectChild(await promise, name, null)
       return parent
     }, Promise.resolve(child))
@@ -221,17 +221,17 @@ abstract class BaseTree implements Tree, UnixTree {
   }
 
   abstract createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
-  abstract createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
+  abstract createOrUpdateChildFile(content: Uint8Array, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
 
-  abstract putDetailed(): Promise<AddResult>
+  abstract putDetailed(): Promise<PutResult>
 
-  abstract updateDirectChild (child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  abstract updateDirectChild(child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
   abstract removeDirectChild(name: string): this
   abstract getDirectChild(name: string): Promise<Tree | File | null>
 
   abstract get(path: Path): Promise<Tree | File | null>
 
-  abstract updateLink(name: string, result: AddResult): this
+  abstract updateLink(name: string, result: PutResult): this
   abstract getLinks(): Links
 }
 

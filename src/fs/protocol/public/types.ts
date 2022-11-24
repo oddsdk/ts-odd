@@ -1,11 +1,11 @@
 import type { CID } from "multiformats/cid"
 
 import { Metadata } from "../../metadata.js"
-import { AddResult } from "../../../ipfs/index.js"
+import { PutResult } from "../../../components/depot/implementation.js"
 import { SoftLink } from "../../types.js"
 
 
-export type PutDetails = AddResult & {
+export type PutDetails = PutResult & {
   userland: CID
   metadata: CID
   isFile: boolean
@@ -20,7 +20,7 @@ export type SkeletonInfo = {
   isFile: boolean
 }
 
-export type Skeleton = { [name: string]: SkeletonInfo | SoftLink }
+export type Skeleton = { [ name: string ]: SkeletonInfo | SoftLink }
 
 export type TreeHeader = {
   metadata: Metadata

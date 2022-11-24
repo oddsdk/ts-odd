@@ -1,32 +1,33 @@
 import { CID } from "multiformats/cid"
 
-import { FileContent } from "../../ipfs/index.js"
-import { Links, NonEmptyPath, SoftLink, Link, UpdateCallback } from "../types.js"
+import * as Common from "../../common/index.js"
+import * as Check from "../types/check.js"
+import * as Depot from "../../components/depot/implementation.js"
+import * as History from "./PublicHistory.js"
+import * as LinkMod from "../link.js"
+import * as Metadata from "../metadata.js"
+import * as Path from "../../path/index.js"
+import * as Protocol from "../protocol/index.js"
+import * as Reference from "../../components/reference/implementation.js"
+import * as Versions from "../versions.js"
+
+import { Link, Links, NonEmptyPath, SoftLink, UpdateCallback } from "../types.js"
 import { Maybe } from "../../common/index.js"
-import { DistinctivePath, Path } from "../../path.js"
+import { DistinctivePath } from "../../path/index.js"
 import { Skeleton, SkeletonInfo, TreeInfo, TreeHeader, PutDetails } from "../protocol/public/types.js"
-import { decodeCID } from "../../common/cid.js"
-import { setup } from "../../setup/internal.js"
+import { decodeCID, encodeCID } from "../../common/cid.js"
+import { nextNonEmpty } from "../protocol/public/skeleton.js"
 
 import BaseTree from "../base/tree.js"
 import BareTree from "../bare/tree.js"
 import PublicFile from "./PublicFile.js"
 import PublicHistory from "./PublicHistory.js"
 
-import * as cidLog from "../../common/cid-log.js"
-import * as common from "../../common/index.js"
-import * as dns from "../../dns/index.js"
-import * as check from "../types/check.js"
-import * as history from "./PublicHistory.js"
-import * as link from "../link.js"
-import * as metadata from "../metadata.js"
-import * as pathing from "../../path.js"
-import * as protocol from "../protocol/index.js"
-import * as skeleton from "../protocol/public/skeleton.js"
-import * as versions from "../versions.js"
-
 
 type ConstructorParams = {
+  depot: Depot.Implementation
+  reference: Reference.Implementation
+
   cid: Maybe<CID>
   links: Links
   header: TreeHeader
@@ -38,45 +39,57 @@ type Child =
 
 export class PublicTree extends BaseTree {
 
-  children: { [name: string]: Child }
+  depot: Depot.Implementation
+  reference: Reference.Implementation
+
+  children: { [ name: string ]: Child }
   cid: Maybe<CID>
   links: Links
   header: TreeHeader
   history: PublicHistory
 
-  constructor({ links, header, cid }: ConstructorParams) {
+  constructor({ depot, reference, links, header, cid }: ConstructorParams) {
     super()
+
+    this.depot = depot
+    this.reference = reference
 
     this.children = {}
     this.cid = cid
     this.links = links
     this.header = header
-    this.history = new PublicHistory(this as unknown as history.Node)
+    this.history = new PublicHistory(this as unknown as History.Node)
   }
 
-  static async empty (): Promise<PublicTree> {
+  static async empty(depot: Depot.Implementation, reference: Reference.Implementation): Promise<PublicTree> {
     return new PublicTree({
+      depot,
+      reference,
+
       links: {},
       header: {
-        metadata: metadata.empty(false, versions.latest),
+        metadata: Metadata.empty(false, Versions.latest),
         skeleton: {},
       },
       cid: null
     })
   }
 
-  static async fromCID (cid: CID): Promise<PublicTree> {
-    const info = await protocol.pub.get(cid)
-    if(!check.isTreeInfo(info)) {
+  static async fromCID(depot: Depot.Implementation, reference: Reference.Implementation, cid: CID): Promise<PublicTree> {
+    const info = await Protocol.pub.get(depot, cid)
+    if (!Check.isTreeInfo(info)) {
       throw new Error(`Could not parse a valid public tree at: ${cid}`)
     }
-    return PublicTree.fromInfo(info, cid)
+    return PublicTree.fromInfo(depot, reference, info, cid)
   }
 
-  static async fromInfo(info: TreeInfo, cid: CID): Promise<PublicTree> {
+  static async fromInfo(depot: Depot.Implementation, reference: Reference.Implementation, info: TreeInfo, cid: CID): Promise<PublicTree> {
     const { userland, metadata, previous, skeleton } = info
-    const links = await protocol.basic.getFileSystemLinks(decodeCID(userland))
+    const links = await Protocol.basic.getFileSystemLinks(depot, decodeCID(userland))
     return new PublicTree({
+      depot,
+      reference,
+
       links,
       header: { metadata, previous, skeleton },
       cid
@@ -84,16 +97,16 @@ export class PublicTree extends BaseTree {
   }
 
   static instanceOf(obj: unknown): obj is PublicTree {
-    return common.hasProp(obj, "links")
-      && common.hasProp(obj, "header")
-      && check.isLinks(obj.links)
-      && check.isTreeHeader(obj.header)
+    return Common.hasProp(obj, "links")
+      && Common.hasProp(obj, "header")
+      && Check.isLinks(obj.links)
+      && Check.isTreeHeader(obj.header)
   }
 
   async createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicTree> {
-    const child = await PublicTree.empty()
+    const child = await PublicTree.empty(this.depot, this.reference)
 
-    const existing = this.children[name]
+    const existing = this.children[ name ]
     if (existing) {
       if (PublicFile.instanceOf(existing)) {
         throw new Error(`There is a file at the given path: ${name}`)
@@ -108,14 +121,14 @@ export class PublicTree extends BaseTree {
     return child
   }
 
-  async createOrUpdateChildFile(content: FileContent, name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicFile> {
+  async createOrUpdateChildFile(content: Uint8Array, name: string, onUpdate: Maybe<UpdateCallback>): Promise<PublicFile> {
     const existing = await this.getDirectChild(name)
     let file: PublicFile
-    if(existing === null){
-      file = await PublicFile.create(content)
+    if (existing === null) {
+      file = await PublicFile.create(this.depot, content)
     } else if (PublicFile.instanceOf(existing)) {
       file = await existing.updateContent(content)
-    }else {
+    } else {
       throw new Error(`There is already a directory with that name: ${name}`)
     }
     await this.updateDirectChild(file, name, onUpdate)
@@ -123,7 +136,8 @@ export class PublicTree extends BaseTree {
   }
 
   async putDetailed(): Promise<PutDetails> {
-    const details = await protocol.pub.putTree(
+    const details = await Protocol.pub.putTree(
+      this.depot,
       this.links,
       this.header.skeleton,
       this.header.metadata,
@@ -136,7 +150,7 @@ export class PublicTree extends BaseTree {
 
   async updateDirectChild(child: PublicTree | PublicFile, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this> {
     if (this.readOnly) throw new Error("Tree is read-only")
-    this.children[name] = child
+    this.children[ name ] = child
     const details = await child.putDetailed()
     this.updateLink(name, details)
     onUpdate && await onUpdate()
@@ -144,10 +158,10 @@ export class PublicTree extends BaseTree {
   }
 
   removeDirectChild(name: string): this {
-    delete this.links[name]
-    delete this.header.skeleton[name]
-    if(this.children[name]) {
-      delete this.children[name]
+    delete this.links[ name ]
+    delete this.header.skeleton[ name ]
+    if (this.children[ name ]) {
+      delete this.children[ name ]
     }
     return this
   }
@@ -155,47 +169,47 @@ export class PublicTree extends BaseTree {
   async getDirectChild(name: string): Promise<Child | null> {
     let child = null
 
-    if (this.children[name]) {
-      return this.children[name]
+    if (this.children[ name ]) {
+      return this.children[ name ]
     }
 
-    const childInfo = this.header.skeleton[name] || null
+    const childInfo = this.header.skeleton[ name ] || null
     if (childInfo === null) return null
 
     // Hard link
-    if (check.isSkeletonInfo(childInfo)) {
+    if (Check.isSkeletonInfo(childInfo)) {
       const cid = decodeCID(childInfo.cid)
       child = childInfo.isFile
-        ? await PublicFile.fromCID(cid)
-        : await PublicTree.fromCID(cid)
+        ? await PublicFile.fromCID(this.depot, cid)
+        : await PublicTree.fromCID(this.depot, this.reference, cid)
 
-    // Soft link
-    } else if (check.isSoftLink(childInfo)) {
-      return PublicTree.resolveSoftLink(childInfo)
+      // Soft link
+    } else if (Check.isSoftLink(childInfo)) {
+      return PublicTree.resolveSoftLink(this.depot, this.reference, childInfo)
 
     }
 
     // Check that the child wasn't added while retrieving the content from the network
-    if (this.children[name]) {
-      return this.children[name]
+    if (this.children[ name ]) {
+      return this.children[ name ]
     }
 
-    if (child) this.children[name] = child
+    if (child) this.children[ name ] = child
     return child
   }
 
-  async get(path: Path): Promise<Child | null> {
+  async get(path: Path.Path): Promise<Child | null> {
     if (path.length < 1) return this
 
     const res = await this.getRecurse(this.header.skeleton, path as NonEmptyPath)
 
     // Hard link
-    if (check.isSkeletonInfo(res)) {
+    if (Check.isSkeletonInfo(res)) {
       const cid = decodeCID(res.cid)
-      const info = await protocol.pub.get(cid)
-      return check.isFileInfo(info)
-        ? PublicFile.fromInfo(info, cid)
-        : PublicTree.fromInfo(info, cid)
+      const info = await Protocol.pub.get(this.depot, cid)
+      return Check.isFileInfo(info)
+        ? PublicFile.fromInfo(this.depot, info, cid)
+        : PublicTree.fromInfo(this.depot, this.reference, info, cid)
     }
 
     // Child
@@ -203,12 +217,12 @@ export class PublicTree extends BaseTree {
   }
 
   async getRecurse(skel: Skeleton, path: NonEmptyPath): Promise<SkeletonInfo | Child | null> {
-    const head = path[0]
-    const child = skel[head] || null
-    const nextPath = skeleton.nextNonEmpty(path)
+    const head = path[ 0 ]
+    const child = skel[ head ] || null
+    const nextPath = nextNonEmpty(path)
 
-    if (check.isSoftLink(child)) {
-      const resolved = await PublicTree.resolveSoftLink(child)
+    if (Check.isSoftLink(child)) {
+      const resolved = await PublicTree.resolveSoftLink(this.depot, this.reference, child)
       if (nextPath) {
         if (PublicTree.instanceOf(resolved)) {
           return resolved.get(nextPath).then(makeReadOnly)
@@ -235,30 +249,32 @@ export class PublicTree extends BaseTree {
     link: Link
     skeleton: SkeletonInfo | SoftLink
   }): void {
-    this.links[name] = link
-    this.header.skeleton[name] = skeleton
+    this.links[ name ] = link
+    this.header.skeleton[ name ] = skeleton
     this.header.metadata.unixMeta.mtime = Date.now()
   }
 
-  static async resolveSoftLink(link: SoftLink): Promise<Child | null> {
-    const [domain, ...pieces] = link.ipns.split("/")
-    const path = pathing.fromPosix(pieces.join("/"))
+  static async resolveSoftLink(
+    depot: Depot.Implementation,
+    reference: Reference.Implementation,
+    link: SoftLink
+  ): Promise<Child | null> {
+    const [ domain, ...pieces ] = link.ipns.split("/")
+    const path = Path.fromPosix(pieces.join("/"))
     const isPublic =
-      pathing.isBranch(pathing.Branch.Public, path) ||
-      pathing.isBranch(pathing.Branch.Pretty, path)
+      Path.isBranch(Path.Branch.Public, path) ||
+      Path.isBranch(Path.Branch.Pretty, path)
 
     if (!isPublic) throw new Error("Mixing public and private soft links is not supported yet.")
 
-    const rootCid = domain === await common.authenticatedUserDomain({ withFiles: true })
-      ? await cidLog.newest()
-      : await dns.lookupDnsLink(domain)
+    const rootCid = await reference.dns.lookupDnsLink(domain)
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
-    const publicCid = (await protocol.basic.getSimpleLinks(decodeCID(rootCid))).public.cid
-    const publicPath = pathing.removeBranch(path)
-    const publicTree = await PublicTree.fromCID(decodeCID(publicCid))
+    const publicCid = (await Protocol.basic.getSimpleLinks(depot, decodeCID(rootCid))).public.cid
+    const publicPath = Path.removeBranch(path)
+    const publicTree = await PublicTree.fromCID(depot, reference, decodeCID(publicCid))
 
-    const item = await publicTree.get(pathing.unwrap(publicPath))
+    const item = await publicTree.get(Path.unwrap(publicPath))
     if (item) item.readOnly = true
     return item
   }
@@ -266,11 +282,11 @@ export class PublicTree extends BaseTree {
   getLinks(): Links {
     // add missing metadata into links
     return Object.values(this.links).reduce((acc, cur) => {
-      const s = this.header.skeleton[cur.name]
+      const s = this.header.skeleton[ cur.name ]
 
       return {
         ...acc,
-        [cur.name]: s && (s as SkeletonInfo).isFile !== undefined
+        [ cur.name ]: s && (s as SkeletonInfo).isFile !== undefined
           ? { ...cur, isFile: (s as SkeletonInfo).isFile }
           : { ...cur },
       }
@@ -281,9 +297,9 @@ export class PublicTree extends BaseTree {
     const { cid, metadata, userland, size, isFile, skeleton } = result
     this.assignLink({
       name,
-      link: link.make(name, cid, false, size),
+      link: LinkMod.make(name, cid, false, size),
       skeleton: {
-        cid,
+        cid: encodeCID(cid),
         metadata,
         userland,
         subSkeleton: skeleton,
@@ -295,7 +311,7 @@ export class PublicTree extends BaseTree {
 
   insertSoftLink({ name, path, username }: { name: string; path: DistinctivePath; username: string }): this {
     const softLink = {
-      ipns: `${username}.files.${setup.endpoints.user}/public/${pathing.toPosix(path)}`,
+      ipns: this.reference.dataRoot.domain(username) + `/public/${Path.toPosix(path)}`,
       name
     }
     this.assignLink({

@@ -1,22 +1,23 @@
-import expect from "expect"
 import * as fc from "fast-check"
+import expect from "expect"
 
-import "../../src/setup/node.js"
-import * as check from "../../src/fs/types/check.js"
-import * as path from "../../src/path.js"
-import * as setup from "../../src/setup.js"
-import * as versions from "../../src/fs/versions.js"
+import * as Check from "../../src/fs/types/check.js"
+import * as Path from "../../src/path/index.js"
+import * as Versions from "../../src/fs/versions.js"
 
 import PublicFile from "../../src/fs/v1/PublicFile.js"
 import PublicTree from "../../src/fs/v1/PublicTree.js"
 
-import { pathSegment, pathSegmentPair } from "../helpers/paths.js"
 import { emptyFilesystem } from "../helpers/filesystem.js"
-import { publicFileContent as fileContent, publicDecode as decode } from "../helpers/fileContent.js"
+import { pathSegment, pathSegmentPair } from "../helpers/paths.js"
+import { fileContent } from "../helpers/fileContent.js"
 
 
+const wasmVersion = Versions.toString(Versions.wnfsWasm)
 const wnfsWasmEnabled = process.env.WNFS_WASM != null
 const itSkipInWasm = wnfsWasmEnabled ? it.skip : it
+
+let fsVersion = Versions.toString(Versions.v1)
 
 describe("the public filesystem api", function () {
 
@@ -24,7 +25,7 @@ describe("the public filesystem api", function () {
     fc.configureGlobal(process.env.TEST_ENV === "gh-action" ? { numRuns: 25 } : { numRuns: 10 })
 
     if (wnfsWasmEnabled) {
-      setup.fsVersion({ version: versions.toString(versions.wnfsWasm) })
+      fsVersion = wasmVersion
     }
   })
 
@@ -34,13 +35,13 @@ describe("the public filesystem api", function () {
 
 
   it("writes files", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("public", pathSegment)
+          const filepath = Path.file("public", pathSegment)
 
           await fs.write(filepath, fileContent.val)
           await fs.historyStep()
@@ -51,13 +52,13 @@ describe("the public filesystem api", function () {
   })
 
   it("removes files it writes", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("public", pathSegment)
+          const filepath = Path.file("public", pathSegment)
 
           await fs.write(filepath, fileContent.val)
           await fs.historyStep()
@@ -70,13 +71,13 @@ describe("the public filesystem api", function () {
   })
 
   it("reads files it writes", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("public", pathSegment)
+          const filepath = Path.file("public", pathSegment)
 
           await fs.write(filepath, fileContent.val)
           await fs.historyStep()
@@ -85,22 +86,20 @@ describe("the public filesystem api", function () {
             expect(file).not.toBe(null)
             return
           }
-          const decodedContent = decode(file, fileContent.type)
-
-          expect(decodedContent).toEqual(fileContent.val)
+          expect(file).toEqual(fileContent.val)
         })
     )
   })
 
   it("moves files", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {
-          const fromPath = path.file("public", pathSegmentPair.first)
-          const toPath = path.file("public", pathSegmentPair.second)
+          const fromPath = Path.file("public", pathSegmentPair.first)
+          const toPath = Path.file("public", pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
           await fs.historyStep()
@@ -115,14 +114,14 @@ describe("the public filesystem api", function () {
   })
 
   it("reads moved files", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {
-          const fromPath = path.file("public", pathSegmentPair.first)
-          const toPath = path.file("public", pathSegmentPair.second)
+          const fromPath = Path.file("public", pathSegmentPair.first)
+          const toPath = Path.file("public", pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
           await fs.historyStep()
@@ -134,20 +133,19 @@ describe("the public filesystem api", function () {
             expect(file).not.toBe(null)
             return
           }
-          const decodedContent = decode(file, fileContent.type)
 
-          expect(decodedContent).toEqual(fileContent.val)
+          expect(file).toEqual(fileContent.val)
         })
     )
   })
 
   it("makes directories", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         pathSegment(), async pathSegment => {
-          const dirpath = path.directory("public", pathSegment)
+          const dirpath = Path.directory("public", pathSegment)
 
           await fs.mkdir(dirpath)
           await fs.historyStep()
@@ -159,12 +157,12 @@ describe("the public filesystem api", function () {
   })
 
   it("removes directories it makes", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         pathSegment(), async pathSegment => {
-          const dirpath = path.directory("public", pathSegment)
+          const dirpath = Path.directory("public", pathSegment)
 
           await fs.mkdir(dirpath)
           await fs.historyStep()
@@ -177,13 +175,13 @@ describe("the public filesystem api", function () {
   })
 
   it("writes files to a directory", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("public", pathSegment)
+          const filepath = Path.file("public", pathSegment)
 
           await fs.write(filepath, fileContent.val)
           await fs.historyStep()
@@ -194,15 +192,15 @@ describe("the public filesystem api", function () {
   })
 
   it("lists files written to a directory", async () => {
-    const fs = await emptyFilesystem()
-    const dirpath = path.directory("public", "testDir")
+    const fs = await emptyFilesystem(fsVersion)
+    const dirpath = Path.directory("public", "testDir")
     await fs.mkdir(dirpath)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegment: pathSegment(), fileContent: fileContent() }),
         async ({ pathSegment, fileContent }) => {
-          const filepath = path.file("public", "testDir", pathSegment)
+          const filepath = Path.file("public", "testDir", pathSegment)
 
           await fs.write(filepath, fileContent.val)
           await fs.historyStep()
@@ -214,16 +212,16 @@ describe("the public filesystem api", function () {
   })
 
   it("moves files into a directory", async () => {
-    const fs = await emptyFilesystem()
-    const dirpath = path.directory("public", "testDir")
+    const fs = await emptyFilesystem(fsVersion)
+    const dirpath = Path.directory("public", "testDir")
     await fs.mkdir(dirpath)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair, fileContent }) => {
-          const fromPath = path.file("public", pathSegmentPair.first)
-          const toPath = path.file("public", pathSegmentPair.second)
+          const fromPath = Path.file("public", pathSegmentPair.first)
+          const toPath = Path.file("public", pathSegmentPair.second)
 
           await fs.write(fromPath, fileContent.val)
           await fs.historyStep()
@@ -238,60 +236,58 @@ describe("the public filesystem api", function () {
   })
 
   itSkipInWasm("makes soft links to directories", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair }) => {
-          const atPath = path.directory("public", pathSegmentPair.first)
-          const referringToPath = path.directory("public", pathSegmentPair.second)
-          const name = path.terminus(referringToPath) || "Symlink"
+          const atPath = Path.directory("public", pathSegmentPair.first)
+          const referringToPath = Path.directory("public", pathSegmentPair.second)
+          const name = Path.terminus(referringToPath) || "Symlink"
 
           await fs.mkdir(referringToPath)
           await fs.symlink({
             at: atPath,
             referringTo: referringToPath,
-            name,
-            username: "test"
+            name
           })
 
           const at = await fs.get(atPath) as PublicTree
-          const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+          const symlink = Check.isFile(at) || at === null ? null : at.getLinks()[ name ]
           const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)
-          expect(check.isSoftLink(symlink)).toEqual(true)
+          expect(Check.isSoftLink(symlink)).toEqual(true)
           expect(followed).toBeInstanceOf(PublicTree)
         })
     )
   })
 
   itSkipInWasm("makes soft links to files", async () => {
-    const fs = await emptyFilesystem()
+    const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
       fc.asyncProperty(
         fc.record({ pathSegmentPair: pathSegmentPair(), fileContent: fileContent() }),
         async ({ pathSegmentPair }) => {
-          const atPath = path.directory("public", pathSegmentPair.first)
-          const referringToPath = path.file("public", pathSegmentPair.second)
-          const name = path.terminus(referringToPath) || "Symlink"
+          const atPath = Path.directory("public", pathSegmentPair.first)
+          const referringToPath = Path.file("public", pathSegmentPair.second)
+          const name = Path.terminus(referringToPath) || "Symlink"
 
-          await fs.write(referringToPath, "")
+          await fs.write(referringToPath, new Uint8Array())
           await fs.symlink({
             at: atPath,
             referringTo: referringToPath,
-            name,
-            username: "test"
+            name
           })
 
           const at = await fs.get(atPath) as PublicTree
-          const symlink = check.isFile(at) || at === null ? null : at.getLinks()[name]
+          const symlink = Check.isFile(at) || at === null ? null : at.getLinks()[ name ]
           const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)
-          expect(check.isSoftLink(symlink)).toEqual(true)
+          expect(Check.isSoftLink(symlink)).toEqual(true)
           expect(followed).toBeInstanceOf(PublicFile)
         })
     )
