@@ -1,12 +1,18 @@
 {
   "name": "webnative",
   "version": "0.35.0",
-  "description": "Fission Webnative SDK",
+  "description": "Webnative SDK",
   "keywords": [
     "WebCrypto",
     "auth",
+    "files",
+    "distributed",
+    "DAG",
+    "DID",
     "IPFS",
-    "files"
+    "IPLD",
+    "UCAN",
+    "WNFS"
   ],
   "type": "module",
   "main": "lib/index.js",
@@ -30,22 +36,21 @@
   "files": [
     "lib",
     "dist",
+    "docs",
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
     "package.json",
-    "!*.test.ts",
-    "docs"
+    "!*.test.ts"
   ],
-  "author": "Daniel Holmgren <daniel@fission.codes>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fission-suite/webnative"
+    "url": "https://github.com/fission-codes/webnative"
   },
-  "homepage": "https://guide.fission.codes",
+  "homepage": "https://webnative.dev",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=15"
+    "node": ">=18"
   },
   "scripts": {
     "docs": "rimraf docs && typedoc",
