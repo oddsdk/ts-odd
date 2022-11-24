@@ -24,7 +24,7 @@ import { decodeCID } from "../common/index.js"
 // FILESYSTEM IMPORTS
 
 import { DEFAULT_AES_ALG } from "./protocol/basic.js"
-import { Links, PuttableUnixTree, UnixTree } from "./types.js"
+import { API, AssociatedIdentity, Links, PuttableUnixTree, UnixTree } from "./types.js"
 import { NoPermissionError } from "./errors.js"
 import { PublishHook, Tree, File, SharedBy, ShareDetails, SoftLink } from "./types.js"
 import BareTree from "./bare/tree.js"
@@ -49,11 +49,6 @@ export interface AppPath {
   (path: FilePath): FilePath
 }
 
-export type Account = {
-  rootDID: string
-  username?: string
-}
-
 export type Dependents = {
   crypto: Crypto.Implementation
   depot: Depot.Implementation
@@ -63,7 +58,7 @@ export type Dependents = {
 }
 
 export type FileSystemOptions = {
-  account: Account
+  account: AssociatedIdentity
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
@@ -79,7 +74,7 @@ export type NewFileSystemOptions = FileSystemOptions & {
 }
 
 type ConstructorParams = {
-  account: Account
+  account: AssociatedIdentity
   dependents: Dependents
   localOnly?: boolean
   permissions?: Permissions
@@ -91,9 +86,9 @@ type ConstructorParams = {
 // CLASS
 
 
-export class FileSystem {
+export class FileSystem implements API {
 
-  account: Account
+  account: AssociatedIdentity
   dependents: Dependents
 
   root: RootTree
@@ -430,6 +425,20 @@ export class FileSystem {
     return this
   }
 
+  /**
+   * Resolve a symlink directly.
+   * The `get` and `cat` methods will automatically resolve symlinks,
+   * but sometimes when working with symlinks directly
+   * you might want to use this method instead.
+   */
+  resolveSymlink(link: SoftLink): Promise<File | Tree | null> {
+    if (TypeChecks.hasProp(link, "privateName")) {
+      return PrivateTree.resolveSoftLink(this.dependents.crypto, this.dependents.depot, this.dependents.manners, this.dependents.reference, link)
+    } else {
+      return PublicTree.resolveSoftLink(this.dependents.depot, this.dependents.reference, link)
+    }
+  }
+
   async rm(path: DistinctivePath): Promise<this> {
     await this.runMutationOnNode(path, {
       public: async (root, relPath) => {
@@ -590,7 +599,7 @@ export class FileSystem {
    * Returns a "entry index", in other words,
    * a private tree with symlinks (soft links) to the shared items.
    */
-  async loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<PrivateTree> {
+  async loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<UnixTree> {
     const ourExchangeDid = await DID.exchange(this.dependents.crypto)
     const theirRootDid = await this.dependents.reference.didRoot.lookup(sharedBy)
 
@@ -635,7 +644,6 @@ export class FileSystem {
     if (!mmptCid) throw new Error("This user's filesystem doesn't have a private branch")
     const theirMmpt = await MMPT.fromCID(
       this.dependents.depot,
-      this.dependents.manners,
       decodeCID(rootLinks[ Branch.Private ]?.cid)
     )
 
@@ -706,8 +714,8 @@ export class FileSystem {
   }
 
 
-  // COMMON
-  // ------
+  // EXCHANGE
+  // --------
 
   /**
    * Stores the public part of the exchange key in the DID format,
@@ -731,20 +739,6 @@ export class FileSystem {
     return this.exists(
       Path.combine(Sharing.EXCHANGE_PATH, Path.directory(publicDid))
     )
-  }
-
-  /**
-   * Resolve a symlink directly.
-   * The `get` and `cat` methods will automatically resolve symlinks,
-   * but sometimes when working with symlinks directly
-   * you might want to use this method instead.
-   */
-  resolveSymlink(link: SoftLink): Promise<File | Tree | null> {
-    if (TypeChecks.hasProp(link, "privateName")) {
-      return PrivateTree.resolveSoftLink(this.dependents.crypto, this.dependents.depot, this.dependents.manners, this.dependents.reference, link)
-    } else {
-      return PublicTree.resolveSoftLink(this.dependents.depot, this.dependents.reference, link)
-    }
   }
 
 

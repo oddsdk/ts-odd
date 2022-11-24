@@ -45,7 +45,7 @@ async function generateExampleEntries(amount: number): Promise<{ name: string; c
 describe("the mmpt", function () {
 
   it("can handle concurrent adds", async function () {
-    const mmpt = MMPT.create(depot, manners)
+    const mmpt = MMPT.create(depot)
 
     // Generate lots of entries
     const amount = 500
@@ -64,7 +64,7 @@ describe("the mmpt", function () {
 
   // This test used to generate even more data races
   it("can handle concurrent adds in batches", async function () {
-    const mmpt = MMPT.create(depot, manners)
+    const mmpt = MMPT.create(depot)
 
     // Generate lots of entries
     const amount = 500
@@ -89,7 +89,7 @@ describe("the mmpt", function () {
 
     expect(missing.length).toStrictEqual(0)
 
-    const reconstructedMMPT = await MMPT.fromCID(depot, manners, await mmpt.put())
+    const reconstructedMMPT = await MMPT.fromCID(depot, await mmpt.put())
 
     const reMembers = await reconstructedMMPT.members()
     missing = soFar.filter(({ name }) => !reMembers.some(mem => mem.name === name))
@@ -101,13 +101,13 @@ describe("the mmpt", function () {
   // half-in-memory half-in-ipfs state where not all branches are fetched
   // that's worth testing for sure
   it("can handle concurrent adds when reconstructed from CID", async function () {
-    const firstMMPT = MMPT.create(depot, manners)
+    const firstMMPT = MMPT.create(depot)
     for (const entry of await generateExampleEntries(500)) {
       await firstMMPT.add(entry.name, entry.cid)
     }
 
     // Reconstruct an MMPT from a CID. This causes it to only fetch branches from ipfs on-demand
-    const reconstructedMMPT = await MMPT.fromCID(depot, manners, await firstMMPT.put())
+    const reconstructedMMPT = await MMPT.fromCID(depot, await firstMMPT.put())
 
     // Test asynchronous adds
     const entries = await generateExampleEntries(500)

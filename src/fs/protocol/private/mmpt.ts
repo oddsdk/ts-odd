@@ -3,7 +3,6 @@ import type { CID } from "multiformats/cid"
 import * as Basic from "../basic.js"
 import * as Depot from "../../../components/depot/implementation.js"
 import * as Link from "../../link.js"
-import * as Manners from "../../../components/manners/implementation.js"
 
 import { Puttable, SimpleLinks } from "../../types.js"
 import { decodeCID } from "../../../common/index.js"
@@ -28,25 +27,23 @@ type Member = {
 export default class MMPT implements Puttable {
 
   depot: Depot.Implementation
-  manners: Manners.Implementation
 
   links: SimpleLinks
   children: { [ name: string ]: MMPT }
 
-  constructor(depot: Depot.Implementation, manners: Manners.Implementation, links: SimpleLinks) {
+  constructor(depot: Depot.Implementation, links: SimpleLinks) {
     this.links = links
     this.children = {}
     this.depot = depot
-    this.manners = manners
   }
 
-  static create(depot: Depot.Implementation, manners: Manners.Implementation): MMPT {
-    return new MMPT(depot, manners, {})
+  static create(depot: Depot.Implementation): MMPT {
+    return new MMPT(depot, {})
   }
 
-  static async fromCID(depot: Depot.Implementation, manners: Manners.Implementation, cid: CID): Promise<MMPT> {
+  static async fromCID(depot: Depot.Implementation, cid: CID): Promise<MMPT> {
     const links = await Basic.getSimpleLinks(depot, cid)
-    return new MMPT(depot, manners, links)
+    return new MMPT(depot, links)
   }
 
   async putDetailed(): Promise<Depot.PutResult> {
@@ -114,7 +111,7 @@ export default class MMPT implements Puttable {
   }
 
   addEmptyChild(name: string): MMPT {
-    const tree = MMPT.create(this.depot, this.manners)
+    const tree = MMPT.create(this.depot)
     this.children[ name ] = tree
     return tree
   }
@@ -139,7 +136,7 @@ export default class MMPT implements Puttable {
         if (name.length > 1) {
           return [ { name, cid: decodeCID(cid) } ]
         }
-        const child = await MMPT.fromCID(this.depot, this.manners, decodeCID(cid))
+        const child = await MMPT.fromCID(this.depot, decodeCID(cid))
         const childMembers = await child.members()
         return childMembers.map(mem => ({
           ...mem,
@@ -157,7 +154,6 @@ export default class MMPT implements Puttable {
 
     const child = await MMPT.fromCID(
       this.depot,
-      this.manners,
       decodeCID(this.links[ name ].cid)
     )
 
