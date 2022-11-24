@@ -7,7 +7,7 @@ describe("hex", () => {
 
   it("round trips to bytes and back out", () => {
     fc.assert(
-      fc.property(fc.array(fc.integer()), data => {
+      fc.property(fc.array(fc.integer({ min: 16, max: 255 })), data => {
         const hexData: string[] = []
         const buffers: Uint8Array[] = []
         const returnData: string[] = []
