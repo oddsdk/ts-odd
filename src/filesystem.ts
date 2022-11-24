@@ -23,7 +23,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> {
-  const { manners, reference } = dependents
+  const { crypto, depot, manners, reference, storage } = dependents
 
   let cid: Maybe<CID>
   let fs
@@ -76,21 +76,21 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
 
   // If a file system exists, load it and return it
   const p = config.permissions
-  const dataFlowComponents = { depot: dependents.depot, reference: dependents.reference }
+  const dataComponents = { crypto, depot, reference, storage }
 
   if (cid) {
     await checkFileSystemVersion(dependents.depot, config, cid)
-    await manners.fileSystem.hooks.beforeLoadExisting(cid, account, dataFlowComponents)
+    await manners.fileSystem.hooks.beforeLoadExisting(cid, account, dataComponents)
 
     fs = await FileSystem.fromCID(cid, { account, dependents, permissions: p })
 
-    await manners.fileSystem.hooks.afterLoadExisting(fs, account, dataFlowComponents)
+    await manners.fileSystem.hooks.afterLoadExisting(fs, account, dataComponents)
 
     return fs
   }
 
   // Otherwise make a new one
-  await manners.fileSystem.hooks.beforeLoadNew(account, dataFlowComponents)
+  await manners.fileSystem.hooks.beforeLoadNew(account, dataComponents)
 
   fs = await FileSystem.empty({
     account,
@@ -100,7 +100,7 @@ export async function loadFileSystem({ config, dependents, rootKey, username }: 
     version: config.fileSystem?.version
   })
 
-  await manners.fileSystem.hooks.afterLoadNew(fs, account, dataFlowComponents)
+  await manners.fileSystem.hooks.afterLoadNew(fs, account, dataComponents)
 
   // Fin
   return fs
