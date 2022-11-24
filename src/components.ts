@@ -19,3 +19,10 @@ export type Components = {
   reference: Reference.Implementation
   storage: Storage.Implementation
 }
+
+
+
+// CONVENIENCE EXPORTS
+
+
+export { Auth, Capabilities, Crypto, Depot, Manners, Reference, Storage }
