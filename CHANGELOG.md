@@ -26,7 +26,7 @@ The documentation should give you some information on how the various components
 
 - Removal of various confusing filesystem parameters, all data and read keys are `Uint8Array`s now.
 - Removal of the `webnative.initialise`, `app` and `permissionedApp` functions. These have been replaced by the `program` function mentioned above.
-- Removal of the `fs.appPath` function, replaced with the `appDataPath` function (not an instance method on the file system, but a regular function exported from webnative).
+- Removal of the `fs.appPath` function, replaced with the `appData` function located in the path module.
 
 ### v0.34.2
 
