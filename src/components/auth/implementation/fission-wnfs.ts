@@ -20,10 +20,10 @@ export function implementation(
   return {
     type: wnfs.type,
 
-    activate: wnfs.activate,
     canDelegateAccount: wnfs.canDelegateAccount,
     delegateAccount: wnfs.delegateAccount,
     linkDevice: wnfs.linkDevice,
+    session: wnfs.session,
 
     createChannel: fissionBase.createChannel,
     isUsernameValid: fissionBase.isUsernameValid,

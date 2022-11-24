@@ -8,8 +8,8 @@ import { Session } from "../../session.js"
 export type Implementation<C> = {
   type: string
 
-  // Function that produces a `Session`
-  activate: (components: C, authenticatedUsername: Maybe<string>, config: Configuration) => Promise<Maybe<Session>>
+  // `Session` producer
+  session: (components: C, authenticatedUsername: Maybe<string>, config: Configuration) => Promise<Maybe<Session>>
 
   // Account creation
   isUsernameAvailable: (username: string) => Promise<boolean>

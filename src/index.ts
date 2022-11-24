@@ -363,7 +363,7 @@ export async function assemble(config: Configuration, components: Components): P
         const newSessionInfo = await SessionMod.restore(components.storage)
         if (!newSessionInfo) return null
 
-        return this.implementation.activate(
+        return this.implementation.session(
           components,
           newSessionInfo.username,
           config

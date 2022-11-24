@@ -18,71 +18,6 @@ import { Session } from "../../../session.js"
 import { loadRootFileSystem } from "../../../filesystem.js"
 
 
-export async function activate(
-  components: Components,
-  authedUsername: Maybe<string>,
-  config: Configuration
-): Promise<Maybe<Session>> {
-  if (authedUsername) {
-    // Self-authorize a filesystem UCAN if needed
-    const hasSelfAuthorisedFsUcan = components.reference.repositories.ucans.find(
-      ucan => {
-        // 🛑 If the UCAN expires within a week
-        if (ucan.payload.exp < (Date.now() + 60 * 60 * 24 * 7)) return false
-
-        // Check potency and resource
-        return ucan.payload.ptc === "APPEND" && ucan.payload.rsc === "*"
-      }
-    )
-
-    if (!hasSelfAuthorisedFsUcan) {
-      const issuer = await DID.write(components.crypto)
-      const proof: string | null = await components.storage.getItem(
-        components.storage.KEYS.ACCOUNT_UCAN
-      )
-
-      const fsUcan = await Ucan.build({
-        dependencies: components,
-        potency: "APPEND",
-        resource: "*",
-        proof: proof ? proof : undefined,
-        lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
-
-        audience: issuer,
-        issuer
-      })
-
-      await components.reference.repositories.ucans.add(fsUcan)
-    }
-
-    // Load filesystem
-    const fs = config.fileSystem?.loadImmediately === false ?
-      undefined :
-      await loadRootFileSystem({
-        config,
-        dependencies: {
-          crypto: components.crypto,
-          depot: components.depot,
-          manners: components.manners,
-          reference: components.reference,
-          storage: components.storage,
-        },
-        username: authedUsername,
-      })
-
-    // Fin
-    return new Session({
-      crypto: components.crypto,
-      fs: fs,
-      storage: components.storage,
-      type: Base.TYPE,
-      username: authedUsername
-    })
-  }
-
-  return null
-}
-
 export async function canDelegateAccount(
   dependencies: Dependencies,
   username: string
@@ -149,6 +84,71 @@ export async function linkDevice(
   await SessionMod.provide(dependencies.storage, { type: Base.TYPE, username })
 }
 
+export async function session(
+  components: Components,
+  authedUsername: Maybe<string>,
+  config: Configuration
+): Promise<Maybe<Session>> {
+  if (authedUsername) {
+    // Self-authorize a filesystem UCAN if needed
+    const hasSelfAuthorisedFsUcan = components.reference.repositories.ucans.find(
+      ucan => {
+        // 🛑 If the UCAN expires within a week
+        if (ucan.payload.exp < (Date.now() + 60 * 60 * 24 * 7)) return false
+
+        // Check potency and resource
+        return ucan.payload.ptc === "APPEND" && ucan.payload.rsc === "*"
+      }
+    )
+
+    if (!hasSelfAuthorisedFsUcan) {
+      const issuer = await DID.write(components.crypto)
+      const proof: string | null = await components.storage.getItem(
+        components.storage.KEYS.ACCOUNT_UCAN
+      )
+
+      const fsUcan = await Ucan.build({
+        dependencies: components,
+        potency: "APPEND",
+        resource: "*",
+        proof: proof ? proof : undefined,
+        lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
+
+        audience: issuer,
+        issuer
+      })
+
+      await components.reference.repositories.ucans.add(fsUcan)
+    }
+
+    // Load filesystem
+    const fs = config.fileSystem?.loadImmediately === false ?
+      undefined :
+      await loadRootFileSystem({
+        config,
+        dependencies: {
+          crypto: components.crypto,
+          depot: components.depot,
+          manners: components.manners,
+          reference: components.reference,
+          storage: components.storage,
+        },
+        username: authedUsername,
+      })
+
+    // Fin
+    return new Session({
+      crypto: components.crypto,
+      fs: fs,
+      storage: components.storage,
+      type: Base.TYPE,
+      username: authedUsername
+    })
+  }
+
+  return null
+}
+
 
 
 // 🛠
@@ -179,7 +179,7 @@ export function implementation(
   return {
     type: base.type,
 
-    activate,
+    session,
 
     canDelegateAccount: (...args) => canDelegateAccount(dependencies, ...args),
     delegateAccount: (...args) => delegateAccount(dependencies, ...args),

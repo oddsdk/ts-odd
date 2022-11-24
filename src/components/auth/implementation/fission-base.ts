@@ -55,10 +55,10 @@ export function implementation(
   return {
     type: base.type,
 
-    activate: base.activate,
     canDelegateAccount: base.canDelegateAccount,
     delegateAccount: base.delegateAccount,
     linkDevice: base.linkDevice,
+    session: base.session,
 
     isUsernameValid,
 

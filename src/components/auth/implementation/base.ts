@@ -30,25 +30,6 @@ export type Dependencies = {
 // 🛠
 
 
-export async function activate(
-  components: Components,
-  authedUsername: Maybe<string>,
-  config: Configuration
-): Promise<Maybe<Session>> {
-  if (authedUsername) {
-    return new Session({
-      crypto: components.crypto,
-      storage: components.storage,
-      type: TYPE,
-      username: authedUsername
-    })
-
-  } else {
-    return null
-
-  }
-}
-
 export async function canDelegateAccount(
   dependencies: Dependencies,
   username: string
@@ -109,7 +90,6 @@ export async function linkDevice(
   }
 }
 
-
 /**
  * Doesn't quite register an account yet,
  * needs to be implemented properly by other implementations.
@@ -125,6 +105,25 @@ export async function register(
   return { success: true }
 }
 
+export async function session(
+  components: Components,
+  authedUsername: Maybe<string>,
+  config: Configuration
+): Promise<Maybe<Session>> {
+  if (authedUsername) {
+    return new Session({
+      crypto: components.crypto,
+      storage: components.storage,
+      type: TYPE,
+      username: authedUsername
+    })
+
+  } else {
+    return null
+
+  }
+}
+
 
 
 // 🛳
@@ -134,11 +133,11 @@ export function implementation(dependencies: Dependencies): Implementation<Compo
   return {
     type: TYPE,
 
-    activate: activate,
     canDelegateAccount: (...args) => canDelegateAccount(dependencies, ...args),
     delegateAccount: (...args) => delegateAccount(dependencies, ...args),
     linkDevice: (...args) => linkDevice(dependencies, ...args),
     register: (...args) => register(dependencies, ...args),
+    session: session,
 
     // Have to be implemented properly by other implementations
     createChannel: () => { throw new Error("Not implemented") },
