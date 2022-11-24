@@ -621,7 +621,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   if (migrationOccurred) return
 
   // Only try to migrate if environment supports indexedDB
-  if (!window.indexedDB) return
+  if (!self.indexedDB) return
 
   // Migration
   const keystoreDB = await bwOpenDatabase("keystore")
