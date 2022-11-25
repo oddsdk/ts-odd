@@ -31,6 +31,7 @@ import * as CapabilitiesImpl from "./components/capabilities/implementation.js"
 import * as Capabilities from "./capabilities.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
+import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as RootKey from "./common/root-key.js"
@@ -235,11 +236,13 @@ export const capabilities = {
     // Dependencies
     crypto?: Crypto.Implementation
     depot?: Depot.Implementation
+    storage?: Storage.Implementation
   }): Promise<CapabilitiesImpl.Implementation> {
     const { staging } = settings
 
+    const storage = settings.storage || defaultStorageComponent(settings.namespace)
     const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
-    const depot = settings.depot || await defaultDepotComponent(settings.namespace)
+    const depot = settings.depot || await defaultDepotComponent({ storage }, settings.namespace)
 
     if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
     return FissionLobbyProduction.implementation({ crypto, depot })
@@ -262,11 +265,18 @@ export const depot = {
    * Other webnative programs with this depot fetch the data from there.
    */
   async fissionIPFS(
-    settings: Configuration & { staging?: boolean }
+    settings: Configuration & {
+      staging?: boolean
+
+      // Dependencies
+      storage?: Storage.Implementation
+    }
   ): Promise<Depot.Implementation> {
     const repoName = `${namespaceToString(settings.namespace)}/ipfs`
-    if (settings.staging) return FissionIpfsStaging.implementation(repoName)
-    return FissionIpfsProduction.implementation(repoName)
+    const storage = settings.storage || defaultStorageComponent(settings.namespace)
+
+    if (settings.staging) return FissionIpfsStaging.implementation({ storage }, repoName)
+    return FissionIpfsProduction.implementation({ storage }, repoName)
   }
 }
 
@@ -517,7 +527,7 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
   const storage = setup.storage || defaultStorageComponent(config.namespace)
 
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
-  const depot = setup.depot || await defaultDepotComponent(config.namespace)
+  const depot = setup.depot || await defaultDepotComponent({ storage }, config.namespace)
   const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto, depot })
   const auth = setup.auth || defaultAuthComponent({ crypto, reference, storage })
 
@@ -555,8 +565,9 @@ export function defaultCryptoComponent(namespace: string | AppInfo): Promise<Cry
   })
 }
 
-export function defaultDepotComponent(namespace: string | AppInfo): Promise<Depot.Implementation> {
+export function defaultDepotComponent({ storage }: IpfsNode.Dependencies, namespace: string | AppInfo): Promise<Depot.Implementation> {
   return FissionIpfsProduction.implementation(
+    { storage },
     `${namespaceToString(namespace)}/ipfs`
   )
 }
