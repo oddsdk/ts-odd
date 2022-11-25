@@ -92,7 +92,7 @@ if (program.session) {
   consumer.on("link", ({ approved, username }) => {
     if (approved) {
       console.log(`Successfully authenticated as ${username}`)
-      session = program.auth.session()
+      session = await program.auth.session()
     }
   })
 }
