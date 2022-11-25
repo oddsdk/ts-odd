@@ -89,7 +89,7 @@ if (program.session) {
     showPinOnUI(pin)
   })
 
-  consumer.on("link", ({ approved, username }) => {
+  consumer.on("link", async ({ approved, username }) => {
     if (approved) {
       console.log(`Successfully authenticated as ${username}`)
       session = await program.auth.session()
