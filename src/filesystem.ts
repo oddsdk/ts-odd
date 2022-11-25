@@ -207,14 +207,14 @@ async function getDataRoot(
   const maxRetries = options.maxRetries ?? 0
   const retryInterval = options.retryInterval ?? 500
 
-  let dataCid = await reference.dataRoot.lookup(username)
+  let dataCid = await reference.dataRoot.lookup(username).catch(() => null)
   if (dataCid) return (dataCid.toString() === EMPTY_CID ? null : dataCid)
 
   return new Promise((resolve, reject) => {
     let attempt = 0
 
     const dataRootInterval = setInterval(async () => {
-      dataCid = await reference.dataRoot.lookup(username)
+      dataCid = await reference.dataRoot.lookup(username).catch(() => null)
 
       if (!dataCid && attempt < maxRetries) {
         attempt++
