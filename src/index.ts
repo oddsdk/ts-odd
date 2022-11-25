@@ -43,7 +43,7 @@ import { SESSION_TYPE as CAPABILITIES_SESSION_TYPE } from "./capabilities.js"
 import { TYPE as WEB_CRYPTO_SESSION_TYPE } from "./components/auth/implementation/base.js"
 import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
-import { Configuration, namespaceToString } from "./configuration.js"
+import { Configuration, namespace } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
 import { AppInfo } from "./appInfo.js"
@@ -200,8 +200,8 @@ export const auth = {
     const { disableWnfs, staging } = settings
 
     const manners = settings.manners || defaultMannersComponent(settings)
-    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
-    const storage = settings.storage || defaultStorageComponent(settings.namespace)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings)
+    const storage = settings.storage || defaultStorageComponent(settings)
     const reference = settings.reference || await defaultReferenceComponent({ crypto, manners, storage })
 
     if (disableWnfs) {
@@ -240,9 +240,9 @@ export const capabilities = {
   }): Promise<CapabilitiesImpl.Implementation> {
     const { staging } = settings
 
-    const storage = settings.storage || defaultStorageComponent(settings.namespace)
-    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
-    const depot = settings.depot || await defaultDepotComponent({ storage }, settings.namespace)
+    const storage = settings.storage || defaultStorageComponent(settings)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings)
+    const depot = settings.depot || await defaultDepotComponent({ storage }, settings)
 
     if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
     return FissionLobbyProduction.implementation({ crypto, depot })
@@ -272,8 +272,8 @@ export const depot = {
       storage?: Storage.Implementation
     }
   ): Promise<Depot.Implementation> {
-    const repoName = `${namespaceToString(settings.namespace)}/ipfs`
-    const storage = settings.storage || defaultStorageComponent(settings.namespace)
+    const repoName = `${namespace(settings)}/ipfs`
+    const storage = settings.storage || defaultStorageComponent(settings)
 
     if (settings.staging) return FissionIpfsStaging.implementation({ storage }, repoName)
     return FissionIpfsProduction.implementation({ storage }, repoName)
@@ -306,8 +306,8 @@ export const reference = {
     const { staging } = settings
 
     const manners = settings.manners || defaultMannersComponent(settings)
-    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
-    const storage = settings.storage || defaultStorageComponent(settings.namespace)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings)
+    const storage = settings.storage || defaultStorageComponent(settings)
 
     if (staging) return FissionReferenceStaging.implementation({ crypto, manners, storage })
     return FissionReferenceProduction.implementation({ crypto, manners, storage })
@@ -495,9 +495,9 @@ export const compositions = {
     manners?: Manners.Implementation
     storage?: Storage.Implementation
   }): Promise<Components> {
-    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings)
     const manners = settings.manners || defaultMannersComponent(settings)
-    const storage = settings.storage || defaultStorageComponent(settings.namespace)
+    const storage = settings.storage || defaultStorageComponent(settings)
 
     const settingsWithComponents = { ...settings, crypto, manners, storage }
 
@@ -522,12 +522,12 @@ export const compositions = {
 export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
   const config = extractConfig(setup)
 
-  const crypto = setup.crypto || await defaultCryptoComponent(config.namespace)
+  const crypto = setup.crypto || await defaultCryptoComponent(config)
   const manners = setup.manners || defaultMannersComponent(config)
-  const storage = setup.storage || defaultStorageComponent(config.namespace)
+  const storage = setup.storage || defaultStorageComponent(config)
 
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
-  const depot = setup.depot || await defaultDepotComponent({ storage }, config.namespace)
+  const depot = setup.depot || await defaultDepotComponent({ storage }, config)
   const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto, depot })
   const auth = setup.auth || defaultAuthComponent({ crypto, reference, storage })
 
@@ -557,18 +557,18 @@ export function defaultCapabilitiesComponent({ crypto, depot }: FissionLobbyBase
   return FissionLobbyProduction.implementation({ crypto, depot })
 }
 
-export function defaultCryptoComponent(namespace: string | AppInfo): Promise<Crypto.Implementation> {
+export function defaultCryptoComponent(config: Configuration): Promise<Crypto.Implementation> {
   return BrowserCrypto.implementation({
-    storeName: namespaceToString(namespace),
+    storeName: namespace(config),
     exchangeKeyName: "exchange-key",
     writeKeyName: "write-key"
   })
 }
 
-export function defaultDepotComponent({ storage }: IpfsNode.Dependencies, namespace: string | AppInfo): Promise<Depot.Implementation> {
+export function defaultDepotComponent({ storage }: IpfsNode.Dependencies, config: Configuration): Promise<Depot.Implementation> {
   return FissionIpfsProduction.implementation(
     { storage },
-    `${namespaceToString(namespace)}/ipfs`
+    `${namespace(config)}/ipfs`
   )
 }
 
@@ -586,9 +586,9 @@ export function defaultReferenceComponent({ crypto, manners, storage }: BaseRefe
   })
 }
 
-export function defaultStorageComponent(namespace: string | AppInfo): Storage.Implementation {
+export function defaultStorageComponent(config: Configuration): Storage.Implementation {
   return BrowserStorage.implementation({
-    name: namespaceToString(namespace)
+    name: namespace(config)
   })
 }
 
