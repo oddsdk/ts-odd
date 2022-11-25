@@ -656,7 +656,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
 
     if (rootKey && isString(rootKey)) {
       const anyUcan = accountUcan || (Array.isArray(permissionedUcans) ? permissionedUcans[ 0 ] : undefined)
-      const accountDID = anyUcan ? Ucan.rootIssuer(anyUcan) : null
+      const accountDID = anyUcan ? Ucan.rootIssuer(anyUcan) : (typeof authedUser === "string" ? await components.reference.didRoot.lookup(authedUser) : null)
       if (!accountDID) throw new Error("Failed to retrieve account DID")
 
       await RootKey.store({
