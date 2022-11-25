@@ -68,7 +68,7 @@ if (program.session) {
 // (b) existing user, link a new device
 } else {
   // On device with existing session:
-  const producer = program.auth.accountProducer(program.session.username)
+  const producer = await program.auth.accountProducer(program.session.username)
 
   producer.on("challenge", challenge => {
     // Either show `challenge.pin` or have the user input a PIN and see if they're equal.
@@ -83,7 +83,7 @@ if (program.session) {
   // On device without session:
   //     Somehow you'll need to get ahold of the username.
   //     Few ideas: URL query param, QR code, manual input.
-  const consumer = program.auth.accountConsumer(username)
+  const consumer = await program.auth.accountConsumer(username)
 
   consumer.on("challenge", ({ pin }) => {
     showPinOnUI(pin)
