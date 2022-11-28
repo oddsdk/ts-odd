@@ -46,7 +46,6 @@ import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { AppInfo } from "./appInfo.js"
 import { loadFileSystem, loadRootFileSystem } from "./filesystem.js"
 import FileSystem from "./fs/filesystem.js"
 
