@@ -35,12 +35,14 @@ import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as RootKey from "./common/root-key.js"
+import * as Semver from "./common/semver.js"
 import * as SessionMod from "./session.js"
 import * as Storage from "./components/storage/implementation.js"
 import * as Ucan from "./ucan/index.js"
 
 import { SESSION_TYPE as CAPABILITIES_SESSION_TYPE } from "./capabilities.js"
 import { TYPE as WEB_CRYPTO_SESSION_TYPE } from "./components/auth/implementation/base.js"
+import { VERSION } from "./common/version.js"
 import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
@@ -623,10 +625,16 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   // - Root read key of the filesystem: IndexedDB → localforage → readKey
   // - Authenticated username: IndexedDB → localforage → webnative.auth_username
 
-  const [ migK, migV ] = [ "migrated", "true" ]
+  const [ migK, migV ] = [ "migrated", VERSION ]
+  const currentVersion = Semver.fromString(VERSION)
+  if (!currentVersion) throw new Error("The webnative VERSION should be a semver string")
 
   // If already migrated, stop here.
-  const migrationOccurred = await components.storage.getItem(migK) === migV
+  const migrationOccurred = await components.storage
+    .getItem(migK)
+    .then(v => typeof v === "string" ? Semver.fromString(v) : null)
+    .then(v => v && Semver.isBiggerThanOrEqualTo(v, currentVersion))
+
   if (migrationOccurred) return
 
   // Only try to migrate if environment supports indexedDB
