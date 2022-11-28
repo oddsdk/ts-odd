@@ -641,7 +641,8 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   if (!self.indexedDB) return
 
   // Migration
-  const keystoreDB = await bwOpenDatabase("keystore")
+  const existingDatabases = (await self.indexedDB.databases()).map(db => db.name)
+  const keystoreDB = existingDatabases.includes("keystore") ? await bwOpenDatabase("keystore") : null
 
   if (keystoreDB) {
     const exchangeKeyPair = await bwGetValue(keystoreDB, "keyvaluepairs", "exchange-key")
@@ -653,7 +654,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
     }
   }
 
-  const localforageDB = await bwOpenDatabase("localforage")
+  const localforageDB = existingDatabases.includes("localforage") ? await bwOpenDatabase("localforage") : null
 
   if (localforageDB) {
     const accountUcan = await bwGetValue(localforageDB, "keyvaluepairs", "ucan")
