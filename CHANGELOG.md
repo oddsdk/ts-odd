@@ -28,10 +28,6 @@ The documentation should give you some information on how the various components
 - Removal of the `webnative.initialise`, `app` and `permissionedApp` functions. These have been replaced by the `program` function mentioned above.
 - Removal of the `fs.appPath` function, replaced with the `appData` function located in the path module.
 
-**Fixes**
-
-- Fixes `Could not locate user DID in DNS` uncaught exception reported after successfully linking a device
-
 ### v0.34.2
 
 - Fixes `LinkError: import object field '__wbg_putBlock_88cdb3be9020efb7' is not a Function` when loading WASM.
