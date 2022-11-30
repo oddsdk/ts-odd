@@ -714,34 +714,6 @@ export class FileSystem implements API {
   }
 
 
-  // EXCHANGE
-  // --------
-
-  /**
-   * Stores the public part of the exchange key in the DID format,
-   * in the `/public/.well-known/exchange/DID_GOES_HERE/` directory.
-   */
-  async addPublicExchangeKey(): Promise<void> {
-    const publicDid = await DID.exchange(this.dependencies.crypto)
-
-    await this.mkdir(
-      Path.combine(Sharing.EXCHANGE_PATH, Path.directory(publicDid))
-    )
-  }
-
-  /**
-   * Checks if the public exchange key was added in the well-known location.
-   * See `addPublicExchangeKey()` for the exact details.
-   */
-  async hasPublicExchangeKey(): Promise<boolean> {
-    const publicDid = await DID.exchange(this.dependencies.crypto)
-
-    return this.exists(
-      Path.combine(Sharing.EXCHANGE_PATH, Path.directory(publicDid))
-    )
-  }
-
-
   // INTERNAL
   // --------
 

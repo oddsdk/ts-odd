@@ -12,11 +12,11 @@ import type { IPFSRepo } from "ipfs-repo"
 import type { libp2p } from "ipfs-core/components/network"
 import type { Options as IPFSOptions } from "ipfs-core/types"
 
-import localforage from "localforage"
 import * as keys from "@libp2p/interface-keys"
 import { multiaddr, Multiaddr } from "@multiformats/multiaddr"
 import { peerIdFromString } from "@libp2p/peer-id"
 
+import * as Storage from "../../../../components/storage/implementation.js"
 import * as t from "../../../../common/type-checks.js"
 import { IPFSPackage } from "./package.js"
 
@@ -34,20 +34,24 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(globalThis.navigator?.use
 // TYPES
 
 
-type BackOff = {
+export type BackOff = {
   retryNumber: number
   lastBackoff: number
   currentBackoff: number
 }
 
-type Status = {
+export type Dependencies = {
+  storage: Storage.Implementation
+}
+
+export type Status = {
   connected: boolean
   lastConnectedAt: number | null
   latency: number | null
 }
 
 
-type IPFS = IPFSCore & { libp2p: libp2p }
+export type IPFS = IPFSCore & { libp2p: libp2p }
 
 
 
@@ -109,8 +113,14 @@ export const OPTIONS: IPFSOptions = {
 // 🚀
 
 
-export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, repoName: string, logging: boolean): Promise<[ IPFSCore, IPFSRepo ]> {
-  const peers = await listPeers(peersUrl)
+export async function createAndConnect(
+  dependencies: Dependencies,
+  pkg: IPFSPackage,
+  peersUrl: string,
+  repoName: string,
+  logging: boolean
+): Promise<[ IPFSCore, IPFSRepo ]> {
+  const peers = await listPeers(dependencies.storage, peersUrl)
 
   if (peers.length === 0) {
     throw new Error("💥 Couldn't start IPFS node, peer list is empty")
@@ -127,7 +137,7 @@ export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, repoN
 
   // Try connecting when browser comes online
   globalThis.addEventListener("online", async () => {
-    (await listPeers(peersUrl))
+    (await listPeers(dependencies.storage, peersUrl))
       .filter(peer => {
         const peerStr = peer.toString()
         return !peerStr.includes("/localhost/") &&
@@ -149,27 +159,30 @@ export async function createAndConnect(pkg: IPFSPackage, peersUrl: string, repoN
 // PEERS
 // -----
 
-const STORAGE_KEY = "ipfs_peers_1661540056"
-
 
 export function fetchPeers(peersUrl: string): Promise<string[]> {
   return fetch(peersUrl)
     .then(r => r.json())
     .then(r => Array.isArray(r) ? r : [])
     .then(r => r.filter(p => t.isString(p) && p.includes("/wss/")))
-    .catch(e => { throw new Error("💥 Couldn't start IPFS node, failed to fetch peer list") })
+    .catch(() => { throw new Error("💥 Couldn't start IPFS node, failed to fetch peer list") })
 }
 
 
-export async function listPeers(peersUrl: string): Promise<Multiaddr[]> {
+export async function listPeers(
+  storage: Storage.Implementation,
+  peersUrl: string
+): Promise<Multiaddr[]> {
   let peers
-  const maybePeers = await localforage.getItem(STORAGE_KEY)
+
+  const storageKey = `ipfs-peers-${peersUrl}`
+  const maybePeers = await storage.getItem(storageKey)
 
   if (t.isString(maybePeers) && maybePeers.trim() !== "") {
     peers = JSON.parse(maybePeers)
 
     fetchPeers(peersUrl).then(list =>
-      localforage.setItem(STORAGE_KEY, JSON.stringify(list))
+      storage.setItem(storageKey, JSON.stringify(list))
     ).catch(err => {
       // don't throw
       console.error(err)
@@ -177,7 +190,7 @@ export async function listPeers(peersUrl: string): Promise<Multiaddr[]> {
 
   } else {
     peers = await fetchPeers(peersUrl)
-    await localforage.setItem(STORAGE_KEY, JSON.stringify(peers))
+    await storage.setItem(storageKey, JSON.stringify(peers))
 
   }
 
@@ -333,10 +346,10 @@ export function stopMonitoringPeers() {
 let monitor: ReturnType<typeof setTimeout> | null = null
 
 
-export async function monitorBitswap(ipfs: IPFS, peersUrl: string, verbose: boolean): Promise<void> {
+export async function monitorBitswap(dependencies: Dependencies, ipfs: IPFS, peersUrl: string, verbose: boolean): Promise<void> {
   const cidCount: { [ k: string ]: number } = {}
   const seen: string[] = []
-  const peers = await listPeers(peersUrl)
+  const peers = await listPeers(dependencies.storage, peersUrl)
 
   verbose = verbose === undefined ? false : true
 

@@ -1,5 +1,6 @@
 import type { IPFS } from "ipfs-core-types"
 import { Repo } from "ipfs-core/components/network"
+import { Dependencies } from "../../../../fs/filesystem.js"
 
 import * as ipfsNode from "./node.js"
 import { IPFSPackage } from "./package.js"
@@ -12,8 +13,14 @@ export const DEFAULT_CDN_URL = "https://unpkg.com/ipfs-core@0.15.4/dist/index.mi
  * Create an IPFS Node given a `IPFSPackage`,
  * which you can get from `pkgFromCDN` or `pkgFromBundle`.
  */
-export const nodeWithPkg = (pkg: IPFSPackage, peersUrl: string, repoName: string, logging: boolean): Promise<[ IPFS, Repo ]> => {
-  return ipfsNode.createAndConnect(pkg, peersUrl, repoName, logging)
+export const nodeWithPkg = (
+  dependencies: ipfsNode.Dependencies,
+  pkg: IPFSPackage,
+  peersUrl: string,
+  repoName: string,
+  logging: boolean
+): Promise<[ IPFS, Repo ]> => {
+  return ipfsNode.createAndConnect(dependencies, pkg, peersUrl, repoName, logging)
 }
 
 /**

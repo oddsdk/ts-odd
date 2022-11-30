@@ -22,11 +22,12 @@ The documentation should give you some information on how the various components
 - When loading a filesystem the data root is tried multiple times (to get around the DNS issue)
 - Multiple filesystems can be loaded at the same time (conflicts with identifiers have been resolved), which allows for a temporary filesystem (progressive login).
 
-**Removed**
+**(Re)moved**
 
 - Removal of various confusing filesystem parameters, all data and read keys are `Uint8Array`s now.
 - Removal of the `webnative.initialise`, `app` and `permissionedApp` functions. These have been replaced by the `program` function mentioned above.
 - Removal of the `fs.appPath` function, replaced with the `appData` function located in the path module.
+- Removal of the `fs.addPublicExchangeKey` and `fs.hasPublicExchangeKey` functions, replaced with non-class-instance functions located in `fs/data.js`.
 
 ### v0.34.2
 

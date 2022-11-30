@@ -11,7 +11,11 @@ export type Configuration = {
   debug?: boolean
 
   fileSystem?: {
-    /* Should I load the filesystem immediately? True by default. */
+    /**
+     * Should I load the filesystem immediately?
+     *
+     * @default true
+     */
     loadImmediately?: boolean
 
     /**
@@ -59,6 +63,9 @@ export type UserMessages = {
 // 🛠
 
 
-export function namespaceToString(namespace: string | AppInfo): string {
-  return isString(namespace) ? namespace : appId(namespace)
+/**
+ * Generate a namespace string based on a configuration.
+ */
+export function namespace(config: Configuration): string {
+  return isString(config.namespace) ? config.namespace : appId(config.namespace)
 }

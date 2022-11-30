@@ -31,21 +31,23 @@ import * as CapabilitiesImpl from "./components/capabilities/implementation.js"
 import * as Capabilities from "./capabilities.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
+import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as RootKey from "./common/root-key.js"
+import * as Semver from "./common/semver.js"
 import * as SessionMod from "./session.js"
 import * as Storage from "./components/storage/implementation.js"
 import * as Ucan from "./ucan/index.js"
 
 import { SESSION_TYPE as CAPABILITIES_SESSION_TYPE } from "./capabilities.js"
 import { TYPE as WEB_CRYPTO_SESSION_TYPE } from "./components/auth/implementation/base.js"
+import { VERSION } from "./common/version.js"
 import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
-import { Configuration, namespaceToString } from "./configuration.js"
+import { Configuration, namespace } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { AppInfo } from "./appInfo.js"
 import { loadFileSystem, loadRootFileSystem } from "./filesystem.js"
 import FileSystem from "./fs/filesystem.js"
 
@@ -199,8 +201,8 @@ export const auth = {
     const { disableWnfs, staging } = settings
 
     const manners = settings.manners || defaultMannersComponent(settings)
-    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
-    const storage = settings.storage || defaultStorageComponent(settings.namespace)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings)
+    const storage = settings.storage || defaultStorageComponent(settings)
     const reference = settings.reference || await defaultReferenceComponent({ crypto, manners, storage })
 
     if (disableWnfs) {
@@ -235,11 +237,13 @@ export const capabilities = {
     // Dependencies
     crypto?: Crypto.Implementation
     depot?: Depot.Implementation
+    storage?: Storage.Implementation
   }): Promise<CapabilitiesImpl.Implementation> {
     const { staging } = settings
 
-    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
-    const depot = settings.depot || await defaultDepotComponent(settings.namespace)
+    const storage = settings.storage || defaultStorageComponent(settings)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings)
+    const depot = settings.depot || await defaultDepotComponent({ storage }, settings)
 
     if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
     return FissionLobbyProduction.implementation({ crypto, depot })
@@ -262,11 +266,18 @@ export const depot = {
    * Other webnative programs with this depot fetch the data from there.
    */
   async fissionIPFS(
-    settings: Configuration & { staging?: boolean }
+    settings: Configuration & {
+      staging?: boolean
+
+      // Dependencies
+      storage?: Storage.Implementation
+    }
   ): Promise<Depot.Implementation> {
-    const repoName = `${namespaceToString(settings.namespace)}/ipfs`
-    if (settings.staging) return FissionIpfsStaging.implementation(repoName)
-    return FissionIpfsProduction.implementation(repoName)
+    const repoName = `${namespace(settings)}/ipfs`
+    const storage = settings.storage || defaultStorageComponent(settings)
+
+    if (settings.staging) return FissionIpfsStaging.implementation({ storage }, repoName)
+    return FissionIpfsProduction.implementation({ storage }, repoName)
   }
 }
 
@@ -296,8 +307,8 @@ export const reference = {
     const { staging } = settings
 
     const manners = settings.manners || defaultMannersComponent(settings)
-    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
-    const storage = settings.storage || defaultStorageComponent(settings.namespace)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings)
+    const storage = settings.storage || defaultStorageComponent(settings)
 
     if (staging) return FissionReferenceStaging.implementation({ crypto, manners, storage })
     return FissionReferenceProduction.implementation({ crypto, manners, storage })
@@ -485,9 +496,9 @@ export const compositions = {
     manners?: Manners.Implementation
     storage?: Storage.Implementation
   }): Promise<Components> {
-    const crypto = settings.crypto || await defaultCryptoComponent(settings.namespace)
+    const crypto = settings.crypto || await defaultCryptoComponent(settings)
     const manners = settings.manners || defaultMannersComponent(settings)
-    const storage = settings.storage || defaultStorageComponent(settings.namespace)
+    const storage = settings.storage || defaultStorageComponent(settings)
 
     const settingsWithComponents = { ...settings, crypto, manners, storage }
 
@@ -512,12 +523,12 @@ export const compositions = {
 export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
   const config = extractConfig(setup)
 
-  const crypto = setup.crypto || await defaultCryptoComponent(config.namespace)
+  const crypto = setup.crypto || await defaultCryptoComponent(config)
   const manners = setup.manners || defaultMannersComponent(config)
-  const storage = setup.storage || defaultStorageComponent(config.namespace)
+  const storage = setup.storage || defaultStorageComponent(config)
 
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
-  const depot = setup.depot || await defaultDepotComponent(config.namespace)
+  const depot = setup.depot || await defaultDepotComponent({ storage }, config)
   const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto, depot })
   const auth = setup.auth || defaultAuthComponent({ crypto, reference, storage })
 
@@ -547,17 +558,18 @@ export function defaultCapabilitiesComponent({ crypto, depot }: FissionLobbyBase
   return FissionLobbyProduction.implementation({ crypto, depot })
 }
 
-export function defaultCryptoComponent(namespace: string | AppInfo): Promise<Crypto.Implementation> {
+export function defaultCryptoComponent(config: Configuration): Promise<Crypto.Implementation> {
   return BrowserCrypto.implementation({
-    storeName: namespaceToString(namespace),
+    storeName: namespace(config),
     exchangeKeyName: "exchange-key",
     writeKeyName: "write-key"
   })
 }
 
-export function defaultDepotComponent(namespace: string | AppInfo): Promise<Depot.Implementation> {
+export function defaultDepotComponent({ storage }: IpfsNode.Dependencies, config: Configuration): Promise<Depot.Implementation> {
   return FissionIpfsProduction.implementation(
-    `${namespaceToString(namespace)}/ipfs`
+    { storage },
+    `${namespace(config)}/ipfs`
   )
 }
 
@@ -575,9 +587,9 @@ export function defaultReferenceComponent({ crypto, manners, storage }: BaseRefe
   })
 }
 
-export function defaultStorageComponent(namespace: string | AppInfo): Storage.Implementation {
+export function defaultStorageComponent(config: Configuration): Storage.Implementation {
   return BrowserStorage.implementation({
-    name: namespaceToString(namespace)
+    name: namespace(config)
   })
 }
 
@@ -613,17 +625,27 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   // - Root read key of the filesystem: IndexedDB → localforage → readKey
   // - Authenticated username: IndexedDB → localforage → webnative.auth_username
 
-  const [ migK, migV ] = [ "migrated", "true" ]
+  const [ migK, migV ] = [ "migrated", VERSION ]
+  const currentVersion = Semver.fromString(VERSION)
+  if (!currentVersion) throw new Error("The webnative VERSION should be a semver string")
 
   // If already migrated, stop here.
-  const migrationOccurred = await components.storage.getItem(migK) === migV
+  const migrationOccurred = await components.storage
+    .getItem(migK)
+    .then(v => typeof v === "string" ? Semver.fromString(v) : null)
+    .then(v => v && Semver.isBiggerThanOrEqualTo(v, currentVersion))
+
   if (migrationOccurred) return
 
   // Only try to migrate if environment supports indexedDB
   if (!self.indexedDB) return
 
   // Migration
-  const keystoreDB = await bwOpenDatabase("keystore")
+  const existingDatabases = self.indexedDB.databases
+    ? (await self.indexedDB.databases()).map(db => db.name)
+    : [ "keystore", "localforage" ]
+
+  const keystoreDB = existingDatabases.includes("keystore") ? await bwOpenDatabase("keystore") : null
 
   if (keystoreDB) {
     const exchangeKeyPair = await bwGetValue(keystoreDB, "keyvaluepairs", "exchange-key")
@@ -635,7 +657,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
     }
   }
 
-  const localforageDB = await bwOpenDatabase("localforage")
+  const localforageDB = existingDatabases.includes("localforage") ? await bwOpenDatabase("localforage") : null
 
   if (localforageDB) {
     const accountUcan = await bwGetValue(localforageDB, "keyvaluepairs", "ucan")
@@ -645,7 +667,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
 
     if (rootKey && isString(rootKey)) {
       const anyUcan = accountUcan || (Array.isArray(permissionedUcans) ? permissionedUcans[ 0 ] : undefined)
-      const accountDID = anyUcan ? Ucan.rootIssuer(anyUcan) : null
+      const accountDID = anyUcan ? Ucan.rootIssuer(anyUcan) : (typeof authedUser === "string" ? await components.reference.didRoot.lookup(authedUser) : null)
       if (!accountDID) throw new Error("Failed to retrieve account DID")
 
       await RootKey.store({
@@ -708,6 +730,12 @@ function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
 
     req.onsuccess = () => {
       resolve(req.result)
+    }
+
+    req.onupgradeneeded = e => {
+      // Don't create database if it didn't exist before
+      req.transaction?.abort()
+      self.indexedDB.deleteDatabase(name)
     }
   })
 }
