@@ -641,7 +641,10 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   if (!self.indexedDB) return
 
   // Migration
-  const existingDatabases = (await self.indexedDB.databases()).map(db => db.name)
+  const existingDatabases = self.indexedDB.databases
+    ? (await self.indexedDB.databases()).map(db => db.name)
+    : [ "keystore", "localforage" ]
+
   const keystoreDB = existingDatabases.includes("keystore") ? await bwOpenDatabase("keystore") : null
 
   if (keystoreDB) {
@@ -727,6 +730,12 @@ function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
 
     req.onsuccess = () => {
       resolve(req.result)
+    }
+
+    req.onupgradeneeded = e => {
+      // Don't create database if it didn't exist before
+      req.transaction?.abort()
+      self.indexedDB.deleteDatabase(name)
     }
   })
 }
