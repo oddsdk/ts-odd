@@ -148,11 +148,18 @@ export type ShortHands = {
  * These are called "shorthands" because they're the same functions available
  * through other places in webnative, but you don't have to pass in the components.
  *
- * See `assemble` for more information.
+ * See `assemble` for more information. Note that this function checks for browser support,
+ * while `assemble` does not. Use the latter in case you want to bypass the indexedDB check,
+ * which might not be needed, or available, in certain environments or using certain components.
  */
 export async function program(settings: Partial<Components> & Configuration): Promise<Program> {
   if (!settings) throw new Error("Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter")
 
+  // Check if the browser and context is supported
+  if (globalThis.isSecureContext === false) throw ProgramError.InsecureContext
+  if (await isSupported() === false) throw ProgramError.UnsupportedBrowser
+
+  // Initialise components & assemble program
   const components = await gatherComponents(settings)
   return assemble(settings, components)
 }
@@ -326,7 +333,6 @@ export const reference = {
  * Use `program` to work with a default, or partial, set of components.
  *
  * Additionally this does a few other things:
- * - Checks if the browser is supported.
  * - Restores a session if one was made before and loads the user's file system if needed.
  * - Attempts to collect capabilities if the configuration has permissions.
  * - Provides shorthands to functions so you don't have to pass in components.
@@ -336,10 +342,6 @@ export const reference = {
  */
 export async function assemble(config: Configuration, components: Components): Promise<Program> {
   const permissions = config.permissions
-
-  // Check if browser is supported
-  if (globalThis.isSecureContext === false) throw ProgramError.InsecureContext
-  if (await isSupported() === false) throw ProgramError.UnsupportedBrowser
 
   // Backwards compatibility (data)
   await ensureBackwardsCompatibility(components, config)
