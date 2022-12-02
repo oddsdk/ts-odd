@@ -136,7 +136,7 @@ export type ShortHands = {
 
 
 /**
- * Build a webnative program.
+ * 🚀 Build a webnative program.
  *
  * This will give you a `Program` object which has the following properties:
  * - `session`, a `Session` object if a session was created before.
