@@ -11,34 +11,37 @@ import FileSystem from "./fs/index.js"
 
 export class Session {
 
-  crypto: Crypto.Implementation
+  #crypto: Crypto.Implementation
+  #storage: Storage.Implementation
+
   fs?: FileSystem
-  storage: Storage.Implementation
   type: string
   username: string
 
   constructor(props: {
     crypto: Crypto.Implementation
-    fs?: FileSystem
     storage: Storage.Implementation
+
+    fs?: FileSystem
     type: string
     username: string
   }) {
-    this.crypto = props.crypto
+    this.#crypto = props.crypto
+    this.#storage = props.storage
+
     this.fs = props.fs
-    this.storage = props.storage
     this.type = props.type
     this.username = props.username
   }
 
 
   async destroy() {
-    await this.storage.removeItem(this.storage.KEYS.ACCOUNT_UCAN)
-    await this.storage.removeItem(this.storage.KEYS.CID_LOG)
-    await this.storage.removeItem(this.storage.KEYS.SESSION)
-    await this.storage.removeItem(this.storage.KEYS.UCANS)
+    await this.#storage.removeItem(this.#storage.KEYS.ACCOUNT_UCAN)
+    await this.#storage.removeItem(this.#storage.KEYS.CID_LOG)
+    await this.#storage.removeItem(this.#storage.KEYS.SESSION)
+    await this.#storage.removeItem(this.#storage.KEYS.UCANS)
 
-    await this.crypto.keystore.clearStore()
+    await this.#crypto.keystore.clearStore()
 
     if (this.fs) this.fs.deactivate()
   }
