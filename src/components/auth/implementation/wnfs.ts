@@ -11,7 +11,7 @@ import * as SessionMod from "../../../session.js"
 import * as TypeChecks from "../../../common/type-checks.js"
 import * as Ucan from "../../../ucan/index.js"
 
-import { Configuration, addRootFileSystemPermissions } from "../../../configuration.js"
+import { Configuration } from "../../../configuration.js"
 import { LinkingError } from "../../../linking/common.js"
 import { Maybe } from "../../../common/types.js"
 import { Session } from "../../../session.js"
@@ -125,7 +125,7 @@ export async function session(
     const fs = config.fileSystem?.loadImmediately === false ?
       undefined :
       await loadFileSystem({
-        config: addRootFileSystemPermissions(config),
+        config,
         dependencies: {
           crypto: components.crypto,
           depot: components.depot,
