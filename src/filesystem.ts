@@ -1,7 +1,6 @@
 import { CID } from "multiformats/cid"
 
 import * as Depot from "./components/depot/implementation.js"
-import * as Path from "./path/index.js"
 import * as Reference from "./components/reference/implementation.js"
 
 import * as Protocol from "./fs/protocol/index.js"
@@ -170,23 +169,6 @@ function alertIfPossible(str: string) {
 
 
 // ROOT HELPERS
-
-
-export const ROOT_PERMISSIONS = { fs: { private: [ Path.root() ], public: [ Path.root() ] } }
-
-
-/**
- * Load a user's root file system.
- */
-export const loadRootFileSystem = async (options: {
-  config: Configuration
-  dependencies: Dependencies
-  rootKey?: Uint8Array
-  username: string
-}): Promise<FileSystem> => {
-  const config = { ...options.config, permissions: { ...options.config.permissions, ...ROOT_PERMISSIONS } }
-  return await loadFileSystem({ ...options, config })
-}
 
 
 /**

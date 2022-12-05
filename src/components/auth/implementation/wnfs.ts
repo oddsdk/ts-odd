@@ -11,11 +11,11 @@ import * as SessionMod from "../../../session.js"
 import * as TypeChecks from "../../../common/type-checks.js"
 import * as Ucan from "../../../ucan/index.js"
 
-import { Configuration } from "../../../configuration.js"
+import { Configuration, addRootFileSystemPermissions } from "../../../configuration.js"
 import { LinkingError } from "../../../linking/common.js"
 import { Maybe } from "../../../common/types.js"
 import { Session } from "../../../session.js"
-import { loadRootFileSystem } from "../../../filesystem.js"
+import { loadFileSystem } from "../../../filesystem.js"
 
 
 export async function canDelegateAccount(
@@ -124,8 +124,8 @@ export async function session(
     // Load filesystem
     const fs = config.fileSystem?.loadImmediately === false ?
       undefined :
-      await loadRootFileSystem({
-        config,
+      await loadFileSystem({
+        config: addRootFileSystemPermissions(config),
         dependencies: {
           crypto: components.crypto,
           depot: components.depot,

@@ -77,7 +77,6 @@ type ConstructorParams = {
   account: AssociatedIdentity
   dependencies: Dependencies
   localOnly?: boolean
-  permissions?: Permissions
   root: RootTree
 }
 
@@ -172,7 +171,6 @@ export class FileSystem implements API {
       account,
       dependencies,
       root,
-      permissions,
       localOnly
     })
   }
@@ -188,7 +186,6 @@ export class FileSystem implements API {
       account,
       dependencies,
       root,
-      permissions,
       localOnly
     })
   }

@@ -4,6 +4,21 @@ import { DistinctivePath } from "./path/index.js"
 import { Potency, Resource } from "./ucan/index.js"
 
 
+// 🏔
+
+
+export const ROOT_FILESYSTEM_PERMISSIONS = {
+  fs: {
+    private: [ Path.root() ],
+    public: [ Path.root() ]
+  }
+}
+
+
+
+// 🧩
+
+
 export type Permissions = {
   app?: AppInfo
   fs?: FileSystemPermissions
@@ -28,6 +43,10 @@ export type RawPermission = {
   rsc: Resource
   ptc: Potency
 }
+
+
+
+// 🛠
 
 
 /**

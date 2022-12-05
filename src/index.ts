@@ -48,7 +48,7 @@ import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { loadFileSystem, loadRootFileSystem } from "./filesystem.js"
+import { loadFileSystem } from "./filesystem.js"
 import FileSystem from "./fs/filesystem.js"
 
 
@@ -127,7 +127,6 @@ export enum ProgramError {
 
 export type ShortHands = {
   loadFileSystem: (username: string) => Promise<FileSystem>
-  loadRootFileSystem: (username: string) => Promise<FileSystem>
 }
 
 
@@ -464,7 +463,6 @@ export async function assemble(config: Configuration, components: Components): P
   // Shorthands
   const shorthands: ShortHands = {
     loadFileSystem: (username: string) => loadFileSystem({ config, username, dependencies: components }),
-    loadRootFileSystem: (username: string) => loadRootFileSystem({ config, username, dependencies: components }),
   }
 
   // Fin
