@@ -114,6 +114,7 @@ export type Program = ShortHands & {
     request: () => Promise<void>
     session: (username: string) => Promise<Maybe<Session>>
   }
+  configuration: Configuration
   components: Components
   session: Maybe<Session>
 }
@@ -160,7 +161,7 @@ export async function program(settings: Partial<Components> & Configuration): Pr
 
   // Initialise components & assemble program
   const components = await gatherComponents(settings)
-  return assemble(settings, components)
+  return assemble(extractConfig(settings), components)
 }
 
 
@@ -468,6 +469,7 @@ export async function assemble(config: Configuration, components: Components): P
   // Fin
   return {
     ...shorthands,
+    configuration: { ...config },
     auth,
     components,
     capabilities,
