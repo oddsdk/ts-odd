@@ -32,6 +32,15 @@ await esbuild.build({
     ]
 })
 
+
+fs.renameSync("dist/index.js", "dist/index.esm.min.js")
+fs.renameSync("dist/index.js.map", "dist/index.esm.min.js.map")
+
+
+
+// UMD
+
+
 const UMD = {
     banner:
         `(function (root, factory) {
@@ -71,20 +80,30 @@ await esbuild.build({
         NodeGlobalsPolyfillPlugin({
             buffer: true
         })
-    ]
+    ],
+    banner: { js: UMD.banner },
+    footer: { js: UMD.footer },
 })
 
-    ; (await globby("dist/*.js")).forEach(jsFile => {
-        const outfile = jsFile
-        const outfileGz = `${outfile}.gz`
 
-        console.log(`📝 Wrote ${outfile} and ${outfile}.map`)
-        console.log("💎 Compressing into .gz")
-        const fileContents = fs.createReadStream(outfile)
-        const writeStream = fs.createWriteStream(outfileGz)
-        const gzip = zlib.createGzip()
 
-        fileContents.pipe(gzip).pipe(writeStream)
+// GZIP
 
-        console.log(`📝 Wrote ${outfileGz}`)
-    })
+
+const glob = await globby("dist/*.js")
+
+
+glob.forEach(jsFile => {
+    const outfile = jsFile
+    const outfileGz = `${outfile}.gz`
+
+    console.log(`📝 Wrote ${outfile} and ${outfile}.map`)
+    console.log("💎 Compressing into .gz")
+    const fileContents = fs.createReadStream(outfile)
+    const writeStream = fs.createWriteStream(outfileGz)
+    const gzip = zlib.createGzip()
+
+    fileContents.pipe(gzip).pipe(writeStream)
+
+    console.log(`📝 Wrote ${outfileGz}`)
+})
