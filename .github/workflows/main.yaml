@@ -33,4 +33,4 @@ jobs:
         run: npm install
 
       - name: Build & Test
-        run: npm test:prod
+        run: npm run test:prod
