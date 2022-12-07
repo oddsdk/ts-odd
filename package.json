@@ -18,9 +18,9 @@
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
-    "./lib/*": [ "./lib/*", "./lib/*.js", "./lib/*/index.js" ],
-    "./*": [ "./lib/*", "./lib/*.js", "./lib/*/index.js", "./*" ],
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./lib/*": [ "./lib/*.js","./lib/*",  "./lib/*/index.js" ],
+    "./*": [ "./lib/*.js", "./lib/*",  "./lib/*/index.js", "./*" ]
   },
   "types": "lib/index.d.ts",
   "typesVersions": {
