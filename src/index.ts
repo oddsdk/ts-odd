@@ -31,6 +31,7 @@ import * as CapabilitiesImpl from "./components/capabilities/implementation.js"
 import * as Capabilities from "./capabilities.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
+import * as DID from "./did/local.js"
 import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
@@ -128,6 +129,8 @@ export enum ProgramError {
 
 export type ShortHands = {
   loadFileSystem: (username: string) => Promise<FileSystem>
+  agentDID: () => Promise<string>
+  sharingDID: () => Promise<string>
 }
 
 
@@ -465,6 +468,9 @@ export async function assemble(config: Configuration, components: Components): P
   // Shorthands
   const shorthands: ShortHands = {
     loadFileSystem: (username: string) => loadFileSystem({ config, username, dependencies: components }),
+
+    agentDID: () => DID.agent(components.crypto),
+    sharingDID: () => DID.sharing(components.crypto),
   }
 
   // Fin

@@ -18,11 +18,6 @@ export async function exchange(crypto: Crypto.Implementation): Promise<string> {
 }
 
 /**
- * Alias `write` to `ucan`
- */
-export { write as ucan }
-
-/**
  * Create a DID based on the write key-pair.
  */
 export async function write(crypto: Crypto.Implementation): Promise<string> {
@@ -35,3 +30,17 @@ export async function write(crypto: Crypto.Implementation): Promise<string> {
     ksAlg
   )
 }
+/**
+ * Alias `exchange` to `sharing`
+ */
+export { exchange as sharing }
+
+/**
+ * Alias `write` to `agent`
+ */
+export { write as agent }
+
+/**
+ * Alias `write` to `ucan`
+ */
+export { write as ucan }
