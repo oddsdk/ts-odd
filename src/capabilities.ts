@@ -54,7 +54,7 @@ export async function collect({ capabilities, crypto, reference, storage }: {
 
   await collectPermissions({ reference, ucans: capabilities.ucans })
 
-  const accountDID = Ucan.rootIssuer(capabilities.ucans[ 0 ])
+  const accountDID = await reference.didRoot.lookup(capabilities.username)
 
   await capabilities.fileSystemSecrets.reduce(
     async (acc: Promise<void>, fsSecret: FileSystemSecret) => {
@@ -112,7 +112,7 @@ export function validatePermissions(
 
   // Root access
   const rootUcan = repo.getByKey("*")
-  if (rootUcan && !Ucan.isExpired(rootUcan)) return rootUcan
+  if (rootUcan && !Ucan.isExpired(rootUcan) && !Ucan.isSelfSigned(rootUcan)) return rootUcan
 
   // Check permissions
   if (app) {

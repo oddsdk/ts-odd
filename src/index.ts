@@ -416,7 +416,8 @@ export async function assemble(config: Configuration, components: Components): P
         return null
       }
 
-      const accountDID = Ucan.rootIssuer(ucan)
+      const accountDID = await components.reference.didRoot.lookup(username)
+
       const validSecrets = await Capabilities.validateSecrets(
         components.crypto,
         accountDID,

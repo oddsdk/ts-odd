@@ -157,6 +157,13 @@ export function isExpired(ucan: Ucan): boolean {
 }
 
 /**
+ * Check if a UCAN is self-signed.
+ */
+export function isSelfSigned(ucan: Ucan): boolean {
+  return ucan.payload.iss === ucan.payload.aud
+}
+
+/**
  * Check if a UCAN is valid.
  *
  * @param ucan The decoded UCAN
