@@ -179,15 +179,20 @@ async function getClassifiedViaPostMessage(
       if (new URL(event.origin).host !== new URL(endpoints.lobby).host) return stop()
       if (event.data == null) return stop()
 
+      let classifiedInfo
+
       try {
-        const classifiedInfo = JSON.parse(event.data)
-        if (!isLobbyClassifiedInfo(classifiedInfo)) stop()
-        window.removeEventListener("message", listen)
-        document.body.removeChild(iframe)
-        resolve(classifiedInfo)
+        classifiedInfo = JSON.parse(event.data)
       } catch {
         stop()
       }
+
+      if (!isLobbyClassifiedInfo(classifiedInfo)) stop()
+      window.removeEventListener("message", listen)
+
+      try { document.body.removeChild(iframe) } catch { }
+
+      resolve(classifiedInfo)
     }
 
     window.addEventListener("message", listen)
@@ -237,12 +242,12 @@ async function translateClassifiedInfo(
   // split up the two bytes. Hence we check for the second byte here.
   const isUtf16 = rawSessionKey[ 1 ] === 0
 
-  const sessionKey = Uint8arrays.fromString(
-    isUtf16
-      ? new TextDecoder("utf-16").decode(rawSessionKey)
-      : Uint8arrays.toString(rawSessionKey, "utf8"),
-    "base64pad"
-  )
+  const sessionKey = isUtf16
+    ? Uint8arrays.fromString(
+      new TextDecoder("utf-16").decode(rawSessionKey),
+      "base64pad"
+    )
+    : rawSessionKey
 
   // Decrypt secrets
   const secretsStr = await crypto.aes.decrypt(
@@ -289,27 +294,20 @@ async function translateClassifiedInfo(
 async function retry<T>(
   action: () => Promise<T>,
   options: { tries: number; timeout: number; timeoutMessage: string }
-): Promise<T | null> {
+): Promise<T> {
   return await Promise.race([
-    (async () => {
-      let returnValue
-      let tryNum = 1
-      while (tryNum <= options.tries) {
-        try {
-          returnValue = await action()
-        } catch (e) {
-          if (tryNum == options.tries) {
-            throw e
-          }
-        }
-        tryNum++
-      }
-      return returnValue || null
-    })(),
-    new Promise<T>((resolve, reject) => setTimeout(
-      () => reject(new Error(options.timeoutMessage)),
-      options.timeout
-    ))
+    action(),
+    new Promise<T>((resolve, reject) => {
+      if (options.tries > 0) return setTimeout(
+        () => retry(action, { ...options, tries: options.tries - 1 }).then(resolve, reject),
+        options.timeout
+      )
+
+      return setTimeout(
+        () => reject(new Error(options.timeoutMessage)),
+        options.timeout
+      )
+    })
   ])
 }
 
