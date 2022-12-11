@@ -112,7 +112,7 @@ export type Program = ShortHands & {
   auth: AuthenticationStrategy
   capabilities: {
     collect: () => Promise<Maybe<string>> // returns username
-    request: () => Promise<void>
+    request: (options: CapabilitiesImpl.RequestOptions) => Promise<void>
     session: (username: string) => Promise<Maybe<Session>>
   }
   configuration: Configuration
@@ -403,9 +403,10 @@ export async function assemble(config: Configuration, components: Components): P
 
       return c.username
     },
-    request() {
+    request(options: CapabilitiesImpl.RequestOptions) {
       return components.capabilities.request({
-        permissions
+        permissions,
+        ...options
       })
     },
     async session(username: string) {
