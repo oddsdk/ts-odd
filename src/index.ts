@@ -760,6 +760,7 @@ export function extractConfig(opts: Partial<Components> & Configuration): Config
     namespace: opts.namespace,
     debug: opts.debug,
     fileSystem: opts.fileSystem,
+    permissions: opts.permissions,
     userMessages: opts.userMessages,
   }
 }
