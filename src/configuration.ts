@@ -8,8 +8,35 @@ import { appId, Permissions, ROOT_FILESYSTEM_PERMISSIONS } from "./permissions.j
 
 export type Configuration = {
   namespace: string | AppInfo
+
+  /**
+   * Capabilities settings.
+   */
+  capabilities?: {
+    /**
+     * Capability collection settings.
+     */
+    collect?: {
+      /**
+       * If set to `true` then collection won't happen automatically
+       * when creating a `Program` (via `program` or `assemble`).
+       *
+       * @default false
+       */
+      manual?: boolean
+    }
+  }
+
+  /**
+   * Enable debug console statements.
+   *
+   * @default false
+   */
   debug?: boolean
 
+  /**
+   * File system settings.
+   */
   fileSystem?: {
     /**
      * Should I load the filesystem immediately?
