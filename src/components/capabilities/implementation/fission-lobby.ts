@@ -33,7 +33,7 @@ export async function collect(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies
 ): Promise<Maybe<Capabilities.Capabilities>> {
-  const url = new URL(window.location.href)
+  const url = new URL(self.location.href)
   const authorised = url.searchParams.get("authorised")
   if (!authorised) return null
 
@@ -170,7 +170,7 @@ async function getClassifiedViaPostMessage(
 
   return new Promise((resolve, reject) => {
     function stop() {
-      window.removeEventListener("message", listen)
+      globalThis.removeEventListener("message", listen)
       document.body.removeChild(iframe)
       reject()
     }
@@ -188,14 +188,14 @@ async function getClassifiedViaPostMessage(
       }
 
       if (!isLobbyClassifiedInfo(classifiedInfo)) stop()
-      window.removeEventListener("message", listen)
+      globalThis.removeEventListener("message", listen)
 
       try { document.body.removeChild(iframe) } catch { }
 
       resolve(classifiedInfo)
     }
 
-    window.addEventListener("message", listen)
+    globalThis.addEventListener("message", listen)
 
     if (iframe.contentWindow == null) {
       throw new Error("Can't import UCANs & readKey(s): No access to its contentWindow")
