@@ -23,7 +23,7 @@ export type Configuration = {
        *
        * @default false
        */
-      manual?: boolean
+      manually?: boolean
     }
   }
 
