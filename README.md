@@ -142,7 +142,6 @@ __Notes:__
 - You can use alternative authentication strategies, such as [webnative-walletauth](https://github.com/fission-codes/webnative-walletauth).
 - You can remove all traces of the user using `await session.destroy()`
 - You can load the file system separately if you're using a web worker. This is done using the combination of `configuration.fileSystem.loadImmediately = false` and `program.loadFileSystem()`
-- If you're using the capabilities system and workers, you may need to disable automatic capability collection if the collection method of the used capabilities component depends on the `window` object. You can disable this using `configuration.capabilities.collect.manually = true`
 
 
 ## Working with the file system

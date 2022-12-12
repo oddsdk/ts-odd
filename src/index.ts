@@ -457,7 +457,7 @@ export async function assemble(config: Configuration, components: Components): P
   let session = null
 
   if (isCapabilityBasedAuthConfiguration(config)) {
-    const username = config.capabilities?.collect?.manually === true ? null : await capabilities.collect()
+    const username = await capabilities.collect()
     if (username) session = await capabilities.session(username)
     if (sessionInfo && sessionInfo.type === CAPABILITIES_SESSION_TYPE) session = await capabilities.session(sessionInfo.username)
 
