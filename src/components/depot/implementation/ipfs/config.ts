@@ -19,7 +19,7 @@ export const nodeWithPkg = (
   peersUrl: string,
   repoName: string,
   logging: boolean
-): Promise<[ IPFS, Repo ]> => {
+): Promise<{ ipfs: IPFS, repo: Repo }> => {
   return ipfsNode.createAndConnect(dependencies, pkg, peersUrl, repoName, logging)
 }
 

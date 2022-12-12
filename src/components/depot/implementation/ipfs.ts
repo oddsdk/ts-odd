@@ -12,15 +12,19 @@ import { Repo } from "ipfs-core/components/network.js"
 // 🛳
 
 
-export async function implementation(ipfs: IPFS, repo: Repo): Promise<Implementation> {
+export async function implementation(
+  getIpfs: () => Promise<{ ipfs: IPFS, repo: Repo }>
+): Promise<Implementation> {
   return {
 
     // GET
 
     getBlock: async (cid: CID): Promise<Uint8Array> => {
+      const { ipfs } = await getIpfs()
       return ipfs.block.get(cid)
     },
     getUnixDirectory: async (cid: CID): Promise<DirectoryItem[]> => {
+      const { ipfs } = await getIpfs()
       const entries = []
 
       for await (const entry of ipfs.ls(cid)) {
@@ -37,6 +41,7 @@ export async function implementation(ipfs: IPFS, repo: Repo): Promise<Implementa
       return entries
     },
     getUnixFile: async (cid: CID): Promise<Uint8Array> => {
+      const { ipfs } = await getIpfs()
       const chunks = []
 
       for await (const chunk of ipfs.cat(cid)) {
@@ -49,6 +54,8 @@ export async function implementation(ipfs: IPFS, repo: Repo): Promise<Implementa
     // PUT
 
     putBlock: async (data: Uint8Array, codecId: CodecIdentifier): Promise<CID> => {
+      const { repo } = await getIpfs()
+
       const codec = Codecs.getByIdentifier(codecId)
       const multihash = await sha256.digest(data)
       const cid = CID.createV1(codec.code, multihash)
@@ -61,6 +68,7 @@ export async function implementation(ipfs: IPFS, repo: Repo): Promise<Implementa
       return cid
     },
     putChunked: async (data: Uint8Array): Promise<PutResult> => {
+      const { ipfs } = await getIpfs()
       const addResult = await ipfs.add(data, {
         cidVersion: 1,
         hashAlg: "sha2-256",
@@ -76,6 +84,7 @@ export async function implementation(ipfs: IPFS, repo: Repo): Promise<Implementa
     // STATS
 
     size: async (cid: CID) => {
+      const { ipfs } = await getIpfs()
       const stat = await ipfs.files.stat(`/ipfs/${cid}`)
       return stat.cumulativeSize
     }
