@@ -16,13 +16,7 @@ export async function implementation(endpoints: Endpoints, dependencies: Depende
   base.dataRoot.domain = (username: string) => `${username}.files.${endpoints.userDomain}`
   base.dataRoot.lookup = (...args) => DataRoot.lookup(endpoints, dependencies, ...args)
   base.dataRoot.update = (...args) => DataRoot.update(endpoints, dependencies, ...args)
-  base.didRoot.lookup = (...args) => {
-    try {
-      return DID.root(endpoints, ...args)
-    } catch {
-      return Base.didRootLookup(dependencies, ...args)
-    }
-  }
+  base.didRoot.lookup = (...args) => DID.root(endpoints, ...args)
 
   return base
 }
