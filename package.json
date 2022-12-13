@@ -19,8 +19,17 @@
   "exports": {
     ".": "./lib/index.js",
     "./package.json": "./package.json",
-    "./lib/*": [ "./lib/*.js","./lib/*",  "./lib/*/index.js" ],
-    "./*": [ "./lib/*.js", "./lib/*",  "./lib/*/index.js", "./*" ]
+    "./lib/*": [
+      "./lib/*.js",
+      "./lib/*",
+      "./lib/*/index.js"
+    ],
+    "./*": [
+      "./lib/*.js",
+      "./lib/*",
+      "./lib/*/index.js",
+      "./*"
+    ]
   },
   "types": "lib/index.d.ts",
   "typesVersions": {
@@ -82,6 +91,7 @@
     "blockstore-datastore-adapter": "^4.0.0",
     "datastore-core": "^8.0.2",
     "datastore-level": "^9.0.4",
+    "events": "^3.3.0",
     "fission-bloom-filters": "1.7.1",
     "ipfs-core-types": "0.13.0",
     "ipfs-repo": "^16.0.0",
@@ -106,7 +116,6 @@
     "copyfiles": "^2.4.1",
     "esbuild": "^0.15.13",
     "eslint": "^8.7.0",
-    "events": "^3.3.0",
     "expect": "^27.4.6",
     "fast-check": "^3.3.0",
     "globby": "^13.1.2",
