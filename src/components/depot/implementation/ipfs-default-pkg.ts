@@ -1,5 +1,5 @@
 import type { IPFS } from "ipfs-core-types"
-import { Repo } from "ipfs-core/components/network"
+import type { IPFSRepo } from "ipfs-repo"
 
 import * as Ipfs from "./ipfs/index.js"
 import * as IpfsBase from "./ipfs.js"
@@ -16,7 +16,7 @@ export async function implementation(
   peersUrl: string,
   repoName: string
 ): Promise<Implementation> {
-  let instance: Maybe<{ ipfs: IPFS, repo: Repo }> = null
+  let instance: Maybe<{ ipfs: IPFS, repo: IPFSRepo }> = null
 
   return IpfsBase.implementation(async () => {
     if (instance) return instance

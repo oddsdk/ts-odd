@@ -1,19 +1,19 @@
 import * as uint8arrays from "uint8arrays"
+import type { IPFS } from "ipfs-core-types"
+import type { IPFSRepo } from "ipfs-repo"
 import { CID } from "multiformats/cid"
-import { IPFS } from "ipfs-core-types"
 import { sha256 } from "multiformats/hashes/sha2"
 
 import * as Codecs from "../../../dag/codecs.js"
 import { CodecIdentifier } from "../../../dag/codecs.js"
 import { DirectoryItem, Implementation, PutResult } from "../implementation.js"
-import { Repo } from "ipfs-core/components/network.js"
 
 
 // 🛳
 
 
 export async function implementation(
-  getIpfs: () => Promise<{ ipfs: IPFS, repo: Repo }>
+  getIpfs: () => Promise<{ ipfs: IPFS, repo: IPFSRepo }>
 ): Promise<Implementation> {
   return {
 

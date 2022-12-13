@@ -1,12 +1,12 @@
 import type { IPFS } from "ipfs-core-types"
-import { Repo } from "ipfs-core/components/network"
-import { Dependencies } from "../../../../fs/filesystem.js"
+import type { IPFSRepo } from "ipfs-repo"
 
 import * as ipfsNode from "./node.js"
+import { Dependencies } from "../../../../fs/filesystem.js"
 import { IPFSPackage } from "./package.js"
 
 
-export const DEFAULT_CDN_URL = "https://unpkg.com/ipfs-core@0.15.4/dist/index.min.js"
+export const DEFAULT_CDN_URL = "https://unpkg.com/ipfs-core@0.17.0/dist/index.min.js"
 
 
 /**
@@ -19,7 +19,7 @@ export const nodeWithPkg = (
   peersUrl: string,
   repoName: string,
   logging: boolean
-): Promise<{ ipfs: IPFS, repo: Repo }> => {
+): Promise<{ ipfs: IPFS, repo: IPFSRepo }> => {
   return ipfsNode.createAndConnect(dependencies, pkg, peersUrl, repoName, logging)
 }
 
@@ -31,11 +31,3 @@ export const pkgFromCDN = async (cdn_url: string): Promise<IPFSPackage> => {
   if (!cdn_url) throw new Error("This function requires a URL to a CDN")
   return import(/* @vite-ignore *//* webpackIgnore: true */ cdn_url).then(_ => (self as any).IpfsCore as IPFSPackage)
 }
-
-// /**
-//  * Loads ipfs-core from the bundled `webnative/lib/vendor/ipfs.js`
-//  */
-// export const pkgFromBundle = (): Promise<IPFSPackage> => {
-//   // @ts-ignore - Vendored dependency, generated at build time
-//   return import("../vendor/ipfs.js")
-// }

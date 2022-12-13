@@ -9,8 +9,7 @@ IPFS node things.
 // Considered dev dependency as these imports will not be present in the resulting lib code
 import type { IPFS as IPFSCore } from "ipfs-core-types"
 import type { IPFSRepo } from "ipfs-repo"
-import type { libp2p } from "ipfs-core/components/network"
-import type { Options as IPFSOptions } from "ipfs-core/types"
+import type { PeerId } from "@libp2p/interface-peer-id"
 
 import * as keys from "@libp2p/interface-keys"
 import { multiaddr, Multiaddr } from "@multiformats/multiaddr"
@@ -18,7 +17,7 @@ import { peerIdFromString } from "@libp2p/peer-id"
 
 import * as Storage from "../../../../components/storage/implementation.js"
 import * as t from "../../../../common/type-checks.js"
-import { IPFSPackage } from "./package.js"
+import { IPFSPackage, Options as IPFSOptions } from "./package.js"
 
 import * as IpfsRepo from "./node/repo.js"
 
@@ -50,8 +49,9 @@ export type Status = {
   latency: number | null
 }
 
-
-export type IPFS = IPFSCore & { libp2p: libp2p }
+export type IPFS = IPFSCore & {
+  libp2p: { ping(peerId: PeerId | Multiaddr): Promise<number> }
+}
 
 
 
@@ -104,7 +104,8 @@ export const OPTIONS: IPFSOptions = {
     }
   },
   init: {
-    algorithm: isSafari ? keys.RSA : undefined
+    algorithm: isSafari ? keys.RSA : undefined,
+    emptyRepo: true
   },
 }
 
