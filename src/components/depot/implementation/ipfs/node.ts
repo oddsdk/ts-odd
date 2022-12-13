@@ -120,7 +120,7 @@ export async function createAndConnect(
   peersUrl: string,
   repoName: string,
   logging: boolean
-): Promise<{ ipfs: IPFSCore, repo: IPFSRepo }> {
+): Promise<{ ipfs: IPFSCore; repo: IPFSRepo }> {
   const peers = await listPeers(dependencies.storage, peersUrl)
 
   if (peers.length === 0) {

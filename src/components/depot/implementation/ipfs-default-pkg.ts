@@ -16,7 +16,7 @@ export async function implementation(
   peersUrl: string,
   repoName: string
 ): Promise<Implementation> {
-  let instance: Maybe<{ ipfs: IPFS, repo: IPFSRepo }> = null
+  let instance: Maybe<{ ipfs: IPFS; repo: IPFSRepo }> = null
 
   return IpfsBase.implementation(async () => {
     if (instance) return instance
