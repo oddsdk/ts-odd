@@ -22,7 +22,7 @@ export async function canDelegateAccount(
   dependencies: Dependencies,
   username: string
 ): Promise<boolean> {
-  const accountDID = await rootDID(dependencies)
+  const accountDID = await dependencies.reference.didRoot.lookup(username)
   const readKey = await RootKey.retrieve({ crypto: dependencies.crypto, accountDID })
   if (!readKey) return false
 
@@ -34,7 +34,7 @@ export async function delegateAccount(
   username: string,
   audience: string
 ): Promise<Record<string, unknown>> {
-  const accountDID = await rootDID(dependencies)
+  const accountDID = await dependencies.reference.didRoot.lookup(username)
   const readKey = await RootKey.retrieve({ crypto: dependencies.crypto, accountDID })
   const { token } = await Base.delegateAccount(dependencies, username, audience)
   return { readKey: Uint8arrays.toString(readKey, "base64pad"), ucan: token }
@@ -56,7 +56,7 @@ export async function linkDevice(
     await dependencies.storage.setItem(dependencies.storage.KEYS.ACCOUNT_UCAN, encodedToken)
 
     await RootKey.store({
-      accountDID: await rootDID(dependencies),
+      accountDID: await dependencies.reference.didRoot.lookup(username),
       crypto: dependencies.crypto,
       readKey: RootKey.fromString(readKey)
     })
@@ -158,12 +158,6 @@ export function isWnfsLinkingData(data: unknown): data is { readKey: string; uca
   return TypeChecks.isObject(data)
     && "readKey" in data && typeof data.readKey === "string"
     && "ucan" in data && typeof data.ucan === "string"
-}
-
-
-export async function rootDID(dependencies: Dependencies): Promise<string> {
-  const maybeUcan: string | null = await dependencies.storage.getItem(dependencies.storage.KEYS.ACCOUNT_UCAN)
-  return maybeUcan ? Ucan.rootIssuer(maybeUcan) : await DID.write(dependencies.crypto)
 }
 
 
