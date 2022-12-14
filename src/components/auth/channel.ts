@@ -63,12 +63,12 @@ const waitForRootDid = async (
   }
 
   return new Promise((resolve, reject) => {
-    const maxRetries = 3
+    const maxRetries = 10
     let tries = 0
 
     const rootDidInterval = setInterval(async () => {
-      console.warn("Could not fetch root DID. Retrying")
       rootDid = await reference.didRoot.lookup(username).catch(() => {
+        console.warn("Could not fetch root DID. Retrying.")
         return null
       })
 
@@ -81,7 +81,7 @@ const waitForRootDid = async (
 
       clearInterval(rootDidInterval)
       resolve(rootDid)
-    }, 2000)
+    }, 1000)
   })
 }
 
