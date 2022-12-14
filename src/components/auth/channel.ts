@@ -69,7 +69,6 @@ const waitForRootDid = async (
     const rootDidInterval = setInterval(async () => {
       console.warn("Could not fetch root DID. Retrying")
       rootDid = await reference.didRoot.lookup(username).catch(() => {
-        clearInterval(rootDidInterval)
         return null
       })
 
