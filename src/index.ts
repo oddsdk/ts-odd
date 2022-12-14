@@ -31,6 +31,7 @@ import * as CapabilitiesImpl from "./components/capabilities/implementation.js"
 import * as Capabilities from "./capabilities.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
+import * as DID from "./did/local.js"
 import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
@@ -48,7 +49,7 @@ import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { loadFileSystem, loadRootFileSystem } from "./filesystem.js"
+import { loadFileSystem } from "./filesystem.js"
 import FileSystem from "./fs/filesystem.js"
 
 
@@ -111,9 +112,10 @@ export type Program = ShortHands & {
   auth: AuthenticationStrategy
   capabilities: {
     collect: () => Promise<Maybe<string>> // returns username
-    request: () => Promise<void>
+    request: (options?: CapabilitiesImpl.RequestOptions) => Promise<void>
     session: (username: string) => Promise<Maybe<Session>>
   }
+  configuration: Configuration
   components: Components
   session: Maybe<Session>
 }
@@ -127,7 +129,8 @@ export enum ProgramError {
 
 export type ShortHands = {
   loadFileSystem: (username: string) => Promise<FileSystem>
-  loadRootFileSystem: (username: string) => Promise<FileSystem>
+  agentDID: () => Promise<string>
+  sharingDID: () => Promise<string>
 }
 
 
@@ -136,7 +139,7 @@ export type ShortHands = {
 
 
 /**
- * Build a webnative program.
+ * 🚀 Build a webnative program.
  *
  * This will give you a `Program` object which has the following properties:
  * - `session`, a `Session` object if a session was created before.
@@ -161,7 +164,7 @@ export async function program(settings: Partial<Components> & Configuration): Pr
 
   // Initialise components & assemble program
   const components = await gatherComponents(settings)
-  return assemble(settings, components)
+  return assemble(extractConfig(settings), components)
 }
 
 
@@ -400,9 +403,10 @@ export async function assemble(config: Configuration, components: Components): P
 
       return c.username
     },
-    request() {
+    request(options?: CapabilitiesImpl.RequestOptions) {
       return components.capabilities.request({
-        permissions
+        permissions,
+        ...(options || {})
       })
     },
     async session(username: string) {
@@ -416,7 +420,8 @@ export async function assemble(config: Configuration, components: Components): P
         return null
       }
 
-      const accountDID = Ucan.rootIssuer(ucan)
+      const accountDID = await components.reference.didRoot.lookup(username)
+
       const validSecrets = await Capabilities.validateSecrets(
         components.crypto,
         accountDID,
@@ -464,12 +469,15 @@ export async function assemble(config: Configuration, components: Components): P
   // Shorthands
   const shorthands: ShortHands = {
     loadFileSystem: (username: string) => loadFileSystem({ config, username, dependencies: components }),
-    loadRootFileSystem: (username: string) => loadRootFileSystem({ config, username, dependencies: components }),
+
+    agentDID: () => DID.agent(components.crypto),
+    sharingDID: () => DID.sharing(components.crypto),
   }
 
   // Fin
   return {
     ...shorthands,
+    configuration: { ...config },
     auth,
     components,
     capabilities,
@@ -752,6 +760,7 @@ export function extractConfig(opts: Partial<Components> & Configuration): Config
     namespace: opts.namespace,
     debug: opts.debug,
     fileSystem: opts.fileSystem,
+    permissions: opts.permissions,
     userMessages: opts.userMessages,
   }
 }

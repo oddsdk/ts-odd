@@ -1,10 +1,9 @@
-// import * as memoryDriver from "localforage-driver-memory"
-import localforage from "localforage"
+import type LocalForage from "localforage"
 
 import NodeFs from "fs"
 import NodePath from "path"
 
-import { BlockCodec, CID } from "multiformats"
+import { CID } from "multiformats"
 import { CryptoSystem, HashAlg, KeyUse } from "keystore-idb/types.js"
 import { default as KeystoreConfig } from "keystore-idb/config.js"
 import IDB from "keystore-idb/idb.js"
@@ -24,7 +23,6 @@ import * as Storage from "../../src/components/storage/implementation.js"
 
 import * as BaseReference from "../../src/components/reference/implementation/base.js"
 import * as BrowserCrypto from "../../src/components/crypto/implementation/browser.js"
-import * as IpfsDepot from "../../src/components/depot/implementation/ipfs.js"
 import * as MemoryStorage from "../../src/components/storage/implementation/memory.js"
 import * as ProperManners from "../../src/components/manners/implementation/base.js"
 import * as WnfsAuth from "../../src/components/auth/implementation/wnfs.js"
@@ -38,7 +36,6 @@ import { Configuration } from "../../src/configuration.js"
 import { Ucan } from "../../src/ucan/types.js"
 import { decodeCID, EMPTY_CID } from "../../src/common/cid.js"
 import { Storage as LocalForageStore } from "./localforage/in-memory-storage.js"
-import { createInMemoryIPFS } from "./in-memory-ipfs.js"
 
 
 // 🚀
@@ -113,10 +110,6 @@ const crypto = await createCryptoComponent()
 
 
 // DEPOT
-
-
-// const [ ipfs, repo ] = await createInMemoryIPFS()
-// const depot: Depot.Implementation = await IpfsDepot.implementation(ipfs, repo)
 
 
 export const inMemoryDepot: Record<string, Uint8Array> = {}

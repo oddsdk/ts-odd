@@ -17,7 +17,7 @@
       {
         devShell = pkgs.mkShell {
           name = "webnative";
-          buildInputs = with pkgs; [ nodejs-18_x yarn ];
+          buildInputs = with pkgs; [ nodejs-18_x ];
         };
       });
 }

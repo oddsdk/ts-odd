@@ -77,7 +77,6 @@ type ConstructorParams = {
   account: AssociatedIdentity
   dependencies: Dependencies
   localOnly?: boolean
-  permissions?: Permissions
   root: RootTree
 }
 
@@ -157,7 +156,7 @@ export class FileSystem implements API {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
-    const { account, dependencies, permissions, localOnly } = opts
+    const { account, dependencies, localOnly } = opts
     const rootKey: Uint8Array = opts.rootKey || await (
       dependencies
         .crypto.aes.genKey(DEFAULT_AES_ALG)
@@ -172,7 +171,6 @@ export class FileSystem implements API {
       account,
       dependencies,
       root,
-      permissions,
       localOnly
     })
   }
@@ -188,7 +186,6 @@ export class FileSystem implements API {
       account,
       dependencies,
       root,
-      permissions,
       localOnly
     })
   }

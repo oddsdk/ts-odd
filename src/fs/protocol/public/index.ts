@@ -154,7 +154,6 @@ export const checkValue = <T>(
 
 
 async function putAndMakeLink(depot: Depot.Implementation, name: string, val: Object): Promise<HardLink> {
-  const bytes = Uint8arrays.fromString(JSON.stringify(val), "utf8")
-  const { cid, size } = await Basic.putFile(depot, DagCBOR.encode(bytes))
+  const { cid, size } = await Basic.putFile(depot, DagCBOR.encode(val))
   return Link.make(name, cid, true, size)
 }

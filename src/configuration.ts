@@ -1,6 +1,6 @@
 import { AppInfo } from "./appInfo.js"
 import { isString } from "./common/type-checks.js"
-import { appId, Permissions } from "./permissions.js"
+import { appId, Permissions, ROOT_FILESYSTEM_PERMISSIONS } from "./permissions.js"
 
 
 // CONFIGURATION
@@ -8,8 +8,17 @@ import { appId, Permissions } from "./permissions.js"
 
 export type Configuration = {
   namespace: string | AppInfo
+
+  /**
+   * Enable debug console statements.
+   *
+   * @default false
+   */
   debug?: boolean
 
+  /**
+   * File system settings.
+   */
   fileSystem?: {
     /**
      * Should I load the filesystem immediately?
@@ -61,6 +70,11 @@ export type UserMessages = {
 
 
 // 🛠
+
+
+export function addRootFileSystemPermissions(config: Configuration): Configuration {
+  return { ...config, permissions: { ...config.permissions, ...ROOT_FILESYSTEM_PERMISSIONS } }
+}
 
 
 /**

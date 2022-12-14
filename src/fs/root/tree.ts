@@ -5,7 +5,7 @@ import { CID } from "multiformats/cid"
 import { BareNameFilter } from "../protocol/private/namefilter.js"
 import { Branch, DistinctivePath } from "../../path/index.js"
 import { Maybe, decodeCID, encodeCID } from "../../common/index.js"
-import { Permissions, permissionPaths } from "../../permissions.js"
+import { Permissions, permissionPaths, ROOT_FILESYSTEM_PERMISSIONS } from "../../permissions.js"
 import { Puttable, SimpleLink, SimpleLinks, UnixTree } from "../types.js"
 
 import * as Crypto from "../../components/crypto/implementation.js"
@@ -162,7 +162,9 @@ export default class RootTree implements Puttable {
   }): Promise<RootTree> {
     const { crypto, depot, manners } = dependencies
     const links = await protocol.basic.getSimpleLinks(dependencies.depot, cid)
-    const keys = permissions ? await permissionKeys(crypto, accountDID, permissions) : []
+
+    // Load root private tree by default
+    const keys = await permissionKeys(crypto, accountDID, permissions || ROOT_FILESYSTEM_PERMISSIONS)
 
     const version = await parseVersionFromLinks(dependencies.depot, links)
     const wnfsWasm = Versions.equals(version, Versions.wnfsWasm)

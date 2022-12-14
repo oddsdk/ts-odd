@@ -18,9 +18,18 @@
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
-    "./lib/*": "./lib/*",
-    "./*": "./lib/*",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./lib/*": [
+      "./lib/*.js",
+      "./lib/*",
+      "./lib/*/index.js"
+    ],
+    "./*": [
+      "./lib/*.js",
+      "./lib/*",
+      "./lib/*/index.js",
+      "./*"
+    ]
   },
   "types": "lib/index.d.ts",
   "typesVersions": {
@@ -37,6 +46,7 @@
     "lib",
     "dist",
     "docs",
+    "src",
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
@@ -57,11 +67,10 @@
     "lint": "eslint src/**/*.ts src/*.ts tests/**/*.ts tests/*.ts",
     "prebuild": "rimraf lib dist && node scripts/gen-version.js",
     "build": "tsc && npm run build:minified",
-    "build:ipfs": "node scripts/build-ipfs.js && copyfiles --flat src/vendor/*.* lib/vendor/",
     "build:minified": "node scripts/build-minified.js",
     "start": "tsc -w",
     "test": "mocha",
-    "test:gh-action": "TEST_ENV=gh-action npm test",
+    "test:gh-action": "TEST_ENV=gh-action npm run test",
     "test:imports": "madge src --ts-config tsconfig.json --extensions ts --circular --warning",
     "test:prod": "npm run build && npm run lint && npm run test:imports && npm run test:gh-action",
     "test:types": "cp -RT tests/types/ lib/ && npm run tsd",
@@ -71,6 +80,29 @@
     "publish-dry": "npm publish --dry-run",
     "publish-alpha": "npm publish --tag alpha",
     "publish-latest": "npm publish --tag latest"
+  },
+  "dependencies": {
+    "@ipld/dag-cbor": "^8.0.0",
+    "@ipld/dag-pb": "^3.0.1",
+    "@libp2p/interface-keys": "^1.0.4",
+    "@libp2p/peer-id": "^1.1.17",
+    "@multiformats/multiaddr": "^11.1.0",
+    "blockstore-core": "^2.0.2",
+    "blockstore-datastore-adapter": "^4.0.0",
+    "datastore-core": "^8.0.2",
+    "datastore-level": "^9.0.4",
+    "events": "^3.3.0",
+    "fission-bloom-filters": "1.7.1",
+    "ipfs-core-types": "0.13.0",
+    "ipfs-repo": "^16.0.0",
+    "keystore-idb": "^0.15.5",
+    "localforage": "^1.10.0",
+    "multiformats": "^10.0.2",
+    "one-webcrypto": "^1.0.3",
+    "throttle-debounce": "^3.0.1",
+    "tweetnacl": "^1.0.3",
+    "uint8arrays": "^3.0.0",
+    "wnfs": "0.1.7"
   },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
@@ -84,7 +116,6 @@
     "copyfiles": "^2.4.1",
     "esbuild": "^0.15.13",
     "eslint": "^8.7.0",
-    "events": "^3.3.0",
     "expect": "^27.4.6",
     "fast-check": "^3.3.0",
     "globby": "^13.1.2",
@@ -99,27 +130,5 @@
     "typedoc-plugin-missing-exports": "^1.0.0",
     "typescript": "^4.8.4",
     "util": "^0.12.4"
-  },
-  "dependencies": {
-    "@ipld/dag-cbor": "^8.0.0",
-    "@ipld/dag-pb": "^3.0.0",
-    "@libp2p/interface-keys": "^1.0.3",
-    "@libp2p/peer-id": "^1.1.16",
-    "@multiformats/multiaddr": "^11.0.7",
-    "blockstore-core": "^2.0.2",
-    "blockstore-datastore-adapter": "^4.0.0",
-    "datastore-core": "^8.0.2",
-    "datastore-level": "^9.0.4",
-    "fission-bloom-filters": "1.7.1",
-    "ipfs-core-types": "0.13.0",
-    "ipfs-repo": "^16.0.0",
-    "keystore-idb": "^0.15.5",
-    "localforage": "^1.10.0",
-    "multiformats": "^10.0.2",
-    "one-webcrypto": "^1.0.3",
-    "throttle-debounce": "^3.0.1",
-    "tweetnacl": "^1.0.3",
-    "uint8arrays": "^3.0.0",
-    "wnfs": "^0.1.7"
   }
 }
