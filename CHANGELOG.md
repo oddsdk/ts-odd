@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.35.1
+
+- Fixes `waitForRootDid` retry issues. The function did not make enough attempts nor did it make them frequently enough.
+
 ### v0.35.0
 
 Full rewrite of webnative. 🎉
