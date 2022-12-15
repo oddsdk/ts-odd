@@ -3,6 +3,7 @@
 ### v0.35.1
 
 - Fixes `waitForRootDid` retry issues. The function did not make enough attempts nor did it make them frequently enough.
+- Moves `shareLink` to `common/fission`
 
 ### v0.35.0
 
