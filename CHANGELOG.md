@@ -3,6 +3,7 @@
 ### v0.35.1
 
 - Fixes `waitForRootDid` retry issues. The function did not make enough attempts nor did it make them frequently enough.
+- Improve capabilities documentation.
 
 ### v0.35.0
 

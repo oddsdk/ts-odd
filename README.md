@@ -124,7 +124,7 @@ const program = await webnative.program({
 })
 
 // (a) Whenever you are ready to redirect to the lobby, call this:
-program.capabilities.request(permissions)
+program.capabilities.request()
 
 // (b) When you get redirected back and your program is ready,
 // you will have access to your user session.
