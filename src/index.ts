@@ -114,8 +114,22 @@ export type AuthenticationStrategy = {
 export type Program = ShortHands & {
   auth: AuthenticationStrategy
   capabilities: {
+    /**
+     * Collect capabilities.
+     */
     collect: () => Promise<Maybe<string>> // returns username
+
+    /**
+     * Request capabilities.
+     *
+     * Permissions from your configuration are passed automatically,
+     * but you can add additional permissions or override existing ones.
+     */
     request: (options?: CapabilitiesImpl.RequestOptions) => Promise<void>
+
+    /**
+     * Try to create a `Session` based on capabilities.
+     */
     session: (username: string) => Promise<Maybe<Session>>
   }
   configuration: Configuration
