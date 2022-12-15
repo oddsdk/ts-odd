@@ -1,4 +1,5 @@
 import * as DOH from "../components/reference/dns-over-https.js"
+import { ShareDetails } from "../fs/types.js"
 
 
 /**
@@ -77,4 +78,17 @@ export async function did(endpoints: Endpoints): Promise<string> {
 
   if (!didCache.did) throw new Error("Couldn't get the Fission API DID")
   return didCache.did
+}
+
+
+/**
+ * Create a share link.
+ * There people can "accept" a share,
+ * copying the soft links into their private filesystem.
+ */
+export function shareLink(endpoints: Endpoints, details: ShareDetails): string {
+  return endpoints.lobby +
+    "/#/share/" +
+    encodeURIComponent(details.sharedBy.username) + "/" +
+    encodeURIComponent(details.shareId) + "/"
 }
