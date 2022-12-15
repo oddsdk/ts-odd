@@ -8,7 +8,6 @@ import * as Ucan from "../../../../ucan/index.js"
 
 import { USERNAME_BLOCKLIST } from "./blocklist.js"
 import { Endpoints } from "../../../../common/fission.js"
-import { ShareDetails } from "../../../../fs/types.js"
 
 
 export * from "../../../../common/fission.js"
@@ -112,17 +111,4 @@ export async function resendVerificationEmail(
   return {
     success: response.status < 300
   }
-}
-
-
-/**
- * Create a share link.
- * There people can "accept" a share,
- * copying the soft links into their private filesystem.
- */
-export function shareLink(endpoints: Endpoints, details: ShareDetails): string {
-  return endpoints.lobby +
-    "/#/share/" +
-    encodeURIComponent(details.sharedBy.username) + "/" +
-    encodeURIComponent(details.shareId) + "/"
 }
