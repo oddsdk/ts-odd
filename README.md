@@ -220,3 +220,8 @@ file.history.prior(1606236743)
 
 
 [https://guide.fission.codes/developers/webnative/sharing-private-data](https://guide.fission.codes/developers/webnative/sharing-private-data)
+
+
+## Migration
+
+Some versions of Webnative require apps to migrate their codebase to address breaking changes. Please see our [migration guide](https://guide.fission.codes/developers/webnative/migration) for help migrating your apps to the latest Webnative version.
