@@ -17,7 +17,7 @@ export function implementation(opts: ImplementationOptions): Implementation {
     fileSystem: {
       hooks: {
         afterLoadExisting: async () => { },
-        afterLoadNew: async (fs: FileSystem.API) => { fs.publish() },
+        afterLoadNew: async (fs: FileSystem.API) => { await fs.publish() },
         beforeLoadExisting: async () => { },
         beforeLoadNew: async () => { },
       },
