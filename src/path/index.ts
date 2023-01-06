@@ -62,9 +62,11 @@ export function root(): DirectoryPath {
 /**
  * Utility function create an app data path.
  */
-export function appData(app: AppInfo, suffix?: DistinctivePath): DistinctivePath {
+export function appData(app: AppInfo, suffix?: FilePath): FilePath
+export function appData(app: AppInfo, suffix?: DirectoryPath): DirectoryPath
+export function appData(app: AppInfo, suffix?: DistinctivePath): DistinctivePath
+export function appData(app: AppInfo, suffix?: any): any {
   const parent = directory(Branch.Private, "Apps", app.creator, app.name)
-
   if (suffix) return combine(parent, suffix)
   return parent
 }

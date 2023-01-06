@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.35.2
+
+Fixes issue with the types of the `path.appData` function. Now has the correct overloads.
+
 ### v0.35.1
 
 - Fixes `waitForRootDid` retry issues. The function did not make enough attempts nor did it make them frequently enough.
