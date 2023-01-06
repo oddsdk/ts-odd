@@ -1,10 +1,8 @@
 name: Docs
 
 on:
-  push:
-    branches:
-      - 'releases/**'
-      - '!releases/**-alpha'
+  release:
+    types: [released]
 
   workflow_dispatch:
 
