@@ -66,7 +66,7 @@ export function appData(app: AppInfo): DirectoryPath
 export function appData(app: AppInfo, suffix: FilePath): FilePath
 export function appData(app: AppInfo, suffix: DirectoryPath): DirectoryPath
 export function appData(app: AppInfo, suffix: DistinctivePath): DistinctivePath
-export function appData(app: AppInfo, suffix?: any): any {
+export function appData(app: AppInfo, suffix?: DistinctivePath): DistinctivePath {
   const parent = directory(Branch.Private, "Apps", app.creator, app.name)
   if (suffix) return combine(parent, suffix)
   return parent
@@ -119,7 +119,7 @@ export function toPosix(
 export function combine(a: DirectoryPath, b: FilePath): FilePath
 export function combine(a: DirectoryPath, b: DirectoryPath): DirectoryPath
 export function combine(a: DirectoryPath, b: DistinctivePath): DistinctivePath
-export function combine(a: any, b: any): any {
+export function combine(a: DirectoryPath, b: DistinctivePath): DistinctivePath {
   return map(p => unwrap(a).concat(p), b)
 }
 
