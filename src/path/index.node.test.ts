@@ -108,6 +108,16 @@ describe("the path helpers", () => {
       creator: "Fission"
     }
 
+    const root: DirectoryPath = Path.appData(
+      appInfo
+    )
+
+    expect(
+      root
+    ).toEqual(
+      { directory: [ Path.Branch.Private, "Apps", appInfo.creator, appInfo.name ] }
+    )
+
     const dir: DirectoryPath = Path.appData(
       appInfo,
       Path.directory("a")
