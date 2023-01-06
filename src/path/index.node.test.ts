@@ -1,6 +1,7 @@
 import expect from "expect"
 import * as fc from "fast-check"
-import * as pathing from "./index.js"
+import * as Path from "./index.js"
+import { DirectoryPath, FilePath } from "./index.js"
 
 
 describe("the path helpers", () => {
@@ -13,28 +14,28 @@ describe("the path helpers", () => {
   it("creates directory paths", () => {
     fc.assert(
       fc.property(fc.array(fc.hexaString()), data => {
-        expect(pathing.directory(...data)).toEqual({
+        expect(Path.directory(...data)).toEqual({
           directory: data
         })
       })
     )
 
     expect(() =>
-      pathing.directory("/")
+      Path.directory("/")
     ).toThrow()
   })
 
   it("creates file paths", () => {
     fc.assert(
       fc.property(fc.array(fc.hexaString()), data => {
-        expect(pathing.file(...data)).toEqual({
+        expect(Path.file(...data)).toEqual({
           file: data
         })
       })
     )
 
     expect(() =>
-      pathing.file("/")
+      Path.file("/")
     ).toThrow()
   })
 
@@ -45,31 +46,31 @@ describe("the path helpers", () => {
 
   it("creates a path from a POSIX formatted string", () => {
     expect(
-      pathing.fromPosix("foo/bar/")
+      Path.fromPosix("foo/bar/")
     ).toEqual(
       { directory: [ "foo", "bar" ] }
     )
 
     expect(
-      pathing.fromPosix("/foo/bar/")
+      Path.fromPosix("/foo/bar/")
     ).toEqual(
       { directory: [ "foo", "bar" ] }
     )
 
     expect(
-      pathing.fromPosix("/")
+      Path.fromPosix("/")
     ).toEqual(
       { directory: [] }
     )
 
     expect(
-      pathing.fromPosix("foo/bar")
+      Path.fromPosix("foo/bar")
     ).toEqual(
       { file: [ "foo", "bar" ] }
     )
 
     expect(
-      pathing.fromPosix("/foo/bar")
+      Path.fromPosix("/foo/bar")
     ).toEqual(
       { file: [ "foo", "bar" ] }
     )
@@ -78,19 +79,19 @@ describe("the path helpers", () => {
 
   it("converts a path to the POSIX format", () => {
     expect(
-      pathing.toPosix({ directory: [ "foo", "bar" ] })
+      Path.toPosix({ directory: [ "foo", "bar" ] })
     ).toEqual(
       "foo/bar/"
     )
 
     expect(
-      pathing.toPosix({ directory: [] })
+      Path.toPosix({ directory: [] })
     ).toEqual(
       ""
     )
 
     expect(
-      pathing.toPosix({ file: [ "foo", "bar" ] })
+      Path.toPosix({ file: [ "foo", "bar" ] })
     ).toEqual(
       "foo/bar"
     )
@@ -101,21 +102,65 @@ describe("the path helpers", () => {
   // 🛠
 
 
-  it("can be combined", () => {
+  it("can create app-data paths", () => {
+    const appInfo = {
+      name: "Tests",
+      creator: "Fission"
+    }
+
+    const root: DirectoryPath = Path.appData(
+      appInfo
+    )
+
     expect(
-      pathing.combine(
-        pathing.directory("a"),
-        pathing.directory("b")
-      )
+      root
+    ).toEqual(
+      { directory: [ Path.Branch.Private, "Apps", appInfo.creator, appInfo.name ] }
+    )
+
+    const dir: DirectoryPath = Path.appData(
+      appInfo,
+      Path.directory("a")
+    )
+
+    expect(
+      dir
+    ).toEqual(
+      { directory: [ Path.Branch.Private, "Apps", appInfo.creator, appInfo.name, "a" ] }
+    )
+
+    const file: FilePath = Path.appData(
+      appInfo,
+      Path.file("a")
+    )
+
+    expect(
+      file
+    ).toEqual(
+      { file: [ Path.Branch.Private, "Apps", appInfo.creator, appInfo.name, "a" ] }
+    )
+  })
+
+
+  it("can be combined", () => {
+    const dir: DirectoryPath = Path.combine(
+      Path.directory("a"),
+      Path.directory("b")
+    )
+
+    expect(
+      dir
     ).toEqual(
       { directory: [ "a", "b" ] }
     )
 
+    const file: FilePath = Path.combine(
+      Path.directory("a"),
+      Path.file("b")
+    )
+
     expect(
-      pathing.combine(
-        pathing.directory("a"),
-        pathing.file("b")
-      )
+      file
     ).toEqual(
       { file: [ "a", "b" ] }
     )
@@ -124,16 +169,16 @@ describe("the path helpers", () => {
 
   it("supports isBranch", () => {
     expect(
-      pathing.isBranch(
-        pathing.Branch.Private,
-        pathing.directory(pathing.Branch.Private, "a")
+      Path.isBranch(
+        Path.Branch.Private,
+        Path.directory(Path.Branch.Private, "a")
       )
     ).toBe(true)
 
     expect(
-      pathing.isBranch(
-        pathing.Branch.Public,
-        pathing.directory(pathing.Branch.Private, "a")
+      Path.isBranch(
+        Path.Branch.Public,
+        Path.directory(Path.Branch.Private, "a")
       )
     ).toBe(false)
   })
@@ -141,14 +186,14 @@ describe("the path helpers", () => {
 
   it("supports isDirectory", () => {
     expect(
-      pathing.isDirectory(
-        pathing.directory(pathing.Branch.Private)
+      Path.isDirectory(
+        Path.directory(Path.Branch.Private)
       )
     ).toBe(true)
 
     expect(
-      pathing.isDirectory(
-        pathing.file("foo")
+      Path.isDirectory(
+        Path.file("foo")
       )
     ).toBe(false)
   })
@@ -156,14 +201,14 @@ describe("the path helpers", () => {
 
   it("supports isFile", () => {
     expect(
-      pathing.isFile(
-        pathing.file("foo")
+      Path.isFile(
+        Path.file("foo")
       )
     ).toBe(true)
 
     expect(
-      pathing.isFile(
-        pathing.directory(pathing.Branch.Private)
+      Path.isFile(
+        Path.directory(Path.Branch.Private)
       )
     ).toBe(false)
   })
@@ -171,20 +216,20 @@ describe("the path helpers", () => {
 
   it("supports isRootDirectory", () => {
     expect(
-      pathing.isRootDirectory(
-        pathing.root()
+      Path.isRootDirectory(
+        Path.root()
       )
     ).toBe(true)
 
     expect(
-      pathing.isRootDirectory(
-        pathing.directory()
+      Path.isRootDirectory(
+        Path.directory()
       )
     ).toBe(true)
 
     expect(
-      pathing.isRootDirectory(
-        pathing.directory(pathing.Branch.Private)
+      Path.isRootDirectory(
+        Path.directory(Path.Branch.Private)
       )
     ).toBe(false)
   })
@@ -192,16 +237,16 @@ describe("the path helpers", () => {
 
   it("supports isSameBranch", () => {
     expect(
-      pathing.isSameBranch(
-        pathing.directory(pathing.Branch.Private),
-        pathing.directory(pathing.Branch.Private)
+      Path.isSameBranch(
+        Path.directory(Path.Branch.Private),
+        Path.directory(Path.Branch.Private)
       )
     ).toBe(true)
 
     expect(
-      pathing.isSameBranch(
-        pathing.directory(pathing.Branch.Private),
-        pathing.directory(pathing.Branch.Public)
+      Path.isSameBranch(
+        Path.directory(Path.Branch.Private),
+        Path.directory(Path.Branch.Public)
       )
     ).toBe(false)
   })
@@ -209,30 +254,30 @@ describe("the path helpers", () => {
 
   it("supports isSameKind", () => {
     expect(
-      pathing.isSameKind(
-        pathing.directory(),
-        pathing.file()
+      Path.isSameKind(
+        Path.directory(),
+        Path.file()
       )
     ).toBe(false)
 
     expect(
-      pathing.isSameKind(
-        pathing.file(),
-        pathing.directory()
+      Path.isSameKind(
+        Path.file(),
+        Path.directory()
       )
     ).toBe(false)
 
     expect(
-      pathing.isSameKind(
-        pathing.directory(),
-        pathing.directory()
+      Path.isSameKind(
+        Path.directory(),
+        Path.directory()
       )
     ).toBe(true)
 
     expect(
-      pathing.isSameKind(
-        pathing.file(),
-        pathing.file()
+      Path.isSameKind(
+        Path.file(),
+        Path.file()
       )
     ).toBe(true)
   })
@@ -240,33 +285,33 @@ describe("the path helpers", () => {
 
   it("has kind", () => {
     expect(
-      pathing.kind(pathing.directory())
+      Path.kind(Path.directory())
     ).toEqual(
-      pathing.Kind.Directory
+      Path.Kind.Directory
     )
 
     expect(
-      pathing.kind(pathing.file())
+      Path.kind(Path.file())
     ).toEqual(
-      pathing.Kind.File
+      Path.Kind.File
     )
   })
 
 
   it("supports map", () => {
     expect(
-      pathing.map(
+      Path.map(
         p => [ ...p, "bar" ],
-        pathing.directory("foo")
+        Path.directory("foo")
       )
     ).toEqual(
       { directory: [ "foo", "bar" ] }
     )
 
     expect(
-      pathing.map(
+      Path.map(
         p => [ ...p, "bar" ],
-        pathing.file("foo")
+        Path.file("foo")
       )
     ).toEqual(
       { file: [ "foo", "bar" ] }
@@ -276,24 +321,24 @@ describe("the path helpers", () => {
 
   it("supports parent", () => {
     expect(
-      pathing.parent(
-        pathing.directory("foo")
+      Path.parent(
+        Path.directory("foo")
       )
     ).toEqual(
-      pathing.root()
+      Path.root()
     )
 
     expect(
-      pathing.parent(
-        pathing.file("foo")
+      Path.parent(
+        Path.file("foo")
       )
     ).toEqual(
-      pathing.root()
+      Path.root()
     )
 
     expect(
-      pathing.parent(
-        pathing.root()
+      Path.parent(
+        Path.root()
       )
     ).toEqual(
       null
@@ -303,35 +348,35 @@ describe("the path helpers", () => {
 
   it("supports removeBranch", () => {
     expect(
-      pathing.removeBranch(
-        pathing.directory("foo")
+      Path.removeBranch(
+        Path.directory("foo")
       )
     ).toEqual(
       { directory: [] }
     )
 
     expect(
-      pathing.removeBranch(
-        pathing.directory("foo", "bar")
+      Path.removeBranch(
+        Path.directory("foo", "bar")
       )
     ).toEqual(
-      pathing.directory("bar")
+      Path.directory("bar")
     )
   })
 
 
   it("correctly unwraps", () => {
     expect(
-      pathing.unwrap(
-        pathing.directory("foo")
+      Path.unwrap(
+        Path.directory("foo")
       )
     ).toEqual(
       [ "foo" ]
     )
 
     expect(
-      pathing.unwrap(
-        pathing.file("foo")
+      Path.unwrap(
+        Path.file("foo")
       )
     ).toEqual(
       [ "foo" ]
