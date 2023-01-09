@@ -30,6 +30,7 @@ export function decodeCID(val: CID | object | string): CID {
     return CID.create(val.version, val.code, val.multihash)
   }
 
+  // Older version of the above
   if (
     typeof val === "object" &&
     hasProp(val, "version") &&
@@ -41,6 +42,17 @@ export function decodeCID(val: CID | object | string): CID {
     ))
 
     return CID.create(val.version as Version, val.code, multihash)
+  }
+
+  // Legacy issue
+  // https://github.com/fission-codes/webnative/issues/459
+  // Related to the `ensureSkeletonStringCIDs` function in the `PrivateTree` class
+  if (
+    typeof val === "object" &&
+    hasProp(val, "/") &&
+    typeof val[ "/" ] === "string"
+  ) {
+    return CID.parse(val[ "/" ])
   }
 
   // Unrecognisable CID
