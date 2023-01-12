@@ -128,49 +128,53 @@ export async function recoverFileSystem({
   auth: AuthenticationStrategy
   dependencies: Dependencies
 } & RecoverFileSystemParams): Promise<{ success: boolean }> {
-  const { crypto, reference, storage } = dependencies
+  try {
+    const { crypto, reference, storage } = dependencies
 
-  const newRootDID = await agentDID()
+    const newRootDID = await agentDID()
 
-  // Register a new user with the `newUsername`
-  const { success } = await auth.register({
-    username: newUsername,
-  })
-  if (!success) {
-    throw new Error("Failed to register new user")
-  }
+    // Register a new user with the `newUsername`
+    const { success } = await auth.register({
+      username: newUsername,
+    })
+    if (!success) {
+      throw new Error("Failed to register new user")
+    }
 
-  // Build an ephemeral UCAN to authorize the dataRoot.update call
-  const proof: string | null = await storage.getItem(storage.KEYS.ACCOUNT_UCAN)
-  const ucan = await Ucan.build({
-    dependencies,
-    potency: "APPEND",
-    resource: "*",
-    proof: proof ? proof : undefined,
-    lifetimeInSeconds: 60 * 3, // Three minutes
-    audience: newRootDID,
-    issuer: newRootDID,
-  })
+    // Build an ephemeral UCAN to authorize the dataRoot.update call
+    const proof: string | null = await storage.getItem(storage.KEYS.ACCOUNT_UCAN)
+    const ucan = await Ucan.build({
+      dependencies,
+      potency: "APPEND",
+      resource: "*",
+      proof: proof ? proof : undefined,
+      lifetimeInSeconds: 60 * 3, // Three minutes
+      audience: newRootDID,
+      issuer: newRootDID,
+    })
 
-  const oldRootCID = await reference.dataRoot.lookup(oldUsername)
-  if (!oldRootCID) {
+    const oldRootCID = await reference.dataRoot.lookup(oldUsername)
+    if (!oldRootCID) {
+      throw new Error("Failed to lookup oldUsername")
+    }
+
+    // Update the dataRoot of the new user
+    await reference.dataRoot.update(oldRootCID, ucan)
+
+    // Store the accountDID, which is used to namespace the readKey
+    await RootKey.store({
+      accountDID: newRootDID,
+      crypto: crypto,
+      readKey,
+    })
+
+    return {
+      success: true
+    }
+  } catch (error) {
     return {
       success: false
     }
-  }
-
-  // Update the dataRoot of the new user
-  await reference.dataRoot.update(oldRootCID, ucan)
-
-  // Store the accountDID, which is used to namespace the readKey
-  await RootKey.store({
-    accountDID: newRootDID,
-    crypto: crypto,
-    readKey,
-  })
-
-  return {
-    success: true
   }
 }
 
