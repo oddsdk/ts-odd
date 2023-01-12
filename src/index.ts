@@ -495,7 +495,7 @@ export async function assemble(config: Configuration, components: Components): P
   }
 
   // AgentDID
-  const agentDID = async () => DID.agent(components.crypto)
+  const agentDID = () => DID.agent(components.crypto)
 
   // Shorthands
   const shorthands: ShortHands = {
