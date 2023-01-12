@@ -10,7 +10,7 @@ import FileSystem, { Dependencies } from "./fs/filesystem.js"
 
 import * as Ucan from "./ucan/index.js"
 
-import * as RootKey from "./common/root-key"
+import * as RootKey from "./common/root-key.js"
 
 import { Branch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
