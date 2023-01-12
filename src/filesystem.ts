@@ -1,4 +1,3 @@
-import * as uint8arrays from "uint8arrays"
 import { CID } from "multiformats/cid"
 
 import * as Depot from "./components/depot/implementation.js"
@@ -18,6 +17,7 @@ import { Configuration } from "./configuration.js"
 import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
 
 import { type RecoverFileSystemParams } from "./fs/types/params"
+
 import { AuthenticationStrategy } from "./index.js"
 
 
