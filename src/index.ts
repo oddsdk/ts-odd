@@ -49,11 +49,18 @@ import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { loadFileSystem } from "./filesystem.js"
+import { loadFileSystem, recoverFileSystem } from "./filesystem.js"
 import FileSystem from "./fs/filesystem.js"
 
 
+// TYPES
+
+
+import { type RecoverFileSystemParams } from "./fs/types/params"
+
+
 // IMPLEMENTATIONS
+
 
 import * as BaseAuth from "./components/auth/implementation/base.js"
 import * as BaseReference from "./components/reference/implementation/base.js"
@@ -143,9 +150,13 @@ export enum ProgramError {
   UnsupportedBrowser = "UNSUPPORTED_BROWSER"
 }
 
-
 export type ShortHands = {
   loadFileSystem: (username: string) => Promise<FileSystem>
+  recoverFileSystem: ({
+    newUsername,
+    oldUsername,
+    readKey,
+  }: RecoverFileSystemParams) => Promise<{ success: boolean }>
   agentDID: () => Promise<string>
   sharingDID: () => Promise<string>
 }
@@ -485,8 +496,10 @@ export async function assemble(config: Configuration, components: Components): P
 
   // Shorthands
   const shorthands: ShortHands = {
-    loadFileSystem: (username: string) => loadFileSystem({ config, username, dependencies: components }),
-
+    loadFileSystem: (username: string) =>
+      loadFileSystem({ config, username, dependencies: components }),
+    recoverFileSystem: (params: RecoverFileSystemParams) =>
+      recoverFileSystem({ agentDID: () => DID.agent(components.crypto), auth, dependencies: components, ...params }),
     agentDID: () => DID.agent(components.crypto),
     sharingDID: () => DID.sharing(components.crypto),
   }
