@@ -1,16 +1,23 @@
 import { CID } from "multiformats/cid"
 
+import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
-import * as Reference from "./components/reference/implementation.js"
-
+import * as DID from "./did/index.js"
 import * as Protocol from "./fs/protocol/index.js"
+import * as Reference from "./components/reference/implementation.js"
+import * as RootKey from "./common/root-key.js"
+import * as Storage from "./components/storage/implementation.js"
+import * as Ucan from "./ucan/index.js"
 import * as Versions from "./fs/versions.js"
 
-import FileSystem, { Dependencies } from "./fs/filesystem.js"
-
+import { AuthenticationStrategy } from "./index.js"
 import { Branch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
+import { Dependencies } from "./fs/filesystem.js"
 import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
+import { type RecoverFileSystemParams } from "./fs/types/params.js"
+
+import FileSystem from "./fs/filesystem.js"
 
 
 /**
@@ -105,6 +112,67 @@ export async function loadFileSystem({ config, dependencies, rootKey, username }
   return fs
 }
 
+/**
+ * Recover a user's file system.
+ */
+export async function recoverFileSystem({
+  auth,
+  dependencies,
+  oldUsername,
+  newUsername,
+  readKey,
+}: {
+  auth: AuthenticationStrategy
+  dependencies: {
+    crypto: Crypto.Implementation
+    reference: Reference.Implementation
+    storage: Storage.Implementation
+  }
+} & RecoverFileSystemParams): Promise<{ success: boolean }> {
+
+  const { crypto, reference, storage } = dependencies
+
+  const newRootDID = await DID.agent(crypto)
+
+  // Register a new user with the `newUsername`
+  const { success } = await auth.register({
+    username: newUsername,
+  })
+  if (!success) {
+    throw new Error("Failed to register new user")
+  }
+
+  // Build an ephemeral UCAN to authorize the dataRoot.update call
+  const proof: string | null = await storage.getItem(storage.KEYS.ACCOUNT_UCAN)
+  const ucan = await Ucan.build({
+    dependencies,
+    potency: "APPEND",
+    resource: "*",
+    proof: proof ? proof : undefined,
+    lifetimeInSeconds: 60 * 3, // Three minutes
+    audience: newRootDID,
+    issuer: newRootDID,
+  })
+
+  const oldRootCID = await reference.dataRoot.lookup(oldUsername)
+  if (!oldRootCID) {
+    throw new Error("Failed to lookup oldUsername")
+  }
+
+  // Update the dataRoot of the new user
+  await reference.dataRoot.update(oldRootCID, ucan)
+
+  // Store the read key, which is namespaced using the account DID
+  await RootKey.store({
+    accountDID: newRootDID,
+    crypto: crypto,
+    readKey,
+  })
+
+  return {
+    success: true,
+  }
+}
 
 
 // VERSIONING

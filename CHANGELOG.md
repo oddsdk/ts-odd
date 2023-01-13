@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.36.0
+
+Adds `program.recoverFileSystem({ newUsername, oldUsername, readKey })` shorthand method so apps will no longer have to implement the FS recovery flow manually.
+
 ### v0.35.2
 
 Fixes issue with the types of the `path.appData` function. Now has the correct overloads.
@@ -354,7 +358,7 @@ Upgrade to CIDv1.
   });
   ```
 
-- Those prerequisites are passed to the `wn.redirectToLobby` function.  
+- Those prerequisites are passed to the `wn.redirectToLobby` function.
   (So the auth lobby has the correct parameters to determine the permissions to ask the user)
 - Adds the ability to use multiple apps with one file system (closes #73)
 - The SDK now handles multiple UCANs
