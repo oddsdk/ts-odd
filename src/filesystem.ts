@@ -117,21 +117,22 @@ export async function loadFileSystem({ config, dependencies, rootKey, username }
  */
 export async function recoverFileSystem({
   auth,
+  dependencies,
   oldUsername,
   newUsername,
   readKey,
 }: {
   auth: AuthenticationStrategy
+  dependencies: {
+    crypto: Crypto.Implementation
+    reference: Reference.Implementation
+    storage: Storage.Implementation
+  }
 } & RecoverFileSystemParams): Promise<{ success: boolean }> {
 
-  const dependencies = {
-    crypto: Crypto,
-    reference: Reference,
-    storage: Storage,
-  }
   const { crypto, reference, storage } = dependencies
 
-  const newRootDID = await DID.agent(dependencies.crypto)
+  const newRootDID = await DID.agent(crypto)
 
   // Register a new user with the `newUsername`
   const { success } = await auth.register({
@@ -142,9 +143,7 @@ export async function recoverFileSystem({
   }
 
   // Build an ephemeral UCAN to authorize the dataRoot.update call
-  const proof: string | null = await storage.getItem(
-    storage.KEYS.ACCOUNT_UCAN
-  )
+  const proof: string | null = await storage.getItem(storage.KEYS.ACCOUNT_UCAN)
   const ucan = await Ucan.build({
     dependencies,
     potency: "APPEND",

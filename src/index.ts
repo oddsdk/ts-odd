@@ -501,7 +501,7 @@ export async function assemble(config: Configuration, components: Components): P
     recoverFileSystem: (params: RecoverFileSystemParams) =>
       recoverFileSystem({
         auth,
-        dependencies: components,
+        dependencies: { crypto: components.crypto, reference: components.reference, storage: components.storage },
         ...params,
       }),
     agentDID: () => DID.agent(components.crypto),
