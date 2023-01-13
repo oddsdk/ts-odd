@@ -1,6 +1,6 @@
 # Changelog
 
-### v0.35.3
+### v0.36.0
 
 Adds `program.recoverFileSystem({ newUsername, oldUsername, readKey })` shorthand method so apps will no longer have to implement the FS recovery flow manually.
 
