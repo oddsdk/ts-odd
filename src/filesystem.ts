@@ -12,6 +12,8 @@ import * as Ucan from "./ucan/index.js"
 
 import * as RootKey from "./common/root-key.js"
 
+import * as DID from "./did/index.js"
+
 import { Branch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
 import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
@@ -117,21 +119,19 @@ export async function loadFileSystem({ config, dependencies, rootKey, username }
  * Recover a user's file system.
  */
 export async function recoverFileSystem({
-  agentDID,
   auth,
   dependencies,
   oldUsername,
   newUsername,
   readKey,
 }: {
-  agentDID: () => Promise<string>
   auth: AuthenticationStrategy
   dependencies: Dependencies
 } & RecoverFileSystemParams): Promise<{ success: boolean }> {
   try {
     const { crypto, reference, storage } = dependencies
 
-    const newRootDID = await agentDID()
+    const newRootDID = await DID.agent(dependencies.crypto)
 
     // Register a new user with the `newUsername`
     const { success } = await auth.register({

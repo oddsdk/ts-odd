@@ -494,16 +494,17 @@ export async function assemble(config: Configuration, components: Components): P
 
   }
 
-  // AgentDID
-  const agentDID = () => DID.agent(components.crypto)
-
   // Shorthands
   const shorthands: ShortHands = {
     loadFileSystem: (username: string) =>
       loadFileSystem({ config, username, dependencies: components }),
     recoverFileSystem: (params: RecoverFileSystemParams) =>
-      recoverFileSystem({ agentDID, auth, dependencies: components, ...params }),
-    agentDID,
+      recoverFileSystem({
+        auth,
+        dependencies: components,
+        ...params,
+      }),
+    agentDID: () => DID.agent(components.crypto),
     sharingDID: () => DID.sharing(components.crypto),
   }
 
