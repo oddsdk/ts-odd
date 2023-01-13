@@ -142,7 +142,9 @@ export async function recoverFileSystem({
     }
 
     // Build an ephemeral UCAN to authorize the dataRoot.update call
-    const proof: string | null = await storage.getItem(storage.KEYS.ACCOUNT_UCAN)
+    const proof: string | null = await storage.getItem(
+      storage.KEYS.ACCOUNT_UCAN
+    )
     const ucan = await Ucan.build({
       dependencies,
       potency: "APPEND",
@@ -161,7 +163,7 @@ export async function recoverFileSystem({
     // Update the dataRoot of the new user
     await reference.dataRoot.update(oldRootCID, ucan)
 
-    // Store the accountDID, which is used to namespace the readKey
+    // Store the read key, which is namespaced using the account DID
     await RootKey.store({
       accountDID: newRootDID,
       crypto: crypto,
@@ -169,7 +171,7 @@ export async function recoverFileSystem({
     })
 
     return {
-      success: true
+      success: true,
     }
   } catch (error) {
     return {
