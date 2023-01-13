@@ -56,7 +56,7 @@ import FileSystem from "./fs/filesystem.js"
 // TYPES
 
 
-import { type RecoverFileSystemParams } from "./fs/types/params"
+import { type RecoverFileSystemParams } from "./fs/types/params.js"
 
 
 // IMPLEMENTATIONS

@@ -16,7 +16,7 @@ import { Branch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
 import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
 
-import { type RecoverFileSystemParams } from "./fs/types/params"
+import { type RecoverFileSystemParams } from "./fs/types/params.js"
 
 import { AuthenticationStrategy } from "./index.js"
 
