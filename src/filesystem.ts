@@ -128,55 +128,50 @@ export async function recoverFileSystem({
   auth: AuthenticationStrategy
   dependencies: Dependencies
 } & RecoverFileSystemParams): Promise<{ success: boolean }> {
-  try {
-    const { crypto, reference, storage } = dependencies
 
-    const newRootDID = await DID.agent(dependencies.crypto)
+  const { crypto, reference, storage } = dependencies
 
-    // Register a new user with the `newUsername`
-    const { success } = await auth.register({
-      username: newUsername,
-    })
-    if (!success) {
-      throw new Error("Failed to register new user")
-    }
+  const newRootDID = await DID.agent(dependencies.crypto)
 
-    // Build an ephemeral UCAN to authorize the dataRoot.update call
-    const proof: string | null = await storage.getItem(
-      storage.KEYS.ACCOUNT_UCAN
-    )
-    const ucan = await Ucan.build({
-      dependencies,
-      potency: "APPEND",
-      resource: "*",
-      proof: proof ? proof : undefined,
-      lifetimeInSeconds: 60 * 3, // Three minutes
-      audience: newRootDID,
-      issuer: newRootDID,
-    })
+  // Register a new user with the `newUsername`
+  const { success } = await auth.register({
+    username: newUsername,
+  })
+  if (!success) {
+    throw new Error("Failed to register new user")
+  }
 
-    const oldRootCID = await reference.dataRoot.lookup(oldUsername)
-    if (!oldRootCID) {
-      throw new Error("Failed to lookup oldUsername")
-    }
+  // Build an ephemeral UCAN to authorize the dataRoot.update call
+  const proof: string | null = await storage.getItem(
+    storage.KEYS.ACCOUNT_UCAN
+  )
+  const ucan = await Ucan.build({
+    dependencies,
+    potency: "APPEND",
+    resource: "*",
+    proof: proof ? proof : undefined,
+    lifetimeInSeconds: 60 * 3, // Three minutes
+    audience: newRootDID,
+    issuer: newRootDID,
+  })
 
-    // Update the dataRoot of the new user
-    await reference.dataRoot.update(oldRootCID, ucan)
+  const oldRootCID = await reference.dataRoot.lookup(oldUsername)
+  if (!oldRootCID) {
+    throw new Error("Failed to lookup oldUsername")
+  }
 
-    // Store the read key, which is namespaced using the account DID
-    await RootKey.store({
-      accountDID: newRootDID,
-      crypto: crypto,
-      readKey,
-    })
+  // Update the dataRoot of the new user
+  await reference.dataRoot.update(oldRootCID, ucan)
 
-    return {
-      success: true,
-    }
-  } catch (error) {
-    return {
-      success: false
-    }
+  // Store the read key, which is namespaced using the account DID
+  await RootKey.store({
+    accountDID: newRootDID,
+    crypto: crypto,
+    readKey,
+  })
+
+  return {
+    success: true,
   }
 }
 
