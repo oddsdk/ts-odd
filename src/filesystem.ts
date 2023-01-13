@@ -1,26 +1,23 @@
 import { CID } from "multiformats/cid"
 
+import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
-import * as Reference from "./components/reference/implementation.js"
-
+import * as DID from "./did/index.js"
 import * as Protocol from "./fs/protocol/index.js"
+import * as Reference from "./components/reference/implementation.js"
+import * as RootKey from "./common/root-key.js"
+import * as Storage from "./components/storage/implementation.js"
+import * as Ucan from "./ucan/index.js"
 import * as Versions from "./fs/versions.js"
 
-import FileSystem, { Dependencies } from "./fs/filesystem.js"
-
-import * as Ucan from "./ucan/index.js"
-
-import * as RootKey from "./common/root-key.js"
-
-import * as DID from "./did/index.js"
-
+import { AuthenticationStrategy } from "./index.js"
 import { Branch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
+import { Dependencies } from "./fs/filesystem.js"
 import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
-
 import { type RecoverFileSystemParams } from "./fs/types/params.js"
 
-import { AuthenticationStrategy } from "./index.js"
+import FileSystem from "./fs/filesystem.js"
 
 
 /**
@@ -120,15 +117,18 @@ export async function loadFileSystem({ config, dependencies, rootKey, username }
  */
 export async function recoverFileSystem({
   auth,
-  dependencies,
   oldUsername,
   newUsername,
   readKey,
 }: {
   auth: AuthenticationStrategy
-  dependencies: Dependencies
 } & RecoverFileSystemParams): Promise<{ success: boolean }> {
 
+  const dependencies = {
+    crypto: Crypto,
+    reference: Reference,
+    storage: Storage,
+  }
   const { crypto, reference, storage } = dependencies
 
   const newRootDID = await DID.agent(dependencies.crypto)
