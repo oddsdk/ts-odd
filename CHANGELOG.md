@@ -10,6 +10,7 @@ Removes the `fs.add` and `fs.cat` functions, use `fs.read` and `fs.write` instea
 
 - Adds `program.recoverFileSystem({ newUsername, oldUsername, readKey })` shorthand method so apps will no longer have to implement the FS recovery flow manually.
 - Adds `program.accountDID(username)` shorthand method to retrieve the root DID of a given account username.
+- Adds the file system data functions as shorthand methods.
 
 
 ### v0.35.2
