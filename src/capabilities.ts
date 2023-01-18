@@ -28,7 +28,7 @@ export type Capabilities = {
 
 export type FileSystemSecret = {
   bareNameFilter: string
-  path: Path.DistinctivePath
+  path: Path.Distinctive<Path.Segments>
   readKey: Uint8Array
 }
 
@@ -77,7 +77,7 @@ export async function collectSecret({ accountDID, bareNameFilter, crypto, path, 
   accountDID: string
   bareNameFilter: string
   crypto: Crypto.Implementation
-  path: Path.DistinctivePath
+  path: Path.DistinctivePath<Path.Segments>
   readKey: Uint8Array
   storage: Storage.Implementation
 }) {
@@ -166,7 +166,7 @@ export async function validateSecrets(
   permissions: Permissions.Permissions
 ): Promise<boolean> {
   return Permissions.permissionPaths(permissions).reduce(
-    (acc: Promise<boolean>, path: Path.DistinctivePath): Promise<boolean> =>
+    (acc: Promise<boolean>, path: Path.Distinctive<Path.Branched>): Promise<boolean> =>
       acc.then(async (bool: boolean) => {
         if (bool === false) return bool
         if (Path.isBranch(Path.Branch.Public, path)) return bool

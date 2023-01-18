@@ -9,7 +9,7 @@ import * as Path from "../path/index.js"
 type Arguments = {
   crypto: Crypto.Implementation
   accountDID: string
-  path: DistinctivePath
+  path: DistinctivePath<Path.Segments>
 }
 
 
@@ -30,7 +30,7 @@ export async function readKey(
 // 🛠
 
 
-async function pathHash(crypto: Crypto.Implementation, path: DistinctivePath): Promise<string> {
+async function pathHash(crypto: Crypto.Implementation, path: DistinctivePath<Path.Segments>): Promise<string> {
   return Uint8Arrays.toString(
     await crypto.hash.sha256(
       Uint8Arrays.fromString("/" + Path.unwrap(path).join("/"), "utf8")

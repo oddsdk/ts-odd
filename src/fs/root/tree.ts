@@ -271,7 +271,7 @@ export default class RootTree implements Puttable {
   // PRIVATE TREES
   // -------------
 
-  findPrivateNode(path: DistinctivePath): [ DistinctivePath, PrivateNode | null ] {
+  findPrivateNode(path: DistinctivePath<Path.Segments>): [ DistinctivePath<Path.Segments>, PrivateNode | null ] {
     return findPrivateNode(this.privateNodes, path)
   }
 
@@ -432,7 +432,7 @@ export default class RootTree implements Puttable {
 // ㊙️
 
 
-type PathKey = { path: DistinctivePath; key: Uint8Array }
+type PathKey = { path: DistinctivePath<Path.Segments>; key: Uint8Array }
 
 
 async function findBareNameFilter(
@@ -440,7 +440,7 @@ async function findBareNameFilter(
   storage: Storage.Implementation,
   accountDID: string,
   map: Record<string, PrivateNode>,
-  path: DistinctivePath
+  path: DistinctivePath<Path.Segments>
 ): Promise<Maybe<BareNameFilter>> {
   const bareNameFilterId = await Identifiers.bareNameFilter({ accountDID, crypto, path })
   const bareNameFilter: Maybe<BareNameFilter> = await storage.getItem(bareNameFilterId)
@@ -466,8 +466,8 @@ async function findBareNameFilter(
 
 function findPrivateNode(
   map: Record<string, PrivateNode>,
-  path: DistinctivePath
-): [ DistinctivePath, PrivateNode | null ] {
+  path: DistinctivePath<Path.Segments>
+): [ DistinctivePath<Path.Segments>, PrivateNode | null ] {
   const t = map[ Path.toPosix(path) ]
   if (t) return [ path, t ]
 
@@ -523,7 +523,7 @@ async function permissionKeys(
 ): Promise<PathKey[]> {
   return permissionPaths(permissions).reduce(async (
     acc: Promise<PathKey[]>,
-    path: DistinctivePath
+    path: DistinctivePath<Path.Segments>
   ): Promise<PathKey[]> => {
     if (Path.isBranch(Path.Branch.Public, path)) return acc
 

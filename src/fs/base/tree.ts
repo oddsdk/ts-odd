@@ -4,7 +4,7 @@ import * as Check from "../types/check.js"
 import * as Pathing from "../../path/index.js"
 
 import { Maybe } from "../../common/index.js"
-import { Path } from "../../path/index.js"
+import { Segments as Path } from "../../path/index.js"
 import { PutResult } from "../../components/depot/implementation.js"
 import { Tree, File, UnixTree, Links, UpdateCallback } from "../types.js"
 

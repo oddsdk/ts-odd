@@ -46,14 +46,14 @@ export class Repo extends Repository<Ucan.Ucan> {
    * Look up a UCAN with a file system path.
    */
   async lookupFilesystemUcan(
-    path: DistinctivePath | "*"
+    path: DistinctivePath<Path.Segments> | "*"
   ): Promise<Ucan.Ucan | null> {
     const god = this.getByKey("*")
     if (god) return god
 
     const all = path === "*"
-    const isDirectory = all ? false : Path.isDirectory(path as DistinctivePath)
-    const pathParts = all ? [ "*" ] : Path.unwrap(path as DistinctivePath)
+    const isDirectory = all ? false : Path.isDirectory(path)
+    const pathParts = all ? [ "*" ] : Path.unwrap(path)
 
     const prefix = filesystemPrefix()
 

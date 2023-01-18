@@ -5,7 +5,7 @@ import * as Depot from "../../components/depot/implementation.js"
 import * as Manners from "../../components/manners/implementation.js"
 
 import { WASM_WNFS_VERSION } from "../../common/version.js"
-import { Path } from "../../path/index.js"
+import { Segments as Path } from "../../path/index.js"
 
 import { UnixTree, Puttable, File, Links, PuttableUnixTree } from "../types.js"
 import { BlockStore, DepotBlockStore } from "./DepotBlockStore.js"

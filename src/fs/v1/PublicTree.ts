@@ -198,7 +198,7 @@ export class PublicTree extends BaseTree {
     return child
   }
 
-  async get(path: Path.Path): Promise<Child | null> {
+  async get(path: Path.Segments): Promise<Child | null> {
     if (path.length < 1) return this
 
     const res = await this.getRecurse(this.header.skeleton, path as NonEmptyPath)
@@ -309,7 +309,7 @@ export class PublicTree extends BaseTree {
     return this
   }
 
-  insertSoftLink({ name, path, username }: { name: string; path: DistinctivePath; username: string }): this {
+  insertSoftLink({ name, path, username }: { name: string; path: DistinctivePath<Path.Segments>; username: string }): this {
     const softLink = {
       ipns: this.reference.dataRoot.domain(username) + `/public/${Path.toPosix(path)}`,
       name

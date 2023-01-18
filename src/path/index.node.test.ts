@@ -108,7 +108,7 @@ describe("the path helpers", () => {
       creator: "Fission"
     }
 
-    const root: DirectoryPath = Path.appData(
+    const root: DirectoryPath<Path.Branched> = Path.appData(
       appInfo
     )
 
@@ -118,7 +118,7 @@ describe("the path helpers", () => {
       { directory: [ Path.Branch.Private, "Apps", appInfo.creator, appInfo.name ] }
     )
 
-    const dir: DirectoryPath = Path.appData(
+    const dir: DirectoryPath<Path.Branched> = Path.appData(
       appInfo,
       Path.directory("a")
     )
@@ -129,7 +129,7 @@ describe("the path helpers", () => {
       { directory: [ Path.Branch.Private, "Apps", appInfo.creator, appInfo.name, "a" ] }
     )
 
-    const file: FilePath = Path.appData(
+    const file: FilePath<Path.Branched> = Path.appData(
       appInfo,
       Path.file("a")
     )
@@ -143,7 +143,7 @@ describe("the path helpers", () => {
 
 
   it("can be combined", () => {
-    const dir: DirectoryPath = Path.combine(
+    const dir: DirectoryPath<Path.Segments> = Path.combine(
       Path.directory("a"),
       Path.directory("b")
     )
@@ -154,7 +154,7 @@ describe("the path helpers", () => {
       { directory: [ "a", "b" ] }
     )
 
-    const file: FilePath = Path.combine(
+    const file: FilePath<Path.Segments> = Path.combine(
       Path.directory("a"),
       Path.file("b")
     )

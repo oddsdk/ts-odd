@@ -27,7 +27,7 @@ import RootTree from "./root/tree.js"
 // CONSTANTS
 
 
-export const EXCHANGE_PATH: DirectoryPath = Path.directory(
+export const EXCHANGE_PATH: Path.Directory<Path.Branched> = Path.directory(
   Path.Branch.Public,
   ".well-known",
   "exchange"

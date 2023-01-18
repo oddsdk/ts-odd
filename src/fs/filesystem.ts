@@ -16,7 +16,7 @@ import * as TypeChecks from "../common/type-checks.js"
 import * as Ucan from "../ucan/index.js"
 import * as Versions from "./versions.js"
 
-import { Branch, DistinctivePath, DirectoryPath, FilePath } from "../path/index.js"
+import { Branch, Branched, DistinctivePath, DirectoryPath, FilePath } from "../path/index.js"
 import { Permissions } from "../permissions.js"
 import { SymmAlg } from "../components/crypto/implementation.js"
 import { decodeCID } from "../common/index.js"
@@ -42,12 +42,6 @@ import * as Sharing from "./share.js"
 
 // TYPES
 
-
-export interface AppPath {
-  (): DirectoryPath
-  (path: DirectoryPath): DirectoryPath
-  (path: FilePath): FilePath
-}
 
 export type Dependencies = {
   crypto: Crypto.Implementation
@@ -210,7 +204,7 @@ export class FileSystem implements API {
   // POSIX INTERFACE (DIRECTORIES)
   // -----------------------------
 
-  async ls(path: DirectoryPath): Promise<Links> {
+  async ls(path: Path.Directory<Branched>): Promise<Links> {
     if (Path.isFile(path)) throw new Error("`ls` only accepts directory paths")
     return this.runOnNode(path, {
       public: async (root, relPath) => {
@@ -226,7 +220,7 @@ export class FileSystem implements API {
     })
   }
 
-  async mkdir(path: DirectoryPath, options: MutationOptions = {}): Promise<this> {
+  async mkdir(path: Path.Directory<Branched>, options: MutationOptions = {}): Promise<this> {
     if (Path.isFile(path)) throw new Error("`mkdir` only accepts directory paths")
 
     await this.runMutationOnNode(path, {
@@ -252,7 +246,7 @@ export class FileSystem implements API {
   // -----------------------
 
   async write(
-    path: DistinctivePath,
+    path: Path.Distinctive<Branched>,
     content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options: MutationOptions = {}
   ): Promise<this> {
@@ -332,7 +326,7 @@ export class FileSystem implements API {
     return this
   }
 
-  async read(path: FilePath): Promise<Uint8Array> {
+  async read(path: Path.File<Branched>): Promise<Uint8Array> {
     if (Path.isDirectory(path)) throw new Error("`cat` only accepts file paths")
     return this.runOnNode(path, {
       public: async (root, relPath) => {
@@ -350,7 +344,7 @@ export class FileSystem implements API {
   // POSIX INTERFACE (GENERAL)
   // -------------------------
 
-  async exists(path: DistinctivePath): Promise<boolean> {
+  async exists(path: Path.Distinctive<Branched>): Promise<boolean> {
     return this.runOnNode(path, {
       public: async (root, relPath) => {
         return await root.exists(relPath)
@@ -362,7 +356,7 @@ export class FileSystem implements API {
     })
   }
 
-  async get(path: DistinctivePath): Promise<PuttableUnixTree | File | null> {
+  async get(path: Path.Distinctive<Branched>): Promise<PuttableUnixTree | File | null> {
     return this.runOnNode(path, {
       public: async (root, relPath) => {
         return await root.get(relPath)
@@ -376,7 +370,7 @@ export class FileSystem implements API {
   }
 
   // This is only implemented on the same tree for now and will error otherwise
-  async mv(from: DistinctivePath, to: DistinctivePath): Promise<this> {
+  async mv(from: Path.Distinctive<Branched>, to: Path.Distinctive<Branched>): Promise<this> {
     const sameTree = Path.isSameBranch(from, to)
 
     if (!Path.isSameKind(from, to)) {
@@ -426,7 +420,7 @@ export class FileSystem implements API {
     }
   }
 
-  async rm(path: DistinctivePath): Promise<this> {
+  async rm(path: DistinctivePath<Branched>): Promise<this> {
     await this.runMutationOnNode(path, {
       public: async (root, relPath) => {
         await root.rm(relPath)
@@ -448,7 +442,7 @@ export class FileSystem implements API {
    */
   async symlink(
     args:
-      { at: DirectoryPath; referringTo: DistinctivePath; name: string }
+      { at: Path.Directory<Branched>; referringTo: Path.Distinctive<Branched>; name: string }
   ): Promise<this> {
     const { at, referringTo, name } = args
     const username = this.account.username
@@ -654,7 +648,7 @@ export class FileSystem implements API {
   /**
    * Share a private file with a user.
    */
-  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails> {
+  async sharePrivate(paths: Path.Distinctive<Path.Private>[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails> {
     const verifiedPaths = paths.filter(path => {
       return Path.isBranch(Path.Branch.Private, path)
     })
@@ -705,7 +699,7 @@ export class FileSystem implements API {
   // --------
 
   /** @internal */
-  async checkMutationPermissionAndAddProof(path: DistinctivePath, isMutation: boolean): Promise<void> {
+  async checkMutationPermissionAndAddProof(path: DistinctivePath<Branched>, isMutation: boolean): Promise<void> {
     const operation = isMutation ? "make changes to" : "query"
 
     if (!this.localOnly) {
@@ -721,10 +715,10 @@ export class FileSystem implements API {
 
   /** @internal */
   async runMutationOnNode(
-    path: DistinctivePath,
+    path: DistinctivePath<Branched>,
     handlers: {
-      public(root: UnixTree, relPath: Path.Path): Promise<void>
-      private(node: PrivateTree | PrivateFile, relPath: Path.Path): Promise<void>
+      public(root: UnixTree, relPath: Path.Segments): Promise<void>
+      private(node: PrivateTree | PrivateFile, relPath: Path.Segments): Promise<void>
     },
   ): Promise<void> {
     const parts = Path.unwrap(path)
@@ -766,10 +760,10 @@ export class FileSystem implements API {
 
   /** @internal */
   async runOnNode<A>(
-    path: DistinctivePath,
+    path: DistinctivePath<Branched>,
     handlers: {
-      public(root: UnixTree, relPath: Path.Path): Promise<A>
-      private(node: Tree | File, relPath: Path.Path): Promise<A>
+      public(root: UnixTree, relPath: Path.Segments): Promise<A>
+      private(node: Tree | File, relPath: Path.Segments): Promise<A>
     },
   ): Promise<A> {
     const parts = Path.unwrap(path)
@@ -803,7 +797,7 @@ export class FileSystem implements API {
   * `put` should be called on the node returned from the function.
   * Normally this is handled by `runOnNode`.
   */
-  async runOnChildTree(node: Tree, relPath: Path.Path, fn: (tree: Tree) => Promise<Tree>): Promise<Tree> {
+  async runOnChildTree(node: Tree, relPath: Path.Segments, fn: (tree: Tree) => Promise<Tree>): Promise<Tree> {
     let tree = node
 
     if (relPath.length) {

@@ -14,7 +14,7 @@ import PrivateHistory from "./PrivateHistory.js"
 import { DEFAULT_AES_ALG } from "../protocol/basic.js"
 import { Links, SoftLink, UpdateCallback } from "../types.js"
 import { DecryptedNode, PrivateSkeletonInfo, PrivateTreeInfo, PrivateAddResult, PrivateLink, PrivateSkeleton } from "../protocol/private/types.js"
-import { Path } from "../../path/index.js"
+import { Segments as Path } from "../../path/index.js"
 import { PrivateName, BareNameFilter } from "../protocol/private/namefilter.js"
 import { decodeCID, isObject, hasProp, mapObj, Maybe, removeKeyFromObj, encodeCID } from "../../common/index.js"
 
