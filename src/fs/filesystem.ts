@@ -251,7 +251,7 @@ export class FileSystem implements API {
   // POSIX INTERFACE (FILES)
   // -----------------------
 
-  async add(
+  async write(
     path: DistinctivePath,
     content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options: MutationOptions = {}
@@ -332,7 +332,7 @@ export class FileSystem implements API {
     return this
   }
 
-  async cat(path: FilePath): Promise<Uint8Array> {
+  async read(path: FilePath): Promise<Uint8Array> {
     if (Path.isDirectory(path)) throw new Error("`cat` only accepts file paths")
     return this.runOnNode(path, {
       public: async (root, relPath) => {
@@ -344,16 +344,6 @@ export class FileSystem implements API {
           : await node.cat(relPath)
       }
     })
-  }
-
-  async read(path: FilePath): Promise<Uint8Array | null> {
-    if (Path.isDirectory(path)) throw new Error("`read` only accepts file paths")
-    return this.cat(path)
-  }
-
-  async write(path: FilePath, content: Uint8Array, options: MutationOptions = {}): Promise<this> {
-    if (Path.isDirectory(path)) throw new Error("`write` only accepts file paths")
-    return this.add(path, content, options)
   }
 
 
@@ -584,7 +574,7 @@ export class FileSystem implements API {
    */
   async acceptShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<this> {
     const share = await this.loadShare({ shareId, sharedBy })
-    await this.add(
+    await this.write(
       Path.directory(Branch.Private, "Shared with me", sharedBy),
       await share.ls([]).then(Object.values).then(links => links.filter(FsTypeChecks.isSoftLink))
     )

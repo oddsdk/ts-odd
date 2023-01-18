@@ -34,14 +34,13 @@ export interface Posix {
   mkdir(path: DirectoryPath, options?: MutationOptions): Promise<this>
 
   // Files
-  add(
+  write(
     path: DistinctivePath,
     content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options?: MutationOptions
   ): Promise<this>
 
   read(path: FilePath): Promise<Uint8Array | null>
-  write(path: FilePath, content: Uint8Array, options?: MutationOptions): Promise<this>
 }
 
 export interface Sharing {
