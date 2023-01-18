@@ -77,6 +77,7 @@ import * as FissionLobbyProduction from "./components/capabilities/implementatio
 import * as FissionLobbyStaging from "./components/capabilities/implementation/fission-lobby-staging.js"
 import * as FissionReferenceProduction from "./components/reference/implementation/fission-production.js"
 import * as FissionReferenceStaging from "./components/reference/implementation/fission-staging.js"
+import * as MemoryStorage from "./components/storage/implementation/memory.js"
 import * as ProperManners from "./components/manners/implementation/base.js"
 
 
@@ -197,7 +198,7 @@ export async function program(settings: Partial<Components> & Configuration): Pr
 
 
 
-// PREDEFINED COMPONENT COMBINATIONS
+// PREDEFINED COMPONENTS
 
 
 /**
@@ -253,6 +254,7 @@ export const auth = {
   }
 }
 
+
 /**
  * Predefined capabilities configurations.
  *
@@ -288,6 +290,27 @@ export const capabilities = {
   }
 }
 
+
+/**
+ * Predefined crypto configurations.
+ *
+ * The crypto component is responsible for various cryptographic operations.
+ * This includes AES and RSA encryption & decryption, creating and storing
+ * key pairs, verifying DIDs and defining their magic bytes, etc.
+ */
+export const crypto = {
+  /**
+   * The default crypto component, uses primarily the Web Crypto API and [keystore-idb](https://github.com/fission-codes/keystore-idb).
+   * Keys are stored in a non-exportable way in indexedDB using the Web Crypto API.
+   *
+   * IndexedDB store is namespaced.
+   */
+  browser(settings: Configuration): Promise<Crypto.Implementation> {
+    return defaultCryptoComponent(settings)
+  }
+}
+
+
 /**
  * Predefined depot configurations.
  *
@@ -316,6 +339,22 @@ export const depot = {
 
     if (settings.staging) return FissionIpfsStaging.implementation({ storage }, repoName)
     return FissionIpfsProduction.implementation({ storage }, repoName)
+  }
+}
+
+
+/**
+ * Predefined manners configurations.
+ *
+ * The manners component allows you to tweak various behaviours of a Webnative program,
+ * such as logging and file system hooks (eg. what to do after a new file system is created).
+ */
+export const manners = {
+  /**
+   * The default Webnative behaviour.
+   */
+  default(settings: Configuration): Manners.Implementation {
+    return defaultMannersComponent(settings)
   }
 }
 
@@ -350,6 +389,29 @@ export const reference = {
 
     if (staging) return FissionReferenceStaging.implementation({ crypto, manners, storage })
     return FissionReferenceProduction.implementation({ crypto, manners, storage })
+  }
+}
+
+
+/**
+ * Predefined storage configuration.
+ *
+ * A key-value storage abstraction responsible for storing various
+ * pieces of data, such as session data and UCANs.
+ */
+export const storage = {
+  /**
+   * IndexedDB through the `localForage` library, automatically namespaced.
+   */
+  browser(settings: Configuration): Storage.Implementation {
+    return defaultStorageComponent(settings)
+  },
+
+  /**
+   * In-memory store.
+   */
+  memory(): Storage.Implementation {
+    return MemoryStorage.implementation()
   }
 }
 
