@@ -32,6 +32,7 @@ import * as Capabilities from "./capabilities.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as DID from "./did/local.js"
+import * as FileSystemData from "./fs/data.js"
 import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
@@ -159,11 +160,15 @@ export type ShortHands = {
 
   // File system
   loadFileSystem: (username: string) => Promise<FileSystem>
-  recoverFileSystem: ({
-    newUsername,
-    oldUsername,
-    readKey,
-  }: RecoverFileSystemParams) => Promise<{ success: boolean }>
+  recoverFileSystem: (params: RecoverFileSystemParams) => Promise<{ success: boolean }>
+
+  fileSystem: {
+    addPublicExchangeKey: (fs: FileSystem) => Promise<void>
+    addSampleData: (fs: FileSystem) => Promise<void>
+    hasPublicExchangeKey: (fs: FileSystem) => Promise<boolean>
+    load: (username: string) => Promise<FileSystem>
+    recover: (params: RecoverFileSystemParams) => Promise<{ success: boolean }>
+  }
 }
 
 
@@ -568,14 +573,16 @@ export async function assemble(config: Configuration, components: Components): P
     sharingDID: () => DID.sharing(components.crypto),
 
     // File system
-    loadFileSystem: (username: string) =>
-      loadFileSystem({ config, username, dependencies: components }),
-    recoverFileSystem: (params: RecoverFileSystemParams) =>
-      recoverFileSystem({
-        auth,
-        dependencies: { crypto: components.crypto, reference: components.reference, storage: components.storage },
-        ...params,
-      }),
+    loadFileSystem: (username: string) => loadFileSystem({ config, username, dependencies: components }),
+    recoverFileSystem: (params: RecoverFileSystemParams) => recoverFileSystem({ auth, dependencies: components, ...params }),
+
+    fileSystem: {
+      addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
+      addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
+      hasPublicExchangeKey: (fs: FileSystem) => FileSystemData.hasPublicExchangeKey(components.crypto, fs),
+      load: (username: string) => loadFileSystem({ config, username, dependencies: components }),
+      recover: (params: RecoverFileSystemParams) => recoverFileSystem({ auth, dependencies: components, ...params }),
+    }
   }
 
   // Fin
