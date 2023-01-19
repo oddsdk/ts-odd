@@ -159,9 +159,6 @@ export type ShortHands = {
   sharingDID: () => Promise<string>
 
   // File system
-  loadFileSystem: (username: string) => Promise<FileSystem>
-  recoverFileSystem: (params: RecoverFileSystemParams) => Promise<{ success: boolean }>
-
   fileSystem: {
     addPublicExchangeKey: (fs: FileSystem) => Promise<void>
     addSampleData: (fs: FileSystem) => Promise<void>
@@ -440,7 +437,7 @@ export const storage = {
  * - Provides shorthands to functions so you don't have to pass in components.
  * - Ensure backwards compatibility with older Webnative clients.
  *
- * See `loadFileSystem` if you want to load the user's file system yourself.
+ * See the `program.fileSystem.load` function if you want to load the user's file system yourself.
  */
 export async function assemble(config: Configuration, components: Components): Promise<Program> {
   const permissions = config.permissions
@@ -573,9 +570,6 @@ export async function assemble(config: Configuration, components: Components): P
     sharingDID: () => DID.sharing(components.crypto),
 
     // File system
-    loadFileSystem: (username: string) => loadFileSystem({ config, username, dependencies: components }),
-    recoverFileSystem: (params: RecoverFileSystemParams) => recoverFileSystem({ auth, dependencies: components, ...params }),
-
     fileSystem: {
       addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
       addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
