@@ -141,8 +141,8 @@ __Notes:__
 
 - You can use alternative authentication strategies, such as [webnative-walletauth](https://github.com/fission-codes/webnative-walletauth).
 - You can remove all traces of the user using `await session.destroy()`
-- You can load the file system separately if you're using a web worker. This is done using the combination of `configuration.fileSystem.loadImmediately = false` and `program.loadFileSystem()`
-- You can recover a file system if you've downloaded a Recovery Kit by calling `program.recoverFileSystem({ newUsername, oldUsername, readKey })`. The `oldUsername` and `readKey` can be parsed from the uploaded Recovery Kit and the `newUsername` can be generated before calling the function. Please refer to [this example](https://github.com/webnative-examples/webnative-app-template/blob/5498e7062a4578028b8b55d2ac4c611bd5daab85/src/components/auth/recover/HasRecoveryKit.svelte#L49) from Fission's Webnative App Template. Additionally, if you would like to see how to generate a Recovery Kit, you can reference [this example](https://github.com/webnative-examples/webnative-app-template/blob/main/src/lib/account-settings.ts#L186)
+- You can load the file system separately if you're using a web worker. This is done using the combination of `configuration.fileSystem.loadImmediately = false` and `program.fileSystem.load()`
+- You can recover a file system if you've downloaded a Recovery Kit by calling `program.fileSystem.recover({ newUsername, oldUsername, readKey })`. The `oldUsername` and `readKey` can be parsed from the uploaded Recovery Kit and the `newUsername` can be generated before calling the function. Please refer to [this example](https://github.com/webnative-examples/webnative-app-template/blob/5498e7062a4578028b8b55d2ac4c611bd5daab85/src/components/auth/recover/HasRecoveryKit.svelte#L49) from Fission's Webnative App Template. Additionally, if you would like to see how to generate a Recovery Kit, you can reference [this example](https://github.com/webnative-examples/webnative-app-template/blob/main/src/lib/account-settings.ts#L186)
 
 
 ## Working with the file system
