@@ -152,14 +152,18 @@ export enum ProgramError {
 }
 
 export type ShortHands = {
+  // DIDs
+  accountDID: (username: string) => Promise<string>
+  agentDID: () => Promise<string>
+  sharingDID: () => Promise<string>
+
+  // File system
   loadFileSystem: (username: string) => Promise<FileSystem>
   recoverFileSystem: ({
     newUsername,
     oldUsername,
     readKey,
   }: RecoverFileSystemParams) => Promise<{ success: boolean }>
-  agentDID: () => Promise<string>
-  sharingDID: () => Promise<string>
 }
 
 
@@ -558,6 +562,12 @@ export async function assemble(config: Configuration, components: Components): P
 
   // Shorthands
   const shorthands: ShortHands = {
+    // DIDs
+    accountDID: (username: string) => components.reference.didRoot.lookup(username),
+    agentDID: () => DID.agent(components.crypto),
+    sharingDID: () => DID.sharing(components.crypto),
+
+    // File system
     loadFileSystem: (username: string) =>
       loadFileSystem({ config, username, dependencies: components }),
     recoverFileSystem: (params: RecoverFileSystemParams) =>
@@ -566,8 +576,6 @@ export async function assemble(config: Configuration, components: Components): P
         dependencies: { crypto: components.crypto, reference: components.reference, storage: components.storage },
         ...params,
       }),
-    agentDID: () => DID.agent(components.crypto),
-    sharingDID: () => DID.sharing(components.crypto),
   }
 
   // Fin
@@ -744,11 +752,11 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   if (migrationOccurred) return
 
   // Only try to migrate if environment supports indexedDB
-  if (!self.indexedDB) return
+  if (!globalThis.indexedDB) return
 
   // Migration
-  const existingDatabases = self.indexedDB.databases
-    ? (await self.indexedDB.databases()).map(db => db.name)
+  const existingDatabases = globalThis.indexedDB.databases
+    ? (await globalThis.indexedDB.databases()).map(db => db.name)
     : [ "keystore", "localforage" ]
 
   const keystoreDB = existingDatabases.includes("keystore") ? await bwOpenDatabase("keystore") : null
@@ -827,7 +835,7 @@ function bwGetValue(db: IDBDatabase, storeName: string, key: string): Promise<Ma
 
 function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
   return new Promise((resolve, reject) => {
-    const req = self.indexedDB.open(name)
+    const req = globalThis.indexedDB.open(name)
 
     req.onerror = () => {
       // No database, moving on.
@@ -841,7 +849,7 @@ function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
     req.onupgradeneeded = e => {
       // Don't create database if it didn't exist before
       req.transaction?.abort()
-      self.indexedDB.deleteDatabase(name)
+      globalThis.indexedDB.deleteDatabase(name)
     }
   })
 }
