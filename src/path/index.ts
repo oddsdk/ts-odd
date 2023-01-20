@@ -17,20 +17,35 @@ export enum Kind {
   File = "file"
 }
 
-/**
- * `RootBranch`es that are accessible through the file system interface.
- */
-export type Private = "private" | RootBranch.Private
-export type Public = "public" | RootBranch.Public
-export type Partition = Private | Public
-
 export type Segment = string
 export type Segments = Segment[]
 export type SegmentsNonEmpty = [ Segment, ...Segments ]
 export type Partitioned<P> = [ P, ...Segments ]
 export type PartitionedNonEmpty<P> = [ P, Segment, ...Segments ]
 
+/**
+ * Private partition
+ */
+export type Private = "private" | RootBranch.Private
+
+/**
+ * Public partition
+ */
+export type Public = "public" | RootBranch.Public
+
+/**
+ * `RootBranch`es that are accessible through the POSIX file system interface.
+ */
+export type Partition = Private | Public
+
+/**
+ * A directory path.
+ */
 export type DirectoryPath<P> = { directory: P }
+
+/**
+ * A file path.
+ */
 export type FilePath<P> = { file: P }
 
 /**
