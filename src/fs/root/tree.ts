@@ -3,7 +3,7 @@ import * as Uint8arrays from "uint8arrays"
 import { CID } from "multiformats/cid"
 
 import { BareNameFilter } from "../protocol/private/namefilter.js"
-import { Branch, DistinctivePath } from "../../path/index.js"
+import { RootBranch, DistinctivePath } from "../../path/index.js"
 import { Maybe, decodeCID, encodeCID } from "../../common/index.js"
 import { Permissions, permissionPaths, ROOT_FILESYSTEM_PERMISSIONS } from "../../permissions.js"
 import { Puttable, SimpleLink, SimpleLinks, UnixTree } from "../types.js"
@@ -116,7 +116,7 @@ export default class RootTree implements Puttable {
     const mmpt = MMPT.create(dependencies.depot)
 
     // Private tree
-    const rootPath = Path.toPosix(Path.directory(Path.Branch.Private))
+    const rootPath = Path.toPosix(Path.directory(Path.RootBranch.Private))
     const rootTree = await PrivateTree.create(dependencies.crypto, dependencies.depot, dependencies.manners, dependencies.reference, mmpt, rootKey, null)
     await rootTree.put()
 
@@ -145,9 +145,9 @@ export default class RootTree implements Puttable {
     await tree.setVersion(wnfsWasm ? Versions.wnfsWasm : Versions.latest)
 
     await Promise.all([
-      tree.updatePuttable(Branch.Public, publicTree),
-      tree.updatePuttable(Branch.Pretty, prettyTree),
-      tree.updatePuttable(Branch.Private, mmpt)
+      tree.updatePuttable(RootBranch.Public, publicTree),
+      tree.updatePuttable(RootBranch.Pretty, prettyTree),
+      tree.updatePuttable(RootBranch.Private, mmpt)
     ])
 
     // Fin
@@ -174,7 +174,7 @@ export default class RootTree implements Puttable {
     }
 
     // Load public parts
-    const publicCID = links[ Branch.Public ]?.cid || null
+    const publicCID = links[ RootBranch.Public ]?.cid || null
     const publicTree = publicCID === null
       ? await PublicTree.empty(dependencies.depot, dependencies.reference)
       : wnfsWasm
@@ -182,12 +182,12 @@ export default class RootTree implements Puttable {
         : await PublicTree.fromCID(dependencies.depot, dependencies.reference, decodeCID(publicCID))
 
 
-    const prettyTree = links[ Branch.Pretty ]
-      ? await BareTree.fromCID(dependencies.depot, decodeCID(links[ Branch.Pretty ].cid))
+    const prettyTree = links[ RootBranch.Pretty ]
+      ? await BareTree.fromCID(dependencies.depot, decodeCID(links[ RootBranch.Pretty ].cid))
       : await BareTree.empty(dependencies.depot)
 
     // Load private bits
-    const privateCID = links[ Branch.Private ]?.cid || null
+    const privateCID = links[ RootBranch.Private ]?.cid || null
 
     let mmpt, privateNodes
     if (privateCID === null) {
@@ -198,7 +198,7 @@ export default class RootTree implements Puttable {
       privateNodes = await loadPrivateNodes(dependencies, accountDID, keys, mmpt)
     }
 
-    const privateLogCid = links[ Branch.PrivateLog ]?.cid
+    const privateLogCid = links[ RootBranch.PrivateLog ]?.cid
     const privateLog = privateLogCid
       ? await DAG.getPB(depot, decodeCID(privateLogCid))
         .then(dagNode => dagNode.Links.map(Link.fromDAGLink))
@@ -208,12 +208,12 @@ export default class RootTree implements Puttable {
       : []
 
     // Shared
-    const sharedCid = links[ Branch.Shared ]?.cid || null
+    const sharedCid = links[ RootBranch.Shared ]?.cid || null
     const sharedLinks = sharedCid
       ? await this.getSharedLinks(depot, decodeCID(sharedCid))
       : {}
 
-    const sharedCounterCid = links[ Branch.SharedCounter ]?.cid || null
+    const sharedCounterCid = links[ RootBranch.SharedCounter ]?.cid || null
     const sharedCounter = sharedCounterCid
       ? await protocol.basic
         .getFile(dependencies.depot, decodeCID(sharedCounterCid))
@@ -236,7 +236,7 @@ export default class RootTree implements Puttable {
       privateNodes
     })
 
-    if (links[ Branch.Version ] == null) {
+    if (links[ RootBranch.Version ] == null) {
       // Old versions of WNFS didn't write a root version link
       await tree.setVersion(Versions.latest)
     }
@@ -326,7 +326,7 @@ export default class RootTree implements Puttable {
     // save log
     const logCID = await DAG.putPB(this.dependencies.depot, log.map(Link.toDAGLink))
 
-    this.updateLink(Branch.PrivateLog, {
+    this.updateLink(RootBranch.PrivateLog, {
       cid: logCID,
       isFile: false,
       size: await this.dependencies.depot.size(logCID)
@@ -358,7 +358,7 @@ export default class RootTree implements Puttable {
       DagCBOR.code
     )
 
-    this.updateLink(Branch.Shared, {
+    this.updateLink(RootBranch.Shared, {
       cid: cid,
       isFile: false,
       size: await this.dependencies.depot.size(cid)
@@ -397,7 +397,7 @@ export default class RootTree implements Puttable {
       Uint8arrays.fromString(JSON.stringify(counter), "utf8")
     )
 
-    this.updateLink(Branch.SharedCounter, {
+    this.updateLink(RootBranch.SharedCounter, {
       cid: cid,
       isFile: true,
       size: size
@@ -418,7 +418,7 @@ export default class RootTree implements Puttable {
   async setVersion(v: Versions.SemVer): Promise<this> {
     const version = Uint8arrays.fromString(Versions.toString(v), "utf8")
     const result = await protocol.basic.putFile(this.dependencies.depot, version)
-    return this.updateLink(Branch.Version, result)
+    return this.updateLink(RootBranch.Version, result)
   }
 
   async getVersion(): Promise<Versions.SemVer | null> {
@@ -492,7 +492,7 @@ function loadPrivateNodes(
       const unwrappedPath = Path.unwrap(path)
 
       // if root, no need for bare name filter
-      if (unwrappedPath.length === 1 && unwrappedPath[ 0 ] === Path.Branch.Private) {
+      if (unwrappedPath.length === 1 && unwrappedPath[ 0 ] === Path.RootBranch.Private) {
         privateNode = await PrivateTree.fromBaseKey(dependencies.crypto, dependencies.depot, dependencies.manners, dependencies.reference, mmpt, key)
 
       } else {
@@ -512,7 +512,7 @@ function loadPrivateNodes(
 }
 
 async function parseVersionFromLinks(depot: Depot.Implementation, links: SimpleLinks): Promise<Versions.SemVer> {
-  const file = await protocol.basic.getFile(depot, decodeCID(links[ Branch.Version ].cid))
+  const file = await protocol.basic.getFile(depot, decodeCID(links[ RootBranch.Version ].cid))
   return Versions.fromString(Uint8arrays.toString(file)) ?? Versions.v0
 }
 
@@ -525,7 +525,7 @@ async function permissionKeys(
     acc: Promise<PathKey[]>,
     path: DistinctivePath<Path.Segments>
   ): Promise<PathKey[]> => {
-    if (Path.isBranch(Path.Branch.Public, path)) return acc
+    if (Path.isPartition(Path.RootBranch.Public, path)) return acc
 
     const name = await Identifiers.readKey({ accountDID, crypto, path })
     const key = await crypto.keystore.exportSymmKey(name)

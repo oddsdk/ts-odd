@@ -10,9 +10,9 @@ describe("the filesystem", () => {
   it("performs actions concurrently", async function () {
     const fs = await emptyFilesystem()
 
-    const pathA = Path.file(Path.Branch.Private, "a")
-    const pathB = Path.file(Path.Branch.Private, "b")
-    const pathC = Path.file(Path.Branch.Private, "c", "foo")
+    const pathA = Path.file("private", "a")
+    const pathB = Path.file("private", "b")
+    const pathC = Path.file("private", "c", "foo")
 
     await Promise.all([
       fs.write(pathA, from_s("x"))

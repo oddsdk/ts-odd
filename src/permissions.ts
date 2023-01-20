@@ -1,6 +1,6 @@
 import * as Path from "./path/index.js"
 import { AppInfo } from "./appInfo.js"
-import { Branched, Distinctive, Segments } from "./path/index.js"
+import { Distinctive } from "./path/index.js"
 import { Potency, Resource } from "./ucan/index.js"
 
 
@@ -61,19 +61,19 @@ export function appId(app: AppInfo): string {
  * Lists the filesystems paths for a set of `Permissions`.
  * This'll return a list of `DistinctivePath`s.
  */
-export function permissionPaths(permissions: Permissions): Distinctive<Path.Branched>[] {
-  let list = [] as Distinctive<Path.Branched>[]
+export function permissionPaths(permissions: Permissions): Distinctive<Path.Partitioned<Path.Partition>>[] {
+  let list = [] as Distinctive<Path.Partitioned<Path.Partition>>[]
 
   if (permissions.app) list.push(Path.appData(permissions.app))
   if (permissions.fs?.private) list = list.concat(
-    permissions.fs?.private.map(p => Path.withBranch(
-      Path.Branch.Private,
+    permissions.fs?.private.map(p => Path.withPartition(
+      "private",
       p
     ))
   )
   if (permissions.fs?.public) list = list.concat(
-    permissions.fs?.public.map(p => Path.withBranch(
-      Path.Branch.Public,
+    permissions.fs?.public.map(p => Path.withPartition(
+      "public",
       p
     ))
   )

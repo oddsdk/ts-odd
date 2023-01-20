@@ -166,10 +166,10 @@ export async function validateSecrets(
   permissions: Permissions.Permissions
 ): Promise<boolean> {
   return Permissions.permissionPaths(permissions).reduce(
-    (acc: Promise<boolean>, path: Path.Distinctive<Path.Branched>): Promise<boolean> =>
+    (acc: Promise<boolean>, path: Path.Distinctive<Path.Partitioned<Path.Partition>>): Promise<boolean> =>
       acc.then(async (bool: boolean) => {
         if (bool === false) return bool
-        if (Path.isBranch(Path.Branch.Public, path)) return bool
+        if (Path.isPartition(Path.RootBranch.Public, path)) return bool
 
         const keyName = await Identifiers.readKey({ accountDID, crypto, path })
         return crypto.keystore.keyExists(keyName)

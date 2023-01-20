@@ -8,7 +8,6 @@ import * as Path from "../../src/path/index.js"
 import * as Protocol from "../../src/fs/protocol/index.js"
 import * as SharingKey from "../../src/fs/protocol/shared/key.js"
 
-import { Branch } from "../../src/path/index.js"
 import { SymmAlg } from "../../src/components/crypto/implementation.js"
 import { components } from "../helpers/components.js"
 import { decodeCID } from "../../src/common/index.js"
@@ -33,8 +32,8 @@ describe("the filesystem", () => {
     const C = Uint8arrays.fromString("🕵️‍♀️", "utf8")
     const F = Uint8arrays.fromString("🍻", "utf8")
 
-    await fs.write(Path.file(Branch.Private, "a", "b", "c.txt"), C)
-    await fs.write(Path.file(Branch.Private, "a", "d", "e", "f.txt"), F)
+    await fs.write(Path.file("private", "a", "b", "c.txt"), C)
+    await fs.write(Path.file("private", "a", "d", "e", "f.txt"), F)
 
     // Test identifiers
     const exchangeKeyPair = await components.crypto.rsa.genKey()
@@ -47,16 +46,16 @@ describe("the filesystem", () => {
     const senderDID = DID.publicKeyToDid(components.crypto, senderPubKey, "rsa")
 
     // Create the `/shared` entries
-    const itemC = await fs.get(Path.file(Branch.Private, "a", "b", "c.txt"))
-    const itemE = await fs.get(Path.directory(Branch.Private, "a", "d", "e"))
+    const itemC = await fs.get(Path.file("private", "a", "b", "c.txt"))
+    const itemE = await fs.get(Path.directory("private", "a", "d", "e"))
 
     if (!PrivateFile.instanceOf(itemC)) throw new Error("Not a PrivateFile")
     if (!PrivateTree.instanceOf(itemE)) throw new Error("Not a PrivateTree")
 
     await fs.sharePrivate(
       [
-        Path.file(Branch.Private, "a", "b", "c.txt"),
-        Path.directory(Branch.Private, "a", "d", "e")
+        Path.file("private", "a", "b", "c.txt"),
+        Path.directory("private", "a", "d", "e")
       ],
       {
         sharedBy: { rootDid: senderDID, username: "anonymous" },

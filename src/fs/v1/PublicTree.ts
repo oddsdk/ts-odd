@@ -262,8 +262,8 @@ export class PublicTree extends BaseTree {
     const [ domain, ...pieces ] = link.ipns.split("/")
     const path = Path.fromPosix(pieces.join("/"))
     const isPublic =
-      Path.isBranch(Path.Branch.Public, path) ||
-      Path.isBranch(Path.Branch.Pretty, path)
+      Path.isRootBranch(Path.RootBranch.Public, path) ||
+      Path.isRootBranch(Path.RootBranch.Pretty, path)
 
     if (!isPublic) throw new Error("Mixing public and private soft links is not supported yet.")
 
@@ -271,7 +271,7 @@ export class PublicTree extends BaseTree {
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
     const publicCid = (await Protocol.basic.getSimpleLinks(depot, decodeCID(rootCid))).public.cid
-    const publicPath = Path.removeBranch(path)
+    const publicPath = Path.removePartition(path)
     const publicTree = await PublicTree.fromCID(depot, reference, decodeCID(publicCid))
 
     const item = await publicTree.get(Path.unwrap(publicPath))

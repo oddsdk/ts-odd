@@ -11,8 +11,8 @@ describe("the filesystem", () => {
     const fs = await emptyFilesystem()
     const expected = Uint8arrays.fromString("content", "utf8")
 
-    const privatePath = Path.file(Path.Branch.Private, "a", "b", "c.txt")
-    const publicPath = Path.file(Path.Branch.Public, "a", "b", "c.txt")
+    const privatePath = Path.file("private", "a", "b", "c.txt")
+    const publicPath = Path.file("public", "a", "b", "c.txt")
 
     await fs.write(privatePath, expected)
     await fs.write(publicPath, expected)

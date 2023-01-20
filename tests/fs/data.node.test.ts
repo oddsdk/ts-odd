@@ -14,7 +14,7 @@ describe("the filesystem", () => {
 
     expect(
       await fs.exists(
-        Path.file(Path.Branch.Private, "Welcome.txt")
+        Path.file("private", "Welcome.txt")
       )
     ).toBe(true)
   })

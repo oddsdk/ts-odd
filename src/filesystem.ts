@@ -11,7 +11,7 @@ import * as Ucan from "./ucan/index.js"
 import * as Versions from "./fs/versions.js"
 
 import { AuthenticationStrategy } from "./index.js"
-import { Branch } from "./path/index.js"
+import { RootBranch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
 import { Dependencies } from "./fs/filesystem.js"
 import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
@@ -194,12 +194,12 @@ export async function checkFileSystemVersion(
   const links = await Protocol.basic.getSimpleLinks(depot, filesystemCID)
   // if there's no version link, we assume it's from a 1.0.0-compatible version
   // (from before ~ November 2020)
-  const versionStr = links[ Branch.Version ] == null
+  const versionStr = links[ RootBranch.Version ] == null
     ? "1.0.0"
     : new TextDecoder().decode(
       await Protocol.basic.getFile(
         depot,
-        decodeCID(links[ Branch.Version ].cid)
+        decodeCID(links[ RootBranch.Version ].cid)
       )
     )
 

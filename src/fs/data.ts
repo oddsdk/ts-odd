@@ -5,22 +5,20 @@ import * as FileSystem from "../fs/types.js"
 import * as Path from "../path/index.js"
 import * as Sharing from "./share.js"
 
-import { Branch } from "../path/index.js"
-
 
 /**
  * Adds some sample to the file system.
  */
 export async function addSampleData(fs: FileSystem.API): Promise<void> {
-  await fs.mkdir(Path.directory(Branch.Private, "Apps"))
-  await fs.mkdir(Path.directory(Branch.Private, "Audio"))
-  await fs.mkdir(Path.directory(Branch.Private, "Documents"))
-  await fs.mkdir(Path.directory(Branch.Private, "Photos"))
-  await fs.mkdir(Path.directory(Branch.Private, "Video"))
+  await fs.mkdir(Path.directory("private", "Apps"))
+  await fs.mkdir(Path.directory("private", "Audio"))
+  await fs.mkdir(Path.directory("private", "Documents"))
+  await fs.mkdir(Path.directory("private", "Photos"))
+  await fs.mkdir(Path.directory("private", "Video"))
 
   // Files
   await fs.write(
-    Path.file(Branch.Private, "Welcome.txt"),
+    Path.file("private", "Welcome.txt"),
     new TextEncoder().encode("Welcome to your personal transportable encrypted file system 👋")
   )
 }

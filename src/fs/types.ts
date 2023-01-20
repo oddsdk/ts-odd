@@ -4,7 +4,7 @@ import * as Path from "../path/index.js"
 
 import { Maybe } from "../common/index.js"
 import { PutResult } from "../components/depot/implementation.js"
-import { DirectoryPath, DistinctivePath, FilePath, Branched, Segments } from "../path/index.js"
+import { DirectoryPath, DistinctivePath, FilePath, Partitioned, PartitionedNonEmpty, Partition } from "../path/index.js"
 import { Ucan } from "../ucan/types.js"
 
 
@@ -23,32 +23,32 @@ export interface Properties {
 }
 
 export interface Posix {
-  exists(path: DistinctivePath<Branched>): Promise<boolean>
-  get(path: DistinctivePath<Branched>): Promise<PuttableUnixTree | File | null>
-  mv(from: DistinctivePath<Branched>, to: DistinctivePath<Branched>): Promise<this>
-  rm(path: DistinctivePath<Branched>): Promise<this>
+  exists(path: DistinctivePath<PartitionedNonEmpty<Partition>>): Promise<boolean>
+  get(path: DistinctivePath<Partitioned<Partition>>): Promise<PuttableUnixTree | File | null>
+  mv(from: DistinctivePath<PartitionedNonEmpty<Partition>>, to: DistinctivePath<PartitionedNonEmpty<Partition>>): Promise<this>
+  rm(path: DistinctivePath<PartitionedNonEmpty<Partition>>): Promise<this>
 
   resolveSymlink(link: SoftLink): Promise<File | Tree | null>
-  symlink(args: { at: DirectoryPath<Branched>; referringTo: DistinctivePath<Branched>; name: string }): Promise<this>
+  symlink(args: { at: DirectoryPath<PartitionedNonEmpty<Partition>>; referringTo: DistinctivePath<PartitionedNonEmpty<Partition>>; name: string }): Promise<this>
 
   // Directories
-  ls(path: DirectoryPath<Branched>): Promise<Links>
-  mkdir(path: DirectoryPath<Branched>, options?: MutationOptions): Promise<this>
+  ls(path: DirectoryPath<Partitioned<Partition>>): Promise<Links>
+  mkdir(path: DirectoryPath<PartitionedNonEmpty<Partition>>, options?: MutationOptions): Promise<this>
 
   // Files
   write(
-    path: DistinctivePath<Branched>,
+    path: DistinctivePath<PartitionedNonEmpty<Partition>>,
     content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options?: MutationOptions
   ): Promise<this>
 
-  read(path: FilePath<Branched>): Promise<Uint8Array | null>
+  read(path: FilePath<PartitionedNonEmpty<Partition>>): Promise<Uint8Array | null>
 }
 
 export interface Sharing {
   acceptShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<this>
   loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<UnixTree>
-  sharePrivate(paths: DistinctivePath<Path.Private>[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails>
+  sharePrivate(paths: DistinctivePath<Path.PartitionedNonEmpty<Path.Private>>[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails>
 }
 
 
