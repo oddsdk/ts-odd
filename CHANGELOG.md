@@ -13,6 +13,10 @@
 - Adds `program.accountDID(username)` shorthand method to retrieve the root DID of a given account username.
 - Adds the file system data functions as shorthand methods.
 
+#### Other
+
+- Introduces stricter types for paths to restrict the paths you can use with various functions and also to guide you a bit more.
+
 
 ### v0.35.2
 
