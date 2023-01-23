@@ -143,7 +143,6 @@ export type Program = ShortHands & {
   }
   configuration: Configuration
   components: Components
-  session: Maybe<Session>
 }
 
 
@@ -579,14 +578,12 @@ export async function assemble(config: Configuration, components: Components): P
     }
   }
 
-  // Fin
   return {
     ...shorthands,
     configuration: { ...config },
     auth,
     components,
-    capabilities,
-    session,
+    capabilities
   }
 }
 
