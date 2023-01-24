@@ -207,16 +207,16 @@ describe("the path helpers", () => {
   })
 
 
-  it("supports isRootBranch", () => {
+  it("supports isOnRootBranch", () => {
     expect(
-      Path.isRootBranch(
+      Path.isOnRootBranch(
         RootBranch.Private,
         Path.directory(RootBranch.Private, "a")
       )
     ).toBe(true)
 
     expect(
-      Path.isRootBranch(
+      Path.isOnRootBranch(
         RootBranch.Public,
         Path.directory(RootBranch.Private, "a")
       )

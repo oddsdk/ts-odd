@@ -262,8 +262,8 @@ export class PublicTree extends BaseTree {
     const [ domain, ...pieces ] = link.ipns.split("/")
     const path = Path.fromPosix(pieces.join("/"))
     const isPublic =
-      Path.isRootBranch(Path.RootBranch.Public, path) ||
-      Path.isRootBranch(Path.RootBranch.Pretty, path)
+      Path.isOnRootBranch(Path.RootBranch.Public, path) ||
+      Path.isOnRootBranch(Path.RootBranch.Pretty, path)
 
     if (!isPublic) throw new Error("Mixing public and private soft links is not supported yet.")
 

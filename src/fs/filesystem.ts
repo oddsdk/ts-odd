@@ -650,7 +650,7 @@ export class FileSystem implements API {
    */
   async sharePrivate(paths: Path.Distinctive<Path.PartitionedNonEmpty<Path.Private>>[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails> {
     const verifiedPaths = paths.filter(path => {
-      return Path.isRootBranch(Path.RootBranch.Private, path)
+      return Path.isOnRootBranch(Path.RootBranch.Private, path)
     })
 
     // Our username
