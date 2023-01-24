@@ -201,7 +201,7 @@ export function isPartition(partition: Partition, path: DistinctivePath<Segments
 }
 
 /**
- * Is this `DistinctivePath` of the given `RootBranch`?
+ * Is this `DistinctivePath` on the given `RootBranch`?
  */
 export function isRootBranch(rootBranch: RootBranch, path: DistinctivePath<Segments>): boolean {
   return unwrap(path)[ 0 ] === rootBranch
