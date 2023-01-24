@@ -246,7 +246,7 @@ export class FileSystem implements API {
   // -----------------------
 
   async write(
-    path: Path.Distinctive<PartitionedNonEmpty<Partition>>,
+    path: Path.Distinctive<Partitioned<Partition>>,
     content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options: MutationOptions = {}
   ): Promise<this> {
