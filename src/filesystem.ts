@@ -27,7 +27,7 @@ import FileSystem from "./fs/filesystem.js"
 export async function loadFileSystem({ config, dependencies, eventEmitter, rootKey, username }: {
   config: Configuration
   dependencies: Dependencies
-  eventEmitter: EventEmitter,
+  eventEmitter: EventEmitter
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> {

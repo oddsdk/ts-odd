@@ -4,7 +4,7 @@ import { DistinctivePath, Partition, Partitioned } from "./path/index.js"
 
 
 export type Events = {
-  "fileSystem:local-change": { root: CID, path: DistinctivePath<Partitioned<Partition>> }
+  "fileSystem:local-change": { root: CID; path: DistinctivePath<Partitioned<Partition>> }
   "fileSystem:published": { root: CID }
 }
 
