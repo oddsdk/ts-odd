@@ -4,12 +4,16 @@ import * as Identifiers from "../../src/common/identifiers.js"
 import * as Path from "../../src/path/index.js"
 import FileSystem from "../../src/fs/filesystem.js"
 import { account, components, crypto } from "./components.js"
+import { createEmitter } from "../../src/events.js"
 
 
 export function emptyFilesystem(version?: string): Promise<FileSystem> {
+  const eventEmitter = createEmitter()
+
   return FileSystem.empty({
     account,
     dependencies: components,
+    eventEmitter,
     localOnly: true,
     permissions: {
       fs: {
@@ -34,9 +38,11 @@ export async function loadFilesystem(cid: CID, readKey?: Uint8Array): Promise<Fi
     )
   }
 
+  const eventEmitter = createEmitter()
   const fs = await FileSystem.fromCID(cid, {
     account,
     dependencies: components,
+    eventEmitter,
     localOnly: true,
     permissions: {
       fs: {
