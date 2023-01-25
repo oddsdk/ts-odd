@@ -13,6 +13,7 @@ import * as Versions from "./fs/versions.js"
 import { AuthenticationStrategy } from "./index.js"
 import { RootBranch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
+import { EventEmitter } from "./events.js"
 import { Dependencies } from "./fs/filesystem.js"
 import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
 import { type RecoverFileSystemParams } from "./fs/types/params.js"
@@ -23,9 +24,10 @@ import FileSystem from "./fs/filesystem.js"
 /**
  * Load a user's file system.
  */
-export async function loadFileSystem({ config, dependencies, rootKey, username }: {
+export async function loadFileSystem({ config, dependencies, eventEmitter, rootKey, username }: {
   config: Configuration
   dependencies: Dependencies
+  eventEmitter: EventEmitter,
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> {
@@ -88,7 +90,7 @@ export async function loadFileSystem({ config, dependencies, rootKey, username }
     await checkFileSystemVersion(dependencies.depot, config, cid)
     await manners.fileSystem.hooks.beforeLoadExisting(cid, account, dataComponents)
 
-    fs = await FileSystem.fromCID(cid, { account, dependencies, permissions: p })
+    fs = await FileSystem.fromCID(cid, { account, dependencies, eventEmitter, permissions: p })
 
     await manners.fileSystem.hooks.afterLoadExisting(fs, account, dataComponents)
 
@@ -101,6 +103,7 @@ export async function loadFileSystem({ config, dependencies, rootKey, username }
   fs = await FileSystem.empty({
     account,
     dependencies,
+    eventEmitter,
     rootKey,
     permissions: p,
     version: config.fileSystem?.version

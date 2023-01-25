@@ -1,6 +1,7 @@
 import type { Channel, ChannelOptions } from "./channel.js"
 
 import { Configuration } from "../../configuration.js"
+import { EventEmitter } from "../../events.js"
 import { Maybe } from "../../common/types.js"
 import { Session } from "../../session.js"
 
@@ -9,7 +10,7 @@ export type Implementation<C> = {
   type: string
 
   // `Session` producer
-  session: (components: C, authenticatedUsername: Maybe<string>, config: Configuration) => Promise<Maybe<Session>>
+  session: (components: C, authenticatedUsername: Maybe<string>, config: Configuration, eventEmitter: EventEmitter) => Promise<Maybe<Session>>
 
   // Account creation
   isUsernameAvailable: (username: string) => Promise<boolean>

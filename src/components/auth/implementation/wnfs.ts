@@ -12,6 +12,7 @@ import * as TypeChecks from "../../../common/type-checks.js"
 import * as Ucan from "../../../ucan/index.js"
 
 import { Configuration } from "../../../configuration.js"
+import { EventEmitter } from "../../../events.js"
 import { LinkingError } from "../../../linking/common.js"
 import { Maybe } from "../../../common/types.js"
 import { Session } from "../../../session.js"
@@ -87,7 +88,8 @@ export async function linkDevice(
 export async function session(
   components: Components,
   authedUsername: Maybe<string>,
-  config: Configuration
+  config: Configuration,
+  eventEmitter: EventEmitter
 ): Promise<Maybe<Session>> {
   if (authedUsername) {
     // Self-authorize a filesystem UCAN if needed
@@ -126,6 +128,8 @@ export async function session(
       undefined :
       await loadFileSystem({
         config,
+        eventEmitter,
+
         dependencies: {
           crypto: components.crypto,
           depot: components.depot,

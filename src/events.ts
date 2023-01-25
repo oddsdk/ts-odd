@@ -1,0 +1,27 @@
+import Emittery from "emittery"
+import { CID } from "./common/cid.js"
+import { DistinctivePath } from "./path/index.js"
+
+
+export type Events = {
+  "fileSystem:local-change": { root: CID, path: DistinctivePath }
+  "fileSystem:published": { root: CID }
+}
+
+
+/**
+ * Events interface.
+ *
+ * Subscribe to events using `on` or `once` (multiple events are allowed),
+ * and unsubscribe using `off`.
+ *
+ * More info on the [emittery Github readme](https://github.com/sindresorhus/emittery/tree/f0b3c2bf8dc985a7dde0e39607e30950394be54b#usage).
+ */
+export type EventEmitter = Emittery<Events>
+
+
+export function createEmitter(): EventEmitter {
+  return new Emittery({
+    debug: { name: "Webnative" }
+  })
+}

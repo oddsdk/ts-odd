@@ -91,6 +91,7 @@
     "blockstore-datastore-adapter": "^4.0.0",
     "datastore-core": "^8.0.2",
     "datastore-level": "^9.0.4",
+    "emittery": "^1.0.1",
     "events": "^3.3.0",
     "fission-bloom-filters": "1.7.1",
     "ipfs-core-types": "0.13.0",
