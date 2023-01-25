@@ -1,10 +1,10 @@
 import Emittery from "emittery"
 import { CID } from "./common/cid.js"
-import { DistinctivePath } from "./path/index.js"
+import { DistinctivePath, Partition, Partitioned } from "./path/index.js"
 
 
 export type Events = {
-  "fileSystem:local-change": { root: CID, path: DistinctivePath }
+  "fileSystem:local-change": { root: CID, path: DistinctivePath<Partitioned<Partition>> }
   "fileSystem:published": { root: CID }
 }
 
