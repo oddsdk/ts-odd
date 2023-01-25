@@ -12,7 +12,7 @@ import * as Protocol from "./protocol/index.js"
 import * as EntryIndex from "./protocol/shared/entry-index.js"
 import * as ShareKey from "./protocol/shared/key.js"
 
-import { Branch, DirectoryPath } from "../path/index.js"
+import { RootBranch } from "../path/index.js"
 import { SharedBy, ShareDetails } from "./types.js"
 import { SymmAlg } from "../components/crypto/implementation.js"
 import { decodeCID, encodeCID } from "../common/cid.js"
@@ -27,8 +27,8 @@ import RootTree from "./root/tree.js"
 // CONSTANTS
 
 
-export const EXCHANGE_PATH: DirectoryPath = Path.directory(
-  Path.Branch.Public,
+export const EXCHANGE_PATH: Path.Directory<Path.PartitionedNonEmpty<Path.Public>> = Path.directory(
+  "public",
   ".well-known",
   "exchange"
 )
@@ -145,11 +145,11 @@ export async function listExchangeDIDs(
   if (!root) throw new Error("This person doesn't have a filesystem yet.")
 
   const rootLinks = await Protocol.basic.getSimpleLinks(depot, root)
-  const prettyTreeCid = rootLinks[ Branch.Pretty ]?.cid || null
+  const prettyTreeCid = rootLinks[ RootBranch.Pretty ]?.cid || null
   if (!prettyTreeCid) throw new Error("This person's filesystem doesn't have a pretty tree.")
 
   const tree = await BareTree.fromCID(depot, decodeCID(prettyTreeCid))
-  const exchangePath = Path.unwrap(Path.removeBranch(EXCHANGE_PATH))
+  const exchangePath = Path.unwrap(Path.removePartition(EXCHANGE_PATH))
   const exchangeTree = await tree.get(exchangePath)
 
   return exchangeTree && exchangeTree instanceof BareTree

@@ -1,8 +1,10 @@
 import type { CID } from "multiformats/cid"
 
+import * as Path from "../path/index.js"
+
 import { Maybe } from "../common/index.js"
 import { PutResult } from "../components/depot/implementation.js"
-import { DirectoryPath, DistinctivePath, FilePath, Path } from "../path/index.js"
+import { DirectoryPath, DistinctivePath, FilePath, Partitioned, PartitionedNonEmpty, Partition } from "../path/index.js"
 import { Ucan } from "../ucan/types.js"
 
 
@@ -21,32 +23,32 @@ export interface Properties {
 }
 
 export interface Posix {
-  exists(path: DistinctivePath): Promise<boolean>
-  get(path: DistinctivePath): Promise<PuttableUnixTree | File | null>
-  mv(from: DistinctivePath, to: DistinctivePath): Promise<this>
-  rm(path: DistinctivePath): Promise<this>
+  exists(path: DistinctivePath<PartitionedNonEmpty<Partition>>): Promise<boolean>
+  get(path: DistinctivePath<Partitioned<Partition>>): Promise<PuttableUnixTree | File | null>
+  mv(from: DistinctivePath<PartitionedNonEmpty<Partition>>, to: DistinctivePath<PartitionedNonEmpty<Partition>>): Promise<this>
+  rm(path: DistinctivePath<PartitionedNonEmpty<Partition>>): Promise<this>
 
   resolveSymlink(link: SoftLink): Promise<File | Tree | null>
-  symlink(args: { at: DirectoryPath; referringTo: DistinctivePath; name: string }): Promise<this>
+  symlink(args: { at: DirectoryPath<PartitionedNonEmpty<Partition>>; referringTo: DistinctivePath<PartitionedNonEmpty<Partition>>; name: string }): Promise<this>
 
   // Directories
-  ls(path: DirectoryPath): Promise<Links>
-  mkdir(path: DirectoryPath, options?: MutationOptions): Promise<this>
+  ls(path: DirectoryPath<Partitioned<Partition>>): Promise<Links>
+  mkdir(path: DirectoryPath<PartitionedNonEmpty<Partition>>, options?: MutationOptions): Promise<this>
 
   // Files
   write(
-    path: DistinctivePath,
+    path: DistinctivePath<PartitionedNonEmpty<Partition>>,
     content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options?: MutationOptions
   ): Promise<this>
 
-  read(path: FilePath): Promise<Uint8Array | null>
+  read(path: FilePath<PartitionedNonEmpty<Partition>>): Promise<Uint8Array | null>
 }
 
 export interface Sharing {
   acceptShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<this>
   loadShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<UnixTree>
-  sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails>
+  sharePrivate(paths: DistinctivePath<Path.PartitionedNonEmpty<Path.Private>>[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails>
 }
 
 
@@ -131,28 +133,28 @@ export type MutationOptions = {
 export interface UnixTree {
   readOnly: boolean
 
-  ls(path: Path): Promise<Links>
-  mkdir(path: Path): Promise<this>
-  cat(path: Path): Promise<Uint8Array>
-  add(path: Path, content: Uint8Array): Promise<this>
-  rm(path: Path): Promise<this>
-  mv(from: Path, to: Path): Promise<this>
-  get(path: Path): Promise<PuttableUnixTree | File | null>
-  exists(path: Path): Promise<boolean>
+  ls(path: Path.Segments): Promise<Links>
+  mkdir(path: Path.Segments): Promise<this>
+  cat(path: Path.Segments): Promise<Uint8Array>
+  add(path: Path.Segments, content: Uint8Array): Promise<this>
+  rm(path: Path.Segments): Promise<this>
+  mv(from: Path.Segments, to: Path.Segments): Promise<this>
+  get(path: Path.Segments): Promise<PuttableUnixTree | File | null>
+  exists(path: Path.Segments): Promise<boolean>
 }
 
 export interface Tree extends UnixTree, Puttable {
   createChildTree(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree>
   createOrUpdateChildFile(content: Uint8Array, name: string, onUpdate: Maybe<UpdateCallback>): Promise<File>
 
-  mkdirRecurse(path: Path, onUpdate: Maybe<UpdateCallback>): Promise<this>
-  addRecurse(path: Path, content: Uint8Array, onUpdate: Maybe<UpdateCallback>): Promise<this>
-  rmRecurse(path: Path, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  mkdirRecurse(path: Path.Segments, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  addRecurse(path: Path.Segments, content: Uint8Array, onUpdate: Maybe<UpdateCallback>): Promise<this>
+  rmRecurse(path: Path.Segments, onUpdate: Maybe<UpdateCallback>): Promise<this>
 
-  updateChild(child: Tree | File, path: Path): Promise<this>
+  updateChild(child: Tree | File, path: Path.Segments): Promise<this>
   updateDirectChild(child: Tree | File, name: string, onUpdate: Maybe<UpdateCallback>): Promise<this>
   removeDirectChild(name: string): this
-  get(path: Path): Promise<Tree | File | null>
+  get(path: Path.Segments): Promise<Tree | File | null>
   getDirectChild(name: string): Promise<Tree | File | null>
   getOrCreateDirectChild(name: string, onUpdate: Maybe<UpdateCallback>): Promise<Tree | File>
 

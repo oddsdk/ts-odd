@@ -16,7 +16,7 @@ import * as TypeChecks from "../common/type-checks.js"
 import * as Ucan from "../ucan/index.js"
 import * as Versions from "./versions.js"
 
-import { Branch, DistinctivePath, DirectoryPath, FilePath } from "../path/index.js"
+import { RootBranch, Partitioned, PartitionedNonEmpty, Partition, DistinctivePath } from "../path/index.js"
 import { Permissions } from "../permissions.js"
 import { SymmAlg } from "../components/crypto/implementation.js"
 import { decodeCID } from "../common/index.js"
@@ -42,12 +42,6 @@ import * as Sharing from "./share.js"
 
 // TYPES
 
-
-export interface AppPath {
-  (): DirectoryPath
-  (path: DirectoryPath): DirectoryPath
-  (path: FilePath): FilePath
-}
 
 export type Dependencies = {
   crypto: Crypto.Implementation
@@ -210,7 +204,7 @@ export class FileSystem implements API {
   // POSIX INTERFACE (DIRECTORIES)
   // -----------------------------
 
-  async ls(path: DirectoryPath): Promise<Links> {
+  async ls(path: Path.Directory<Partitioned<Partition>>): Promise<Links> {
     if (Path.isFile(path)) throw new Error("`ls` only accepts directory paths")
     return this.runOnNode(path, {
       public: async (root, relPath) => {
@@ -226,7 +220,7 @@ export class FileSystem implements API {
     })
   }
 
-  async mkdir(path: DirectoryPath, options: MutationOptions = {}): Promise<this> {
+  async mkdir(path: Path.Directory<PartitionedNonEmpty<Partition>>, options: MutationOptions = {}): Promise<this> {
     if (Path.isFile(path)) throw new Error("`mkdir` only accepts directory paths")
 
     await this.runMutationOnNode(path, {
@@ -252,7 +246,7 @@ export class FileSystem implements API {
   // -----------------------
 
   async write(
-    path: DistinctivePath,
+    path: Path.Distinctive<Partitioned<Partition>>,
     content: Uint8Array | SoftLink | SoftLink[] | Record<string, SoftLink>,
     options: MutationOptions = {}
   ): Promise<this> {
@@ -332,7 +326,7 @@ export class FileSystem implements API {
     return this
   }
 
-  async read(path: FilePath): Promise<Uint8Array> {
+  async read(path: Path.File<PartitionedNonEmpty<Partition>>): Promise<Uint8Array> {
     if (Path.isDirectory(path)) throw new Error("`cat` only accepts file paths")
     return this.runOnNode(path, {
       public: async (root, relPath) => {
@@ -350,7 +344,7 @@ export class FileSystem implements API {
   // POSIX INTERFACE (GENERAL)
   // -------------------------
 
-  async exists(path: DistinctivePath): Promise<boolean> {
+  async exists(path: Path.Distinctive<PartitionedNonEmpty<Partition>>): Promise<boolean> {
     return this.runOnNode(path, {
       public: async (root, relPath) => {
         return await root.exists(relPath)
@@ -362,7 +356,7 @@ export class FileSystem implements API {
     })
   }
 
-  async get(path: DistinctivePath): Promise<PuttableUnixTree | File | null> {
+  async get(path: Path.Distinctive<Partitioned<Partition>>): Promise<PuttableUnixTree | File | null> {
     return this.runOnNode(path, {
       public: async (root, relPath) => {
         return await root.get(relPath)
@@ -376,8 +370,8 @@ export class FileSystem implements API {
   }
 
   // This is only implemented on the same tree for now and will error otherwise
-  async mv(from: DistinctivePath, to: DistinctivePath): Promise<this> {
-    const sameTree = Path.isSameBranch(from, to)
+  async mv(from: Path.Distinctive<PartitionedNonEmpty<Partition>>, to: Path.Distinctive<PartitionedNonEmpty<Partition>>): Promise<this> {
+    const sameTree = Path.isSamePartition(from, to)
 
     if (!Path.isSameKind(from, to)) {
       const kindFrom = Path.kind(from)
@@ -426,7 +420,7 @@ export class FileSystem implements API {
     }
   }
 
-  async rm(path: DistinctivePath): Promise<this> {
+  async rm(path: DistinctivePath<Partitioned<Partition>>): Promise<this> {
     await this.runMutationOnNode(path, {
       public: async (root, relPath) => {
         await root.rm(relPath)
@@ -448,7 +442,7 @@ export class FileSystem implements API {
    */
   async symlink(
     args:
-      { at: DirectoryPath; referringTo: DistinctivePath; name: string }
+      { at: Path.Directory<Partitioned<Partition>>; referringTo: Path.Distinctive<Partitioned<Partition>>; name: string }
   ): Promise<this> {
     const { at, referringTo, name } = args
     const username = this.account.username
@@ -456,7 +450,7 @@ export class FileSystem implements API {
     if (at == null) throw new Error("Missing parameter `symlink.at`")
     if (Path.isFile(at)) throw new Error("`symlink.at` only accepts directory paths")
 
-    const sameTree = Path.isSameBranch(at, referringTo)
+    const sameTree = Path.isSamePartition(at, referringTo)
 
     if (!username) throw new Error("I need a username in order to use this method")
     if (!sameTree) throw new Error("`link` is only supported on the same tree for now")
@@ -472,7 +466,7 @@ export class FileSystem implements API {
           await this.runOnChildTree(root, relPath, async tree => {
             if (PublicTree.instanceOf(tree)) {
               tree.insertSoftLink({
-                path: Path.removeBranch(referringTo),
+                path: Path.removePartition(referringTo),
                 name,
                 username,
               })
@@ -575,7 +569,7 @@ export class FileSystem implements API {
   async acceptShare({ shareId, sharedBy }: { shareId: string; sharedBy: string }): Promise<this> {
     const share = await this.loadShare({ shareId, sharedBy })
     await this.write(
-      Path.directory(Branch.Private, "Shared with me", sharedBy),
+      Path.directory(RootBranch.Private, "Shared with me", sharedBy),
       await share.ls([]).then(Object.values).then(links => links.filter(FsTypeChecks.isSoftLink))
     )
     return this
@@ -602,7 +596,7 @@ export class FileSystem implements API {
     if (!root) throw new Error("This user doesn't have a filesystem yet.")
 
     const rootLinks = await Protocol.basic.getSimpleLinks(this.dependencies.depot, root)
-    const sharedLinksCid = rootLinks[ Branch.Shared ]?.cid || null
+    const sharedLinksCid = rootLinks[ RootBranch.Shared ]?.cid || null
     if (!sharedLinksCid) throw new Error("This user hasn't shared anything yet.")
 
     const sharedLinks = await RootTree.getSharedLinks(this.dependencies.depot, decodeCID(sharedLinksCid))
@@ -627,11 +621,11 @@ export class FileSystem implements API {
     const symmKeyAlgo: string = decodedPayload.algo as string
 
     // Load MMPT
-    const mmptCid = rootLinks[ Branch.Private ]?.cid
+    const mmptCid = rootLinks[ RootBranch.Private ]?.cid
     if (!mmptCid) throw new Error("This user's filesystem doesn't have a private branch")
     const theirMmpt = await MMPT.fromCID(
       this.dependencies.depot,
-      decodeCID(rootLinks[ Branch.Private ]?.cid)
+      decodeCID(rootLinks[ RootBranch.Private ]?.cid)
     )
 
     // Decode index
@@ -654,9 +648,9 @@ export class FileSystem implements API {
   /**
    * Share a private file with a user.
    */
-  async sharePrivate(paths: DistinctivePath[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails> {
+  async sharePrivate(paths: Path.Distinctive<Path.PartitionedNonEmpty<Path.Private>>[], { sharedBy, shareWith }: { sharedBy?: SharedBy; shareWith: string | string[] }): Promise<ShareDetails> {
     const verifiedPaths = paths.filter(path => {
-      return Path.isBranch(Path.Branch.Private, path)
+      return Path.isOnRootBranch(Path.RootBranch.Private, path)
     })
 
     // Our username
@@ -693,7 +687,7 @@ export class FileSystem implements API {
     await this.root.bumpSharedCounter()
 
     // Publish
-    await this.root.updatePuttable(Branch.Private, this.root.mmpt)
+    await this.root.updatePuttable(RootBranch.Private, this.root.mmpt)
     await this.publish()
 
     // Fin
@@ -705,7 +699,7 @@ export class FileSystem implements API {
   // --------
 
   /** @internal */
-  async checkMutationPermissionAndAddProof(path: DistinctivePath, isMutation: boolean): Promise<void> {
+  async checkMutationPermissionAndAddProof(path: DistinctivePath<Partitioned<Partition>>, isMutation: boolean): Promise<void> {
     const operation = isMutation ? "make changes to" : "query"
 
     if (!this.localOnly) {
@@ -721,10 +715,10 @@ export class FileSystem implements API {
 
   /** @internal */
   async runMutationOnNode(
-    path: DistinctivePath,
+    path: DistinctivePath<Partitioned<Partition>>,
     handlers: {
-      public(root: UnixTree, relPath: Path.Path): Promise<void>
-      private(node: PrivateTree | PrivateFile, relPath: Path.Path): Promise<void>
+      public(root: UnixTree, relPath: Path.Segments): Promise<void>
+      private(node: PrivateTree | PrivateFile, relPath: Path.Segments): Promise<void>
     },
   ): Promise<void> {
     const parts = Path.unwrap(path)
@@ -733,16 +727,16 @@ export class FileSystem implements API {
 
     await this.checkMutationPermissionAndAddProof(path, true)
 
-    if (head === Branch.Public) {
+    if (head === RootBranch.Public) {
       await handlers.public(this.root.publicTree, relPath)
       await handlers.public(this.root.prettyTree, relPath)
 
       await Promise.all([
-        this.root.updatePuttable(Branch.Public, this.root.publicTree),
-        this.root.updatePuttable(Branch.Pretty, this.root.prettyTree)
+        this.root.updatePuttable(RootBranch.Public, this.root.publicTree),
+        this.root.updatePuttable(RootBranch.Pretty, this.root.prettyTree)
       ])
 
-    } else if (head === Branch.Private) {
+    } else if (head === RootBranch.Private) {
       const [ nodePath, node ] = this.root.findPrivateNode(path)
 
       if (!node) {
@@ -751,12 +745,12 @@ export class FileSystem implements API {
 
       await handlers.private(node, parts.slice(Path.unwrap(nodePath).length))
       await node.put()
-      await this.root.updatePuttable(Branch.Private, this.root.mmpt)
+      await this.root.updatePuttable(RootBranch.Private, this.root.mmpt)
 
       const cid = await this.root.mmpt.put()
       await this.root.addPrivateLogEntry(this.dependencies.depot, cid)
 
-    } else if (head === Branch.Pretty) {
+    } else if (head === RootBranch.Pretty) {
       throw new Error("The pretty path is read only")
 
     } else {
@@ -766,10 +760,10 @@ export class FileSystem implements API {
 
   /** @internal */
   async runOnNode<A>(
-    path: DistinctivePath,
+    path: DistinctivePath<Partitioned<Partition>>,
     handlers: {
-      public(root: UnixTree, relPath: Path.Path): Promise<A>
-      private(node: Tree | File, relPath: Path.Path): Promise<A>
+      public(root: UnixTree, relPath: Path.Segments): Promise<A>
+      private(node: Tree | File, relPath: Path.Segments): Promise<A>
     },
   ): Promise<A> {
     const parts = Path.unwrap(path)
@@ -778,10 +772,10 @@ export class FileSystem implements API {
 
     await this.checkMutationPermissionAndAddProof(path, false)
 
-    if (head === Branch.Public) {
+    if (head === RootBranch.Public) {
       return await handlers.public(this.root.publicTree, relPath)
 
-    } else if (head === Branch.Private) {
+    } else if (head === RootBranch.Private) {
       const [ nodePath, node ] = this.root.findPrivateNode(path)
 
       if (!node) {
@@ -790,7 +784,7 @@ export class FileSystem implements API {
 
       return await handlers.private(node, parts.slice(Path.unwrap(nodePath).length))
 
-    } else if (head === Branch.Pretty) {
+    } else if (head === RootBranch.Pretty) {
       return await handlers.public(this.root.prettyTree, relPath)
 
     } else {
@@ -803,7 +797,7 @@ export class FileSystem implements API {
   * `put` should be called on the node returned from the function.
   * Normally this is handled by `runOnNode`.
   */
-  async runOnChildTree(node: Tree, relPath: Path.Path, fn: (tree: Tree) => Promise<Tree>): Promise<Tree> {
+  async runOnChildTree(node: Tree, relPath: Path.Segments, fn: (tree: Tree) => Promise<Tree>): Promise<Tree> {
     let tree = node
 
     if (relPath.length) {

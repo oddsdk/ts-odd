@@ -29,7 +29,7 @@ export async function loadFilesystem(cid: CID, readKey?: Uint8Array): Promise<Fi
       await Identifiers.readKey({
         accountDID: account.rootDID,
         crypto,
-        path: Path.directory(Path.Branch.Private)
+        path: Path.directory("private")
       })
     )
   }

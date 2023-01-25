@@ -2,7 +2,7 @@ import { AppInfo } from "../appInfo.js"
 import { Maybe } from "../common/types.js"
 
 
-export enum Branch {
+export enum RootBranch {
   Public = "public",
   Pretty = "p",
   Private = "private",
@@ -17,15 +17,56 @@ export enum Kind {
   File = "file"
 }
 
-export type Path = string[]
-
-export type DirectoryPath = { directory: Path }
-export type FilePath = { file: Path }
+export type Segment = string
+export type Segments = Segment[]
+export type SegmentsNonEmpty = [ Segment, ...Segments ]
+export type Partitioned<P> = [ P, ...Segments ]
+export type PartitionedNonEmpty<P> = [ P, Segment, ...Segments ]
 
 /**
- * The primarily used type for paths.
+ * Private partition
  */
-export type DistinctivePath = DirectoryPath | FilePath
+export type Private = "private" | RootBranch.Private
+
+/**
+ * Public partition
+ */
+export type Public = "public" | RootBranch.Public
+
+/**
+ * `RootBranch`es that are accessible through the POSIX file system interface.
+ */
+export type Partition = Private | Public
+
+/**
+ * A directory path.
+ */
+export type DirectoryPath<P> = { directory: P }
+
+/**
+ * A file path.
+ */
+export type FilePath<P> = { file: P }
+
+/**
+ * A file or directory path.
+ */
+export type DistinctivePath<P> = DirectoryPath<P> | FilePath<P>
+
+/**
+ * Alias for `DirectoryPath`
+ */
+export type Directory<P> = DirectoryPath<P>
+
+/**
+ * Alias for `FilePath`
+ */
+export type File<P> = FilePath<P>
+
+/**
+ * Alias for `DistinctivePath`
+ */
+export type Distinctive<P> = DistinctivePath<P>
 
 
 
@@ -35,7 +76,11 @@ export type DistinctivePath = DirectoryPath | FilePath
 /**
  * Utility function to create a `DirectoryPath`
  */
-export function directory(...args: Path): DirectoryPath {
+export function directory<P extends Partition>(...args: PartitionedNonEmpty<P>): DirectoryPath<PartitionedNonEmpty<P>>
+export function directory<P extends Partition>(...args: Partitioned<P>): DirectoryPath<Partitioned<P>>
+export function directory(...args: SegmentsNonEmpty): DirectoryPath<SegmentsNonEmpty>
+export function directory(...args: Segments): DirectoryPath<Segments>
+export function directory(...args: Segments): DirectoryPath<Segments> {
   if (args.some(p => p.includes("/"))) {
     throw new Error("Forward slashes `/` are not allowed")
   }
@@ -45,7 +90,10 @@ export function directory(...args: Path): DirectoryPath {
 /**
  * Utility function to create a `FilePath`
  */
-export function file(...args: Path): FilePath {
+export function file<P extends Partition>(...args: PartitionedNonEmpty<P>): FilePath<PartitionedNonEmpty<P>>
+export function file(...args: SegmentsNonEmpty): FilePath<SegmentsNonEmpty>
+export function file(...args: Segments): FilePath<Segments>
+export function file(...args: Segments): FilePath<Segments> {
   if (args.some(p => p.includes("/"))) {
     throw new Error("Forward slashes `/` are not allowed")
   }
@@ -55,21 +103,20 @@ export function file(...args: Path): FilePath {
 /**
  * Utility function to create a root `DirectoryPath`
  */
-export function root(): DirectoryPath {
+export function root(): DirectoryPath<Segments> {
   return { directory: [] }
 }
 
 /**
  * Utility function create an app data path.
  */
-export function appData(app: AppInfo): DirectoryPath
-export function appData(app: AppInfo, suffix: FilePath): FilePath
-export function appData(app: AppInfo, suffix: DirectoryPath): DirectoryPath
-export function appData(app: AppInfo, suffix: DistinctivePath): DistinctivePath
-export function appData(app: AppInfo, suffix?: DistinctivePath): DistinctivePath {
-  const parent = directory(Branch.Private, "Apps", app.creator, app.name)
-  if (suffix) return combine(parent, suffix)
-  return parent
+export function appData(app: AppInfo): DirectoryPath<PartitionedNonEmpty<Private>>
+export function appData(app: AppInfo, suffix: FilePath<Segments>): FilePath<PartitionedNonEmpty<Private>>
+export function appData(app: AppInfo, suffix: DirectoryPath<Segments>): DirectoryPath<PartitionedNonEmpty<Private>>
+export function appData(app: AppInfo, suffix: DistinctivePath<Segments>): DistinctivePath<PartitionedNonEmpty<Private>>
+export function appData(app: AppInfo, suffix?: DistinctivePath<Segments>): DistinctivePath<PartitionedNonEmpty<Private>> {
+  const appDir = directory(RootBranch.Private, "Apps", app.creator, app.name)
+  return suffix ? combine(appDir, suffix) : appDir
 }
 
 
@@ -85,7 +132,7 @@ export function appData(app: AppInfo, suffix?: DistinctivePath): DistinctivePath
  *
  * Leading forward slashes are removed too, so you can pass absolute paths.
  */
-export function fromPosix(path: string): DistinctivePath {
+export function fromPosix(path: string): DistinctivePath<Segments> {
   const split = path.replace(/^\/+/, "").split("/")
   if (path.endsWith("/")) return { directory: split.slice(0, -1) }
   else if (path === "") return root()
@@ -99,7 +146,7 @@ export function fromPosix(path: string): DistinctivePath {
  * files will have the format `path/to/file`.
  */
 export function toPosix(
-  path: DistinctivePath,
+  path: DistinctivePath<Segments>,
   { absolute }: { absolute: boolean } = { absolute: false }
 ): string {
   const prefix = absolute ? "/" : ""
@@ -116,52 +163,68 @@ export function toPosix(
 /**
  * Combine two `DistinctivePath`s.
  */
-export function combine(a: DirectoryPath, b: FilePath): FilePath
-export function combine(a: DirectoryPath, b: DirectoryPath): DirectoryPath
-export function combine(a: DirectoryPath, b: DistinctivePath): DistinctivePath
-export function combine(a: DirectoryPath, b: DistinctivePath): DistinctivePath {
+export function combine<P extends Partition>(a: DirectoryPath<PartitionedNonEmpty<P>>, b: FilePath<Segments>): FilePath<PartitionedNonEmpty<P>>
+export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: FilePath<SegmentsNonEmpty>): FilePath<PartitionedNonEmpty<P>>
+export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: FilePath<Segments>): FilePath<Partitioned<P>>
+export function combine(a: DirectoryPath<Segments>, b: FilePath<Segments>): FilePath<Segments>
+export function combine<P extends Partition>(a: DirectoryPath<PartitionedNonEmpty<P>>, b: DirectoryPath<Segments>): DirectoryPath<PartitionedNonEmpty<P>>
+export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: DirectoryPath<SegmentsNonEmpty>): DirectoryPath<PartitionedNonEmpty<P>>
+export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: DirectoryPath<Segments>): DirectoryPath<Partitioned<P>>
+export function combine(a: DirectoryPath<Segments>, b: DirectoryPath<Segments>): DirectoryPath<Segments>
+export function combine<P extends Partition>(a: DirectoryPath<PartitionedNonEmpty<P>>, b: DistinctivePath<Segments>): DistinctivePath<PartitionedNonEmpty<P>>
+export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: DistinctivePath<SegmentsNonEmpty>): DistinctivePath<PartitionedNonEmpty<P>>
+export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: DistinctivePath<Segments>): DistinctivePath<Partitioned<P>>
+export function combine(a: DirectoryPath<Segments>, b: DistinctivePath<Segments>): DistinctivePath<Segments>
+export function combine(a: DirectoryPath<Segments>, b: DistinctivePath<Segments>): DistinctivePath<Segments> {
   return map(p => unwrap(a).concat(p), b)
-}
-
-/**
- * Is this `DistinctivePath` of the given `Branch`?
- */
-export function isBranch(branch: Branch, path: DistinctivePath): boolean {
-  return unwrap(path)[ 0 ] === branch
 }
 
 /**
  * Is this `DistinctivePath` a directory?
  */
-export function isDirectory(path: DistinctivePath): path is DirectoryPath {
-  return !!(path as DirectoryPath).directory
+export function isDirectory<P>(path: DistinctivePath<P>): path is DirectoryPath<P> {
+  return !!(path as DirectoryPath<P>).directory
 }
 
 /**
  * Is this `DistinctivePath` a file?
  */
-export function isFile(path: DistinctivePath): path is FilePath {
-  return !!(path as FilePath).file
+export function isFile<P>(path: DistinctivePath<P>): path is FilePath<P> {
+  return !!(path as FilePath<P>).file
+}
+
+/**
+ * Is this `DistinctivePath` of the given `Partition`?
+ */
+export function isPartition(partition: Partition, path: DistinctivePath<Segments>): boolean {
+  return unwrap(path)[ 0 ] === partition
+}
+
+/**
+ * Is this `DistinctivePath` on the given `RootBranch`?
+ */
+export function isOnRootBranch(rootBranch: RootBranch, path: DistinctivePath<Segments>): boolean {
+  return unwrap(path)[ 0 ] === rootBranch
 }
 
 /**
  * Is this `DirectoryPath` a root directory?
  */
-export function isRootDirectory(path: DirectoryPath): boolean {
+export function isRootDirectory(path: DirectoryPath<Segments>): boolean {
   return path.directory.length === 0
 }
 
 /**
- * Check if two `DistinctivePath` have the same `Branch`.
+ * Check if two `DistinctivePath` have the same `Partition`.
  */
-export function isSameBranch(a: DistinctivePath, b: DistinctivePath): boolean {
+export function isSamePartition(a: DistinctivePath<Segments>, b: DistinctivePath<Segments>): boolean {
   return unwrap(a)[ 0 ] === unwrap(b)[ 0 ]
 }
 
 /**
  * Check if two `DistinctivePath` are of the same kind.
  */
-export function isSameKind(a: DistinctivePath, b: DistinctivePath): boolean {
+export function isSameKind(a: DistinctivePath<Segments>, b: DistinctivePath<Segments>): boolean {
   if (isDirectory(a) && isDirectory(b)) return true
   else if (isFile(a) && isFile(b)) return true
   else return false
@@ -170,7 +233,7 @@ export function isSameKind(a: DistinctivePath, b: DistinctivePath): boolean {
 /**
  * What `Kind` of path are we dealing with?
  */
-export function kind(path: DistinctivePath): Kind {
+export function kind(path: DistinctivePath<Segments>): Kind {
   if (isDirectory(path)) return Kind.Directory
   return Kind.File
 }
@@ -178,7 +241,7 @@ export function kind(path: DistinctivePath): Kind {
 /**
  * Map a `DistinctivePath`.
  */
-export function map(fn: (p: Path) => Path, path: DistinctivePath): DistinctivePath {
+export function map<A, B>(fn: (p: A) => B, path: DistinctivePath<A>): DistinctivePath<B> {
   if (isDirectory(path)) return { directory: fn(path.directory) }
   else if (isFile(path)) return { file: fn(path.file) }
   return path
@@ -187,16 +250,16 @@ export function map(fn: (p: Path) => Path, path: DistinctivePath): DistinctivePa
 /**
  * Get the parent directory of a `DistinctivePath`.
  */
-export function parent(path: DistinctivePath): Maybe<DirectoryPath> {
-  return isDirectory(path) && isRootDirectory(path as DirectoryPath)
+export function parent(path: DistinctivePath<Segments>): Maybe<DirectoryPath<Segments>> {
+  return isDirectory(path) && isRootDirectory(path as DirectoryPath<Segments>)
     ? null
     : directory(...unwrap(path).slice(0, -1))
 }
 
 /**
- * Remove the `Branch` of a `DistinctivePath` (ie. the top-level directory)
+ * Remove the `Partition` of a `DistinctivePath` (ie. the top-level directory)
  */
-export function removeBranch(path: DistinctivePath): DistinctivePath {
+export function removePartition(path: DistinctivePath<Segments>): DistinctivePath<Segments> {
   return map(
     p => isDirectory(path) || p.length > 1 ? p.slice(1) : p,
     path
@@ -206,7 +269,7 @@ export function removeBranch(path: DistinctivePath): DistinctivePath {
 /**
  * Get the last part of the path.
  */
-export function terminus(path: DistinctivePath): Maybe<string> {
+export function terminus(path: DistinctivePath<Segments>): Maybe<string> {
   const u = unwrap(path)
   if (u.length < 1) return null
   return u[ u.length - 1 ]
@@ -215,14 +278,30 @@ export function terminus(path: DistinctivePath): Maybe<string> {
 /**
  * Unwrap a `DistinctivePath`.
  */
-export function unwrap(path: DistinctivePath): Path {
+export function unwrap<P>(path: DistinctivePath<P>): P {
   if (isDirectory(path)) {
     return path.directory
   } else if (isFile(path)) {
     return path.file
   }
 
-  return []
+  throw new Error("Path is neither a directory or a file")
+}
+
+/**
+ * Utility function to prefix a path with a `Partition`.
+ */
+export function withPartition<P extends Partition>(partition: P, path: DirectoryPath<SegmentsNonEmpty>): DirectoryPath<PartitionedNonEmpty<P>>
+export function withPartition<P extends Partition>(partition: P, path: DirectoryPath<Segments>): DirectoryPath<Partitioned<P>>
+export function withPartition<P extends Partition>(partition: P, path: FilePath<SegmentsNonEmpty>): FilePath<PartitionedNonEmpty<P>>
+export function withPartition<P extends Partition>(partition: P, path: FilePath<Segments>): FilePath<Partitioned<P>>
+export function withPartition<P extends Partition>(partition: P, path: DistinctivePath<SegmentsNonEmpty>): DistinctivePath<PartitionedNonEmpty<P>>
+export function withPartition<P extends Partition>(partition: P, path: DistinctivePath<Segments>): DistinctivePath<Partitioned<P>>
+export function withPartition<P extends Partition>(partition: P, path: DistinctivePath<Segments>): DistinctivePath<Partitioned<P>> {
+  return combine(
+    directory(partition),
+    path
+  )
 }
 
 
@@ -233,6 +312,6 @@ export function unwrap(path: DistinctivePath): Path {
 /**
  * Render a raw `Path` to a string for logging purposes.
  */
-export function log(path: Path): string {
+export function log(path: Segments): string {
   return `[ ${path.join(", ")} ]`
 }

@@ -3,9 +3,9 @@ import expect from "expect"
 
 import { loadCARWithRoot } from "../helpers/loadCAR.js"
 
-import FileSystem from "../../src/fs/filesystem.js"
+import * as Path from "../../src/path/index.js"
 import { File } from "../../src/fs/types.js"
-import * as path from "../../src/path/index.js"
+import FileSystem from "../../src/fs/filesystem.js"
 
 import { loadFilesystem } from "../helpers/filesystem.js"
 import { isSoftLink } from "../../src/fs/types/check.js"
@@ -18,22 +18,22 @@ describe("the filesystem", () => {
     const readKey = Uint8arrays.fromString("pJW/xgBGck9/ZXwQHNPhV3zSuqGlUpXiChxwigwvUws=", "base64pad")
     const fs = await loadFilesystem(rootCID, readKey)
 
-    let files = await listFiles(fs, path.directory("public"))
-    files = files.concat(await listFiles(fs, path.directory("private")))
+    let files = await listFiles(fs, Path.directory("private"))
+    files = files.concat(await listFiles(fs, Path.directory("private")))
 
     expect(files).not.toEqual([])
   })
 })
 
-async function listFiles(fs: FileSystem, searchPath: path.DirectoryPath): Promise<File[]> {
+async function listFiles(fs: FileSystem, searchPath: Path.Directory<Path.Partitioned<Path.Partition>>): Promise<File[]> {
   let files: File[] = []
   for (const [ subName, sub ] of Object.entries(await fs.ls(searchPath))) {
     if (isSoftLink(sub)) continue
     if (sub.isFile) {
-      const file = await fs.get(path.combine(searchPath, path.file(subName))) as File
+      const file = await fs.get(Path.combine(searchPath, Path.file(subName))) as File
       files.push(file)
     } else {
-      const subFiles = await listFiles(fs, path.combine(searchPath, path.directory(subName)) as path.DirectoryPath)
+      const subFiles = await listFiles(fs, Path.combine(searchPath, Path.directory(subName)))
       files = files.concat(subFiles)
     }
   }

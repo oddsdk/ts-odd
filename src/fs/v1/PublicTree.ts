@@ -198,7 +198,7 @@ export class PublicTree extends BaseTree {
     return child
   }
 
-  async get(path: Path.Path): Promise<Child | null> {
+  async get(path: Path.Segments): Promise<Child | null> {
     if (path.length < 1) return this
 
     const res = await this.getRecurse(this.header.skeleton, path as NonEmptyPath)
@@ -262,8 +262,8 @@ export class PublicTree extends BaseTree {
     const [ domain, ...pieces ] = link.ipns.split("/")
     const path = Path.fromPosix(pieces.join("/"))
     const isPublic =
-      Path.isBranch(Path.Branch.Public, path) ||
-      Path.isBranch(Path.Branch.Pretty, path)
+      Path.isOnRootBranch(Path.RootBranch.Public, path) ||
+      Path.isOnRootBranch(Path.RootBranch.Pretty, path)
 
     if (!isPublic) throw new Error("Mixing public and private soft links is not supported yet.")
 
@@ -271,7 +271,7 @@ export class PublicTree extends BaseTree {
     if (!rootCid) throw new Error(`Failed to resolve the soft link: ${link.ipns} - Could not resolve DNSLink`)
 
     const publicCid = (await Protocol.basic.getSimpleLinks(depot, decodeCID(rootCid))).public.cid
-    const publicPath = Path.removeBranch(path)
+    const publicPath = Path.removePartition(path)
     const publicTree = await PublicTree.fromCID(depot, reference, decodeCID(publicCid))
 
     const item = await publicTree.get(Path.unwrap(publicPath))
@@ -309,7 +309,7 @@ export class PublicTree extends BaseTree {
     return this
   }
 
-  insertSoftLink({ name, path, username }: { name: string; path: DistinctivePath; username: string }): this {
+  insertSoftLink({ name, path, username }: { name: string; path: DistinctivePath<Path.Segments>; username: string }): this {
     const softLink = {
       ipns: this.reference.dataRoot.domain(username) + `/public/${Path.toPosix(path)}`,
       name

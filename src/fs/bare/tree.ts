@@ -8,7 +8,7 @@ import * as Link from "../link.js"
 import { HardLinks, BaseLinks, Tree, File, Puttable, UpdateCallback, PuttableUnixTree } from "../types.js"
 import { Maybe, decodeCID } from "../../common/index.js"
 import { isObject, hasProp } from "../../common/type-checks.js"
-import { Path } from "../../path/index.js"
+import { Segments as Path } from "../../path/index.js"
 
 import BareFile from "../bare/file.js"
 import BaseTree from "../base/tree.js"

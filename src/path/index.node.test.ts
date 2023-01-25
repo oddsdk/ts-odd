@@ -1,7 +1,7 @@
 import expect from "expect"
 import * as fc from "fast-check"
 import * as Path from "./index.js"
-import { DirectoryPath, FilePath } from "./index.js"
+import { DirectoryPath, FilePath, RootBranch } from "./index.js"
 
 
 describe("the path helpers", () => {
@@ -23,6 +23,11 @@ describe("the path helpers", () => {
     expect(() =>
       Path.directory("/")
     ).toThrow()
+
+    // Type testing
+    const a: Path.Directory<Path.Partitioned<Path.Private>> = Path.directory("private")
+    const b: Path.Directory<Path.PartitionedNonEmpty<Path.Public>> = Path.directory("public", "a")
+    const c: Path.Directory<Path.Segments> = Path.directory("private", "a", "b")
   })
 
   it("creates file paths", () => {
@@ -37,6 +42,10 @@ describe("the path helpers", () => {
     expect(() =>
       Path.file("/")
     ).toThrow()
+
+    // Type testing
+    const a: Path.File<Path.PartitionedNonEmpty<Path.Private>> = Path.file("private", "a")
+    const b: Path.File<Path.Segments> = Path.file("private", "a", "b")
   })
 
 
@@ -108,17 +117,17 @@ describe("the path helpers", () => {
       creator: "Fission"
     }
 
-    const root: DirectoryPath = Path.appData(
+    const root: DirectoryPath<Path.PartitionedNonEmpty<Path.Private>> = Path.appData(
       appInfo
     )
 
     expect(
       root
     ).toEqual(
-      { directory: [ Path.Branch.Private, "Apps", appInfo.creator, appInfo.name ] }
+      { directory: [ RootBranch.Private, "Apps", appInfo.creator, appInfo.name ] }
     )
 
-    const dir: DirectoryPath = Path.appData(
+    const dir: DirectoryPath<Path.PartitionedNonEmpty<Path.Private>> = Path.appData(
       appInfo,
       Path.directory("a")
     )
@@ -126,10 +135,10 @@ describe("the path helpers", () => {
     expect(
       dir
     ).toEqual(
-      { directory: [ Path.Branch.Private, "Apps", appInfo.creator, appInfo.name, "a" ] }
+      { directory: [ RootBranch.Private, "Apps", appInfo.creator, appInfo.name, "a" ] }
     )
 
-    const file: FilePath = Path.appData(
+    const file: FilePath<Path.PartitionedNonEmpty<Path.Private>> = Path.appData(
       appInfo,
       Path.file("a")
     )
@@ -137,13 +146,13 @@ describe("the path helpers", () => {
     expect(
       file
     ).toEqual(
-      { file: [ Path.Branch.Private, "Apps", appInfo.creator, appInfo.name, "a" ] }
+      { file: [ RootBranch.Private, "Apps", appInfo.creator, appInfo.name, "a" ] }
     )
   })
 
 
   it("can be combined", () => {
-    const dir: DirectoryPath = Path.combine(
+    const dir: DirectoryPath<Path.Segments> = Path.combine(
       Path.directory("a"),
       Path.directory("b")
     )
@@ -154,7 +163,7 @@ describe("the path helpers", () => {
       { directory: [ "a", "b" ] }
     )
 
-    const file: FilePath = Path.combine(
+    const file: FilePath<Path.Segments> = Path.combine(
       Path.directory("a"),
       Path.file("b")
     )
@@ -164,21 +173,52 @@ describe("the path helpers", () => {
     ).toEqual(
       { file: [ "a", "b" ] }
     )
+
+    // Type testing
+    const a: DirectoryPath<Path.PartitionedNonEmpty<Path.Private>> = Path.combine(
+      Path.directory("private"),
+      Path.directory("a"),
+    )
+
+    const aa: FilePath<Path.Partitioned<Path.Public>> = Path.combine(
+      Path.directory("public"),
+      Path.file("a"),
+    )
+
+    const b: DirectoryPath<Path.Partitioned<Path.Private>> = Path.combine(
+      Path.directory("private"),
+      Path.directory(),
+    )
+
+    const bb: FilePath<Path.Partitioned<Path.Public>> = Path.combine(
+      Path.directory("public"),
+      Path.file(),
+    )
+
+    const c: DirectoryPath<Path.PartitionedNonEmpty<Path.Private>> = Path.combine(
+      Path.directory("private"),
+      Path.directory("a"),
+    )
+
+    const cc: FilePath<Path.PartitionedNonEmpty<Path.Public>> = Path.combine(
+      Path.directory("public"),
+      Path.file("a"),
+    )
   })
 
 
-  it("supports isBranch", () => {
+  it("supports isOnRootBranch", () => {
     expect(
-      Path.isBranch(
-        Path.Branch.Private,
-        Path.directory(Path.Branch.Private, "a")
+      Path.isOnRootBranch(
+        RootBranch.Private,
+        Path.directory(RootBranch.Private, "a")
       )
     ).toBe(true)
 
     expect(
-      Path.isBranch(
-        Path.Branch.Public,
-        Path.directory(Path.Branch.Private, "a")
+      Path.isOnRootBranch(
+        RootBranch.Public,
+        Path.directory(RootBranch.Private, "a")
       )
     ).toBe(false)
   })
@@ -187,7 +227,7 @@ describe("the path helpers", () => {
   it("supports isDirectory", () => {
     expect(
       Path.isDirectory(
-        Path.directory(Path.Branch.Private)
+        Path.directory(RootBranch.Private)
       )
     ).toBe(true)
 
@@ -208,7 +248,7 @@ describe("the path helpers", () => {
 
     expect(
       Path.isFile(
-        Path.directory(Path.Branch.Private)
+        Path.directory(RootBranch.Private)
       )
     ).toBe(false)
   })
@@ -229,24 +269,24 @@ describe("the path helpers", () => {
 
     expect(
       Path.isRootDirectory(
-        Path.directory(Path.Branch.Private)
+        Path.directory(RootBranch.Private)
       )
     ).toBe(false)
   })
 
 
-  it("supports isSameBranch", () => {
+  it("supports isSamePartition", () => {
     expect(
-      Path.isSameBranch(
-        Path.directory(Path.Branch.Private),
-        Path.directory(Path.Branch.Private)
+      Path.isSamePartition(
+        Path.directory(RootBranch.Private),
+        Path.directory(RootBranch.Private)
       )
     ).toBe(true)
 
     expect(
-      Path.isSameBranch(
-        Path.directory(Path.Branch.Private),
-        Path.directory(Path.Branch.Public)
+      Path.isSamePartition(
+        Path.directory(RootBranch.Private),
+        Path.directory(RootBranch.Public)
       )
     ).toBe(false)
   })
@@ -346,9 +386,9 @@ describe("the path helpers", () => {
   })
 
 
-  it("supports removeBranch", () => {
+  it("supports removePartition", () => {
     expect(
-      Path.removeBranch(
+      Path.removePartition(
         Path.directory("foo")
       )
     ).toEqual(
@@ -356,7 +396,7 @@ describe("the path helpers", () => {
     )
 
     expect(
-      Path.removeBranch(
+      Path.removePartition(
         Path.directory("foo", "bar")
       )
     ).toEqual(

@@ -55,6 +55,6 @@ export function toString(a: Uint8Array): string {
 
 
 function identifier(crypto: Crypto.Implementation, accountDID: string): Promise<string> {
-  const path = Path.directory(Path.Branch.Private)
+  const path = Path.directory(Path.RootBranch.Private)
   return Identifiers.readKey({ crypto, path, accountDID })
 }
