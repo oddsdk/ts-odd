@@ -9,6 +9,7 @@
 
 #### Additions
 
+- Adds an event emitter interface so you can listen to various events. This release comes with two events: `fileSystem.local-change` for listening to file system changes and `fileSystem.published` to listen for successful publishes.
 - Adds `program.fileSystem.recover({ newUsername, oldUsername, readKey })` shorthand method so apps will no longer have to implement the FS recovery flow manually.
 - Adds `program.accountDID(username)` shorthand method to retrieve the root DID of a given account username.
 - Adds the file system data functions as shorthand methods.
