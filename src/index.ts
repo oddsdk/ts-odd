@@ -32,6 +32,7 @@ import * as Capabilities from "./capabilities.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as DID from "./did/local.js"
+import * as Events from "./events.js"
 import * as FileSystemData from "./fs/data.js"
 import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
@@ -50,7 +51,6 @@ import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { createEmitter, EventEmitter } from "./events.js"
 import { loadFileSystem, recoverFileSystem } from "./filesystem.js"
 import FileSystem from "./fs/filesystem.js"
 
@@ -144,7 +144,27 @@ export type Program = ShortHands & {
   }
   configuration: Configuration
   components: Components
-  events: EventEmitter
+  /**
+   * Events interface.
+   *
+   * Subscribe to events using `on` or `once` (multiple events are allowed),
+   * and unsubscribe using `off`.
+   *
+   * ```ts
+   * program.events.fileSystem.on("local-change", ({ path, root }) => {
+   *   console.log("The file system has changed locally 🔔")
+   *   console.log("Changed path:", path)
+   *   console.log("New data root CID:", root)
+   * })
+   *
+   * program.events.fileSystem.off("published")
+   * ```
+   *
+   * More info on the [emittery Github readme](https://github.com/sindresorhus/emittery/tree/f0b3c2bf8dc985a7dde0e39607e30950394be54b#usage).
+   */
+  events: {
+    fileSystem: Events.Emitter<Events.FileSystem>
+  }
   session: Maybe<Session>
 }
 
@@ -448,7 +468,7 @@ export async function assemble(config: Configuration, components: Components): P
   await ensureBackwardsCompatibility(components, config)
 
   // Event emitter
-  const eventEmitter = createEmitter()
+  const fsEvents = Events.createEmitter<Events.FileSystem>()
 
   // Authenticated user
   const sessionInfo = await SessionMod.restore(components.storage)
@@ -484,7 +504,7 @@ export async function assemble(config: Configuration, components: Components): P
           components,
           newSessionInfo.username,
           config,
-          eventEmitter
+          { fileSystem: fsEvents }
         )
       }
     }
@@ -542,7 +562,7 @@ export async function assemble(config: Configuration, components: Components): P
         await loadFileSystem({
           config,
           dependencies: components,
-          eventEmitter,
+          eventEmitter: fsEvents,
           username,
         })
 
@@ -581,13 +601,15 @@ export async function assemble(config: Configuration, components: Components): P
       addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
       addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
       hasPublicExchangeKey: (fs: FileSystem) => FileSystemData.hasPublicExchangeKey(components.crypto, fs),
-      load: (username: string) => loadFileSystem({ config, eventEmitter, username, dependencies: components }),
+      load: (username: string) => loadFileSystem({ config, username, dependencies: components, eventEmitter: fsEvents }),
       recover: (params: RecoverFileSystemParams) => recoverFileSystem({ auth, dependencies: components, ...params }),
     }
   }
 
   // Events
-  const events = eventEmitter
+  const events = {
+    fileSystem: fsEvents
+  }
 
   // Fin
   return {

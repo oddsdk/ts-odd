@@ -3,6 +3,7 @@ import { CID } from "multiformats/cid"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as DID from "./did/index.js"
+import * as Events from "./events.js"
 import * as Protocol from "./fs/protocol/index.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as RootKey from "./common/root-key.js"
@@ -13,7 +14,6 @@ import * as Versions from "./fs/versions.js"
 import { AuthenticationStrategy } from "./index.js"
 import { RootBranch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
-import { EventEmitter } from "./events.js"
 import { Dependencies } from "./fs/filesystem.js"
 import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
 import { type RecoverFileSystemParams } from "./fs/types/params.js"
@@ -27,7 +27,7 @@ import FileSystem from "./fs/filesystem.js"
 export async function loadFileSystem({ config, dependencies, eventEmitter, rootKey, username }: {
   config: Configuration
   dependencies: Dependencies
-  eventEmitter: EventEmitter
+  eventEmitter: Events.Emitter<Events.FileSystem>
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> {

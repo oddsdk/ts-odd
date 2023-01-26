@@ -10,6 +10,7 @@ import * as Reference from "../components/reference/implementation.js"
 import * as Storage from "../components/storage/implementation.js"
 
 import * as DID from "../did/index.js"
+import * as Events from "../events.js"
 import * as FsTypeChecks from "./types/check.js"
 import * as Path from "../path/index.js"
 import * as TypeChecks from "../common/type-checks.js"
@@ -55,7 +56,7 @@ export type Dependencies = {
 export type FileSystemOptions = {
   account: AssociatedIdentity
   dependencies: Dependencies
-  eventEmitter: EventEmitter
+  eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   permissions?: Permissions
 }
@@ -72,7 +73,7 @@ export type NewFileSystemOptions = FileSystemOptions & {
 type ConstructorParams = {
   account: AssociatedIdentity
   dependencies: Dependencies
-  eventEmitter: EventEmitter
+  eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   root: RootTree
 }
@@ -86,7 +87,7 @@ export class FileSystem implements API {
 
   account: AssociatedIdentity
   dependencies: Dependencies
-  eventEmitter: EventEmitter
+  eventEmitter: EventEmitter<Events.FileSystem>
 
   root: RootTree
   readonly localOnly: boolean
@@ -125,9 +126,9 @@ export class FileSystem implements API {
     const updateDataRootWhenOnline = throttle(3000, false, (cid, proof) => {
       if (globalThis.navigator.onLine) {
         this._publishing = [ cid, true ]
-        return this.dependencies.reference.dataRoot.update(cid, proof).then(async () => {
+        return this.dependencies.reference.dataRoot.update(cid, proof).then(() => {
           if (this._publishing && this._publishing[ 0 ] === cid) {
-            await eventEmitter.emit("fileSystem:published", { root: cid })
+            eventEmitter.emit("published", { root: cid })
             this._publishing = false
           }
         })
@@ -765,8 +766,8 @@ export class FileSystem implements API {
       throw new Error("Not a valid FileSystem path")
     }
 
-    await this.eventEmitter.emit(
-      "fileSystem:local-change",
+    this.eventEmitter.emit(
+      "local-change",
       { root: await this.root.put(), path }
     )
   }
