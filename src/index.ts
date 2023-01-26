@@ -144,6 +144,21 @@ export type Program = ShortHands & {
   }
   configuration: Configuration
   components: Components
+  /**
+   * Events interface.
+   *
+   * Subscribe to events using `on` and unsubscribe using `off`.
+   *
+   * ```ts
+   * program.events.fileSystem.on("local-change", ({ path, root }) => {
+   *   console.log("The file system has changed locally 🔔")
+   *   console.log("Changed path:", path)
+   *   console.log("New data root CID:", root)
+   * })
+   *
+   * program.events.fileSystem.off("published")
+   * ```
+   */
   events: {
     fileSystem: Events.Emitter<Events.FileSystem>
   }
