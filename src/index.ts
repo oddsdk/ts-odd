@@ -144,24 +144,6 @@ export type Program = ShortHands & {
   }
   configuration: Configuration
   components: Components
-  /**
-   * Events interface.
-   *
-   * Subscribe to events using `on` or `once` (multiple events are allowed),
-   * and unsubscribe using `off`.
-   *
-   * ```ts
-   * program.events.fileSystem.on("local-change", ({ path, root }) => {
-   *   console.log("The file system has changed locally 🔔")
-   *   console.log("Changed path:", path)
-   *   console.log("New data root CID:", root)
-   * })
-   *
-   * program.events.fileSystem.off("published")
-   * ```
-   *
-   * More info on the [emittery Github readme](https://github.com/sindresorhus/emittery/tree/f0b3c2bf8dc985a7dde0e39607e30950394be54b#usage).
-   */
   events: {
     fileSystem: Events.Emitter<Events.FileSystem>
   }
