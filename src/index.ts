@@ -144,25 +144,6 @@ export type Program = ShortHands & {
   }
   configuration: Configuration
   components: Components
-  /**
-   * Events interface.
-   *
-   * Subscribe to events using `on` and unsubscribe using `off`,
-   * alternatively you can use `addListener` and `removeListener`.
-   *
-   * ```ts
-   * program.events.fileSystem.on("local-change", ({ path, root }) => {
-   *   console.log("The file system has changed locally 🔔")
-   *   console.log("Changed path:", path)
-   *   console.log("New data root CID:", root)
-   * })
-   *
-   * program.events.fileSystem.off("published")
-   * ```
-   */
-  events: {
-    fileSystem: Events.Emitter<Events.FileSystem>
-  }
   session: Maybe<Session>
 }
 
@@ -185,7 +166,7 @@ export type ShortHands = {
     hasPublicExchangeKey: (fs: FileSystem) => Promise<boolean>
     load: (username: string) => Promise<FileSystem>
     recover: (params: RecoverFileSystemParams) => Promise<{ success: boolean }>
-  }
+  } & Events.ListenTo<Events.FileSystem>
 }
 
 
@@ -597,17 +578,14 @@ export async function assemble(config: Configuration, components: Components): P
 
     // File system
     fileSystem: {
+      ...Events.listenTo(fsEvents),
+
       addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
       addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
       hasPublicExchangeKey: (fs: FileSystem) => FileSystemData.hasPublicExchangeKey(components.crypto, fs),
       load: (username: string) => loadFileSystem({ config, username, dependencies: components, eventEmitter: fsEvents }),
       recover: (params: RecoverFileSystemParams) => recoverFileSystem({ auth, dependencies: components, ...params }),
     }
-  }
-
-  // Events
-  const events = {
-    fileSystem: fsEvents
   }
 
   // Fin
@@ -617,7 +595,6 @@ export async function assemble(config: Configuration, components: Components): P
     auth,
     components,
     capabilities,
-    events,
     session,
   }
 }

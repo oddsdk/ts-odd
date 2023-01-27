@@ -41,7 +41,7 @@ describe("account linking", () => {
 
       return {
         send: (data) => channel.emit(`${username}`, data),
-        close: () => channel.off(`${username}`, messageCallback)
+        close: () => channel.removeListener(`${username}`, messageCallback)
       }
     }
 
