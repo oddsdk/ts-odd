@@ -2,6 +2,7 @@ import * as Uint8arrays from "uint8arrays"
 
 import * as Crypto from "../../components/crypto/implementation.js"
 import * as Depot from "../../components/depot/implementation.js"
+import * as History from "./PrivateHistory.js"
 import * as Manners from "../../components/manners/implementation.js"
 import * as Reference from "../../components/reference/implementation.js"
 import * as Pathing from "../../path/index.js"
@@ -20,7 +21,6 @@ import { decodeCID, isObject, hasProp, mapObj, Maybe, removeKeyFromObj, encodeCI
 
 import * as check from "../protocol/private/types/check.js"
 import * as checkNormie from "../types/check.js"
-import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
 import * as namefilter from "../protocol/private/namefilter.js"
 import * as protocol from "../protocol/index.js"
@@ -62,9 +62,23 @@ export default class PrivateTree extends BaseTree {
 
     this.children = {}
     this.header = header
-    this.history = new PrivateHistory(crypto, depot, this as unknown as history.Node)
     this.key = key
     this.mmpt = mmpt
+
+    this.history = new PrivateHistory(
+      crypto,
+      depot,
+      toHistoryNode(this)
+    )
+
+    function toHistoryNode(tree: PrivateTree): History.Node {
+      return {
+        ...tree,
+        fromInfo: async (mmpt: MMPT, key: Uint8Array, info: DecryptedNode) => toHistoryNode(
+          await PrivateTree.fromInfo(crypto, depot, manners, reference, mmpt, key, info)
+        )
+      }
+    }
   }
 
   static instanceOf(obj: unknown): obj is PrivateTree {

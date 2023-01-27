@@ -40,10 +40,10 @@ export class PublicFile extends BaseFile {
       toHistoryNode(this)
     )
 
-    function toHistoryNode(tree: PublicFile): History.Node {
+    function toHistoryNode(file: PublicFile): History.Node {
       return {
-        header: tree.header,
-        fromCID: async (cid) => toHistoryNode(
+        ...file,
+        fromCID: async (cid: CID) => toHistoryNode(
           await PublicFile.fromCID(depot, cid)
         )
       }

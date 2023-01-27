@@ -2,9 +2,9 @@ import * as Uint8arrays from "uint8arrays"
 
 import * as Crypto from "../../components/crypto/implementation.js"
 import * as Depot from "../../components/depot/implementation.js"
+import * as History from "./PrivateHistory.js"
 
 import * as check from "../protocol/private/types/check.js"
-import * as history from "./PrivateHistory.js"
 import * as metadata from "../metadata.js"
 import * as protocol from "../protocol/index.js"
 import * as namefilter from "../protocol/private/namefilter.js"
@@ -49,9 +49,23 @@ export class PrivateFile extends BaseFile {
     this.depot = depot
 
     this.header = header
-    this.history = new PrivateHistory(crypto, depot, this as unknown as history.Node)
     this.key = key
     this.mmpt = mmpt
+
+    this.history = new PrivateHistory(
+      crypto,
+      depot,
+      toHistoryNode(this)
+    )
+
+    function toHistoryNode(file: PrivateFile): History.Node {
+      return {
+        ...file,
+        fromInfo: async (mmpt: MMPT, key: Uint8Array, info: DecryptedNode) => toHistoryNode(
+          await PrivateFile.fromInfo(crypto, depot, mmpt, key, info)
+        )
+      }
+    }
   }
 
   static instanceOf(obj: unknown): obj is PrivateFile {

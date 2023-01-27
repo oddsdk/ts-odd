@@ -13,9 +13,7 @@ import { Metadata } from "../metadata.js"
 
 
 export interface Node {
-  constructor: {
-    fromInfo: (mmpt: MMPT, key: Uint8Array, info: DecryptedNode) => Node
-  }
+  fromInfo: (mmpt: MMPT, key: Uint8Array, info: DecryptedNode) => Promise<Node>
   header: {
     bareNameFilter: BareNameFilter
     metadata: Metadata
@@ -98,7 +96,7 @@ export default class PrivateHistory {
    */
   async _getRevision(revision: number): Promise<Maybe<Node>> {
     const info = await this._getRevisionInfoFromNumber(revision)
-    return info && await this.node.constructor.fromInfo(
+    return info && await this.node.fromInfo(
       this.node.mmpt,
       this.node.key,
       info
