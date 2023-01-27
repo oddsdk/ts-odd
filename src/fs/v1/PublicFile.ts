@@ -36,7 +36,18 @@ export class PublicFile extends BaseFile {
 
     this.cid = cid
     this.header = header
-    this.history = new PublicHistory(this as unknown as History.Node)
+    this.history = new PublicHistory(
+      toHistoryNode(this)
+    )
+
+    function toHistoryNode(file: PublicFile): History.Node {
+      return {
+        ...file,
+        fromCID: async (cid: CID) => toHistoryNode(
+          await PublicFile.fromCID(depot, cid)
+        )
+      }
+    }
   }
 
   static instanceOf(obj: unknown): obj is PublicFile {

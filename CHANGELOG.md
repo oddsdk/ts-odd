@@ -15,7 +15,11 @@
 
 #### Other
 
-- Introduces stricter types for paths to restrict the paths you can use with various functions and also to guide you a bit more.
+Introduces stricter types for paths to restrict the paths you can use with various functions and also to guide you a bit more.
+
+#### Fixes
+
+Fixes various issues with file/directory history.
 
 
 ### v0.35.2
