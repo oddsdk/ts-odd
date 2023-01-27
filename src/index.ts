@@ -147,7 +147,8 @@ export type Program = ShortHands & {
   /**
    * Events interface.
    *
-   * Subscribe to events using `on` and unsubscribe using `off`.
+   * Subscribe to events using `on` and unsubscribe using `off`,
+   * alternatively you can use `addListener` and `removeListener`.
    *
    * ```ts
    * program.events.fileSystem.on("local-change", ({ path, root }) => {

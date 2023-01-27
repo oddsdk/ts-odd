@@ -3,7 +3,8 @@ export type EventListener<E> = (event: E) => void
 /**
  * Events interface.
  *
- * Subscribe to events using `on` and unsubscribe using `off`.
+ * Subscribe to events using `on` and unsubscribe using `off`,
+ * alternatively you can use `addListener` and `removeListener`.
  *
  * ```ts
  * program.events.fileSystem.on("local-change", ({ path, root }) => {
@@ -18,7 +19,7 @@ export type EventListener<E> = (event: E) => void
 export class EventEmitter<EventMap> {
   private readonly events: Map<keyof EventMap, Set<EventListener<unknown>>> = new Map()
 
-  public on<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[ K ]>): void {
+  public addListener<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[ K ]>): void {
     const eventSet = this.events.get(eventName)
 
     if (eventSet === undefined) {
@@ -28,7 +29,7 @@ export class EventEmitter<EventMap> {
     }
   }
 
-  public off<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[ K ]>): void {
+  public removeListener<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[ K ]>): void {
     const eventSet = this.events.get(eventName)
     if (eventSet === undefined) return
 
@@ -38,6 +39,9 @@ export class EventEmitter<EventMap> {
       this.events.delete(eventName)
     }
   }
+
+  on = this.addListener
+  off = this.removeListener
 
   public emit<K extends keyof EventMap>(eventName: K, event: EventMap[ K ]): void {
     this.events.get(eventName)?.forEach((listener: EventListener<EventMap[ K ]>) => {
