@@ -58,7 +58,18 @@ export class PublicTree extends BaseTree {
     this.cid = cid
     this.links = links
     this.header = header
-    this.history = new PublicHistory(this as unknown as History.Node)
+    this.history = new PublicHistory(
+      toHistoryNode(this)
+    )
+
+    function toHistoryNode(tree: PublicTree): History.Node {
+      return {
+        header: tree.header,
+        fromCID: async (cid) => toHistoryNode(
+          await PublicTree.fromCID(depot, reference, cid)
+        )
+      }
+    }
   }
 
   static async empty(depot: Depot.Implementation, reference: Reference.Implementation): Promise<PublicTree> {

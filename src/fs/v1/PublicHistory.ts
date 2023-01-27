@@ -1,23 +1,18 @@
 import type { CID } from "multiformats/cid"
 
-import { Maybe } from "../../common/index.js"
-import { Metadata } from "../metadata.js"
+import { decodeCID, Maybe } from "../../common/index.js"
+import { FileHeader } from "../protocol/public/types.js"
 
 
 export type Node = {
-  constructor: {
-    fromCID: (cid: CID) => Node
-  }
-  header: {
-    metadata: Metadata
-    previous: CID
-  }
+  fromCID: (cid: CID) => Promise<Node>
+  header: Pick<FileHeader, "metadata" | "previous">
 }
 
 
 export default class PublicHistory {
 
-  constructor(readonly node: Node) {}
+  constructor(readonly node: Node) { }
 
   /**
    * Go back one or more versions.
@@ -82,7 +77,9 @@ export default class PublicHistory {
    */
   static async _getPreviousVersion(node: Node): Promise<Maybe<Node>> {
     if (!node.header.previous) return Promise.resolve(null)
-    return node.constructor.fromCID(node.header.previous)
+    return node.fromCID(
+      decodeCID(node.header.previous)
+    )
   }
 
   /**
