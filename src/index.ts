@@ -182,7 +182,6 @@ export type ShortHands = {
  * - `auth`, a means to control the various auth strategies you configured. Use this to create sessions. Read more about auth components in the toplevel `auth` object documention.
  * - `capabilities`, a means to control capabilities. Use this to collect & request capabilities, and to create a session based on them. Read more about capabilities in the toplevel `capabilities` object documentation.
  * - `components`, your full set of `Components`.
- * - `events`, an object containing various event emitters. Use this to subscribe to, for example, file system events.
  *
  * This object also has a few other functions, for example to load a filesystem.
  * These are called "shorthands" because they're the same functions available
