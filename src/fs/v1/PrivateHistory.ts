@@ -12,7 +12,7 @@ import { Maybe, decodeCID } from "../../common/index.js"
 import { Metadata } from "../metadata.js"
 
 
-export type Node = {
+export interface Node {
   constructor: {
     fromInfo: (mmpt: MMPT, key: Uint8Array, info: DecryptedNode) => Node
   }
@@ -21,7 +21,7 @@ export type Node = {
     metadata: Metadata
     revision: number
   }
-  key: string
+  key: Uint8Array
   mmpt: MMPT
 }
 
@@ -100,7 +100,7 @@ export default class PrivateHistory {
     const info = await this._getRevisionInfoFromNumber(revision)
     return info && await this.node.constructor.fromInfo(
       this.node.mmpt,
-      Uint8arrays.fromString(this.node.key, "base64pad"),
+      this.node.key,
       info
     )
   }
@@ -113,7 +113,7 @@ export default class PrivateHistory {
       this.depot,
       this.crypto,
       decodeCID(revision.cid),
-      Uint8arrays.fromString(this.node.key, "base64pad")
+      this.node.key
     )
   }
 
@@ -123,7 +123,7 @@ export default class PrivateHistory {
   async _getRevisionInfoFromNumber(revision: number): Promise<Maybe<DecryptedNode>> {
     const { mmpt } = this.node
     const { bareNameFilter } = this.node.header
-    const key = Uint8arrays.fromString(this.node.key, "base64pad")
+    const key = this.node.key
 
     const r = await Protocol.priv.getRevision(this.crypto, mmpt, bareNameFilter, key, revision)
     return r && this._getRevisionInfo(r)
