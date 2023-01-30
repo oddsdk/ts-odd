@@ -179,7 +179,7 @@ const content = new TextDecoder().decode(
 That's it, you have successfully created a Webnative app! 🚀
 
 
-## Basics
+## POSIX Interface
 
 WNFS exposes a familiar POSIX-style interface:
 - `exists`: check if a file or directory exists
@@ -224,3 +224,20 @@ file.history.prior(1606236743)
 ## Migration
 
 Some versions of Webnative require apps to migrate their codebase to address breaking changes. Please see our [migration guide](https://guide.fission.codes/developers/webnative/migration) for help migrating your apps to the latest Webnative version.
+
+
+## Debugging
+
+Debugging mode can be enable by setting `debug` to `true` in your configuration object that you pass to your `Program`. By default this will add your programs to the global context object (eg. `window`) under `globalThis.__webnative.programs` (can be disabled, see API docs).
+
+```ts
+const appInfo = { creator: "Nullsoft", name: "Winamp" }
+
+await wn.program({
+  namespace: appInfo,
+  debug: true
+})
+
+// Automatically exposed Program in debug mode
+const program = globalThis.__webnative[ wn.namespace(appInfo) ] // namespace: "Nullsoft/Winamp"
+```
