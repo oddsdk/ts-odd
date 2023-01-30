@@ -22,8 +22,8 @@ export { EventEmitter, EventEmitter as Emitter }
  * program.fileSystem.off("published")
  * ```
  */
-export type ListenTo<Events> = Pick<
-  EventEmitter<Events>,
+export type ListenTo<EventMap> = Pick<
+  EventEmitter<EventMap>,
   "addListener" | "removeListener" | "on" | "off"
 >
 
@@ -34,12 +34,16 @@ export type FileSystem = {
 }
 
 
-export function createEmitter<E>(): EventEmitter<E> {
+export function createEmitter<EventMap>(): EventEmitter<EventMap> {
   return new EventEmitter()
 }
 
 
-export function listenTo<E>(emitter: EventEmitter<E>): ListenTo<E> {
-  const { addListener, removeListener, on, off } = emitter
-  return { addListener, removeListener, on, off }
+export function listenTo<EventMap>(emitter: EventEmitter<EventMap>): ListenTo<EventMap> {
+  return {
+    addListener: emitter.addListener.bind(emitter),
+    removeListener: emitter.removeListener.bind(emitter),
+    on: emitter.on.bind(emitter),
+    off: emitter.off.bind(emitter),
+  }
 }

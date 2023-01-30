@@ -17,7 +17,10 @@ import type { Maybe, Result } from "../common/index.js"
 
 
 export type AccountLinkingConsumer = {
-  on: <K extends keyof ConsumerEventMap>(eventName: K, listener: EventListener<ConsumerEventMap[ K ]>) => void
+  on: (
+    eventName: keyof ConsumerEventMap,
+    listener: EventListener<ConsumerEventMap[ keyof ConsumerEventMap ]>
+  ) => void
   cancel: () => void
 }
 
@@ -147,7 +150,7 @@ export const createConsumer = async (
       ls.temporaryRsaPair = temporaryRsaPair
       ls.step = LinkingStep.Negotiation
 
-      await channel.send(temporaryDID)
+      channel.send(temporaryDID)
     } else {
       clearInterval(rsaExchangeInterval)
     }

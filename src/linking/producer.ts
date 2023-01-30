@@ -17,7 +17,10 @@ import type { Maybe, Result } from "../common/index.js"
 
 
 export type AccountLinkingProducer = {
-  on: <K extends keyof ProducerEventMap>(eventName: K, listener: EventListener<ProducerEventMap[ K ]>) => void
+  on: (
+    eventName: keyof ProducerEventMap,
+    listener: EventListener<ProducerEventMap[ keyof ProducerEventMap ]>
+  ) => void
   cancel: () => void
 }
 
