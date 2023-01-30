@@ -32,6 +32,7 @@ import * as Capabilities from "./capabilities.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as DID from "./did/local.js"
+import * as Events from "./events.js"
 import * as FileSystemData from "./fs/data.js"
 import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
@@ -165,7 +166,7 @@ export type ShortHands = {
     hasPublicExchangeKey: (fs: FileSystem) => Promise<boolean>
     load: (username: string) => Promise<FileSystem>
     recover: (params: RecoverFileSystemParams) => Promise<{ success: boolean }>
-  }
+  } & Events.ListenTo<Events.FileSystem>
 }
 
 
@@ -445,6 +446,9 @@ export async function assemble(config: Configuration, components: Components): P
   // Backwards compatibility (data)
   await ensureBackwardsCompatibility(components, config)
 
+  // Event emitter
+  const fsEvents = Events.createEmitter<Events.FileSystem>()
+
   // Authenticated user
   const sessionInfo = await SessionMod.restore(components.storage)
 
@@ -478,7 +482,8 @@ export async function assemble(config: Configuration, components: Components): P
         return this.implementation.session(
           components,
           newSessionInfo.username,
-          config
+          config,
+          { fileSystem: fsEvents }
         )
       }
     }
@@ -536,6 +541,7 @@ export async function assemble(config: Configuration, components: Components): P
         await loadFileSystem({
           config,
           dependencies: components,
+          eventEmitter: fsEvents,
           username,
         })
 
@@ -571,10 +577,12 @@ export async function assemble(config: Configuration, components: Components): P
 
     // File system
     fileSystem: {
+      ...Events.listenTo(fsEvents),
+
       addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
       addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
       hasPublicExchangeKey: (fs: FileSystem) => FileSystemData.hasPublicExchangeKey(components.crypto, fs),
-      load: (username: string) => loadFileSystem({ config, username, dependencies: components }),
+      load: (username: string) => loadFileSystem({ config, username, dependencies: components, eventEmitter: fsEvents }),
       recover: (params: RecoverFileSystemParams) => recoverFileSystem({ auth, dependencies: components, ...params }),
     }
   }

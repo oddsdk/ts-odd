@@ -3,6 +3,7 @@ import { CID } from "multiformats/cid"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as DID from "./did/index.js"
+import * as Events from "./events.js"
 import * as Protocol from "./fs/protocol/index.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as RootKey from "./common/root-key.js"
@@ -23,9 +24,10 @@ import FileSystem from "./fs/filesystem.js"
 /**
  * Load a user's file system.
  */
-export async function loadFileSystem({ config, dependencies, rootKey, username }: {
+export async function loadFileSystem({ config, dependencies, eventEmitter, rootKey, username }: {
   config: Configuration
   dependencies: Dependencies
+  eventEmitter: Events.Emitter<Events.FileSystem>
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> {
@@ -88,7 +90,7 @@ export async function loadFileSystem({ config, dependencies, rootKey, username }
     await checkFileSystemVersion(dependencies.depot, config, cid)
     await manners.fileSystem.hooks.beforeLoadExisting(cid, account, dataComponents)
 
-    fs = await FileSystem.fromCID(cid, { account, dependencies, permissions: p })
+    fs = await FileSystem.fromCID(cid, { account, dependencies, eventEmitter, permissions: p })
 
     await manners.fileSystem.hooks.afterLoadExisting(fs, account, dataComponents)
 
@@ -101,6 +103,7 @@ export async function loadFileSystem({ config, dependencies, rootKey, username }
   fs = await FileSystem.empty({
     account,
     dependencies,
+    eventEmitter,
     rootKey,
     permissions: p,
     version: config.fileSystem?.version

@@ -10,6 +10,7 @@ import * as Reference from "../components/reference/implementation.js"
 import * as Storage from "../components/storage/implementation.js"
 
 import * as DID from "../did/index.js"
+import * as Events from "../events.js"
 import * as FsTypeChecks from "./types/check.js"
 import * as Path from "../path/index.js"
 import * as TypeChecks from "../common/type-checks.js"
@@ -17,6 +18,7 @@ import * as Ucan from "../ucan/index.js"
 import * as Versions from "./versions.js"
 
 import { RootBranch, Partitioned, PartitionedNonEmpty, Partition, DistinctivePath } from "../path/index.js"
+import { EventEmitter } from "../events.js"
 import { Permissions } from "../permissions.js"
 import { SymmAlg } from "../components/crypto/implementation.js"
 import { decodeCID } from "../common/index.js"
@@ -54,6 +56,7 @@ export type Dependencies = {
 export type FileSystemOptions = {
   account: AssociatedIdentity
   dependencies: Dependencies
+  eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   permissions?: Permissions
 }
@@ -70,6 +73,7 @@ export type NewFileSystemOptions = FileSystemOptions & {
 type ConstructorParams = {
   account: AssociatedIdentity
   dependencies: Dependencies
+  eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   root: RootTree
 }
@@ -83,6 +87,7 @@ export class FileSystem implements API {
 
   account: AssociatedIdentity
   dependencies: Dependencies
+  eventEmitter: EventEmitter<Events.FileSystem>
 
   root: RootTree
   readonly localOnly: boolean
@@ -94,9 +99,10 @@ export class FileSystem implements API {
   _publishing: false | [ CID, true ]
 
 
-  constructor({ account, dependencies, root, localOnly }: ConstructorParams) {
+  constructor({ account, dependencies, eventEmitter, root, localOnly }: ConstructorParams) {
     this.account = account
     this.dependencies = dependencies
+    this.eventEmitter = eventEmitter
 
     this.localOnly = localOnly || false
     this.proofs = {}
@@ -122,6 +128,7 @@ export class FileSystem implements API {
         this._publishing = [ cid, true ]
         return this.dependencies.reference.dataRoot.update(cid, proof).then(() => {
           if (this._publishing && this._publishing[ 0 ] === cid) {
+            eventEmitter.emit("published", { root: cid })
             this._publishing = false
           }
         })
@@ -150,7 +157,7 @@ export class FileSystem implements API {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: NewFileSystemOptions): Promise<FileSystem> {
-    const { account, dependencies, localOnly } = opts
+    const { account, dependencies, eventEmitter, localOnly } = opts
     const rootKey: Uint8Array = opts.rootKey || await (
       dependencies
         .crypto.aes.genKey(DEFAULT_AES_ALG)
@@ -164,6 +171,7 @@ export class FileSystem implements API {
     return new FileSystem({
       account,
       dependencies,
+      eventEmitter,
       root,
       localOnly
     })
@@ -173,12 +181,13 @@ export class FileSystem implements API {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions): Promise<FileSystem> {
-    const { account, dependencies, permissions, localOnly } = opts
+    const { account, dependencies, eventEmitter, permissions, localOnly } = opts
     const root = await RootTree.fromCID({ accountDID: account.rootDID, dependencies, cid, permissions })
 
     return new FileSystem({
       account,
       dependencies,
+      eventEmitter,
       root,
       localOnly
     })
@@ -756,6 +765,11 @@ export class FileSystem implements API {
     } else {
       throw new Error("Not a valid FileSystem path")
     }
+
+    this.eventEmitter.emit(
+      "local-change",
+      { root: await this.root.put(), path }
+    )
   }
 
   /** @internal */

@@ -6,6 +6,7 @@ import type { Implementation } from "../implementation.js"
 
 import * as Base from "./base.js"
 import * as DID from "../../../did/index.js"
+import * as Events from "../../../events.js"
 import * as RootKey from "../../../common/root-key.js"
 import * as SessionMod from "../../../session.js"
 import * as TypeChecks from "../../../common/type-checks.js"
@@ -87,7 +88,8 @@ export async function linkDevice(
 export async function session(
   components: Components,
   authedUsername: Maybe<string>,
-  config: Configuration
+  config: Configuration,
+  eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem> }
 ): Promise<Maybe<Session>> {
   if (authedUsername) {
     // Self-authorize a filesystem UCAN if needed
@@ -126,6 +128,7 @@ export async function session(
       undefined :
       await loadFileSystem({
         config,
+
         dependencies: {
           crypto: components.crypto,
           depot: components.depot,
@@ -133,6 +136,7 @@ export async function session(
           reference: components.reference,
           storage: components.storage,
         },
+        eventEmitter: eventEmitters.fileSystem,
         username: authedUsername,
       })
 
