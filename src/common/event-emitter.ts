@@ -2,32 +2,23 @@ export type EventListener<E> = (event: E) => void
 
 
 export class EventEmitter<EventMap> {
-  private readonly events: Map<
-    keyof EventMap,
-    Set<EventListener<EventMap[ keyof EventMap ]>>
-  > = new Map()
+  private readonly events: Map<keyof EventMap, Set<EventListener<unknown>>> = new Map()
 
-  public addListener(
-    eventName: keyof EventMap,
-    listener: EventListener<EventMap[ keyof EventMap ]>
-  ): void {
+  public addListener<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[ K ]>): void {
     const eventSet = this.events.get(eventName)
 
     if (eventSet === undefined) {
-      this.events.set(eventName, new Set([ listener ]))
+      this.events.set(eventName, new Set([ listener ]) as Set<EventListener<unknown>>)
     } else {
-      eventSet.add(listener)
+      eventSet.add(listener as EventListener<unknown>)
     }
   }
 
-  public removeListener(
-    eventName: keyof EventMap,
-    listener: EventListener<EventMap[ keyof EventMap ]>
-  ): void {
+  public removeListener<K extends keyof EventMap>(eventName: K, listener: EventListener<EventMap[ K ]>): void {
     const eventSet = this.events.get(eventName)
     if (eventSet === undefined) return
 
-    eventSet.delete(listener)
+    eventSet.delete(listener as EventListener<unknown>)
 
     if (eventSet.size === 0) {
       this.events.delete(eventName)
@@ -37,11 +28,8 @@ export class EventEmitter<EventMap> {
   on = this.addListener
   off = this.removeListener
 
-  public emit(
-    eventName: keyof EventMap,
-    event: EventMap[ keyof EventMap ]
-  ): void {
-    this.events.get(eventName)?.forEach((listener: EventListener<EventMap[ keyof EventMap ]>) => {
+  public emit<K extends keyof EventMap>(eventName: K, event: EventMap[ K ]): void {
+    this.events.get(eventName)?.forEach((listener: EventListener<EventMap[ K ]>) => {
       listener.apply(this, [ event ])
     })
   }
