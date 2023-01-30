@@ -30,6 +30,14 @@ export class Repo extends Repository<CID> {
     return a.toString()
   }
 
+  indexOf(item: CID): number {
+    return this.memoryCache.map(
+      c => c.toString()
+    ).indexOf(
+      item.toString()
+    )
+  }
+
   newest(): CID {
     return this.memoryCache[ this.memoryCache.length - 1 ]
   }
