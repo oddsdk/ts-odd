@@ -587,8 +587,8 @@ export async function assemble(config: Configuration, components: Components): P
     }
   }
 
-  // Fin
-  return {
+  // Create `Program`
+  const program = {
     ...shorthands,
     configuration: { ...config },
     auth,
@@ -596,6 +596,23 @@ export async function assemble(config: Configuration, components: Components): P
     capabilities,
     session,
   }
+
+  // Inject into global context if necessary
+  if (config.debug) {
+    const inject = config.debugging?.injectIntoGlobalContext === undefined
+      ? true
+      : config.debugging?.injectIntoGlobalContext
+
+    if (inject) {
+      const container = globalThis as any
+      container.__webnative = container.__webnative || {}
+      container.__webnative.programs = container.__webnative.programs || {}
+      container.__webnative.programs[ namespace(config) ] = program
+    }
+  }
+
+  // Fin
+  return program
 }
 
 

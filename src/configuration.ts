@@ -10,11 +10,23 @@ export type Configuration = {
   namespace: string | AppInfo
 
   /**
-   * Enable debug console statements.
+   * Enable debug mode.
    *
    * @default false
    */
   debug?: boolean
+
+  /**
+   * Debugging settings.
+   */
+  debugging?: {
+    /**
+     * Should I add programs to the global context while in debugging mode?
+     *
+     * @default true
+     */
+    injectIntoGlobalContext?: boolean
+  }
 
   /**
    * File system settings.

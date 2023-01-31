@@ -13,6 +13,7 @@
 - Adds `program.fileSystem.recover({ newUsername, oldUsername, readKey })` shorthand method so apps will no longer have to implement the FS recovery flow manually.
 - Adds `program.accountDID(username)` shorthand method to retrieve the root DID of a given account username.
 - Adds the file system data functions as shorthand methods.
+- Injects programs into the global namespace when in debug mode. Can be disabled via the configuration.
 
 #### Other
 
