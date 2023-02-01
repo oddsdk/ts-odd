@@ -122,7 +122,11 @@ export type AuthenticationStrategy = {
 
 
 export type Program = ShortHands & {
+  /**
+   * Authentication strategy, use this interface to register an account and link devices.
+   */
   auth: AuthenticationStrategy
+
   capabilities: {
     /**
      * Collect capabilities.
@@ -142,8 +146,25 @@ export type Program = ShortHands & {
      */
     session: (username: string) => Promise<Maybe<Session>>
   }
+
+  /**
+   * Configuration used to build this program.
+   */
   configuration: Configuration
+
+  /**
+   * Components used to build this program.
+   */
   components: Components
+
+  /**
+   * Various file system methods.
+   */
+  fileSystem: FileSystemShortHands & Events.ListenTo<Events.FileSystem>
+
+  /**
+   * Existing session, if there is one.
+   */
   session: Maybe<Session>
 }
 
@@ -153,20 +174,28 @@ export enum ProgramError {
   UnsupportedBrowser = "UNSUPPORTED_BROWSER"
 }
 
+
 export type ShortHands = {
-  // DIDs
   accountDID: (username: string) => Promise<string>
   agentDID: () => Promise<string>
   sharingDID: () => Promise<string>
+}
 
-  // File system
-  fileSystem: {
-    addPublicExchangeKey: (fs: FileSystem) => Promise<void>
-    addSampleData: (fs: FileSystem) => Promise<void>
-    hasPublicExchangeKey: (fs: FileSystem) => Promise<boolean>
-    load: (username: string) => Promise<FileSystem>
-    recover: (params: RecoverFileSystemParams) => Promise<{ success: boolean }>
-  } & Events.ListenTo<Events.FileSystem>
+
+export type FileSystemShortHands = {
+  addPublicExchangeKey: (fs: FileSystem) => Promise<void>
+  addSampleData: (fs: FileSystem) => Promise<void>
+  hasPublicExchangeKey: (fs: FileSystem) => Promise<boolean>
+
+  /**
+   * Load the file system of a given username.
+   */
+  load: (username: string) => Promise<FileSystem>
+
+  /**
+   * Recover a file system.
+   */
+  recover: (params: RecoverFileSystemParams) => Promise<{ success: boolean }>
 }
 
 
@@ -569,7 +598,7 @@ export async function assemble(config: Configuration, components: Components): P
   }
 
   // Shorthands
-  const shorthands: ShortHands = {
+  const shorthands = {
     // DIDs
     accountDID: (username: string) => components.reference.didRoot.lookup(username),
     agentDID: () => DID.agent(components.crypto),
@@ -590,6 +619,7 @@ export async function assemble(config: Configuration, components: Components): P
   // Create `Program`
   const program = {
     ...shorthands,
+
     configuration: { ...config },
     auth,
     components,
