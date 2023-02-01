@@ -250,6 +250,15 @@ export function map<A, B>(fn: (p: A) => B, path: DistinctivePath<A>): Distinctiv
 /**
  * Get the parent directory of a `DistinctivePath`.
  */
+export function parent(path: DistinctivePath<[ Partition, Segment, Segment, ...Segments ]>): DirectoryPath<PartitionedNonEmpty<Partition>>
+export function parent(path: DistinctivePath<[ Segment, Segment, Segment, ...Segments ]>): DirectoryPath<SegmentsNonEmpty>
+export function parent(path: DistinctivePath<PartitionedNonEmpty<Partition>>): DirectoryPath<Partitioned<Partition>>
+export function parent(path: DistinctivePath<[ Partition, Segment ]>): DirectoryPath<Partitioned<Partition>>
+export function parent(path: DistinctivePath<Partitioned<Partition>>): DirectoryPath<Segments>
+export function parent(path: DistinctivePath<SegmentsNonEmpty>): DirectoryPath<Segments>
+export function parent(path: DistinctivePath<[ Segment ]>): DirectoryPath<[]>
+export function parent(path: DistinctivePath<[]>): null
+export function parent(path: DistinctivePath<Segments>): Maybe<DirectoryPath<Segments>>
 export function parent(path: DistinctivePath<Segments>): Maybe<DirectoryPath<Segments>> {
   return isDirectory(path) && isRootDirectory(path as DirectoryPath<Segments>)
     ? null

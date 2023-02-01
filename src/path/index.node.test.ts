@@ -383,6 +383,35 @@ describe("the path helpers", () => {
     ).toEqual(
       null
     )
+
+    // Type testing
+    const a: DirectoryPath<Path.PartitionedNonEmpty<Path.Partition>> = Path.parent({
+      directory: [ "private", "a", "b" ]
+    })
+
+    const a_: DirectoryPath<Path.SegmentsNonEmpty> = Path.parent({
+      directory: [ "random", "a", "b" ]
+    })
+
+    const b: DirectoryPath<Path.Partitioned<Path.Partition>> = Path.parent({
+      directory: [ "private", "a" ]
+    })
+
+    const b_: DirectoryPath<Path.Segments> = Path.parent({
+      directory: [ "random", "a" ]
+    })
+
+    const c: DirectoryPath<Path.Segments> = Path.parent({
+      directory: [ "private" ]
+    })
+
+    const c_: DirectoryPath<Path.Segments> = Path.parent({
+      directory: [ "random" ]
+    })
+
+    const x: null = Path.parent({
+      directory: []
+    })
   })
 
 
