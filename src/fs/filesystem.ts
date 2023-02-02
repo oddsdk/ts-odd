@@ -128,7 +128,7 @@ export class FileSystem implements API {
         this._publishing = [ cid, true ]
         return this.dependencies.reference.dataRoot.update(cid, proof).then(() => {
           if (this._publishing && this._publishing[ 0 ] === cid) {
-            eventEmitter.emit("published", { root: cid })
+            eventEmitter.emit("publish", { root: cid })
             this._publishing = false
           }
         })

@@ -19,7 +19,7 @@ export { EventEmitter, EventEmitter as Emitter }
  *   console.log("New data root CID:", root)
  * })
  *
- * program.fileSystem.off("published")
+ * program.fileSystem.off("publish")
  * ```
  */
 export type ListenTo<EventMap> = Pick<
@@ -30,7 +30,7 @@ export type ListenTo<EventMap> = Pick<
 
 export type FileSystem = {
   "local-change": { root: CID; path: DistinctivePath<Partitioned<Partition>> }
-  "published": { root: CID }
+  "publish": { root: CID }
 }
 
 
