@@ -396,7 +396,7 @@ export class FileSystem implements API {
       throw new Error("Destination already exists")
     }
 
-    await this.runOnNode(from, {
+    await this.runMutationOnNode(from, {
       public: async (root, relPath) => {
         const [ _, ...nextPath ] = Path.unwrap(to)
         await root.mv(relPath, nextPath)
