@@ -22,7 +22,8 @@
 
 #### Fixes
 
-Fixes various issues with file/directory history.
+- Fixes persistance issue with `fs.mv()`
+- Fixes various issues with file/directory history.
 
 
 ### v0.35.2
