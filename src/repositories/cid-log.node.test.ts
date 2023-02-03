@@ -66,7 +66,7 @@ describe("cid-log", () => {
           const cid = cids[ idx ]
 
           // Get the index of test cid after all CIDs have been added
-          const index = await cidLog.indexOf(cid)
+          const index = cidLog.indexOf(cid)
 
           expect(index).toEqual(idx)
         })
@@ -85,7 +85,7 @@ describe("cid-log", () => {
           const cid = cids[ cids.length - 1 ]
 
           // Get the newest cid after all CIDs have been added
-          const newest = await cidLog.newest()
+          const newest = cidLog.newest()
 
           expect(newest.toString()).toEqual(cid.toString())
         })
