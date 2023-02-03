@@ -44,7 +44,7 @@ export async function loadFileSystem({ config, dependencies, eventEmitter, rootK
 
   // Determine the correct CID of the file system to load
   const dataCid = navigator.onLine ? await getDataRoot(reference, username, { maxRetries: 20 }) : null
-  const logIdx = dataCid ? cidLog.length() - cidLog.indexOf(dataCid) - 1 : -1
+  const logIdx = dataCid ? cidLog.indexOf(dataCid) : -1
 
   if (!navigator.onLine) {
     // Offline, use local CID
@@ -59,15 +59,16 @@ export async function loadFileSystem({ config, dependencies, eventEmitter, rootK
     if (cid) manners.log("📓 No DNSLink, using local CID:", cid.toString())
     else manners.log("📓 Creating a new file system")
 
-  } else if (logIdx === 0) {
+  } else if (logIdx === cidLog.length() - 1) {
     // DNS is up to date
     cid = dataCid
     manners.log("📓 DNSLink is up to date:", cid.toString())
 
-  } else if (logIdx > 0) {
+  } else if (logIdx !== -1 && logIdx < cidLog.length() - 1) {
     // DNS is outdated
     cid = cidLog.newest()
-    const idxLog = logIdx === 1 ? "1 newer local entry" : (cidLog.length() - logIdx - 1).toString() + " newer local entries"
+    const diff = cidLog.length() - 1 - logIdx
+    const idxLog = diff === 1 ? "1 newer local entry" : diff.toString() + " newer local entries"
     manners.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid.toString())
 
   } else {
