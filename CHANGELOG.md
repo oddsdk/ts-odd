@@ -2,7 +2,7 @@
 
 ### v0.36.1
 
-Fixes issue with the CID log which in certain scenarios caused Webnative to load the wrong version of an account's file system.
+Fixes an issue with the CID log, which, in certain scenarios, caused Webnative to load the wrong version of an account's file system.
 
 ### v0.36.0
 
