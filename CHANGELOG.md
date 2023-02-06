@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.36.2
+
+Allow symlinks to other file systems to be created.
+
 ### v0.36.1
 
 Fixes an issue with the CID log, which, in certain scenarios, caused Webnative to load the wrong version of an account's file system.

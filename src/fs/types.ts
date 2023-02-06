@@ -29,7 +29,14 @@ export interface Posix {
   rm(path: DistinctivePath<PartitionedNonEmpty<Partition>>): Promise<this>
 
   resolveSymlink(link: SoftLink): Promise<File | Tree | null>
-  symlink(args: { at: DirectoryPath<PartitionedNonEmpty<Partition>>; referringTo: DistinctivePath<PartitionedNonEmpty<Partition>>; name: string }): Promise<this>
+  symlink(args: {
+    at: DirectoryPath<PartitionedNonEmpty<Partition>>
+    referringTo: {
+      path: Path.Distinctive<Partitioned<Partition>>
+      username?: string
+    }
+    name: string
+  }): Promise<this>
 
   // Directories
   ls(path: DirectoryPath<Partitioned<Partition>>): Promise<Links>
