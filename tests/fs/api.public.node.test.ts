@@ -249,7 +249,7 @@ describe("the public filesystem api", function () {
           await fs.mkdir(referringToPath)
           await fs.symlink({
             at: atPath,
-            referringTo: referringToPath,
+            referringTo: { path: referringToPath },
             name
           })
 
@@ -278,7 +278,7 @@ describe("the public filesystem api", function () {
           await fs.write(referringToPath, new Uint8Array())
           await fs.symlink({
             at: atPath,
-            referringTo: referringToPath,
+            referringTo: { path: referringToPath },
             name
           })
 

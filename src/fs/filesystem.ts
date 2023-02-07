@@ -447,14 +447,19 @@ export class FileSystem implements API {
   }
 
   /**
-   * Make an internal symbolic link **at** a path.
+   * Make a symbolic link **at** a path.
    */
-  async symlink(
-    args:
-      { at: Path.Directory<Partitioned<Partition>>; referringTo: Path.Distinctive<Partitioned<Partition>>; name: string }
-  ): Promise<this> {
-    const { at, referringTo, name } = args
-    const username = this.account.username
+  async symlink(args: {
+    at: Path.Directory<Partitioned<Partition>>
+    referringTo: {
+      path: Path.Distinctive<Partitioned<Partition>>
+      username?: string
+    }
+    name: string
+  }): Promise<this> {
+    const { at, name } = args
+    const referringTo = args.referringTo.path
+    const username = args.referringTo.username || this.account.username
 
     if (at == null) throw new Error("Missing parameter `symlink.at`")
     if (Path.isFile(at)) throw new Error("`symlink.at` only accepts directory paths")
