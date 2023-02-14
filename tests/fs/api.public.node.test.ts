@@ -34,7 +34,7 @@ describe("the public filesystem api", function () {
   })
 
 
-  it.skip("writes files", async () => {
+  it("writes files", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -57,7 +57,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it.skip("removes files it writes", async () => {
+  it("removes files it writes", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -76,7 +76,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it.skip("reads files it writes", async () => {
+  it("reads files it writes", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -97,7 +97,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it.skip("moves files", async () => {
+  it("moves files", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -119,7 +119,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it.skip("reads moved files", async () => {
+  it("reads moved files", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -260,7 +260,7 @@ describe("the public filesystem api", function () {
           })
 
           const at = await fs.get(atPath) as PublicTree
-          const symlink = Check.isFile(at) || at === null ? null : at.getLinks()[ name ]
+          const symlink = Check.isFile(at) || at === null ? null : at.getLinks()[name]
           const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)
@@ -289,7 +289,7 @@ describe("the public filesystem api", function () {
           })
 
           const at = await fs.get(atPath) as PublicTree
-          const symlink = Check.isFile(at) || at === null ? null : at.getLinks()[ name ]
+          const symlink = Check.isFile(at) || at === null ? null : at.getLinks()[name]
           const followed = await fs.get(referringToPath)
 
           expect(!!symlink).toEqual(true)

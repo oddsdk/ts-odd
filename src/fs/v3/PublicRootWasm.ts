@@ -13,8 +13,11 @@ import { BaseFile } from "../base/file.js"
 import { Metadata } from "../metadata.js"
 
 
+let initialized = false;
 
 async function loadWasm({ manners }: Dependencies) {
+  if (initialized) return
+  initialized = true;
   manners.log(`⏬ Loading WNFS WASM`)
   const before = performance.now()
   // init accepts Promises as arguments
