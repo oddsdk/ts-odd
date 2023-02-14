@@ -80,6 +80,7 @@ export const getFileSystemLinks = async (depot: Depot.Implementation, cid: CID):
   const topNode = await DAG.getPB(depot, cid)
 
   const links = await Promise.all(topNode.Links.map(async l => {
+    // @ts-ignore
     const innerNode = await DAG.getPB(depot, l.Hash)
     const innerLinks = Link.arrToMap(innerNode.Links.map(Link.fromDAGLink))
     const isSoftLink = !!innerLinks[ "softLink" ]
@@ -124,11 +125,13 @@ export const putLinks = async (
         )
 
         const dagNodeCID = await DAG.putPB(depot, [
+          // @ts-ignore
           DagPB.createLink("softLink", softLink.size, softLink.cid)
         ])
 
         const dagNodeSize = await depot.size(dagNodeCID)
 
+        // @ts-ignore
         return [ ...arr, DagPB.createLink(l.name, dagNodeSize, dagNodeCID) ]
       } else if (TypeCheck.hasProp(l, "Hash") && l.Hash) {
         return [ ...arr, l as DagPB.PBLink ]

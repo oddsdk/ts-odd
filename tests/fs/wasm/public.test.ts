@@ -10,7 +10,7 @@ import { components } from "../../helpers/components.js"
 
 
 // TODO: Fix GC issues
-describe.skip("the wasm public root", () => {
+describe("the wasm public root", () => {
 
   const dependencies = components
 
@@ -73,6 +73,28 @@ describe.skip("the wasm public root", () => {
       expect(typeof file.header.metadata.unixMeta.ctime).toBe("number")
       expect(typeof file.header.metadata.unixMeta.mtime).toBe("number")
     })
+  })
+
+  it("should be able to allocate and drop forever", async () => {
+    const iterations = 100_000_000; // Should generate gigabyte-level garbage?
+
+    const root = await PublicRootWasm.empty(dependencies);
+    await root.add(["file.txt"], new TextEncoder().encode("hello world"));
+
+    for (let i = 0; i < iterations; i++) {
+      // await root.historyStep();
+      root.lastRoot.asNode().asDir();
+      // const { result, rootDir } = await (await root.root).read(["file.txt"], root.store);
+      
+      if (i % 1000 === 0) {
+        process.stdout.write(`\riteration ${i}/${iterations}`)
+
+        if (!global.gc) {
+          throw "gimme my gc :>"
+        }
+        global.gc()
+      }
+    }
   })
 
 })

@@ -75,7 +75,7 @@
     "test:prod": "npm run build && npm run lint && npm run test:imports && npm run test:gh-action",
     "test:types": "cp -RT tests/types/ lib/ && npm run tsd",
     "test:unit": "mocha --watch --testPathPattern=src/",
-    "test:wasm": "WNFS_WASM=true mocha",
+    "test:wasm": "WNFS_WASM=true mocha --v8-max-old-space-size=250 --v8-expose-gc",
     "prepare": "npm run build && npm run docs",
     "publish-dry": "npm publish --dry-run",
     "publish-alpha": "npm publish --tag alpha",

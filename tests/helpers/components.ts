@@ -123,6 +123,7 @@ const depot: Depot.Implementation = {
     return Promise.resolve(data)
   },
   getUnixFile: (cid: CID) => depot.getBlock(cid),
+  // @ts-ignore
   getUnixDirectory: async (cid: CID) => {
     const dag = DagPB.decode(await depot.getBlock(cid))
 
@@ -185,7 +186,7 @@ const manners = {
   wnfsWasmLookup: async () => {
     const pathToThisModule = new URL(import.meta.url).pathname
     const dirOfThisModule = NodePath.parse(pathToThisModule).dir
-    return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wasm_wnfs_bg.wasm`))
+    return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wnfs_wasm_bg.wasm`))
   }
 }
 

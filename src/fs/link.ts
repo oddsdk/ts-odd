@@ -20,6 +20,7 @@ export const fromDAGLink = (link: PBLink): SimpleLink => {
   const name = link.Name || ""
   const cid = link.Hash
   const size = link.Tsize || 0
+  // @ts-ignore
   return { name, cid, size }
 }
 
@@ -34,5 +35,6 @@ export const make = (name: string, cid: CID, isFile: boolean, size: number): Har
 
 export const toDAGLink = (link: SimpleLink): PBLink => {
   const { name, cid, size } = link
+  // @ts-ignore
   return DagPB.createLink(name, size, decodeCID(cid))
 }

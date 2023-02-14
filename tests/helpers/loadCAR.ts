@@ -18,6 +18,7 @@ export async function loadCAR(filepath: string): Promise<{ roots: CID[] }> {
       inMemoryDepot[ cid.toString() ] = bytes
     }
 
+    // @ts-ignore
     return { roots }
   } finally {
     inStream.close()

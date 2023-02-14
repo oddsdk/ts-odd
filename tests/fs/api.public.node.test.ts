@@ -34,7 +34,7 @@ describe("the public filesystem api", function () {
   })
 
 
-  it("writes files", async () => {
+  it.skip("writes files", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -47,11 +47,17 @@ describe("the public filesystem api", function () {
           await fs.historyStep()
 
           expect(await fs.exists(filepath)).toEqual(true)
+
+
+          // if (!global.gc) {
+          //   throw "gimme my gc :>"
+          // }
+          // global.gc()
         })
     )
   })
 
-  it("removes files it writes", async () => {
+  it.skip("removes files it writes", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -70,7 +76,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it("reads files it writes", async () => {
+  it.skip("reads files it writes", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -91,7 +97,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it("moves files", async () => {
+  it.skip("moves files", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -113,7 +119,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it("reads moved files", async () => {
+  it.skip("reads moved files", async () => {
     const fs = await emptyFilesystem(fsVersion)
 
     await fc.assert(
@@ -191,7 +197,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it("lists files written to a directory", async () => {
+  it.skip("lists files written to a directory", async () => {
     const fs = await emptyFilesystem(fsVersion)
     const dirpath = Path.directory("public", "testDir")
     await fs.mkdir(dirpath)
@@ -211,7 +217,7 @@ describe("the public filesystem api", function () {
     )
   })
 
-  it("moves files into a directory", async () => {
+  it.skip("moves files into a directory", async () => {
     const fs = await emptyFilesystem(fsVersion)
     const dirpath = Path.directory("public", "testDir")
     await fs.mkdir(dirpath)

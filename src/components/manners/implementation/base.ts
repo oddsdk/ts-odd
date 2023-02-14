@@ -11,7 +11,7 @@ export function implementation(opts: ImplementationOptions): Implementation {
     warn: opts.configuration.debug ? console.warn : () => { },
 
     // WASM
-    wnfsWasmLookup: wnfsVersion => fetch(`https://unpkg.com/wnfs@${wnfsVersion}/wasm_wnfs_bg.wasm`),
+    wnfsWasmLookup: wnfsVersion => fetch(`https://unpkg.com/wnfs@${wnfsVersion}/wnfs_wasm_bg.wasm`),
 
     // File system
     fileSystem: {

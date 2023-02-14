@@ -1,5 +1,5 @@
 import { CID } from "multiformats"
-import { default as init, PublicDirectory, PublicFile, PublicNode } from "wnfs"
+import { default as init, PublicDirectory, PublicFile, PublicNode, setPanicHook } from "wnfs"
 
 import * as Depot from "../../components/depot/implementation.js"
 import * as Manners from "../../components/manners/implementation.js"
@@ -19,6 +19,7 @@ async function loadWasm({ manners }: Dependencies) {
   const before = performance.now()
   // init accepts Promises as arguments
   await init(manners.wnfsWasmLookup(WASM_WNFS_VERSION))
+  setPanicHook();
   const time = performance.now() - before
   manners.log(`🧪 Loaded WNFS WASM (${time.toFixed(0)}ms)`)
 }
@@ -236,8 +237,8 @@ export class PublicRootWasm implements UnixTree, Puttable {
     const root = await this.root
 
     try {
-      await root.getNode(path, this.store)
-      return true
+      const { result: node } = await root.getNode(path, this.store);
+      return node != null
     } catch {
       return false
     }
@@ -436,7 +437,7 @@ function nodeHeader(node: PublicFile | PublicDirectory): { metadata: Metadata; p
     }
   }
 
-  const previous = node.previousCid()
+  const previous = node.previousCids()[0];
   return previous == null ? { metadata } : {
     metadata,
     previous: CID.decode(previous),
