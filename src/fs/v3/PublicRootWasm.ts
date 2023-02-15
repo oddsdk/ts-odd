@@ -13,10 +13,15 @@ import { BaseFile } from "../base/file.js"
 import { Metadata } from "../metadata.js"
 
 
+// This is some global mutable state to work around global mutable state
+// issues with wasm-bindgen. It's important we *never* accidentally initialize the
+// "wnfs" Wasm module twice.
 let initialized = false
 
 async function loadWasm({ manners }: Dependencies) {
-  // MUST NOT initialize twice
+  // MUST be prevented from initializing twice:
+  // https://github.com/fission-codes/webnative/issues/429
+  // https://github.com/rustwasm/wasm-bindgen/issues/3307
   if (initialized) return
   initialized = true
 
