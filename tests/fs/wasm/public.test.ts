@@ -9,8 +9,7 @@ import { components } from "../../helpers/components.js"
 
 
 
-// TODO: Fix GC issues
-describe.skip("the wasm public root", () => {
+describe("the wasm public root", () => {
 
   const dependencies = components
 
