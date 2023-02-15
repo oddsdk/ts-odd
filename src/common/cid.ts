@@ -44,7 +44,7 @@ export function decodeCID(val: CID | object | string): CID {
     return CID.create(val.version as Version, val.code, multihash)
   }
 
-  // Legacy issue
+  // Sometimes we can encounter a DAG-JSON encoded CID
   // https://github.com/fission-codes/webnative/issues/459
   // Related to the `ensureSkeletonStringCIDs` function in the `PrivateTree` class
   if (
