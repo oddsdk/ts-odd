@@ -1,5 +1,9 @@
 # Changelog
 
+### V0.36.3
+
+Now parses DAG-JSON formatted CIDs.
+
 ### v0.36.2
 
 Allow symlinks to other file systems to be created.
