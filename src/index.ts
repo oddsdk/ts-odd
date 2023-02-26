@@ -31,9 +31,9 @@ import * as CapabilitiesImpl from "./components/capabilities/implementation.js"
 import * as Capabilities from "./capabilities.js"
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
-import * as Devtools from "./devtools/index.js"
 import * as DID from "./did/local.js"
 import * as Events from "./events.js"
+import * as Extension from "./extension/index.js"
 import * as FileSystemData from "./fs/data.js"
 import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
@@ -646,13 +646,22 @@ export async function assemble(config: Configuration, components: Components): P
       : config.debugging?.emitWindowPostMessages
 
     if (emitMessages) {
-      console.log("configuring devrools")
+      console.log("configuring devtools")
+
+      const { connect, disconnect } = await Extension.create({
+        auth,
+        capabilities: { session: capabilities.session },
+        lookupDataRoot: components.reference.dataRoot.lookup,
+        namespace: config.namespace,
+        session,
+        shorthands
+      })
 
       const container = globalThis as any
       container.__webnative = container.__webnative || {}
       container.__webnative.extension = container.__webnative.extension || {}
-      container.__webnative.extension.connect = Devtools.connect
-      container.__webnative.extension.disconnect = Devtools.disconnect
+      container.__webnative.extension.connect = connect
+      container.__webnative.extension.disconnect = disconnect
     }
   }
 
