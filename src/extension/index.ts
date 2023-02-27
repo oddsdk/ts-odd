@@ -63,7 +63,7 @@ function connect(extensionId: string): void {
 
   globalThis.postMessage({
     id: extensionId,
-    type: "connected"
+    type: "connect"
   })
 }
 
@@ -72,7 +72,7 @@ function disconnect(extensionId: string): void {
 
   globalThis.postMessage({
     id: extensionId,
-    type: "disconnected"
+    type: "disconnect"
   })
 }
 
