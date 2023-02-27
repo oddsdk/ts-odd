@@ -1,5 +1,6 @@
 import type { AppInfo, AuthenticationStrategy, CID, FileSystemShortHands, ShortHands, Session } from "../index.js"
 import type { Maybe } from "../index.js"
+import * as Events from "../events.js"
 
 import { VERSION } from "../index.js"
 
@@ -8,38 +9,46 @@ type Connection = {
   connected: boolean
 }
 
-type WebnativeInfo = {
-  version: string
-  namespace: AppInfo | string
-  username: string | null
-  accountDID: string | null
-  agentDID: string
-  dataRootCID: string | null
-  capabilities?: Permissions
-}
-
-export async function create(config: {
+type Config = {
   auth: AuthenticationStrategy
   capabilities: { session: (username: string) => Promise<Maybe<Session>> }
   lookupDataRoot: (username: string) => Promise<CID | null>
   namespace: AppInfo | string
   session: Maybe<Session>
-  shorthands: ShortHands & { fileSystem: FileSystemShortHands }
-}): Promise<{
+  shorthands: ShortHands & { fileSystem: FileSystemShortHands & Events.ListenTo<Events.FileSystem> }
+}
+
+type State = {
+  app: {
+    version: string
+    namespace: AppInfo | string
+    capabilities?: Permissions
+  }
+  filesystem: {
+    dataRootCID: string | null
+  }
+  user: {
+    username: string | null
+    accountDID: string | null
+    agentDID: string
+  }
+}
+
+export async function create(config: Config): Promise<{
   connect: (extensionId: string) => void
   disconnect: (extensionId: string) => void
 }> {
   let connection: Connection = { extensionId: null, connected: false }
-  let webnativeInfo = await collectData(config)
-
-  console.log("webnativeInfo", webnativeInfo)
 
   return {
-    connect: (extensionId: string) => {
+    connect: async (extensionId: string) => {
       connect(extensionId)
       connection = { extensionId, connected: true }
 
-      sendData(connection, webnativeInfo)
+      const state = await getState(config)
+      sendData(connection, state)
+
+      listen(connection, config)
     },
     disconnect: (extensionId: string) => {
       disconnect(extensionId)
@@ -48,14 +57,36 @@ export async function create(config: {
   }
 }
 
-function sendData(connection: Connection, webnativeInfo: WebnativeInfo) {
+function sendData(connection: Connection, state: State) {
   if (connection.connected) {
     globalThis.postMessage({
       id: connection.extensionId,
       type: "data",
-      data: webnativeInfo
+      data: state
     })
   }
+}
+
+function listen(connection: Connection, config: Config) {
+  const { shorthands } = config
+
+  shorthands.fileSystem.on("local-change", async ({ root, path }) => {
+    const state = await getState(config)
+
+    globalThis.postMessage({
+      id: connection.extensionId,
+      type: "data",
+      data: {
+        info: state,
+        type: "local-change",
+        root: root.toString(),
+        path
+      }
+    })
+
+  })
+
+
 }
 
 function connect(extensionId: string): void {
@@ -76,14 +107,7 @@ function disconnect(extensionId: string): void {
   })
 }
 
-async function collectData(config: {
-  auth: AuthenticationStrategy
-  capabilities: { session: (username: string) => Promise<Maybe<Session>> }
-  lookupDataRoot: (username: string) => Promise<CID | null>
-  namespace: AppInfo | string
-  session: Maybe<Session>
-  shorthands: ShortHands & { fileSystem: FileSystemShortHands }
-}): Promise<WebnativeInfo> {
+async function getState(config: Config): Promise<State> {
   const { lookupDataRoot, namespace, session, shorthands } = config
 
   const agentDID = await shorthands.agentDID()
@@ -98,12 +122,17 @@ async function collectData(config: {
   }
 
   return {
-    version: VERSION,
-    namespace,
-    username,
-    accountDID,
-    agentDID,
-    dataRootCID: dataRootCID?.toString() ?? null
+    app: {
+      version: VERSION,
+      namespace,
+    },
+    filesystem: {
+      dataRootCID: dataRootCID?.toString() ?? null
+    },
+    user: {
+      username,
+      accountDID,
+      agentDID,
+    }
   }
-
 }
