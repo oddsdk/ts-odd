@@ -27,15 +27,11 @@ export async function create(config: Config): Promise<{
 
   return {
     connect: async (extensionId: string) => {
-      await connect(extensionId, config)
-      connection = { extensionId, connected: true }
-
+      connection = await connect(extensionId, config)
       listeners = listen(connection, config)
     },
     disconnect: async (extensionId: string) => {
-      await disconnect(extensionId, config)
-      connection = { extensionId, connected: false }
-
+      connection = await disconnect(extensionId, config)
       stopListening(config, listeners)
     }
   }
@@ -51,7 +47,7 @@ type Connection = {
   connected: boolean
 }
 
-async function connect(extensionId: string, config: Config): Promise<void> {
+async function connect(extensionId: string, config: Config): Promise<Connection> {
   console.log("connect called with extension id", extensionId)
 
   const state = await getState(config)
@@ -61,9 +57,11 @@ async function connect(extensionId: string, config: Config): Promise<void> {
     type: "connect",
     state
   })
+
+  return { extensionId, connected: true }
 }
 
-async function disconnect(extensionId: string, config: Config): Promise<void> {
+async function disconnect(extensionId: string, config: Config): Promise<Connection> {
   console.log("disconnect called with extension id", extensionId)
 
   const state = await getState(config)
@@ -73,6 +71,8 @@ async function disconnect(extensionId: string, config: Config): Promise<void> {
     type: "disconnect",
     state
   })
+
+  return { extensionId, connected: false }
 }
 
 
