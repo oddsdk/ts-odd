@@ -3,6 +3,7 @@ import * as Reference from "../../reference/implementation.js"
 import * as Storage from "../../storage/implementation.js"
 
 import * as Did from "../../../did/index.js"
+import * as Events from "../../../events.js"
 import * as SessionMod from "../../../session.js"
 import * as Ucan from "../../../ucan/index.js"
 
@@ -108,12 +109,17 @@ export async function register(
 export async function session(
   components: Components,
   authedUsername: Maybe<string>,
-  config: Configuration
+  config: Configuration,
+  eventEmitters: { session: Events.Emitter<Events.Session> }
 ): Promise<Maybe<Session>> {
   if (authedUsername) {
+    // Emit session create event
+    eventEmitters.session.emit("create", { username: authedUsername })
+
     return new Session({
       crypto: components.crypto,
       storage: components.storage,
+      eventEmitter: eventEmitters.session,
       type: TYPE,
       username: authedUsername
     })

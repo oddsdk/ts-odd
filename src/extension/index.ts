@@ -1,4 +1,4 @@
-import type { AppInfo, AuthenticationStrategy, CID, FileSystemShortHands, ShortHands, Session } from "../index.js"
+import type { AppInfo, AuthenticationStrategy, CID, ShortHands, Session } from "../index.js"
 import type { Maybe } from "../index.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
 import * as Events from "../events.js"
@@ -15,7 +15,11 @@ type Config = {
   lookupDataRoot: (username: string) => Promise<CID | null>
   namespace: AppInfo | string
   session: Maybe<Session>
-  shorthands: ShortHands & { fileSystem: FileSystemShortHands & Events.ListenTo<Events.FileSystem> }
+  shorthands: ShortHands
+  eventEmitters: {
+    fileSystem: Events.Emitter<Events.FileSystem>
+    session: Events.Emitter<Events.Session>
+  }
 }
 
 export async function create(config: Config): Promise<{
@@ -83,6 +87,8 @@ async function disconnect(extensionId: string, config: Config): Promise<Connecti
 type Listeners = {
   handleLocalChange: (params: { root: CID; path: DistinctivePath<[ Partition, ...string[] ]> }) => Promise<void>
   handlePublish: (params: { root: CID }) => Promise<void>
+  handleSessionCreate: (params: { username: string }) => Promise<void>
+  handleSessionDestroy: (params: { username: string }) => Promise<void>
 }
 
 function listen(connection: Connection, config: Config): Listeners {
@@ -117,16 +123,52 @@ function listen(connection: Connection, config: Config): Listeners {
     })
   }
 
-  config.shorthands.fileSystem.on("local-change", handleLocalChange)
-  config.shorthands.fileSystem.on("publish", handlePublish)
+  async function handleSessionCreate(params: { username: string }) {
+    const { username } = params
+    const state = await getState(config)
 
-  return { handleLocalChange, handlePublish }
+    globalThis.postMessage({
+      id: connection.extensionId,
+      type: "session",
+      state,
+      detail: {
+        type: "create",
+        username
+      }
+    })
+  }
+
+  async function handleSessionDestroy(params: { username: string }) {
+    console.log("sending destroy message from Webnative")
+
+    const { username } = params
+    const state = await getState(config)
+
+    globalThis.postMessage({
+      id: connection.extensionId,
+      type: "session",
+      state,
+      detail: {
+        type: "destroy",
+        username
+      }
+    })
+  }
+
+  config.eventEmitters.fileSystem.on("local-change", handleLocalChange)
+  config.eventEmitters.fileSystem.on("publish", handlePublish)
+  config.eventEmitters.session.on("create", handleSessionCreate)
+  config.eventEmitters.session.on("destroy", handleSessionDestroy)
+
+  return { handleLocalChange, handlePublish, handleSessionCreate, handleSessionDestroy }
 }
 
 function stopListening(config: Config, listeners: Listeners) {
   if (listeners) {
-    config.shorthands.fileSystem.removeListener("local-change", listeners.handleLocalChange)
-    config.shorthands.fileSystem.removeListener("publish", listeners.handlePublish)
+    config.eventEmitters.fileSystem.removeListener("local-change", listeners.handleLocalChange)
+    config.eventEmitters.fileSystem.removeListener("publish", listeners.handlePublish)
+    config.eventEmitters.session.removeListener("create", listeners.handleSessionCreate)
+    config.eventEmitters.session.removeListener("destroy", listeners.handleSessionDestroy)
   }
 }
 

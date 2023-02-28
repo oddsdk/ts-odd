@@ -478,6 +478,7 @@ export async function assemble(config: Configuration, components: Components): P
 
   // Event emitter
   const fsEvents = Events.createEmitter<Events.FileSystem>()
+  const sessionEvents = Events.createEmitter<Events.Session>()
 
   // Authenticated user
   const sessionInfo = await SessionMod.restore(components.storage)
@@ -513,7 +514,7 @@ export async function assemble(config: Configuration, components: Components): P
           components,
           newSessionInfo.username,
           config,
-          { fileSystem: fsEvents }
+          { fileSystem: fsEvents, session: sessionEvents }
         )
       }
     }
@@ -581,6 +582,7 @@ export async function assemble(config: Configuration, components: Components): P
         crypto: components.crypto,
         storage: components.storage,
         type: CAPABILITIES_SESSION_TYPE,
+        eventEmitter: sessionEvents
       })
     }
   }
@@ -646,15 +648,17 @@ export async function assemble(config: Configuration, components: Components): P
       : config.debugging?.emitWindowPostMessages
 
     if (emitMessages) {
-      console.log("configuring devtools")
-
       const { connect, disconnect } = await Extension.create({
         auth,
         capabilities: { session: capabilities.session },
         lookupDataRoot: components.reference.dataRoot.lookup,
         namespace: config.namespace,
         session,
-        shorthands
+        shorthands,
+        eventEmitters: {
+          fileSystem: fsEvents,
+          session: sessionEvents
+        }
       })
 
       const container = globalThis as any

@@ -33,6 +33,11 @@ export type FileSystem = {
   "publish": { root: CID }
 }
 
+export type Session = {
+  "create": { username: string }
+  "destroy": { username: string }
+}
+
 
 export function createEmitter<EventMap>(): EventEmitter<EventMap> {
   return new EventEmitter()
