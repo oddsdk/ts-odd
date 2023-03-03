@@ -1,5 +1,10 @@
 # Changelog
 
+### Next
+
+- **Uses the rs-wnfs implementation of the Webnative file system**.
+- Improves several types of the paths module.
+
 ### V0.36.3
 
 Now parses DAG-JSON formatted CIDs.

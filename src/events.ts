@@ -29,8 +29,8 @@ export type ListenTo<EventMap> = Pick<
 
 
 export type FileSystem = {
-  "local-change": { root: CID; path: DistinctivePath<Partitioned<Partition>> }
-  "publish": { root: CID }
+  "local-change": { dataRoot: CID; path: DistinctivePath<Partitioned<Partition>> }
+  "publish": { dataRoot: CID }
 }
 
 

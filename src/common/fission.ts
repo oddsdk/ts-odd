@@ -1,5 +1,4 @@
 import * as DOH from "../components/reference/dns-over-https.js"
-import { ShareDetails } from "../fs/types.js"
 
 
 /**
@@ -12,6 +11,7 @@ import { ShareDetails } from "../fs/types.js"
  */
 export type Endpoints = {
   apiPath: string
+  ipfsGateway: string
   lobby: string
   server: string
   userDomain: string
@@ -20,6 +20,7 @@ export type Endpoints = {
 
 export const PRODUCTION: Endpoints = {
   apiPath: "/v2/api",
+  ipfsGateway: "https://ipfs.runfission.com",
   lobby: "https://auth.fission.codes",
   server: "https://runfission.com",
   userDomain: "fission.name"
@@ -28,6 +29,7 @@ export const PRODUCTION: Endpoints = {
 
 export const STAGING: Endpoints = {
   apiPath: "/v2/api",
+  ipfsGateway: "https://ipfs.runfission.net",
   lobby: "https://auth.runfission.net",
   server: "https://runfission.net",
   userDomain: "fissionuser.net"
@@ -78,17 +80,4 @@ export async function did(endpoints: Endpoints): Promise<string> {
 
   if (!didCache.did) throw new Error("Couldn't get the Fission API DID")
   return didCache.did
-}
-
-
-/**
- * Create a share link.
- * There people can "accept" a share,
- * copying the soft links into their private filesystem.
- */
-export function shareLink(endpoints: Endpoints, details: ShareDetails): string {
-  return endpoints.lobby +
-    "/#/share/" +
-    encodeURIComponent(details.sharedBy.username) + "/" +
-    encodeURIComponent(details.shareId) + "/"
 }

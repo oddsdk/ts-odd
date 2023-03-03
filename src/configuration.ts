@@ -33,7 +33,7 @@ export type Configuration = {
    */
   fileSystem?: {
     /**
-     * Should I load the filesystem immediately?
+     * Should I load the file system immediately?
      *
      * @default true
      */
@@ -60,9 +60,9 @@ export type Configuration = {
    * Configure messages that webnative sends to users.
    *
    * `versionMismatch.newer` is shown when webnative detects
-   *  that the user's filesystem is newer than what this version of webnative supports.
+   *  that the user's file system is newer than what this version of webnative supports.
    * `versionMismatch.older` is shown when webnative detects that the user's
-   *  filesystem is older than what this version of webnative supports.
+   *  file system is older than what this version of webnative supports.
    */
   userMessages?: UserMessages
 }

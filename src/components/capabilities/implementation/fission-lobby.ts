@@ -3,7 +3,6 @@ import * as Uint8arrays from "uint8arrays"
 import * as Base64 from "../../../common/base64.js"
 import * as Capabilities from "../../../capabilities.js"
 import * as Crypto from "../../../components/crypto/implementation.js"
-import * as Depot from "../../../components/depot/implementation.js"
 import * as DID from "../../../did/index.js"
 import * as Fission from "../../../common/fission.js"
 import * as Path from "../../../path/index.js"
@@ -13,7 +12,6 @@ import * as Ucan from "../../../ucan/index.js"
 import { Implementation, RequestOptions } from "../implementation.js"
 import { Maybe } from "../../../common/types.js"
 import { VERSION } from "../../../common/version.js"
-import { decodeCID } from "../../../common/cid.js"
 
 
 // 🧩
@@ -21,7 +19,6 @@ import { decodeCID } from "../../../common/cid.js"
 
 export type Dependencies = {
   crypto: Crypto.Implementation
-  depot: Depot.Implementation
 }
 
 
@@ -41,16 +38,7 @@ export async function collect(
   const secrets = await retry(
     async () => translateClassifiedInfo(
       dependencies,
-      authorised === "via-postmessage"
-        ? await getClassifiedViaPostMessage(endpoints, dependencies.crypto)
-        : JSON.parse(
-          Uint8arrays.toString(
-            await dependencies.depot.getUnixFile(
-              decodeCID(authorised)
-            ),
-            "utf8"
-          )
-        )
+      await getClassifiedViaPostMessage(endpoints, dependencies.crypto)
     ),
     {
       tries: 20,

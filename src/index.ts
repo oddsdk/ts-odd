@@ -34,7 +34,6 @@ import * as Depot from "./components/depot/implementation.js"
 import * as DID from "./did/local.js"
 import * as Events from "./events.js"
 import * as FileSystemData from "./fs/data.js"
-import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as RootKey from "./common/root-key.js"
@@ -49,10 +48,10 @@ import { VERSION } from "./common/version.js"
 import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
+import { FileSystem } from "./fs/class.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { loadFileSystem, recoverFileSystem } from "./filesystem.js"
-import FileSystem from "./fs/filesystem.js"
+import { loadFileSystem, recoverFileSystem } from "./fileSystem.js"
 
 
 // TYPES
@@ -101,7 +100,7 @@ export * as path from "./path/index.js"
 export * as ucan from "./ucan/index.js"
 
 export { AccountLinkingConsumer, AccountLinkingProducer } from "./linking/index.js"
-export { FileSystem } from "./fs/filesystem.js"
+export { FileSystem } from "./fs/class.js"
 export { Session } from "./session.js"
 
 
@@ -183,9 +182,7 @@ export type ShortHands = {
 
 
 export type FileSystemShortHands = {
-  addPublicExchangeKey: (fs: FileSystem) => Promise<void>
   addSampleData: (fs: FileSystem) => Promise<void>
-  hasPublicExchangeKey: (fs: FileSystem) => Promise<boolean>
 
   /**
    * Load the file system of a given username.
@@ -321,8 +318,8 @@ export const capabilities = {
     const crypto = settings.crypto || await defaultCryptoComponent(settings)
     const depot = settings.depot || await defaultDepotComponent({ storage }, settings)
 
-    if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
-    return FissionLobbyProduction.implementation({ crypto, depot })
+    if (staging) return FissionLobbyStaging.implementation({ crypto })
+    return FissionLobbyProduction.implementation({ crypto })
   }
 }
 
@@ -373,8 +370,8 @@ export const depot = {
     const repoName = `${namespace(settings)}/ipfs`
     const storage = settings.storage || defaultStorageComponent(settings)
 
-    if (settings.staging) return FissionIpfsStaging.implementation({ storage }, repoName)
-    return FissionIpfsProduction.implementation({ storage }, repoName)
+    if (settings.staging) return FissionIpfsStaging.implementation(storage, repoName)
+    return FissionIpfsProduction.implementation(storage, repoName)
   }
 }
 
@@ -608,9 +605,7 @@ export async function assemble(config: Configuration, components: Components): P
     fileSystem: {
       ...Events.listenTo(fsEvents),
 
-      addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
       addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
-      hasPublicExchangeKey: (fs: FileSystem) => FileSystemData.hasPublicExchangeKey(components.crypto, fs),
       load: (username: string) => loadFileSystem({ config, username, dependencies: components, eventEmitter: fsEvents }),
       recover: (params: RecoverFileSystemParams) => recoverFileSystem({ auth, dependencies: components, ...params }),
     }
@@ -699,7 +694,7 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
 
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
   const depot = setup.depot || await defaultDepotComponent({ storage }, config)
-  const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto, depot })
+  const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto })
   const auth = setup.auth || defaultAuthComponent({ crypto, reference, storage })
 
   return {
@@ -724,8 +719,8 @@ export function defaultAuthComponent({ crypto, reference, storage }: BaseAuth.De
   })
 }
 
-export function defaultCapabilitiesComponent({ crypto, depot }: FissionLobbyBase.Dependencies): CapabilitiesImpl.Implementation {
-  return FissionLobbyProduction.implementation({ crypto, depot })
+export function defaultCapabilitiesComponent({ crypto }: FissionLobbyBase.Dependencies): CapabilitiesImpl.Implementation {
+  return FissionLobbyProduction.implementation({ crypto })
 }
 
 export function defaultCryptoComponent(config: Configuration): Promise<Crypto.Implementation> {
@@ -736,10 +731,10 @@ export function defaultCryptoComponent(config: Configuration): Promise<Crypto.Im
   })
 }
 
-export function defaultDepotComponent({ storage }: IpfsNode.Dependencies, config: Configuration): Promise<Depot.Implementation> {
+export function defaultDepotComponent({ storage }: { storage: Storage.Implementation }, config: Configuration): Promise<Depot.Implementation> {
   return FissionIpfsProduction.implementation(
-    { storage },
-    `${namespace(config)}/ipfs`
+    storage,
+    `${namespace(config)}/blockstore`
   )
 }
 
@@ -796,7 +791,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   // - Authenticated username: IndexedDB → localforage → webnative.auth_username
 
   const [ migK, migV ] = [ "migrated", VERSION ]
-  const currentVersion = Semver.fromString(VERSION)
+  const currentVersion = Semver.fromString(VERSION.toString() === "next" ? "1.0.0" : VERSION)
   if (!currentVersion) throw new Error("The webnative VERSION should be a semver string")
 
   // If already migrated, stop here.
