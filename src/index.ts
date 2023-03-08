@@ -666,6 +666,11 @@ export async function assemble(config: Configuration, components: Components): P
       container.__webnative.extension = container.__webnative.extension || {}
       container.__webnative.extension.connect = connect
       container.__webnative.extension.disconnect = disconnect
+
+      // Notify extension that Webnative is ready
+      globalThis.postMessage({
+        id: "webnative-devtools-ready-message",
+      })
     }
   }
 
