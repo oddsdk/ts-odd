@@ -32,7 +32,10 @@ export async function create(config: Config): Promise<{
   return {
     connect: async (extensionId: string) => {
       connection = await connect(extensionId, config)
-      listeners = listen(connection, config)
+
+      // The extension may call connect more than once, but
+      // listeners should only be added once
+      if (!listeners) listeners = listen(connection, config)
     },
     disconnect: async (extensionId: string) => {
       connection = await disconnect(extensionId, config)
