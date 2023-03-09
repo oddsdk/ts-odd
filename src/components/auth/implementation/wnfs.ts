@@ -140,11 +140,8 @@ export async function session(
         username: authedUsername,
       })
 
-    // Emit session create event
-    eventEmitters.session.emit("create", { username: authedUsername })
 
-    // Fin
-    return new Session({
+    const session = new Session({
       crypto: components.crypto,
       fs: fs,
       eventEmitter: eventEmitters.session,
@@ -152,6 +149,12 @@ export async function session(
       type: Base.TYPE,
       username: authedUsername
     })
+
+    // Emit session create event
+    eventEmitters.session.emit("create", { session })
+
+    // Fin
+    return session
   }
 
   return null

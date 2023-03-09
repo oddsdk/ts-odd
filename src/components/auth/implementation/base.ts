@@ -113,16 +113,18 @@ export async function session(
   eventEmitters: { session: Events.Emitter<Events.Session> }
 ): Promise<Maybe<Session>> {
   if (authedUsername) {
-    // Emit session create event
-    eventEmitters.session.emit("create", { username: authedUsername })
-
-    return new Session({
+    const session = new Session({
       crypto: components.crypto,
       storage: components.storage,
       eventEmitter: eventEmitters.session,
       type: TYPE,
       username: authedUsername
     })
+
+    // Emit session create event
+    eventEmitters.session.emit("create", { session })
+
+    return session
 
   } else {
     return null

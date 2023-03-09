@@ -87,7 +87,7 @@ async function disconnect(extensionId: string, config: Config): Promise<Connecti
 type Listeners = {
   handleLocalChange: (params: { root: CID; path: DistinctivePath<[ Partition, ...string[] ]> }) => Promise<void>
   handlePublish: (params: { root: CID }) => Promise<void>
-  handleSessionCreate: (params: { username: string }) => Promise<void>
+  handleSessionCreate: (params: { session: Session }) => Promise<void>
   handleSessionDestroy: (params: { username: string }) => Promise<void>
 }
 
@@ -123,8 +123,10 @@ function listen(connection: Connection, config: Config): Listeners {
     })
   }
 
-  async function handleSessionCreate(params: { username: string }) {
-    const { username } = params
+  async function handleSessionCreate(params: { session: Session }) {
+    const { session } = params
+
+    config = { ...config, session }
     const state = await getState(config)
 
     globalThis.postMessage({
@@ -133,7 +135,7 @@ function listen(connection: Connection, config: Config): Listeners {
       state,
       detail: {
         type: "create",
-        username
+        username: session.username
       }
     })
   }
@@ -142,6 +144,8 @@ function listen(connection: Connection, config: Config): Listeners {
     console.log("sending destroy message from Webnative")
 
     const { username } = params
+
+    config = { ...config, session: null }
     const state = await getState(config)
 
     globalThis.postMessage({
