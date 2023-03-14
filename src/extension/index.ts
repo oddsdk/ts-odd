@@ -62,6 +62,7 @@ async function connect(extensionId: string, config: Config): Promise<Connection>
   globalThis.postMessage({
     id: extensionId,
     type: "connect",
+    timestamp: Date.now(),
     state
   })
 
@@ -76,6 +77,7 @@ async function disconnect(extensionId: string, config: Config): Promise<Connecti
   globalThis.postMessage({
     id: extensionId,
     type: "disconnect",
+    timestamp: Date.now(),
     state
   })
 
@@ -102,6 +104,7 @@ function listen(connection: Connection, config: Config): Listeners {
     globalThis.postMessage({
       id: connection.extensionId,
       type: "filesystem",
+      timestamp: Date.now(),
       state,
       detail: {
         type: "local-change",
@@ -118,6 +121,7 @@ function listen(connection: Connection, config: Config): Listeners {
     globalThis.postMessage({
       id: connection.extensionId,
       type: "filesystem",
+      timestamp: Date.now(),
       state,
       detail: {
         type: "publish",
@@ -135,6 +139,7 @@ function listen(connection: Connection, config: Config): Listeners {
     globalThis.postMessage({
       id: connection.extensionId,
       type: "session",
+      timestamp: Date.now(),
       state,
       detail: {
         type: "create",
@@ -154,6 +159,7 @@ function listen(connection: Connection, config: Config): Listeners {
     globalThis.postMessage({
       id: connection.extensionId,
       type: "session",
+      timestamp: Date.now(),
       state,
       detail: {
         type: "destroy",
