@@ -649,12 +649,13 @@ export async function assemble(config: Configuration, components: Components): P
 
     if (emitMessages) {
       const { connect, disconnect } = await Extension.create({
-        auth,
-        capabilities: { session: capabilities.session },
-        lookupDataRoot: components.reference.dataRoot.lookup,
+        // auth,
+        // capabilities: { session: capabilities.session },
         namespace: config.namespace,
         session,
+        capabilities: config.permissions,
         shorthands,
+        lookupDataRoot: components.reference.dataRoot.lookup,
         eventEmitters: {
           fileSystem: fsEvents,
           session: sessionEvents

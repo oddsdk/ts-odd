@@ -1,9 +1,10 @@
 import type { AppInfo } from "../appInfo.js"
-import type { AuthenticationStrategy, ShortHands } from "../index.js"
 import type { CID } from "../common/cid.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
-import type { Maybe } from "../index.js"
+import type { Maybe } from "../common/types.js"
+import type { Permissions } from "../permissions.js"
 import type { Session } from "../session.js"
+import type { ShortHands } from "../index.js"
 
 import * as Events from "../events.js"
 import { VERSION } from "../index.js"
@@ -13,12 +14,11 @@ import { VERSION } from "../index.js"
 
 
 type Config = {
-  auth: AuthenticationStrategy
-  capabilities: { session: (username: string) => Promise<Maybe<Session>> }
-  lookupDataRoot: (username: string) => Promise<CID | null>
   namespace: AppInfo | string
   session: Maybe<Session>
+  capabilities?: Permissions
   shorthands: ShortHands
+  lookupDataRoot: (username: string) => Promise<CID | null>
   eventEmitters: {
     fileSystem: Events.Emitter<Events.FileSystem>
     session: Events.Emitter<Events.Session>
@@ -210,7 +210,7 @@ type State = {
 }
 
 async function getState(config: Config): Promise<State> {
-  const { lookupDataRoot, namespace, session, shorthands } = config
+  const { capabilities, lookupDataRoot, namespace, session, shorthands } = config
 
   const agentDID = await shorthands.agentDID()
   let accountDID = null
@@ -227,6 +227,7 @@ async function getState(config: Config): Promise<State> {
     app: {
       version: VERSION,
       namespace,
+      capabilities
     },
     filesystem: {
       dataRootCID: dataRootCID?.toString() ?? null
