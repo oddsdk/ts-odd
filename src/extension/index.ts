@@ -1,8 +1,11 @@
-import type { AppInfo, AuthenticationStrategy, CID, ShortHands, Session } from "../index.js"
-import type { Maybe } from "../index.js"
+import type { AppInfo } from "../appInfo.js"
+import type { AuthenticationStrategy, ShortHands } from "../index.js"
+import type { CID } from "../common/cid.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
-import * as Events from "../events.js"
+import type { Maybe } from "../index.js"
+import type { Session } from "../session.js"
 
+import * as Events from "../events.js"
 import { VERSION } from "../index.js"
 
 
