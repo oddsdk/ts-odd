@@ -228,7 +228,7 @@ async function getState(config: Config): Promise<State> {
   return {
     app: {
       namespace,
-      capabilities
+      ...(capabilities ? { capabilities } : {})
     },
     filesystem: {
       dataRootCID: dataRootCID?.toString() ?? null
