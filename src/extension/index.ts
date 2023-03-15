@@ -195,7 +195,6 @@ function stopListening(config: Config, listeners: Listeners) {
 
 type State = {
   app: {
-    version: string
     namespace: AppInfo | string
     capabilities?: Permissions
   }
@@ -206,6 +205,9 @@ type State = {
     username: string | null
     accountDID: string | null
     agentDID: string
+  }
+  webnative: {
+    version: string
   }
 }
 
@@ -225,7 +227,6 @@ async function getState(config: Config): Promise<State> {
 
   return {
     app: {
-      version: VERSION,
       namespace,
       capabilities
     },
@@ -235,7 +236,10 @@ async function getState(config: Config): Promise<State> {
     user: {
       username,
       accountDID,
-      agentDID,
+      agentDID
+    },
+    webnative: {
+      version: VERSION
     }
   }
 }
