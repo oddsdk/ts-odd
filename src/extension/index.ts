@@ -58,8 +58,6 @@ type Connection = {
 }
 
 async function connect(extensionId: string, config: Config): Promise<Connection> {
-  console.log("connect called with extension id", extensionId)
-
   const state = await getState(config)
 
   globalThis.postMessage({
@@ -73,8 +71,6 @@ async function connect(extensionId: string, config: Config): Promise<Connection>
 }
 
 async function disconnect(extensionId: string, config: Config): Promise<Connection> {
-  console.log("disconnect called with extension id", extensionId)
-
   const state = await getState(config)
 
   globalThis.postMessage({
@@ -152,8 +148,6 @@ function listen(connection: Connection, config: Config): Listeners {
   }
 
   async function handleSessionDestroy(params: { username: string }) {
-    console.log("sending destroy message from Webnative")
-
     const { username } = params
 
     config = { ...config, session: null }
