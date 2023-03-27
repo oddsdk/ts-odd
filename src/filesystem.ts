@@ -14,7 +14,7 @@ import * as Versions from "./fs/versions.js"
 import { AuthenticationStrategy } from "./index.js"
 import { RootBranch } from "./path/index.js"
 import { Configuration } from "./configuration.js"
-import { Dependencies } from "./fs/filesystem.js"
+import { Dependencies, FileSystemEvents } from "./fs/filesystem.js"
 import { Maybe, decodeCID, EMPTY_CID } from "./common/index.js"
 import { type RecoverFileSystemParams } from "./fs/types/params.js"
 
@@ -27,7 +27,7 @@ import FileSystem from "./fs/filesystem.js"
 export async function loadFileSystem({ config, dependencies, eventEmitter, rootKey, username }: {
   config: Configuration
   dependencies: Dependencies
-  eventEmitter: Events.Emitter<Events.FileSystem>
+  eventEmitter: Events.Emitter<FileSystemEvents>
   rootKey?: Uint8Array
   username: string
 }): Promise<FileSystem> {

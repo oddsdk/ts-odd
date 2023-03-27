@@ -50,8 +50,9 @@ import { VERSION } from "./common/version.js"
 import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
+import { FileSystemEvents } from "./fs/filesystem.js"
 import { isString, Maybe } from "./common/index.js"
-import { Session } from "./session.js"
+import { Session, type SessionEvents } from "./session.js"
 import { loadFileSystem, recoverFileSystem } from "./filesystem.js"
 import FileSystem from "./fs/filesystem.js"
 
@@ -122,7 +123,7 @@ export type AuthenticationStrategy = {
 }
 
 
-export type Program = ShortHands & {
+export type Program = ShortHands & Events.ListenTo<FileSystemEvents & SessionEvents> & {
   /**
    * Authentication strategy, use this interface to register an account and link devices.
    */
@@ -161,7 +162,7 @@ export type Program = ShortHands & {
   /**
    * Various file system methods.
    */
-  fileSystem: FileSystemShortHands & Events.ListenTo<Events.FileSystem>
+  fileSystem: FileSystemShortHands
 
   /**
    * Existing session, if there is one.
@@ -477,8 +478,8 @@ export async function assemble(config: Configuration, components: Components): P
   await ensureBackwardsCompatibility(components, config)
 
   // Event emitter
-  const fsEvents = Events.createEmitter<Events.FileSystem>()
-  const sessionEvents = Events.createEmitter<Events.Session>()
+  const fsEvents = Events.createEmitter<FileSystemEvents>()
+  const sessionEvents = Events.createEmitter<SessionEvents>()
 
   // Authenticated user
   const sessionInfo = await SessionMod.restore(components.storage)
@@ -609,8 +610,6 @@ export async function assemble(config: Configuration, components: Components): P
 
     // File system
     fileSystem: {
-      ...Events.listenTo(fsEvents),
-
       addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
       addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
       hasPublicExchangeKey: (fs: FileSystem) => FileSystemData.hasPublicExchangeKey(components.crypto, fs),
@@ -622,6 +621,7 @@ export async function assemble(config: Configuration, components: Components): P
   // Create `Program`
   const program = {
     ...shorthands,
+    ...{ ...Events.listenTo(fsEvents), ...Events.listenTo(sessionEvents)},
 
     configuration: { ...config },
     auth,
@@ -649,8 +649,6 @@ export async function assemble(config: Configuration, components: Components): P
 
     if (emitMessages) {
       const { connect, disconnect } = await Extension.create({
-        // auth,
-        // capabilities: { session: capabilities.session },
         namespace: config.namespace,
         session,
         capabilities: config.permissions,

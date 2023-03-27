@@ -11,7 +11,7 @@ import { Components } from "../../../components.js"
 import { Configuration } from "../../../configuration.js"
 import { Implementation } from "../implementation.js"
 import { Maybe } from "../../../common/types.js"
-import { Session } from "../../../session.js"
+import { Session, type SessionEvents } from "../../../session.js"
 
 
 // 🏔
@@ -110,7 +110,7 @@ export async function session(
   components: Components,
   authedUsername: Maybe<string>,
   config: Configuration,
-  eventEmitters: { session: Events.Emitter<Events.Session> }
+  eventEmitters: { session: Events.Emitter<SessionEvents> }
 ): Promise<Maybe<Session>> {
   if (authedUsername) {
     const session = new Session({
@@ -122,7 +122,7 @@ export async function session(
     })
 
     // Emit session create event
-    eventEmitters.session.emit("create", { session })
+    eventEmitters.session.emit("session:create", { session })
 
     return session
 

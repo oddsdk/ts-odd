@@ -13,9 +13,10 @@ import * as TypeChecks from "../../../common/type-checks.js"
 import * as Ucan from "../../../ucan/index.js"
 
 import { Configuration } from "../../../configuration.js"
+import { FileSystemEvents } from "../../../fs/filesystem.js"
 import { LinkingError } from "../../../linking/common.js"
 import { Maybe } from "../../../common/types.js"
-import { Session } from "../../../session.js"
+import { Session, type SessionEvents } from "../../../session.js"
 import { loadFileSystem } from "../../../filesystem.js"
 
 
@@ -89,7 +90,7 @@ export async function session(
   components: Components,
   authedUsername: Maybe<string>,
   config: Configuration,
-  eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem>; session: Events.Emitter<Events.Session> }
+  eventEmitters: { fileSystem: Events.Emitter<FileSystemEvents>; session: Events.Emitter<SessionEvents> }
 ): Promise<Maybe<Session>> {
   if (authedUsername) {
     // Self-authorize a filesystem UCAN if needed
@@ -151,7 +152,7 @@ export async function session(
     })
 
     // Emit session create event
-    eventEmitters.session.emit("create", { session })
+    eventEmitters.session.emit("session:create", { session })
 
     // Fin
     return session

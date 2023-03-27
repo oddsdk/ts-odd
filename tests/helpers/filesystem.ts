@@ -4,6 +4,8 @@ import * as Identifiers from "../../src/common/identifiers.js"
 import * as Events from "../../src/events.js"
 import * as Path from "../../src/path/index.js"
 
+import type { FileSystemEvents } from "../../src/fs/filesystem.js"
+
 import FileSystem from "../../src/fs/filesystem.js"
 import { account, components, crypto } from "./components.js"
 
@@ -12,7 +14,7 @@ export function emptyFilesystem(version?: string): Promise<FileSystem> {
   return FileSystem.empty({
     account,
     dependencies: components,
-    eventEmitter: Events.createEmitter<Events.FileSystem>(),
+    eventEmitter: Events.createEmitter<FileSystemEvents>(),
     localOnly: true,
     permissions: {
       fs: {
@@ -40,7 +42,7 @@ export async function loadFilesystem(cid: CID, readKey?: Uint8Array): Promise<Fi
   const fs = await FileSystem.fromCID(cid, {
     account,
     dependencies: components,
-    eventEmitter: Events.createEmitter<Events.FileSystem>(),
+    eventEmitter: Events.createEmitter<FileSystemEvents>(),
     localOnly: true,
     permissions: {
       fs: {
