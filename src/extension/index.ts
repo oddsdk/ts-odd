@@ -200,7 +200,7 @@ type State = {
     accountDID: string | null
     agentDID: string
   }
-  webnative: {
+  odd: {
     version: string
   }
 }
@@ -232,7 +232,7 @@ async function getState(config: Config): Promise<State> {
       accountDID,
       agentDID
     },
-    webnative: {
+    odd: {
       version: VERSION
     }
   }

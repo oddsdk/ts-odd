@@ -638,9 +638,9 @@ export async function assemble(config: Configuration, components: Components): P
 
     if (inject) {
       const container = globalThis as any
-      container.__webnative = container.__webnative || {}
-      container.__webnative.programs = container.__webnative.programs || {}
-      container.__webnative.programs[ namespace(config) ] = program
+      container.__odd = container.__odd || {}
+      container.__odd.programs = container.__odd.programs || {}
+      container.__odd.programs[ namespace(config) ] = program
     }
 
     const emitMessages = config.debugging?.emitWindowPostMessages === undefined
@@ -663,14 +663,14 @@ export async function assemble(config: Configuration, components: Components): P
       })
 
       const container = globalThis as any
-      container.__webnative = container.__webnative || {}
-      container.__webnative.extension = container.__webnative.extension || {}
-      container.__webnative.extension.connect = connect
-      container.__webnative.extension.disconnect = disconnect
+      container.__odd = container.__odd || {}
+      container.__odd.extension = container.__odd.extension || {}
+      container.__odd.extension.connect = connect
+      container.__odd.extension.disconnect = disconnect
 
-      // Notify extension that Webnative is ready
+      // Notify extension that ODD is ready
       globalThis.postMessage({
-        id: "webnative-devtools-ready-message",
+        id: "odd-devtools-ready-message",
       })
     }
   }
