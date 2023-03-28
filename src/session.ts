@@ -16,7 +16,7 @@ export class Session {
   #crypto: Crypto.Implementation
   #storage: Storage.Implementation
 
-  #eventEmitter: Events.Emitter<SessionEvents>
+  #eventEmitter: Events.Emitter<Events.Session>
 
   fs?: FileSystem
   type: string
@@ -26,7 +26,7 @@ export class Session {
     crypto: Crypto.Implementation
     storage: Storage.Implementation
 
-    eventEmitter: Events.Emitter<SessionEvents>
+    eventEmitter: Events.Emitter<Events.Session>
 
     fs?: FileSystem
     type: string
@@ -44,7 +44,7 @@ export class Session {
 
 
   async destroy() {
-    this.#eventEmitter.emit("session:destroy", { username: this.username })
+    this.#eventEmitter.emit("destroy", { username: this.username })
 
     await this.#storage.removeItem(this.#storage.KEYS.ACCOUNT_UCAN)
     await this.#storage.removeItem(this.#storage.KEYS.CID_LOG)
@@ -56,14 +56,6 @@ export class Session {
     if (this.fs) this.fs.deactivate()
   }
 
-}
-
-
-// EVENTS
-
-export type SessionEvents = {
-  "session:create": { session: Session }
-  "session:destroy": { username: string }
 }
 
 

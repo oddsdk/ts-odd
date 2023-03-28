@@ -1,10 +1,9 @@
 import type { AppInfo } from "../appInfo.js"
 import type { CID } from "../common/cid.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
-import type { FileSystemEvents } from "../fs/filesystem.js"
 import type { Maybe } from "../common/types.js"
 import type { Permissions } from "../permissions.js"
-import type { Session, SessionEvents } from "../session.js"
+import type { Session } from "../session.js"
 import type { ShortHands } from "../index.js"
 
 import * as Events from "../events.js"
@@ -21,8 +20,8 @@ type Config = {
   shorthands: ShortHands
   lookupDataRoot: (username: string) => Promise<CID | null>
   eventEmitters: {
-    fileSystem: Events.Emitter<FileSystemEvents>
-    session: Events.Emitter<SessionEvents>
+    fileSystem: Events.Emitter<Events.FileSystem>
+    session: Events.Emitter<Events.Session>
   }
 }
 
@@ -166,20 +165,20 @@ function listen(connection: Connection, config: Config): Listeners {
     })
   }
 
-  config.eventEmitters.fileSystem.on("fileSystem:local-change", handleLocalChange)
-  config.eventEmitters.fileSystem.on("fileSystem:publish", handlePublish)
-  config.eventEmitters.session.on("session:create", handleSessionCreate)
-  config.eventEmitters.session.on("session:destroy", handleSessionDestroy)
+  config.eventEmitters.fileSystem.on("local-change", handleLocalChange)
+  config.eventEmitters.fileSystem.on("publish", handlePublish)
+  config.eventEmitters.session.on("create", handleSessionCreate)
+  config.eventEmitters.session.on("destroy", handleSessionDestroy)
 
   return { handleLocalChange, handlePublish, handleSessionCreate, handleSessionDestroy }
 }
 
 function stopListening(config: Config, listeners: Listeners) {
   if (listeners) {
-    config.eventEmitters.fileSystem.removeListener("fileSystem:local-change", listeners.handleLocalChange)
-    config.eventEmitters.fileSystem.removeListener("fileSystem:publish", listeners.handlePublish)
-    config.eventEmitters.session.removeListener("session:create", listeners.handleSessionCreate)
-    config.eventEmitters.session.removeListener("session:destroy", listeners.handleSessionDestroy)
+    config.eventEmitters.fileSystem.removeListener("local-change", listeners.handleLocalChange)
+    config.eventEmitters.fileSystem.removeListener("publish", listeners.handlePublish)
+    config.eventEmitters.session.removeListener("create", listeners.handleSessionCreate)
+    config.eventEmitters.session.removeListener("destroy", listeners.handleSessionDestroy)
   }
 }
 

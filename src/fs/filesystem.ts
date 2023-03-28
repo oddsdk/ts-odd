@@ -10,6 +10,7 @@ import * as Reference from "../components/reference/implementation.js"
 import * as Storage from "../components/storage/implementation.js"
 
 import * as DID from "../did/index.js"
+import * as Events from "../events.js"
 import * as FsTypeChecks from "./types/check.js"
 import * as Path from "../path/index.js"
 import * as TypeChecks from "../common/type-checks.js"
@@ -55,7 +56,7 @@ export type Dependencies = {
 export type FileSystemOptions = {
   account: AssociatedIdentity
   dependencies: Dependencies
-  eventEmitter: EventEmitter<FileSystemEvents>
+  eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   permissions?: Permissions
 }
@@ -72,15 +73,12 @@ export type NewFileSystemOptions = FileSystemOptions & {
 type ConstructorParams = {
   account: AssociatedIdentity
   dependencies: Dependencies
-  eventEmitter: EventEmitter<FileSystemEvents>
+  eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   root: RootTree
 }
 
-export type FileSystemEvents = {
-  "fileSystem:local-change": { root: CID; path: DistinctivePath<Partitioned<Partition>> }
-  "fileSystem:publish": { root: CID }
-}
+
 
 // CLASS
 
@@ -89,7 +87,7 @@ export class FileSystem implements API {
 
   account: AssociatedIdentity
   dependencies: Dependencies
-  eventEmitter: EventEmitter<FileSystemEvents>
+  eventEmitter: EventEmitter<Events.FileSystem>
 
   root: RootTree
   readonly localOnly: boolean
@@ -130,7 +128,7 @@ export class FileSystem implements API {
         this._publishing = [ cid, true ]
         return this.dependencies.reference.dataRoot.update(cid, proof).then(() => {
           if (this._publishing && this._publishing[ 0 ] === cid) {
-            eventEmitter.emit("fileSystem:publish", { root: cid })
+            eventEmitter.emit("publish", { root: cid })
             this._publishing = false
           }
         })
@@ -774,7 +772,7 @@ export class FileSystem implements API {
     }
 
     this.eventEmitter.emit(
-      "fileSystem:local-change",
+      "local-change",
       { root: await this.root.put(), path }
     )
   }

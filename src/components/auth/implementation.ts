@@ -2,9 +2,8 @@ import type { Channel, ChannelOptions } from "./channel.js"
 
 import * as Events from "../../events.js"
 import { Configuration } from "../../configuration.js"
-import { FileSystemEvents } from "../../fs/filesystem.js"
 import { Maybe } from "../../common/types.js"
-import { Session, type SessionEvents } from "../../session.js"
+import { Session } from "../../session.js"
 
 
 export type Implementation<C> = {
@@ -15,7 +14,7 @@ export type Implementation<C> = {
     components: C,
     authenticatedUsername: Maybe<string>,
     config: Configuration,
-    eventEmitters: { fileSystem: Events.Emitter<FileSystemEvents>; session: Events.Emitter<SessionEvents> }
+    eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem>; session: Events.Emitter<Events.Session> }
   ) => Promise<Maybe<Session>>
 
   // Account creation
