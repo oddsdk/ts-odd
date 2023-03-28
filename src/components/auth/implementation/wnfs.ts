@@ -151,7 +151,7 @@ export async function session(
     })
 
     // Emit session create event
-    eventEmitters.session.emit("create", { session })
+    eventEmitters.session.emit("session:create", { session })
 
     // Fin
     return session

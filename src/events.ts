@@ -13,13 +13,13 @@ export { EventEmitter, EventEmitter as Emitter }
  * alternatively you can use `addListener` and `removeListener`.
  *
  * ```ts
- * program.fileSystem.on("local-change", ({ path, root }) => {
+ * program.on("fileSystem:local-change", ({ path, root }) => {
  *   console.log("The file system has changed locally 🔔")
  *   console.log("Changed path:", path)
  *   console.log("New data root CID:", root)
  * })
  *
- * program.fileSystem.off("publish")
+ * program.off("fileSystem:publish")
  * ```
  */
 export type ListenTo<EventMap> = Pick<
@@ -29,14 +29,14 @@ export type ListenTo<EventMap> = Pick<
 
 
 export type FileSystem = {
-  "local-change": { root: CID; path: DistinctivePath<Partitioned<Partition>> }
-  "publish": { root: CID }
+  "fileSystem:local-change": { root: CID; path: DistinctivePath<Partitioned<Partition>> }
+  "fileSystem:publish": { root: CID }
 }
 
 
 export type Session<S> = {
-  "create": { session: S }
-  "destroy": { username: string }
+  "session:create": { session: S }
+  "session:destroy": { username: string }
 }
 
 

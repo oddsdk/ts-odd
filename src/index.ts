@@ -122,7 +122,7 @@ export type AuthenticationStrategy = {
 }
 
 
-export type Program = ShortHands & {
+export type Program = ShortHands &  Events.ListenTo<Events.FileSystem & Events.Session<Session>> & {
   /**
    * Authentication strategy, use this interface to register an account and link devices.
    */
@@ -161,7 +161,7 @@ export type Program = ShortHands & {
   /**
    * Various file system methods.
    */
-  fileSystem: FileSystemShortHands & Events.ListenTo<Events.FileSystem>
+  fileSystem: FileSystemShortHands
 
   /**
    * Existing session, if there is one.
@@ -609,8 +609,6 @@ export async function assemble(config: Configuration, components: Components): P
 
     // File system
     fileSystem: {
-      ...Events.listenTo(fsEvents),
-
       addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
       addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
       hasPublicExchangeKey: (fs: FileSystem) => FileSystemData.hasPublicExchangeKey(components.crypto, fs),
@@ -622,6 +620,7 @@ export async function assemble(config: Configuration, components: Components): P
   // Create `Program`
   const program = {
     ...shorthands,
+    ...{ ...Events.listenTo(fsEvents), ...Events.listenTo(sessionEvents)},
 
     configuration: { ...config },
     auth,

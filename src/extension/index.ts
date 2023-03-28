@@ -165,20 +165,20 @@ function listen(connection: Connection, config: Config): Listeners {
     })
   }
 
-  config.eventEmitters.fileSystem.on("local-change", handleLocalChange)
-  config.eventEmitters.fileSystem.on("publish", handlePublish)
-  config.eventEmitters.session.on("create", handleSessionCreate)
-  config.eventEmitters.session.on("destroy", handleSessionDestroy)
+  config.eventEmitters.fileSystem.on("fileSystem:local-change", handleLocalChange)
+  config.eventEmitters.fileSystem.on("fileSystem:publish", handlePublish)
+  config.eventEmitters.session.on("session:create", handleSessionCreate)
+  config.eventEmitters.session.on("session:destroy", handleSessionDestroy)
 
   return { handleLocalChange, handlePublish, handleSessionCreate, handleSessionDestroy }
 }
 
 function stopListening(config: Config, listeners: Listeners) {
   if (listeners) {
-    config.eventEmitters.fileSystem.removeListener("local-change", listeners.handleLocalChange)
-    config.eventEmitters.fileSystem.removeListener("publish", listeners.handlePublish)
-    config.eventEmitters.session.removeListener("create", listeners.handleSessionCreate)
-    config.eventEmitters.session.removeListener("destroy", listeners.handleSessionDestroy)
+    config.eventEmitters.fileSystem.removeListener("fileSystem:local-change", listeners.handleLocalChange)
+    config.eventEmitters.fileSystem.removeListener("fileSystem:publish", listeners.handlePublish)
+    config.eventEmitters.session.removeListener("session:create", listeners.handleSessionCreate)
+    config.eventEmitters.session.removeListener("session:destroy", listeners.handleSessionDestroy)
   }
 }
 

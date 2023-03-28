@@ -44,7 +44,7 @@ export class Session {
 
 
   async destroy() {
-    this.#eventEmitter.emit("destroy", { username: this.username })
+    this.#eventEmitter.emit("session:destroy", { username: this.username })
 
     await this.#storage.removeItem(this.#storage.KEYS.ACCOUNT_UCAN)
     await this.#storage.removeItem(this.#storage.KEYS.CID_LOG)
