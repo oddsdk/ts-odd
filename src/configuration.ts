@@ -21,7 +21,7 @@ export type Configuration = {
    */
   debugging?: {
      /**
-     * Should I emit window post messages with account and filesystem information
+     * Should I emit window post messages with session and filesystem information?
      *
      * @default true
      */
