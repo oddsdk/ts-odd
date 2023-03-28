@@ -14,7 +14,7 @@ export type Implementation<C> = {
     components: C,
     authenticatedUsername: Maybe<string>,
     config: Configuration,
-    eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem>; session: Events.Emitter<Events.Session> }
+    eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem>; session: Events.Emitter<Events.Session<Session>> }
   ) => Promise<Maybe<Session>>
 
   // Account creation

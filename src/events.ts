@@ -1,5 +1,3 @@
-import * as session from "./session.js"
-
 import { CID } from "./common/cid.js"
 import { EventEmitter } from "./common/event-emitter.js"
 import { DistinctivePath, Partition, Partitioned } from "./path/index.js"
@@ -35,8 +33,9 @@ export type FileSystem = {
   "publish": { root: CID }
 }
 
-export type Session = {
-  "create": { session: session.Session }
+
+export type Session<S> = {
+  "create": { session: S }
   "destroy": { username: string }
 }
 

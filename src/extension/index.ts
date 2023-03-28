@@ -21,7 +21,7 @@ type Config = {
   lookupDataRoot: (username: string) => Promise<CID | null>
   eventEmitters: {
     fileSystem: Events.Emitter<Events.FileSystem>
-    session: Events.Emitter<Events.Session>
+    session: Events.Emitter<Events.Session<Session>>
   }
 }
 

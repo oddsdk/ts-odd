@@ -110,7 +110,7 @@ export async function session(
   components: Components,
   authedUsername: Maybe<string>,
   config: Configuration,
-  eventEmitters: { session: Events.Emitter<Events.Session> }
+  eventEmitters: { session: Events.Emitter<Events.Session<Session>> }
 ): Promise<Maybe<Session>> {
   if (authedUsername) {
     const session = new Session({

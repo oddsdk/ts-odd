@@ -478,7 +478,7 @@ export async function assemble(config: Configuration, components: Components): P
 
   // Event emitter
   const fsEvents = Events.createEmitter<Events.FileSystem>()
-  const sessionEvents = Events.createEmitter<Events.Session>()
+  const sessionEvents = Events.createEmitter<Events.Session<Session>>()
 
   // Authenticated user
   const sessionInfo = await SessionMod.restore(components.storage)

@@ -16,7 +16,7 @@ export class Session {
   #crypto: Crypto.Implementation
   #storage: Storage.Implementation
 
-  #eventEmitter: Events.Emitter<Events.Session>
+  #eventEmitter: Events.Emitter<Events.Session<Session>>
 
   fs?: FileSystem
   type: string
@@ -26,7 +26,7 @@ export class Session {
     crypto: Crypto.Implementation
     storage: Storage.Implementation
 
-    eventEmitter: Events.Emitter<Events.Session>
+    eventEmitter: Events.Emitter<Events.Session<Session>>
 
     fs?: FileSystem
     type: string
