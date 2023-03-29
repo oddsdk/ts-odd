@@ -35,7 +35,6 @@ import * as DID from "./did/local.js"
 import * as Events from "./events.js"
 import * as Extension from "./extension/index.js"
 import * as FileSystemData from "./fs/data.js"
-import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Reference from "./components/reference/implementation.js"
 import * as RootKey from "./common/root-key.js"
@@ -50,10 +49,10 @@ import { VERSION } from "./common/version.js"
 import { AccountLinkingConsumer, AccountLinkingProducer, createConsumer, createProducer } from "./linking/index.js"
 import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
+import { FileSystem } from "./fs/class.js"
 import { isString, Maybe } from "./common/index.js"
 import { Session } from "./session.js"
-import { loadFileSystem, recoverFileSystem } from "./filesystem.js"
-import FileSystem from "./fs/filesystem.js"
+import { loadFileSystem, recoverFileSystem } from "./fileSystem.js"
 
 
 // TYPES
@@ -102,7 +101,7 @@ export * as path from "./path/index.js"
 export * as ucan from "./ucan/index.js"
 
 export { AccountLinkingConsumer, AccountLinkingProducer } from "./linking/index.js"
-export { FileSystem } from "./fs/filesystem.js"
+export { FileSystem } from "./fs/class.js"
 export { Session } from "./session.js"
 
 
@@ -184,9 +183,7 @@ export type ShortHands = {
 
 
 export type FileSystemShortHands = {
-  addPublicExchangeKey: (fs: FileSystem) => Promise<void>
   addSampleData: (fs: FileSystem) => Promise<void>
-  hasPublicExchangeKey: (fs: FileSystem) => Promise<boolean>
 
   /**
    * Load the file system of a given username.
@@ -319,6 +316,8 @@ export const capabilities = {
 
     if (staging) return FissionLobbyStaging.implementation({ crypto })
     return FissionLobbyProduction.implementation({ crypto })
+    if (staging) return FissionLobbyStaging.implementation({ crypto })
+    return FissionLobbyProduction.implementation({ crypto })
   }
 }
 
@@ -369,8 +368,8 @@ export const depot = {
     const repoName = `${namespace(settings)}/ipfs`
     const storage = settings.storage || defaultStorageComponent(settings)
 
-    if (settings.staging) return FissionIpfsStaging.implementation({ storage }, repoName)
-    return FissionIpfsProduction.implementation({ storage }, repoName)
+    if (settings.staging) return FissionIpfsStaging.implementation(storage, repoName)
+    return FissionIpfsProduction.implementation(storage, repoName)
   }
 }
 
@@ -605,9 +604,7 @@ export async function assemble(config: Configuration, components: Components): P
 
     // File system
     fileSystem: {
-      addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
       addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
-      hasPublicExchangeKey: (fs: FileSystem) => FileSystemData.hasPublicExchangeKey(components.crypto, fs),
       load: (username: string) => loadFileSystem({ config, username, dependencies: components, eventEmitter: fsEvents }),
       recover: (params: RecoverFileSystemParams) => recoverFileSystem({ auth, dependencies: components, ...params }),
     }
@@ -635,7 +632,7 @@ export async function assemble(config: Configuration, components: Components): P
       const container = globalThis as any
       container.__odd = container.__odd || {}
       container.__odd.programs = container.__odd.programs || {}
-      container.__odd.programs[namespace(config)] = program
+      container.__odd.programs[ namespace(config) ] = program
     }
 
     const emitMessages = config.debugging?.emitWindowPostMessages === undefined
@@ -726,6 +723,7 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
   const depot = setup.depot || await defaultDepotComponent({ storage }, config)
   const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto })
+  const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto })
   const auth = setup.auth || defaultAuthComponent({ crypto, reference, storage })
 
   return {
@@ -752,209 +750,211 @@ export function defaultAuthComponent({ crypto, reference, storage }: BaseAuth.De
 
 export function defaultCapabilitiesComponent({ crypto }: FissionLobbyBase.Dependencies): CapabilitiesImpl.Implementation {
   return FissionLobbyProduction.implementation({ crypto })
-}
-
-export function defaultCryptoComponent(config: Configuration): Promise<Crypto.Implementation> {
-  return BrowserCrypto.implementation({
-    storeName: namespace(config),
-    exchangeKeyName: "exchange-key",
-    writeKeyName: "write-key"
-  })
-}
-
-export function defaultDepotComponent({ storage }: IpfsNode.Dependencies, config: Configuration): Promise<Depot.Implementation> {
-  return FissionIpfsProduction.implementation(
-    { storage },
-    `${namespace(config)}/ipfs`
-  )
-}
-
-export function defaultMannersComponent(config: Configuration): Manners.Implementation {
-  return ProperManners.implementation({
-    configuration: config
-  })
-}
-
-export function defaultReferenceComponent({ crypto, manners, storage }: BaseReference.Dependencies): Promise<Reference.Implementation> {
-  return FissionReferenceProduction.implementation({
-    crypto,
-    manners,
-    storage,
-  })
-}
-
-export function defaultStorageComponent(config: Configuration): Storage.Implementation {
-  return BrowserStorage.implementation({
-    name: namespace(config)
-  })
-}
-
-
-
-// 🛟
-
-
-/**
- * Is this browser supported?
- */
-export async function isSupported(): Promise<boolean> {
-  return localforage.supports(localforage.INDEXEDDB)
-
-    // Firefox in private mode can't use indexedDB properly,
-    // so we test if we can actually make a database.
-    && await (() => new Promise(resolve => {
-      const db = indexedDB.open("testDatabase")
-      db.onsuccess = () => resolve(true)
-      db.onerror = () => resolve(false)
-    }))() as boolean
-}
-
-
-
-// BACKWARDS COMPAT
-
-
-async function ensureBackwardsCompatibility(components: Components, config: Configuration): Promise<void> {
-  // Old pieces:
-  // - Key pairs: IndexedDB → keystore → exchange-key & write-key
-  // - UCAN used for account linking/delegation: IndexedDB → localforage → ucan
-  // - Root read key of the filesystem: IndexedDB → localforage → readKey
-  // - Authenticated username: IndexedDB → localforage → webnative.auth_username
-
-  const [migK, migV] = ["migrated", VERSION]
-  const currentVersion = Semver.fromString(VERSION)
-  if (!currentVersion) throw new Error("The ODD SDK VERSION should be a semver string")
-
-  // If already migrated, stop here.
-  const migrationOccurred = await components.storage
-    .getItem(migK)
-    .then(v => typeof v === "string" ? Semver.fromString(v) : null)
-    .then(v => v && Semver.isBiggerThanOrEqualTo(v, currentVersion))
-
-  if (migrationOccurred) return
-
-  // Only try to migrate if environment supports indexedDB
-  if (!globalThis.indexedDB) return
-
-  // Migration
-  const existingDatabases = globalThis.indexedDB.databases
-    ? (await globalThis.indexedDB.databases()).map(db => db.name)
-    : ["keystore", "localforage"]
-
-  const keystoreDB = existingDatabases.includes("keystore") ? await bwOpenDatabase("keystore") : null
-
-  if (keystoreDB) {
-    const exchangeKeyPair = await bwGetValue(keystoreDB, "keyvaluepairs", "exchange-key")
-    const writeKeyPair = await bwGetValue(keystoreDB, "keyvaluepairs", "write-key")
-
-    if (exchangeKeyPair && writeKeyPair) {
-      await components.storage.setItem("exchange-key", exchangeKeyPair)
-      await components.storage.setItem("write-key", writeKeyPair)
-    }
+  export function defaultCapabilitiesComponent({ crypto }: FissionLobbyBase.Dependencies): CapabilitiesImpl.Implementation {
+    return FissionLobbyProduction.implementation({ crypto })
   }
 
-  const localforageDB = existingDatabases.includes("localforage") ? await bwOpenDatabase("localforage") : null
+  export function defaultCryptoComponent(config: Configuration): Promise<Crypto.Implementation> {
+    return BrowserCrypto.implementation({
+      storeName: namespace(config),
+      exchangeKeyName: "exchange-key",
+      writeKeyName: "write-key"
+    })
+  }
 
-  if (localforageDB) {
-    const accountUcan = await bwGetValue(localforageDB, "keyvaluepairs", "ucan")
-    const permissionedUcans = await bwGetValue(localforageDB, "keyvaluepairs", "webnative.auth_ucans")
-    const rootKey = await bwGetValue(localforageDB, "keyvaluepairs", "readKey")
-    const authedUser = await bwGetValue(localforageDB, "keyvaluepairs", "webnative.auth_username")
+  export function defaultDepotComponent({ storage }: { storage: Storage.Implementation }, config: Configuration): Promise<Depot.Implementation> {
+    return FissionIpfsProduction.implementation(
+      storage,
+      `${namespace(config)}/blockstore`
+    )
+  }
 
-    if (rootKey && isString(rootKey)) {
-      const anyUcan = accountUcan || (Array.isArray(permissionedUcans) ? permissionedUcans[0] : undefined)
-      const accountDID = anyUcan ? Ucan.rootIssuer(anyUcan) : (typeof authedUser === "string" ? await components.reference.didRoot.lookup(authedUser) : null)
-      if (!accountDID) throw new Error("Failed to retrieve account DID")
+  export function defaultMannersComponent(config: Configuration): Manners.Implementation {
+    return ProperManners.implementation({
+      configuration: config
+    })
+  }
 
-      await RootKey.store({
-        accountDID,
-        crypto: components.crypto,
-        readKey: Uint8arrays.fromString(rootKey, "base64pad"),
-      })
+  export function defaultReferenceComponent({ crypto, manners, storage }: BaseReference.Dependencies): Promise<Reference.Implementation> {
+    return FissionReferenceProduction.implementation({
+      crypto,
+      manners,
+      storage,
+    })
+  }
+
+  export function defaultStorageComponent(config: Configuration): Storage.Implementation {
+    return BrowserStorage.implementation({
+      name: namespace(config)
+    })
+  }
+
+
+
+  // 🛟
+
+
+  /**
+   * Is this browser supported?
+   */
+  export async function isSupported(): Promise<boolean> {
+    return localforage.supports(localforage.INDEXEDDB)
+
+      // Firefox in private mode can't use indexedDB properly,
+      // so we test if we can actually make a database.
+      && await (() => new Promise(resolve => {
+        const db = indexedDB.open("testDatabase")
+        db.onsuccess = () => resolve(true)
+        db.onerror = () => resolve(false)
+      }))() as boolean
+  }
+
+
+
+  // BACKWARDS COMPAT
+
+
+  async function ensureBackwardsCompatibility(components: Components, config: Configuration): Promise<void> {
+    // Old pieces:
+    // - Key pairs: IndexedDB → keystore → exchange-key & write-key
+    // - UCAN used for account linking/delegation: IndexedDB → localforage → ucan
+    // - Root read key of the filesystem: IndexedDB → localforage → readKey
+    // - Authenticated username: IndexedDB → localforage → webnative.auth_username
+
+    const [ migK, migV ] = [ "migrated", VERSION ]
+    const currentVersion = Semver.fromString(VERSION.toString() === "next" ? "1.0.0" : VERSION)
+    if (!currentVersion) throw new Error("The ODD SDK VERSION should be a semver string")
+
+    // If already migrated, stop here.
+    const migrationOccurred = await components.storage
+      .getItem(migK)
+      .then(v => typeof v === "string" ? Semver.fromString(v) : null)
+      .then(v => v && Semver.isBiggerThanOrEqualTo(v, currentVersion))
+
+    if (migrationOccurred) return
+
+    // Only try to migrate if environment supports indexedDB
+    if (!globalThis.indexedDB) return
+
+    // Migration
+    const existingDatabases = globalThis.indexedDB.databases
+      ? (await globalThis.indexedDB.databases()).map(db => db.name)
+      : [ "keystore", "localforage" ]
+
+    const keystoreDB = existingDatabases.includes("keystore") ? await bwOpenDatabase("keystore") : null
+
+    if (keystoreDB) {
+      const exchangeKeyPair = await bwGetValue(keystoreDB, "keyvaluepairs", "exchange-key")
+      const writeKeyPair = await bwGetValue(keystoreDB, "keyvaluepairs", "write-key")
+
+      if (exchangeKeyPair && writeKeyPair) {
+        await components.storage.setItem("exchange-key", exchangeKeyPair)
+        await components.storage.setItem("write-key", writeKeyPair)
+      }
     }
 
-    if (accountUcan) {
-      await components.storage.setItem(
-        components.storage.KEYS.ACCOUNT_UCAN,
-        accountUcan
-      )
-    }
+    const localforageDB = existingDatabases.includes("localforage") ? await bwOpenDatabase("localforage") : null
 
-    if (authedUser) {
-      await components.storage.setItem(
-        components.storage.KEYS.SESSION,
-        JSON.stringify({
-          type: isCapabilityBasedAuthConfiguration(config) ? CAPABILITIES_SESSION_TYPE : WEB_CRYPTO_SESSION_TYPE,
-          username: authedUser
+    if (localforageDB) {
+      const accountUcan = await bwGetValue(localforageDB, "keyvaluepairs", "ucan")
+      const permissionedUcans = await bwGetValue(localforageDB, "keyvaluepairs", "webnative.auth_ucans")
+      const rootKey = await bwGetValue(localforageDB, "keyvaluepairs", "readKey")
+      const authedUser = await bwGetValue(localforageDB, "keyvaluepairs", "webnative.auth_username")
+
+      if (rootKey && isString(rootKey)) {
+        const anyUcan = accountUcan || (Array.isArray(permissionedUcans) ? permissionedUcans[ 0 ] : undefined)
+        const accountDID = anyUcan ? Ucan.rootIssuer(anyUcan) : (typeof authedUser === "string" ? await components.reference.didRoot.lookup(authedUser) : null)
+        if (!accountDID) throw new Error("Failed to retrieve account DID")
+
+        await RootKey.store({
+          accountDID,
+          crypto: components.crypto,
+          readKey: Uint8arrays.fromString(rootKey, "base64pad"),
         })
-      )
+      }
+
+      if (accountUcan) {
+        await components.storage.setItem(
+          components.storage.KEYS.ACCOUNT_UCAN,
+          accountUcan
+        )
+      }
+
+      if (authedUser) {
+        await components.storage.setItem(
+          components.storage.KEYS.SESSION,
+          JSON.stringify({
+            type: isCapabilityBasedAuthConfiguration(config) ? CAPABILITIES_SESSION_TYPE : WEB_CRYPTO_SESSION_TYPE,
+            username: authedUser
+          })
+        )
+      }
+    }
+
+    await components.storage.setItem(migK, migV)
+  }
+
+
+  function bwGetValue(db: IDBDatabase, storeName: string, key: string): Promise<Maybe<unknown>> {
+    return new Promise((resolve, reject) => {
+      if (!db.objectStoreNames.contains(storeName)) return resolve(null)
+
+      const transaction = db.transaction([ storeName ], "readonly")
+      const store = transaction.objectStore(storeName)
+      const req = store.get(key)
+
+      req.onerror = () => {
+        // No store, moving on.
+        resolve(null)
+      }
+
+      req.onsuccess = () => {
+        resolve(req.result)
+      }
+    })
+  }
+
+
+  function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
+    return new Promise((resolve, reject) => {
+      const req = globalThis.indexedDB.open(name)
+
+      req.onerror = () => {
+        // No database, moving on.
+        resolve(null)
+      }
+
+      req.onsuccess = () => {
+        resolve(req.result)
+      }
+
+      req.onupgradeneeded = e => {
+        // Don't create database if it didn't exist before
+        req.transaction?.abort()
+        globalThis.indexedDB.deleteDatabase(name)
+      }
+    })
+  }
+
+
+
+  // 🛠
+
+
+  export function extractConfig(opts: Partial<Components> & Configuration): Configuration {
+    return {
+      namespace: opts.namespace,
+      debug: opts.debug,
+      fileSystem: opts.fileSystem,
+      permissions: opts.permissions,
+      userMessages: opts.userMessages,
     }
   }
 
-  await components.storage.setItem(migK, migV)
-}
 
-
-function bwGetValue(db: IDBDatabase, storeName: string, key: string): Promise<Maybe<unknown>> {
-  return new Promise((resolve, reject) => {
-    if (!db.objectStoreNames.contains(storeName)) return resolve(null)
-
-    const transaction = db.transaction([storeName], "readonly")
-    const store = transaction.objectStore(storeName)
-    const req = store.get(key)
-
-    req.onerror = () => {
-      // No store, moving on.
-      resolve(null)
-    }
-
-    req.onsuccess = () => {
-      resolve(req.result)
-    }
-  })
-}
-
-
-function bwOpenDatabase(name: string): Promise<Maybe<IDBDatabase>> {
-  return new Promise((resolve, reject) => {
-    const req = globalThis.indexedDB.open(name)
-
-    req.onerror = () => {
-      // No database, moving on.
-      resolve(null)
-    }
-
-    req.onsuccess = () => {
-      resolve(req.result)
-    }
-
-    req.onupgradeneeded = e => {
-      // Don't create database if it didn't exist before
-      req.transaction?.abort()
-      globalThis.indexedDB.deleteDatabase(name)
-    }
-  })
-}
-
-
-
-// 🛠
-
-
-export function extractConfig(opts: Partial<Components> & Configuration): Configuration {
-  return {
-    namespace: opts.namespace,
-    debug: opts.debug,
-    fileSystem: opts.fileSystem,
-    permissions: opts.permissions,
-    userMessages: opts.userMessages,
+  /**
+   * Is this a configuration that uses capabilities?
+   */
+  export function isCapabilityBasedAuthConfiguration(config: Configuration): boolean {
+    return !!config.permissions
   }
-}
-
-
-/**
- * Is this a configuration that uses capabilities?
- */
-export function isCapabilityBasedAuthConfiguration(config: Configuration): boolean {
-  return !!config.permissions
-}

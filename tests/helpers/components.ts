@@ -5,14 +5,12 @@ import NodePath from "path"
 
 import { CID } from "multiformats"
 import { CryptoSystem, HashAlg, KeyUse } from "keystore-idb/types.js"
+import { MemoryBlockstore } from "blockstore-core/memory"
 import { default as KeystoreConfig } from "keystore-idb/config.js"
+import { sha256 } from "multiformats/hashes/sha2"
 import IDB from "keystore-idb/idb.js"
 import RSAKeys from "keystore-idb/rsa/keys.js"
 import RSAKeyStore from "keystore-idb/rsa/keystore.js"
-
-import * as DagPB from "@ipld/dag-pb"
-import * as Raw from "multiformats/codecs/raw"
-import { sha256 } from "multiformats/hashes/sha2"
 
 import * as Auth from "../../src/components/auth/implementation.js"
 import * as Crypto from "../../src/components/crypto/implementation.js"
@@ -29,6 +27,7 @@ import * as WnfsAuth from "../../src/components/auth/implementation/wnfs.js"
 
 import * as Codecs from "../../src/dag/codecs.js"
 import * as DID from "../../src/did/index.js"
+import * as Ucans from "../../src/ucan/index.js"
 
 import { CodecIdentifier } from "../../src/dag/codecs.js"
 import { Components } from "../../src/components.js"
@@ -116,23 +115,13 @@ export const inMemoryDepot: Record<string, Uint8Array> = {}
 
 
 const depot: Depot.Implementation = {
+  blockstore: new MemoryBlockstore(),
+
   // Get the data behind a CID
   getBlock: (cid: CID) => {
     const data = inMemoryDepot[ cid.toString() ]
     if (!data) throw new Error("CID not stored in depot")
     return Promise.resolve(data)
-  },
-  getUnixFile: (cid: CID) => depot.getBlock(cid),
-  getUnixDirectory: async (cid: CID) => {
-    const dag = DagPB.decode(await depot.getBlock(cid))
-
-    // Not technically correct but might be good enough for testing?
-    return dag.Links.map(link => ({
-      cid: link.Hash,
-      name: link.Name || "",
-      size: link.Tsize || 0,
-      isFile: link.Hash.code === Raw.code
-    }))
   },
 
   // Keep data around
@@ -144,26 +133,6 @@ const depot: Depot.Implementation = {
     inMemoryDepot[ cid.toString() ] = data
 
     return cid
-  },
-  putChunked: async (data: Uint8Array) => {
-    // Not sure what the max size is here, this might not work.
-    // Might need to use https://github.com/ipfs/js-ipfs-unixfs/tree/master/packages/ipfs-unixfs-importer instead.
-    const multihash = await sha256.digest(data)
-    const cid = CID.createV1(Raw.code, multihash)
-
-    inMemoryDepot[ cid.toString() ] = data
-
-    return {
-      cid,
-      size: data.length,
-      isFile: true
-    }
-  },
-
-  // Stats
-  size: async (cid: CID) => {
-    const data = await depot.getBlock(cid)
-    return data.length
   }
 }
 
@@ -185,7 +154,7 @@ const manners = {
   wnfsWasmLookup: async () => {
     const pathToThisModule = new URL(import.meta.url).pathname
     const dirOfThisModule = NodePath.parse(pathToThisModule).dir
-    return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wasm_wnfs_bg.wasm`))
+    return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wnfs_wasm_bg.wasm`))
   }
 }
 
@@ -240,6 +209,29 @@ export const account = {
   rootDID: await reference.didRoot.lookup(username),
   username
 }
+
+
+
+// Add self-signed file-system UCAN
+
+
+const issuer = await DID.write(crypto)
+const proof: string | null = await storage.getItem(
+  storage.KEYS.ACCOUNT_UCAN
+)
+
+const fsUcan = await Ucans.build({
+  dependencies: { crypto },
+  potency: "APPEND",
+  resource: "*",
+  proof: proof ? proof : undefined,
+  lifetimeInSeconds: 60 * 60 * 24 * 30 * 12 * 1000, // 1000 years
+
+  audience: issuer,
+  issuer
+})
+
+await reference.repositories.ucans.add(fsUcan)
 
 
 

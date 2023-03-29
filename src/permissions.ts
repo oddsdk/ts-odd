@@ -58,7 +58,7 @@ export function appId(app: AppInfo): string {
 
 
 /**
- * Lists the filesystems paths for a set of `Permissions`.
+ * Lists the file system's paths for a set of `Permissions`.
  * This'll return a list of `DistinctivePath`s.
  */
 export function permissionPaths(permissions: Permissions): Distinctive<Path.Partitioned<Path.Partition>>[] {

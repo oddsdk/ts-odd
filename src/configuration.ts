@@ -20,11 +20,11 @@ export type Configuration = {
    * Debugging settings.
    */
   debugging?: {
-     /**
-     * Should I emit window post messages with session and filesystem information?
-     *
-     * @default true
-     */
+    /**
+    * Should I emit window post messages with session and filesystem information?
+    *
+    * @default true
+    */
     emitWindowPostMessages?: boolean
 
     /**
@@ -40,7 +40,7 @@ export type Configuration = {
    */
   fileSystem?: {
     /**
-     * Should I load the filesystem immediately?
+     * Should I load the file system immediately?
      *
      * @default true
      */
@@ -67,9 +67,9 @@ export type Configuration = {
    * Configure messages that the ODD SDK sends to users.
    *
    * `versionMismatch.newer` is shown when the ODD SDK detects
-   *  that the user's filesystem is newer than what this version of the ODD SDK supports.
+   *  that the user's file system is newer than what this version of the ODD SDK supports.
    * `versionMismatch.older` is shown when the ODD SDK detects that the user's
-   *  filesystem is older than what this version of the ODD SDK supports.
+   *  file system is older than what this version of the ODD SDK supports.
    */
   userMessages?: UserMessages
 }

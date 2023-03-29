@@ -108,7 +108,7 @@ export function validatePermissions(
 ): Maybe<Ucan.Ucan> {
   let ucan
 
-  const prefix = UcansRepo.filesystemPrefix()
+  const prefix = UcansRepo.fileSystemPrefix()
 
   // Root access
   const rootUcan = repo.getByKey("*")
@@ -158,7 +158,7 @@ export function validatePermissions(
 
 /**
  * Ensure the existence and validity of the read keys and namefilters
- * we need for the filesystem based on the permissions we asked for.
+ * we need for the file system based on the permissions we asked for.
  */
 export async function validateSecrets(
   crypto: Crypto.Implementation,

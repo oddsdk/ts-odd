@@ -3,12 +3,10 @@ import { Maybe } from "../common/types.js"
 
 
 export enum RootBranch {
-  Public = "public",
-  Pretty = "p",
+  Exchange = "exchange",
   Private = "private",
-  PrivateLog = "privateLog",
-  Shared = "shared",
-  SharedCounter = "sharedCounter",
+  Public = "public",
+  Unix = "unix",
   Version = "version"
 }
 
@@ -101,6 +99,25 @@ export function file(...args: Segments): FilePath<Segments> {
 }
 
 /**
+ * Utility function to create a path based on the given `Kind`
+ */
+export function fromKind<P extends Partition>(kind: Kind.Directory, ...args: PartitionedNonEmpty<P>): DirectoryPath<PartitionedNonEmpty<P>>
+export function fromKind<P extends Partition>(kind: Kind.Directory, ...args: Partitioned<P>): DirectoryPath<Partitioned<P>>
+export function fromKind(kind: Kind.Directory, ...args: SegmentsNonEmpty): DirectoryPath<SegmentsNonEmpty>
+export function fromKind(kind: Kind.Directory, ...args: Segments): DirectoryPath<Segments>
+export function fromKind<P extends Partition>(kind: Kind.File, ...args: PartitionedNonEmpty<P>): FilePath<PartitionedNonEmpty<P>>
+export function fromKind(kind: Kind.File, ...args: SegmentsNonEmpty): FilePath<SegmentsNonEmpty>
+export function fromKind(kind: Kind.File, ...args: Segments): FilePath<Segments>
+export function fromKind<P extends Partition>(kind: Kind, ...args: PartitionedNonEmpty<P>): DistinctivePath<PartitionedNonEmpty<P>>
+export function fromKind<P extends Partition>(kind: Kind, ...args: Partitioned<P>): DistinctivePath<Partitioned<P>>
+export function fromKind(kind: Kind, ...args: SegmentsNonEmpty): DistinctivePath<SegmentsNonEmpty>
+export function fromKind(kind: Kind, ...args: Segments): DistinctivePath<Segments>
+export function fromKind(kind: Kind, ...args: Segments): DistinctivePath<Segments> {
+  if (kind === Kind.Directory) return directory(...args)
+  else return file(...args)
+}
+
+/**
  * Utility function to create a root `DirectoryPath`
  */
 export function root(): DirectoryPath<Segments> {
@@ -166,14 +183,17 @@ export function toPosix(
 export function combine<P extends Partition>(a: DirectoryPath<PartitionedNonEmpty<P>>, b: FilePath<Segments>): FilePath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: FilePath<SegmentsNonEmpty>): FilePath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: FilePath<Segments>): FilePath<Partitioned<P>>
+export function combine(a: DirectoryPath<Segments>, b: FilePath<SegmentsNonEmpty>): FilePath<SegmentsNonEmpty>
 export function combine(a: DirectoryPath<Segments>, b: FilePath<Segments>): FilePath<Segments>
 export function combine<P extends Partition>(a: DirectoryPath<PartitionedNonEmpty<P>>, b: DirectoryPath<Segments>): DirectoryPath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: DirectoryPath<SegmentsNonEmpty>): DirectoryPath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: DirectoryPath<Segments>): DirectoryPath<Partitioned<P>>
+export function combine(a: DirectoryPath<Segments>, b: DirectoryPath<SegmentsNonEmpty>): DirectoryPath<SegmentsNonEmpty>
 export function combine(a: DirectoryPath<Segments>, b: DirectoryPath<Segments>): DirectoryPath<Segments>
 export function combine<P extends Partition>(a: DirectoryPath<PartitionedNonEmpty<P>>, b: DistinctivePath<Segments>): DistinctivePath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: DistinctivePath<SegmentsNonEmpty>): DistinctivePath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(a: DirectoryPath<Partitioned<P>>, b: DistinctivePath<Segments>): DistinctivePath<Partitioned<P>>
+export function combine(a: DirectoryPath<Segments>, b: DistinctivePath<SegmentsNonEmpty>): DistinctivePath<SegmentsNonEmpty>
 export function combine(a: DirectoryPath<Segments>, b: DistinctivePath<Segments>): DistinctivePath<Segments>
 export function combine(a: DirectoryPath<Segments>, b: DistinctivePath<Segments>): DistinctivePath<Segments> {
   return map(p => unwrap(a).concat(p), b)
@@ -194,6 +214,13 @@ export function isFile<P>(path: DistinctivePath<P>): path is FilePath<P> {
 }
 
 /**
+ * Is this `DistinctivePath` on the given `RootBranch`?
+ */
+export function isOnRootBranch(rootBranch: RootBranch, path: DistinctivePath<Segments>): boolean {
+  return unwrap(path)[ 0 ] === rootBranch
+}
+
+/**
  * Is this `DistinctivePath` of the given `Partition`?
  */
 export function isPartition(partition: Partition, path: DistinctivePath<Segments>): boolean {
@@ -201,10 +228,10 @@ export function isPartition(partition: Partition, path: DistinctivePath<Segments
 }
 
 /**
- * Is this `DistinctivePath` on the given `RootBranch`?
+ * Is this partitioned `DistinctivePath` non-empty?
  */
-export function isOnRootBranch(rootBranch: RootBranch, path: DistinctivePath<Segments>): boolean {
-  return unwrap(path)[ 0 ] === rootBranch
+export function isPartitionedNonEmpty<P extends Partition>(path: DistinctivePath<Partitioned<P>>): path is DistinctivePath<PartitionedNonEmpty<P>> {
+  return unwrap(path).length > 1
 }
 
 /**
@@ -224,7 +251,7 @@ export function isSamePartition(a: DistinctivePath<Segments>, b: DistinctivePath
 /**
  * Check if two `DistinctivePath` are of the same kind.
  */
-export function isSameKind(a: DistinctivePath<Segments>, b: DistinctivePath<Segments>): boolean {
+export function isSameKind<A, B>(a: DistinctivePath<A>, b: DistinctivePath<B>): boolean {
   if (isDirectory(a) && isDirectory(b)) return true
   else if (isFile(a) && isFile(b)) return true
   else return false
@@ -233,9 +260,16 @@ export function isSameKind(a: DistinctivePath<Segments>, b: DistinctivePath<Segm
 /**
  * What `Kind` of path are we dealing with?
  */
-export function kind(path: DistinctivePath<Segments>): Kind {
+export function kind<P>(path: DistinctivePath<P>): Kind {
   if (isDirectory(path)) return Kind.Directory
   return Kind.File
+}
+
+/**
+ * What's the length of a path?
+ */
+export function length(path: DistinctivePath<Segments>): number {
+  return unwrap(path).length
 }
 
 /**
@@ -275,10 +309,43 @@ export function removePartition(path: DistinctivePath<Segments>): DistinctivePat
   )
 }
 
+export function replaceTerminus(path: FilePath<PartitionedNonEmpty<Partition>>, terminus: string): FilePath<PartitionedNonEmpty<Partition>>
+export function replaceTerminus(path: DirectoryPath<PartitionedNonEmpty<Partition>>, terminus: string): DirectoryPath<PartitionedNonEmpty<Partition>>
+export function replaceTerminus(path: DistinctivePath<PartitionedNonEmpty<Partition>>, terminus: string): DistinctivePath<PartitionedNonEmpty<Partition>>
+export function replaceTerminus(path: FilePath<SegmentsNonEmpty>, terminus: string): FilePath<SegmentsNonEmpty>
+export function replaceTerminus(path: DirectoryPath<SegmentsNonEmpty>, terminus: string): DirectoryPath<SegmentsNonEmpty>
+export function replaceTerminus(path: DistinctivePath<SegmentsNonEmpty>, terminus: string): DistinctivePath<SegmentsNonEmpty>
+export function replaceTerminus(path: DistinctivePath<SegmentsNonEmpty> | DistinctivePath<SegmentsNonEmpty>, terminus: string): DistinctivePath<SegmentsNonEmpty> {
+  return combine(
+    parent(path),
+    fromKind(kind(path), terminus)
+  )
+}
+
+export function rootBranch(path: DistinctivePath<Segments>): Maybe<{ branch: RootBranch, rest: Segments }> {
+  const unwrapped = unwrap(path)
+  const firstSegment = unwrapped[ 0 ]
+  const rest = unwrapped.slice(1)
+
+  switch (firstSegment) {
+    case RootBranch.Exchange: return { branch: RootBranch.Exchange, rest }
+    case RootBranch.Private: return { branch: RootBranch.Private, rest }
+    case RootBranch.Public: return { branch: RootBranch.Public, rest }
+    case RootBranch.Unix: return { branch: RootBranch.Unix, rest }
+    case RootBranch.Version: return { branch: RootBranch.Version, rest }
+
+    default: return null
+  }
+}
+
 /**
  * Get the last part of the path.
  */
-export function terminus(path: DistinctivePath<Segments>): Maybe<string> {
+export function terminus(path: DistinctivePath<PartitionedNonEmpty<Partition>>): string
+export function terminus(path: DistinctivePath<Partitioned<Partition>>): string
+export function terminus(path: DistinctivePath<SegmentsNonEmpty>): string
+export function terminus(path: DistinctivePath<Segments>): Maybe<string>
+export function terminus(path: DistinctivePath<Segments>): string | Maybe<string> {
   const u = unwrap(path)
   if (u.length < 1) return null
   return u[ u.length - 1 ]

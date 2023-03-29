@@ -1,7 +1,6 @@
 import * as Uint8arrays from "uint8arrays"
 import expect from "expect"
 
-import * as DID from "../../src/did/index.js"
 import * as Ucan from "../../src/ucan/index.js"
 import { components } from "../helpers/components.js"
 import { didToPublicKey } from "../../src/did/index.js"

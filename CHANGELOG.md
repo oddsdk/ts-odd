@@ -1,5 +1,11 @@
 # Changelog
 
+### Next
+
+- **Uses the rs-wnfs implementation of the Webnative file system**.
+- Improves several types of the paths module.
+
+
 ### V0.37.2
 
 - Fixes an issue with the capabilities system which prevented ODD apps from receiving the capabilities.
