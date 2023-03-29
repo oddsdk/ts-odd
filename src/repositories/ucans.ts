@@ -26,6 +26,9 @@ export class Repo extends Repository<Ucan.Ucan> {
   }
 
 
+  // TODO: Shouldn't be able to add a UCAN that isn't valid
+
+
   // ENCODING
 
   fromJSON(a: string): Ucan.Ucan { return Ucan.decode(a) }
@@ -45,17 +48,18 @@ export class Repo extends Repository<Ucan.Ucan> {
   /**
    * Look up a UCAN with a file system path.
    */
-  async lookupFilesystemUcan(
+  async lookupFileSystemUcan(
+    audience: string,
     path: DistinctivePath<Path.Segments> | "*"
   ): Promise<Ucan.Ucan | null> {
     const god = this.getByKey("*")
-    if (god) return god
+    if (god && god.payload.aud === audience) return god
 
     const all = path === "*"
     const isDirectory = all ? false : Path.isDirectory(path)
     const pathParts = all ? [ "*" ] : Path.unwrap(path)
 
-    const prefix = filesystemPrefix()
+    const prefix = fileSystemPrefix()
 
     return pathParts.reduce(
       (acc: Ucan.Ucan | null, part: string, idx: number) => {
@@ -70,7 +74,8 @@ export class Repo extends Repository<Ucan.Ucan> {
             : Path.directory(...partsSlice)
         )
 
-        return this.getByKey(`${prefix}${partialPath}`) || null
+        const ucan = this.getByKey(`${prefix}${partialPath}`)
+        return ucan?.payload.aud === audience ? ucan : null
       },
       null
     )
@@ -80,6 +85,7 @@ export class Repo extends Repository<Ucan.Ucan> {
    * Look up a UCAN for a platform app.
    */
   async lookupAppUcan(
+    // TODO: audience: string,
     domain: string
   ): Promise<Ucan.Ucan | null> {
     return this.getByKey("*") || this.getByKey("app:*") || this.getByKey(`app:${domain}`)
@@ -102,9 +108,9 @@ export const WNFS_PREFIX = "wnfs"
 
 
 /**
- * Construct the prefix for a filesystem key.
+ * Construct the prefix for a file system key.
  */
-export function filesystemPrefix(username?: string): string {
+export function fileSystemPrefix(username?: string): string {
   // const host = `${username}.${setup.endpoints.user}`
   // TODO: Waiting on API change.
   //       Should be `${WNFS_PREFIX}:${host}/`

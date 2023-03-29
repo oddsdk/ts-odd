@@ -7,7 +7,8 @@ import * as Depot from "../../components/depot/implementation.js"
 import * as Reference from "../../components/reference/implementation.js"
 import * as Storage from "../../components/storage/implementation.js"
 
-import * as FileSystem from "../../fs/types.js"
+import * as FS from "../../fs/types.js"
+import { FileSystem } from "../../fs/class.js"
 
 
 export type ImplementationOptions = {
@@ -44,10 +45,10 @@ export type Implementation = {
      * Various file system hooks.
      */
     hooks: {
-      afterLoadExisting: (fs: FileSystem.API, account: FileSystem.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
-      afterLoadNew: (fs: FileSystem.API, account: FileSystem.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
-      beforeLoadExisting: (cid: CID, account: FileSystem.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
-      beforeLoadNew: (account: FileSystem.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
+      afterLoadExisting: (fs: FileSystem, account: FS.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
+      afterLoadNew: (fs: FileSystem, account: FS.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
+      beforeLoadExisting: (cid: CID, account: FS.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
+      beforeLoadNew: (account: FS.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
     }
   }
 }

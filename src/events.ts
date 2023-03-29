@@ -29,8 +29,8 @@ export type ListenTo<EventMap> = Pick<
 
 
 export type FileSystem = {
-  "fileSystem:local-change": { root: CID; path: DistinctivePath<Partitioned<Partition>> }
-  "fileSystem:publish": { root: CID }
+  "fileSystem:local-change": { dataRoot: CID; path: DistinctivePath<Partitioned<Partition>> }
+  "fileSystem:publish": { dataRoot: CID }
 }
 
 
@@ -58,7 +58,7 @@ export function listenTo<EventMap>(emitter: EventEmitter<EventMap>): ListenTo<Ev
 }
 
 
-export function merge<A, B>(a: EventEmitter<A>, b: EventEmitter<B>): EventEmitter<A & B>  {
+export function merge<A, B>(a: EventEmitter<A>, b: EventEmitter<B>): EventEmitter<A & B> {
   const merged = createEmitter<A & B>()
   const aEmit = a.emit
   const bEmit = b.emit

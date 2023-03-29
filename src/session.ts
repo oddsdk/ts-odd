@@ -4,8 +4,8 @@ import * as Storage from "./components/storage/implementation.js"
 import * as Events from "./events.js"
 import * as TypeChecks from "./common/type-checks.js"
 
+import { FileSystem } from "./fs/class.js"
 import { Maybe } from "./common/types.js"
-import FileSystem from "./fs/index.js"
 
 
 // ✨
@@ -55,7 +55,8 @@ export class Session {
 
     await this.#crypto.keystore.clearStore()
 
-    if (this.fs) this.fs.deactivate()
+    // TODO:
+    // if (this.fs) this.fs.deactivate()
   }
 
 }

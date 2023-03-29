@@ -1,2 +1,2 @@
-export const VERSION = "0.37.2"
-export const WASM_WNFS_VERSION = "0.1.7"
+export const VERSION = "next"
+export const WASM_WNFS_VERSION = "0.1.19"

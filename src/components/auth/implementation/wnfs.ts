@@ -16,7 +16,7 @@ import { Configuration } from "../../../configuration.js"
 import { LinkingError } from "../../../linking/common.js"
 import { Maybe } from "../../../common/types.js"
 import { Session } from "../../../session.js"
-import { loadFileSystem } from "../../../filesystem.js"
+import { loadFileSystem } from "../../../fileSystem.js"
 
 
 export async function canDelegateAccount(
@@ -62,7 +62,7 @@ export async function linkDevice(
       readKey: RootKey.fromString(readKey)
     })
 
-    // Create and store filesystem UCAN
+    // Create and store file system UCAN
     const issuer = await DID.write(dependencies.crypto)
     const fsUcan = await Ucan.build({
       dependencies: dependencies,
@@ -92,7 +92,7 @@ export async function session(
   eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem>; session: Events.Emitter<Events.Session<Session>> }
 ): Promise<Maybe<Session>> {
   if (authedUsername) {
-    // Self-authorize a filesystem UCAN if needed
+    // Self-authorize a file system UCAN if needed
     const hasSelfAuthorisedFsUcan = components.reference.repositories.ucans.find(
       ucan => {
         // 🛑 If the UCAN expires within a week
@@ -123,7 +123,7 @@ export async function session(
       await components.reference.repositories.ucans.add(fsUcan)
     }
 
-    // Load filesystem
+    // Load file system
     const fs = config.fileSystem?.loadImmediately === false ?
       undefined :
       await loadFileSystem({

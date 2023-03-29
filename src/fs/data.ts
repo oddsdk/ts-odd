@@ -1,15 +1,58 @@
-import * as Crypto from "../components/crypto/implementation.js"
-
-import * as DID from "../did/index.js"
-import * as FileSystem from "../fs/types.js"
 import * as Path from "../path/index.js"
-import * as Sharing from "./share.js"
+import { AnySupportedDataType, DataType } from "./types.js"
+import { FileSystem } from "./class.js"
+
+
+/**
+ * Convert Uint8Array to `Data`.
+ */
+export function dataFromBytes(dataType: "bytes", bytes: Uint8Array): Uint8Array
+export function dataFromBytes<K extends string | number | symbol, V>(dataType: "json", bytes: Uint8Array): Record<K, V>
+export function dataFromBytes(dataType: "utf8", bytes: Uint8Array): string
+export function dataFromBytes<V>(dataType: DataType, bytes: Uint8Array): AnySupportedDataType<V>
+export function dataFromBytes<V>(dataType: DataType, bytes: Uint8Array): AnySupportedDataType<V> {
+  switch (dataType) {
+    case "bytes":
+      return bytes
+
+    case "json":
+      return JSON.parse(
+        new TextDecoder().decode(bytes)
+      )
+
+    case "utf8":
+      return new TextDecoder().decode(bytes)
+  }
+}
+
+
+/**
+ * Convert `Data` to Uint8Array.
+ */
+export function dataToBytes(dataType: "bytes", data: Uint8Array): Uint8Array
+export function dataToBytes<K extends string | number | symbol, V>(dataType: "json", data: Record<K, V>): Uint8Array
+export function dataToBytes(dataType: "utf8", data: string): Uint8Array
+export function dataToBytes<V>(dataType: DataType, data: AnySupportedDataType<V>): Uint8Array
+export function dataToBytes(dataType: DataType, data: any): Uint8Array {
+  switch (dataType) {
+    case "bytes":
+      return data
+
+    case "json":
+      return new TextEncoder().encode(
+        JSON.stringify(data)
+      )
+
+    case "utf8":
+      return new TextEncoder().encode(data)
+  }
+}
 
 
 /**
  * Adds some sample to the file system.
  */
-export async function addSampleData(fs: FileSystem.API): Promise<void> {
+export async function addSampleData(fs: FileSystem): Promise<void> {
   await fs.mkdir(Path.directory("private", "Apps"))
   await fs.mkdir(Path.directory("private", "Audio"))
   await fs.mkdir(Path.directory("private", "Documents"))
@@ -19,37 +62,7 @@ export async function addSampleData(fs: FileSystem.API): Promise<void> {
   // Files
   await fs.write(
     Path.file("private", "Welcome.txt"),
-    new TextEncoder().encode("Welcome to your personal transportable encrypted file system 👋")
-  )
-}
-
-/**
- * Stores the public part of the exchange key in the DID format,
- * in the `/public/.well-known/exchange/DID_GOES_HERE/` directory.
- */
-export async function addPublicExchangeKey(
-  crypto: Crypto.Implementation,
-  fs: FileSystem.API
-): Promise<void> {
-  const publicDid = await DID.exchange(crypto)
-
-  await fs.mkdir(
-    Path.combine(Sharing.EXCHANGE_PATH, Path.directory(publicDid))
-  )
-}
-
-
-/**
- * Checks if the public exchange key was added in the well-known location.
- * See `addPublicExchangeKey()` for the exact details.
- */
-export async function hasPublicExchangeKey(
-  crypto: Crypto.Implementation,
-  fs: FileSystem.API
-): Promise<boolean> {
-  const publicDid = await DID.exchange(crypto)
-
-  return fs.exists(
-    Path.combine(Sharing.EXCHANGE_PATH, Path.directory(publicDid))
+    "utf8",
+    "Welcome to your personal transportable encrypted file system 👋"
   )
 }

@@ -85,26 +85,26 @@ export async function request(
 
   // Compile params
   const params = [
-    ["didExchange", exchangeDid],
-    ["didWrite", writeDid],
-    ["redirectTo", redirectTo],
-    ["sdk", VERSION.toString()],
-    ["sharedRepo", sharedRepo ? "t" : "f"],
-    ["sharing", sharing ? "t" : "f"]
+    [ "didExchange", exchangeDid ],
+    [ "didWrite", writeDid ],
+    [ "redirectTo", redirectTo ],
+    [ "sdk", VERSION.toString() ],
+    [ "sharedRepo", sharedRepo ? "t" : "f" ],
+    [ "sharing", sharing ? "t" : "f" ]
 
   ].concat(
-    app ? [["appFolder", `${app.creator}/${app.name}`]] : [],
-    fs?.private ? fs.private.map(p => ["privatePath", Path.toPosix(p, { absolute: true })]) : [],
-    fs?.public ? fs.public.map(p => ["publicPath", Path.toPosix(p, { absolute: true })]) : [],
-    raw ? [["raw", Base64.urlEncode(JSON.stringify(raw))]] : [],
+    app ? [ [ "appFolder", `${app.creator}/${app.name}` ] ] : [],
+    fs?.private ? fs.private.map(p => [ "privatePath", Path.toPosix(p, { absolute: true }) ]) : [],
+    fs?.public ? fs.public.map(p => [ "publicPath", Path.toPosix(p, { absolute: true }) ]) : [],
+    raw ? [ [ "raw", Base64.urlEncode(JSON.stringify(raw)) ] ] : [],
     options.extraParams ? Object.entries(options.extraParams) : []
 
   ).concat((() => {
     const apps = platform?.apps
 
     switch (typeof apps) {
-      case "string": return [["app", apps]]
-      case "object": return apps.map(a => ["app", a])
+      case "string": return [ [ "app", apps ] ]
+      case "object": return apps.map(a => [ "app", a ])
       default: return []
     }
 
@@ -113,7 +113,7 @@ export async function request(
   // And, go!
   window.location.href = endpoints.lobby + "?" +
     params
-      .map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v))
+      .map(([ k, v ]) => encodeURIComponent(k) + "=" + encodeURIComponent(v))
       .join("&")
 }
 
@@ -226,7 +226,7 @@ async function translateClassifiedInfo(
   // This easy way of detection works because the decrypted session key is encoded in base 64.
   // That means it'll only ever use the first byte to encode it, and if it were UTF-16 it would
   // split up the two bytes. Hence we check for the second byte here.
-  const isUtf16 = rawSessionKey[1] === 0
+  const isUtf16 = rawSessionKey[ 1 ] === 0
 
   const sessionKey = isUtf16
     ? Uint8arrays.fromString(
@@ -253,7 +253,7 @@ async function translateClassifiedInfo(
     isLobbySecrets(secrets)
       ? Object
         .entries(secrets.fs)
-        .map(([posixPath, { bareNameFilter, key }]) => {
+        .map(([ posixPath, { bareNameFilter, key } ]) => {
           return {
             bareNameFilter: bareNameFilter,
             path: Path.fromPosix(posixPath),

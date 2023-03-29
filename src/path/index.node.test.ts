@@ -4,7 +4,7 @@ import * as Path from "./index.js"
 import { DirectoryPath, FilePath, RootBranch } from "./index.js"
 
 
-describe("the path helpers", () => {
+describe("Path functions", () => {
 
 
 
@@ -46,6 +46,37 @@ describe("the path helpers", () => {
     // Type testing
     const a: Path.File<Path.PartitionedNonEmpty<Path.Private>> = Path.file("private", "a")
     const b: Path.File<Path.Segments> = Path.file("private", "a", "b")
+  })
+
+
+  it("creates directory paths with fromKind", () => {
+    fc.assert(
+      fc.property(fc.array(fc.hexaString()), data => {
+        expect(Path.fromKind(Path.Kind.Directory, ...data)).toEqual({
+          directory: data
+        })
+      })
+    )
+
+    // Type testing
+    const a: Path.Directory<Path.Partitioned<Path.Private>> = Path.fromKind(Path.Kind.Directory, "private")
+    const b: Path.Directory<Path.PartitionedNonEmpty<Path.Public>> = Path.fromKind(Path.Kind.Directory, "public", "a")
+    const c: Path.Directory<Path.Segments> = Path.fromKind(Path.Kind.Directory, "private", "a", "b")
+  })
+
+
+  it("creates file paths with fromKind", () => {
+    fc.assert(
+      fc.property(fc.array(fc.hexaString()), data => {
+        expect(Path.fromKind(Path.Kind.File, ...data)).toEqual({
+          file: data
+        })
+      })
+    )
+
+    // Type testing
+    const a: Path.File<Path.PartitionedNonEmpty<Path.Private>> = Path.fromKind(Path.Kind.File, "private", "a")
+    const b: Path.File<Path.Segments> = Path.fromKind(Path.Kind.File, "private", "a", "b")
   })
 
 
@@ -431,6 +462,35 @@ describe("the path helpers", () => {
     ).toEqual(
       Path.directory("bar")
     )
+  })
+
+
+  it("supports replaceTerminus", () => {
+    expect(
+      Path.replaceTerminus(
+        Path.file("private", "a", "b"),
+        "c"
+      )
+    ).toEqual(
+      Path.file("private", "a", "c")
+    )
+
+    // Type testing
+    const a: DirectoryPath<Path.PartitionedNonEmpty<Path.Partition>> = Path.replaceTerminus({
+      directory: [ "private", "a" ]
+    }, "b")
+
+    const b: FilePath<Path.PartitionedNonEmpty<Path.Partition>> = Path.replaceTerminus({
+      file: [ "private", "a" ]
+    }, "b")
+
+    const c: DirectoryPath<Path.SegmentsNonEmpty> = Path.replaceTerminus({
+      directory: [ "a" ]
+    }, "b")
+
+    const d: FilePath<Path.SegmentsNonEmpty> = Path.replaceTerminus({
+      file: [ "a" ]
+    }, "b")
   })
 
 
