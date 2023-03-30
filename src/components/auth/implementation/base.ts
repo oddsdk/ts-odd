@@ -121,9 +121,6 @@ export async function session(
       username: authedUsername
     })
 
-    // Emit session create event
-    eventEmitters.session.emit("session:create", { session })
-
     return session
 
   } else {

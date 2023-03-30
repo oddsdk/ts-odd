@@ -40,6 +40,8 @@ export class Session {
     this.fs = props.fs
     this.type = props.type
     this.username = props.username
+
+    this.#eventEmitter.emit("session:create", { session: this })
   }
 
 
