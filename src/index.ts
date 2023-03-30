@@ -651,8 +651,7 @@ export async function assemble(config: Configuration, components: Components): P
         namespace: config.namespace,
         session,
         capabilities: config.permissions,
-        shorthands,
-        lookupDataRoot: components.reference.dataRoot.lookup,
+        dependencies: components,
         eventEmitters: {
           fileSystem: fsEvents,
           session: sessionEvents

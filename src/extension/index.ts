@@ -1,24 +1,28 @@
 import type { AppInfo } from "../appInfo.js"
 import type { CID } from "../common/cid.js"
+import type { Crypto, Reference } from "../components.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
 import type { Maybe } from "../common/types.js"
 import type { Permissions } from "../permissions.js"
 import type { Session } from "../session.js"
-import type { ShortHands } from "../index.js"
 
+import * as DID from "../did/index.js"
 import * as Events from "../events.js"
 import { VERSION } from "../index.js"
 
 
 // CREATE
 
+export type Dependencies = {
+  crypto: Crypto.Implementation
+  reference: Reference.Implementation
+}
 
 type Config = {
   namespace: AppInfo | string
   session: Maybe<Session>
   capabilities?: Permissions
-  shorthands: ShortHands
-  lookupDataRoot: (username: string) => Promise<CID | null>
+  dependencies: Dependencies
   eventEmitters: {
     fileSystem: Events.Emitter<Events.FileSystem>
     session: Events.Emitter<Events.Session<Session>>
@@ -206,17 +210,17 @@ type State = {
 }
 
 async function getState(config: Config): Promise<State> {
-  const { capabilities, lookupDataRoot, namespace, session, shorthands } = config
+  const { capabilities, dependencies, namespace, session } = config
 
-  const agentDID = await shorthands.agentDID()
+  const agentDID = await DID.agent(dependencies.crypto)
   let accountDID = null
   let username = null
   let dataRootCID = null
 
   if (session && session.username) {
     username = session.username
-    accountDID = await shorthands.accountDID(username)
-    dataRootCID = await lookupDataRoot(username)
+    accountDID = await dependencies.reference.didRoot.lookup(username)
+    dataRootCID = await dependencies.reference.dataRoot.lookup(username)
   }
 
   return {
