@@ -192,7 +192,7 @@ type State = {
     namespace: AppInfo | string
     capabilities?: Permissions
   }
-  filesystem: {
+  fileSystem: {
     dataRootCID: string | null
   }
   user: {
@@ -224,7 +224,7 @@ async function getState(config: Config): Promise<State> {
       namespace,
       ...(capabilities ? { capabilities } : {})
     },
-    filesystem: {
+    fileSystem: {
       dataRootCID: dataRootCID?.toString() ?? null
     },
     user: {
