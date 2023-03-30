@@ -102,7 +102,7 @@ function listen(connection: Connection, config: Config): Listeners {
 
     globalThis.postMessage({
       id: connection.extensionId,
-      type: "filesystem",
+      type: "fileSystem",
       timestamp: Date.now(),
       state,
       detail: {
@@ -119,7 +119,7 @@ function listen(connection: Connection, config: Config): Listeners {
 
     globalThis.postMessage({
       id: connection.extensionId,
-      type: "filesystem",
+      type: "fileSystem",
       timestamp: Date.now(),
       state,
       detail: {
