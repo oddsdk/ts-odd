@@ -122,7 +122,7 @@ export type AuthenticationStrategy = {
 }
 
 
-export type Program = ShortHands &  Events.ListenTo<Events.FileSystem & Events.Session<Session>> & {
+export type Program = ShortHands & Events.ListenTo<Events.All<Session>> & {
   /**
    * Authentication strategy, use this interface to register an account and link devices.
    */
@@ -476,9 +476,10 @@ export async function assemble(config: Configuration, components: Components): P
   // Backwards compatibility (data)
   await ensureBackwardsCompatibility(components, config)
 
-  // Event emitter
+  // Event emitters
   const fsEvents = Events.createEmitter<Events.FileSystem>()
   const sessionEvents = Events.createEmitter<Events.Session<Session>>()
+  const allEvents = Events.merge(fsEvents, sessionEvents)
 
   // Authenticated user
   const sessionInfo = await SessionMod.restore(components.storage)
@@ -620,7 +621,7 @@ export async function assemble(config: Configuration, components: Components): P
   // Create `Program`
   const program = {
     ...shorthands,
-    ...{ ...Events.listenTo(fsEvents), ...Events.listenTo(sessionEvents)},
+    ...Events.listenTo(allEvents),
 
     configuration: { ...config },
     auth,

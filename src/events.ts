@@ -40,6 +40,9 @@ export type Session<S> = {
 }
 
 
+export type All<S> = FileSystem & Session<S>
+
+
 export function createEmitter<EventMap>(): EventEmitter<EventMap> {
   return new EventEmitter()
 }
