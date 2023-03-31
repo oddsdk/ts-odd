@@ -53,3 +53,22 @@ export function listenTo<EventMap>(emitter: EventEmitter<EventMap>): ListenTo<Ev
     off: emitter.off.bind(emitter),
   }
 }
+
+
+export function merge<A, B>(a: EventEmitter<A>, b: EventEmitter<B>): EventEmitter<A & B>  {
+  const merged = createEmitter<A & B>()
+  const aEmit = a.emit
+  const bEmit = b.emit
+
+  a.emit = <K extends keyof A>(eventName: K, event: (A & B)[ K ]) => {
+    aEmit.call(a, eventName, event)
+    merged.emit(eventName, event)
+  }
+
+  b.emit = <K extends keyof B>(eventName: K, event: (A & B)[ K ]) => {
+    bEmit.call(b, eventName, event)
+    merged.emit(eventName, event)
+  }
+
+  return merged
+}
