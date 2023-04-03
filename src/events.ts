@@ -13,13 +13,13 @@ export { EventEmitter, EventEmitter as Emitter }
  * alternatively you can use `addListener` and `removeListener`.
  *
  * ```ts
- * program.fileSystem.on("local-change", ({ path, root }) => {
+ * program.on("fileSystem:local-change", ({ path, root }) => {
  *   console.log("The file system has changed locally 🔔")
  *   console.log("Changed path:", path)
  *   console.log("New data root CID:", root)
  * })
  *
- * program.fileSystem.off("publish")
+ * program.off("fileSystem:publish")
  * ```
  */
 export type ListenTo<EventMap> = Pick<
@@ -29,9 +29,18 @@ export type ListenTo<EventMap> = Pick<
 
 
 export type FileSystem = {
-  "local-change": { root: CID; path: DistinctivePath<Partitioned<Partition>> }
-  "publish": { root: CID }
+  "fileSystem:local-change": { root: CID; path: DistinctivePath<Partitioned<Partition>> }
+  "fileSystem:publish": { root: CID }
 }
+
+
+export type Session<S> = {
+  "session:create": { session: S }
+  "session:destroy": { username: string }
+}
+
+
+export type All<S> = FileSystem & Session<S>
 
 
 export function createEmitter<EventMap>(): EventEmitter<EventMap> {
@@ -46,4 +55,23 @@ export function listenTo<EventMap>(emitter: EventEmitter<EventMap>): ListenTo<Ev
     on: emitter.on.bind(emitter),
     off: emitter.off.bind(emitter),
   }
+}
+
+
+export function merge<A, B>(a: EventEmitter<A>, b: EventEmitter<B>): EventEmitter<A & B>  {
+  const merged = createEmitter<A & B>()
+  const aEmit = a.emit
+  const bEmit = b.emit
+
+  a.emit = <K extends keyof A>(eventName: K, event: (A & B)[ K ]) => {
+    aEmit.call(a, eventName, event)
+    merged.emit(eventName, event)
+  }
+
+  b.emit = <K extends keyof B>(eventName: K, event: (A & B)[ K ]) => {
+    bEmit.call(b, eventName, event)
+    merged.emit(eventName, event)
+  }
+
+  return merged
 }

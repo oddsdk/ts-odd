@@ -20,6 +20,13 @@ export type Configuration = {
    * Debugging settings.
    */
   debugging?: {
+     /**
+     * Should I emit window post messages with session and filesystem information?
+     *
+     * @default true
+     */
+    emitWindowPostMessages?: boolean
+
     /**
      * Should I add programs to the global context while in debugging mode?
      *

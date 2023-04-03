@@ -89,7 +89,7 @@ export async function session(
   components: Components,
   authedUsername: Maybe<string>,
   config: Configuration,
-  eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem> }
+  eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem>; session: Events.Emitter<Events.Session<Session>> }
 ): Promise<Maybe<Session>> {
   if (authedUsername) {
     // Self-authorize a filesystem UCAN if needed
@@ -140,14 +140,18 @@ export async function session(
         username: authedUsername,
       })
 
-    // Fin
-    return new Session({
+
+    const session = new Session({
       crypto: components.crypto,
       fs: fs,
+      eventEmitter: eventEmitters.session,
       storage: components.storage,
       type: Base.TYPE,
       username: authedUsername
     })
+
+    // Fin
+    return session
   }
 
   return null

@@ -1,5 +1,7 @@
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Storage from "./components/storage/implementation.js"
+
+import * as Events from "./events.js"
 import * as TypeChecks from "./common/type-checks.js"
 
 import { Maybe } from "./common/types.js"
@@ -14,6 +16,8 @@ export class Session {
   #crypto: Crypto.Implementation
   #storage: Storage.Implementation
 
+  #eventEmitter: Events.Emitter<Events.Session<Session>>
+
   fs?: FileSystem
   type: string
   username: string
@@ -22,6 +26,8 @@ export class Session {
     crypto: Crypto.Implementation
     storage: Storage.Implementation
 
+    eventEmitter: Events.Emitter<Events.Session<Session>>
+
     fs?: FileSystem
     type: string
     username: string
@@ -29,13 +35,19 @@ export class Session {
     this.#crypto = props.crypto
     this.#storage = props.storage
 
+    this.#eventEmitter = props.eventEmitter
+
     this.fs = props.fs
     this.type = props.type
     this.username = props.username
+
+    this.#eventEmitter.emit("session:create", { session: this })
   }
 
 
   async destroy() {
+    this.#eventEmitter.emit("session:destroy", { username: this.username })
+
     await this.#storage.removeItem(this.#storage.KEYS.ACCOUNT_UCAN)
     await this.#storage.removeItem(this.#storage.KEYS.CID_LOG)
     await this.#storage.removeItem(this.#storage.KEYS.SESSION)

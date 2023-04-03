@@ -10,7 +10,12 @@ export type Implementation<C> = {
   type: string
 
   // `Session` producer
-  session: (components: C, authenticatedUsername: Maybe<string>, config: Configuration, eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem> }) => Promise<Maybe<Session>>
+  session: (
+    components: C,
+    authenticatedUsername: Maybe<string>,
+    config: Configuration,
+    eventEmitters: { fileSystem: Events.Emitter<Events.FileSystem>; session: Events.Emitter<Events.Session<Session>> }
+  ) => Promise<Maybe<Session>>
 
   // Account creation
   isUsernameAvailable: (username: string) => Promise<boolean>

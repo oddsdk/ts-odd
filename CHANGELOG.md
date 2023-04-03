@@ -1,5 +1,11 @@
 # Changelog
 
+### V0.37.0
+
+- Adds browser extension support
+- Moves events onto top-level program and renames them. For example, the `local-change` is now `fileSystem:local-change`.
+- Adds session create and destroy events
+
 ### V0.36.3
 
 Now parses DAG-JSON formatted CIDs.

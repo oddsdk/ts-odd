@@ -33,6 +33,7 @@ import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as DID from "./did/local.js"
 import * as Events from "./events.js"
+import * as Extension from "./extension/index.js"
 import * as FileSystemData from "./fs/data.js"
 import * as IpfsNode from "./components/depot/implementation/ipfs/node.js"
 import * as Manners from "./components/manners/implementation.js"
@@ -121,7 +122,7 @@ export type AuthenticationStrategy = {
 }
 
 
-export type Program = ShortHands & {
+export type Program = ShortHands & Events.ListenTo<Events.All<Session>> & {
   /**
    * Authentication strategy, use this interface to register an account and link devices.
    */
@@ -160,7 +161,7 @@ export type Program = ShortHands & {
   /**
    * Various file system methods.
    */
-  fileSystem: FileSystemShortHands & Events.ListenTo<Events.FileSystem>
+  fileSystem: FileSystemShortHands
 
   /**
    * Existing session, if there is one.
@@ -475,8 +476,10 @@ export async function assemble(config: Configuration, components: Components): P
   // Backwards compatibility (data)
   await ensureBackwardsCompatibility(components, config)
 
-  // Event emitter
+  // Event emitters
   const fsEvents = Events.createEmitter<Events.FileSystem>()
+  const sessionEvents = Events.createEmitter<Events.Session<Session>>()
+  const allEvents = Events.merge(fsEvents, sessionEvents)
 
   // Authenticated user
   const sessionInfo = await SessionMod.restore(components.storage)
@@ -512,7 +515,7 @@ export async function assemble(config: Configuration, components: Components): P
           components,
           newSessionInfo.username,
           config,
-          { fileSystem: fsEvents }
+          { fileSystem: fsEvents, session: sessionEvents }
         )
       }
     }
@@ -580,6 +583,7 @@ export async function assemble(config: Configuration, components: Components): P
         crypto: components.crypto,
         storage: components.storage,
         type: CAPABILITIES_SESSION_TYPE,
+        eventEmitter: sessionEvents
       })
     }
   }
@@ -606,8 +610,6 @@ export async function assemble(config: Configuration, components: Components): P
 
     // File system
     fileSystem: {
-      ...Events.listenTo(fsEvents),
-
       addPublicExchangeKey: (fs: FileSystem) => FileSystemData.addPublicExchangeKey(components.crypto, fs),
       addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
       hasPublicExchangeKey: (fs: FileSystem) => FileSystemData.hasPublicExchangeKey(components.crypto, fs),
@@ -619,6 +621,7 @@ export async function assemble(config: Configuration, components: Components): P
   // Create `Program`
   const program = {
     ...shorthands,
+    ...Events.listenTo(allEvents),
 
     configuration: { ...config },
     auth,
@@ -635,9 +638,37 @@ export async function assemble(config: Configuration, components: Components): P
 
     if (inject) {
       const container = globalThis as any
-      container.__webnative = container.__webnative || {}
-      container.__webnative.programs = container.__webnative.programs || {}
-      container.__webnative.programs[ namespace(config) ] = program
+      container.__odd = container.__odd || {}
+      container.__odd.programs = container.__odd.programs || {}
+      container.__odd.programs[ namespace(config) ] = program
+    }
+
+    const emitMessages = config.debugging?.emitWindowPostMessages === undefined
+      ? true
+      : config.debugging?.emitWindowPostMessages
+
+    if (emitMessages) {
+      const { connect, disconnect } = await Extension.create({
+        namespace: config.namespace,
+        session,
+        capabilities: config.permissions,
+        dependencies: components,
+        eventEmitters: {
+          fileSystem: fsEvents,
+          session: sessionEvents
+        }
+      })
+
+      const container = globalThis as any
+      container.__odd = container.__odd || {}
+      container.__odd.extension = container.__odd.extension || {}
+      container.__odd.extension.connect = connect
+      container.__odd.extension.disconnect = disconnect
+
+      // Notify extension that ODD is ready
+      globalThis.postMessage({
+        id: "odd-devtools-ready-message",
+      })
     }
   }
 
