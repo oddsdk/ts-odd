@@ -30,4 +30,4 @@ jobs:
         with:
           machine_key: ${{ secrets.FISSION_PRODUCTION_KEY }}
           build_dir: ./docs
-          app_url: webnative.fission.app
+          app_url: odd.fission.app

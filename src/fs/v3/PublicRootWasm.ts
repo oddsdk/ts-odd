@@ -20,7 +20,7 @@ let initialized = false
 
 async function loadWasm({ manners }: Dependencies) {
   // MUST be prevented from initializing twice:
-  // https://github.com/fission-codes/webnative/issues/429
+  // https://github.com/oddsdk/ts-odd/issues/429
   // https://github.com/rustwasm/wasm-bindgen/issues/3307
   if (initialized) return
   initialized = true

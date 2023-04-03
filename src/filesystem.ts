@@ -209,7 +209,7 @@ export async function checkFileSystemVersion(
 
   const errorVersionBigger = async () => {
     await (config.userMessages || DEFAULT_USER_MESSAGES).versionMismatch.newer(versionStr)
-    return new Error(`Incompatible filesystem version. Version: ${versionStr} Supported versions: ${Versions.supported.map(v => Versions.toString(v)).join(", ")}. Please upgrade this app's webnative version.`)
+    return new Error(`Incompatible filesystem version. Version: ${versionStr} Supported versions: ${Versions.supported.map(v => Versions.toString(v)).join(", ")}. Please upgrade this app's ODD SDK version.`)
   }
 
   const errorVersionSmaller = async () => {
