@@ -1,19 +1,19 @@
-# Webnative SDK
+# ODD SDK
 
-[![NPM](https://img.shields.io/npm/v/webnative)](https://www.npmjs.com/package/webnative)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/fission-suite/blob/master/LICENSE)
+[![NPM](https://img.shields.io/npm/v/@oddjs/odd)](https://www.npmjs.com/package/@oddjs/odd)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/oddsdk/ts-odd/blob/main/LICENSE)
 [![Built by FISSION](https://img.shields.io/badge/⌘-Built_by_FISSION-purple.svg)](https://fission.codes)
 [![Discord](https://img.shields.io/discord/478735028319158273.svg)](https://discord.gg/zAQBDEq)
 [![Discourse](https://img.shields.io/discourse/https/talk.fission.codes/topics)](https://talk.fission.codes)
 
-The Webnative SDK empowers developers to build fully distributed web applications without needing a complex back-end. The SDK provides:
+The ODD SDK empowers developers to build fully distributed web applications without needing a complex back-end. The SDK provides:
 
-- **User accounts** via the browser's [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) or by using a blockchain wallet as a [webnative plugin](https://github.com/fission-codes/webnative-walletauth).
+- **User accounts** via the browser's [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) or by using a blockchain wallet as a [ODD plugin](https://github.com/oddsdk/odd-walletauth).
 - **Authorization** using [UCAN](https://ucan.xyz/).
-- **Encrypted file storage** via the [Webnative File System](https://guide.fission.codes/developers/webnative/file-system-wnfs) backed by [IPLD](https://ipld.io/).
+- **Encrypted file storage** via the [ODD File System](https://docs.odd.dev/developers/odd/file-system-wnfs) backed by [IPLD](https://ipld.io/).
 - **Key management** via websockets and a two-factor auth-like flow.
 
-Webnative applications work offline and store data encrypted for the user by leveraging the power of the web platform. You can read more about Webnative in Fission's [Webnative Guide](https://guide.fission.codes/developers/webnative). There's also an API reference which can be found at [webnative.fission.app](https://webnative.fission.app)
+ODD applications work offline and store data encrypted for the user by leveraging the power of the web platform. You can read more about the ODD SDK in Fission's [ODD SDK Guide](https://docs.odd.dev). There's also an API reference which can be found at [odd.fission.app](https://odd.fission.app)
 
 
 
@@ -21,18 +21,18 @@ Webnative applications work offline and store data encrypted for the user by lev
 
 ```ts
 // ESM
-import * as wn from "webnative"
+import * as odd from "@oddjs/odd"
 
 // Browser/UMD build
-const wn = globalThis.webnative
+const odd = globalThis.oddjs
 ```
 
 ## Creating a Program
 
-A Webnative program is an assembly of components that make up a distributed web application. Several of the components can be customized. _Let's stick with the default components for now, which means we'll be using the Web Crypto API._
+An ODD program is an assembly of components that make up a distributed web application. Several of the components can be customized. _Let's stick with the default components for now, which means we'll be using the Web Crypto API._
 
 ```ts
-const program = await wn.program({
+const program = await odd.program({
   // Can also be a string, used as an identifier for caches.
   // If you're developing multiple apps on the same localhost port,
   // make sure these differ.
@@ -40,17 +40,17 @@ const program = await wn.program({
 
 }).catch(error => {
   switch (error) {
-    case webnative.ProgramError.InsecureContext:
-      // Webnative requires HTTPS
+    case odd.ProgramError.InsecureContext:
+      // ODD requires HTTPS
       break;
-    case webnative.ProgramError.UnsupportedBrowser:
+    case odd.ProgramError.UnsupportedBrowser:
       break;
   }
 
 })
 ```
 
-`wn.program` returns a `Program` object, which can create a new user session or reuse an existing session. There are two ways to create a user session, either by using an authentication strategy or by requesting access from another app through the "capabilities" system. Let's start with the default authentication strategy.
+`odd.program` returns a `Program` object, which can create a new user session or reuse an existing session. There are two ways to create a user session, either by using an authentication strategy or by requesting access from another app through the "capabilities" system. Let's start with the default authentication strategy.
 
 ```ts
 let session
@@ -98,7 +98,7 @@ if (program.session) {
 }
 ```
 
-Alternatively you can use the "capabilities" system when you want partial access to a file system. At the moment of writing, capabilities are only supported through the "Fission auth lobby", which is a Webnative app that uses the auth strategy shown above.
+Alternatively you can use the "capabilities" system when you want partial access to a file system. At the moment of writing, capabilities are only supported through the "Fission auth lobby", which is an ODD app that uses the auth strategy shown above.
 
 This Fission auth lobby flow works as follows:
 1. You get redirected to the Fission lobby from your app.
@@ -118,7 +118,7 @@ const permissions = {
 }
 
 // We need to pass this object to our program
-const program = await webnative.program({
+const program = await odd.program({
   namespace: { creator: "Nullsoft", name: "Winamp" },
   permissions
 })
@@ -139,26 +139,26 @@ const fs = session.fs
 
 __Notes:__
 
-- You can use alternative authentication strategies, such as [webnative-walletauth](https://github.com/fission-codes/webnative-walletauth).
+- You can use alternative authentication strategies, such as [odd-walletauth](https://github.com/oddsdk/odd-walletauth).
 - You can remove all traces of the user using `await session.destroy()`
 - You can load the file system separately if you're using a web worker. This is done using the combination of `configuration.fileSystem.loadImmediately = false` and `program.fileSystem.load()`
-- You can recover a file system if you've downloaded a Recovery Kit by calling `program.fileSystem.recover({ newUsername, oldUsername, readKey })`. The `oldUsername` and `readKey` can be parsed from the uploaded Recovery Kit and the `newUsername` can be generated before calling the function. Please refer to [this example](https://github.com/webnative-examples/webnative-app-template/blob/5498e7062a4578028b8b55d2ac4c611bd5daab85/src/components/auth/recover/HasRecoveryKit.svelte#L49) from Fission's Webnative App Template. Additionally, if you would like to see how to generate a Recovery Kit, you can reference [this example](https://github.com/webnative-examples/webnative-app-template/blob/main/src/lib/account-settings.ts#L186)
+- You can recover a file system if you've downloaded a Recovery Kit by calling `program.fileSystem.recover({ newUsername, oldUsername, readKey })`. The `oldUsername` and `readKey` can be parsed from the uploaded Recovery Kit and the `newUsername` can be generated before calling the function. Please refer to [this example](https://github.com/oddsdk/odd-app-template/blob/5498e7062a4578028b8b55d2ac4c611bd5daab85/src/components/auth/recover/HasRecoveryKit.svelte#L49) from Fission's ODD App Template. Additionally, if you would like to see how to generate a Recovery Kit, you can reference [this example](https://github.com/oddsdk/odd-app-template/blob/main/src/lib/account-settings.ts#L186)
 
 
 ## Working with the file system
 
-The Web Native File System (WNFS) is a file system built on top of [IPLD](https://ipld.io/). It supports operations similar to your macOS, Windows, or Linux desktop file system. It consists of a public and private branch: The public branch is "live" and publicly accessible on the Internet. The private branch is encrypted so that only the owner can see the contents. Read more about it [here](https://github.com/wnfs-wg).
+The Webnative File System (WNFS) is a file system built on top of [IPLD](https://ipld.io/). It supports operations similar to your macOS, Windows, or Linux desktop file system. It consists of a public and private branch: The public branch is "live" and publicly accessible on the Internet. The private branch is encrypted so that only the owner can see the contents. Read more about it [here](https://github.com/wnfs-wg).
 
 ```ts
-const { Branch } = wn.path
+const { Branch } = odd.path
 
 // List the user's private files
 await fs.ls(
-  wn.path.directory(Branch.Private)
+  odd.path.directory(Branch.Private)
 )
 
 // Create a sub directory and add some content
-const contentPath = wn.file(
+const contentPath = odd.file(
   Branch.Private, "Sub Directory", "hello.txt"
 )
 
@@ -176,7 +176,7 @@ const content = new TextDecoder().decode(
 )
 ```
 
-That's it, you have successfully created a Webnative app! 🚀
+That's it, you have successfully created an ODD app! 🚀
 
 
 ## POSIX Interface
@@ -196,7 +196,7 @@ WNFS exposes a familiar POSIX-style interface:
 Each file and directory has a `history` property, which you can use to get an earlier version of that item. We use the `delta` variable as the order index. Primarily because the timestamps can be slightly out of sequence, due to device inconsistencies.
 
 ```ts
-const file = await fs.get(wn.path.file("private", "Blog Posts", "article.md"))
+const file = await fs.get(odd.path.file("private", "Blog Posts", "article.md"))
 
 file.history.list()
 // { delta: -1, timestamp: 1606236743 }
@@ -218,26 +218,26 @@ file.history.prior(1606236743)
 ## Sharing Private Data
 
 
-[https://guide.fission.codes/developers/webnative/sharing-private-data](https://guide.fission.codes/developers/webnative/sharing-private-data)
+[https://docs.odd.dev/developers/odd/sharing-private-data](https://docs.odd.dev/developers/odd/sharing-private-data)
 
 
 ## Migration
 
-Some versions of Webnative require apps to migrate their codebase to address breaking changes. Please see our [migration guide](https://guide.fission.codes/developers/webnative/migration) for help migrating your apps to the latest Webnative version.
+Some versions of the ODD SDK require apps to migrate their codebase to address breaking changes. Please see our [migration guide](https://docs.odd.dev/developers/odd/migration) for help migrating your apps to the latest ODD SDK version.
 
 
 ## Debugging
 
-Debugging mode can be enable by setting `debug` to `true` in your configuration object that you pass to your `Program`. By default this will add your programs to the global context object (eg. `window`) under `globalThis.__webnative.programs` (can be disabled, see API docs).
+Debugging mode can be enable by setting `debug` to `true` in your configuration object that you pass to your `Program`. By default this will add your programs to the global context object (eg. `window`) under `globalThis.__odd.programs` (can be disabled, see API docs).
 
 ```ts
 const appInfo = { creator: "Nullsoft", name: "Winamp" }
 
-await wn.program({
+await odd.program({
   namespace: appInfo,
   debug: true
 })
 
 // Automatically exposed Program in debug mode
-const program = globalThis.__webnative[ wn.namespace(appInfo) ] // namespace: "Nullsoft/Winamp"
+const program = globalThis.__odd[ odd.namespace(appInfo) ] // namespace: "Nullsoft/Winamp"
 ```
