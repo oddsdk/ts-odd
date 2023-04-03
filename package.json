@@ -57,7 +57,7 @@
     "type": "git",
     "url": "https://github.com/oddsdk/ts-odd"
   },
-  "homepage": "https://webnative.dev",
+  "homepage": "https://odd.dev",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=16"
