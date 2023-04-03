@@ -1,5 +1,5 @@
 {
-  description = "webnative";
+  description = "oddjs";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/release-22.05";
@@ -16,7 +16,7 @@
       in
       {
         devShell = pkgs.mkShell {
-          name = "webnative";
+          name = "oddjs";
           buildInputs = with pkgs; [ nodejs-18_x ];
         };
       });
