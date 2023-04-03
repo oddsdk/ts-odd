@@ -55,7 +55,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/fission-codes/webnative"
+    "url": "https://github.com/oddsdk/ts-odd"
   },
   "homepage": "https://webnative.dev",
   "license": "Apache-2.0",
