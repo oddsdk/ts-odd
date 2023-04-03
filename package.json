@@ -1,7 +1,7 @@
 {
-  "name": "webnative",
+  "name": "@oddjs/odd",
   "version": "0.37.0",
-  "description": "Webnative SDK",
+  "description": "ODD SDK",
   "keywords": [
     "WebCrypto",
     "auth",
