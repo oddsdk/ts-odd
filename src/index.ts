@@ -388,7 +388,7 @@ export const depot = {
  */
 export const manners = {
   /**
-   * The default ODD behaviour.
+   * The default ODD SDK behaviour.
    */
   default(settings: Configuration): Manners.Implementation {
     return defaultMannersComponent(settings)
@@ -466,7 +466,7 @@ export const storage = {
  * - Restores a session if one was made before and loads the user's file system if needed.
  * - Attempts to collect capabilities if the configuration has permissions.
  * - Provides shorthands to functions so you don't have to pass in components.
- * - Ensure backwards compatibility with older ODD clients.
+ * - Ensure backwards compatibility with older ODD SDK clients.
  *
  * See the `program.fileSystem.load` function if you want to load the user's file system yourself.
  */
@@ -665,7 +665,7 @@ export async function assemble(config: Configuration, components: Components): P
       container.__odd.extension.connect = connect
       container.__odd.extension.disconnect = disconnect
 
-      // Notify extension that ODD is ready
+      // Notify extension that the ODD SDK is ready
       globalThis.postMessage({
         id: "odd-devtools-ready-message",
       })
@@ -828,7 +828,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
 
   const [ migK, migV ] = [ "migrated", VERSION ]
   const currentVersion = Semver.fromString(VERSION)
-  if (!currentVersion) throw new Error("The ODD VERSION should be a semver string")
+  if (!currentVersion) throw new Error("The ODD SDK VERSION should be a semver string")
 
   // If already migrated, stop here.
   const migrationOccurred = await components.storage

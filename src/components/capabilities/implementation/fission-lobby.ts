@@ -235,7 +235,7 @@ async function translateClassifiedInfo(
   )
 
   // The encrypted session key and read keys can be encoded in both UTF-16 and UTF-8.
-  // This is because keystore-idb uses UTF-16 by default, and that's what ODD used before.
+  // This is because keystore-idb uses UTF-16 by default, and that's what the ODD SDK used before.
   // ---
   // This easy way of detection works because the decrypted session key is encoded in base 64.
   // That means it'll only ever use the first byte to encode it, and if it were UTF-16 it would
