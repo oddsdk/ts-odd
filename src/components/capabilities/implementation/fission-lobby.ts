@@ -94,7 +94,7 @@ export async function request(
 
   const exchangeDid = await DID.exchange(dependencies.crypto)
   const writeDid = await DID.write(dependencies.crypto)
-  const sharedRepo = !!document.body.querySelector("iframe#webnative-ipfs") && typeof SharedWorker === "function"
+  const sharedRepo = false
   const redirectTo = options.returnUrl || window.location.href
 
   // Compile params
