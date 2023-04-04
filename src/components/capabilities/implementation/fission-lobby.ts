@@ -154,7 +154,7 @@ async function getClassifiedViaPostMessage(
   const didExchange = await DID.exchange(crypto)
   const iframe: HTMLIFrameElement = await new Promise(resolve => {
     const iframe = document.createElement("iframe")
-    iframe.id = "webnative-secret-exchange"
+    iframe.id = "odd-secret-exchange"
     iframe.style.width = "0"
     iframe.style.height = "0"
     iframe.style.border = "none"
@@ -202,7 +202,7 @@ async function getClassifiedViaPostMessage(
     }
 
     const message = {
-      webnative: "exchange-secrets",
+      odd: "exchange-secrets",
       didExchange
     }
 
