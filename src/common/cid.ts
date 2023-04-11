@@ -45,7 +45,7 @@ export function decodeCID(val: CID | object | string): CID {
   }
 
   // Sometimes we can encounter a DAG-JSON encoded CID
-  // https://github.com/fission-codes/webnative/issues/459
+  // https://github.com/oddsdk/ts-odd/issues/459
   // Related to the `ensureSkeletonStringCIDs` function in the `PrivateTree` class
   if (
     typeof val === "object" &&

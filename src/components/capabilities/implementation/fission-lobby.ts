@@ -94,7 +94,7 @@ export async function request(
 
   const exchangeDid = await DID.exchange(dependencies.crypto)
   const writeDid = await DID.write(dependencies.crypto)
-  const sharedRepo = !!document.body.querySelector("iframe#webnative-ipfs") && typeof SharedWorker === "function"
+  const sharedRepo = false
   const redirectTo = options.returnUrl || window.location.href
 
   // Compile params
@@ -154,7 +154,7 @@ async function getClassifiedViaPostMessage(
   const didExchange = await DID.exchange(crypto)
   const iframe: HTMLIFrameElement = await new Promise(resolve => {
     const iframe = document.createElement("iframe")
-    iframe.id = "webnative-secret-exchange"
+    iframe.id = "odd-secret-exchange"
     iframe.style.width = "0"
     iframe.style.height = "0"
     iframe.style.border = "none"
@@ -202,7 +202,7 @@ async function getClassifiedViaPostMessage(
     }
 
     const message = {
-      webnative: "exchange-secrets",
+      odd: "exchange-secrets",
       didExchange
     }
 
@@ -235,7 +235,7 @@ async function translateClassifiedInfo(
   )
 
   // The encrypted session key and read keys can be encoded in both UTF-16 and UTF-8.
-  // This is because keystore-idb uses UTF-16 by default, and that's what webnative used before.
+  // This is because keystore-idb uses UTF-16 by default, and that's what the ODD SDK used before.
   // ---
   // This easy way of detection works because the decrypted session key is encoded in base 64.
   // That means it'll only ever use the first byte to encode it, and if it were UTF-16 it would

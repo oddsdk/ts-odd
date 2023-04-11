@@ -5,7 +5,7 @@ import fs from "fs"
 import zlib from "zlib"
 
 
-const globalName = "webnative"
+const globalName = "oddjs"
 
 
 console.log("📦 Bundling & minifying...")

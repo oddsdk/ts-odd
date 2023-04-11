@@ -6,7 +6,7 @@
     "**/*.test.ts"
   ],
   "excludeExternals": true,
-  "name": "Webnative SDK",
+  "name": "ODD SDK",
   "out": "docs",
   "theme": "default"
 }

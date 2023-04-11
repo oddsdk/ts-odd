@@ -205,7 +205,7 @@ export type FileSystemShortHands = {
 
 
 /**
- * 🚀 Build a webnative program.
+ * 🚀 Build an ODD program.
  *
  * This will give you a `Program` object which has the following properties:
  * - `session`, a `Session` object if a session was created before.
@@ -215,7 +215,7 @@ export type FileSystemShortHands = {
  *
  * This object also has a few other functions, for example to load a filesystem.
  * These are called "shorthands" because they're the same functions available
- * through other places in webnative, but you don't have to pass in the components.
+ * through other places in the ODD SDK, but you don't have to pass in the components.
  *
  * See `assemble` for more information. Note that this function checks for browser support,
  * while `assemble` does not. Use the latter in case you want to bypass the indexedDB check,
@@ -304,7 +304,7 @@ export const auth = {
  */
 export const capabilities = {
   /**
-   * A secure enclave in the form of a webnative app which serves as the root authority.
+   * A secure enclave in the form of a ODD app which serves as the root authority.
    * Your app is redirected to the lobby where the user can create an account or link a device,
    * and then request permissions from the user for reading or write to specific parts of the filesystem.
    */
@@ -361,7 +361,7 @@ export const depot = {
    * This depot uses IPFS and the Fission servers.
    * The data is transferred to the Fission IPFS node,
    * where all of your encrypted and public data lives.
-   * Other webnative programs with this depot fetch the data from there.
+   * Other ODD programs with this depot fetch the data from there.
    */
   async fissionIPFS(
     settings: Configuration & {
@@ -383,12 +383,12 @@ export const depot = {
 /**
  * Predefined manners configurations.
  *
- * The manners component allows you to tweak various behaviours of a Webnative program,
+ * The manners component allows you to tweak various behaviours of an ODD program,
  * such as logging and file system hooks (eg. what to do after a new file system is created).
  */
 export const manners = {
   /**
-   * The default Webnative behaviour.
+   * The default ODD SDK behaviour.
    */
   default(settings: Configuration): Manners.Implementation {
     return defaultMannersComponent(settings)
@@ -458,15 +458,15 @@ export const storage = {
 
 
 /**
- * Build a Webnative Program based on a given set of `Components`.
- * These are various customisable components that determine how a Webnative app works.
+ * Build an ODD Program based on a given set of `Components`.
+ * These are various customisable components that determine how an ODD app works.
  * Use `program` to work with a default, or partial, set of components.
  *
  * Additionally this does a few other things:
  * - Restores a session if one was made before and loads the user's file system if needed.
  * - Attempts to collect capabilities if the configuration has permissions.
  * - Provides shorthands to functions so you don't have to pass in components.
- * - Ensure backwards compatibility with older Webnative clients.
+ * - Ensure backwards compatibility with older ODD SDK clients.
  *
  * See the `program.fileSystem.load` function if you want to load the user's file system yourself.
  */
@@ -665,7 +665,7 @@ export async function assemble(config: Configuration, components: Components): P
       container.__odd.extension.connect = connect
       container.__odd.extension.disconnect = disconnect
 
-      // Notify extension that ODD is ready
+      // Notify extension that the ODD SDK is ready
       globalThis.postMessage({
         id: "odd-devtools-ready-message",
       })
@@ -828,7 +828,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
 
   const [ migK, migV ] = [ "migrated", VERSION ]
   const currentVersion = Semver.fromString(VERSION)
-  if (!currentVersion) throw new Error("The webnative VERSION should be a semver string")
+  if (!currentVersion) throw new Error("The ODD SDK VERSION should be a semver string")
 
   // If already migrated, stop here.
   const migrationOccurred = await components.storage

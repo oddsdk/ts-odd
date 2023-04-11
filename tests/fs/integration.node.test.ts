@@ -14,7 +14,7 @@ import { isSoftLink } from "../../src/fs/types/check.js"
 describe("the filesystem", () => {
 
   it("can load filesystem fixtures", async function () {
-    const rootCID = await loadCARWithRoot("tests/fixtures/webnative-integration-test-v2-0-0.car")
+    const rootCID = await loadCARWithRoot("tests/fixtures/odd-integration-test-v2-0-0.car")
     const readKey = Uint8arrays.fromString("pJW/xgBGck9/ZXwQHNPhV3zSuqGlUpXiChxwigwvUws=", "base64pad")
     const fs = await loadFilesystem(rootCID, readKey)
 

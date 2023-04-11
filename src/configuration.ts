@@ -64,12 +64,12 @@ export type Configuration = {
   permissions?: Permissions
 
   /**
-   * Configure messages that webnative sends to users.
+   * Configure messages that the ODD SDK sends to users.
    *
-   * `versionMismatch.newer` is shown when webnative detects
-   *  that the user's filesystem is newer than what this version of webnative supports.
-   * `versionMismatch.older` is shown when webnative detects that the user's
-   *  filesystem is older than what this version of webnative supports.
+   * `versionMismatch.newer` is shown when the ODD SDK detects
+   *  that the user's filesystem is newer than what this version of the ODD SDK supports.
+   * `versionMismatch.older` is shown when the ODD SDK detects that the user's
+   *  filesystem is older than what this version of the ODD SDK supports.
    */
   userMessages?: UserMessages
 }

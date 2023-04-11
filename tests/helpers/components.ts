@@ -42,7 +42,7 @@ import { Storage as LocalForageStore } from "./localforage/in-memory-storage.js"
 
 
 export const configuration: Configuration = {
-  namespace: { name: "Webnative Tests", creator: "Fission" },
+  namespace: { name: "ODD SDK Tests", creator: "Fission" },
   debug: false,
   fileSystem: {
     loadImmediately: false

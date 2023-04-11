@@ -1,7 +1,7 @@
 {
-  "name": "webnative",
+  "name": "@oddjs/odd",
   "version": "0.37.0",
-  "description": "Webnative SDK",
+  "description": "ODD SDK",
   "keywords": [
     "WebCrypto",
     "auth",
@@ -55,9 +55,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/fission-codes/webnative"
+    "url": "https://github.com/oddsdk/ts-odd"
   },
-  "homepage": "https://webnative.dev",
+  "homepage": "https://odd.dev",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=16"

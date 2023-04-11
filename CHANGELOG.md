@@ -5,6 +5,7 @@
 - Adds browser extension support
 - Moves events onto top-level program and renames them. For example, the `local-change` is now `fileSystem:local-change`.
 - Adds session create and destroy events
+- Rename Webnative SDK to ODD SDK and update external URLs
 
 ### V0.36.3
 
