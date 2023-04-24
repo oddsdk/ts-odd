@@ -218,7 +218,7 @@ file.history.prior(1606236743)
 ## Sharing Private Data
 
 
-[https://docs.odd.dev/developers/odd/sharing-private-data](https://docs.odd.dev/developers/odd/sharing-private-data)
+[https://docs.odd.dev/sharing-private-data](https://docs.odd.dev/sharing-private-data)
 
 
 ## Migration
