@@ -15,7 +15,27 @@ The ODD SDK empowers developers to build fully distributed web applications with
 
 ODD applications work offline and store data encrypted for the user by leveraging the power of the web platform. You can read more about the ODD SDK in Fission's [ODD SDK Guide](https://docs.odd.dev). There's also an API reference which can be found at [api.odd.dev](https://api.odd.dev)
 
+# Installation
 
+The `ts-odd` package is published on yarn, pnpm and npm as `@oddjs/odd`:
+
+### npm
+
+```bash
+npm install @oddjs/odd
+```
+
+### pnpm
+
+```bash
+pnpm install @oddjs/odd
+```
+
+### yarn
+
+```bash
+yarn add @oddjs/odd
+```
 
 # Getting started
 
