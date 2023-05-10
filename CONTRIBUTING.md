@@ -39,6 +39,8 @@ Pull requests are how we make changes to the ODD SDK.
 
 Even tiny pull requests to fix typos or improve comments are welcome. Before submitting a significant PR, it is usually best to start by [opening an issue][issue] or [starting a discusssion][discussions]. Taking one of these steps increases the likelihood that your PR will be merged.
 
+All commits must be signed before a pull request will be accepted. See the GitHub [signing commits][signing] and [telling git about your signing key][telling-git] documentation. We recommend generating a new SSH key for signing if you are setting up signing for the first time.
+
 We squash and merge all PRs. Orderly, well-written commits will help us during review, but we don't require a pristine commit history.
 
 Add an entry to the CHANGELOG if your pull request adds a feature or fixes a bug.
@@ -77,4 +79,6 @@ The primary goals for a pull request are to improve the codebase and for the con
 [docs]: https://docs.odd.dev/
 [issue]: https://github.com/oddsdk/ts-odd/issues
 [sscce]: http://www.sscce.org/
+[signing]: https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits
+[telling-git]: https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key
 [template]: .github/PULL_REQUEST_TEMPLATE.md
