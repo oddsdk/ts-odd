@@ -65,7 +65,7 @@ this Code of Conduct.
 
 This Code of Conduct applies within all project and community spaces, as well as
 in any public spaces where an individual representing the community is involved.
-This covers
+This covers:
 
 - Interactions on the Github repository, including discussions, issues, pull
   requests, commits, and wikis
