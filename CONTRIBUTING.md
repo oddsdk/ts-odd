@@ -33,8 +33,6 @@ The most important information is describing the problem and how it impacts you.
 
 We very much appreciate it if you could include a [short, self-contained, correct example][sscce] that demonstrates the issue.
 
----
-
 ## Pull requests
 
 Pull requests are how we make changes to the ODD SDK.
