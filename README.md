@@ -10,7 +10,7 @@ The ODD SDK empowers developers to build fully distributed web applications with
 
 - **User accounts** via the browser's [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) or by using a blockchain wallet as a [ODD plugin](https://github.com/oddsdk/odd-walletauth).
 - **Authorization** using [UCAN](https://ucan.xyz/).
-- **Encrypted file storage** using [WNFS](https://docs.odd.dev/developers/odd/file-system-wnfs) backed by [IPLD](https://ipld.io/).
+- **Encrypted file storage** using [WNFS](https://docs.odd.dev/file-system-wnfs) backed by [IPLD](https://ipld.io/).
 - **Key management** using websockets and a two-factor auth-like flow.
 
 ODD applications work offline and store data encrypted for the user by leveraging the power of the web platform. You can read more about the ODD SDK in Fission's [ODD SDK Guide](https://docs.odd.dev). There's also an API reference which can be found at [api.odd.dev](https://api.odd.dev)
