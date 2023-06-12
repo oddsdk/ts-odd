@@ -188,7 +188,7 @@ async function getClassifiedViaPostMessage(
     }
 
     const message = {
-      webnative: "exchange-secrets",
+      odd: "exchange-secrets",
       didExchange
     }
 
