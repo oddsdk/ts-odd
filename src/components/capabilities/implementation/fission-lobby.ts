@@ -281,20 +281,23 @@ async function retry<T>(
   action: () => Promise<T>,
   options: { tries: number; timeout: number; timeoutMessage: string }
 ): Promise<T> {
-  return await Promise.race([
-    action(),
-    new Promise<T>((resolve, reject) => {
-      if (options.tries > 0) return setTimeout(
-        () => retry(action, { ...options, tries: options.tries - 1 }).then(resolve, reject),
-        options.timeout
-      )
+  return new Promise((resolve, reject) => {
+    if (options.tries > 0) {
+      const unoMas = () => {
+        retry(action, { ...options, tries: options.tries - 1 })
+      }
 
-      return setTimeout(
-        () => reject(new Error(options.timeoutMessage)),
-        options.timeout
-      )
-    })
-  ])
+      const timeoutId = setTimeout(unoMas, options.timeout)
+
+      action()
+        .then(resolve, unoMas)
+        .finally(() => clearTimeout(timeoutId))
+
+    } else {
+      reject(new Error(options.timeoutMessage))
+
+    }
+  })
 }
 
 
