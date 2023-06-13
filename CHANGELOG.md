@@ -1,11 +1,17 @@
 # Changelog
 
+### V0.37.1
+
+- Fixes an issue with the capabilities system which prevented ODD apps from receiving the capabilities.
+- Increases the default life time of a UCAN.
+
 ### V0.37.0
 
 - Adds browser extension support
 - Moves events onto top-level program and renames them. For example, the `local-change` is now `fileSystem:local-change`.
 - Adds session create and destroy events
 - Rename Webnative SDK to ODD SDK and update external URLs
+
 
 ### V0.36.3
 

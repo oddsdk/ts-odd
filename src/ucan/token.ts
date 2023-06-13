@@ -34,7 +34,7 @@ export async function build({
   dependencies,
   facts = [],
   issuer,
-  lifetimeInSeconds = 30,
+  lifetimeInSeconds = 120,
   expiration,
   potency = "APPEND",
   proof,
@@ -65,7 +65,7 @@ export async function build({
 
   // Timestamps
   let exp = expiration || (currentTimeInSeconds + lifetimeInSeconds)
-  let nbf = currentTimeInSeconds - 60
+  let nbf = currentTimeInSeconds - 120
 
   if (decodedProof) {
     const prf = decodedProof.payload
@@ -103,13 +103,13 @@ export async function build({
  */
 export function decode(ucan: string): Ucan {
   const split = ucan.split(".")
-  const header = JSON.parse(base64.urlDecode(split[ 0 ]))
-  const payload = JSON.parse(base64.urlDecode(split[ 1 ]))
+  const header = JSON.parse(base64.urlDecode(split[0]))
+  const payload = JSON.parse(base64.urlDecode(split[1]))
 
   return {
     header,
     payload,
-    signature: split[ 2 ] || null
+    signature: split[2] || null
   }
 }
 
@@ -175,7 +175,7 @@ export async function isValid(crypto: Crypto.Implementation, ucan: Ucan): Promis
     const encodedPayload = encodePayload(ucan.payload)
 
     const { publicKey, type } = didToPublicKey(crypto, ucan.payload.iss)
-    const algo = crypto.did.keyTypes[ type ]
+    const algo = crypto.did.keyTypes[type]
 
     const a = await algo.verify({
       publicKey,
@@ -244,7 +244,7 @@ export async function sign(
  */
 function extractPayload(ucan: string, level: number): { iss: string; prf: string | null } {
   try {
-    return JSON.parse(base64.urlDecode(ucan.split(".")[ 1 ]))
+    return JSON.parse(base64.urlDecode(ucan.split(".")[1]))
   } catch (_) {
     throw new Error(`Invalid UCAN (${level} level${level === 1 ? "" : "s"} deep): \`${ucan}\``)
   }

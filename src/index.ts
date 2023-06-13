@@ -313,17 +313,12 @@ export const capabilities = {
 
     // Dependencies
     crypto?: Crypto.Implementation
-    depot?: Depot.Implementation
-    storage?: Storage.Implementation
   }): Promise<CapabilitiesImpl.Implementation> {
     const { staging } = settings
-
-    const storage = settings.storage || defaultStorageComponent(settings)
     const crypto = settings.crypto || await defaultCryptoComponent(settings)
-    const depot = settings.depot || await defaultDepotComponent({ storage }, settings)
 
-    if (staging) return FissionLobbyStaging.implementation({ crypto, depot })
-    return FissionLobbyProduction.implementation({ crypto, depot })
+    if (staging) return FissionLobbyStaging.implementation({ crypto })
+    return FissionLobbyProduction.implementation({ crypto })
   }
 }
 
@@ -640,7 +635,7 @@ export async function assemble(config: Configuration, components: Components): P
       const container = globalThis as any
       container.__odd = container.__odd || {}
       container.__odd.programs = container.__odd.programs || {}
-      container.__odd.programs[ namespace(config) ] = program
+      container.__odd.programs[namespace(config)] = program
     }
 
     const emitMessages = config.debugging?.emitWindowPostMessages === undefined
@@ -705,7 +700,7 @@ export const compositions = {
 
     const r = await reference.fission(settingsWithComponents)
     const d = await depot.fissionIPFS(settingsWithComponents)
-    const c = await capabilities.fissionLobby({ ...settingsWithComponents, depot: d })
+    const c = await capabilities.fissionLobby(settingsWithComponents)
     const a = await auth.fissionWebCrypto({ ...settingsWithComponents, reference: r })
 
     return {
@@ -730,7 +725,7 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
 
   const reference = setup.reference || await defaultReferenceComponent({ crypto, manners, storage })
   const depot = setup.depot || await defaultDepotComponent({ storage }, config)
-  const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto, depot })
+  const capabilities = setup.capabilities || defaultCapabilitiesComponent({ crypto })
   const auth = setup.auth || defaultAuthComponent({ crypto, reference, storage })
 
   return {
@@ -755,8 +750,8 @@ export function defaultAuthComponent({ crypto, reference, storage }: BaseAuth.De
   })
 }
 
-export function defaultCapabilitiesComponent({ crypto, depot }: FissionLobbyBase.Dependencies): CapabilitiesImpl.Implementation {
-  return FissionLobbyProduction.implementation({ crypto, depot })
+export function defaultCapabilitiesComponent({ crypto }: FissionLobbyBase.Dependencies): CapabilitiesImpl.Implementation {
+  return FissionLobbyProduction.implementation({ crypto })
 }
 
 export function defaultCryptoComponent(config: Configuration): Promise<Crypto.Implementation> {
@@ -826,7 +821,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   // - Root read key of the filesystem: IndexedDB → localforage → readKey
   // - Authenticated username: IndexedDB → localforage → webnative.auth_username
 
-  const [ migK, migV ] = [ "migrated", VERSION ]
+  const [migK, migV] = ["migrated", VERSION]
   const currentVersion = Semver.fromString(VERSION)
   if (!currentVersion) throw new Error("The ODD SDK VERSION should be a semver string")
 
@@ -844,7 +839,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
   // Migration
   const existingDatabases = globalThis.indexedDB.databases
     ? (await globalThis.indexedDB.databases()).map(db => db.name)
-    : [ "keystore", "localforage" ]
+    : ["keystore", "localforage"]
 
   const keystoreDB = existingDatabases.includes("keystore") ? await bwOpenDatabase("keystore") : null
 
@@ -867,7 +862,7 @@ async function ensureBackwardsCompatibility(components: Components, config: Conf
     const authedUser = await bwGetValue(localforageDB, "keyvaluepairs", "webnative.auth_username")
 
     if (rootKey && isString(rootKey)) {
-      const anyUcan = accountUcan || (Array.isArray(permissionedUcans) ? permissionedUcans[ 0 ] : undefined)
+      const anyUcan = accountUcan || (Array.isArray(permissionedUcans) ? permissionedUcans[0] : undefined)
       const accountDID = anyUcan ? Ucan.rootIssuer(anyUcan) : (typeof authedUser === "string" ? await components.reference.didRoot.lookup(authedUser) : null)
       if (!accountDID) throw new Error("Failed to retrieve account DID")
 
@@ -904,7 +899,7 @@ function bwGetValue(db: IDBDatabase, storeName: string, key: string): Promise<Ma
   return new Promise((resolve, reject) => {
     if (!db.objectStoreNames.contains(storeName)) return resolve(null)
 
-    const transaction = db.transaction([ storeName ], "readonly")
+    const transaction = db.transaction([storeName], "readonly")
     const store = transaction.objectStore(storeName)
     const req = store.get(key)
 
