@@ -93,15 +93,15 @@ async function disconnect(extensionId: string, config: Config): Promise<Connecti
 
 
 type Listeners = {
-  handleLocalChange: (params: { root: CID; path: DistinctivePath<[ Partition, ...string[] ]> }) => Promise<void>
-  handlePublish: (params: { root: CID }) => Promise<void>
+  handleLocalChange: (params: { dataRoot: CID; path: DistinctivePath<[ Partition, ...string[] ]> }) => Promise<void>
+  handlePublish: (params: { dataRoot: CID }) => Promise<void>
   handleSessionCreate: (params: { session: Session }) => Promise<void>
   handleSessionDestroy: (params: { username: string }) => Promise<void>
 }
 
 function listen(connection: Connection, config: Config): Listeners {
-  async function handleLocalChange(params: { root: CID; path: DistinctivePath<[ Partition, ...string[] ]> }) {
-    const { root, path } = params
+  async function handleLocalChange(params: { dataRoot: CID; path: DistinctivePath<[ Partition, ...string[] ]> }) {
+    const { dataRoot, path } = params
     const state = await getState(config)
 
     globalThis.postMessage({
@@ -111,14 +111,14 @@ function listen(connection: Connection, config: Config): Listeners {
       state,
       detail: {
         type: "local-change",
-        root: root.toString(),
+        root: dataRoot.toString(),
         path
       }
     })
   }
 
-  async function handlePublish(params: { root: CID }) {
-    const { root } = params
+  async function handlePublish(params: { dataRoot: CID }) {
+    const { dataRoot } = params
     const state = await getState(config)
 
     globalThis.postMessage({
@@ -128,7 +128,7 @@ function listen(connection: Connection, config: Config): Listeners {
       state,
       detail: {
         type: "publish",
-        root: root.toString()
+        root: dataRoot.toString()
       }
     })
   }

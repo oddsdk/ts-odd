@@ -876,11 +876,11 @@ describe("File System Class", () => {
       setTimeout(reject, 10000)
 
       const listener = ({ dataRoot }: { dataRoot: CID }) => {
-        fsOpts.eventEmitter.off("publish", listener)
+        fsOpts.eventEmitter.off("fileSystem:publish", listener)
         resolve(dataRoot)
       }
 
-      fsOpts.eventEmitter.on("publish", listener)
+      fsOpts.eventEmitter.on("fileSystem:publish", listener)
     })
 
     const a = await fs.write(Path.file("private", "a"), "bytes", new Uint8Array())
@@ -903,7 +903,7 @@ describe("File System Class", () => {
   it("doesn't publish when asked not to do so", async () => {
     let published = false
 
-    fsOpts.eventEmitter.on("publish", () => {
+    fsOpts.eventEmitter.on("fileSystem:publish", () => {
       published = true
     })
 
@@ -928,7 +928,7 @@ describe("File System Class", () => {
     const eventPromise: Promise<CID> = new Promise((resolve, reject) => {
       setTimeout(reject, 10000)
 
-      fsOpts.eventEmitter.on("local-change", ({ dataRoot }) => {
+      fsOpts.eventEmitter.on("fileSystem:local-change", ({ dataRoot }) => {
         resolve(dataRoot)
       })
     })
