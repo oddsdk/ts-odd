@@ -2,9 +2,9 @@
 
 ## Modules
 
-The root level exports various objects, these are the "modules" which live in their own directories. For example, `import { paths } from "webnative"`, this paths object is exported from `src/paths/index.ts`
+The root level exports various objects, these are the "modules" which live in their own directories. For example, `import { paths } from "@oddjs/odd"`, this paths object is exported from `src/paths/index.ts`
 
-You also have modules that contain functions that will be mixed in with the other top-level functions. For example, `webnative.loadFileSystem()` which lives in `src/fileSystem.ts`
+You also have modules that contain functions that will be mixed in with the other top-level functions. For example, `odd.appId()` which lives in `src/permissions.ts`
 
 
 ## Emojis

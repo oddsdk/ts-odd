@@ -1,16 +1,13 @@
 import { importBytes as importUnixFsBytes } from "ipfs-unixfs-importer"
 import { BlockStore } from "wnfs"
 
-import * as Queries from "./queries.js"
 import * as Path from "../path/index.js"
 
-import { Dependencies, DirectoryItemWithKind } from "./types.js"
+import { Dependencies } from "./types.js"
 import { MountedPrivateNodes, PrivateNodeQueryResult, WnfsPrivateResult, WnfsPublicResult } from "./types/internal.js"
-import { PartitionedNonEmpty, Partitioned } from "../path/index.js"
 import { RootTree } from "./rootTree.js"
 import { Rng } from "./rng.js"
-import { pathSegmentsWithoutPartition, searchLatest } from "./common.js"
-import { findPrivateNode } from "./mounts.js"
+import { searchLatest } from "./common.js"
 
 
 // PUBLIC
