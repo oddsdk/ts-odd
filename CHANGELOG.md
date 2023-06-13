@@ -1,6 +1,6 @@
 # Changelog
 
-### V0.37.1
+### V0.37.2
 
 - Fixes an issue with the capabilities system which prevented ODD apps from receiving the capabilities.
 - Increases the default life time of a UCAN.
