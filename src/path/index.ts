@@ -228,10 +228,18 @@ export function isPartition(partition: Partition, path: DistinctivePath<Segments
 }
 
 /**
+ * Is this a partitioned `DistinctivePath`?
+ */
+export function isPartitioned<P extends Partition>(path: DistinctivePath<Segments>): path is DistinctivePath<Partitioned<P>> {
+  const soCalledPartition = unwrap(path)[ 0 ]
+  return [ RootBranch.Private, RootBranch.Public, "private", "public" ].includes(soCalledPartition)
+}
+
+/**
  * Is this partitioned `DistinctivePath` non-empty?
  */
-export function isPartitionedNonEmpty<P extends Partition>(path: DistinctivePath<Partitioned<P>>): path is DistinctivePath<PartitionedNonEmpty<P>> {
-  return unwrap(path).length > 1
+export function isPartitionedNonEmpty<P extends Partition>(path: DistinctivePath<Segments>): path is DistinctivePath<PartitionedNonEmpty<P>> {
+  return isPartitioned(path) && length(path) > 1
 }
 
 /**

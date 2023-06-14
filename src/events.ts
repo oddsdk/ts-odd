@@ -34,13 +34,20 @@ export type FileSystem = {
 }
 
 
-export type Session<S> = {
-  "session:create": { session: S }
-  "session:destroy": { username: string }
+export type CapabilityConsumer = {
+  "capabilities:challenge": any // TODO
 }
 
 
-export type All<S> = FileSystem & Session<S>
+export type CapabilityProvider = {
+  "capabilities:approved": void
+  "capabilities:challenge": any // TODO
+  "capabilities:dismissed": void
+  "capabilities:query": { capabilities: Record<string, any> } // TODO
+}
+
+
+export type All = FileSystem
 
 
 export function createEmitter<EventMap>(): EventEmitter<EventMap> {

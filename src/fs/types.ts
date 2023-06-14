@@ -1,18 +1,20 @@
+import type { Repo as CIDLog } from "../repositories/cid-log.js"
+import type { Repo as UcanRepo } from "../repositories/ucans.js"
+
 import * as Events from "../events.js"
 import * as Path from "../path/index.js"
 
 import { CID } from "../common/cid.js"
 import { EventEmitter } from "../events.js"
 import { Partition, Partitioned } from "../path/index.js"
-import { Crypto, Depot, Manners, Reference } from "../components.js"
+import { Account, Agent, Depot, Identifier, Manners } from "../components.js"
 
 
 export type AnySupportedDataType<V>
   = Uint8Array | Record<string | number | symbol, V> | string
 
-export type AssociatedIdentity = {
-  rootDID: string
-  username?: string
+export type AssociatedAccount = {
+  did: string
 }
 
 export type DataRootChange = {
@@ -30,10 +32,11 @@ export type DataForType<D extends DataType, V = unknown>
   : never
 
 export type Dependencies = {
-  crypto: Crypto.Implementation
+  account: Account.Implementation
+  agent: Agent.Implementation
   depot: Depot.Implementation
+  identifier: Identifier.Implementation
   manners: Manners.Implementation
-  reference: Reference.Implementation
 }
 
 export type DirectoryItem = {
@@ -47,11 +50,12 @@ export type DirectoryItemWithKind = DirectoryItem & {
 }
 
 export type FileSystemOptions = {
-  account: AssociatedIdentity
+  cidLog: CIDLog
   dependencies: Dependencies
   eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   settleTimeBeforePublish?: number
+  ucanRepository: UcanRepo
 }
 
 export type MutationOptions = {

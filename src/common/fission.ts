@@ -1,5 +1,4 @@
-import * as DOH from "../components/reference/dns-over-https.js"
-
+import { DNS } from "../components.js"
 
 /**
  * Fission endpoints.
@@ -60,7 +59,10 @@ const didCache: {
  * Lookup the DID of a Fission API.
  * This function caches the DID for 3 hours.
  */
-export async function did(endpoints: Endpoints): Promise<string> {
+export async function did(
+  endpoints: Endpoints,
+  dns: DNS.Implementation
+): Promise<string> {
   let host
   try {
     host = new URL(endpoints.server).host
@@ -73,7 +75,7 @@ export async function did(endpoints: Endpoints): Promise<string> {
     didCache.host !== host ||
     didCache.lastFetched + 1000 * 60 * 60 * 3 <= now
   ) {
-    didCache.did = await DOH.lookupTxtRecord("_did." + host)
+    didCache.did = await dns.lookupTxtRecord("_did." + host)
     didCache.host = host
     didCache.lastFetched = now
   }

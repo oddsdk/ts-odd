@@ -3,12 +3,13 @@ export type ImplementationOptions = {
 }
 
 
+/**
+ * Ephemeral storage.
+ */
 export type Implementation = {
   KEYS: {
-    ACCOUNT_UCAN: string
     CID_LOG: string
     UCANS: string
-    SESSION: string
   }
 
   getItem: <T>(key: string) => Promise<T | null>

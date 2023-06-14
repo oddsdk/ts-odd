@@ -1,4 +1,4 @@
-import * as Crypto from "../components/crypto/implementation.js"
+import { randomNumbers } from "../common/crypto.js"
 
 
 export type Rng = {
@@ -6,11 +6,11 @@ export type Rng = {
 }
 
 
-export function makeRngInterface(crypto: Crypto.Implementation): Rng {
+export function makeRngInterface(): Rng {
   return {
     /** Returns random bytes of specified length */
     randomBytes(count: number): Uint8Array {
-      return crypto.misc.randomNumbers({ amount: count });
+      return randomNumbers({ amount: count });
     }
   }
 }

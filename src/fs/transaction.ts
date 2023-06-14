@@ -2,21 +2,23 @@ import { BlockStore, PrivateForest, PrivateRef, PublicFile, PublicNode } from "w
 
 import * as Mutations from "./mutations.js"
 import * as Path from "../path/index.js"
+import * as PrivateRefs from "./private-ref.js"
 import * as Queries from "./queries.js"
 
 import { AnySupportedDataType, DataForType, DataType, Dependencies, DirectoryItem, DirectoryItemWithKind, PrivateReference } from "./types.js"
 import { CID } from "../common/cid.js"
 import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
+import { Repo as UcanRepo } from "../repositories/ucans.js"
 import { RootTree } from "./rootTree.js"
 import { Rng } from "./rng.js"
-import { Ucan } from "../ucan/types.js"
-import { agent } from "../did/local.js"
+import { Ucan } from "../ucan/index.js"
 import { dataFromBytes, dataToBytes } from "./data.js"
 import { findPrivateNode, partition as determinePartition } from "./mounts.js"
-import { addOrIncreaseNameNumber, pathSegmentsWithoutPartition, privateReferenceFromWnfsRef, searchLatest, wnfsRefFromPrivateReference } from "./common.js"
+import { addOrIncreaseNameNumber, pathSegmentsWithoutPartition, searchLatest } from "./common.js"
 import { throwNoAccess } from "./errors.js"
 import { hasProp } from "../common/type-checks.js"
+import { lookupFsWriteUcan } from "../ucan/lookup.js"
 
 
 export class TransactionContext {
@@ -28,7 +30,8 @@ export class TransactionContext {
     private dependencies: Dependencies,
     private privateNodes: MountedPrivateNodes,
     private rng: Rng,
-    private rootTree: RootTree
+    private rootTree: RootTree,
+    private ucanRepository: UcanRepo
   ) {
     this.changedPaths = new Set()
   }
@@ -41,15 +44,17 @@ export class TransactionContext {
     rootTree: RootTree,
   }> {
     const changedPaths = Array.from(context.changedPaths)
-    const audience = await agent(context.dependencies.crypto)
+    const identifier = await context.dependencies.identifier.did()
+    const identifierUcans = context.ucanRepository.audienceUcans(identifier)
+    const fileSystemDID = await context.dependencies.account.did(identifierUcans, { ...context.ucanRepository.collection })
 
     // Proofs
     const proofs = await changedPaths.reduce(
       async (accPromise: Promise<Ucan[]>, changedPath: Path.Distinctive<Partitioned<Partition>>): Promise<Ucan[]> => {
         const acc = await accPromise
-
-        const proof = await context.dependencies.reference.repositories.ucans.lookupFileSystemUcan(
-          audience,
+        const proof = lookupFsWriteUcan(
+          identifierUcans,
+          fileSystemDID,
           changedPath
         )
 
@@ -147,7 +152,7 @@ export class TransactionContext {
     return priv.remainder.length === 0 || priv.node.isFile()
       ? priv.node
         .store(this.rootTree.privateForest, this.blockStore, this.rng)
-        .then(([ ref ]: [ PrivateRef, PrivateForest ]) => privateReferenceFromWnfsRef(ref))
+        .then(([ ref ]: [ PrivateRef, PrivateForest ]) => PrivateRefs.fromWnfsRef(ref))
       : priv.node.asDir()
         .getNode(
           priv.remainder,
@@ -159,7 +164,7 @@ export class TransactionContext {
           return result
             ? result
               .store(this.rootTree.privateForest, this.blockStore, this.rng)
-              .then(([ ref ]: [ PrivateRef, PrivateForest ]) => privateReferenceFromWnfsRef(ref))
+              .then(([ ref ]: [ PrivateRef, PrivateForest ]) => PrivateRefs.fromWnfsRef(ref))
             : null
         })
 
@@ -229,7 +234,7 @@ export class TransactionContext {
   ): Promise<AnySupportedDataType<V>> {
     let bytes
 
-    if (hasProp(arg, "contentCID")) {
+    if ("contentCID" in arg) {
       // Public content from content CID
       bytes = await Queries.publicReadFromCID(
         arg.contentCID,
@@ -238,7 +243,7 @@ export class TransactionContext {
         this.publicContext()
       )
 
-    } else if (hasProp(arg, "capsuleCID")) {
+    } else if ("capsuleCID" in arg) {
       // Public content from capsule CID
       const publicFile: PublicFile = await PublicFile.load(arg.capsuleCID.bytes, this.blockStore)
 
@@ -248,16 +253,16 @@ export class TransactionContext {
         options
       )
 
-    } else if (hasProp(arg, "capsuleRef")) {
+    } else if ("capsuleRef" in arg) {
       // Private content from capsule reference
       bytes = await Queries.privateReadFromReference(
-        wnfsRefFromPrivateReference(arg.capsuleRef),
+        PrivateRefs.toWnfsRef(arg.capsuleRef),
         options
       )(
         this.privateContext()
       )
 
-    } else if (hasProp(arg, "file") || hasProp(arg, "directory")) {
+    } else if ("file" in arg || "directory" in arg) {
       // Public or private from path
       bytes = await this.query(
         arg,

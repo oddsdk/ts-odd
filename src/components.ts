@@ -1,9 +1,10 @@
-import * as Auth from "./components/auth/implementation.js"
-import * as Capabilities from "./components/capabilities/implementation.js"
-import * as Crypto from "./components/crypto/implementation.js"
+import * as Account from "./components/account/implementation.js"
+import * as Agent from "./components/agent/implementation.js"
+import * as Channel from "./components/channel/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
+import * as DNS from "./components/dns/implementation.js"
+import * as Identifier from "./components/identifier/implementation.js"
 import * as Manners from "./components/manners/implementation.js"
-import * as Reference from "./components/reference/implementation.js"
 import * as Storage from "./components/storage/implementation.js"
 
 
@@ -11,12 +12,13 @@ import * as Storage from "./components/storage/implementation.js"
 
 
 export type Components = {
-  auth: Auth.Implementation<Components>
-  capabilities: Capabilities.Implementation
-  crypto: Crypto.Implementation
+  account: Account.Implementation
+  agent: Agent.Implementation
+  channel: Channel.Implementation
   depot: Depot.Implementation
+  dns: DNS.Implementation
+  identifier: Identifier.Implementation
   manners: Manners.Implementation
-  reference: Reference.Implementation
   storage: Storage.Implementation
 }
 
@@ -25,4 +27,4 @@ export type Components = {
 // CONVENIENCE EXPORTS
 
 
-export { Auth, Capabilities, Crypto, Depot, Manners, Reference, Storage }
+export { Account, Agent, Channel, Depot, DNS, Identifier, Manners, Storage }

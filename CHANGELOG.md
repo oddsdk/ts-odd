@@ -3,7 +3,10 @@
 ### Next
 
 - **Uses the rs-wnfs implementation of the Webnative file system**.
+- **Upgrades to UCAN 0.9**
+- Improves the `Program` type.
 - Improves several types of the paths module.
+- Removes sessions.
 
 
 ### V0.37.2

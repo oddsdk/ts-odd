@@ -1,8 +1,7 @@
-import { PrivateRef } from "wnfs"
-
 import * as Path from "../path/index.js"
-import { CID } from "../common/cid.js"
-import { PrivateReference } from "./types.js"
+
+
+// 🛠️
 
 
 export function addOrIncreaseNameNumber(path: Path.Directory<Path.PartitionedNonEmpty<Path.Partition>>): Path.Directory<Path.PartitionedNonEmpty<Path.Partition>>
@@ -28,27 +27,9 @@ export function pathSegmentsWithoutPartition(path: Path.Distinctive<Path.Partiti
 }
 
 
-export function privateReferenceFromWnfsRef(ref: PrivateRef) {
-  return {
-    contentCID: CID.decode(ref.getContentCid()),
-    label: ref.getLabel(),
-    temporalKey: ref.getTemporalKey()
-  }
-}
-
-
 /**
  * Which `searchLatest` value to use for the private file system actions.
  */
 export function searchLatest(): boolean {
   return true
-}
-
-
-export function wnfsRefFromPrivateReference(ref: PrivateReference) {
-  return new PrivateRef(
-    ref.label,
-    ref.temporalKey,
-    ref.contentCID.bytes
-  )
 }

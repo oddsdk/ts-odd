@@ -1,31 +1,21 @@
 import type { AppInfo } from "../appInfo.js"
 import type { CID } from "../common/cid.js"
-import type { Crypto, Reference } from "../components.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
-import type { Maybe } from "../common/types.js"
-import type { Permissions } from "../permissions.js"
-import type { Session } from "../session.js"
 
-import * as DID from "../did/index.js"
 import * as Events from "../events.js"
 import { VERSION } from "../index.js"
 
 
 // CREATE
 
-export type Dependencies = {
-  crypto: Crypto.Implementation
-  reference: Reference.Implementation
-}
+export type Dependencies = {}
 
 type Config = {
   namespace: AppInfo | string
-  session: Maybe<Session>
   capabilities?: Permissions
   dependencies: Dependencies
   eventEmitters: {
     fileSystem: Events.Emitter<Events.FileSystem>
-    session: Events.Emitter<Events.Session<Session>>
   }
 }
 
@@ -95,8 +85,6 @@ async function disconnect(extensionId: string, config: Config): Promise<Connecti
 type Listeners = {
   handleLocalChange: (params: { dataRoot: CID; path: DistinctivePath<[ Partition, ...string[] ]> }) => Promise<void>
   handlePublish: (params: { dataRoot: CID }) => Promise<void>
-  handleSessionCreate: (params: { session: Session }) => Promise<void>
-  handleSessionDestroy: (params: { username: string }) => Promise<void>
 }
 
 function listen(connection: Connection, config: Config): Listeners {
@@ -133,56 +121,16 @@ function listen(connection: Connection, config: Config): Listeners {
     })
   }
 
-  async function handleSessionCreate(params: { session: Session }) {
-    const { session } = params
-
-    config = { ...config, session }
-    const state = await getState(config)
-
-    globalThis.postMessage({
-      id: connection.extensionId,
-      type: "session",
-      timestamp: Date.now(),
-      state,
-      detail: {
-        type: "create",
-        username: session.username
-      }
-    })
-  }
-
-  async function handleSessionDestroy(params: { username: string }) {
-    const { username } = params
-
-    config = { ...config, session: null }
-    const state = await getState(config)
-
-    globalThis.postMessage({
-      id: connection.extensionId,
-      type: "session",
-      timestamp: Date.now(),
-      state,
-      detail: {
-        type: "destroy",
-        username
-      }
-    })
-  }
-
   config.eventEmitters.fileSystem.on("fileSystem:local-change", handleLocalChange)
   config.eventEmitters.fileSystem.on("fileSystem:publish", handlePublish)
-  config.eventEmitters.session.on("session:create", handleSessionCreate)
-  config.eventEmitters.session.on("session:destroy", handleSessionDestroy)
 
-  return { handleLocalChange, handlePublish, handleSessionCreate, handleSessionDestroy }
+  return { handleLocalChange, handlePublish }
 }
 
 function stopListening(config: Config, listeners: Listeners) {
   if (listeners) {
     config.eventEmitters.fileSystem.removeListener("fileSystem:local-change", listeners.handleLocalChange)
     config.eventEmitters.fileSystem.removeListener("fileSystem:publish", listeners.handlePublish)
-    config.eventEmitters.session.removeListener("session:create", listeners.handleSessionCreate)
-    config.eventEmitters.session.removeListener("session:destroy", listeners.handleSessionDestroy)
   }
 }
 
@@ -202,7 +150,6 @@ type State = {
   user: {
     username: string | null
     accountDID: string | null
-    agentDID: string
   }
   odd: {
     version: string
@@ -210,18 +157,18 @@ type State = {
 }
 
 async function getState(config: Config): Promise<State> {
-  const { capabilities, dependencies, namespace, session } = config
+  const { capabilities, dependencies, namespace } = config
 
-  const agentDID = await DID.agent(dependencies.crypto)
   let accountDID = null
   let username = null
   let dataRootCID = null
 
-  if (session && session.username) {
-    username = session.username
-    accountDID = await dependencies.reference.didRoot.lookup(username)
-    dataRootCID = await dependencies.reference.dataRoot.lookup(username)
-  }
+  // TODO:
+  // if (session && session.username) {
+  //   username = session.username
+  //   accountDID = await dependencies.reference.didRoot.lookup(username)
+  //   dataRootCID = await dependencies.reference.dataRoot.lookup(username)
+  // }
 
   return {
     app: {
@@ -229,12 +176,11 @@ async function getState(config: Config): Promise<State> {
       ...(capabilities ? { capabilities } : {})
     },
     fileSystem: {
-      dataRootCID: dataRootCID?.toString() ?? null
+      dataRootCID: null // TODO: dataRootCID?.toString() ?? null
     },
     user: {
       username,
       accountDID,
-      agentDID
     },
     odd: {
       version: VERSION

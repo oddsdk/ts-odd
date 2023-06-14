@@ -8,7 +8,7 @@ import * as Path from "../path/index.js"
 
 import { CID } from "../common/cid.js"
 import { FileSystem } from "./class.js"
-import { crypto, depot, manners, reference } from "../../tests/helpers/components.js"
+import { account, depot, identifier, manners } from "../../tests/helpers/components.js"
 import { createEmitter } from "../events.js"
 
 
@@ -17,8 +17,7 @@ describe("File System Class", () => {
   let fs: FileSystem
 
   const fsOpts = {
-    account: { rootDID: "ROOT_DID" },
-    dependencies: { crypto, depot, manners, reference },
+    dependencies: { account, depot, identifier, manners },
     eventEmitter: createEmitter<Events.FileSystem>(),
     settleTimeBeforePublish: 250,
   }
