@@ -1,10 +1,8 @@
-import * as Path from "../path/index.js"
 import * as Storage from "../components/storage/implementation"
 import * as Ucan from "../ucan/index.js"
 
 import Repository, { RepositoryOptions } from "../repository.js"
-import { DistinctivePath } from "../path/index.js"
-import { Resource } from "../ucan/index.js"
+import { CID, Maybe, isString } from "../common/index.js"
 
 
 export function create({ storage }: { storage: Storage.Implementation }): Promise<Repo> {
@@ -19,116 +17,87 @@ export function create({ storage }: { storage: Storage.Implementation }): Promis
 // CLASS
 
 
-export class Repo extends Repository<Ucan.Ucan> {
+export class Repo extends Repository<Ucan.Dictionary, Ucan.Ucan> {
+
+  private indexedByAudience: Record<string, Ucan.Ucan[]>
+
 
   private constructor(options: RepositoryOptions) {
     super(options)
+    this.indexedByAudience = {}
   }
 
 
-  // TODO: Shouldn't be able to add a UCAN that isn't valid
+  // IMPLEMENTATION
 
+  emptyCollection() {
+    return {}
+  }
 
-  // ENCODING
+  mergeCollections(a: Ucan.Dictionary, b: Ucan.Dictionary): Ucan.Dictionary {
+    return {
+      ...a,
+      ...b
+    }
+  }
 
-  fromJSON(a: string): Ucan.Ucan { return Ucan.decode(a) }
-  toJSON(a: Ucan.Ucan): string { return Ucan.encode(a) }
+  async toCollection(item: Ucan.Ucan): Promise<Ucan.Dictionary> {
+    return { [ (await Ucan.cid(item)).toString() ]: item }
+  }
 
-  // `${resourceKey}:${resourceValue}`
-  toDictionary(items: Ucan.Ucan[]) {
-    return items.reduce(
-      (acc, ucan) => ({ ...acc, [ resourceLabel(ucan.payload.rsc) ]: ucan }),
+  collectionUpdateCallback(collection: Ucan.Dictionary) {
+    this.indexedByAudience = Object.entries(collection).reduce(
+      (acc: Record<string, Ucan.Ucan[]>, [ k, v ]) => {
+        return {
+          ...acc,
+          [ v.payload.aud ]: [ ...(acc[ v.payload.aud ] || []), v ]
+        }
+      },
       {}
     )
   }
 
 
-  // LOOKUPS
+  // ENCODING
 
-  /**
-   * Look up a UCAN with a file system path.
-   */
-  async lookupFileSystemUcan(
-    audience: string,
-    path: DistinctivePath<Path.Segments> | "*"
-  ): Promise<Ucan.Ucan | null> {
-    const god = this.getByKey("*")
-    if (god && god.payload.aud === audience) return god
+  fromJSON(a: string): Ucan.Dictionary {
+    const encodedObj = JSON.parse(a)
 
-    const all = path === "*"
-    const isDirectory = all ? false : Path.isDirectory(path)
-    const pathParts = all ? [ "*" ] : Path.unwrap(path)
-
-    const prefix = fileSystemPrefix()
-
-    return pathParts.reduce(
-      (acc: Ucan.Ucan | null, part: string, idx: number) => {
-        if (acc) return acc
-
-        const isLastPart = idx === 0
-        const partsSlice = pathParts.slice(0, pathParts.length - idx)
-
-        const partialPath = Path.toPosix(
-          isLastPart && !isDirectory
-            ? Path.file(...partsSlice)
-            : Path.directory(...partsSlice)
-        )
-
-        const ucan = this.getByKey(`${prefix}${partialPath}`)
-        return ucan?.payload.aud === audience ? ucan : null
+    return Object.entries(encodedObj).reduce(
+      (acc, [ k, v ]) => {
+        return {
+          ...acc,
+          [ k ]: Ucan.decode(v as string)
+        }
       },
-      null
+      {}
     )
   }
 
-  /**
-   * Look up a UCAN for a platform app.
-   */
-  async lookupAppUcan(
-    // TODO: audience: string,
-    domain: string
-  ): Promise<Ucan.Ucan | null> {
-    return this.getByKey("*") || this.getByKey("app:*") || this.getByKey(`app:${domain}`)
+  toJSON(a: Ucan.Dictionary): string {
+    const encodedObj = Object.entries(a).reduce(
+      (acc, [ k, v ]) => {
+        return {
+          ...acc,
+          [ k ]: Ucan.encode(v)
+        }
+      },
+      {}
+    )
+
+    return JSON.stringify(encodedObj)
   }
 
-}
 
+  // LOOKUPS
 
-
-// CONSTANTS
-
-
-// TODO: Waiting on API change.
-//       Should be `dnslink`
-export const WNFS_PREFIX = "wnfs"
-
-
-
-// DICTIONARY
-
-
-/**
- * Construct the prefix for a file system key.
- */
-export function fileSystemPrefix(username?: string): string {
-  // const host = `${username}.${setup.endpoints.user}`
-  // TODO: Waiting on API change.
-  //       Should be `${WNFS_PREFIX}:${host}/`
-  return WNFS_PREFIX + ":"
-}
-
-/**
- * Creates the label for a given resource.
- */
-export function resourceLabel(rsc: Resource): string {
-  if (typeof rsc !== "object") {
-    return rsc
+  getByCID(cid: CID | string): Maybe<Ucan.Ucan> {
+    const cidString = isString(cid) ? cid : cid.toString()
+    return this.collection[ cidString ]
   }
 
-  const resource = Array.from(Object.entries(rsc))[ 0 ]
-  return resource[ 0 ] + ":" + (
-    resource[ 0 ] === WNFS_PREFIX
-      ? resource[ 1 ].replace(/^\/+/, "")
-      : resource[ 1 ]
-  )
+  audienceUcans(audience: string): Ucan.Ucan[] {
+    return this.indexedByAudience[ audience ] || []
+  }
+
 }

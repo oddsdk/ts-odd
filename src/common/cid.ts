@@ -24,37 +24,6 @@ export function decodeCID(val: CID | object | string): CID {
   // String format
   if (typeof val === "string") return CID.parse(val)
 
-  // CID.toJSON() returns an object in the form of { version, code, hash }
-  // `hash` was `multihash` previously.
-  if (typeof val === "object" && "version" in val && "code" in val && "multihash" in val) {
-    return CID.create(val.version, val.code, val.multihash)
-  }
-
-  // Older version of the above
-  if (
-    typeof val === "object" &&
-    hasProp(val, "version") &&
-    hasProp(val, "code") && isNum(val.code) &&
-    hasProp(val, "hash") && isObject(val.hash) && Object.values(val.hash).every(isNum)
-  ) {
-    const multihash = decodeMultihash(new Uint8Array(
-      Object.values(val.hash) as number[]
-    ))
-
-    return CID.create(val.version as Version, val.code, multihash)
-  }
-
-  // Sometimes we can encounter a DAG-JSON encoded CID
-  // https://github.com/oddsdk/ts-odd/issues/459
-  // Related to the `ensureSkeletonStringCIDs` function in the `PrivateTree` class
-  if (
-    typeof val === "object" &&
-    hasProp(val, "/") &&
-    typeof val[ "/" ] === "string"
-  ) {
-    return CID.parse(val[ "/" ])
-  }
-
   // Unrecognisable CID
   throw new Error(`Could not decode CID: ${JSON.stringify(val)}`)
 }

@@ -33,7 +33,7 @@ describe("cid-log", () => {
   })
 
   it("gets an empty log when key is missing", async () => {
-    const log = await cidLog.getAll()
+    const log = cidLog.getAll()
     expect(log).toEqual([])
   })
 
@@ -46,7 +46,7 @@ describe("cid-log", () => {
           const cids: CID[] = await generateCids(data)
           await cidLog.add(cids)
 
-          const log = await cidLog.getAll()
+          const log = cidLog.getAll()
 
           isEqualCIDsSet(log, cids)
         })
@@ -103,7 +103,7 @@ describe("cid-log", () => {
 
           // Clear the log and get it after all CIDs have been added
           await cidLog.clear()
-          const log = await cidLog.getAll()
+          const log = cidLog.getAll()
 
           isEqualCIDsSet(log, [])
         })

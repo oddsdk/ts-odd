@@ -2,22 +2,26 @@ import { BlockStore, PrivateDirectory, PrivateNode, PublicDirectory, Namefilter,
 import { CID } from "multiformats/cid"
 import debounce from "debounce-promise"
 
+import type { Repo as CIDLog } from "../repositories/cid-log.js"
+import type { Repo as UcanRepo } from "../repositories/ucans.js"
+
 import * as Events from "../events.js"
 import * as Path from "../path/index.js"
+import * as PrivateRefs from "./private-ref.js"
 import * as Queries from "./queries.js"
 import * as Rng from "./rng.js"
 import * as RootTree from "./rootTree.js"
 import * as Store from "./store.js"
 import * as WASM from "./wasm.js"
 
-import { AnySupportedDataType, AssociatedIdentity, DataForType, DataRootChange, DataType, Dependencies, DirectoryItem, DirectoryItemWithKind, FileSystemOptions, MutationOptions, MutationResult, PartitionDiscovery, PartitionDiscoveryNonEmpty, PrivateMutationResult, PrivateReference, PublicMutationResult, PublishingStatus, TransactionResult } from "./types.js"
+import { AnySupportedDataType, DataForType, DataRootChange, DataType, Dependencies, DirectoryItem, DirectoryItemWithKind, FileSystemOptions, MutationOptions, MutationResult, PartitionDiscovery, PartitionDiscoveryNonEmpty, PrivateMutationResult, PrivateReference, PublicMutationResult, PublishingStatus, TransactionResult } from "./types.js"
 import { EventEmitter } from "../events.js"
 import { Partitioned, PartitionedNonEmpty, Partition, Public, Private } from "../path/index.js"
 import { MountedPrivateNode, MountedPrivateNodes } from "./types/internal.js"
 import { TransactionContext } from "./transaction.js"
-import { Ucan } from "../ucan/types.js"
+import { Ucan } from "../ucan/index.js"
 import { findPrivateNode, partition as determinePartition } from "./mounts.js"
-import { privateReferenceFromWnfsRef, searchLatest, wnfsRefFromPrivateReference } from "./common.js"
+import { searchLatest } from "./common.js"
 
 
 export class FileSystem {
@@ -28,15 +32,16 @@ export class FileSystem {
 
 
   constructor(
-    public account: AssociatedIdentity,
     private blockStore: BlockStore,
+    private cidLog: CIDLog,
     private dependencies: Dependencies,
     private eventEmitter: EventEmitter<Events.FileSystem>,
     private localOnly: boolean,
     private settleTimeBeforePublish: number,
-    private rootTree: RootTree.RootTree
+    private rootTree: RootTree.RootTree,
+    private ucanRepository: UcanRepo
   ) {
-    this.rng = Rng.makeRngInterface(dependencies.crypto)
+    this.rng = Rng.makeRngInterface()
   }
 
 
@@ -47,7 +52,7 @@ export class FileSystem {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: FileSystemOptions): Promise<FileSystem> {
-    const { account, dependencies, eventEmitter, localOnly, settleTimeBeforePublish } = opts
+    const { cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish, ucanRepository } = opts
 
     await WASM.load({ manners: dependencies.manners })
 
@@ -55,13 +60,14 @@ export class FileSystem {
     const rootTree = RootTree.empty()
 
     return new FileSystem(
-      account,
       blockStore,
+      cidLog,
       dependencies,
       eventEmitter,
       localOnly || false,
       settleTimeBeforePublish || 2500,
-      rootTree
+      rootTree,
+      ucanRepository
     )
   }
 
@@ -69,7 +75,7 @@ export class FileSystem {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions): Promise<FileSystem> {
-    const { account, dependencies, eventEmitter, localOnly, settleTimeBeforePublish } = opts
+    const { cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish, ucanRepository } = opts
 
     await WASM.load({ manners: dependencies.manners })
 
@@ -77,13 +83,14 @@ export class FileSystem {
     const rootTree = await RootTree.fromCID({ blockStore, cid, depot: dependencies.depot })
 
     return new FileSystem(
-      account,
       blockStore,
+      cidLog,
       dependencies,
       eventEmitter,
       localOnly || false,
       settleTimeBeforePublish || 2500,
-      rootTree
+      rootTree,
+      ucanRepository
     )
   }
 
@@ -117,7 +124,7 @@ export class FileSystem {
         let privateNode: PrivateNode
 
         if (capsuleRef) {
-          const ref = wnfsRefFromPrivateReference(capsuleRef)
+          const ref = PrivateRefs.toWnfsRef(capsuleRef)
           privateNode = await PrivateNode.load(ref, this.rootTree.privateForest, this.blockStore)
         } else {
           privateNode = Path.isFile(path)
@@ -145,7 +152,7 @@ export class FileSystem {
 
         return {
           path: n.path,
-          capsuleRef: privateReferenceFromWnfsRef(privateRef)
+          capsuleRef: PrivateRefs.fromWnfsRef(privateRef)
         }
       })
     )
@@ -445,15 +452,10 @@ export class FileSystem {
       })
     })
 
-    // Create a single UCAN containing all proofs
-    // TODO: This isn't possible with UCAN v0.3
-    //       Use rs-ucan or ts-ucan.
-    const proof = proofs[ 0 ]
-
     // Publish
     const signal = mutationOptions.skipPublish === true
       ? Promise.resolve(FileSystem.statusNotPublishing)
-      : this.publish(dataRoot, proof)
+      : this.publish(dataRoot, proofs)
 
     // Fin
     return {
@@ -532,7 +534,7 @@ export class FileSystem {
         return {
           dataRoot: transactionResult.dataRoot,
           publishingStatus: transactionResult.publishingStatus,
-          capsuleRef: privateReferenceFromWnfsRef(capsuleRef),
+          capsuleRef: PrivateRefs.fromWnfsRef(capsuleRef),
         }
     }
   }
@@ -545,6 +547,7 @@ export class FileSystem {
       { ...this.privateNodes },
       this.rng,
       { ...this.rootTree },
+      this.ucanRepository
     )
   }
 
@@ -559,19 +562,23 @@ export class FileSystem {
   }
 
 
-  private debouncedDataRootUpdate = debounce(async (args: [ dataRoot: CID, proof: Ucan ][]): Promise<PublishingStatus[]> => {
-    const [ dataRoot, proof ] = args[ args.length - 1 ]
-    const { success } = await this.dependencies.reference.dataRoot.update(
+  private debouncedDataRootUpdate = debounce(async (args: [ dataRoot: CID, proofs: Ucan[] ][]): Promise<PublishingStatus[]> => {
+    const [ dataRoot, proofs ] = args[ args.length - 1 ]
+
+    await this.dependencies.depot.flush(dataRoot, proofs)
+
+    const { ok } = await this.dependencies.account.updateDataRoot(
       dataRoot,
-      proof
+      proofs
     )
 
     let status: PublishingStatus
 
-    if (success) {
+    if (ok) {
       this.eventEmitter.emit("fileSystem:publish", { dataRoot })
       status = { persisted: true, localOnly: false }
     } else {
+      // TODO: Add reason
       status = { persisted: false, reason: "DATA_ROOT_UPDATE_FAILED" }
     }
 
@@ -589,12 +596,12 @@ export class FileSystem {
    */
   private async publish(
     dataRoot: CID,
-    proof: Ucan
+    proofs: Ucan[]
   ): Promise<PublishingStatus> {
     if (this.localOnly) return { persisted: true, localOnly: true }
 
-    await this.dependencies.reference.repositories.cidLog.add(dataRoot)
-    const debounceResult = await this.debouncedDataRootUpdate(dataRoot, proof)
+    await this.cidLog.add([ dataRoot ])
+    const debounceResult = await this.debouncedDataRootUpdate(dataRoot, proofs)
 
     // The type of `debounceResult` is not correct, issue with `@types/debounce-promise`
     return debounceResult as unknown as PublishingStatus

@@ -16,6 +16,7 @@ import { CodecIdentifier } from "../../../dag/codecs.js"
 import { Implementation } from "../implementation.js"
 import { Maybe } from "../../../common/types.js"
 import { Storage } from "../../../components.js"
+import { Ucan } from "../../../ucan/index.js"
 
 import * as Connections from "./ipfs/connections.js"
 import * as Peers from "./ipfs/peers.js"
@@ -129,8 +130,6 @@ export async function implementation({ blockstoreName, gatewayUrl, peersUrl, sto
     // PUT
 
     putBlock: async (data: Uint8Array, codecId: CodecIdentifier): Promise<CID> => {
-      await initiateTransport()
-
       const codec = Codecs.getByIdentifier(codecId)
       const multihash = await sha256.digest(data)
       const cid = CID.createV1(codec.code, multihash)
@@ -139,5 +138,11 @@ export async function implementation({ blockstoreName, gatewayUrl, peersUrl, sto
 
       return cid
     },
+
+    // FLUSH
+
+    flush: async (_dataRoot: CID, _proofs: Ucan[]): Promise<void> => {
+      await initiateTransport()
+    }
   }
 }

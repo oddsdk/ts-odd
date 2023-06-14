@@ -1,5 +1,5 @@
-export function hasProp<K extends PropertyKey>(data: unknown, prop: K): data is Record<K, unknown> {
-  return typeof data === "object" && data != null && prop in data
+export function hasProp(data: unknown, prop: string): data is Record<string, unknown> {
+  return isObject(data) && prop in data && data[ prop ] !== undefined
 }
 
 export const isDefined = <T>(val: T | undefined): val is T => {
