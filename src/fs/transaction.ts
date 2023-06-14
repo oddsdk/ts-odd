@@ -155,7 +155,7 @@ export class TransactionContext {
           this.rootTree.privateForest,
           this.blockStore
         )
-        .then(({ result }) => {
+        .then(result => {
           return result
             ? result
               .store(this.rootTree.privateForest, this.blockStore, this.rng)

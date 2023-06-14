@@ -493,7 +493,9 @@ export class FileSystem {
 
     switch (partition.name) {
       case "public":
-        const node = await this.rootTree.publicRoot.getNode(partition.segments, this.blockStore)
+        const node = partition.segments.length === 0
+          ? this.rootTree.publicRoot.asNode()
+          : await this.rootTree.publicRoot.getNode(partition.segments, this.blockStore)
         if (!node) throw new Error("Failed to find needed public node for infusion")
 
         const fileOrDir: PublicFile | PublicDirectory = node.isFile() ? node.asFile() : node.asDir()
@@ -520,7 +522,6 @@ export class FileSystem {
               : priv.node
                 .asDir()
                 .getNode(priv.remainder, searchLatest(), this.rootTree.privateForest, this.blockStore)
-                .then(a => a.result)
           )
             .then(node => {
               if (!node) throw new Error("Failed to find needed private node for infusion")
