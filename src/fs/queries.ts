@@ -69,7 +69,9 @@ export const publicListDirectory =
 export const publicListDirectoryWithKind =
   () =>
     async (params: PublicParams): Promise<DirectoryItemWithKind[]> => {
-      const dir: PublicDirectory = await params.rootTree.publicRoot.getNode(params.pathSegments, params.blockStore).then(a => a.asDir())
+      const dir: PublicDirectory = params.pathSegments.length === 0
+        ? params.rootTree.publicRoot
+        : await params.rootTree.publicRoot.getNode(params.pathSegments, params.blockStore).then(a => a.asDir())
       const items: DirectoryItem[] = await dir.ls([], params.blockStore)
 
       const promises = items.map(async (item): Promise<DirectoryItemWithKind> => {
@@ -159,7 +161,7 @@ export const privateExists =
     async (params: PrivateParams): Promise<boolean> => {
       if (params.node.isFile()) return true
 
-      const { result } = await params.node.asDir().getNode(
+      const result = await params.node.asDir().getNode(
         params.remainder,
         searchLatest(),
         params.rootTree.privateForest,
@@ -184,8 +186,10 @@ export const privateListDirectoryWithKind =
     async (params: PrivateParams): Promise<DirectoryItemWithKind[]> => {
       if (params.node.isFile()) throw new Error("Cannot list a file")
 
-      const dir: PrivateDirectory = await params.node.asDir().getNode(params.remainder, searchLatest(), params.rootTree.privateForest, params.blockStore).then(a => a.result.asDir())
-      const items: DirectoryItem[] = await dir.ls([], searchLatest(), params.rootTree.privateForest, params.blockStore)
+      const dir: PrivateDirectory = params.remainder.length === 0
+        ? params.node.asDir()
+        : await params.node.asDir().getNode(params.remainder, searchLatest(), params.rootTree.privateForest, params.blockStore).then(a => a.asDir())
+      const items: DirectoryItem[] = await dir.ls([], searchLatest(), params.rootTree.privateForest, params.blockStore).then(a => a.result)
 
       const parentPath = Path.combine(
         Path.directory("private", ...Path.unwrap(params.path)),
@@ -197,7 +201,7 @@ export const privateListDirectoryWithKind =
       }
 
       const promises = items.map(async (item: DirectoryItem): Promise<DirectoryItemWithKind> => {
-        const node: PrivateNode = await dir.lookupNode(item.name, searchLatest(), params.rootTree.privateForest, params.blockStore).then(a => a.result)
+        const node: PrivateNode = await dir.lookupNode(item.name, searchLatest(), params.rootTree.privateForest, params.blockStore)
         const kind = node.isDir() ? Path.Kind.Directory : Path.Kind.File
 
         return {

@@ -108,7 +108,7 @@
     "one-webcrypto": "^1.0.3",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^4.0.3",
-    "wnfs": "0.1.20"
+    "wnfs": "0.1.21"
   },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
