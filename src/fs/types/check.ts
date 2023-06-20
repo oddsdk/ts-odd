@@ -1,4 +1,4 @@
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 import { isString, isObject, isNum, isBool } from "../../common/index.js"
 import { Tree, File, HardLink, SoftLink, Links, BaseLink, SimpleLink } from "../types.js"

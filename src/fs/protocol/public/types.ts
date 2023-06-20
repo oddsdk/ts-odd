@@ -1,4 +1,4 @@
-import type { CID } from "multiformats/cid"
+import type { CID } from "multiformats"
 
 import { Metadata } from "../../metadata.js"
 import { PutResult } from "../../../components/depot/implementation.js"

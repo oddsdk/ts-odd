@@ -1,4 +1,4 @@
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 import * as Crypto from "./components/crypto/implementation.js"
 import * as Depot from "./components/depot/implementation.js"

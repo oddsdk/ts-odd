@@ -1,5 +1,5 @@
 import * as DagPB from "@ipld/dag-pb"
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 import expect from "expect"
 import crypto from "crypto"
 

@@ -1,4 +1,5 @@
-import { CID, Version } from "multiformats/cid"
+// import { CID, Version } from "multiformats/cid"
+import { CID } from "multiformats"
 import { decode as decodeMultihash } from "multiformats/hashes/digest"
 import { hasProp, isNum, isObject } from "./type-checks.js"
 
@@ -41,7 +42,7 @@ export function decodeCID(val: CID | object | string): CID {
       Object.values(val.hash) as number[]
     ))
 
-    return CID.create(val.version as Version, val.code, multihash)
+    return CID.create(val.version as any, val.code, multihash)
   }
 
   // Sometimes we can encounter a DAG-JSON encoded CID

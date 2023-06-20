@@ -1,4 +1,4 @@
-import type { CID } from "multiformats/cid"
+import type { CID } from "multiformats"
 
 import * as Crypto from "../components/crypto/implementation.js"
 import * as DID from "../did/index.js"

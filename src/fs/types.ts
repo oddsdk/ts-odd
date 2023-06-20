@@ -1,4 +1,4 @@
-import type { CID } from "multiformats/cid"
+import type { CID } from "multiformats"
 
 import * as Path from "../path/index.js"
 

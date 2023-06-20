@@ -1,4 +1,4 @@
-import type { CID } from "multiformats/cid"
+import type { CID } from "multiformats"
 
 import { decodeCID, Maybe } from "../../common/index.js"
 import { FileHeader } from "../protocol/public/types.js"

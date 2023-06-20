@@ -1,4 +1,4 @@
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 import * as Identifiers from "../../src/common/identifiers.js"
 import * as Events from "../../src/events.js"

@@ -1,4 +1,4 @@
-import type { CID } from "multiformats/cid"
+import type { CID } from "multiformats"
 
 import { BareNameFilter, PrivateName } from "./namefilter.js"
 import { BaseLink, SoftLink } from "../../types.js"

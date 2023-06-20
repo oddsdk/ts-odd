@@ -1,5 +1,5 @@
 import * as Uint8arrays from "uint8arrays"
-import type { CID } from "multiformats/cid"
+import type { CID } from "multiformats"
 
 import * as Basic from "../basic.js"
 import * as Check from "./types/check.js"

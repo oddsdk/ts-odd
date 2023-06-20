@@ -1,6 +1,6 @@
 import * as DagCBOR from "@ipld/dag-cbor"
 import * as Uint8arrays from "uint8arrays"
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 import * as Check from "../../types/check.js"
 import * as Depot from "../../../components/depot/implementation.js"

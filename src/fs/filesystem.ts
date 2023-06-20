@@ -1,6 +1,6 @@
 import * as cbor from "@ipld/dag-cbor"
 import * as uint8arrays from "uint8arrays"
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 import { throttle } from "throttle-debounce"
 
 import * as Crypto from "../components/crypto/implementation.js"

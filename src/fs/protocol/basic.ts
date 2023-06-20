@@ -1,7 +1,7 @@
 import * as DagCBOR from "@ipld/dag-cbor"
 import * as DagPB from "@ipld/dag-pb"
 import * as Uint8arrays from "uint8arrays"
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 import * as Blob from "../../common/blob.js"
 import * as Crypto from "../../components/crypto/implementation.js"

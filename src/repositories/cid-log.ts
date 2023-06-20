@@ -1,4 +1,4 @@
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 import * as Storage from "../components/storage/implementation"
 import { decodeCID } from "../common/cid.js"

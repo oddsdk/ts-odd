@@ -1,4 +1,4 @@
-import type { CID } from "multiformats/cid"
+import type { CID } from "multiformats"
 
 import * as Depot from "../../components/depot/implementation.js"
 import * as Protocol from "../protocol/index.js"

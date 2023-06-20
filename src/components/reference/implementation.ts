@@ -1,4 +1,4 @@
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 import * as CIDLog from "../../repositories/cid-log.js"
 import * as Ucans from "../../repositories/ucans.js"

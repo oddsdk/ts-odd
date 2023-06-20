@@ -95,7 +95,7 @@
     "fission-bloom-filters": "1.7.1",
     "ipfs-core-types": "0.13.0",
     "ipfs-repo": "^16.0.0",
-    "keystore-idb": "^0.15.5",
+    "keystore-idb": "github:fission-codes/keystore-idb#avivash/temp-hardcoded-localforage-mobile-driver",
     "localforage": "^1.10.0",
     "multiformats": "^10.0.2",
     "one-webcrypto": "^1.0.3",

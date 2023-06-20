@@ -5,7 +5,7 @@ import * as DagPB from "@ipld/dag-pb"
 import * as Raw from "multiformats/codecs/raw"
 
 import { BlockCodec } from "multiformats/codecs/interface"
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 
 // 🧩

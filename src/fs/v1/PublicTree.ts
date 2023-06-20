@@ -1,4 +1,4 @@
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 import * as Common from "../../common/index.js"
 import * as Check from "../types/check.js"

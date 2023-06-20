@@ -1,7 +1,7 @@
 import * as DagCBOR from "@ipld/dag-cbor"
 import * as fc from "fast-check"
 import * as Raw from "multiformats/codecs/raw"
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 import { sha256 } from "multiformats/hashes/sha2"
 import expect from "expect"
 

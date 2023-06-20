@@ -1,4 +1,4 @@
-import { CID } from "multiformats/cid"
+import { CID } from "multiformats"
 
 import * as DID from "../../../../did/index.js"
 import * as DNS from "../../dns-over-https.js"
