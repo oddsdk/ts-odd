@@ -16,13 +16,13 @@ export class DepotBlockStore implements BlockStore {
     this.depot = depot
   }
 
-  /** Stores an array of bytes in the block store. */
+  /** Retrieves an array of bytes from the block store with given CID. */
   async getBlock(cid: Uint8Array): Promise<Uint8Array | undefined> {
     const decodedCid = CID.decode(cid)
     return await this.depot.getBlock(decodedCid)
   }
 
-  /** Retrieves an array of bytes from the block store with given CID. */
+  /** Stores an array of bytes in the block store. */
   async putBlock(bytes: Uint8Array, code: number): Promise<Uint8Array> {
     if (!Codecs.isIdentifier(code)) throw new Error(`No codec was registered for the code: ${Codecs.numberHex(code)}`)
 
