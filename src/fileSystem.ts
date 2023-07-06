@@ -12,7 +12,6 @@ import { Configuration } from "./configuration.js"
 import { Dependencies } from "./fs/types.js"
 import { FileSystem } from "./fs/class.js"
 import { Maybe, isString } from "./common/index.js"
-import { Mode } from "./mode.js"
 import { fsReadUcans } from "./ucan/lookup.js"
 import { listFacts } from "./ucan/chain.js"
 

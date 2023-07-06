@@ -1,5 +1,4 @@
 import * as Path from "../path/index.js"
-import { Mode, isMode } from "../mode.js"
 
 
 // 🏔️
@@ -17,7 +16,6 @@ export type Query = AccountQuery | FileSystemQuery
 
 export type AccountQuery = {
   query: "account"
-  mode: Mode
 }
 
 export type FileSystemQuery = {
@@ -48,13 +46,8 @@ export function fromJSON(query: string): Query {
 
 
 export function accountQueryFromJSON(obj: Record<string, any>): AccountQuery {
-  if (isMode(obj.mode) === false) {
-    throw new Error(`Mode in account query is not allowed: \`${obj.mode}\``)
-  }
-
   return {
     query: obj.query,
-    mode: obj.mode
   }
 }
 
@@ -86,7 +79,6 @@ export function toJSON(query: Query): string {
     case "account":
       return JSON.stringify({
         query: query.query,
-        mode: query.mode
       })
 
     case "fileSystem":
