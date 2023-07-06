@@ -3,7 +3,6 @@ import type { Implementation, ImplementationOptions } from "../implementation.js
 import * as Path from "../../../path/index.js"
 
 import { FileSystem } from "../../../fs/class.js"
-import { Mode } from "../../../mode.js"
 
 
 // 🛳

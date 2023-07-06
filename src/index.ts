@@ -14,7 +14,6 @@ import { Account, Agent, Channel, Depot, DNS, Identifier, Manners, Storage } fro
 import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
 import { FileSystem } from "./fs/class.js"
-import { Mode } from "./mode.js"
 import { loadFileSystem } from "./fileSystem.js"
 import { RequestOptions } from "./components/access/implementation.js"
 import { Ucan } from "./ucan/types.js"
@@ -42,7 +41,6 @@ export * from "./configuration.js"
 export * from "./common/cid.js"
 export * from "./common/types.js"
 export * from "./common/version.js"
-export * from "./mode.js"
 
 export * as fission from "./common/fission.js"
 export * as path from "./path/index.js"
@@ -54,7 +52,40 @@ export { FileSystem } from "./fs/class.js"
 // TYPES & CONSTANTS
 
 
-export type Program<M extends Mode> = {
+export type Program = {
+  /**
+   * Access control system.
+   */
+  access: {
+    // TODO
+    isGranted: () => Promise<
+      { granted: true } | { granted: false, reason: string }
+    >
+
+    provide: () => Promise<void>
+    request: (options: RequestOptions) => Promise<void>
+  }
+
+  /**
+   * Manage the account.
+   */
+  account: {
+    isConnected(): Promise<
+      { connected: true } | { connected: false, reason: string }
+    >
+
+    login: (formValues: Record<string, string>) => Promise<
+      { ok: true } | { ok: false, reason: string }
+    >
+
+    register: (formValues: Record<string, string>) => Promise<
+      { ok: true } | { ok: false, reason: string }
+    >
+    canRegister: (formValues: Record<string, string>) => Promise<
+      { ok: true } | { ok: false, reason: string }
+    >
+  }
+
   /**
    * Components used to build this program.
    */
@@ -69,17 +100,7 @@ export type Program<M extends Mode> = {
    * Various file system methods.
    */
   fileSystem: FileSystemShortHands
-
-  /**
-   * Is the program "connected"?
-   *
-   * This essential means having all the required UCANs in possession.
-   * More specifically having the capabilities to query and/or mutate the
-   * file system based on what is configured, and if mutation is considered,
-   * to update the data root associated with the file system.
-   */
-  isConnected: () => Promise<{ connected: true } | { connected: false, reason: string }>
-} & ShortHands & Events.ListenTo<Events.All> & ProgramPropertiesForMode<M>
+} & ShortHands & Events.ListenTo<Events.All>
 
 
 export enum ProgramError {
@@ -88,7 +109,7 @@ export enum ProgramError {
 }
 
 
-export type ShortHands = {} // TODO: Add back DIDs? `agentDID` doesn't really make sense anymore.
+export type ShortHands = {}
 
 
 export type FileSystemShortHands = {
@@ -98,73 +119,6 @@ export type FileSystemShortHands = {
    * Load the file system associated with the account system.
    */
   load: () => Promise<FileSystem>
-}
-
-
-export type AuthorityMode = {
-  access: {
-    provide: () => Promise<void>
-  }
-} & AuthenticationStrategy
-
-
-export type DelegateMode = {
-  access: {
-    request: (options: RequestOptions) => Promise<void>
-  }
-}
-
-
-export type AuthenticationStrategy = {
-  login: () => Promise<void>
-
-  register: (formValues: Record<string, string>) => Promise<
-    { ok: true } | { ok: false, reason: string }
-  >
-  canRegister: (formValues: Record<string, string>) => Promise<
-    { ok: true } | { ok: false, reason: string }
-  >
-}
-
-
-export type ProgramPropertiesForMode<M extends Mode>
-  = M extends "authority" ? AuthorityMode
-  : M extends "delegate" ? DelegateMode
-  : never
-
-
-export type AccessControl = {
-  request: AccessQuery.Query[]
-}
-
-
-export type DelegateMode = {
-  access: {
-    request: (options: RequestOptions) => Promise<void>
-  }
-}
-
-
-export type AuthenticationStrategy = {
-  login: () => Promise<void>
-
-  register: (formValues: Record<string, string>) => Promise<
-    { ok: true } | { ok: false, reason: string }
-  >
-  canRegister: (formValues: Record<string, string>) => Promise<
-    { ok: true } | { ok: false, reason: string }
-  >
-}
-
-
-export type ProgramPropertiesForMode<M extends Mode>
-  = M extends "authority" ? AuthorityMode
-  : M extends "delegate" ? DelegateMode
-  : never
-
-
-export type AccessControl = {
-  request: AccessQuery.Query[]
 }
 
 
@@ -188,10 +142,7 @@ export type AccessControl = {
  * while `assemble` does not. Use the latter in case you want to bypass the indexedDB check,
  * which might not be needed, or available, in certain environments or using certain components.
  */
-export async function program(settings: Partial<Components> & Configuration, mode: "authority"): Promise<Program<"authority">>
-export async function program(settings: Partial<Components> & Configuration, mode: "delegate", accessControl: AccessControl): Promise<Program<"delegate">>
-export async function program(settings: Partial<Components> & Configuration, mode: "authority" | "delegate", accessControl?: AccessControl): Promise<Program<Mode>>
-export async function program(settings: Partial<Components> & Configuration, mode: "authority" | "delegate", accessControl?: AccessControl): Promise<Program<Mode>> {
+export async function program(settings: Partial<Components> & Configuration): Promise<Program> {
   if (!settings) throw new Error("Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter")
 
   // Check if the browser and context is supported
@@ -200,7 +151,7 @@ export async function program(settings: Partial<Components> & Configuration, mod
 
   // Initialise components & assemble program
   const components = await gatherComponents(settings)
-  return assemble(extractConfig(settings), components, mode, accessControl)
+  return assemble(extractConfig(settings), components)
 }
 
 
@@ -228,10 +179,7 @@ export async function program(settings: Partial<Components> & Configuration, mod
  *
  * See the `program.fileSystem.load` function if you want to load the user's file system yourself.
  */
-export async function assemble(config: Configuration, components: Components, mode: "authority"): Promise<Program<"authority">>
-export async function assemble(config: Configuration, components: Components, mode: "delegate", accessControl: AccessControl): Promise<Program<"delegate">>
-export async function assemble(config: Configuration, components: Components, mode: "authority" | "delegate", accessControl?: AccessControl): Promise<Program<Mode>>
-export async function assemble(config: Configuration, components: Components, mode: "authority" | "delegate", accessControl?: AccessControl): Promise<Program<Mode>> {
+export async function assemble(config: Configuration, components: Components): Promise<Program> {
   const { account, agent, identifier } = components
 
   // Event emitters
@@ -242,34 +190,38 @@ export async function assemble(config: Configuration, components: Components, mo
   const cidLog = await CIDLog.create({ storage: components.storage })
   const ucanRepository = await UcanRepository.create({ storage: components.storage })
 
-  // Mode implementation
-  let modeImplementation
+  // Access
+  const access = {
+    // TODO: Needs to check if it can update the data root IF write access has been requested too.
+    isGranted: async () => ({ granted: false, reason: "Not implemented just yet" }),
 
-  switch (mode) {
-    case "authority":
-      const a: AuthorityMode = {
-        login: Auth.login({ agent, identifier }),
-        register: Auth.register({ account, agent, identifier, ucanRepository }),
+    // TODO
+    provide: async () => { },
+    request: async () => { },
+  }
 
-        canRegister: account.canRegister,
+  // Account
+  async function isConnected(): Promise<
+    { connected: true } | { connected: false, reason: string }
+  > {
+    const ucanDictionary = { ...ucanRepository.collection }
 
-        access: {
-          provide: async () => { } // TODO
-        }
-      }
+    // Audience is always the identifier here,
+    // the account system should delegate to the identifier (not the agent)
+    const audience = await components.identifier.did()
+    const identifierUcans = ucanRepository.audienceUcans(audience)
 
-      modeImplementation = a
-      break;
+    // TODO: Do we need something like `account.hasSufficientCapabilities()` here?
+    //       Something that would check if all needed capabilities are present?
+    //
+    //       Also need to check if we can write to the entire file system.
+    const canUpdateDataRoot = await components.account.canUpdateDataRoot(identifierUcans, ucanDictionary)
+    if (!canUpdateDataRoot) return {
+      connected: false,
+      reason: "Program does not have the ability to update the data root, but is expected to."
+    }
 
-    case "delegate":
-      const d: DelegateMode = {
-        access: {
-          request: async () => { } // TODO
-        }
-      }
-
-      modeImplementation = d
-      break;
+    return { connected: true }
   }
 
   // Shorthands
@@ -278,76 +230,24 @@ export async function assemble(config: Configuration, components: Components, mo
     load: () => loadFileSystem({ config, cidLog, ucanRepository, dependencies: components, eventEmitter: fsEvents }),
   }
 
-  // Is connected?
-  async function isConnected(): Promise<{ connected: true } | { connected: false, reason: string }> {
-    const ucanDictionary = { ...ucanRepository.collection }
-
-    // Audience is always the identifier here,
-    // the account system should delegate to the identifier (not the agent)
-    const audience = await components.identifier.did()
-    const identifierUcans = ucanRepository.audienceUcans(audience)
-
-    // TODO: This could be done better, waiting on rs-ucan integration
-    const capabilities = identifierUcans.flatMap(
-      ucan => UcanChain.listCapabilities(ucan, ucanRepository.collection)
-    )
-
-    // 👀
-    switch (mode) {
-      case "authority":
-        // TODO: Do we need something like `account.hasSufficientCapabilities()` here?
-        //       Something that would check if all needed capabilities are present?
-        //
-        //       Also need to check if we can write to the entire file system.
-        const canUpdateDataRoot = await components.account.canUpdateDataRoot(identifierUcans, ucanDictionary)
-        if (!canUpdateDataRoot) return {
-          connected: false,
-          reason: "Program does not have the ability to update the data root, but is expected to."
-        }
-
-        return { connected: true }
-
-      case "delegate":
-        const anyAccountQueries = (accessControl?.request || []).some(
-          qry => qry.query === "account"
-        )
-
-        const needsWriteAccess = (accessControl?.request || []).reduce(
-          (acc, qry) => {
-            if (acc === true) return true
-            if (qry.query === "fileSystem") return AccessQuery.needsWriteAccess(qry)
-            return false
-          },
-          false
-        )
-
-        if (anyAccountQueries && needsWriteAccess) {
-          const canUpdateDataRoot = await components.account.canUpdateDataRoot(identifierUcans, ucanDictionary)
-          if (!canUpdateDataRoot) return {
-            connected: false,
-            reason: "Program does not have the ability to update the data root, but is expected to."
-          }
-        }
-
-        // TODO: Check if our received WNFS capabilities fulfil our access query
-
-        return { connected: true }
-
-      default:
-        throw new Error("Invalid program mode")
-    }
-  }
-
   // Create `Program`
   const program = {
-    ...modeImplementation,
     ...Events.listenTo(allEvents),
 
     configuration: { ...config },
     fileSystem: { ...fileSystemShortHands },
 
     components,
-    isConnected,
+
+    access,
+    account: {
+      login: Auth.login({ agent, identifier }),
+      register: Auth.register({ account, agent, identifier, ucanRepository }),
+
+      canRegister: account.canRegister,
+
+      isConnected,
+    }
   }
 
   // Debug mode:
@@ -411,7 +311,7 @@ export const compositions = {
 }
 
 
-export async function gatherComponents<M extends Mode>(setup: Partial<Components> & Configuration): Promise<Components> {
+export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
   const config = extractConfig(setup)
 
   const dns = setup.dns || defaultDNSComponent()

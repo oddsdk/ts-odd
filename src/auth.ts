@@ -13,13 +13,16 @@ export const login = (
     agent: Agent.Implementation
     identifier: Identifier.Implementation
   }
-) => async () => {
-  // Do delegation from identifier to agent
-  const agentDelegation = await identifierToAgentDelegation({ agent, identifier })
+) => async (formValues: Record<string, string>): Promise<
+  { ok: true } | { ok: false, reason: string }
+> => {
+    // Do delegation from identifier to agent
+    const agentDelegation = await identifierToAgentDelegation({ agent, identifier })
 
-  // TODO: Need to do device linking in the case of using web crypto as the identifier.
-  //       We also need to transfer UCANs with capabilities.
-}
+    // TODO: Need to do device linking in the case of using web crypto as the identifier.
+    //       We also need to transfer UCANs with capabilities.
+    return { ok: false, reason: "Not implemented just yet" }
+  }
 
 
 export const register = (
