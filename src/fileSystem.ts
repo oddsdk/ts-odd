@@ -9,11 +9,12 @@ import * as PrivateRef from "./fs/private-ref.js"
 import * as Ucan from "./ucan/index.js"
 
 import { Configuration } from "./configuration.js"
-import { Dependencies } from "./fs/types.js"
+import { Dependencies, PrivateReference } from "./fs/types.js"
 import { FileSystem } from "./fs/class.js"
 import { Maybe, isString } from "./common/index.js"
 import { fsReadUcans } from "./ucan/lookup.js"
 import { listFacts } from "./ucan/chain.js"
+import { Agent, Identifier } from "./components.js"
 
 
 /**
@@ -120,7 +121,28 @@ export async function loadFileSystem({ cidLog, config, dependencies, eventEmitte
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)
 
   // Self delegate file system UCAN
-  const fileSystemDelegation = await Ucan.build({
+  const fileSystemDelegation = await selfDelegateCapabilities(agent, identifier, maybeMount ? [ maybeMount ] : [])
+  await ucanRepository.add([ fileSystemDelegation ])
+
+  // Fin
+  return fs
+}
+
+
+/**
+ * Create a UCAN that self-delegates the file system capabilities.
+ */
+export async function selfDelegateCapabilities(
+  agent: Agent.Implementation,
+  identifier: Identifier.Implementation,
+  mounts: {
+    path: Path.Distinctive<Path.Segments>
+    capsuleRef: PrivateReference
+  }[]
+) {
+  const identifierDID = await identifier.did()
+
+  return Ucan.build({
     dependencies: { agent },
 
     // from & to
@@ -139,19 +161,12 @@ export async function loadFileSystem({ cidLog, config, dependencies, eventEmitte
       },
     ],
 
-    facts: maybeMount
-      ? [
-        {
-          [ `wnfs://${identifierDID}/private/${Path.toPosix(maybeMount.path)}` ]: (
-            await PrivateRef.encrypt(maybeMount.capsuleRef, agent)
-          )
-        }
-      ]
-      : [],
+    facts: await Promise.all(mounts.map(async mount => (
+      {
+        [ `wnfs://${identifierDID}/private/${Path.toPosix(mount.path)}` ]: (
+          await PrivateRef.encrypt(mount.capsuleRef, agent)
+        )
+      }
+    )))
   })
-
-  await ucanRepository.add([ fileSystemDelegation ])
-
-  // Fin
-  return fs
 }

@@ -6,18 +6,22 @@ import expect from "expect"
 import * as Events from "../events.js"
 import * as Path from "../path/index.js"
 
+import * as CIDLog from "../repositories/cid-log.js"
+import * as UcanRepository from "../repositories/ucans.js"
+
 import { CID } from "../common/cid.js"
 import { FileSystem } from "./class.js"
-import { account, depot, identifier, manners } from "../../tests/helpers/components.js"
+import { account, agent, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
 import { createEmitter } from "../events.js"
+import { selfDelegateCapabilities } from "../fileSystem.js"
 
 
-describe("File System Class", () => {
+describe("File System Class", async () => {
 
   let fs: FileSystem
 
   const fsOpts = {
-    dependencies: { account, depot, identifier, manners },
+    dependencies: { account, agent, depot, identifier, manners },
     eventEmitter: createEmitter<Events.FileSystem>(),
     settleTimeBeforePublish: 250,
   }
@@ -27,10 +31,17 @@ describe("File System Class", () => {
   // -----
 
   beforeEach(async () => {
-    fs = await FileSystem.empty(fsOpts)
+    const cidLog = await CIDLog.create({ storage })
+    const ucanRepository = await UcanRepository.create({ storage })
 
-    await fs.mountPrivateNodes([
+    fs = await FileSystem.empty({ ...fsOpts, cidLog, ucanRepository })
+
+    const mounts = await fs.mountPrivateNodes([
       { path: Path.root() }
+    ])
+
+    await ucanRepository.add([
+      await selfDelegateCapabilities(agent, identifier, mounts)
     ])
   })
 
@@ -54,7 +65,10 @@ describe("File System Class", () => {
       "public"
     )
 
-    const loadedFs = await FileSystem.fromCID(dataRoot, fsOpts)
+    const cidLog = await CIDLog.create({ storage })
+    const ucanRepository = await UcanRepository.create({ storage })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, ucanRepository })
+
     await loadedFs.mountPrivateNodes([
       { path: Path.removePartition(privatePath), capsuleRef }
     ])

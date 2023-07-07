@@ -351,8 +351,10 @@ export function defaultAccountComponent(
 export function defaultAgentComponent(
   config: Configuration
 ): Promise<Agent.Implementation> {
+  const store = localforage.createInstance({ name: `${namespace(config)}/agent` })
+
   return WebCryptoAgent.implementation({
-    storeName: `${namespace(config)}/agent`,
+    store
   })
 }
 
@@ -377,8 +379,10 @@ export function defaultDNSComponent(): DNS.Implementation {
 export function defaultIdentifierComponent(
   config: Configuration
 ): Promise<Identifier.Implementation> {
+  const store = localforage.createInstance({ name: `${namespace(config)}/identifier` })
+
   return WebCryptoIdentifier.implementation({
-    storeName: `${namespace(config)}/identifier`,
+    store
   })
 }
 

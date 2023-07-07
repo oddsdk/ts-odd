@@ -12,6 +12,12 @@ import { isCryptoKey } from "./type-checks.js"
 export type KeyUse = "exchange" | "sign"
 
 
+export type Store = {
+  getItem: (name: string) => Promise<CryptoKeyPair | CryptoKey | null>
+  setItem: (name: string, key: CryptoKeyPair | CryptoKey) => Promise<unknown>
+}
+
+
 export type VerifyArgs = {
   message: Uint8Array
   publicKey: Uint8Array
@@ -78,14 +84,14 @@ export function importRsaKey(key: Uint8Array, alg: RSA_ALG, keyUsages: KeyUsage[
 }
 
 
-export async function rsaDecrypt(data: Uint8Array, publicKey: CryptoKey | Uint8Array) {
+export async function rsaDecrypt(data: Uint8Array, privateKey: CryptoKey | Uint8Array) {
   const arrayBuffer = await webcrypto.subtle.decrypt(
     {
       name: RSA_EXCHANGE_ALGORITHM
     },
-    isCryptoKey(publicKey)
-      ? publicKey
-      : await importRsaKey(publicKey, RSA_EXCHANGE_ALGORITHM, [ "decrypt" ])
+    isCryptoKey(privateKey)
+      ? privateKey
+      : await importRsaKey(privateKey, RSA_EXCHANGE_ALGORITHM, [ "decrypt" ])
     ,
     data
   )
@@ -94,14 +100,21 @@ export async function rsaDecrypt(data: Uint8Array, publicKey: CryptoKey | Uint8A
 }
 
 
-export async function rsaEncrypt(data: Uint8Array, privateKey: CryptoKey | Uint8Array) {
-  const arrayBuffer = await webcrypto.subtle.decrypt(
+export async function rsaEncrypt(data: Uint8Array, publicKey: CryptoKey | Uint8Array) {
+  console.log("rsaEncrypt", publicKey)
+  // @ts-ignore
+  isCryptoKey(publicKey) ? console.log("algorithm.hash", publicKey.algorithm.hash) : null;
+  // @ts-ignore
+  isCryptoKey(publicKey) ? console.log("algorithm.publicExponent", publicKey.algorithm.publicExponent) : null;
+  console.log("isCryptoKey", isCryptoKey(publicKey))
+
+  const arrayBuffer = await webcrypto.subtle.encrypt(
     {
       name: RSA_EXCHANGE_ALGORITHM
     },
-    isCryptoKey(privateKey)
-      ? privateKey
-      : await importRsaKey(privateKey, RSA_EXCHANGE_ALGORITHM, [ "encrypt" ])
+    isCryptoKey(publicKey)
+      ? publicKey
+      : await importRsaKey(publicKey, RSA_EXCHANGE_ALGORITHM, [ "encrypt" ])
     ,
     data
   )
