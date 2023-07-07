@@ -1,8 +1,9 @@
 import { DIDKey } from "iso-did/key"
-import { webcrypto } from "one-webcrypto"
 import localforage from "localforage"
 
 import * as WebCryptoAPIAgent from "../../agent/implementation/web-crypto-api.js"
+import * as crypto from "../../../common/crypto.js"
+
 import { Implementation } from "../implementation.js"
 import { rsa } from "../../../common/crypto.js"
 
@@ -11,11 +12,8 @@ import { rsa } from "../../../common/crypto.js"
 
 
 export async function implementation(
-  { storeName }: { storeName: string }
+  { store }: { store: crypto.Store }
 ): Promise<Implementation> {
-  const store = localforage.createInstance({ name: storeName })
-
-  // Ensure a signing key (this will be unique if the store name is unique)
   const signingKey = await WebCryptoAPIAgent.ensureKey(
     store,
     "signing-key",
@@ -24,7 +22,6 @@ export async function implementation(
 
   const exportedKey = await rsa.exportPublicKey(signingKey)
 
-  // Implementation
   return {
     did: async () => DIDKey.fromPublicKey("RSA", exportedKey).toString(),
     sign: async data => WebCryptoAPIAgent.sign(data, signingKey),

@@ -578,7 +578,6 @@ export class FileSystem {
       this.eventEmitter.emit("fileSystem:publish", { dataRoot })
       status = { persisted: true, localOnly: false }
     } else {
-      // TODO: Add reason
       status = { persisted: false, reason: "DATA_ROOT_UPDATE_FAILED" }
     }
 
