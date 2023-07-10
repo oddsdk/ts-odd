@@ -48,7 +48,7 @@ export function lookupFsWriteUcan(
   return lookupFsUcan(
     fsWriteUcans(collection),
     pathSoFar => ucan => {
-      const hierPart = `${fileSystemDID}/${Path.toPosix(pathSoFar)}`
+      const hierPart = `//${fileSystemDID}/${Path.toPosix(pathSoFar)}`
 
       return !!ucan.payload.att.find(cap => {
         return cap.with.hierPart === hierPart && (cap.can === "*" || cap.can.namespace === "fs")

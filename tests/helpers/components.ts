@@ -133,7 +133,7 @@ const account: Account.Implementation = {
   },
 
   did: async (identifierUcans: Ucan[], ucanDictionary: UcanDictionary) => {
-    return "did:identifier"
+    return identifier.did()
   },
 
   provideUCANs: () => {

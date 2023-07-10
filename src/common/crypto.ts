@@ -101,13 +101,6 @@ export async function rsaDecrypt(data: Uint8Array, privateKey: CryptoKey | Uint8
 
 
 export async function rsaEncrypt(data: Uint8Array, publicKey: CryptoKey | Uint8Array) {
-  console.log("rsaEncrypt", publicKey)
-  // @ts-ignore
-  isCryptoKey(publicKey) ? console.log("algorithm.hash", publicKey.algorithm.hash) : null;
-  // @ts-ignore
-  isCryptoKey(publicKey) ? console.log("algorithm.publicExponent", publicKey.algorithm.publicExponent) : null;
-  console.log("isCryptoKey", isCryptoKey(publicKey))
-
   const arrayBuffer = await webcrypto.subtle.encrypt(
     {
       name: RSA_EXCHANGE_ALGORITHM
