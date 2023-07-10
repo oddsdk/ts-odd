@@ -73,9 +73,9 @@ export async function register(
   }
 
   const token = Ucan.encode(await Ucan.build({
-    dependencies,
-
     audience: await Fission.did(endpoints, dependencies.dns),
+    issuer: await Ucan.keyPair(dependencies.agent),
+
     proofs: [ Ucan.encode(identifierUcan) ]
   }))
 
@@ -93,9 +93,8 @@ export async function register(
     ucans: [
       // TODO: This should be done by the server
       await Ucan.build({
-        dependencies,
-
         audience: identifierUcan.payload.iss,
+        issuer: await Ucan.keyPair(dependencies.agent),
         proofs: [ Ucan.encode(identifierUcan) ],
 
         facts: [
@@ -160,10 +159,10 @@ export async function updateDataRoot(
   proofs: Ucan.Ucan[]
 ): Promise<{ ok: true } | { ok: false, reason: string }> {
   const ucan = await Ucan.build({
-    dependencies,
-
     // Delegate to self
     audience: await AgentDID.signing(dependencies.agent),
+    issuer: await Ucan.keyPair(dependencies.agent),
+
     capabilities: [ DELEGATE_ALL_PROOFS ],
     proofs: await Promise.all(
       proofs.map(prf => Ucan.cid(prf).then(c => c.toString()))

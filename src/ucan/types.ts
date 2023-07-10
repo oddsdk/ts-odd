@@ -8,7 +8,7 @@ export type Facts = Record<string, unknown>
 export type BuildParams = {
   // from/to
   audience: string
-  issuer?: Keypair
+  issuer: Keypair
 
   // capabilities
   capabilities?: Array<Ucans.Capability>

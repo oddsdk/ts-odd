@@ -32,14 +32,13 @@ export * from "./types.js"
 
 
 export async function build(
-  { dependencies, ...params }: { dependencies: { agent: Agent.Implementation } } & BuildParams
+  params: BuildParams
 ): Promise<Ucan> {
   return Ucans.build(
-    await plugins(dependencies.agent)
-  )({
-    ...params,
-    issuer: params.issuer || await keyPair(dependencies.agent)
-  })
+    await plugins()
+  )(
+    params
+  )
 }
 
 
@@ -73,7 +72,7 @@ export function isSelfSigned(ucan: Ucan): boolean {
 
 
 export async function isValid(agent: Agent.Implementation, ucan: Ucan): Promise<boolean> {
-  const plugs = await plugins(agent)
+  const plugs = await plugins()
   const jwtAlg = await agent.ucanAlgorithm()
 
   const signature = Uint8arrays.fromString(ucan.signature, "base64url")
@@ -97,7 +96,7 @@ export async function keyPair(agent: Agent.Implementation): Promise<Keypair> {
 }
 
 
-export async function plugins(agent: Agent.Implementation): Promise<Ucans.Plugins> {
+export async function plugins(): Promise<Ucans.Plugins> {
   return new Plugins([], {})
 }
 
