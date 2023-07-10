@@ -63,17 +63,12 @@ async function identifierToAgentDelegation({ agent, identifier }: {
   const identifierDID = await identifier.did()
 
   return Ucan.build({
-    dependencies: { agent },
-
-    // from & to
     issuer: {
       did: () => identifierDID,
       jwtAlg: await identifier.ucanAlgorithm(),
       sign: identifier.sign,
     },
     audience: await AgentDID.signing(agent),
-
-    // capabilities
     capabilities: [
       // Powerbox concept:
       // Every capability given to the identifier may be used by the agent.

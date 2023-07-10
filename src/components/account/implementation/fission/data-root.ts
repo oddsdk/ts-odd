@@ -82,9 +82,9 @@ export async function update(
   return fetchWithRetry(Fission.apiUrl(endpoints, `user/data/${cid}`), {
     headers: async () => {
       const jwt = Ucan.encode(await Ucan.build({
-        dependencies: dependencies,
-
         audience: await Fission.did(endpoints, dependencies.dns),
+        issuer: await Ucan.keyPair(dependencies.agent),
+
         proofs: [ (await Ucan.cid(proof)).toString() ],
 
         capabilities: [ DELEGATE_ALL_PROOFS ]

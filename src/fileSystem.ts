@@ -143,8 +143,6 @@ export async function selfDelegateCapabilities(
   const identifierDID = await identifier.did()
 
   return Ucan.build({
-    dependencies: { agent },
-
     // from & to
     issuer: {
       did: () => identifierDID,
