@@ -1,13 +1,19 @@
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
 import type { Repo as UcanRepo } from "../repositories/ucans.js"
 
+import * as Account from "../components/account/implementation.js"
+import * as Agent from "../components/agent/implementation.js"
+import * as Depot from "../components/depot/implementation.js"
+import * as Identifier from "../components/identifier/implementation.js"
+import * as Manners from "../components/manners/implementation.js"
+
 import * as Events from "../events.js"
 import * as Path from "../path/index.js"
 
 import { CID } from "../common/cid.js"
 import { EventEmitter } from "../events.js"
 import { Partition, Partitioned } from "../path/index.js"
-import { Account, Agent, Depot, Identifier, Manners } from "../components.js"
+import { PrivateReference } from "./types/private-ref.js"
 
 
 export type AnySupportedDataType<V>
@@ -31,12 +37,12 @@ export type DataForType<D extends DataType, V = unknown>
   : D extends "utf8" ? string
   : never
 
-export type Dependencies = {
+export type Dependencies<FS> = {
   account: Account.Implementation
   agent: Agent.Implementation
   depot: Depot.Implementation
   identifier: Identifier.Implementation
-  manners: Manners.Implementation
+  manners: Manners.Implementation<FS>
 }
 
 export type DirectoryItem = {
@@ -49,9 +55,9 @@ export type DirectoryItemWithKind = DirectoryItem & {
   path: Path.Distinctive<Path.PartitionedNonEmpty<Partition>>
 }
 
-export type FileSystemOptions = {
+export type FileSystemOptions<FS> = {
   cidLog: CIDLog
-  dependencies: Dependencies
+  dependencies: Dependencies<FS>
   eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   settleTimeBeforePublish?: number
@@ -86,12 +92,6 @@ export type PublicMutationResult = DataRootChange & {
 
 export type PrivateMutationResult = DataRootChange & {
   capsuleRef: PrivateReference
-}
-
-export type PrivateReference = {
-  label: Uint8Array
-  temporalKey: Uint8Array
-  contentCID: CID
 }
 
 export type TransactionResult = {

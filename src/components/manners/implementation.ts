@@ -4,9 +4,7 @@ import type { Configuration } from "../../configuration.js"
 
 import * as Depot from "../../components/depot/implementation.js"
 import * as Path from "../../path/index.js"
-
-import { FileSystem } from "../../fs/class.js"
-import { PrivateReference } from "../../fs/types.js"
+import { PrivateReference } from "../../fs/types/private-ref.js"
 
 
 export type ImplementationOptions = {
@@ -14,7 +12,7 @@ export type ImplementationOptions = {
 }
 
 
-export type Implementation = {
+export type Implementation<FS> = {
   log: (...args: unknown[]) => void
   warn: (...args: unknown[]) => void
 
@@ -26,8 +24,8 @@ export type Implementation = {
      * Various file system hooks.
      */
     hooks: {
-      afterLoadExisting: (fs: FileSystem, depot: Depot.Implementation) => Promise<void>
-      afterLoadNew: (fs: FileSystem, depot: Depot.Implementation) => Promise<null | {
+      afterLoadExisting: (fs: FS, depot: Depot.Implementation) => Promise<void>
+      afterLoadNew: (fs: FS, depot: Depot.Implementation) => Promise<null | {
         path: Path.Distinctive<Path.Segments>
         capsuleRef: PrivateReference
       }>

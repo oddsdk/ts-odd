@@ -19,7 +19,8 @@ import { Ucan } from "@ucans/core"
 import { sha256 } from "multiformats/hashes/sha2"
 
 import * as AgentDID from "../agent/did.js"
-import { Agent } from "../components.js"
+import * as Agent from "../components/agent/implementation.js"
+
 import { CID } from "../common/cid.js"
 import { BuildParams, Keypair } from "./types.js"
 

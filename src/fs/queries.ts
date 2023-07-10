@@ -18,22 +18,22 @@ import { findPrivateNode } from "./mounts.js"
 // PUBLIC
 
 
-export type PublicParams = {
+export type PublicParams<FS> = {
   blockStore: BlockStore
-  dependencies: Dependencies
+  dependencies: Dependencies<FS>
   pathSegments: Path.Segments
   rootTree: RootTree
 }
 
 
-export type Public<T> = (params: PublicParams) => Promise<T>
-export type PublicContext = Omit<PublicParams, "pathSegments">
+export type Public<T> = <FS>(params: PublicParams<FS>) => Promise<T>
+export type PublicContext<FS> = Omit<PublicParams<FS>, "pathSegments">
 
 
-export async function publicQuery<T>(
+export async function publicQuery<FS, T>(
   path: Path.Distinctive<Partitioned<Path.Public>>,
   qry: Public<T>,
-  context: PublicContext
+  context: PublicContext<FS>
 ): Promise<T> {
   return qry({
     blockStore: context.blockStore,
@@ -46,7 +46,7 @@ export async function publicQuery<T>(
 
 export const publicExists =
   () =>
-    async (params: PublicParams): Promise<boolean> => {
+    async <FS>(params: PublicParams<FS>): Promise<boolean> => {
       const result = await params.rootTree.publicRoot.getNode(
         params.pathSegments,
         params.blockStore
@@ -58,7 +58,7 @@ export const publicExists =
 
 export const publicListDirectory =
   () =>
-    async (params: PublicParams): Promise<DirectoryItem[]> => {
+    async <FS>(params: PublicParams<FS>): Promise<DirectoryItem[]> => {
       return params.rootTree.publicRoot.ls(
         params.pathSegments,
         params.blockStore
@@ -68,7 +68,7 @@ export const publicListDirectory =
 
 export const publicListDirectoryWithKind =
   () =>
-    async (params: PublicParams): Promise<DirectoryItemWithKind[]> => {
+    async <FS>(params: PublicParams<FS>): Promise<DirectoryItemWithKind[]> => {
       const dir: PublicDirectory = params.pathSegments.length === 0
         ? params.rootTree.publicRoot
         : await params.rootTree.publicRoot.getNode(params.pathSegments, params.blockStore).then(a => a.asDir())
@@ -94,7 +94,7 @@ export const publicListDirectoryWithKind =
 
 export const publicRead =
   (options?: { offset: number, length: number }) =>
-    async (params: PublicParams): Promise<Uint8Array> => {
+    async <FS>(params: PublicParams<FS>): Promise<Uint8Array> => {
       const result = await params.rootTree.publicRoot.read(
         params.pathSegments,
         params.blockStore
@@ -106,7 +106,7 @@ export const publicRead =
 
 export const publicReadFromCID =
   (cid: CID, options?: { offset: number, length: number }) =>
-    async (context: PublicContext): Promise<Uint8Array> => {
+    async <FS>(context: PublicContext<FS>): Promise<Uint8Array> => {
       const offset = options?.offset
       const length = options?.length
 

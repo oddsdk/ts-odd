@@ -1,9 +1,10 @@
 import * as Uint8arrays from "uint8arrays"
 import { PrivateRef } from "wnfs"
 
+import * as Agent from "../components/agent/implementation.js"
+
 import { CID, decodeCID, encodeCID } from "../common/cid.js"
-import { PrivateReference } from "./types.js"
-import { Agent } from "../components.js"
+import { PrivateReference } from "./types/private-ref.js"
 
 
 // 🛠️

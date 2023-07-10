@@ -6,6 +6,7 @@ import * as DNS from "./components/dns/implementation.js"
 import * as Identifier from "./components/identifier/implementation.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Storage from "./components/storage/implementation.js"
+import { FileSystem } from "./fs/class.js"
 
 
 // COMPONENTS
@@ -18,7 +19,7 @@ export type Components = {
   depot: Depot.Implementation
   dns: DNS.Implementation
   identifier: Identifier.Implementation
-  manners: Manners.Implementation
+  manners: Manners.Implementation<FileSystem>
   storage: Storage.Implementation
 }
 

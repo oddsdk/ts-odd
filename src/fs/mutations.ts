@@ -13,21 +13,21 @@ import { searchLatest } from "./common.js"
 // PUBLIC
 
 
-export type PublicParams = {
+export type PublicParams<FS> = {
   blockStore: BlockStore
-  dependencies: Dependencies
+  dependencies: Dependencies<FS>
   pathSegments: Path.Segments
   rootTree: RootTree
 }
 
 
 export type Public =
-  (params: PublicParams) => Promise<WnfsPublicResult>
+  <FS>(params: PublicParams<FS>) => Promise<WnfsPublicResult>
 
 
 export const publicCreateDirectory =
   () =>
-    async (params: PublicParams): Promise<WnfsPublicResult> => {
+    async <FS>(params: PublicParams<FS>): Promise<WnfsPublicResult> => {
       return params.rootTree.publicRoot.mkdir(
         params.pathSegments,
         new Date(),
@@ -38,7 +38,7 @@ export const publicCreateDirectory =
 
 export const publicRemove =
   () =>
-    async (params: PublicParams): Promise<WnfsPublicResult> => {
+    async <FS>(params: PublicParams<FS>): Promise<WnfsPublicResult> => {
       return params.rootTree.publicRoot.rm(
         params.pathSegments,
         params.blockStore
@@ -48,7 +48,7 @@ export const publicRemove =
 
 export const publicWrite =
   (bytes: Uint8Array) =>
-    async (params: PublicParams): Promise<WnfsPublicResult> => {
+    async <FS>(params: PublicParams<FS>): Promise<WnfsPublicResult> => {
       const importResult = await importUnixFsBytes(bytes, params.dependencies.depot.blockstore)
 
       return params.rootTree.publicRoot.write(

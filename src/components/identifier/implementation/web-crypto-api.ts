@@ -1,11 +1,10 @@
 import { DIDKey } from "iso-did/key"
-import localforage from "localforage"
 
 import * as WebCryptoAPIAgent from "../../agent/implementation/web-crypto-api.js"
 import * as crypto from "../../../common/crypto.js"
 
 import { Implementation } from "../implementation.js"
-import { rsa } from "../../../common/crypto.js"
+import { exportPublicKey } from "../../../common/crypto.js"
 
 
 // 🛳️
@@ -20,7 +19,7 @@ export async function implementation(
     WebCryptoAPIAgent.createSigningKey
   )
 
-  const exportedKey = await rsa.exportPublicKey(signingKey)
+  const exportedKey = await exportPublicKey(signingKey)
 
   return {
     did: async () => DIDKey.fromPublicKey("RSA", exportedKey).toString(),

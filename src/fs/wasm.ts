@@ -10,7 +10,7 @@ import { default as init } from "wnfs"
 let initialized = false
 
 
-export async function load({ manners }: { manners: Manners.Implementation }) {
+export async function load<FS>({ manners }: { manners: Manners.Implementation<FS> }) {
   // MUST be prevented from initializing twice:
   // https://github.com/fission-codes/webnative/issues/429
   // https://github.com/rustwasm/wasm-bindgen/issues/3307

@@ -9,12 +9,13 @@ import * as PrivateRef from "./fs/private-ref.js"
 import * as Ucan from "./ucan/index.js"
 
 import { Configuration } from "./configuration.js"
-import { Dependencies, PrivateReference } from "./fs/types.js"
+import { Dependencies } from "./fs/types.js"
 import { FileSystem } from "./fs/class.js"
 import { Maybe, isString } from "./common/index.js"
 import { fsReadUcans } from "./ucan/lookup.js"
 import { listFacts } from "./ucan/chain.js"
 import { Agent, Identifier } from "./components.js"
+import { PrivateReference } from "./fs/types/private-ref.js"
 
 
 /**
@@ -23,7 +24,7 @@ import { Agent, Identifier } from "./components.js"
 export async function loadFileSystem({ cidLog, config, dependencies, eventEmitter, ucanRepository }: {
   cidLog: CIDLog
   config: Configuration
-  dependencies: Dependencies
+  dependencies: Dependencies<FileSystem>
   eventEmitter: Events.Emitter<Events.FileSystem>
   ucanRepository: UcanRepo
 }): Promise<FileSystem> {
