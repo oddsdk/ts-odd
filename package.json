@@ -73,7 +73,6 @@
     "test:gh-action": "TEST_ENV=gh-action npm run test",
     "test:imports": "madge src --ts-config tsconfig.json --extensions ts --circular --warning",
     "test:prod": "npm run build && npm run lint && npm run test:imports && npm run test:gh-action",
-    "test:types": "cp -RT tests/types/ lib/ && npm run tsd",
     "test:unit": "mocha --watch --testPathPattern=src/",
     "test:wasm": "WNFS_WASM=true mocha",
     "prepare": "npm run build && npm run docs",

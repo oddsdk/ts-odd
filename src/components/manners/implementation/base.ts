@@ -1,14 +1,13 @@
 import type { Implementation, ImplementationOptions } from "../implementation.js"
 
 import * as Path from "../../../path/index.js"
-
 import { FileSystem } from "../../../fs/class.js"
 
 
 // 🛳
 
 
-export function implementation(opts: ImplementationOptions): Implementation {
+export function implementation(opts: ImplementationOptions): Implementation<FileSystem> {
   return {
     log: opts.configuration.debug ? console.log : () => { },
     warn: opts.configuration.debug ? console.warn : () => { },

@@ -5,8 +5,9 @@ import * as TypeChecks from "../../../../common/type-checks.js"
 import * as Ucan from "../../../../ucan/index.js"
 
 import { decodeCID } from "../../../../common/cid.js"
-import { Dependencies } from "../fission-base.js"
 import { DELEGATE_ALL_PROOFS } from "../../../../ucan/capabilities.js"
+import { Agent, DNS, Manners } from "../../../../components.js"
+import { FileSystem } from "../../../../fs/class.js"
 
 
 /**
@@ -17,7 +18,10 @@ import { DELEGATE_ALL_PROOFS } from "../../../../ucan/capabilities.js"
  */
 export async function lookup(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: {
+    dns: DNS.Implementation
+    manners: Manners.Implementation<FileSystem>
+  },
   username: string
 ): Promise<CID | null> {
   const maybeRoot = await lookupOnFisson(endpoints, dependencies, username)
@@ -40,7 +44,9 @@ export async function lookup(
  */
 export async function lookupOnFisson(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: {
+    manners: Manners.Implementation<FileSystem>
+  },
   username: string
 ): Promise<CID | null> {
   try {
@@ -69,7 +75,11 @@ export async function lookupOnFisson(
  */
 export async function update(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: {
+    agent: Agent.Implementation
+    dns: DNS.Implementation
+    manners: Manners.Implementation<FileSystem>
+  },
   cidInstance: CID,
   proof: Ucan.Ucan
 ): Promise<{ ok: true } | { ok: false, reason: string }> {

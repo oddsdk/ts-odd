@@ -5,10 +5,11 @@ import * as Path from "../path/index.js"
 import * as PrivateRefs from "./private-ref.js"
 import * as Queries from "./queries.js"
 
-import { AnySupportedDataType, DataForType, DataType, Dependencies, DirectoryItem, DirectoryItemWithKind, PrivateReference } from "./types.js"
+import { AnySupportedDataType, DataForType, DataType, Dependencies, DirectoryItem, DirectoryItemWithKind } from "./types.js"
 import { CID } from "../common/cid.js"
 import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
+import { PrivateReference } from "./types/private-ref.js"
 import { Repo as UcanRepo } from "../repositories/ucans.js"
 import { RootTree } from "./rootTree.js"
 import { Rng } from "./rng.js"
@@ -17,17 +18,16 @@ import { dataFromBytes, dataToBytes } from "./data.js"
 import { findPrivateNode, partition as determinePartition } from "./mounts.js"
 import { addOrIncreaseNameNumber, pathSegmentsWithoutPartition, searchLatest } from "./common.js"
 import { throwNoAccess } from "./errors.js"
-import { hasProp } from "../common/type-checks.js"
 import { lookupFsWriteUcan } from "../ucan/lookup.js"
 
 
-export class TransactionContext {
+export class TransactionContext<FS> {
 
   private changedPaths: Set<Path.Distinctive<Partitioned<Partition>>>
 
   constructor(
     private blockStore: BlockStore,
-    private dependencies: Dependencies,
+    private dependencies: Dependencies<FS>,
     private privateNodes: MountedPrivateNodes,
     private rng: Rng,
     private rootTree: RootTree,
@@ -37,7 +37,7 @@ export class TransactionContext {
   }
 
 
-  static async commit(context: TransactionContext): Promise<{
+  static async commit<FS>(context: TransactionContext<FS>): Promise<{
     changedPaths: Array<Path.Distinctive<Partitioned<Partition>>>,
     privateNodes: MountedPrivateNodes,
     proofs: Ucan[],
@@ -573,7 +573,7 @@ export class TransactionContext {
   // ㊙️
 
 
-  publicContext(): Queries.PublicContext {
+  publicContext(): Queries.PublicContext<FS> {
     return {
       blockStore: this.blockStore,
       dependencies: this.dependencies,

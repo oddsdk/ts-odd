@@ -40,6 +40,17 @@ export function randomNumbers(options: { amount: number }): Uint8Array {
 
 
 
+// GENERIC
+
+
+export async function exportPublicKey(key: CryptoKeyPair): Promise<Uint8Array> {
+  return webcrypto.subtle
+    .exportKey("spki", key.publicKey)
+    .then(a => spki.decode(new Uint8Array(a)))
+}
+
+
+
 // RSA
 
 
@@ -55,18 +66,10 @@ export type RSA_ALG = (typeof RSA_EXCHANGE_ALGORITHM | typeof RSA_SIGNING_ALGORI
 export const rsa = {
   decrypt: rsaDecrypt,
   encrypt: rsaEncrypt,
-  exportPublicKey: exportPublicRsaKey,
   generateKey: rsaGenerateKey,
   importKey: importRsaKey,
   sign: rsaSign,
   verify: rsaVerify,
-}
-
-
-export async function exportPublicRsaKey(key: CryptoKeyPair): Promise<Uint8Array> {
-  return webcrypto.subtle
-    .exportKey("spki", key.publicKey)
-    .then(a => spki.decode(new Uint8Array(a)))
 }
 
 

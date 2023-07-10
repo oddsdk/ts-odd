@@ -4,11 +4,11 @@ import { PBLink } from "@ipld/dag-pb"
 import { PublicDirectory, PrivateForest, BlockStore } from "wnfs"
 
 import * as DAG from "../dag/index.js"
+import * as Depot from "../components/depot/implementation.js"
 import * as SemVer from "../common/semver.js"
 import * as Version from "./version.js"
 
 import { CID } from "../common/cid.js"
-import { Depot } from "../components.js"
 import { RootBranch } from "../path/index.js"
 
 

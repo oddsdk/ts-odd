@@ -14,9 +14,10 @@ import { Account, Agent, Channel, Depot, DNS, Identifier, Manners, Storage } fro
 import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
 import { FileSystem } from "./fs/class.js"
-import { loadFileSystem } from "./fileSystem.js"
 import { RequestOptions } from "./components/access/implementation.js"
 import { Ucan } from "./ucan/types.js"
+import { addSampleData } from "./fs/data/sample.js"
+import { loadFileSystem } from "./fileSystem.js"
 
 
 // IMPLEMENTATIONS
@@ -226,7 +227,7 @@ export async function assemble(config: Configuration, components: Components): P
 
   // Shorthands
   const fileSystemShortHands: FileSystemShortHands = {
-    addSampleData: (fs: FileSystem) => FileSystemData.addSampleData(fs),
+    addSampleData: (fs: FileSystem) => addSampleData(fs),
     load: () => loadFileSystem({ config, cidLog, ucanRepository, dependencies: components, eventEmitter: fsEvents }),
   }
 
@@ -343,7 +344,7 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
 
 
 export function defaultAccountComponent(
-  { agent, dns, manners }: { agent: Agent.Implementation, dns: DNS.Implementation, manners: Manners.Implementation },
+  { agent, dns, manners }: { agent: Agent.Implementation, dns: DNS.Implementation, manners: Manners.Implementation<FileSystem> },
 ): Account.Implementation {
   return FissionAccountsProduction.implementation({ agent, dns, manners })
 }
@@ -386,7 +387,7 @@ export function defaultIdentifierComponent(
   })
 }
 
-export function defaultMannersComponent(config: Configuration): Manners.Implementation {
+export function defaultMannersComponent(config: Configuration): Manners.Implementation<FileSystem> {
   return ProperManners.implementation({
     configuration: config
   })

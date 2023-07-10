@@ -9,6 +9,7 @@ import { Query } from "../../../access/query.js"
 import { Agent, DNS, Manners } from "../../../components.js"
 import { listCapabilities, listFacts } from "../../../ucan/chain.js"
 import { rootIssuer } from "../../../ucan/lookup.js"
+import { FileSystem } from "../../../fs/class.js"
 
 
 // 🧩
@@ -17,7 +18,7 @@ import { rootIssuer } from "../../../ucan/lookup.js"
 export type Dependencies = {
   agent: Agent.Implementation
   dns: DNS.Implementation
-  manners: Manners.Implementation
+  manners: Manners.Implementation<FileSystem>
 }
 
 

@@ -14,7 +14,7 @@ import * as RootTree from "./rootTree.js"
 import * as Store from "./store.js"
 import * as WASM from "./wasm.js"
 
-import { AnySupportedDataType, DataForType, DataRootChange, DataType, Dependencies, DirectoryItem, DirectoryItemWithKind, FileSystemOptions, MutationOptions, MutationResult, PartitionDiscovery, PartitionDiscoveryNonEmpty, PrivateMutationResult, PrivateReference, PublicMutationResult, PublishingStatus, TransactionResult } from "./types.js"
+import { AnySupportedDataType, DataForType, DataRootChange, DataType, Dependencies, DirectoryItem, DirectoryItemWithKind, FileSystemOptions, MutationOptions, MutationResult, PartitionDiscovery, PartitionDiscoveryNonEmpty, PrivateMutationResult, PublicMutationResult, PublishingStatus, TransactionResult } from "./types.js"
 import { EventEmitter } from "../events.js"
 import { Partitioned, PartitionedNonEmpty, Partition, Public, Private } from "../path/index.js"
 import { MountedPrivateNode, MountedPrivateNodes } from "./types/internal.js"
@@ -22,6 +22,7 @@ import { TransactionContext } from "./transaction.js"
 import { Ucan } from "../ucan/index.js"
 import { findPrivateNode, partition as determinePartition } from "./mounts.js"
 import { searchLatest } from "./common.js"
+import { PrivateReference } from "./types/private-ref.js"
 
 
 export class FileSystem {
@@ -34,7 +35,7 @@ export class FileSystem {
   constructor(
     private blockStore: BlockStore,
     private cidLog: CIDLog,
-    private dependencies: Dependencies,
+    private dependencies: Dependencies<FileSystem>,
     private eventEmitter: EventEmitter<Events.FileSystem>,
     private localOnly: boolean,
     private settleTimeBeforePublish: number,
@@ -51,7 +52,7 @@ export class FileSystem {
   /**
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
-  static async empty(opts: FileSystemOptions): Promise<FileSystem> {
+  static async empty(opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
     const { cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish, ucanRepository } = opts
 
     await WASM.load({ manners: dependencies.manners })
@@ -74,7 +75,7 @@ export class FileSystem {
   /**
    * Loads an existing file system from a CID.
    */
-  static async fromCID(cid: CID, opts: FileSystemOptions): Promise<FileSystem> {
+  static async fromCID(cid: CID, opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
     const { cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish, ucanRepository } = opts
 
     await WASM.load({ manners: dependencies.manners })
@@ -423,7 +424,7 @@ export class FileSystem {
   // ------------
 
   async transaction(
-    handler: (t: TransactionContext) => Promise<void>,
+    handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     mutationOptions: MutationOptions = {}
   ): Promise<TransactionResult> {
     const context = this.transactionContext()
@@ -471,22 +472,22 @@ export class FileSystem {
 
 
   private async infusedTransaction(
-    handler: (t: TransactionContext) => Promise<void>,
+    handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Public>>,
     mutationOptions?: MutationOptions
   ): Promise<PublicMutationResult>
   private async infusedTransaction(
-    handler: (t: TransactionContext) => Promise<void>,
+    handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Private>>,
     mutationOptions?: MutationOptions
   ): Promise<PrivateMutationResult>
   private async infusedTransaction(
-    handler: (t: TransactionContext) => Promise<void>,
+    handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Partition>>,
     mutationOptions?: MutationOptions
   ): Promise<MutationResult<Partition>>
   private async infusedTransaction(
-    handler: (t: TransactionContext) => Promise<void>,
+    handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Partition>>,
     mutationOptions: MutationOptions = {}
   ): Promise<MutationResult<Partition>> {
@@ -540,7 +541,7 @@ export class FileSystem {
   }
 
 
-  private transactionContext(): TransactionContext {
+  private transactionContext(): TransactionContext<FileSystem> {
     return new TransactionContext(
       this.blockStore,
       this.dependencies,
@@ -611,7 +612,7 @@ export class FileSystem {
   // ㊙️
 
 
-  publicContext(): Queries.PublicContext {
+  publicContext(): Queries.PublicContext<FileSystem> {
     return {
       blockStore: this.blockStore,
       dependencies: this.dependencies,
