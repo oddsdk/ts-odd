@@ -19,8 +19,9 @@ export function decode(ref: Record<string, string>): PrivateReference {
 
 
 export async function decrypt(ref: string, agent: Agent.Implementation): Promise<PrivateReference> {
-  const encrypted = Uint8arrays.fromString(ref, "base64pad")
-  const jsonBytes = await agent.decrypt(encrypted)
+  // TODO:
+  const jsonBytes = Uint8arrays.fromString(ref, "base64pad")
+  // const jsonBytes = await agent.decrypt(encrypted)
   const json = Uint8arrays.toString(jsonBytes, "utf8")
   const encoded = JSON.parse(json)
   return decode(encoded)
@@ -37,11 +38,13 @@ export function encode(ref: PrivateReference): Record<string, string> {
 
 
 export async function encrypt(capsuleRef: PrivateReference, agent: Agent.Implementation): Promise<string> {
+  // TODO:
   const encoded = encode(capsuleRef)
   const json = JSON.stringify(encoded)
   const jsonBytes = Uint8arrays.fromString(json, "utf8")
-  const encrypted = await agent.encrypt(jsonBytes)
-  return Uint8arrays.toString(encrypted, "base64pad")
+  // const encrypted = await agent.encrypt(jsonBytes)
+  // return Uint8arrays.toString(encrypted, "base64pad")
+  return Uint8arrays.toString(jsonBytes, "base64pad")
 }
 
 
