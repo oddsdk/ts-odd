@@ -1,4 +1,4 @@
-import type { Alg, KeyType } from "iso-did/dist/src/common"
+import type { SignatureAlgorithm, KeyType } from "iso-did/types"
 
 
 export type Implementation = {
@@ -36,5 +36,5 @@ export type Implementation = {
   /**
    * The JWT algorithm string for agent UCANs.
    */
-  ucanAlgorithm: () => Promise<Alg>
+  ucanAlgorithm: () => Promise<SignatureAlgorithm>
 }
