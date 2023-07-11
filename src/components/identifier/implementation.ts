@@ -1,3 +1,6 @@
+import * as Channel from "../channel/implementation.js"
+
+
 export type Implementation = {
   /**
    * The DID belonging to the identifier.

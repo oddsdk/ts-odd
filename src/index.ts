@@ -1,21 +1,15 @@
 import localforage from "localforage"
 
 import * as Auth from "./auth.js"
-import * as AccessQuery from "./access/query.js"
+import * as Cabinet from "./repositories/cabinet.js"
 import * as CIDLog from "./repositories/cid-log.js"
-import * as Config from "./configuration.js"
 import * as Events from "./events.js"
-import * as Extension from "./extension/index.js"
-import * as FileSystemData from "./fs/data.js"
-import * as UcanChain from "./ucan/chain.js"
-import * as UcanRepository from "./repositories/ucans.js"
 
 import { Account, Agent, Channel, Depot, DNS, Identifier, Manners, Storage } from "./components.js"
 import { Components } from "./components.js"
 import { Configuration, namespace } from "./configuration.js"
 import { FileSystem } from "./fs/class.js"
 import { RequestOptions } from "./components/access/implementation.js"
-import { Ucan } from "./ucan/types.js"
 import { addSampleData } from "./fs/data/sample.js"
 import { loadFileSystem } from "./fileSystem.js"
 
@@ -189,7 +183,11 @@ export async function assemble(config: Configuration, components: Components): P
 
   // Create repositories
   const cidLog = await CIDLog.create({ storage: components.storage })
-  const ucanRepository = await UcanRepository.create({ storage: components.storage })
+  const cabinet = await Cabinet.create({ storage: components.storage })
+
+  cabinet.events.on("collection:changed", ({ collection }) => {
+    components.manners.cabinet.hooks.inventoryChanged(collection)
+  })
 
   // Access
   const access = {
@@ -205,12 +203,12 @@ export async function assemble(config: Configuration, components: Components): P
   async function isConnected(): Promise<
     { connected: true } | { connected: false, reason: string }
   > {
-    const ucanDictionary = { ...ucanRepository.collection }
+    const ucanDictionary = { ...cabinet.ucansIndexedByCID }
 
     // Audience is always the identifier here,
     // the account system should delegate to the identifier (not the agent)
     const audience = await components.identifier.did()
-    const identifierUcans = ucanRepository.audienceUcans(audience)
+    const identifierUcans = cabinet.audienceUcans(audience)
 
     // TODO: Do we need something like `account.hasSufficientCapabilities()` here?
     //       Something that would check if all needed capabilities are present?
@@ -228,7 +226,7 @@ export async function assemble(config: Configuration, components: Components): P
   // Shorthands
   const fileSystemShortHands: FileSystemShortHands = {
     addSampleData: (fs: FileSystem) => addSampleData(fs),
-    load: () => loadFileSystem({ config, cidLog, ucanRepository, dependencies: components, eventEmitter: fsEvents }),
+    load: () => loadFileSystem({ config, cidLog, cabinet, dependencies: components, eventEmitter: fsEvents }),
   }
 
   // Create `Program`
@@ -242,8 +240,8 @@ export async function assemble(config: Configuration, components: Components): P
 
     access,
     account: {
-      login: Auth.login({ agent, identifier }),
-      register: Auth.register({ account, agent, identifier, ucanRepository }),
+      login: Auth.login({ agent, identifier, cabinet }),
+      register: Auth.register({ account, agent, identifier, cabinet }),
 
       canRegister: account.canRegister,
 

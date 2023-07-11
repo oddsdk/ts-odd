@@ -1,5 +1,5 @@
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
-import type { Repo as UcanRepo } from "../repositories/ucans.js"
+import type { Cabinet } from "../repositories/cabinet.js"
 
 import * as Account from "../components/account/implementation.js"
 import * as Agent from "../components/agent/implementation.js"
@@ -56,12 +56,12 @@ export type DirectoryItemWithKind = DirectoryItem & {
 }
 
 export type FileSystemOptions<FS> = {
+  cabinet: Cabinet
   cidLog: CIDLog
   dependencies: Dependencies<FS>
   eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   settleTimeBeforePublish?: number
-  ucanRepository: UcanRepo
 }
 
 export type MutationOptions = {

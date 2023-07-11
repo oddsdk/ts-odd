@@ -12,8 +12,12 @@ export function implementation(opts: ImplementationOptions): Implementation<File
     log: opts.configuration.debug ? console.log : () => { },
     warn: opts.configuration.debug ? console.warn : () => { },
 
-    // WASM
-    wnfsWasmLookup: wnfsVersion => fetch(`https://unpkg.com/wnfs@${wnfsVersion}/wnfs_wasm_bg.wasm`),
+    // Cabinet
+    cabinet: {
+      hooks: {
+        inventoryChanged: async () => { },
+      },
+    },
 
     // File system
     fileSystem: {
@@ -33,5 +37,8 @@ export function implementation(opts: ImplementationOptions): Implementation<File
         beforeLoadNew: async () => { },
       },
     },
+
+    // WASM
+    wnfsWasmLookup: wnfsVersion => fetch(`https://unpkg.com/wnfs@${wnfsVersion}/wnfs_wasm_bg.wasm`),
   }
 }

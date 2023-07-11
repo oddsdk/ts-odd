@@ -3,7 +3,7 @@ import { CID } from "multiformats/cid"
 import debounce from "debounce-promise"
 
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
-import type { Repo as UcanRepo } from "../repositories/ucans.js"
+import type { Cabinet } from "../repositories/cabinet.js"
 
 import * as Events from "../events.js"
 import * as Path from "../path/index.js"
@@ -34,13 +34,13 @@ export class FileSystem {
 
   constructor(
     private blockStore: BlockStore,
+    private cabinet: Cabinet,
     private cidLog: CIDLog,
     private dependencies: Dependencies<FileSystem>,
     private eventEmitter: EventEmitter<Events.FileSystem>,
     private localOnly: boolean,
     private settleTimeBeforePublish: number,
-    private rootTree: RootTree.RootTree,
-    private ucanRepository: UcanRepo
+    private rootTree: RootTree.RootTree
   ) {
     this.rng = Rng.makeRngInterface()
   }
@@ -53,7 +53,7 @@ export class FileSystem {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish, ucanRepository } = opts
+    const { cabinet, cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish } = opts
 
     await WASM.load({ manners: dependencies.manners })
 
@@ -62,13 +62,13 @@ export class FileSystem {
 
     return new FileSystem(
       blockStore,
+      cabinet,
       cidLog,
       dependencies,
       eventEmitter,
       localOnly || false,
       settleTimeBeforePublish || 2500,
-      rootTree,
-      ucanRepository
+      rootTree
     )
   }
 
@@ -76,7 +76,7 @@ export class FileSystem {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish, ucanRepository } = opts
+    const { cabinet, cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish } = opts
 
     await WASM.load({ manners: dependencies.manners })
 
@@ -85,13 +85,13 @@ export class FileSystem {
 
     return new FileSystem(
       blockStore,
+      cabinet,
       cidLog,
       dependencies,
       eventEmitter,
       localOnly || false,
       settleTimeBeforePublish || 2500,
-      rootTree,
-      ucanRepository
+      rootTree
     )
   }
 
@@ -544,11 +544,11 @@ export class FileSystem {
   private transactionContext(): TransactionContext<FileSystem> {
     return new TransactionContext(
       this.blockStore,
+      this.cabinet,
       this.dependencies,
       { ...this.privateNodes },
       this.rng,
-      { ...this.rootTree },
-      this.ucanRepository
+      { ...this.rootTree }
     )
   }
 

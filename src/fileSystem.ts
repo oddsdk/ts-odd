@@ -1,7 +1,7 @@
 import { CID } from "multiformats/cid"
 
 import type { Repo as CIDLog } from "./repositories/cid-log.js"
-import type { Repo as UcanRepo } from "./repositories/ucans.js"
+import type { Cabinet } from "./repositories/cabinet.js"
 
 import * as Events from "./events.js"
 import * as Path from "./path/index.js"
@@ -21,12 +21,12 @@ import { PrivateReference } from "./fs/types/private-ref.js"
 /**
  * Load a user's file system.
  */
-export async function loadFileSystem({ cidLog, config, dependencies, eventEmitter, ucanRepository }: {
+export async function loadFileSystem({ cabinet, cidLog, config, dependencies, eventEmitter }: {
+  cabinet: Cabinet
   cidLog: CIDLog
   config: Configuration
   dependencies: Dependencies<FileSystem>
   eventEmitter: Events.Emitter<Events.FileSystem>
-  ucanRepository: UcanRepo
 }): Promise<FileSystem> {
   const { agent, depot, identifier, manners } = dependencies
 
@@ -35,10 +35,10 @@ export async function loadFileSystem({ cidLog, config, dependencies, eventEmitte
 
   // Determine the correct CID of the file system to load
   const identifierDID = await dependencies.identifier.did()
-  const identifierUcans = ucanRepository.audienceUcans(identifierDID)
+  const identifierUcans = cabinet.audienceUcans(identifierDID)
 
   const dataCid = navigator.onLine
-    ? await dependencies.account.lookupDataRoot(identifierUcans, ucanRepository.collection)
+    ? await dependencies.account.lookupDataRoot(identifierUcans, cabinet.ucansIndexedByCID)
     : null
 
   const logIdx = dataCid ? cidLog.indexOf(dataCid) : -1
@@ -84,13 +84,13 @@ export async function loadFileSystem({ cidLog, config, dependencies, eventEmitte
   if (cid) {
     await manners.fileSystem.hooks.beforeLoadExisting(cid, depot)
 
-    fs = await FileSystem.fromCID(cid, { cidLog, dependencies, eventEmitter, ucanRepository })
+    fs = await FileSystem.fromCID(cid, { cabinet, cidLog, dependencies, eventEmitter })
 
     await manners.fileSystem.hooks.afterLoadExisting(fs, depot)
 
     const readUcans = fsReadUcans(identifierUcans, identifierDID)
     const facts = readUcans.reduce(
-      (acc, readUcan) => ({ ...acc, ...listFacts(readUcan, ucanRepository.collection) }),
+      (acc, readUcan) => ({ ...acc, ...listFacts(readUcan, cabinet.ucansIndexedByCID) }),
       {}
     )
 
@@ -113,17 +113,17 @@ export async function loadFileSystem({ cidLog, config, dependencies, eventEmitte
   await manners.fileSystem.hooks.beforeLoadNew(depot)
 
   fs = await FileSystem.empty({
+    cabinet,
     cidLog,
     dependencies,
     eventEmitter,
-    ucanRepository
   })
 
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)
 
   // Self delegate file system UCAN
   const fileSystemDelegation = await selfDelegateCapabilities(agent, identifier, maybeMount ? [ maybeMount ] : [])
-  await ucanRepository.add([ fileSystemDelegation ])
+  await cabinet.addUcan(fileSystemDelegation)
 
   // Fin
   return fs

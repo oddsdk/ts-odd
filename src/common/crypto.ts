@@ -1,6 +1,4 @@
 import { webcrypto } from "one-webcrypto"
-
-// @ts-ignore
 import { spki } from "iso-signatures/spki"
 
 import { isCryptoKey } from "./type-checks.js"

@@ -1,4 +1,5 @@
 import * as Storage from "./components/storage/implementation"
+import * as Events from "./events.js"
 
 
 export type RepositoryOptions = {
@@ -9,6 +10,7 @@ export type RepositoryOptions = {
 
 export default abstract class Repository<C, I> {
 
+  events: Events.Emitter<Events.Repositories<C>>
   collection: C
   storage: Storage.Implementation
   storageName: string
@@ -20,6 +22,7 @@ export default abstract class Repository<C, I> {
 
   constructor({ storage, storageName }: RepositoryOptions) {
     this.collection = this.emptyCollection()
+    this.events = Events.createEmitter()
     this.storage = storage
     this.storageName = storageName
   }
@@ -32,7 +35,8 @@ export default abstract class Repository<C, I> {
     const storedItems = storage ? repo.fromJSON(storage) : repo.emptyCollection()
 
     repo.collection = storedItems
-    repo.collectionUpdateCallback(storedItems)
+    await repo.collectionUpdateCallback(storedItems)
+    repo.events.emit("collection:changed", { collection: storedItems })
 
     return repo
   }
@@ -44,7 +48,8 @@ export default abstract class Repository<C, I> {
     )
 
     this.collection = col
-    this.collectionUpdateCallback(col)
+    await this.collectionUpdateCallback(col)
+    this.events.emit("collection:changed", { collection: col })
 
     await this.storage.setItem(
       this.storageName,
@@ -57,7 +62,7 @@ export default abstract class Repository<C, I> {
     return this.storage.removeItem(this.storageName)
   }
 
-  collectionUpdateCallback(collection: C) { }
+  async collectionUpdateCallback(collection: C) { }
 
 
   // ENCODING

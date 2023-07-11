@@ -3,9 +3,7 @@ import { Channel, ChannelOptions } from "../../channel.js"
 
 export type Implementation = {
   /**
-   * How to establish an AWAKE channel.
-   *
-   * This used for device linking and transferring UCANs.
+   * Creates a `Channel` which can be used to transfer data over.
    */
   establish: (options: ChannelOptions) => Promise<Channel>
 }

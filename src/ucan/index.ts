@@ -2,16 +2,9 @@ import * as Raw from "multiformats/codecs/raw"
 import * as Uint8arrays from "uint8arrays"
 import * as Ucans from "@ucans/core"
 
-// @ts-ignore
 import * as ECDSA from "iso-signatures/verifiers/ecdsa"
-
-// @ts-ignore
 import * as EDDSA from "iso-signatures/verifiers/eddsa"
-
-// @ts-ignore
 import * as RSA from "iso-signatures/verifiers/rsa"
-
-// @ts-ignore
 import { Resolver } from "iso-signatures/verifiers/resolver"
 
 import { DIDKey } from "iso-did/key"
@@ -121,8 +114,9 @@ class Plugins extends Ucans.Plugins {
     const dk = DIDKey.fromString(did)
 
     return resolver.verify({
-      sig,
-      data,
+      alg: dk.alg,
+      signature: sig,
+      message: data,
       publicKey: dk.publicKey
     })
   }

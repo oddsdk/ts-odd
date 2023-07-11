@@ -16,6 +16,9 @@ export function create({ storage }: { storage: Storage.Implementation }): Promis
 // CLASS
 
 
+export { Repo as CIDLog }
+
+
 export class Repo extends Repository<CID[], CID> {
 
   private constructor(options: RepositoryOptions) {

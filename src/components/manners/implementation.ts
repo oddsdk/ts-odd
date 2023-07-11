@@ -5,6 +5,7 @@ import type { Configuration } from "../../configuration.js"
 import * as Depot from "../../components/depot/implementation.js"
 import * as Path from "../../path/index.js"
 import { PrivateReference } from "../../fs/types/private-ref.js"
+import { CabinetCollection } from "../../repositories/cabinet.js"
 
 
 export type ImplementationOptions = {
@@ -31,6 +32,17 @@ export type Implementation<FS> = {
       }>
       beforeLoadExisting: (cid: CID, depot: Depot.Implementation) => Promise<void>
       beforeLoadNew: (depot: Depot.Implementation) => Promise<void>
+    }
+  }
+
+  /**
+   * Cabinet configuration.
+   *
+   * Responsible for storing UCANs and keys.
+   */
+  cabinet: {
+    hooks: {
+      inventoryChanged: (cabinetItems: CabinetCollection) => Promise<void>
     }
   }
 

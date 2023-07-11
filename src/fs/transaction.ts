@@ -10,7 +10,7 @@ import { CID } from "../common/cid.js"
 import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
 import { PrivateReference } from "./types/private-ref.js"
-import { Repo as UcanRepo } from "../repositories/ucans.js"
+import { Cabinet } from "../repositories/cabinet.js"
 import { RootTree } from "./rootTree.js"
 import { Rng } from "./rng.js"
 import { Ucan } from "../ucan/index.js"
@@ -27,11 +27,11 @@ export class TransactionContext<FS> {
 
   constructor(
     private blockStore: BlockStore,
+    private cabinet: Cabinet,
     private dependencies: Dependencies<FS>,
     private privateNodes: MountedPrivateNodes,
     private rng: Rng,
     private rootTree: RootTree,
-    private ucanRepository: UcanRepo
   ) {
     this.changedPaths = new Set()
   }
@@ -45,8 +45,8 @@ export class TransactionContext<FS> {
   }> {
     const changedPaths = Array.from(context.changedPaths)
     const identifier = await context.dependencies.identifier.did()
-    const identifierUcans = context.ucanRepository.audienceUcans(identifier)
-    const fileSystemDID = await context.dependencies.account.did(identifierUcans, { ...context.ucanRepository.collection })
+    const identifierUcans = context.cabinet.audienceUcans(identifier)
+    const fileSystemDID = await context.dependencies.account.did(identifierUcans, { ...context.cabinet.ucansIndexedByCID })
 
     // Proofs
     const proofs = await changedPaths.reduce(

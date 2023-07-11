@@ -47,6 +47,11 @@ export type CapabilityProvider = {
 }
 
 
+export type Repositories<Collection> = {
+  "collection:changed": { collection: Collection }
+}
+
+
 export type All = FileSystem
 
 
