@@ -60,72 +60,72 @@ export type Program = {
   access: {
     // TODO
     isGranted: () => Promise<
-      { granted: true } | { granted: false, reason: string }
-    >
+      { granted: true } | { granted: false; reason: string }
+    >;
 
-    provide: () => Promise<void>
-    request: (options: RequestOptions) => Promise<void>
-  }
+    provide: () => Promise<void>;
+    request: (options: RequestOptions) => Promise<void>;
+  };
 
   /**
    * Manage the account.
    */
   account: {
     isConnected(): Promise<
-      { connected: true } | { connected: false, reason: string }
-    >
+      { connected: true } | { connected: false; reason: string }
+    >;
 
-    login: (formValues: Record<string, string>) => Promise<
-      { ok: true } | { ok: false, reason: string }
-    >
+    login: (
+      formValues: Record<string, string>
+    ) => Promise<{ ok: true } | { ok: false; reason: string }>;
 
-    register: (formValues: Record<string, string>) => Promise<
-      { ok: true } | { ok: false, reason: string }
-    >
-    canRegister: (formValues: Record<string, string>) => Promise<
-      { ok: true } | { ok: false, reason: string }
-    >
-  }
+    register: (
+      formValues: Record<string, string>
+    ) => Promise<{ ok: true } | { ok: false; reason: string }>;
+    canRegister: (
+      formValues: Record<string, string>
+    ) => Promise<{ ok: true } | { ok: false; reason: string }>;
+
+    requestVerificationCode: (
+      formValues: Record<string, string>,
+      identfierUcan: Ucan
+    ) => Promise<{ ok: true } | { ok: false; reason: string }>;
+  };
 
   /**
    * Components used to build this program.
    */
-  components: Components
+  components: Components;
 
   /**
    * Configuration used to build this program.
    */
-  configuration: Configuration
+  configuration: Configuration;
 
   /**
    * Various file system methods.
    */
-  fileSystem: FileSystemShortHands
-} & ShortHands & Events.ListenTo<Events.All>
-
+  fileSystem: FileSystemShortHands;
+} & ShortHands &
+  Events.ListenTo<Events.All>;
 
 export enum ProgramError {
   InsecureContext = "INSECURE_CONTEXT",
-  UnsupportedBrowser = "UNSUPPORTED_BROWSER"
+  UnsupportedBrowser = "UNSUPPORTED_BROWSER",
 }
 
-
-export type ShortHands = {}
-
+export type ShortHands = {};
 
 export type FileSystemShortHands = {
-  addSampleData: (fs: FileSystem) => Promise<void>
+  addSampleData: (fs: FileSystem) => Promise<void>;
 
   /**
    * Load the file system associated with the account system.
    */
-  load: () => Promise<FileSystem>
-}
-
-
+  load: () => Promise<FileSystem>;
+};
 
 // ENTRY POINTS
-
 
 /**
  * 🚀 Build an ODD program.
@@ -143,29 +143,28 @@ export type FileSystemShortHands = {
  * while `assemble` does not. Use the latter in case you want to bypass the indexedDB check,
  * which might not be needed, or available, in certain environments or using certain components.
  */
-export async function program(settings: Partial<Components> & Configuration): Promise<Program> {
-  if (!settings) throw new Error("Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter")
+export async function program(
+  settings: Partial<Components> & Configuration
+): Promise<Program> {
+  if (!settings)
+    throw new Error(
+      "Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter"
+    );
 
   // Check if the browser and context is supported
-  if (globalThis.isSecureContext === false) throw ProgramError.InsecureContext
-  if (await isSupported() === false) throw ProgramError.UnsupportedBrowser
+  if (globalThis.isSecureContext === false) throw ProgramError.InsecureContext;
+  if ((await isSupported()) === false) throw ProgramError.UnsupportedBrowser;
 
   // Initialise components & assemble program
-  const components = await gatherComponents(settings)
-  return assemble(extractConfig(settings), components)
+  const components = await gatherComponents(settings);
+  return assemble(extractConfig(settings), components);
 }
-
-
 
 // PREDEFINED COMPONENTS
 
-
 // TODO: Add back predefined components
 
-
-
 // ASSEMBLE
-
 
 /**
  * Build an ODD Program based on a given set of `Components`.
@@ -180,56 +179,76 @@ export async function program(settings: Partial<Components> & Configuration): Pr
  *
  * See the `program.fileSystem.load` function if you want to load the user's file system yourself.
  */
-export async function assemble(config: Configuration, components: Components): Promise<Program> {
-  const { account, agent, identifier } = components
+export async function assemble(
+  config: Configuration,
+  components: Components
+): Promise<Program> {
+  const { account, agent, identifier } = components;
 
   // Event emitters
-  const fsEvents = Events.createEmitter<Events.FileSystem>()
-  const allEvents = fsEvents
+  const fsEvents = Events.createEmitter<Events.FileSystem>();
+  const allEvents = fsEvents;
 
   // Create repositories
-  const cidLog = await CIDLog.create({ storage: components.storage })
-  const ucanRepository = await UcanRepository.create({ storage: components.storage })
+  const cidLog = await CIDLog.create({ storage: components.storage });
+  const ucanRepository = await UcanRepository.create({
+    storage: components.storage,
+  });
 
   // Access
   const access = {
     // TODO: Needs to check if it can update the data root IF write access has been requested too.
-    isGranted: async () => ({ granted: false, reason: "Not implemented just yet" }),
+    isGranted: async () => ({
+      granted: false,
+      reason: "Not implemented just yet",
+    }),
 
     // TODO
-    provide: async () => { },
-    request: async () => { },
-  }
+    provide: async () => {},
+    request: async () => {},
+  };
 
   // Account
   async function isConnected(): Promise<
-    { connected: true } | { connected: false, reason: string }
+    { connected: true } | { connected: false; reason: string }
   > {
-    const ucanDictionary = { ...ucanRepository.collection }
+    const ucanDictionary = { ...ucanRepository.collection };
 
     // Audience is always the identifier here,
     // the account system should delegate to the identifier (not the agent)
-    const audience = await components.identifier.did()
-    const identifierUcans = ucanRepository.audienceUcans(audience)
+    const audience = await components.identifier.did();
+    const identifierUcans = ucanRepository.audienceUcans(audience);
 
     // TODO: Do we need something like `account.hasSufficientCapabilities()` here?
     //       Something that would check if all needed capabilities are present?
     //
     //       Also need to check if we can write to the entire file system.
-    const canUpdateDataRoot = await components.account.canUpdateDataRoot(identifierUcans, ucanDictionary)
-    if (!canUpdateDataRoot) return {
-      connected: false,
-      reason: "Program does not have the ability to update the data root, but is expected to."
-    }
+    const canUpdateDataRoot = await components.account.canUpdateDataRoot(
+      identifierUcans,
+      ucanDictionary
+    );
+    if (!canUpdateDataRoot)
+      return {
+        connected: false,
+        reason:
+          "Program does not have the ability to update the data root, but is expected to.",
+      };
 
-    return { connected: true }
+    return { connected: true };
   }
 
   // Shorthands
   const fileSystemShortHands: FileSystemShortHands = {
     addSampleData: (fs: FileSystem) => addSampleData(fs),
-    load: () => loadFileSystem({ config, cidLog, ucanRepository, dependencies: components, eventEmitter: fsEvents }),
-  }
+    load: () =>
+      loadFileSystem({
+        config,
+        cidLog,
+        ucanRepository,
+        dependencies: components,
+        eventEmitter: fsEvents,
+      }),
+  };
 
   // Create `Program`
   const program = {
@@ -246,24 +265,27 @@ export async function assemble(config: Configuration, components: Components): P
       register: Auth.register({ account, agent, identifier, ucanRepository }),
 
       canRegister: account.canRegister,
+      requestVerificationCode: account.requestVerificationCode,
 
       isConnected,
-    }
-  }
+    },
+  };
 
   // Debug mode:
   // - Enable ODD extensions (if configured)
   // - Inject into global context (if configured)
   if (config.debug) {
-    const inject = config.debug === true || config.debug?.injectIntoGlobalContext === undefined
-      ? true
-      : config.debug?.injectIntoGlobalContext
+    const inject =
+      config.debug === true ||
+      config.debug?.injectIntoGlobalContext === undefined
+        ? true
+        : config.debug?.injectIntoGlobalContext;
 
     if (inject) {
-      const container = globalThis as any
-      container.__odd = container.__odd || {}
-      container.__odd.programs = container.__odd.programs || {}
-      container.__odd.programs[ namespace(config) ] = program
+      const container = globalThis as any;
+      container.__odd = container.__odd || {};
+      container.__odd.programs = container.__odd.programs || {};
+      container.__odd.programs[namespace(config)] = program;
     }
 
     // TODO: Re-enable extension
@@ -296,35 +318,37 @@ export async function assemble(config: Configuration, components: Components): P
   }
 
   // Fin
-  return program
+  return program;
 }
 
-
-
 // COMPOSITIONS
-
 
 /**
  * Full component sets.
  */
 export const compositions = {
   // TODO: Fission stack
-}
+};
 
+export async function gatherComponents(
+  setup: Partial<Components> & Configuration
+): Promise<Components> {
+  const config = extractConfig(setup);
 
-export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
-  const config = extractConfig(setup)
+  const dns = setup.dns || defaultDNSComponent();
+  const manners = setup.manners || defaultMannersComponent(config);
+  const storage = setup.storage || defaultStorageComponent(config);
 
-  const dns = setup.dns || defaultDNSComponent()
-  const manners = setup.manners || defaultMannersComponent(config)
-  const storage = setup.storage || defaultStorageComponent(config)
+  const agent = setup.agent || (await defaultAgentComponent(config));
+  const identifier =
+    setup.identifier || (await defaultIdentifierComponent(config));
+  const account =
+    setup.account ||
+    defaultAccountComponent({ agent, dns, manners, identifier });
 
-  const agent = setup.agent || await defaultAgentComponent(config)
-  const identifier = setup.identifier || await defaultIdentifierComponent(config)
-  const account = setup.account || defaultAccountComponent({ agent, dns, manners })
-
-  const channel = setup.channel || defaultChannelComponent()
-  const depot = setup.depot || await defaultDepotComponent({ storage }, config)
+  const channel = setup.channel || defaultChannelComponent();
+  const depot =
+    setup.depot || (await defaultDepotComponent({ storage }, config));
 
   return {
     account,
@@ -335,18 +359,28 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
     identifier,
     manners,
     storage,
-  }
+  };
 }
-
-
 
 // DEFAULT COMPONENTS
 
-
-export function defaultAccountComponent(
-  { agent, dns, manners }: { agent: Agent.Implementation, dns: DNS.Implementation, manners: Manners.Implementation<FileSystem> },
-): Account.Implementation {
-  return FissionAccountsProduction.implementation({ agent, dns, manners })
+export function defaultAccountComponent({
+  agent,
+  dns,
+  manners,
+  identifier,
+}: {
+  agent: Agent.Implementation;
+  dns: DNS.Implementation;
+  manners: Manners.Implementation<FileSystem>;
+  identifier: Identifier.Implementation;
+}): Account.Implementation {
+  return FissionAccountsProduction.implementation({
+    agent,
+    dns,
+    manners,
+    identifier,
+  });
 }
 
 export function defaultAgentComponent(

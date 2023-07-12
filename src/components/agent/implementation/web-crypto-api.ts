@@ -48,6 +48,7 @@ export function sign(
   data: Uint8Array,
   signingKey: CryptoKeyPair
 ): Promise<Uint8Array> {
+  console.log("signing data", data, signingKey);
   return crypto.rsa.sign(data, signingKey)
 }
 

@@ -9,51 +9,43 @@ import { DNS } from "../components.js"
  * `userDomain` User's domain to use, will be prefixed by username.
  */
 export type Endpoints = {
-  apiPath: string
-  ipfsGateway: string
-  lobby: string
-  server: string
-  userDomain: string
-}
-
+  apiPath: string;
+  ipfsGateway: string;
+  server: string;
+  userDomain: string;
+};
 
 export const PRODUCTION: Endpoints = {
-  apiPath: "/v2/api",
+  apiPath: "/api",
   ipfsGateway: "https://ipfs.runfission.com",
-  lobby: "https://auth.fission.codes",
-  server: "https://runfission.com",
-  userDomain: "fission.name"
-}
-
+  server: "http://localhost:3000",
+  userDomain: "fission.name",
+};
 
 export const STAGING: Endpoints = {
-  apiPath: "/v2/api",
+  apiPath: "/api",
   ipfsGateway: "https://ipfs.runfission.net",
-  lobby: "https://auth.runfission.net",
-  server: "https://runfission.net",
-  userDomain: "fissionuser.net"
-}
-
+  server: "http://localhost:3000",
+  userDomain: "fissionuser.net",
+};
 
 export function apiUrl(endpoints: Endpoints, suffix?: string): string {
-  return `${endpoints.server}${endpoints.apiPath}${suffix?.length ? "/" + suffix.replace(/^\/+/, "") : ""}`
+  return `${endpoints.server}${endpoints.apiPath}${
+    suffix?.length ? "/" + suffix.replace(/^\/+/, "") : ""
+  }`;
 }
-
-
 
 // API
 
-
 const didCache: {
-  did: string | null
-  host: string | null
-  lastFetched: number
+  did: string | null;
+  host: string | null;
+  lastFetched: number;
 } = {
   did: null,
   host: null,
   lastFetched: 0,
-}
-
+};
 
 /**
  * Lookup the DID of a Fission API.
@@ -63,23 +55,29 @@ export async function did(
   endpoints: Endpoints,
   dns: DNS.Implementation
 ): Promise<string> {
-  let host
+  let host;
   try {
-    host = new URL(endpoints.server).host
+    host = new URL(endpoints.server).host;
   } catch (e) {
-    throw new Error("Unable to parse API Endpoint")
+    throw new Error("Unable to parse API Endpoint");
   }
-  const now = Date.now() // in milliseconds
+  const now = Date.now(); // in milliseconds
+
+  if (host === "localhost:3000") {
+    didCache.did = "did:web:localhost";
+    didCache.host = "localhost:3000";
+    didCache.lastFetched = now;
+  }
 
   if (
     didCache.host !== host ||
     didCache.lastFetched + 1000 * 60 * 60 * 3 <= now
   ) {
-    didCache.did = await dns.lookupTxtRecord("_did." + host)
-    didCache.host = host
-    didCache.lastFetched = now
+    didCache.did = await dns.lookupTxtRecord("_did." + host);
+    didCache.host = host;
+    didCache.lastFetched = now;
   }
 
-  if (!didCache.did) throw new Error("Couldn't get the Fission API DID")
-  return didCache.did
+  if (!didCache.did) throw new Error("Couldn't get the Fission API DID");
+  return didCache.did;
 }
