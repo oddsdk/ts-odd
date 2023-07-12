@@ -101,7 +101,7 @@
     "ipfs-unixfs-exporter": "^12.0.0",
     "ipfs-unixfs-importer": "^14.0.1",
     "iso-did": "^1.3.0",
-    "iso-signatures": "^0.1.7",
+    "iso-signatures": "^0.1.8",
     "it-all": "^2.0.1",
     "libp2p": "^0.42.2",
     "localforage": "^1.10.0",

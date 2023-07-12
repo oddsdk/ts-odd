@@ -17,6 +17,7 @@ import { CodecIdentifier } from "../../src/dag/codecs.js"
 import { ChannelOptions } from "../../src/channel.js"
 import { Components, Account, Agent, Channel, Depot, DNS, Identifier, Manners, Storage } from "../../src/components.js"
 import { Configuration } from "../../src/configuration.js"
+import { FileSystem } from "../../src/fs/class.js"
 import { Storage as InMemoryStorage } from "./localforage/in-memory-storage.js"
 import { Ucan, Dictionary as UcanDictionary } from "../../src/ucan/types.js"
 
@@ -74,7 +75,7 @@ const storage: Storage.Implementation = MemoryStorage.implementation()
 // MANNERS
 
 
-const manners: Manners.Implementation = {
+const manners: Manners.Implementation<FileSystem> = {
   ...ProperManners.implementation({ configuration }),
 
   wnfsWasmLookup: async () => {

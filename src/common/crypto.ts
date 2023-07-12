@@ -1,6 +1,4 @@
 import { webcrypto } from "one-webcrypto"
-import { spki } from "iso-signatures/spki"
-
 import { isCryptoKey } from "./type-checks.js"
 
 
@@ -8,12 +6,6 @@ import { isCryptoKey } from "./type-checks.js"
 
 
 export type KeyUse = "exchange" | "sign"
-
-
-export type Store = {
-  getItem: (name: string) => Promise<CryptoKeyPair | CryptoKey | null>
-  setItem: (name: string, key: CryptoKeyPair | CryptoKey) => Promise<unknown>
-}
 
 
 export type VerifyArgs = {
@@ -44,7 +36,7 @@ export function randomNumbers(options: { amount: number }): Uint8Array {
 export async function exportPublicKey(key: CryptoKeyPair): Promise<Uint8Array> {
   return webcrypto.subtle
     .exportKey("spki", key.publicKey)
-    .then(a => spki.decode(new Uint8Array(a)))
+    .then(a => new Uint8Array(a))
 }
 
 

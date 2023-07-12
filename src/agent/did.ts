@@ -1,4 +1,5 @@
 import { DIDKey } from "iso-did/key"
+import { spki } from "iso-signatures/spki"
 
 import * as Agent from "../components/agent/implementation.js"
 import { exportPublicKey } from "../common/crypto.js"
@@ -8,7 +9,7 @@ import { exportPublicKey } from "../common/crypto.js"
  * Create a DID based on the exchange key-pair of the agent.
  */
 export async function exchange(agent: Agent.Implementation): Promise<string> {
-  const pubKey = await agent.exchangeKey().then(exportPublicKey)
+  const pubKey = await agent.exchangeKey().then(exportPublicKey).then(spki.decode)
   const ksAlg = await agent.keyAlgorithm()
 
   return DIDKey.fromPublicKey(ksAlg, pubKey).toString()
@@ -23,7 +24,7 @@ export { exchange as sharing }
  * Create a DID based on the signing key-pair.
  */
 export async function signing(agent: Agent.Implementation): Promise<string> {
-  const pubKey = await agent.signingKey().then(exportPublicKey)
+  const pubKey = await agent.signingKey().then(exportPublicKey).then(spki.decode)
   const ksAlg = await agent.keyAlgorithm()
 
   return DIDKey.fromPublicKey(ksAlg, pubKey).toString()

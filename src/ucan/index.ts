@@ -80,7 +80,7 @@ export async function isValid(agent: Agent.Implementation, ucan: Ucan): Promise<
 
 
 export async function keyPair(agent: Agent.Implementation): Promise<Keypair> {
-  const did = await AgentDID.exchange(agent)
+  const did = await AgentDID.signing(agent)
 
   return {
     did: () => did,

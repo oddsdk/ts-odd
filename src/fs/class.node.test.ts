@@ -6,8 +6,8 @@ import expect from "expect"
 import * as Events from "../events.js"
 import * as Path from "../path/index.js"
 
+import * as Cabinet from "../repositories/cabinet.js"
 import * as CIDLog from "../repositories/cid-log.js"
-import * as UcanRepository from "../repositories/ucans.js"
 
 import { CID } from "../common/cid.js"
 import { FileSystem } from "./class.js"
@@ -32,15 +32,15 @@ describe("File System Class", async () => {
 
   beforeEach(async () => {
     const cidLog = await CIDLog.create({ storage })
-    const ucanRepository = await UcanRepository.create({ storage })
+    const cabinet = await Cabinet.create({ storage })
 
-    fs = await FileSystem.empty({ ...fsOpts, cidLog, ucanRepository })
+    fs = await FileSystem.empty({ ...fsOpts, cidLog, cabinet })
 
     const mounts = await fs.mountPrivateNodes([
       { path: Path.root() }
     ])
 
-    await ucanRepository.add([
+    await cabinet.addUcans([
       await selfDelegateCapabilities(agent, identifier, mounts)
     ])
   })
@@ -66,8 +66,8 @@ describe("File System Class", async () => {
     )
 
     const cidLog = await CIDLog.create({ storage })
-    const ucanRepository = await UcanRepository.create({ storage })
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, ucanRepository })
+    const cabinet = await Cabinet.create({ storage })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet })
 
     await loadedFs.mountPrivateNodes([
       { path: Path.removePartition(privatePath), capsuleRef }

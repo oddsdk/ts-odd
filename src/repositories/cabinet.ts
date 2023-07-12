@@ -177,6 +177,6 @@ export function decodeItem(item: unknown): CabinetItem {
 export function encodeItem(item: CabinetItem): any {
   switch (item.type) {
     case "access-key": return { type: "access-key", key: PrivateRef.encode(item.key), path: item.path }
-    case "ucan": return { type: "access-key", ucan: Ucan.encode(item.ucan) }
+    case "ucan": return { type: "ucan", ucan: Ucan.encode(item.ucan) }
   }
 }
