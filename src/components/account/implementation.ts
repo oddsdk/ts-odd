@@ -1,8 +1,19 @@
 import { Query } from "../../access/query.js"
 import { CID } from "../../common/cid.js"
-import { Capability, Dictionary as UcanDictionary, Ucan } from "../../ucan/types.js"
+import { Dictionary as UcanDictionary, Ucan } from "../../ucan/types.js"
 
-export type Implementation = {
+////////
+// 🧩 //
+////////
+
+export type AnnexParentType = Record<string, Function>
+
+export type Implementation<Annex extends AnnexParentType> = {
+  /**
+   * Additional methods you want to be part of `program.accounst`
+   */
+  annex: Annex
+
   // CREATION
 
   /**

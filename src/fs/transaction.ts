@@ -34,6 +34,7 @@ export class TransactionContext<FS> {
     private blockStore: BlockStore,
     private cabinet: Cabinet,
     private dependencies: Dependencies<FS>,
+    private did: () => Promise<string>,
     private privateNodes: MountedPrivateNodes,
     private rng: Rng,
     private rootTree: RootTree,
@@ -50,9 +51,7 @@ export class TransactionContext<FS> {
     const changedPaths = Array.from(context.changedPaths)
     const identifier = await context.dependencies.identifier.did()
     const identifierUcans = context.cabinet.audienceUcans(identifier)
-    const fileSystemDID = await context.dependencies.account.did(identifierUcans, {
-      ...context.cabinet.ucansIndexedByCID,
-    })
+    const fileSystemDID = await context.did()
 
     // Proofs
     const proofs = await changedPaths.reduce(

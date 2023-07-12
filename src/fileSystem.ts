@@ -9,7 +9,8 @@ import * as Path from "./path/index.js"
 import * as Ucan from "./ucan/index.js"
 
 import { Maybe, isString } from "./common/index.js"
-import { Agent, Identifier } from "./components.js"
+import { Account, Agent, Identifier } from "./components.js"
+import { AnnexParentType } from "./components/account/implementation.js"
 import { Configuration } from "./configuration.js"
 import { FileSystem } from "./fs/class.js"
 import { Dependencies } from "./fs/types.js"
@@ -24,13 +25,15 @@ import { fsReadUcans } from "./ucan/lookup.js"
 /**
  * Load a user's file system.
  */
-export async function loadFileSystem({ cabinet, cidLog, config, dependencies, eventEmitter }: {
-  cabinet: Cabinet
-  cidLog: CIDLog
-  config: Configuration
-  dependencies: Dependencies<FileSystem>
-  eventEmitter: Events.Emitter<Events.FileSystem>
-}): Promise<FileSystem> {
+export async function loadFileSystem<Annex extends AnnexParentType>(
+  { cabinet, cidLog, config, dependencies, eventEmitter }: {
+    cabinet: Cabinet
+    cidLog: CIDLog
+    config: Configuration
+    dependencies: Dependencies<FileSystem> & { account: Account.Implementation<Annex> }
+    eventEmitter: Events.Emitter<Events.FileSystem>
+  },
+): Promise<FileSystem> {
   const { agent, depot, identifier, manners } = dependencies
 
   let cid: Maybe<CID>
@@ -79,10 +82,19 @@ export async function loadFileSystem({ cabinet, cidLog, config, dependencies, ev
   }
 
   // If a file system exists, load it and return it
+  const did = async () => {
+    const identifier = await dependencies.identifier.did()
+    const identifierUcans = cabinet.audienceUcans(identifier)
+
+    return dependencies.account.did(identifierUcans, cabinet.ucansIndexedByCID)
+  }
+
+  const updateDataRoot = dependencies.account.updateDataRoot
+
   if (cid) {
     await manners.fileSystem.hooks.beforeLoadExisting(cid, depot)
 
-    fs = await FileSystem.fromCID(cid, { cabinet, cidLog, dependencies, eventEmitter })
+    fs = await FileSystem.fromCID(cid, { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot })
 
     await manners.fileSystem.hooks.afterLoadExisting(fs, depot)
 
@@ -116,7 +128,9 @@ export async function loadFileSystem({ cabinet, cidLog, config, dependencies, ev
     cabinet,
     cidLog,
     dependencies,
+    did,
     eventEmitter,
+    updateDataRoot,
   })
 
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)

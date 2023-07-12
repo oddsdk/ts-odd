@@ -5,6 +5,8 @@ import * as FissionBase from "./fission-base.js"
 
 // 🛳
 
-export function implementation(dependencies: FissionBase.Dependencies): Implementation {
+export { Annex } from "./fission-base.js"
+
+export function implementation(dependencies: FissionBase.Dependencies): Implementation<FissionBase.Annex> {
   return FissionBase.implementation(FissionEndpoints.STAGING, dependencies)
 }

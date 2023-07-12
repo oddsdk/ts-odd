@@ -7,11 +7,19 @@ import { CID } from "../../../common/index.js"
 import { Agent, DNS, Manners } from "../../../components.js"
 import { FileSystem } from "../../../fs/class.js"
 import { DELEGATE_ALL_PROOFS } from "../../../ucan/capabilities.js"
-import { listCapabilities, listFacts } from "../../../ucan/chain.js"
+import { listFacts } from "../../../ucan/chain.js"
 import { rootIssuer } from "../../../ucan/lookup.js"
 import { Implementation } from "../implementation.js"
 
-// 🧩
+////////
+// 🧩 //
+////////
+
+export type Annex = {
+  requestVerificationCode: (formValues: Record<string, string>) => Promise<
+    { ok: true } | { ok: false; reason: string }
+  >
+}
 
 export type Dependencies = {
   agent: Agent.Implementation
@@ -19,7 +27,9 @@ export type Dependencies = {
   manners: Manners.Implementation<FileSystem>
 }
 
-// CREATION
+//////////////
+// CREATION //
+//////////////
 
 export async function canRegister(
   endpoints: Fission.Endpoints,
@@ -122,7 +132,9 @@ export async function register(
   }
 }
 
-// DATA ROOT
+///////////////
+// DATA ROOT //
+///////////////
 
 export async function canUpdateDataRoot(
   identifierUcans: Ucan.Ucan[],
@@ -188,7 +200,9 @@ export async function updateDataRoot(
   )
 }
 
-// UCANS
+///////////
+// UCANS //
+///////////
 
 export async function did(identifierUcans: Ucan.Ucan[], ucanDictionary: Ucan.Dictionary): Promise<string> {
   const rootIssuers: Set<string> = identifierUcans.reduce(
@@ -214,13 +228,19 @@ export function provideUCANs(accessQuery: Query): Ucan.Ucan[] {
   return [] // TODO
 }
 
-// 🛳
+////////
+// 🛳 //
+////////
 
 export function implementation(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
-): Implementation {
+): Implementation<Annex> {
   return {
+    annex: {
+      requestVerificationCode: async () => ({ ok: true }), // TODO
+    },
+
     canRegister: (...args) => canRegister(endpoints, dependencies, ...args),
     register: (...args) => register(endpoints, dependencies, ...args),
 

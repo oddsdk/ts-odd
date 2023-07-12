@@ -3,32 +3,15 @@ import { Cabinet } from "./repositories/cabinet.js"
 import * as Ucan from "./ucan/index.js"
 
 import { Account, Agent, Identifier } from "./components.js"
-
-///////////
-// LOGIN //
-///////////
-
-export const login = (
-  { agent, identifier, cabinet }: {
-    agent: Agent.Implementation
-    identifier: Identifier.Implementation
-    cabinet: Cabinet
-  },
-) =>
-async (formValues: Record<string, string>): Promise<
-  { ok: true } | { ok: false; reason: string }
-> => {
-  // TODO:
-  return { ok: false, reason: "Not implemented just yet" }
-}
+import { AnnexParentType } from "./components/account/implementation.js"
 
 //////////////
 // REGISTER //
 //////////////
 
-export const register = (
+export const register = <Annex extends AnnexParentType>(
   { account, agent, identifier, cabinet }: {
-    account: Account.Implementation
+    account: Account.Implementation<Annex>
     agent: Agent.Implementation
     identifier: Identifier.Implementation
     cabinet: Cabinet

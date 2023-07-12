@@ -48,10 +48,12 @@ export class FileSystem {
     private cabinet: Cabinet,
     private cidLog: CIDLog,
     private dependencies: Dependencies<FileSystem>,
+    private did: () => Promise<string>,
     private eventEmitter: EventEmitter<Events.FileSystem>,
     private localOnly: boolean,
     private settleTimeBeforePublish: number,
     private rootTree: RootTree.RootTree,
+    private updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>,
   ) {
     this.rng = Rng.makeRngInterface()
   }
@@ -63,7 +65,8 @@ export class FileSystem {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cabinet, cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish } = opts
+    const { cabinet, cidLog, dependencies, did, eventEmitter, localOnly, settleTimeBeforePublish, updateDataRoot } =
+      opts
 
     await WASM.load({ manners: dependencies.manners })
 
@@ -75,10 +78,12 @@ export class FileSystem {
       cabinet,
       cidLog,
       dependencies,
+      did,
       eventEmitter,
       localOnly || false,
       settleTimeBeforePublish || 2500,
       rootTree,
+      updateDataRoot,
     )
   }
 
@@ -86,7 +91,8 @@ export class FileSystem {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cabinet, cidLog, dependencies, eventEmitter, localOnly, settleTimeBeforePublish } = opts
+    const { cabinet, cidLog, dependencies, did, eventEmitter, localOnly, settleTimeBeforePublish, updateDataRoot } =
+      opts
 
     await WASM.load({ manners: dependencies.manners })
 
@@ -98,10 +104,12 @@ export class FileSystem {
       cabinet,
       cidLog,
       dependencies,
+      did,
       eventEmitter,
       localOnly || false,
       settleTimeBeforePublish || 2500,
       rootTree,
+      updateDataRoot,
     )
   }
 
@@ -531,6 +539,7 @@ export class FileSystem {
       this.blockStore,
       this.cabinet,
       this.dependencies,
+      this.did,
       { ...this.privateNodes },
       this.rng,
       { ...this.rootTree },
@@ -550,7 +559,7 @@ export class FileSystem {
 
       await this.dependencies.depot.flush(dataRoot, proofs)
 
-      const { ok } = await this.dependencies.account.updateDataRoot(
+      const { ok } = await this.updateDataRoot(
         dataRoot,
         proofs,
       )

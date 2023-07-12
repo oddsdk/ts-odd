@@ -8,6 +8,7 @@ import * as CIDLog from "./repositories/cid-log.js"
 import { Account, Agent, Channel, DNS, Depot, Identifier, Manners, Storage } from "./components.js"
 import { Components } from "./components.js"
 import { RequestOptions } from "./components/access/implementation.js"
+import { AnnexParentType } from "./components/account/implementation.js"
 import { Configuration, namespace } from "./configuration.js"
 import { loadFileSystem } from "./fileSystem.js"
 import { FileSystem } from "./fs/class.js"
@@ -46,7 +47,7 @@ export { FileSystem } from "./fs/class.js"
 // TYPES & CONSTANTS //
 ///////////////////////
 
-export type Program =
+export type Program<Annex extends Account.AnnexParentType> =
   & {
     /**
      * Access control system.
@@ -64,13 +65,9 @@ export type Program =
     /**
      * Manage the account.
      */
-    account: {
+    account: Account.Implementation<Annex>["annex"] & {
       isConnected(): Promise<
         { connected: true } | { connected: false; reason: string }
-      >
-
-      login: (formValues: Record<string, string>) => Promise<
-        { ok: true } | { ok: false; reason: string }
       >
 
       register: (formValues: Record<string, string>) => Promise<
@@ -84,7 +81,7 @@ export type Program =
     /**
      * Components used to build this program.
      */
-    components: Components
+    components: Components<Annex>
 
     /**
      * Configuration used to build this program.
@@ -135,7 +132,15 @@ export type FileSystemShortHands = {
  * while `assemble` does not. Use the latter in case you want to bypass the indexedDB check,
  * which might not be needed, or available, in certain environments or using certain components.
  */
-export async function program(settings: Partial<Components> & Configuration): Promise<Program> {
+export async function program<Annex extends AnnexParentType>(
+  settings: Partial<Components<Annex>> & { account: Account.Implementation<Annex> } & Configuration,
+): Promise<Program<Annex>>
+export async function program(
+  settings: Partial<Omit<Components<FissionAccountsProduction.Annex>, "account">> & Configuration,
+): Promise<Program<FissionAccountsProduction.Annex>>
+export async function program(
+  settings: Partial<Components<any>> & Configuration,
+): Promise<Program<any>> {
   if (!settings) {
     throw new Error(
       "Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter",
@@ -174,7 +179,10 @@ export async function program(settings: Partial<Components> & Configuration): Pr
  *
  * See the `program.fileSystem.load` function if you want to load the user's file system yourself.
  */
-export async function assemble(config: Configuration, components: Components): Promise<Program> {
+export async function assemble<Annex extends AnnexParentType>(
+  config: Configuration,
+  components: Components<Annex>,
+): Promise<Program<Annex>> {
   const { account, agent, identifier } = components
 
   // Event emitters
@@ -242,12 +250,12 @@ export async function assemble(config: Configuration, components: Components): P
 
     access,
     account: {
-      login: Auth.login({ agent, identifier, cabinet }),
       register: Auth.register({ account, agent, identifier, cabinet }),
-
       canRegister: account.canRegister,
 
       isConnected,
+
+      ...components.account.annex,
     },
   }
 
@@ -310,7 +318,15 @@ export const compositions = {
   // TODO: Fission stack
 }
 
-export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
+export async function gatherComponents<Annex extends AnnexParentType>(
+  setup: Partial<Components<Annex>> & { account: Account.Implementation<Annex> } & Configuration,
+): Promise<Components<Annex>>
+export async function gatherComponents(
+  setup: Partial<Omit<Components<FissionAccountsProduction.Annex>, "account">> & Configuration,
+): Promise<Components<FissionAccountsProduction.Annex>>
+export async function gatherComponents(
+  setup: Partial<Components<any>> & Configuration,
+): Promise<Components<any>> {
   const config = extractConfig(setup)
 
   const dns = setup.dns || defaultDNSComponent()
@@ -346,7 +362,7 @@ export function defaultAccountComponent(
     dns: DNS.Implementation
     manners: Manners.Implementation<FileSystem>
   },
-): Account.Implementation {
+): Account.Implementation<FissionAccountsProduction.Annex> {
   return FissionAccountsProduction.implementation({ agent, dns, manners })
 }
 
@@ -423,7 +439,9 @@ export async function isSupported(): Promise<boolean> {
 // 🛠 //
 ////////
 
-export function extractConfig(opts: Partial<Components> & Configuration): Configuration {
+export function extractConfig<Annex extends AnnexParentType>(
+  opts: Partial<Components<Annex>> & Configuration,
+): Configuration {
   return {
     namespace: opts.namespace,
     debug: opts.debug,

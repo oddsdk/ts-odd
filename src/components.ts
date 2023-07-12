@@ -13,8 +13,8 @@ import { FileSystem } from "./fs/class.js"
 // COMPONENTS //
 ////////////////
 
-export type Components = {
-  account: Account.Implementation
+export type Components<Annex extends Account.AnnexParentType> = {
+  account: Account.Implementation<Annex>
   agent: Agent.Implementation
   channel: Channel.Implementation
   depot: Depot.Implementation

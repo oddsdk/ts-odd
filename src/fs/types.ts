@@ -1,7 +1,6 @@
 import type { Cabinet } from "../repositories/cabinet.js"
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
 
-import * as Account from "../components/account/implementation.js"
 import * as Agent from "../components/agent/implementation.js"
 import * as Depot from "../components/depot/implementation.js"
 import * as Identifier from "../components/identifier/implementation.js"
@@ -13,6 +12,7 @@ import * as Path from "../path/index.js"
 import { CID } from "../common/cid.js"
 import { EventEmitter } from "../events.js"
 import { Partition, Partitioned } from "../path/index.js"
+import { Ucan } from "../ucan/index.js"
 import { PrivateReference } from "./types/private-ref.js"
 
 ////////
@@ -38,7 +38,6 @@ export type DataForType<D extends DataType, V = unknown> = D extends "bytes" ? U
   : never
 
 export type Dependencies<FS> = {
-  account: Account.Implementation
   agent: Agent.Implementation
   depot: Depot.Implementation
   identifier: Identifier.Implementation
@@ -59,9 +58,11 @@ export type FileSystemOptions<FS> = {
   cabinet: Cabinet
   cidLog: CIDLog
   dependencies: Dependencies<FS>
+  did: () => Promise<string>
   eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   settleTimeBeforePublish?: number
+  updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>
 }
 
 export type MutationOptions = {
