@@ -1,14 +1,14 @@
+import * as Ucans from "@ucans/core"
 import * as Raw from "multiformats/codecs/raw"
 import * as Uint8arrays from "uint8arrays"
-import * as Ucans from "@ucans/core"
 
 import * as ECDSA from "iso-signatures/verifiers/ecdsa"
 import * as EDDSA from "iso-signatures/verifiers/eddsa"
-import * as RSA from "iso-signatures/verifiers/rsa"
 import { Resolver } from "iso-signatures/verifiers/resolver"
+import * as RSA from "iso-signatures/verifiers/rsa"
 
-import { DIDKey } from "iso-did/key"
 import { Ucan } from "@ucans/core"
+import { DIDKey } from "iso-did/key"
 import { sha256 } from "multiformats/hashes/sha2"
 
 import * as AgentDID from "../agent/did.js"
@@ -17,53 +17,45 @@ import * as Agent from "../components/agent/implementation.js"
 import { CID } from "../common/cid.js"
 import { BuildParams, Keypair } from "./types.js"
 
-
-export { encode, encodeHeader, encodePayload, verify, parse, isExpired, isTooEarly } from "@ucans/core"
+export { encode, encodeHeader, encodePayload, isExpired, isTooEarly, parse, verify } from "@ucans/core"
 export * from "./types.js"
-
 
 // 🛠️
 
-
 export async function build(
-  params: BuildParams
+  params: BuildParams,
 ): Promise<Ucan> {
   return Ucans.build(
-    await plugins()
+    await plugins(),
   )(
-    params
+    params,
   )
 }
-
 
 export async function cid(ucan: Ucan): Promise<CID> {
   const ucanString = Ucans.encode(ucan)
   const multihash = await sha256.digest(
-    Uint8arrays.fromString(ucanString, "utf8")
+    Uint8arrays.fromString(ucanString, "utf8"),
   )
 
   return CID.createV1(Raw.code, multihash)
 }
 
-
 export function decode(encoded: string): Ucan {
-  const [ encodedHeader, encodedPayload, signature ] = encoded.split(".")
+  const [encodedHeader, encodedPayload, signature] = encoded.split(".")
   const parts = Ucans.parse(encoded)
-
 
   return {
     header: parts.header,
     payload: parts.payload,
     signedData: `${encodedHeader}.${encodedPayload}`,
-    signature: signature
+    signature: signature,
   }
 }
-
 
 export function isSelfSigned(ucan: Ucan): boolean {
   return ucan.payload.iss === ucan.payload.aud
 }
-
 
 export async function isValid(agent: Agent.Implementation, ucan: Ucan): Promise<boolean> {
   const plugs = await plugins()
@@ -78,7 +70,6 @@ export async function isValid(agent: Agent.Implementation, ucan: Ucan): Promise<
     && plugs.verifySignature(ucan.payload.iss, signedData, signature)
 }
 
-
 export async function keyPair(agent: Agent.Implementation): Promise<Keypair> {
   const did = await AgentDID.signing(agent)
 
@@ -89,11 +80,9 @@ export async function keyPair(agent: Agent.Implementation): Promise<Keypair> {
   }
 }
 
-
 export async function plugins(): Promise<Ucans.Plugins> {
   return new Plugins([], {})
 }
-
 
 class Plugins extends Ucans.Plugins {
   verifyIssuerAlg(did: string, jwtAlg: string): boolean {
@@ -108,7 +97,7 @@ class Plugins extends Ucans.Plugins {
         ...EDDSA.verifier,
         ...RSA.verifier,
       },
-      { cache: true }
+      { cache: true },
     )
 
     const dk = DIDKey.fromString(did)
@@ -117,7 +106,7 @@ class Plugins extends Ucans.Plugins {
       alg: dk.alg,
       signature: sig,
       message: data,
-      publicKey: dk.publicKey
+      publicKey: dk.publicKey,
     })
   }
 }

@@ -2,9 +2,7 @@ import expect from "expect"
 
 import * as Crypto from "./crypto.js"
 
-
 describe("Crypto", async () => {
-
   it("signs and verifies using RSA", async () => {
     const data = new TextEncoder().encode("🙈")
     const key = await Crypto.rsa.generateKey("sign")
@@ -15,10 +13,9 @@ describe("Crypto", async () => {
         message: data,
         publicKey: await Crypto.exportPublicKey(key),
         signature: signature,
-      })
+      }),
     ).toBe(
-      true
+      true,
     )
   })
-
 })

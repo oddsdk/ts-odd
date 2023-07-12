@@ -1,9 +1,7 @@
 import expect from "expect"
 import { isUsernameValid } from "./index.js"
 
-
 describe("isUsernameValid", () => {
-
   it("allows basic usernames", () => {
     expect(isUsernameValid("simple")).toBe(true)
   })
@@ -63,5 +61,4 @@ describe("isUsernameValid", () => {
   it("does not allow special characters", () => {
     expect(isUsernameValid("name&with#chars")).toBe(false)
   })
-
 })

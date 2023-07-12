@@ -2,9 +2,7 @@ import { CID } from "./common/cid.js"
 import { EventEmitter } from "./common/event-emitter.js"
 import { DistinctivePath, Partition, Partitioned } from "./path/index.js"
 
-
 export { EventEmitter, EventEmitter as Emitter }
-
 
 /**
  * Events interface.
@@ -27,17 +25,14 @@ export type ListenTo<EventMap> = Pick<
   "addListener" | "removeListener" | "on" | "off"
 >
 
-
 export type FileSystem = {
   "fileSystem:local-change": { dataRoot: CID; path: DistinctivePath<Partitioned<Partition>> }
   "fileSystem:publish": { dataRoot: CID }
 }
 
-
 export type CapabilityConsumer = {
   "capabilities:challenge": any // TODO
 }
-
 
 export type CapabilityProvider = {
   "capabilities:approved": void
@@ -46,19 +41,15 @@ export type CapabilityProvider = {
   "capabilities:query": { capabilities: Record<string, any> } // TODO
 }
 
-
 export type Repositories<Collection> = {
   "collection:changed": { collection: Collection }
 }
 
-
 export type All = FileSystem
-
 
 export function createEmitter<EventMap>(): EventEmitter<EventMap> {
   return new EventEmitter()
 }
-
 
 export function listenTo<EventMap>(emitter: EventEmitter<EventMap>): ListenTo<EventMap> {
   return {
@@ -69,18 +60,17 @@ export function listenTo<EventMap>(emitter: EventEmitter<EventMap>): ListenTo<Ev
   }
 }
 
-
 export function merge<A, B>(a: EventEmitter<A>, b: EventEmitter<B>): EventEmitter<A & B> {
   const merged = createEmitter<A & B>()
   const aEmit = a.emit
   const bEmit = b.emit
 
-  a.emit = <K extends keyof A>(eventName: K, event: (A & B)[ K ]) => {
+  a.emit = <K extends keyof A>(eventName: K, event: (A & B)[K]) => {
     aEmit.call(a, eventName, event)
     merged.emit(eventName, event)
   }
 
-  b.emit = <K extends keyof B>(eventName: K, event: (A & B)[ K ]) => {
+  b.emit = <K extends keyof B>(eventName: K, event: (A & B)[K]) => {
     bEmit.call(b, eventName, event)
     merged.emit(eventName, event)
   }

@@ -5,17 +5,17 @@ Thanks for submitting a pull request! Please provide enough information so that 
 
 For more information, see the `CONTRIBUTING` guide.
 
-
 ## Summary
+
 <!-- Summary of the PR -->
 
 This PR fixes/implements the following **bugs/features**
 
-* [ ] Bug 1
-* [ ] Bug 2
-* [ ] Feature 1
-* [ ] Feature 2
-* [ ] Breaking changes
+- [ ] Bug 1
+- [ ] Bug 2
+- [ ] Feature 1
+- [ ] Feature 2
+- [ ] Breaking changes
 
 <!-- You can skip this if you're fixing a typo or adding an app to the Showcase. -->
 
@@ -29,13 +29,13 @@ Demonstrate the code is solid. Example: The exact commands you ran and their out
 
 <!-- Make sure tests pass on Circle CI. -->
 
-
 ## Closing issues
 
 <!-- Put `closes #XXXX` in your comment to auto-close the issue that your PR fixes (if such). -->
+
 Fixes #
 
 ## After Merge
-* [ ] Does this change invalidate any docs or tutorials? _If so ensure the changes needed are either made or recorded_
-* [ ] Does this change require a release to be made? Is so please create and deploy the release
 
+- [ ] Does this change invalidate any docs or tutorials? _If so ensure the changes needed are either made or recorded_
+- [ ] Does this change require a release to be made? Is so please create and deploy the release

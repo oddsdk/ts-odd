@@ -8,7 +8,6 @@
 - Improves several types of the paths module.
 - Removes sessions.
 
-
 ### V0.37.2
 
 - Fixes an issue with the capabilities system which prevented ODD apps from receiving the capabilities.
@@ -20,7 +19,6 @@
 - Moves events onto top-level program and renames them. For example, the `local-change` is now `fileSystem:local-change`.
 - Adds session create and destroy events
 - Rename Webnative SDK to ODD SDK and update external URLs
-
 
 ### V0.36.3
 
@@ -58,7 +56,6 @@ Fixes an issue with the CID log, which, in certain scenarios, caused Webnative t
 
 - Fixes persistance issue with `fs.mv()`
 - Fixes various issues with file/directory history.
-
 
 ### v0.35.2
 
@@ -411,7 +408,7 @@ Upgrade to CIDv1.
       privatePaths: ["Music"],
       publicPaths: ["Mixtapes"],
     },
-  });
+  })
   ```
 
 - Those prerequisites are passed to the `wn.redirectToLobby` function.
@@ -467,11 +464,11 @@ Upgrade to CIDv1.
 Removed the default import from the index file. Now you use the SDK as follows, browser stays the same.
 
 ```js
-import * as sdk from "fission-sdk";
-import { initialise } from "fission-sdk";
+import * as sdk from "fission-sdk"
+import { initialise } from "fission-sdk"
 
-sdk.initialise();
-initialise();
+sdk.initialise()
+initialise()
 ```
 
 ### v0.14.0

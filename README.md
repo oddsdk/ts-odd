@@ -56,17 +56,15 @@ const program = await odd.program({
   // Can also be a string, used as an identifier for caches.
   // If you're developing multiple apps on the same localhost port,
   // make sure these differ.
-  namespace: { creator: "Nullsoft", name: "Winamp" }
-
+  namespace: { creator: "Nullsoft", name: "Winamp" },
 }).catch(error => {
   switch (error) {
     case odd.ProgramError.InsecureContext:
       // The ODD SDK requires HTTPS
-      break;
+      break
     case odd.ProgramError.UnsupportedBrowser:
-      break;
+      break
   }
-
 })
 ```
 
@@ -79,13 +77,13 @@ let session
 if (program.session) {
   session = program.session
 
-// If not, let's authenticate.
-// (a) new user, register a new Fission account
+  // If not, let's authenticate.
+  // (a) new user, register a new Fission account
 } else if (userChoseToRegister) {
   const { success } = await program.auth.register({ username: "llama" })
   session = success ? program.auth.session() : null
 
-// (b) existing user, link a new device
+  // (b) existing user, link a new device
 } else {
   // On device with existing session:
   const producer = await program.auth.accountProducer(program.session.username)
@@ -121,6 +119,7 @@ if (program.session) {
 Alternatively you can use the "capabilities" system when you want partial access to a file system. At the moment of writing, capabilities are only supported through the "Fission auth lobby", which is an ODD app that uses the auth strategy shown above.
 
 This Fission auth lobby flow works as follows:
+
 1. You get redirected to the Fission lobby from your app.
 2. Here you create an account like in the normal auth strategy flow shown above.
 3. The lobby shows what your app wants to access in your file system.
@@ -134,13 +133,13 @@ This Fission auth lobby flow works as follows:
 const permissions = {
   // Ask permission to write to and read from the directory:
   // private/Apps/Nullsoft/Winamp
-  app: { creator: "Nullsoft", name: "Winamp" }
+  app: { creator: "Nullsoft", name: "Winamp" },
 }
 
 // We need to pass this object to our program
 const program = await odd.program({
   namespace: { creator: "Nullsoft", name: "Winamp" },
-  permissions
+  permissions,
 })
 
 // (a) Whenever you are ready to redirect to the lobby, call this:
@@ -157,13 +156,12 @@ Once you have your `Session`, you have access to your file system 🎉
 const fs = session.fs
 ```
 
-__Notes:__
+**Notes:**
 
 - You can use alternative authentication strategies, such as [odd-walletauth](https://github.com/oddsdk/odd-walletauth).
 - You can remove all traces of the user using `await session.destroy()`
 - You can load the file system separately if you're using a web worker. This is done using the combination of `configuration.fileSystem.loadImmediately = false` and `program.fileSystem.load()`
 - You can recover a file system if you've downloaded a Recovery Kit by calling `program.fileSystem.recover({ newUsername, oldUsername, readKey })`. The `oldUsername` and `readKey` can be parsed from the uploaded Recovery Kit and the `newUsername` can be generated before calling the function. Please refer to [this example](https://github.com/oddsdk/odd-app-template/blob/5498e7062a4578028b8b55d2ac4c611bd5daab85/src/components/auth/recover/HasRecoveryKit.svelte#L49) from Fission's ODD App Template. Additionally, if you would like to see how to generate a Recovery Kit, you can reference [this example](https://github.com/oddsdk/odd-app-template/blob/main/src/lib/account-settings.ts#L186)
-
 
 ## Working with the file system
 
@@ -174,17 +172,19 @@ const { Branch } = odd.path
 
 // List the user's private files
 await fs.ls(
-  odd.path.directory(Branch.Private)
+  odd.path.directory(Branch.Private),
 )
 
 // Create a sub directory and add some content
 const contentPath = odd.file(
-  Branch.Private, "Sub Directory", "hello.txt"
+  Branch.Private,
+  "Sub Directory",
+  "hello.txt",
 )
 
 await fs.write(
   contentPath,
-  new TextEncoder().encode("👋") // Uint8Array
+  new TextEncoder().encode("👋"), // Uint8Array
 )
 
 // Persist changes and announce them to your other devices
@@ -192,16 +192,16 @@ await fs.publish()
 
 // Read the file
 const content = new TextDecoder().decode(
-  await fs.read(contentPath)
+  await fs.read(contentPath),
 )
 ```
 
 That's it, you have successfully created an ODD app! 🚀
 
-
 ## POSIX Interface
 
 WNFS exposes a familiar POSIX-style interface:
+
 - `exists`: check if a file or directory exists
 - `ls`: list a directory
 - `mkdir`: create a directory
@@ -209,7 +209,6 @@ WNFS exposes a familiar POSIX-style interface:
 - `read`: read from a file
 - `rm`: remove a file or directory
 - `write`: write to a file
-
 
 ## Versioning
 
@@ -234,17 +233,13 @@ file.history.back(delta)
 file.history.prior(1606236743)
 ```
 
-
 ## Sharing Private Data
 
-
 [https://docs.odd.dev/sharing-private-data](https://docs.odd.dev/sharing-private-data)
-
 
 ## Migration
 
 Some versions of the ODD SDK require apps to migrate their codebase to address breaking changes. Please see our [migration guide](https://docs.odd.dev/developers/odd/migration) for help migrating your apps to the latest ODD SDK version.
-
 
 ## Debugging
 
@@ -255,9 +250,9 @@ const appInfo = { creator: "Nullsoft", name: "Winamp" }
 
 await odd.program({
   namespace: appInfo,
-  debug: true
+  debug: true,
 })
 
 // Automatically exposed Program in debug mode
-const program = globalThis.__odd[ odd.namespace(appInfo) ] // namespace: "Nullsoft/Winamp"
+const program = globalThis.__odd[odd.namespace(appInfo)] // namespace: "Nullsoft/Winamp"
 ```

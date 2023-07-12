@@ -1,7 +1,6 @@
 import * as Path from "../../path/index.js"
 import { FileSystem } from "../class.js"
 
-
 /**
  * Adds some sample to the file system.
  */
@@ -16,6 +15,6 @@ export async function addSampleData(fs: FileSystem): Promise<void> {
   await fs.write(
     Path.file("private", "Welcome.txt"),
     "utf8",
-    "Welcome to your personal transportable encrypted file system 👋"
+    "Welcome to your personal transportable encrypted file system 👋",
   )
 }

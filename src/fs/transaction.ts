@@ -1,28 +1,33 @@
 import { BlockStore, PrivateForest, PrivateRef, PublicFile, PublicNode } from "wnfs"
 
-import * as Mutations from "./mutations.js"
 import * as Path from "../path/index.js"
+import * as Mutations from "./mutations.js"
 import * as PrivateRefs from "./private-ref.js"
 import * as Queries from "./queries.js"
 
-import { AnySupportedDataType, DataForType, DataType, Dependencies, DirectoryItem, DirectoryItemWithKind } from "./types.js"
 import { CID } from "../common/cid.js"
-import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
-import { PrivateReference } from "./types/private-ref.js"
 import { Cabinet } from "../repositories/cabinet.js"
-import { RootTree } from "./rootTree.js"
-import { Rng } from "./rng.js"
 import { Ucan } from "../ucan/index.js"
-import { dataFromBytes, dataToBytes } from "./data.js"
-import { findPrivateNode, partition as determinePartition } from "./mounts.js"
-import { addOrIncreaseNameNumber, pathSegmentsWithoutPartition, searchLatest } from "./common.js"
-import { throwNoAccess } from "./errors.js"
 import { lookupFsWriteUcan } from "../ucan/lookup.js"
-
+import { addOrIncreaseNameNumber, pathSegmentsWithoutPartition, searchLatest } from "./common.js"
+import { dataFromBytes, dataToBytes } from "./data.js"
+import { throwNoAccess } from "./errors.js"
+import { findPrivateNode, partition as determinePartition } from "./mounts.js"
+import { Rng } from "./rng.js"
+import { RootTree } from "./rootTree.js"
+import {
+  AnySupportedDataType,
+  DataForType,
+  DataType,
+  Dependencies,
+  DirectoryItem,
+  DirectoryItemWithKind,
+} from "./types.js"
+import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js"
+import { PrivateReference } from "./types/private-ref.js"
 
 export class TransactionContext<FS> {
-
   private changedPaths: Set<Path.Distinctive<Partitioned<Partition>>>
 
   constructor(
@@ -36,17 +41,18 @@ export class TransactionContext<FS> {
     this.changedPaths = new Set()
   }
 
-
   static async commit<FS>(context: TransactionContext<FS>): Promise<{
-    changedPaths: Array<Path.Distinctive<Partitioned<Partition>>>,
-    privateNodes: MountedPrivateNodes,
-    proofs: Ucan[],
-    rootTree: RootTree,
+    changedPaths: Array<Path.Distinctive<Partitioned<Partition>>>
+    privateNodes: MountedPrivateNodes
+    proofs: Ucan[]
+    rootTree: RootTree
   }> {
     const changedPaths = Array.from(context.changedPaths)
     const identifier = await context.dependencies.identifier.did()
     const identifierUcans = context.cabinet.audienceUcans(identifier)
-    const fileSystemDID = await context.dependencies.account.did(identifierUcans, { ...context.cabinet.ucansIndexedByCID })
+    const fileSystemDID = await context.dependencies.account.did(identifierUcans, {
+      ...context.cabinet.ucansIndexedByCID,
+    })
 
     // Proofs
     const proofs = await changedPaths.reduce(
@@ -55,18 +61,20 @@ export class TransactionContext<FS> {
         const proof = lookupFsWriteUcan(
           identifierUcans,
           fileSystemDID,
-          changedPath
+          changedPath,
         )
 
         // Throw error if no write access to this path
-        if (!proof) throwNoAccess(
-          changedPath,
-          "write"
-        )
+        if (!proof) {
+          throwNoAccess(
+            changedPath,
+            "write",
+          )
+        }
 
         return acc
       },
-      Promise.resolve([])
+      Promise.resolve([]),
     )
 
     // Private forest
@@ -80,18 +88,18 @@ export class TransactionContext<FS> {
 
         const nodePath = Path.removePartition(changedPath)
         const posixPath = Path.toPosix(nodePath, { absolute: true })
-        const maybeNode = context.privateNodes[ posixPath ]
+        const maybeNode = context.privateNodes[posixPath]
 
         if (maybeNode) {
-          const [ _, newForest ] = await maybeNode.node.store(oldForest, context.blockStore, context.rng)
+          const [_, newForest] = await maybeNode.node.store(oldForest, context.blockStore, context.rng)
           return newForest
         } else {
           return oldForest
         }
       },
       Promise.resolve(
-        context.rootTree.privateForest
-      )
+        context.rootTree.privateForest,
+      ),
     )
 
     // Replace forest
@@ -106,15 +114,12 @@ export class TransactionContext<FS> {
     }
   }
 
-
-
   // QUERIES
-
 
   async contentCID(path: Path.File<Partitioned<Public>>): Promise<CID | null> {
     const result = await this.rootTree.publicRoot.getNode(
       pathSegmentsWithoutPartition(path),
-      this.blockStore
+      this.blockStore,
     )
 
     const maybeNode: PublicNode | null = result || null
@@ -123,22 +128,21 @@ export class TransactionContext<FS> {
       : null
   }
 
-
   async capsuleCID(path: Path.Distinctive<Partitioned<Public>>): Promise<CID | null> {
     const result = await this.rootTree.publicRoot.getNode(
       pathSegmentsWithoutPartition(path),
-      this.blockStore
+      this.blockStore,
     )
 
     const maybeNode: PublicNode | null = result || null
     return maybeNode
-      ? CID.decode(maybeNode.isFile()
-        ? await maybeNode.asFile().store(this.blockStore)
-        : await maybeNode.asDir().store(this.blockStore)
+      ? CID.decode(
+        maybeNode.isFile()
+          ? await maybeNode.asFile().store(this.blockStore)
+          : await maybeNode.asDir().store(this.blockStore),
       )
       : null
   }
-
 
   async capsuleRef(path: Path.Distinctive<Partitioned<Private>>): Promise<PrivateReference | null> {
     let priv: PrivateNodeQueryResult
@@ -152,85 +156,86 @@ export class TransactionContext<FS> {
     return priv.remainder.length === 0 || priv.node.isFile()
       ? priv.node
         .store(this.rootTree.privateForest, this.blockStore, this.rng)
-        .then(([ ref ]: [ PrivateRef, PrivateForest ]) => PrivateRefs.fromWnfsRef(ref))
+        .then(([ref]: [PrivateRef, PrivateForest]) => PrivateRefs.fromWnfsRef(ref))
       : priv.node.asDir()
         .getNode(
           priv.remainder,
           searchLatest(),
           this.rootTree.privateForest,
-          this.blockStore
+          this.blockStore,
         )
         .then(result => {
           return result
             ? result
               .store(this.rootTree.privateForest, this.blockStore, this.rng)
-              .then(([ ref ]: [ PrivateRef, PrivateForest ]) => PrivateRefs.fromWnfsRef(ref))
+              .then(([ref]: [PrivateRef, PrivateForest]) => PrivateRefs.fromWnfsRef(ref))
             : null
         })
-
   }
-
 
   async exists(path: Path.Distinctive<Partitioned<Partition>>): Promise<boolean> {
     return this.query(
       path,
       {
         public: Queries.publicExists(),
-        private: Queries.privateExists()
-      }
+        private: Queries.privateExists(),
+      },
     )
   }
 
-
   async listDirectory(
     path: Path.Directory<Partitioned<Partition>>,
-    listOptions: { withItemKind: true }
+    listOptions: { withItemKind: true },
   ): Promise<DirectoryItemWithKind[]>
   async listDirectory(
     path: Path.Directory<Partitioned<Partition>>,
-    listOptions: { withItemKind: false }
-  ): Promise<DirectoryItem[]>
-  async listDirectory(
-    path: Path.Directory<Partitioned<Partition>>
+    listOptions: { withItemKind: false },
   ): Promise<DirectoryItem[]>
   async listDirectory(
     path: Path.Directory<Partitioned<Partition>>,
-    listOptions?: { withItemKind: boolean }
+  ): Promise<DirectoryItem[]>
+  async listDirectory(
+    path: Path.Directory<Partitioned<Partition>>,
+    listOptions?: { withItemKind: boolean },
   ): Promise<DirectoryItem[] | DirectoryItemWithKind[]>
   async listDirectory(
     path: Path.Directory<Partitioned<Partition>>,
-    listOptions: { withItemKind: boolean } = { withItemKind: false }
+    listOptions: { withItemKind: boolean } = { withItemKind: false },
   ): Promise<DirectoryItem[] | DirectoryItemWithKind[]> {
-    if (listOptions.withItemKind) return this.query(
-      path,
-      {
-        public: Queries.publicListDirectoryWithKind(),
-        private: Queries.privateListDirectoryWithKind()
-      }
-    )
+    if (listOptions.withItemKind) {
+      return this.query(
+        path,
+        {
+          public: Queries.publicListDirectoryWithKind(),
+          private: Queries.privateListDirectoryWithKind(),
+        },
+      )
+    }
 
     return this.query(
       path,
       {
         public: Queries.publicListDirectory(),
-        private: Queries.privateListDirectory()
-      }
+        private: Queries.privateListDirectory(),
+      },
     )
   }
 
-
   ls = this.listDirectory
 
-
   async read<D extends DataType, V = unknown>(
-    arg: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | { capsuleRef: PrivateReference },
+    arg: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
+      capsuleRef: PrivateReference
+    },
     dataType: DataType,
-    options?: { offset: number, length: number }
+    options?: { offset: number; length: number },
   ): Promise<DataForType<D, V>>
   async read<V = unknown>(
-    arg: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | { capsuleRef: PrivateReference },
+    arg: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
+      capsuleRef: PrivateReference
+    },
     dataType: DataType,
-    options?: { offset: number, length: number }
+    options?: { offset: number; length: number },
   ): Promise<AnySupportedDataType<V>> {
     let bytes
 
@@ -238,11 +243,10 @@ export class TransactionContext<FS> {
       // Public content from content CID
       bytes = await Queries.publicReadFromCID(
         arg.contentCID,
-        options
+        options,
       )(
-        this.publicContext()
+        this.publicContext(),
       )
-
     } else if ("capsuleCID" in arg) {
       // Public content from capsule CID
       const publicFile: PublicFile = await PublicFile.load(arg.capsuleCID.bytes, this.blockStore)
@@ -250,45 +254,38 @@ export class TransactionContext<FS> {
       return this.read<DataType, V>(
         { contentCID: CID.decode(publicFile.contentCid()) },
         dataType,
-        options
+        options,
       )
-
     } else if ("capsuleRef" in arg) {
       // Private content from capsule reference
       bytes = await Queries.privateReadFromReference(
         PrivateRefs.toWnfsRef(arg.capsuleRef),
-        options
+        options,
       )(
-        this.privateContext()
+        this.privateContext(),
       )
-
     } else if ("file" in arg || "directory" in arg) {
       // Public or private from path
       bytes = await this.query(
         arg,
         {
           public: Queries.publicRead(options),
-          private: Queries.privateRead(options)
-        }
+          private: Queries.privateRead(options),
+        },
       )
-
     } else {
       // ⚠️
       throw new Error("Invalid argument")
-
     }
 
     return dataFromBytes(dataType, bytes)
   }
 
-
-
   // MUTATIONS
-
 
   async copy(
     fromParam: Path.Distinctive<PartitionedNonEmpty<Partition>>,
-    toParam: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>
+    toParam: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
   ): Promise<void> {
     let from = fromParam
     let to = toParam
@@ -306,67 +303,59 @@ export class TransactionContext<FS> {
     throw new Error(`Copy no-op, from '${Path.toPosix(from)}' to '${Path.toPosix(to)}'`)
   }
 
-
   cp = this.copy
 
-
   async createDirectory(
-    path: Path.Directory<PartitionedNonEmpty<Partition>>
+    path: Path.Directory<PartitionedNonEmpty<Partition>>,
   ): Promise<{ path: Path.Directory<PartitionedNonEmpty<Partition>> }> {
     if (await this.exists(path)) {
       const newPath = addOrIncreaseNameNumber(path)
       return this.createDirectory(newPath)
-
     } else {
       await this.ensureDirectory(path)
       return { path: path }
-
     }
   }
-
 
   async createFile<D extends DataType, V = unknown>(
     path: Path.File<PartitionedNonEmpty<Partition>>,
     dataType: DataType,
-    data: DataForType<D, V>
+    data: DataForType<D, V>,
   ): Promise<{ path: Path.File<PartitionedNonEmpty<Partition>> }> {
     if (await this.exists(path)) {
       const newPath = addOrIncreaseNameNumber(path)
       return this.createFile(newPath, dataType, data)
-
     } else {
       await this.write(path, dataType, data)
       return { path: path }
-
     }
   }
 
-
   async ensureDirectory(
-    path: Path.Directory<PartitionedNonEmpty<Partition>>
+    path: Path.Directory<PartitionedNonEmpty<Partition>>,
   ): Promise<void> {
     const partition = determinePartition(path)
 
     switch (partition.name) {
-      case "public": return this.publicMutation(
-        partition.path,
-        Mutations.publicCreateDirectory()
-      )
+      case "public":
+        return this.publicMutation(
+          partition.path,
+          Mutations.publicCreateDirectory(),
+        )
 
-      case "private": return this.privateMutation(
-        partition.path,
-        Mutations.privateCreateDirectory()
-      )
+      case "private":
+        return this.privateMutation(
+          partition.path,
+          Mutations.privateCreateDirectory(),
+        )
     }
   }
 
-
   mkdir = this.ensureDirectory
-
 
   async move(
     fromParam: Path.Distinctive<PartitionedNonEmpty<Partition>>,
-    toParam: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>
+    toParam: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
   ): Promise<void> {
     let from = fromParam
     let to = toParam
@@ -377,42 +366,39 @@ export class TransactionContext<FS> {
     return this.manualMove(from, to)
   }
 
-
   mv = this.move
 
-
   async remove(
-    path: Path.Distinctive<PartitionedNonEmpty<Partition>>
+    path: Path.Distinctive<PartitionedNonEmpty<Partition>>,
   ): Promise<void> {
     const partition = determinePartition(path)
 
     switch (partition.name) {
-      case "public": return this.publicMutation(
-        partition.path,
-        Mutations.publicRemove()
-      )
+      case "public":
+        return this.publicMutation(
+          partition.path,
+          Mutations.publicRemove(),
+        )
 
-      case "private": return this.privateMutation(
-        partition.path,
-        Mutations.privateRemove()
-      )
+      case "private":
+        return this.privateMutation(
+          partition.path,
+          Mutations.privateRemove(),
+        )
     }
   }
 
-
   rm = this.remove
-
 
   async rename(
     path: Path.Distinctive<PartitionedNonEmpty<Partition>>,
-    newName: string
+    newName: string,
   ): Promise<void> {
     const fromPath = path
     const toPath = Path.replaceTerminus(fromPath, newName)
 
     return this.move(fromPath, toPath)
   }
-
 
   async write<D extends DataType, V = unknown>(
     path: Path.File<PartitionedNonEmpty<Partition>>,
@@ -423,29 +409,28 @@ export class TransactionContext<FS> {
     const partition = determinePartition(path)
 
     switch (partition.name) {
-      case "public": return this.publicMutation(
-        partition.path,
-        Mutations.publicWrite(bytes)
-      )
+      case "public":
+        return this.publicMutation(
+          partition.path,
+          Mutations.publicWrite(bytes),
+        )
 
-      case "private": return this.privateMutation(
-        partition.path,
-        Mutations.privateWrite(bytes)
-      )
+      case "private":
+        return this.privateMutation(
+          partition.path,
+          Mutations.privateWrite(bytes),
+        )
     }
   }
 
-
-
   // ㊙️  ▒▒  QUERIES
-
 
   query<T>(
     path: Path.Distinctive<Partitioned<Partition>>,
     queryFunctions: {
       public: Queries.Public<T>
       private: Queries.Private<T>
-    }
+    },
   ): Promise<T> {
     const partition = determinePartition(path)
 
@@ -454,34 +439,30 @@ export class TransactionContext<FS> {
         return Queries.publicQuery(
           partition.path,
           queryFunctions.public,
-          this.publicContext()
+          this.publicContext(),
         )
 
       case "private":
         return Queries.privateQuery(
           partition.path,
           queryFunctions.private,
-          this.privateContext()
+          this.privateContext(),
         )
     }
   }
 
-
-
   // ㊙️  ▒▒  MUTATIONS
-
 
   private async manualCopyFile(
     from: Path.File<PartitionedNonEmpty<Partition>>,
-    to: Path.File<PartitionedNonEmpty<Partition>>
+    to: Path.File<PartitionedNonEmpty<Partition>>,
   ): Promise<void> {
     return this.write(to, "bytes", await this.read(from, "bytes"))
   }
 
-
   private async manualCopyDirectory(
     from: Path.Directory<PartitionedNonEmpty<Partition>>,
-    to: Path.Directory<Partitioned<Partition>>
+    to: Path.Directory<Partitioned<Partition>>,
   ): Promise<void> {
     if (Path.isPartitionedNonEmpty(to)) await this.ensureDirectory(to)
 
@@ -492,53 +473,50 @@ export class TransactionContext<FS> {
 
     return listing.reduce(async (
       acc: Promise<void>,
-      item: DirectoryItemWithKind
+      item: DirectoryItemWithKind,
     ): Promise<void> => {
       await acc
 
       if (item.kind === "directory") {
         return this.manualCopyDirectory(
           Path.combine(from, Path.directory(item.name)),
-          Path.combine(to, Path.directory(item.name))
+          Path.combine(to, Path.directory(item.name)),
         )
       }
 
       return this.manualCopyFile(
         Path.combine(from, Path.file(item.name)),
-        Path.combine(to, Path.file(item.name))
+        Path.combine(to, Path.file(item.name)),
       )
     }, Promise.resolve())
   }
 
-
   private async manualMove(
     from: Path.Distinctive<PartitionedNonEmpty<Partition>>,
-    to: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>
+    to: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
   ): Promise<void> {
     await this.copy(from, to)
     return this.remove(from)
   }
 
-
   private async publicMutation(
     path: Path.Distinctive<Partitioned<Public>>,
-    mut: Mutations.Public
+    mut: Mutations.Public,
   ): Promise<void> {
     const result = await mut({
       blockStore: this.blockStore,
       dependencies: this.dependencies,
       pathSegments: Path.unwrap(Path.removePartition(path)),
-      rootTree: this.rootTree
+      rootTree: this.rootTree,
     })
 
     // Replace public root
     this.rootTree = { ...this.rootTree, publicRoot: result.rootDir }
   }
 
-
   private async privateMutation(
     path: Path.Distinctive<Partitioned<Private>>,
-    mut: Mutations.Private
+    mut: Mutations.Private,
   ): Promise<void> {
     const priv = findPrivateNode(path, this.privateNodes)
 
@@ -553,7 +531,7 @@ export class TransactionContext<FS> {
 
     // Mark node as changed
     this.changedPaths.add(
-      Path.withPartition("private", priv.path)
+      Path.withPartition("private", priv.path),
     )
 
     // Replace forest
@@ -562,16 +540,13 @@ export class TransactionContext<FS> {
     // Replace private node
     const nodePosix = Path.toPosix(priv.path, { absolute: true })
 
-    this.privateNodes[ nodePosix ] = {
+    this.privateNodes[nodePosix] = {
       node: result.rootDir.asNode(),
-      path: priv.path
+      path: priv.path,
     }
   }
 
-
-
   // ㊙️
-
 
   publicContext(): Queries.PublicContext<FS> {
     return {
@@ -589,5 +564,4 @@ export class TransactionContext<FS> {
       rootTree: this.rootTree,
     }
   }
-
 }

@@ -1,13 +1,19 @@
-import * as Codecs from "../dag/codecs.js"
-import * as Depot from "../components/depot/implementation.js"
 import { CID } from "../common/cid.js"
+import * as Depot from "../components/depot/implementation.js"
+import * as Codecs from "../dag/codecs.js"
 
+////////
+// 🧩 //
+////////
 
 export interface BlockStore {
   putBlock(bytes: Uint8Array, code: number): Promise<Uint8Array>
   getBlock(cid: Uint8Array): Promise<Uint8Array | undefined>
 }
 
+////////
+// 🛠️ //
+////////
 
 export function fromDepot(depot: Depot.Implementation): BlockStore {
   return {
@@ -23,6 +29,6 @@ export function fromDepot(depot: Depot.Implementation): BlockStore {
 
       const cid = await depot.putBlock(bytes, code)
       return cid.bytes
-    }
+    },
   }
 }

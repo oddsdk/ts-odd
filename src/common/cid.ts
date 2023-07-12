@@ -1,16 +1,24 @@
-import { CID, Version } from "multiformats/cid"
-import { decode as decodeMultihash } from "multiformats/hashes/digest"
-import { hasProp, isNum, isObject } from "./type-checks.js"
+import { CID } from "multiformats/cid"
 
+////////
+// 🛳️ //
+////////
 
 export { CID }
 
+////////
+// 🏔️ //
+////////
 
 /**
  * CID representing an empty string. We use this to speed up DNS propagation
  * However, we treat that as a null value in the code
  */
 export const EMPTY_CID = "Qmc5m94Gu7z62RC8waSKkZUrCCBJPyHbkpmGzEePxy2oXJ"
+
+////////
+// 🛠️ //
+////////
 
 /**
  * Decode a possibly string-encoded CID.

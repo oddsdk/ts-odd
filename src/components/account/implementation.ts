@@ -2,25 +2,22 @@ import { Query } from "../../access/query.js"
 import { CID } from "../../common/cid.js"
 import { Capability, Dictionary as UcanDictionary, Ucan } from "../../ucan/types.js"
 
-
 export type Implementation = {
-
   // CREATION
 
   /**
    * Can these form values be used to register an account?
    */
   canRegister: (formValues: Record<string, string>) => Promise<
-    { ok: true } | { ok: false, reason: string }
+    { ok: true } | { ok: false; reason: string }
   >
 
   /**
    * How to register an account with this account system.
    */
   register: (formValues: Record<string, string>, identifierUcan: Ucan) => Promise<
-    { ok: true, ucans: Ucan[] } | { ok: false, reason: string }
+    { ok: true; ucans: Ucan[] } | { ok: false; reason: string }
   >
-
 
   // DATA ROOT
 
@@ -37,8 +34,7 @@ export type Implementation = {
   /**
    * How to update the data root, the top-level pointer of the file system.
    */
-  updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false, reason: string }>
-
+  updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>
 
   // UCAN
 
@@ -51,5 +47,4 @@ export type Implementation = {
    * This delegates account access.
    */
   provideUCANs(accessQuery: Query): Ucan[]
-
 }

@@ -1,9 +1,7 @@
 import * as Ucans from "@ucans/core"
 
-
 export { Capability, Ucan } from "@ucans/core"
 export type Facts = Record<string, unknown>
-
 
 export type BuildParams = {
   // from/to
@@ -24,12 +22,10 @@ export type BuildParams = {
   addNonce?: boolean
 }
 
-
 /**
  * Ucan dictionary,
  * UCANs indexed by CID string representing the UCAN.
  */
 export type Dictionary = Record<string, Ucans.Ucan>
-
 
 export type Keypair = Ucans.DidableKey

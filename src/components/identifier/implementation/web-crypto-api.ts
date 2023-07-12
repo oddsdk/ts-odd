@@ -3,21 +3,19 @@ import { spki } from "iso-signatures/spki"
 
 import * as WebCryptoAPIAgent from "../../agent/implementation/web-crypto-api.js"
 
-import { Implementation } from "../implementation.js"
 import { exportPublicKey } from "../../../common/crypto.js"
 import { Store } from "../../../common/crypto/store.js"
-
+import { Implementation } from "../implementation.js"
 
 // 🛳️
 
-
 export async function implementation(
-  { store }: { store: Store }
+  { store }: { store: Store },
 ): Promise<Implementation> {
   const signingKey = await WebCryptoAPIAgent.ensureKey(
     store,
     "signing-key",
-    WebCryptoAPIAgent.createSigningKey
+    WebCryptoAPIAgent.createSigningKey,
   )
 
   const exportedKey = await exportPublicKey(signingKey).then(spki.decode)

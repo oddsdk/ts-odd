@@ -1,6 +1,5 @@
 import * as Path from "../path/index.js"
 
-
 export function throwNoAccess(path: Path.DistinctivePath<Path.Segments>, accessType?: string): never {
   throw new Error(`Expected to have ${accessType ? accessType + " " : ""}access to the path '${Path.toPosix(path)}'`)
 }

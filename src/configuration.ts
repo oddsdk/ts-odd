@@ -1,9 +1,7 @@
 import { AppInfo } from "./appInfo.js"
 import { isString } from "./common/type-checks.js"
 
-
 // CONFIGURATION
-
 
 export type Configuration = {
   namespace: string | AppInfo
@@ -13,10 +11,10 @@ export type Configuration = {
    */
   debug?: boolean | {
     /**
-    * Should I emit window post messages with session and filesystem information?
-    *
-    * @default true
-    */
+     * Should I emit window post messages with session and filesystem information?
+     *
+     * @default true
+     */
     emitWindowPostMessages?: boolean
 
     /**
@@ -61,10 +59,7 @@ export type Configuration = {
   userMessages?: UserMessages
 }
 
-
-
 // PIECES
-
 
 export type UserMessages = {
   versionMismatch: {
@@ -73,10 +68,7 @@ export type UserMessages = {
   }
 }
 
-
-
 // 🛠
-
 
 /**
  * App identifier.

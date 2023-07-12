@@ -120,6 +120,7 @@
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "@typescript-eslint/parser": "^5.54.0",
     "copyfiles": "^2.4.1",
+    "dprint": "^0.39.0",
     "esbuild": "^0.17.11",
     "eslint": "^8.35.0",
     "expect": "^27.0.0",

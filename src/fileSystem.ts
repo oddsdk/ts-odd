@@ -1,22 +1,25 @@
 import { CID } from "multiformats/cid"
 
-import type { Repo as CIDLog } from "./repositories/cid-log.js"
 import type { Cabinet } from "./repositories/cabinet.js"
+import type { Repo as CIDLog } from "./repositories/cid-log.js"
 
 import * as Events from "./events.js"
-import * as Path from "./path/index.js"
 import * as PrivateRef from "./fs/private-ref.js"
+import * as Path from "./path/index.js"
 import * as Ucan from "./ucan/index.js"
 
-import { Configuration } from "./configuration.js"
-import { Dependencies } from "./fs/types.js"
-import { FileSystem } from "./fs/class.js"
 import { Maybe, isString } from "./common/index.js"
-import { fsReadUcans } from "./ucan/lookup.js"
-import { listFacts } from "./ucan/chain.js"
 import { Agent, Identifier } from "./components.js"
+import { Configuration } from "./configuration.js"
+import { FileSystem } from "./fs/class.js"
+import { Dependencies } from "./fs/types.js"
 import { PrivateReference } from "./fs/types/private-ref.js"
+import { listFacts } from "./ucan/chain.js"
+import { fsReadUcans } from "./ucan/lookup.js"
 
+////////
+// 🛠️ //
+////////
 
 /**
  * Load a user's file system.
@@ -49,35 +52,30 @@ export async function loadFileSystem({ cabinet, cidLog, config, dependencies, ev
     if (cid) manners.log("📓 Working offline, using local CID:", cid.toString())
 
     throw new Error("Offline, don't have a file system to work with.")
-
   } else if (!dataCid) {
     // No DNS CID yet
     cid = cidLog.newest()
     if (cid) manners.log("📓 No DNSLink, using local CID:", cid.toString())
     else manners.log("📓 Creating a new file system")
-
   } else if (logIdx === cidLog.length() - 1) {
     // DNS is up to date
     cid = dataCid
     manners.log("📓 DNSLink is up to date:", cid.toString())
-
   } else if (logIdx !== -1 && logIdx < cidLog.length() - 1) {
     // DNS is outdated
     cid = cidLog.newest()
     const diff = cidLog.length() - 1 - logIdx
     const idxLog = diff === 1 ? "1 newer local entry" : diff.toString() + " newer local entries"
     manners.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid.toString())
-
   } else {
     // DNS is newer
     cid = dataCid
-    await cidLog.add([ cid ])
+    await cidLog.add([cid])
     manners.log("📓 DNSLink is newer:", cid.toString())
 
     // TODO: We could test the filesystem version at this DNSLink at this point to figure out whether to continue locally.
     // However, that needs a plan for reconciling local changes back into the DNSLink, once migrated. And a plan for migrating changes
     // that are only stored locally.
-
   }
 
   // If a file system exists, load it and return it
@@ -91,20 +89,22 @@ export async function loadFileSystem({ cabinet, cidLog, config, dependencies, ev
     const readUcans = fsReadUcans(identifierUcans, identifierDID)
     const facts = readUcans.reduce(
       (acc, readUcan) => ({ ...acc, ...listFacts(readUcan, cabinet.ucansIndexedByCID) }),
-      {}
+      {},
     )
 
-    await Promise.all(Object.entries(facts).map(async ([ key, ref ]) => {
-      if (!isString(ref)) throw new Error("Invalid ref")
+    await Promise.all(
+      Object.entries(facts).map(async ([key, ref]) => {
+        if (!isString(ref)) throw new Error("Invalid ref")
 
-      const posixPath = key.replace(/wnfs\:\/\/[^\/]+\//, "")
-      const path = Path.fromPosix(posixPath)
+        const posixPath = key.replace(/wnfs\:\/\/[^\/]+\//, "")
+        const path = Path.fromPosix(posixPath)
 
-      return fs.mountPrivateNode({
-        path,
-        capsuleRef: await PrivateRef.decrypt(ref, agent)
-      })
-    }))
+        return fs.mountPrivateNode({
+          path,
+          capsuleRef: await PrivateRef.decrypt(ref, agent),
+        })
+      }),
+    )
 
     return fs
   }
@@ -122,13 +122,12 @@ export async function loadFileSystem({ cabinet, cidLog, config, dependencies, ev
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)
 
   // Self delegate file system UCAN
-  const fileSystemDelegation = await selfDelegateCapabilities(agent, identifier, maybeMount ? [ maybeMount ] : [])
+  const fileSystemDelegation = await selfDelegateCapabilities(agent, identifier, maybeMount ? [maybeMount] : [])
   await cabinet.addUcan(fileSystemDelegation)
 
   // Fin
   return fs
 }
-
 
 /**
  * Create a UCAN that self-delegates the file system capabilities.
@@ -139,7 +138,7 @@ export async function selfDelegateCapabilities(
   mounts: {
     path: Path.Distinctive<Path.Segments>
     capsuleRef: PrivateReference
-  }[]
+  }[],
 ) {
   const identifierDID = await identifier.did()
 
@@ -156,16 +155,16 @@ export async function selfDelegateCapabilities(
     capabilities: [
       {
         with: { scheme: "wnfs", hierPart: `//${identifierDID}/` },
-        can: { namespace: "fs", segments: [ "*" ] }
+        can: { namespace: "fs", segments: ["*"] },
       },
     ],
 
     facts: await Promise.all(mounts.map(async mount => (
       {
-        [ `wnfs://${identifierDID}/private/${Path.toPosix(mount.path)}` ]: (
+        [`wnfs://${identifierDID}/private/${Path.toPosix(mount.path)}`]: (
           await PrivateRef.encrypt(mount.capsuleRef, agent)
-        )
+        ),
       }
-    )))
+    ))),
   })
 }

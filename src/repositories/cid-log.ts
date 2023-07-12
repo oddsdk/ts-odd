@@ -1,30 +1,30 @@
 import { CID } from "multiformats/cid"
 
-import * as Storage from "../components/storage/implementation"
 import { decodeCID, encodeCID } from "../common/cid.js"
+import * as Storage from "../components/storage/implementation"
 import Repository, { RepositoryOptions } from "../repository.js"
 
+////////
+// 🛠️ //
+////////
 
 export function create({ storage }: { storage: Storage.Implementation }): Promise<Repo> {
   return Repo.create({
     storage,
-    storageName: storage.KEYS.CID_LOG
+    storageName: storage.KEYS.CID_LOG,
   })
 }
 
-
-// CLASS
-
+///////////
+// CLASS //
+///////////
 
 export { Repo as CIDLog }
 
-
 export class Repo extends Repository<CID[], CID> {
-
   private constructor(options: RepositoryOptions) {
     super(options)
   }
-
 
   // IMPLEMENTATION
 
@@ -35,14 +35,13 @@ export class Repo extends Repository<CID[], CID> {
   mergeCollections(a: CID[], b: CID[]): CID[] {
     return [
       ...a,
-      ...b
+      ...b,
     ]
   }
 
   async toCollection(item: CID): Promise<CID[]> {
-    return [ item ]
+    return [item]
   }
-
 
   // ENCODING
 
@@ -52,10 +51,9 @@ export class Repo extends Repository<CID[], CID> {
 
   toJSON(a: CID[]): string {
     return JSON.stringify(
-      a.map(encodeCID)
+      a.map(encodeCID),
     )
   }
-
 
   // 🛠️
 
@@ -64,7 +62,7 @@ export class Repo extends Repository<CID[], CID> {
   }
 
   getByIndex(idx: number): CID | null {
-    return this.collection[ idx ]
+    return this.collection[idx]
   }
 
   getAll(): CID[] {
@@ -73,9 +71,9 @@ export class Repo extends Repository<CID[], CID> {
 
   indexOf(item: CID): number {
     return this.collection.map(
-      c => c.toString()
+      c => c.toString(),
     ).indexOf(
-      item.toString()
+      item.toString(),
     )
   }
 
@@ -84,7 +82,6 @@ export class Repo extends Repository<CID[], CID> {
   }
 
   newest(): CID {
-    return this.collection[ this.collection.length - 1 ]
+    return this.collection[this.collection.length - 1]
   }
-
 }

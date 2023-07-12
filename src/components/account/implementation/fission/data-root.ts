@@ -5,10 +5,9 @@ import * as TypeChecks from "../../../../common/type-checks.js"
 import * as Ucan from "../../../../ucan/index.js"
 
 import { decodeCID } from "../../../../common/cid.js"
-import { DELEGATE_ALL_PROOFS } from "../../../../ucan/capabilities.js"
 import { Agent, DNS, Manners } from "../../../../components.js"
 import { FileSystem } from "../../../../fs/class.js"
-
+import { DELEGATE_ALL_PROOFS } from "../../../../ucan/capabilities.js"
 
 /**
  * Get the CID of a user's data root.
@@ -22,7 +21,7 @@ export async function lookup(
     dns: DNS.Implementation
     manners: Manners.Implementation<FileSystem>
   },
-  username: string
+  username: string,
 ): Promise<CID | null> {
   const maybeRoot = await lookupOnFisson(endpoints, dependencies, username)
   if (!maybeRoot) return null
@@ -47,23 +46,21 @@ export async function lookupOnFisson(
   dependencies: {
     manners: Manners.Implementation<FileSystem>
   },
-  username: string
+  username: string,
 ): Promise<CID | null> {
   try {
     const resp = await fetch(
       Fission.apiUrl(endpoints, `user/data/${username}`),
-      { cache: "reload" } // don't use cache
+      { cache: "reload" }, // don't use cache
     )
     const cid = await resp.json()
     return decodeCID(cid)
-
   } catch (err) {
     dependencies.manners.log(
       "Could not locate user root on Fission server: ",
-      TypeChecks.hasProp(err, "toString") ? (err as any).toString() : err
+      TypeChecks.hasProp(err, "toString") ? (err as any).toString() : err,
     )
     return null
-
   }
 }
 
@@ -81,8 +78,8 @@ export async function update(
     manners: Manners.Implementation<FileSystem>
   },
   cidInstance: CID,
-  proof: Ucan.Ucan
-): Promise<{ ok: true } | { ok: false, reason: string }> {
+  proof: Ucan.Ucan,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const cid = cidInstance.toString()
 
   // Debug
@@ -91,68 +88,64 @@ export async function update(
   // Make API call
   return fetchWithRetry(Fission.apiUrl(endpoints, `user/data/${cid}`), {
     headers: async () => {
-      const jwt = Ucan.encode(await Ucan.build({
-        audience: await Fission.did(endpoints, dependencies.dns),
-        issuer: await Ucan.keyPair(dependencies.agent),
+      const jwt = Ucan.encode(
+        await Ucan.build({
+          audience: await Fission.did(endpoints, dependencies.dns),
+          issuer: await Ucan.keyPair(dependencies.agent),
 
-        proofs: [ (await Ucan.cid(proof)).toString() ],
+          proofs: [(await Ucan.cid(proof)).toString()],
 
-        capabilities: [ DELEGATE_ALL_PROOFS ]
-      }))
+          capabilities: [DELEGATE_ALL_PROOFS],
+        }),
+      )
 
       return { "authorization": `Bearer ${jwt}` }
     },
     retries: 100,
     retryDelay: 5000,
-    retryOn: [ 502, 503, 504 ],
-
+    retryOn: [502, 503, 504],
   }, {
-    method: "PUT"
-
-  }).then((response: Response): { ok: true } | { ok: false, reason: string } => {
+    method: "PUT",
+  }).then((response: Response): { ok: true } | { ok: false; reason: string } => {
     if (response.status < 300) dependencies.manners.log("🪴 DNSLink updated:", cid)
     else dependencies.manners.log("🔥 Failed to update DNSLink for:", cid)
     return response.ok ? { ok: true } : { ok: false, reason: response.statusText }
-
   }).catch(err => {
     dependencies.manners.log("🔥 Failed to update DNSLink for:", cid)
     console.error(err)
     return { ok: false, reason: err }
-
   })
 }
 
-
-
 // ㊙️
 
-
 type RetryOptions = {
-  headers: () => Promise<{ [ _: string ]: string }>
+  headers: () => Promise<{ [_: string]: string }>
   retries: number
   retryDelay: number
   retryOn: Array<number>
 }
 
-
 async function fetchWithRetry(
   url: string,
   retryOptions: RetryOptions,
   fetchOptions: RequestInit,
-  retry = 0
+  retry = 0,
 ): Promise<Response> {
   const headers = await retryOptions.headers()
   const response = await fetch(url, {
     ...fetchOptions,
-    headers: { ...fetchOptions.headers, ...headers }
+    headers: { ...fetchOptions.headers, ...headers },
   })
 
   if (retryOptions.retryOn.includes(response.status)) {
     if (retry < retryOptions.retries) {
-      return await new Promise((resolve, reject) => setTimeout(
-        () => fetchWithRetry(url, retryOptions, fetchOptions, retry + 1).then(resolve, reject),
-        retryOptions.retryDelay
-      ))
+      return await new Promise((resolve, reject) =>
+        setTimeout(
+          () => fetchWithRetry(url, retryOptions, fetchOptions, retry + 1).then(resolve, reject),
+          retryOptions.retryDelay,
+        )
+      )
     } else {
       throw new Error("Too many retries for fetch")
     }

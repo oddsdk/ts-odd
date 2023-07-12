@@ -2,7 +2,6 @@ export type ImplementationOptions = {
   name: string
 }
 
-
 /**
  * Ephemeral storage.
  */

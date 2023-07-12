@@ -1,111 +1,110 @@
 import localforage from "localforage"
 
 import * as Auth from "./auth.js"
+import * as Events from "./events.js"
 import * as Cabinet from "./repositories/cabinet.js"
 import * as CIDLog from "./repositories/cid-log.js"
-import * as Events from "./events.js"
 
-import { Account, Agent, Channel, Depot, DNS, Identifier, Manners, Storage } from "./components.js"
+import { Account, Agent, Channel, DNS, Depot, Identifier, Manners, Storage } from "./components.js"
 import { Components } from "./components.js"
-import { Configuration, namespace } from "./configuration.js"
-import { FileSystem } from "./fs/class.js"
 import { RequestOptions } from "./components/access/implementation.js"
-import { addSampleData } from "./fs/data/sample.js"
+import { Configuration, namespace } from "./configuration.js"
 import { loadFileSystem } from "./fileSystem.js"
+import { FileSystem } from "./fs/class.js"
+import { addSampleData } from "./fs/data/sample.js"
 
+/////////////////////
+// IMPLEMENTATIONS //
+/////////////////////
 
-// IMPLEMENTATIONS
-
-
-import * as DNSOverHTTPS from "./components/dns/implementation/dns-over-https.js"
 import * as FissionAccountsProduction from "./components/account/implementation/fission-production.js"
-import * as FissionIpfsProduction from "./components/depot/implementation/fission-ipfs-production.js"
-import * as FissionWebSocketChannelProduction from "./components/channel/implementation/fission-production.js"
-import * as IndexedDBStorage from "./components/storage/implementation/indexed-db.js"
-import * as ProperManners from "./components/manners/implementation/base.js"
 import * as WebCryptoAgent from "./components/agent/implementation/web-crypto-api.js"
+import * as FissionWebSocketChannelProduction from "./components/channel/implementation/fission-production.js"
+import * as FissionIpfsProduction from "./components/depot/implementation/fission-ipfs-production.js"
+import * as DNSOverHTTPS from "./components/dns/implementation/dns-over-https.js"
 import * as WebCryptoIdentifier from "./components/identifier/implementation/web-crypto-api.js"
+import * as ProperManners from "./components/manners/implementation/base.js"
+import * as IndexedDBStorage from "./components/storage/implementation/indexed-db.js"
 
-
-// RE-EXPORTS
-
+////////////////
+// RE-EXPORTS //
+////////////////
 
 export * from "./appInfo.js"
-export * from "./components.js"
-export * from "./configuration.js"
 export * from "./common/cid.js"
 export * from "./common/types.js"
 export * from "./common/version.js"
+export * from "./components.js"
+export * from "./configuration.js"
 
 export * as fission from "./common/fission.js"
 export * as path from "./path/index.js"
 
 export { FileSystem } from "./fs/class.js"
 
+///////////////////////
+// TYPES & CONSTANTS //
+///////////////////////
 
+export type Program =
+  & {
+    /**
+     * Access control system.
+     */
+    access: {
+      // TODO
+      isGranted: () => Promise<
+        { granted: true } | { granted: false; reason: string }
+      >
 
-// TYPES & CONSTANTS
+      provide: () => Promise<void>
+      request: (options: RequestOptions) => Promise<void>
+    }
 
+    /**
+     * Manage the account.
+     */
+    account: {
+      isConnected(): Promise<
+        { connected: true } | { connected: false; reason: string }
+      >
 
-export type Program = {
-  /**
-   * Access control system.
-   */
-  access: {
-    // TODO
-    isGranted: () => Promise<
-      { granted: true } | { granted: false, reason: string }
-    >
+      login: (formValues: Record<string, string>) => Promise<
+        { ok: true } | { ok: false; reason: string }
+      >
 
-    provide: () => Promise<void>
-    request: (options: RequestOptions) => Promise<void>
+      register: (formValues: Record<string, string>) => Promise<
+        { ok: true } | { ok: false; reason: string }
+      >
+      canRegister: (formValues: Record<string, string>) => Promise<
+        { ok: true } | { ok: false; reason: string }
+      >
+    }
+
+    /**
+     * Components used to build this program.
+     */
+    components: Components
+
+    /**
+     * Configuration used to build this program.
+     */
+    configuration: Configuration
+
+    /**
+     * Various file system methods.
+     */
+    fileSystem: FileSystemShortHands
   }
-
-  /**
-   * Manage the account.
-   */
-  account: {
-    isConnected(): Promise<
-      { connected: true } | { connected: false, reason: string }
-    >
-
-    login: (formValues: Record<string, string>) => Promise<
-      { ok: true } | { ok: false, reason: string }
-    >
-
-    register: (formValues: Record<string, string>) => Promise<
-      { ok: true } | { ok: false, reason: string }
-    >
-    canRegister: (formValues: Record<string, string>) => Promise<
-      { ok: true } | { ok: false, reason: string }
-    >
-  }
-
-  /**
-   * Components used to build this program.
-   */
-  components: Components
-
-  /**
-   * Configuration used to build this program.
-   */
-  configuration: Configuration
-
-  /**
-   * Various file system methods.
-   */
-  fileSystem: FileSystemShortHands
-} & ShortHands & Events.ListenTo<Events.All>
-
+  & ShortHands
+  & Events.ListenTo<Events.All>
 
 export enum ProgramError {
   InsecureContext = "INSECURE_CONTEXT",
-  UnsupportedBrowser = "UNSUPPORTED_BROWSER"
+  UnsupportedBrowser = "UNSUPPORTED_BROWSER",
 }
 
-
 export type ShortHands = {}
-
 
 export type FileSystemShortHands = {
   addSampleData: (fs: FileSystem) => Promise<void>
@@ -116,10 +115,9 @@ export type FileSystemShortHands = {
   load: () => Promise<FileSystem>
 }
 
-
-
-// ENTRY POINTS
-
+//////////////////
+// ENTRY POINTS //
+//////////////////
 
 /**
  * 🚀 Build an ODD program.
@@ -138,7 +136,11 @@ export type FileSystemShortHands = {
  * which might not be needed, or available, in certain environments or using certain components.
  */
 export async function program(settings: Partial<Components> & Configuration): Promise<Program> {
-  if (!settings) throw new Error("Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter")
+  if (!settings) {
+    throw new Error(
+      "Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter",
+    )
+  }
 
   // Check if the browser and context is supported
   if (globalThis.isSecureContext === false) throw ProgramError.InsecureContext
@@ -149,17 +151,15 @@ export async function program(settings: Partial<Components> & Configuration): Pr
   return assemble(extractConfig(settings), components)
 }
 
-
-
-// PREDEFINED COMPONENTS
-
+///////////////////////////
+// PREDEFINED COMPONENTS //
+///////////////////////////
 
 // TODO: Add back predefined components
 
-
-
-// ASSEMBLE
-
+//////////////
+// ASSEMBLE //
+//////////////
 
 /**
  * Build an ODD Program based on a given set of `Components`.
@@ -195,13 +195,13 @@ export async function assemble(config: Configuration, components: Components): P
     isGranted: async () => ({ granted: false, reason: "Not implemented just yet" }),
 
     // TODO
-    provide: async () => { },
-    request: async () => { },
+    provide: async () => {},
+    request: async () => {},
   }
 
   // Account
   async function isConnected(): Promise<
-    { connected: true } | { connected: false, reason: string }
+    { connected: true } | { connected: false; reason: string }
   > {
     const ucanDictionary = { ...cabinet.ucansIndexedByCID }
 
@@ -215,9 +215,11 @@ export async function assemble(config: Configuration, components: Components): P
     //
     //       Also need to check if we can write to the entire file system.
     const canUpdateDataRoot = await components.account.canUpdateDataRoot(identifierUcans, ucanDictionary)
-    if (!canUpdateDataRoot) return {
-      connected: false,
-      reason: "Program does not have the ability to update the data root, but is expected to."
+    if (!canUpdateDataRoot) {
+      return {
+        connected: false,
+        reason: "Program does not have the ability to update the data root, but is expected to.",
+      }
     }
 
     return { connected: true }
@@ -246,7 +248,7 @@ export async function assemble(config: Configuration, components: Components): P
       canRegister: account.canRegister,
 
       isConnected,
-    }
+    },
   }
 
   // Debug mode:
@@ -261,7 +263,7 @@ export async function assemble(config: Configuration, components: Components): P
       const container = globalThis as any
       container.__odd = container.__odd || {}
       container.__odd.programs = container.__odd.programs || {}
-      container.__odd.programs[ namespace(config) ] = program
+      container.__odd.programs[namespace(config)] = program
     }
 
     // TODO: Re-enable extension
@@ -297,10 +299,9 @@ export async function assemble(config: Configuration, components: Components): P
   return program
 }
 
-
-
-// COMPOSITIONS
-
+//////////////////
+// COMPOSITIONS //
+//////////////////
 
 /**
  * Full component sets.
@@ -308,7 +309,6 @@ export async function assemble(config: Configuration, components: Components): P
 export const compositions = {
   // TODO: Fission stack
 }
-
 
 export async function gatherComponents(setup: Partial<Components> & Configuration): Promise<Components> {
   const config = extractConfig(setup)
@@ -336,24 +336,27 @@ export async function gatherComponents(setup: Partial<Components> & Configuratio
   }
 }
 
-
-
-// DEFAULT COMPONENTS
-
+////////////////////////
+// DEFAULT COMPONENTS //
+////////////////////////
 
 export function defaultAccountComponent(
-  { agent, dns, manners }: { agent: Agent.Implementation, dns: DNS.Implementation, manners: Manners.Implementation<FileSystem> },
+  { agent, dns, manners }: {
+    agent: Agent.Implementation
+    dns: DNS.Implementation
+    manners: Manners.Implementation<FileSystem>
+  },
 ): Account.Implementation {
   return FissionAccountsProduction.implementation({ agent, dns, manners })
 }
 
 export function defaultAgentComponent(
-  config: Configuration
+  config: Configuration,
 ): Promise<Agent.Implementation> {
   const store = localforage.createInstance({ name: `${namespace(config)}/agent` })
 
   return WebCryptoAgent.implementation({
-    store
+    store,
   })
 }
 
@@ -363,11 +366,11 @@ export function defaultChannelComponent(): Channel.Implementation {
 
 export function defaultDepotComponent(
   { storage }: { storage: Storage.Implementation },
-  config: Configuration
+  config: Configuration,
 ): Promise<Depot.Implementation> {
   return FissionIpfsProduction.implementation(
     storage,
-    `${namespace(config)}/blockstore`
+    `${namespace(config)}/blockstore`,
   )
 }
 
@@ -376,59 +379,49 @@ export function defaultDNSComponent(): DNS.Implementation {
 }
 
 export function defaultIdentifierComponent(
-  config: Configuration
+  config: Configuration,
 ): Promise<Identifier.Implementation> {
   const store = localforage.createInstance({ name: `${namespace(config)}/identifier` })
 
   return WebCryptoIdentifier.implementation({
-    store
+    store,
   })
 }
 
 export function defaultMannersComponent(config: Configuration): Manners.Implementation<FileSystem> {
   return ProperManners.implementation({
-    configuration: config
+    configuration: config,
   })
 }
 
 export function defaultStorageComponent(config: Configuration): Storage.Implementation {
   return IndexedDBStorage.implementation({
-    name: namespace(config)
+    name: namespace(config),
   })
 }
 
-
-
-// 🛟
-
+////////
+// 🛟 //
+////////
 
 /**
  * Is this browser supported?
  */
 export async function isSupported(): Promise<boolean> {
   return localforage.supports(localforage.INDEXEDDB)
-
     // Firefox in private mode can't use indexedDB properly,
     // so we test if we can actually make a database.
-    && await (() => new Promise(resolve => {
-      const db = indexedDB.open("testDatabase")
-      db.onsuccess = () => resolve(true)
-      db.onerror = () => resolve(false)
-    }))() as boolean
-}
-    // Firefox in private mode can't use indexedDB properly,
-    // so we test if we can actually make a database.
-    && await (() => new Promise(resolve => {
-      const db = indexedDB.open("testDatabase")
-      db.onsuccess = () => resolve(true)
-      db.onerror = () => resolve(false)
-    }))() as boolean
+    && await (() =>
+      new Promise(resolve => {
+        const db = indexedDB.open("testDatabase")
+        db.onsuccess = () => resolve(true)
+        db.onerror = () => resolve(false)
+      }))() as boolean
 }
 
-
-
-// 🛠
-
+////////
+// 🛠 //
+////////
 
 export function extractConfig(opts: Partial<Components> & Configuration): Configuration {
   return {

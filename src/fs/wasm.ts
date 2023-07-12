@@ -1,14 +1,12 @@
 import * as Manners from "../components/manners/implementation.js"
 
-import { WASM_WNFS_VERSION } from "../common/version.js"
 import { default as init } from "wnfs"
-
+import { WASM_WNFS_VERSION } from "../common/version.js"
 
 // This is some global mutable state to work around global mutable state
 // issues with wasm-bindgen. It's important we *never* accidentally initialize the
 // "wnfs" Wasm module twice.
 let initialized = false
-
 
 export async function load<FS>({ manners }: { manners: Manners.Implementation<FS> }) {
   // MUST be prevented from initializing twice:

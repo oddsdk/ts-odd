@@ -1,8 +1,6 @@
 import { Implementation } from "../implementation.js"
 
-
 // FUNDAMENTALS
-
 
 /**
  * Lookup DNS TXT record using Google DNS-over-HTTPS
@@ -37,8 +35,8 @@ export function cloudflareLookup(domain: string): Promise<string | null> {
 export function dnsOverHttps(url: string): Promise<string | null> {
   return fetch(url, {
     headers: {
-      "accept": "application/dns-json"
-    }
+      "accept": "application/dns-json",
+    },
   })
     .then(r => r.json())
     .then(r => {
@@ -50,28 +48,21 @@ export function dnsOverHttps(url: string): Promise<string | null> {
 
         // Sort by prefix, if prefix is present,
         // and then add the answers together as one string.
-        if (answers[ 0 ][ 3 ] === ";") {
+        if (answers[0][3] === ";") {
           return answers
             .sort((a, b) => a.slice(0, 4).localeCompare(b.slice(0, 4)))
             .map(a => a.slice(4))
             .join("")
-
         } else {
           return answers.join("")
-
         }
-
       } else {
         return null
-
       }
     })
 }
 
-
-
 // 🛠
-
 
 /**
  * Lookup a DNS TXT record.
@@ -84,7 +75,7 @@ export function dnsOverHttps(url: string): Promise<string | null> {
 export async function lookupTxtRecord(domain: string): Promise<string | null> {
   return Promise.any([
     googleLookup(domain),
-    cloudflareLookup(domain)
+    cloudflareLookup(domain),
   ])
 }
 
@@ -98,7 +89,7 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
   const txt = await lookupTxtRecord(
     domain.startsWith("_dnslink.")
       ? domain
-      : `_dnslink.${domain}`
+      : `_dnslink.${domain}`,
   )
 
   return txt && !txt.includes("/ipns/")
@@ -106,14 +97,11 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
     : null
 }
 
-
-
 // 🛳️
-
 
 export function implementation(): Implementation {
   return {
     lookupDnsLink,
-    lookupTxtRecord
+    lookupTxtRecord,
   }
 }

@@ -3,7 +3,7 @@
  * This in memory storage implements the methods of localForage.
  */
 export class Storage {
-  storage: { [key: string]: any}
+  storage: { [key: string]: any }
 
   constructor() {
     this.storage = {}

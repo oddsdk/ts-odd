@@ -1,5 +1,4 @@
-import type { SignatureAlgorithm, KeyType } from "iso-did/types"
-
+import type { KeyType, SignatureAlgorithm } from "iso-did/types"
 
 export type Implementation = {
   /**

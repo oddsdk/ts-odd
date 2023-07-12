@@ -1,9 +1,7 @@
 import * as Path from "../path/index.js"
 import { Dictionary, Ucan } from "./types.js"
 
-
 // 🛠️
-
 
 export function fsReadUcans(collection: Ucan[], did: string): Ucan[] {
   return collection.filter(ucan =>
@@ -14,16 +12,14 @@ export function fsReadUcans(collection: Ucan[], did: string): Ucan[] {
 }
 
 export function fsWriteUcans(collection: Ucan[]): Ucan[] {
-  return collection.filter(ucan =>
-    ucan.payload.att.some(cap => cap.with.scheme === "wnfs")
-  )
+  return collection.filter(ucan => ucan.payload.att.some(cap => cap.with.scheme === "wnfs"))
 }
 
 export function lookupFsReadUcan(
   collection: Ucan[],
   fileSystemDID: string,
   path: Path.DistinctivePath<Path.Segments>,
-  did: string
+  did: string,
 ): Ucan | null {
   return lookupFsUcan(
     fsReadUcans(collection, did),
@@ -36,14 +32,14 @@ export function lookupFsReadUcan(
       })
     },
     fileSystemDID,
-    path
+    path,
   )
 }
 
 export function lookupFsWriteUcan(
   collection: Ucan[],
   fileSystemDID: string,
-  path: Path.DistinctivePath<Path.Segments>
+  path: Path.DistinctivePath<Path.Segments>,
 ): Ucan | null {
   return lookupFsUcan(
     fsWriteUcans(collection),
@@ -55,10 +51,9 @@ export function lookupFsWriteUcan(
       })
     },
     fileSystemDID,
-    path
+    path,
   )
 }
-
 
 export function rootIssuer(ucan: Ucan, ucanDictionary: Dictionary): string {
   if (ucan.payload.prf.length) {
@@ -68,44 +63,41 @@ export function rootIssuer(ucan: Ucan, ucanDictionary: Dictionary): string {
         // TBH, not sure what's best here.
         if (acc) return acc
 
-        const prfUcan = ucanDictionary[ prf ]
+        const prfUcan = ucanDictionary[prf]
         if (!prfUcan) throw new Error("Missing a UCAN in the repository")
 
         return rootIssuer(prfUcan, ucanDictionary)
-      }
+      },
     )
   } else {
     return ucan.payload.iss
   }
 }
 
-
-
 // ㊙️
-
 
 function lookupFsUcan(
   fsUcans: Ucan[],
   matcher: (pathSoFar: Path.Distinctive<Path.Segments>) => (ucan: Ucan) => boolean,
   fileSystemDID: string,
-  path: Path.DistinctivePath<Path.Segments>
+  path: Path.DistinctivePath<Path.Segments>,
 ): Ucan | null {
   const pathParts = Path.unwrap(path)
 
-  const results = [ "", ...pathParts ].reduce(
+  const results = ["", ...pathParts].reduce(
     (acc: Ucan[], _part, idx): Ucan[] => {
       const pathSoFar = Path.fromKind(Path.kind(path), ...(pathParts.slice(0, idx)))
 
       return [
         ...acc,
         ...fsUcans.filter(
-          matcher(pathSoFar)
-        )
+          matcher(pathSoFar),
+        ),
       ]
     },
-    []
+    [],
   )
 
   // TODO: Need to sort by ability level, ie. prefer super user over anything else
-  return results[ 0 ] || null
+  return results[0] || null
 }

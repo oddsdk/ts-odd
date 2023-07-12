@@ -3,15 +3,13 @@ import { CID } from "multiformats"
 import type { Configuration } from "../../configuration.js"
 
 import * as Depot from "../../components/depot/implementation.js"
-import * as Path from "../../path/index.js"
 import { PrivateReference } from "../../fs/types/private-ref.js"
+import * as Path from "../../path/index.js"
 import { CabinetCollection } from "../../repositories/cabinet.js"
-
 
 export type ImplementationOptions = {
   configuration: Configuration
 }
-
 
 export type Implementation<FS> = {
   log: (...args: unknown[]) => void
@@ -26,10 +24,12 @@ export type Implementation<FS> = {
      */
     hooks: {
       afterLoadExisting: (fs: FS, depot: Depot.Implementation) => Promise<void>
-      afterLoadNew: (fs: FS, depot: Depot.Implementation) => Promise<null | {
-        path: Path.Distinctive<Path.Segments>
-        capsuleRef: PrivateReference
-      }>
+      afterLoadNew: (fs: FS, depot: Depot.Implementation) => Promise<
+        null | {
+          path: Path.Distinctive<Path.Segments>
+          capsuleRef: PrivateReference
+        }
+      >
       beforeLoadExisting: (cid: CID, depot: Depot.Implementation) => Promise<void>
       beforeLoadNew: (depot: Depot.Implementation) => Promise<void>
     }

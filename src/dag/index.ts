@@ -4,17 +4,16 @@ import * as DagCBOR from "@ipld/dag-cbor"
 import * as DagPB from "@ipld/dag-pb"
 import * as Raw from "multiformats/codecs/raw"
 
-import * as Codecs from "./codecs.js"
 import * as Depot from "../components/depot/implementation.js"
+import * as Codecs from "./codecs.js"
 
-
-
-// BYTES
-
+///////////
+// BYTES //
+///////////
 
 export function fromBytes(
   storeCodecId: Codecs.CodecIdentifier,
-  bytes: Uint8Array
+  bytes: Uint8Array,
 ): unknown {
   const storeCodec = Codecs.getByIdentifier(storeCodecId)
   return storeCodec.decode(bytes)
@@ -22,16 +21,15 @@ export function fromBytes(
 
 export function toBytes(
   storeCodecId: Codecs.CodecIdentifier,
-  dagNode: unknown
+  dagNode: unknown,
 ): Uint8Array {
   const storeCodec = Codecs.getByIdentifier(storeCodecId)
   return storeCodec.encode(dagNode)
 }
 
-
-
-// GET
-
+/////////
+// GET //
+/////////
 
 export async function get(depot: Depot.Implementation, cid: CID): Promise<unknown> {
   const codec = Codecs.getByCode(cid.code)
@@ -53,10 +51,9 @@ export async function getRaw(depot: Depot.Implementation, cid: CID): Promise<Uin
   return Raw.decode(await depot.getBlock(cid))
 }
 
-
-
-// PUT
-
+/////////
+// PUT //
+/////////
 
 export function putPB(depot: Depot.Implementation, links: DagPB.PBLink[]): Promise<CID> {
   const node = DagPB.createNode(new Uint8Array(), links)

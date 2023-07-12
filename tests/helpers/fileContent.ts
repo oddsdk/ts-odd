@@ -1,12 +1,10 @@
 import * as fc from "fast-check"
 
-
 /** Public and Private file content */
 
-type FileContent =
-  fc.Arbitrary<
-    { type: string; val: Uint8Array }
-  >
+type FileContent = fc.Arbitrary<
+  { type: string; val: Uint8Array }
+>
 
 export const fileContent: () => FileContent = () => {
   return fc.oneof(

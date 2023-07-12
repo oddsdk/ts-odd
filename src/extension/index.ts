@@ -2,11 +2,12 @@ import type { AppInfo } from "../appInfo.js"
 import type { CID } from "../common/cid.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
 
-import * as Events from "../events.js"
 import { VERSION } from "../common/version.js"
+import * as Events from "../events.js"
 
-
-// CREATE
+////////////
+// CREATE //
+////////////
 
 export type Dependencies = {}
 
@@ -37,14 +38,13 @@ export async function create(config: Config): Promise<{
     disconnect: async (extensionId: string) => {
       connection = await disconnect(extensionId, config)
       stopListening(config, listeners)
-    }
+    },
   }
 }
 
-
-
-// CONNECTION
-
+////////////////
+// CONNECTION //
+////////////////
 
 type Connection = {
   extensionId: string | null
@@ -58,7 +58,7 @@ async function connect(extensionId: string, config: Config): Promise<Connection>
     id: extensionId,
     type: "connect",
     timestamp: Date.now(),
-    state
+    state,
   })
 
   return { extensionId, connected: true }
@@ -71,24 +71,23 @@ async function disconnect(extensionId: string, config: Config): Promise<Connecti
     id: extensionId,
     type: "disconnect",
     timestamp: Date.now(),
-    state
+    state,
   })
 
   return { extensionId, connected: false }
 }
 
-
-
-// LISTENERS
-
+///////////////
+// LISTENERS //
+///////////////
 
 type Listeners = {
-  handleLocalChange: (params: { dataRoot: CID; path: DistinctivePath<[ Partition, ...string[] ]> }) => Promise<void>
+  handleLocalChange: (params: { dataRoot: CID; path: DistinctivePath<[Partition, ...string[]]> }) => Promise<void>
   handlePublish: (params: { dataRoot: CID }) => Promise<void>
 }
 
 function listen(connection: Connection, config: Config): Listeners {
-  async function handleLocalChange(params: { dataRoot: CID; path: DistinctivePath<[ Partition, ...string[] ]> }) {
+  async function handleLocalChange(params: { dataRoot: CID; path: DistinctivePath<[Partition, ...string[]]> }) {
     const { dataRoot, path } = params
     const state = await getState(config)
 
@@ -100,8 +99,8 @@ function listen(connection: Connection, config: Config): Listeners {
       detail: {
         type: "local-change",
         root: dataRoot.toString(),
-        path
-      }
+        path,
+      },
     })
   }
 
@@ -116,8 +115,8 @@ function listen(connection: Connection, config: Config): Listeners {
       state,
       detail: {
         type: "publish",
-        root: dataRoot.toString()
-      }
+        root: dataRoot.toString(),
+      },
     })
   }
 
@@ -134,10 +133,9 @@ function stopListening(config: Config, listeners: Listeners) {
   }
 }
 
-
-
-// STATE
-
+///////////
+// STATE //
+///////////
 
 type State = {
   app: {
@@ -173,17 +171,17 @@ async function getState(config: Config): Promise<State> {
   return {
     app: {
       namespace,
-      ...(capabilities ? { capabilities } : {})
+      ...(capabilities ? { capabilities } : {}),
     },
     fileSystem: {
-      dataRootCID: null // TODO: dataRootCID?.toString() ?? null
+      dataRootCID: null, // TODO: dataRootCID?.toString() ?? null
     },
     user: {
       username,
       accountDID,
     },
     odd: {
-      version: VERSION
-    }
+      version: VERSION,
+    },
   }
 }

@@ -16,33 +16,29 @@ export type Endpoints = {
   userDomain: string
 }
 
-
 export const PRODUCTION: Endpoints = {
   apiPath: "/v2/api",
   ipfsGateway: "https://ipfs.runfission.com",
   lobby: "https://auth.fission.codes",
   server: "https://runfission.com",
-  userDomain: "fission.name"
+  userDomain: "fission.name",
 }
-
 
 export const STAGING: Endpoints = {
   apiPath: "/v2/api",
   ipfsGateway: "https://ipfs.runfission.net",
   lobby: "https://auth.runfission.net",
   server: "https://runfission.net",
-  userDomain: "fissionuser.net"
+  userDomain: "fissionuser.net",
 }
 
+/////////
+// API //
+/////////
 
 export function apiUrl(endpoints: Endpoints, suffix?: string): string {
   return `${endpoints.server}${endpoints.apiPath}${suffix?.length ? "/" + suffix.replace(/^\/+/, "") : ""}`
 }
-
-
-
-// API
-
 
 const didCache: {
   did: string | null
@@ -54,14 +50,13 @@ const didCache: {
   lastFetched: 0,
 }
 
-
 /**
  * Lookup the DID of a Fission API.
  * This function caches the DID for 3 hours.
  */
 export async function did(
   endpoints: Endpoints,
-  dns: DNS.Implementation
+  dns: DNS.Implementation,
 ): Promise<string> {
   let host
   try {
@@ -72,8 +67,8 @@ export async function did(
   const now = Date.now() // in milliseconds
 
   if (
-    didCache.host !== host ||
-    didCache.lastFetched + 1000 * 60 * 60 * 3 <= now
+    didCache.host !== host
+    || didCache.lastFetched + 1000 * 60 * 60 * 3 <= now
   ) {
     didCache.did = await dns.lookupTxtRecord("_did." + host)
     didCache.host = host

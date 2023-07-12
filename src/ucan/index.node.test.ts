@@ -5,9 +5,7 @@ import * as WebCryptoAgent from "../components/agent/implementation/web-crypto-a
 
 import * as Ucan from "./index.js"
 
-
 describe("UCAN", async () => {
-
   it("signs a UCAN properly using a web-crypto-api agent", async () => {
     const store = InMemoryCryptoStore.create()
     const agent = await WebCryptoAgent.implementation({ store })
@@ -18,10 +16,9 @@ describe("UCAN", async () => {
     })
 
     expect(
-      await Ucan.isValid(agent, ucan)
+      await Ucan.isValid(agent, ucan),
     ).toBe(
-      true
+      true,
     )
   })
-
 })

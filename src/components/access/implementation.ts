@@ -1,9 +1,8 @@
 import * as Events from "../../events.js"
 
-import { EventEmitter } from "../../events.js"
 import { Query } from "../../access/query.js"
+import { EventEmitter } from "../../events.js"
 import { Ucan } from "../../ucan/index.js"
-
 
 export type RequestOptions = {
   extraParams?: Record<string, string>

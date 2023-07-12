@@ -1,26 +1,30 @@
 import * as AgentDID from "./agent/did.js"
-import * as Ucan from "./ucan/index.js"
 import { Cabinet } from "./repositories/cabinet.js"
+import * as Ucan from "./ucan/index.js"
 
 import { Account, Agent, Identifier } from "./components.js"
 
-
-// LOGIN
-
+///////////
+// LOGIN //
+///////////
 
 export const login = (
   { agent, identifier, cabinet }: {
     agent: Agent.Implementation
     identifier: Identifier.Implementation
     cabinet: Cabinet
-  }
-) => async (formValues: Record<string, string>): Promise<
-  { ok: true } | { ok: false, reason: string }
+  },
+) =>
+async (formValues: Record<string, string>): Promise<
+  { ok: true } | { ok: false; reason: string }
 > => {
-    // TODO:
-    return { ok: false, reason: "Not implemented just yet" }
-  }
+  // TODO:
+  return { ok: false, reason: "Not implemented just yet" }
+}
 
+//////////////
+// REGISTER //
+//////////////
 
 export const register = (
   { account, agent, identifier, cabinet }: {
@@ -28,34 +32,32 @@ export const register = (
     agent: Agent.Implementation
     identifier: Identifier.Implementation
     cabinet: Cabinet
-  }
-) => async (formValues: Record<string, string>): Promise<
-  { ok: true } | { ok: false, reason: string }
+  },
+) =>
+async (formValues: Record<string, string>): Promise<
+  { ok: true } | { ok: false; reason: string }
 > => {
-    // Do delegation from identifier to agent
-    const agentDelegation = await identifierToAgentDelegation({ agent, identifier })
-    await cabinet.addUcan(agentDelegation)
+  // Do delegation from identifier to agent
+  const agentDelegation = await identifierToAgentDelegation({ agent, identifier })
+  await cabinet.addUcan(agentDelegation)
 
-    // Call account register implementation
-    const result = await account.register(formValues, agentDelegation)
+  // Call account register implementation
+  const result = await account.register(formValues, agentDelegation)
 
-    if (result.ok) {
-      await cabinet.addUcans(result.ucans)
-      return { ok: true }
-
-    } else {
-      return result
-
-    }
+  if (result.ok) {
+    await cabinet.addUcans(result.ucans)
+    return { ok: true }
+  } else {
+    return result
   }
+}
 
-
-
-// ㊙️
-
+////////
+// ㊙️ //
+////////
 
 async function identifierToAgentDelegation({ agent, identifier }: {
-  agent: Agent.Implementation,
+  agent: Agent.Implementation
   identifier: Identifier.Implementation
 }) {
   const identifierDID = await identifier.did()
@@ -72,8 +74,8 @@ async function identifierToAgentDelegation({ agent, identifier }: {
       // Every capability given to the identifier may be used by the agent.
       {
         with: { scheme: "ucan", hierPart: `${identifierDID}/*` },
-        can: { namespace: "ucan", segments: [ "*" ] }
+        can: { namespace: "ucan", segments: ["*"] },
       },
-    ]
+    ],
   })
 }

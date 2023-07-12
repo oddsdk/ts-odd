@@ -1,9 +1,8 @@
 import { DIDKey } from "iso-did/key"
 import { spki } from "iso-signatures/spki"
 
-import * as Agent from "../components/agent/implementation.js"
 import { exportPublicKey } from "../common/crypto.js"
-
+import * as Agent from "../components/agent/implementation.js"
 
 /**
  * Create a DID based on the exchange key-pair of the agent.

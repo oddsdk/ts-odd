@@ -1,28 +1,26 @@
 import type { Implementation, ImplementationOptions } from "../implementation.js"
 
-import * as Path from "../../../path/index.js"
 import { FileSystem } from "../../../fs/class.js"
-
+import * as Path from "../../../path/index.js"
 
 // 🛳
 
-
 export function implementation(opts: ImplementationOptions): Implementation<FileSystem> {
   return {
-    log: opts.configuration.debug ? console.log : () => { },
-    warn: opts.configuration.debug ? console.warn : () => { },
+    log: opts.configuration.debug ? console.log : () => {},
+    warn: opts.configuration.debug ? console.warn : () => {},
 
     // Cabinet
     cabinet: {
       hooks: {
-        inventoryChanged: async () => { },
+        inventoryChanged: async () => {},
       },
     },
 
     // File system
     fileSystem: {
       hooks: {
-        afterLoadExisting: async () => { },
+        afterLoadExisting: async () => {},
         afterLoadNew: async (fs: FileSystem) => {
           // We assume that the client creating a new file system that
           // has full access to the file system. Here we create a new
@@ -33,8 +31,8 @@ export function implementation(opts: ImplementationOptions): Implementation<File
           // gain access through received UCANs. The file system class checks
           // for write access
         },
-        beforeLoadExisting: async () => { },
-        beforeLoadNew: async () => { },
+        beforeLoadExisting: async () => {},
+        beforeLoadNew: async () => {},
       },
     },
 

@@ -1,18 +1,16 @@
 import * as Path from "../path/index.js"
 
+////////
+// 🏔️ //
+////////
 
-// 🏔️
+export const ALLOWED_FILE_SYSTEM_ABILITIES = ["read", "append", "delete", "overwrite", "*"] as const
 
-
-export const ALLOWED_FILE_SYSTEM_ABILITIES = [ "read", "append", "delete", "overwrite", "*" ] as const
-
-
-
-// 🧩
-
+////////
+// 🧩 //
+////////
 
 export type Query = AccountQuery | FileSystemQuery
-
 
 export type AccountQuery = {
   query: "account"
@@ -20,14 +18,21 @@ export type AccountQuery = {
 
 export type FileSystemQuery = {
   query: "fileSystem"
-  ability: typeof ALLOWED_FILE_SYSTEM_ABILITIES[ number ]
+  ability: typeof ALLOWED_FILE_SYSTEM_ABILITIES[number]
   path: Path.Distinctive<Path.Partitioned<Path.Partition>>
 }
 
+////////
+// 🛠️ //
+////////
 
+export function needsWriteAccess(query: FileSystemQuery): boolean {
+  return query.ability !== "read"
+}
 
-// ENCODING
-
+//////////////
+// ENCODING //
+//////////////
 
 export function fromJSON(query: string): Query {
   const obj = JSON.parse(query)
@@ -44,13 +49,11 @@ export function fromJSON(query: string): Query {
   }
 }
 
-
 export function accountQueryFromJSON(obj: Record<string, any>): AccountQuery {
   return {
     query: obj.query,
   }
 }
-
 
 export function fileSystemQueryFromJSON(obj: Record<string, any>): FileSystemQuery {
   if (ALLOWED_FILE_SYSTEM_ABILITIES.includes(obj.ability) === false) {
@@ -73,7 +76,6 @@ export function fileSystemQueryFromJSON(obj: Record<string, any>): FileSystemQue
   }
 }
 
-
 export function toJSON(query: Query): string {
   switch (query.query) {
     case "account":
@@ -88,13 +90,4 @@ export function toJSON(query: Query): string {
         path: Path.toPosix(query.path),
       })
   }
-}
-
-
-
-// 🛠️
-
-
-export function needsWriteAccess(query: FileSystemQuery): boolean {
-  return query.ability !== "read"
 }

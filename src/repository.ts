@@ -1,15 +1,20 @@
 import * as Storage from "./components/storage/implementation"
 import * as Events from "./events.js"
 
+////////
+// 🧩 //
+////////
 
 export type RepositoryOptions = {
   storage: Storage.Implementation
   storageName: string
 }
 
+///////////
+// CLASS //
+///////////
 
 export default abstract class Repository<C, I> {
-
   events: Events.Emitter<Events.Repositories<C>>
   collection: C
   storage: Storage.Implementation
@@ -18,7 +23,6 @@ export default abstract class Repository<C, I> {
   abstract emptyCollection(): C
   abstract mergeCollections(a: C, b: C): C
   abstract toCollection(item: I): Promise<C>
-
 
   constructor({ storage, storageName }: RepositoryOptions) {
     this.collection = this.emptyCollection()
@@ -44,7 +48,7 @@ export default abstract class Repository<C, I> {
   async add(newItems: I[]): Promise<void> {
     const col = await newItems.reduce(
       async (acc: Promise<C>, item) => this.mergeCollections(await acc, await this.toCollection(item)),
-      Promise.resolve(this.collection)
+      Promise.resolve(this.collection),
     )
 
     this.collection = col
@@ -53,7 +57,7 @@ export default abstract class Repository<C, I> {
 
     await this.storage.setItem(
       this.storageName,
-      this.toJSON(this.collection)
+      this.toJSON(this.collection),
     )
   }
 
@@ -62,8 +66,7 @@ export default abstract class Repository<C, I> {
     return this.storage.removeItem(this.storageName)
   }
 
-  async collectionUpdateCallback(collection: C) { }
-
+  async collectionUpdateCallback(collection: C) {}
 
   // ENCODING
 
@@ -74,5 +77,4 @@ export default abstract class Repository<C, I> {
   toJSON(a: C): string {
     return JSON.stringify(a)
   }
-
 }

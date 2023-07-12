@@ -1,8 +1,8 @@
 import type { Maybe } from "./common/types.js"
 
-
-// TYPES
-
+////////
+// 🧩 //
+////////
 
 export type Channel = {
   close: () => void
@@ -15,14 +15,13 @@ export type ChannelOptions = {
 
 export type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView
 
-
-
-// FUNCTIONS
-
+////////
+// 🛠️ //
+////////
 
 export const createWssChannel = async (
   socketEndpoint: string,
-  options: ChannelOptions
+  options: ChannelOptions,
 ): Promise<Channel> => {
   const { handleMessage } = options
 
@@ -37,7 +36,7 @@ export const createWssChannel = async (
 
   return {
     send,
-    close
+    close,
   }
 }
 
@@ -49,13 +48,13 @@ const waitForOpenConnection = async (socket: WebSocket): Promise<void> => {
 }
 
 export const closeWssChannel = (socket: Maybe<WebSocket>): () => void => {
-  return function () {
+  return function() {
     if (socket) socket.close(1000)
   }
 }
 
 export const publishOnWssChannel = (socket: WebSocket): (data: ChannelData) => void => {
-  return function (data: ChannelData) {
+  return function(data: ChannelData) {
     const binary = typeof data === "string"
       ? new TextEncoder().encode(data).buffer
       : data

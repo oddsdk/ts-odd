@@ -1,9 +1,8 @@
 import localforage from "localforage"
 
-import { KEYS } from "./keys/default.js"
-import { Implementation, ImplementationOptions } from "../implementation.js"
 import { assertBrowser } from "../../../common/browser.js"
-
+import { Implementation, ImplementationOptions } from "../implementation.js"
+import { KEYS } from "./keys/default.js"
 
 export function getItem<T>(db: LocalForage, key: string): Promise<T | null> {
   assertBrowser("storage.getItem")
@@ -25,10 +24,7 @@ export async function clear(db: LocalForage): Promise<void> {
   return db.clear()
 }
 
-
-
 // 🛳
-
 
 export function implementation({ name }: ImplementationOptions): Implementation {
   const db = localforage.createInstance({ name })

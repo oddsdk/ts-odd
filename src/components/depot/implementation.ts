@@ -4,7 +4,6 @@ import { CID } from "multiformats/cid"
 import { CodecIdentifier } from "../../dag/codecs.js"
 import { Ucan } from "../../ucan/index.js"
 
-
 export type Implementation = {
   blockstore: Blockstore
 

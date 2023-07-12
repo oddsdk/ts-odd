@@ -6,11 +6,12 @@ import * as DNS from "./components/dns/implementation.js"
 import * as Identifier from "./components/identifier/implementation.js"
 import * as Manners from "./components/manners/implementation.js"
 import * as Storage from "./components/storage/implementation.js"
+
 import { FileSystem } from "./fs/class.js"
 
-
-// COMPONENTS
-
+////////////////
+// COMPONENTS //
+////////////////
 
 export type Components = {
   account: Account.Implementation
@@ -22,10 +23,8 @@ export type Components = {
   manners: Manners.Implementation<FileSystem>
   storage: Storage.Implementation
 }
-
-
-
-// CONVENIENCE EXPORTS
-
+/////////////////////////
+// CONVENIENCE EXPORTS //
+/////////////////////////
 
 export { Account, Agent, Channel, Depot, DNS, Identifier, Manners, Storage }
