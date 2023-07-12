@@ -1,8 +1,11 @@
-import { Channel, ChannelOptions, createWssChannel } from "../../../channel.js"
+import { Channel, ChannelOptions } from "../../../channel.js"
+import { createWssChannel } from "../../../channel/wss.js"
 import { Endpoints } from "../../../common/fission.js"
 import { Implementation } from "../implementation.js"
 
-// 🛠️
+////////
+// 🛠️ //
+////////
 
 export function establish(
   endpoints: Endpoints,
@@ -17,7 +20,9 @@ export function establish(
   )
 }
 
-// 🛳️
+////////
+// 🛳️ //
+////////
 
 export function implementation(
   endpoints: Endpoints,
