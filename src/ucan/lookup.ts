@@ -1,39 +1,12 @@
 import * as Path from "../path/index.js"
 import { Dictionary, Ucan } from "./types.js"
 
-// 🛠️
-
-export function fsReadUcans(collection: Ucan[], did: string): Ucan[] {
-  return collection.filter(ucan =>
-    (ucan.payload.fct || []).some(f => {
-      return Object.keys(f).some(a => a.startsWith(`wnfs://${did}/`))
-    })
-  )
-}
+////////
+// 🛠️ //
+////////
 
 export function fsWriteUcans(collection: Ucan[]): Ucan[] {
   return collection.filter(ucan => ucan.payload.att.some(cap => cap.with.scheme === "wnfs"))
-}
-
-export function lookupFsReadUcan(
-  collection: Ucan[],
-  fileSystemDID: string,
-  path: Path.DistinctivePath<Path.Segments>,
-  did: string,
-): Ucan | null {
-  return lookupFsUcan(
-    fsReadUcans(collection, did),
-    pathSoFar => ucan => {
-      return (ucan.payload.fct || []).some(f => {
-        return Object.keys(f).some(a => {
-          const withoutScheme = a.replace("wnfs://", "")
-          return withoutScheme === `${fileSystemDID}/${Path.toPosix(pathSoFar)}`
-        })
-      })
-    },
-    fileSystemDID,
-    path,
-  )
 }
 
 export function lookupFsWriteUcan(
@@ -74,7 +47,9 @@ export function rootIssuer(ucan: Ucan, ucanDictionary: Dictionary): string {
   }
 }
 
-// ㊙️
+////////
+// ㊙️ //
+////////
 
 function lookupFsUcan(
   fsUcans: Ucan[],

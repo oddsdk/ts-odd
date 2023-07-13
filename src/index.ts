@@ -2,9 +2,11 @@ import localforage from "localforage"
 
 import * as Auth from "./auth.js"
 import * as Events from "./events.js"
+import * as Path from "./path/index.js"
 import * as Cabinet from "./repositories/cabinet.js"
 import * as CIDLog from "./repositories/cid-log.js"
 
+import { Query } from "./access/query.js"
 import { Account, Agent, Channel, DNS, Depot, Identifier, Manners, Storage } from "./components.js"
 import { Components } from "./components.js"
 import { RequestOptions } from "./components/access/implementation.js"
@@ -61,10 +63,14 @@ export type Program<Annex extends Account.AnnexParentType> =
   & {
     /**
      * Access control system.
+     *
+     * TODO: Unfinished
      */
     access: {
-      // TODO
-      isGranted: () => Promise<
+      /**
+       * Is my program allowed to do what I want to do?
+       */
+      isGranted: (query?: Query) => Promise<
         { granted: true } | { granted: false; reason: string }
       >
 
@@ -76,10 +82,6 @@ export type Program<Annex extends Account.AnnexParentType> =
      * Manage the account.
      */
     account: Account.Implementation<Annex>["annex"] & {
-      isConnected(): Promise<
-        { connected: true } | { connected: false; reason: string }
-      >
-
       register: (formValues: Record<string, string>) => Promise<
         { ok: true } | { ok: false; reason: string }
       >
@@ -210,38 +212,44 @@ export async function assemble<Annex extends AnnexParentType>(
 
   // Access
   const access = {
-    // TODO: Needs to check if it can update the data root IF write access has been requested too.
-    isGranted: async () => ({ granted: false, reason: "Not implemented just yet" }),
+    async isGranted(query?: Query): Promise<{ granted: true } | { granted: false; reason: string }> {
+      // TODO:
+      // This should take the query in consideration.
 
-    // TODO
-    provide: async () => {},
-    request: async () => {},
-  }
+      const ucanDictionary = { ...cabinet.ucansIndexedByCID }
 
-  // Account
-  async function isConnected(): Promise<
-    { connected: true } | { connected: false; reason: string }
-  > {
-    const ucanDictionary = { ...cabinet.ucansIndexedByCID }
+      // Audience is always the identifier here,
+      // the account system should delegate to the identifier (not the agent)
+      const audience = await components.identifier.did()
+      const identifierUcans = cabinet.audienceUcans(audience)
 
-    // Audience is always the identifier here,
-    // the account system should delegate to the identifier (not the agent)
-    const audience = await components.identifier.did()
-    const identifierUcans = cabinet.audienceUcans(audience)
-
-    // TODO: Do we need something like `account.hasSufficientCapabilities()` here?
-    //       Something that would check if all needed capabilities are present?
-    //
-    //       Also need to check if we can write to the entire file system.
-    const canUpdateDataRoot = await components.account.canUpdateDataRoot(identifierUcans, ucanDictionary)
-    if (!canUpdateDataRoot) {
-      return {
-        connected: false,
-        reason: "Program does not have the ability to update the data root, but is expected to.",
+      // TODO: Do we need something like `account.hasSufficientCapabilities()` here?
+      //       Something that would check if all needed capabilities are present?
+      //
+      //       Also need to check if we can write to the entire file system.
+      const canUpdateDataRoot = await components.account.canUpdateDataRoot(identifierUcans, ucanDictionary)
+      if (!canUpdateDataRoot) {
+        return {
+          granted: false,
+          reason: "Program does not have the ability to update the data root, but is expected to.",
+        }
       }
-    }
 
-    return { connected: true }
+      // Check file system access
+      if (cabinet.hasAccessKey(Path.directory("private")) === false) {
+        return {
+          granted: false,
+          reason: "Program does not have write access to the root private node, but is expected to.",
+        }
+      }
+
+      // Fin
+      return { granted: true }
+    },
+
+    // TODO:
+    async provide() {},
+    async request() {},
   }
 
   // Shorthands
@@ -263,8 +271,6 @@ export async function assemble<Annex extends AnnexParentType>(
     account: {
       register: Auth.register({ account, agent, identifier, cabinet }),
       canRegister: account.canRegister,
-
-      isConnected,
 
       ...components.account.annex,
     },

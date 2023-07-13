@@ -21,17 +21,24 @@ import { FileSystem } from "../../src/fs/class.js"
 import { Dictionary as UcanDictionary, Ucan } from "../../src/ucan/types.js"
 import { Storage as InMemoryStorage } from "./localforage/in-memory-storage.js"
 
-// 🚀
+////////
+// 🧩 //
+////////
+
+type Annex = {}
+
+////////
+// 🚀 //
+////////
 
 export const configuration: Configuration = {
   namespace: { name: "ODD SDK Tests", creator: "Fission" },
   debug: false,
-  fileSystem: {
-    loadImmediately: false,
-  },
 }
 
-// DEPOT
+///////////
+// DEPOT //
+///////////
 
 export const inMemoryDepot: Record<string, Uint8Array> = {}
 
@@ -57,11 +64,15 @@ const depot: Depot.Implementation = {
   flush: async (dataRoot: CID, proofs: Ucan[]) => {},
 }
 
-// STORAGE
+/////////////
+// STORAGE //
+/////////////
 
 const storage: Storage.Implementation = MemoryStorage.implementation()
 
-// MANNERS
+/////////////
+// MANNERS //
+/////////////
 
 const manners: Manners.Implementation<FileSystem> = {
   ...ProperManners.implementation({ configuration }),
@@ -73,7 +84,9 @@ const manners: Manners.Implementation<FileSystem> = {
   },
 }
 
-// CHANNEL
+/////////////
+// CHANNEL //
+/////////////
 
 const channel: Channel.Implementation = {
   establish: (options: ChannelOptions) => {
@@ -81,21 +94,29 @@ const channel: Channel.Implementation = {
   },
 }
 
-// DNS
+/////////
+// DNS //
+/////////
 
 const dns: DNS.Implementation = DOH.implementation()
 
-// AGENT
+///////////
+// AGENT //
+///////////
 
 const agent: Agent.Implementation = await WebCryptoAgent.implementation({
   store: new InMemoryStorage(),
 })
 
-// ACCOUNT
+/////////////
+// ACCOUNT //
+/////////////
 
 let inMemoryDataRoot: CID | null = null
 
-const account: Account.Implementation = {
+const account: Account.Implementation<Annex> = {
+  annex: {},
+
   canRegister: async () => ({ ok: true }),
   register: async (formValues: Record<string, string>, identifierUcan: Ucan) => {
     return { ok: true, ucans: [] }
@@ -111,22 +132,21 @@ const account: Account.Implementation = {
   did: async (identifierUcans: Ucan[], ucanDictionary: UcanDictionary) => {
     return identifier.did()
   },
-
-  provideUCANs: () => {
-    // TODO
-    return []
-  },
 }
 
-// IDENTIFIER
+////////////////
+// IDENTIFIER //
+////////////////
 
 const identifier: Identifier.Implementation = await WebCryptoIdentifier.implementation({
   store: new InMemoryStorage(),
 })
 
-// 🛳
+////////
+// 🛳 //
+////////
 
-const components: Components = {
+const components: Components<Annex> = {
   depot,
   manners,
   storage,

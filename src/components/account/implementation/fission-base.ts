@@ -224,10 +224,6 @@ export async function did(identifierUcans: Ucan.Ucan[], ucanDictionary: Ucan.Dic
   return root
 }
 
-export function provideUCANs(accessQuery: Query): Ucan.Ucan[] {
-  return [] // TODO
-}
-
 ////////
 // 🛳 //
 ////////
@@ -249,6 +245,5 @@ export function implementation(
     updateDataRoot: (...args) => updateDataRoot(endpoints, dependencies, ...args),
 
     did,
-    provideUCANs,
   }
 }

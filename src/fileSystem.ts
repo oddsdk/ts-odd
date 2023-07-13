@@ -15,8 +15,6 @@ import { Configuration } from "./configuration.js"
 import { FileSystem } from "./fs/class.js"
 import { Dependencies } from "./fs/types.js"
 import { PrivateReference } from "./fs/types/private-ref.js"
-import { listFacts } from "./ucan/chain.js"
-import { fsReadUcans } from "./ucan/lookup.js"
 
 ////////
 // 🛠️ //
@@ -82,13 +80,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
   }
 
   // If a file system exists, load it and return it
-  const did = async () => {
-    const identifier = await dependencies.identifier.did()
-    const identifierUcans = cabinet.audienceUcans(identifier)
-
-    return dependencies.account.did(identifierUcans, cabinet.ucansIndexedByCID)
-  }
-
+  const did = fileSystemIdentifier({ ...dependencies, cabinet })
   const updateDataRoot = dependencies.account.updateDataRoot
 
   if (cid) {
@@ -96,27 +88,16 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
 
     fs = await FileSystem.fromCID(cid, { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot })
 
-    await manners.fileSystem.hooks.afterLoadExisting(fs, depot)
-
-    const readUcans = fsReadUcans(identifierUcans, identifierDID)
-    const facts = readUcans.reduce(
-      (acc, readUcan) => ({ ...acc, ...listFacts(readUcan, cabinet.ucansIndexedByCID) }),
-      {},
-    )
-
     await Promise.all(
-      Object.entries(facts).map(async ([key, ref]) => {
-        if (!isString(ref)) throw new Error("Invalid ref")
-
-        const posixPath = key.replace(/wnfs\:\/\/[^\/]+\//, "")
-        const path = Path.fromPosix(posixPath)
-
+      cabinet.accessKeys.map(async a => {
         return fs.mountPrivateNode({
-          path,
-          capsuleRef: await PrivateRef.decrypt(ref, agent),
+          path: a.path,
+          capsuleRef: a.key,
         })
       }),
     )
+
+    await manners.fileSystem.hooks.afterLoadExisting(fs, depot)
 
     return fs
   }
@@ -138,9 +119,24 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
   // Self delegate file system UCAN
   const fileSystemDelegation = await selfDelegateCapabilities(agent, identifier, maybeMount ? [maybeMount] : [])
   await cabinet.addUcan(fileSystemDelegation)
+  if (maybeMount) await cabinet.addAccessKey({ key: maybeMount.capsuleRef, path: maybeMount.path })
 
   // Fin
   return fs
+}
+
+//
+export function fileSystemIdentifier<Annex extends AnnexParentType>({ account, cabinet, identifier }: {
+  account: Account.Implementation<Annex>
+  cabinet: Cabinet
+  identifier: Identifier.Implementation
+}) {
+  return async () => {
+    const identifierDID = await identifier.did()
+    const identifierUcans = cabinet.audienceUcans(identifierDID)
+
+    return account.did(identifierUcans, cabinet.ucansIndexedByCID)
+  }
 }
 
 /**

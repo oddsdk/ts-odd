@@ -12,7 +12,7 @@ import * as CIDLog from "../repositories/cid-log.js"
 import { account, agent, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
 import { CID } from "../common/cid.js"
 import { createEmitter } from "../events.js"
-import { selfDelegateCapabilities } from "../fileSystem.js"
+import { fileSystemIdentifier, selfDelegateCapabilities } from "../fileSystem.js"
 import { FileSystem } from "./class.js"
 
 describe("File System Class", async () => {
@@ -31,7 +31,10 @@ describe("File System Class", async () => {
     const cidLog = await CIDLog.create({ storage })
     const cabinet = await Cabinet.create({ storage })
 
-    fs = await FileSystem.empty({ ...fsOpts, cidLog, cabinet })
+    const did = fileSystemIdentifier({ account, identifier, cabinet })
+    const updateDataRoot = account.updateDataRoot
+
+    fs = await FileSystem.empty({ ...fsOpts, cidLog, cabinet, did, updateDataRoot })
 
     const mounts = await fs.mountPrivateNodes([
       { path: Path.root() },
@@ -63,8 +66,11 @@ describe("File System Class", async () => {
 
     const cidLog = await CIDLog.create({ storage })
     const cabinet = await Cabinet.create({ storage })
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet })
 
+    const did = fileSystemIdentifier({ account, identifier, cabinet })
+    const updateDataRoot = account.updateDataRoot
+
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
     await loadedFs.mountPrivateNodes([
       { path: Path.removePartition(privatePath), capsuleRef },
     ])

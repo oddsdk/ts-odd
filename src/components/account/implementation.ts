@@ -53,9 +53,4 @@ export type Implementation<Annex extends AnnexParentType> = {
    * The DID associated with this account.
    */
   did(identifierUcans: Ucan[], ucanDictionary: UcanDictionary): Promise<string>
-
-  /**
-   * This delegates account access.
-   */
-  provideUCANs(accessQuery: Query): Ucan[]
 }
