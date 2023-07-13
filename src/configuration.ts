@@ -30,13 +30,6 @@ export type Configuration = {
    */
   fileSystem?: {
     /**
-     * Should I load the file system immediately?
-     *
-     * @default true
-     */
-    loadImmediately?: boolean
-
-    /**
      * Set the file system version.
      *
      * This will only affect new file systems created.

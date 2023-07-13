@@ -32,21 +32,31 @@ import * as IndexedDBStorage from "./components/storage/implementation/indexed-d
 ////////////////
 
 export * from "./appInfo.js"
-export * from "./common/cid.js"
 export * from "./common/types.js"
 export * from "./common/version.js"
 export * from "./components.js"
 export * from "./configuration.js"
 
-export * as fission from "./common/fission.js"
-export * as path from "./path/index.js"
+export * as Path from "./path/index.js"
 
+export { CID, decodeCID, encodeCID } from "./common/cid.js"
 export { FileSystem } from "./fs/class.js"
 
 ///////////////////////
 // TYPES & CONSTANTS //
 ///////////////////////
 
+/**
+ * The `Program` type.
+ *
+ * This will be your main interaction point with an ODD SDK program.
+ * From here you can interact with the file system, manage your account,
+ * and do access control.
+ *
+ * The `Annex` type parameter is the type of `annex` part of the account
+ * system implementation. Using a different account system could mean
+ * you have different extensions located in the `program.account` object.
+ */
 export type Program<Annex extends Account.AnnexParentType> =
   & {
     /**
@@ -119,10 +129,12 @@ export type FileSystemShortHands = {
 /**
  * 🚀 Build an ODD program.
  *
- * This will give you a `Program` object which has the following properties:
- * - `auth`, a means to login or register an account.
- * - `capabilities`, a means to control capabilities. Use this to collect & request capabilities. Read more about capabilities in the toplevel `capabilities` object documentation.
- * - `components`, your full set of `Components`.
+ * This will give you a `Program` object which will your main interaction point.
+ *
+ * This gives you three systems to work with:
+ * - `access`, the access control system, request or provide access to parts of the file system and account system.
+ * - `account`, the account system, use this to register an account.
+ * - `fileSystem`, the file system.
  *
  * This object also has a few other functions, for example to load a filesystem.
  * These are called "shorthands" because they're the same functions available
@@ -173,9 +185,8 @@ export async function program(
  *
  * Additionally this does a few other things:
  * - Loads the user's file system if needed.
- * - Attempts to collect capabilities if the configuration has permissions.
  * - Provides shorthands to functions so you don't have to pass in components.
- * - Ensure backwards compatibility with older ODD SDK clients.
+ * - Enables the ODD extension.
  *
  * See the `program.fileSystem.load` function if you want to load the user's file system yourself.
  */
