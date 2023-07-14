@@ -1,6 +1,6 @@
 import * as crypto from "../../../common/crypto.js"
 import { Store } from "../../../common/crypto/store.js"
-import { hasProp } from "../../../common/index.js"
+import { hasProp, isObject } from "../../../common/index.js"
 import { Implementation } from "../implementation.js"
 
 // 🛠️
@@ -19,7 +19,7 @@ export async function ensureKey(
   keyCreator: () => Promise<CryptoKeyPair>,
 ): Promise<CryptoKeyPair> {
   const e = await store.getItem(name)
-  if (e && hasProp(e, "alg")) return e as unknown as CryptoKeyPair
+  if (e && isObject(e)) return e as unknown as CryptoKeyPair
 
   const k = await keyCreator()
   await store.setItem(name, k)
