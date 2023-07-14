@@ -25,7 +25,7 @@ import { Storage as InMemoryStorage } from "./localforage/in-memory-storage.js"
 // 🧩 //
 ////////
 
-type Annex = {}
+type Annex = Record<string, never>
 
 ////////
 // 🚀 //

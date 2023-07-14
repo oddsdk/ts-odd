@@ -286,7 +286,7 @@ export class TransactionContext<FS> {
     fromParam: Path.Distinctive<PartitionedNonEmpty<Partition>>,
     toParam: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
   ): Promise<void> {
-    let from = fromParam
+    const from = fromParam
     let to = toParam
 
     if (Path.isDirectory(fromParam) && Path.isFile(toParam)) throw new Error("Cannot copy a directory to a file")
@@ -356,7 +356,7 @@ export class TransactionContext<FS> {
     fromParam: Path.Distinctive<PartitionedNonEmpty<Partition>>,
     toParam: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
   ): Promise<void> {
-    let from = fromParam
+    const from = fromParam
     let to = toParam
 
     if (Path.isDirectory(fromParam) && Path.isFile(toParam)) throw new Error("Cannot move a directory to a file")

@@ -489,7 +489,7 @@ export class FileSystem {
     const partition = determinePartition(path)
 
     switch (partition.name) {
-      case "public":
+      case "public": {
         const node = partition.segments.length === 0
           ? this.rootTree.publicRoot.asNode()
           : await this.rootTree.publicRoot.getNode(partition.segments, this.blockStore)
@@ -506,8 +506,9 @@ export class FileSystem {
           capsuleCID,
           contentCID,
         }
+      }
 
-      case "private":
+      case "private": {
         const priv = findPrivateNode(partition.path, this.privateNodes)
         const capsuleRef = priv.node.isFile()
           ? await priv.node
@@ -531,6 +532,7 @@ export class FileSystem {
           publishingStatus: transactionResult.publishingStatus,
           capsuleRef: PrivateRefs.fromWnfsRef(capsuleRef),
         }
+      }
     }
   }
 

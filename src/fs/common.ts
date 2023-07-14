@@ -13,7 +13,7 @@ export function addOrIncreaseNameNumber(
 export function addOrIncreaseNameNumber(
   path: Path.Distinctive<Path.PartitionedNonEmpty<Path.Partition>>,
 ): Path.Distinctive<Path.PartitionedNonEmpty<Path.Partition>> {
-  const regex = Path.isFile(path) ? (/(\ \((\d+)\))?(\.[^$]+)?$/) : (/(\ \((\d+)\))$/)
+  const regex = Path.isFile(path) ? (/( \((\d+)\))?(\.[^$]+)?$/) : (/( \((\d+)\))$/)
   const terminus = Path.terminus(path)
   const suffixMatches = terminus.match(regex)
 

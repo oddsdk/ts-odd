@@ -976,7 +976,7 @@ describe("File System Class", async () => {
     }).catch(e => {})
 
     try {
-      fs.read(Path.file("private", "file"), "utf8")
+      await fs.read(Path.file("private", "file"), "utf8")
     } catch (e) {
       expect(e).toBeTruthy()
     }

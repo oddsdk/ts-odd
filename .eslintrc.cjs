@@ -14,12 +14,14 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
   ],
   rules: {
+    "no-empty-function": "off",
     "@typescript-eslint/member-delimiter-style": ["error", {
       "multiline": {
         "delimiter": "none",
         "requireLast": false,
       },
     }],
+    "@typescript-eslint/no-empty-function": ["off"],
     "@typescript-eslint/no-use-before-define": ["off"],
     "@typescript-eslint/semi": ["error", "never"],
     "@typescript-eslint/ban-ts-comment": 1,

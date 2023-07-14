@@ -9,7 +9,7 @@ import * as Events from "../events.js"
 // CREATE //
 ////////////
 
-export type Dependencies = {}
+export type Dependencies = Record<string, never> // TODO
 
 type Config = {
   namespace: AppInfo | string
@@ -157,9 +157,9 @@ type State = {
 async function getState(config: Config): Promise<State> {
   const { capabilities, dependencies, namespace } = config
 
-  let accountDID = null
-  let username = null
-  let dataRootCID = null
+  const accountDID = null
+  const username = null
+  const dataRootCID = null
 
   // TODO:
   // if (session && session.username) {

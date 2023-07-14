@@ -105,15 +105,12 @@ export type Program<Annex extends Account.AnnexParentType> =
      */
     fileSystem: FileSystemShortHands
   }
-  & ShortHands
   & Events.ListenTo<Events.All>
 
 export enum ProgramError {
   InsecureContext = "INSECURE_CONTEXT",
   UnsupportedBrowser = "UNSUPPORTED_BROWSER",
 }
-
-export type ShortHands = {}
 
 export type FileSystemShortHands = {
   addSampleData: (fs: FileSystem) => Promise<void>
@@ -206,8 +203,8 @@ export async function assemble<Annex extends AnnexParentType>(
   const cidLog = await CIDLog.create({ storage: components.storage })
   const cabinet = await Cabinet.create({ storage: components.storage })
 
-  cabinet.events.on("collection:changed", ({ collection }) => {
-    components.manners.cabinet.hooks.inventoryChanged(collection)
+  cabinet.events.on("collection:changed", async ({ collection }) => {
+    await components.manners.cabinet.hooks.inventoryChanged(collection)
   })
 
   // Access

@@ -8,7 +8,7 @@ import * as PrivateRef from "./fs/private-ref.js"
 import * as Path from "./path/index.js"
 import * as Ucan from "./ucan/index.js"
 
-import { Maybe, isString } from "./common/index.js"
+import { Maybe } from "./common/index.js"
 import { Account, Agent, Identifier } from "./components.js"
 import { AnnexParentType } from "./components/account/implementation.js"
 import { Configuration } from "./configuration.js"
@@ -88,6 +88,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
 
     fs = await FileSystem.fromCID(cid, { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot })
 
+    // Mount private nodes
     await Promise.all(
       cabinet.accessKeys.map(async a => {
         return fs.mountPrivateNode({
@@ -116,7 +117,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
 
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)
 
-  // Self delegate file system UCAN
+  // Self delegate file system UCAN & add stuff to cabinet
   const fileSystemDelegation = await selfDelegateCapabilities(agent, identifier, maybeMount ? [maybeMount] : [])
   await cabinet.addUcan(fileSystemDelegation)
   if (maybeMount) await cabinet.addAccessKey({ key: maybeMount.capsuleRef, path: maybeMount.path })
