@@ -24,7 +24,7 @@ export type CabinetCollection = Record<string, CabinetItem>
 export function create({ storage }: { storage: Storage.Implementation }): Promise<Repo> {
   return Repo.create({
     storage,
-    storageName: storage.KEYS.UCANS,
+    storageName: storage.KEYS.CABINET,
   })
 }
 

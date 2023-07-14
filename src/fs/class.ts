@@ -165,7 +165,9 @@ export class FileSystem {
     return Promise.all(
       newNodes.map(async ([_, n]: [string, MountedPrivateNode]) => {
         const storeResult = await n.node.store(this.rootTree.privateForest, this.blockStore, this.rng)
-        const [privateRef, _privateForest] = storeResult
+        const [privateRef, privateForest] = storeResult
+
+        this.rootTree = { ...this.rootTree, privateForest }
 
         return {
           path: n.path,
@@ -436,11 +438,7 @@ export class FileSystem {
     this.rootTree = rootTree
 
     // Determine data root
-    const dataRoot = await RootTree.store({
-      blockStore: this.blockStore,
-      depot: this.dependencies.depot,
-      rootTree: this.rootTree,
-    })
+    const dataRoot = await this.calculateDataRoot()
 
     // Emit events
     changedPaths.forEach(changedPath => {
@@ -461,6 +459,16 @@ export class FileSystem {
       dataRoot,
       publishingStatus: signal,
     }
+  }
+
+  // 🛠️
+
+  calculateDataRoot(): Promise<CID> {
+    return RootTree.store({
+      blockStore: this.blockStore,
+      depot: this.dependencies.depot,
+      rootTree: this.rootTree,
+    })
   }
 
   // ㊙️  ▒▒  MUTATIONS

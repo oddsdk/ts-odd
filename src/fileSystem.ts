@@ -4,17 +4,14 @@ import type { Cabinet } from "./repositories/cabinet.js"
 import type { Repo as CIDLog } from "./repositories/cid-log.js"
 
 import * as Events from "./events.js"
-import * as PrivateRef from "./fs/private-ref.js"
 import * as Path from "./path/index.js"
 import * as Ucan from "./ucan/index.js"
 
 import { Maybe } from "./common/index.js"
-import { Account, Agent, Identifier } from "./components.js"
+import { Account, Identifier } from "./components.js"
 import { AnnexParentType } from "./components/account/implementation.js"
-import { Configuration } from "./configuration.js"
 import { FileSystem } from "./fs/class.js"
 import { Dependencies } from "./fs/types.js"
-import { PrivateReference } from "./fs/types/private-ref.js"
 
 ////////
 // 🛠️ //
@@ -24,15 +21,14 @@ import { PrivateReference } from "./fs/types/private-ref.js"
  * Load a user's file system.
  */
 export async function loadFileSystem<Annex extends AnnexParentType>(
-  { cabinet, cidLog, config, dependencies, eventEmitter }: {
+  { cabinet, cidLog, dependencies, eventEmitter }: {
     cabinet: Cabinet
     cidLog: CIDLog
-    config: Configuration
     dependencies: Dependencies<FileSystem> & { account: Account.Implementation<Annex> }
     eventEmitter: Events.Emitter<Events.FileSystem>
   },
 ): Promise<FileSystem> {
-  const { agent, depot, identifier, manners } = dependencies
+  const { depot, identifier, manners } = dependencies
 
   let cid: Maybe<CID>
   let fs: FileSystem
@@ -92,7 +88,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
     await Promise.all(
       cabinet.accessKeys.map(async a => {
         return fs.mountPrivateNode({
-          path: a.path,
+          path: Path.removePartition(a.path),
           capsuleRef: a.key,
         })
       }),
@@ -118,15 +114,27 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)
 
   // Self delegate file system UCAN & add stuff to cabinet
-  const fileSystemDelegation = await selfDelegateCapabilities(agent, identifier, maybeMount ? [maybeMount] : [])
+  const fileSystemDelegation = await selfDelegateCapabilities(identifier)
   await cabinet.addUcan(fileSystemDelegation)
-  if (maybeMount) await cabinet.addAccessKey({ key: maybeMount.capsuleRef, path: maybeMount.path })
+  if (maybeMount) {
+    await cabinet.addAccessKey({
+      key: maybeMount.capsuleRef,
+      path: Path.combine(Path.directory("private"), maybeMount.path),
+    })
+  }
+
+  // Add initial CID to log
+  await cidLog.add([
+    await fs.calculateDataRoot(),
+  ])
 
   // Fin
   return fs
 }
 
-//
+/**
+ * Determines the DID used for the file system.
+ */
 export function fileSystemIdentifier<Annex extends AnnexParentType>({ account, cabinet, identifier }: {
   account: Account.Implementation<Annex>
   cabinet: Cabinet
@@ -144,12 +152,7 @@ export function fileSystemIdentifier<Annex extends AnnexParentType>({ account, c
  * Create a UCAN that self-delegates the file system capabilities.
  */
 export async function selfDelegateCapabilities(
-  agent: Agent.Implementation,
   identifier: Identifier.Implementation,
-  mounts: {
-    path: Path.Distinctive<Path.Segments>
-    capsuleRef: PrivateReference
-  }[],
 ) {
   const identifierDID = await identifier.did()
 
@@ -169,13 +172,5 @@ export async function selfDelegateCapabilities(
         can: { namespace: "fs", segments: ["*"] },
       },
     ],
-
-    facts: await Promise.all(mounts.map(async mount => (
-      {
-        [`wnfs://${identifierDID}/private/${Path.toPosix(mount.path)}`]: (
-          await PrivateRef.encrypt(mount.capsuleRef, agent)
-        ),
-      }
-    ))),
   })
 }

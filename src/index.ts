@@ -252,7 +252,7 @@ export async function assemble<Annex extends AnnexParentType>(
   // Shorthands
   const fileSystemShortHands: FileSystemShortHands = {
     addSampleData: (fs: FileSystem) => addSampleData(fs),
-    load: () => loadFileSystem({ config, cidLog, cabinet, dependencies: components, eventEmitter: fsEvents }),
+    load: () => loadFileSystem({ cidLog, cabinet, dependencies: components, eventEmitter: fsEvents }),
   }
 
   // Create `Program`
@@ -343,16 +343,16 @@ export async function gatherComponents(
 ): Promise<Components<any>> {
   const config = extractConfig(setup)
 
-  const dns = setup.dns || defaultDNSComponent()
-  const manners = setup.manners || defaultMannersComponent(config)
-  const storage = setup.storage || defaultStorageComponent(config)
+  const dns = setup.dns || defaultComponents.dns()
+  const manners = setup.manners || defaultComponents.manners(config)
+  const storage = setup.storage || defaultComponents.storage(config)
 
-  const agent = setup.agent || await defaultAgentComponent(config)
-  const identifier = setup.identifier || await defaultIdentifierComponent(config)
-  const account = setup.account || defaultAccountComponent({ agent, dns, manners })
+  const agent = setup.agent || await defaultComponents.agent(config)
+  const identifier = setup.identifier || await defaultComponents.identifier(config)
+  const account = setup.account || defaultComponents.account({ agent, dns, manners })
 
-  const channel = setup.channel || defaultChannelComponent()
-  const depot = setup.depot || await defaultDepotComponent({ storage }, config)
+  const channel = setup.channel || defaultComponents.channel()
+  const depot = setup.depot || await defaultComponents.depot({ storage }, config)
 
   return {
     account,
@@ -370,64 +370,66 @@ export async function gatherComponents(
 // DEFAULT COMPONENTS //
 ////////////////////////
 
-export function defaultAccountComponent(
-  { agent, dns, manners }: {
-    agent: Agent.Implementation
-    dns: DNS.Implementation
-    manners: Manners.Implementation<FileSystem>
+export const defaultComponents = {
+  account(
+    { agent, dns, manners }: {
+      agent: Agent.Implementation
+      dns: DNS.Implementation
+      manners: Manners.Implementation<FileSystem>
+    },
+  ): Account.Implementation<FissionAccountsProduction.Annex> {
+    return FissionAccountsProduction.implementation({ agent, dns, manners })
   },
-): Account.Implementation<FissionAccountsProduction.Annex> {
-  return FissionAccountsProduction.implementation({ agent, dns, manners })
-}
 
-export function defaultAgentComponent(
-  config: Configuration,
-): Promise<Agent.Implementation> {
-  const store = localforage.createInstance({ name: `${namespace(config)}/agent` })
+  agent(
+    config: Configuration,
+  ): Promise<Agent.Implementation> {
+    const store = localforage.createInstance({ name: `${namespace(config)}/agent` })
 
-  return WebCryptoAgent.implementation({
-    store,
-  })
-}
+    return WebCryptoAgent.implementation({
+      store,
+    })
+  },
 
-export function defaultChannelComponent(): Channel.Implementation {
-  return FissionWebSocketChannelProduction.implementation()
-}
+  channel(): Channel.Implementation {
+    return FissionWebSocketChannelProduction.implementation()
+  },
 
-export function defaultDepotComponent(
-  { storage }: { storage: Storage.Implementation },
-  config: Configuration,
-): Promise<Depot.Implementation> {
-  return FissionIpfsProduction.implementation(
-    storage,
-    `${namespace(config)}/blockstore`,
-  )
-}
+  depot(
+    { storage }: { storage: Storage.Implementation },
+    config: Configuration,
+  ): Promise<Depot.Implementation> {
+    return FissionIpfsProduction.implementation(
+      storage,
+      `${namespace(config)}/blockstore`,
+    )
+  },
 
-export function defaultDNSComponent(): DNS.Implementation {
-  return DNSOverHTTPS.implementation()
-}
+  dns(): DNS.Implementation {
+    return DNSOverHTTPS.implementation()
+  },
 
-export function defaultIdentifierComponent(
-  config: Configuration,
-): Promise<Identifier.Implementation> {
-  const store = localforage.createInstance({ name: `${namespace(config)}/identifier` })
+  identifier(
+    config: Configuration,
+  ): Promise<Identifier.Implementation> {
+    const store = localforage.createInstance({ name: `${namespace(config)}/identifier` })
 
-  return WebCryptoIdentifier.implementation({
-    store,
-  })
-}
+    return WebCryptoIdentifier.implementation({
+      store,
+    })
+  },
 
-export function defaultMannersComponent(config: Configuration): Manners.Implementation<FileSystem> {
-  return ProperManners.implementation({
-    configuration: config,
-  })
-}
+  manners(config: Configuration): Manners.Implementation<FileSystem> {
+    return ProperManners.implementation({
+      configuration: config,
+    })
+  },
 
-export function defaultStorageComponent(config: Configuration): Storage.Implementation {
-  return IndexedDBStorage.implementation({
-    name: namespace(config),
-  })
+  storage(config: Configuration): Storage.Implementation {
+    return IndexedDBStorage.implementation({
+      name: namespace(config),
+    })
+  },
 }
 
 ////////

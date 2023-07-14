@@ -7,8 +7,8 @@ export type ImplementationOptions = {
  */
 export type Implementation = {
   KEYS: {
+    CABINET: string
     CID_LOG: string
-    UCANS: string
   }
 
   getItem: <T>(key: string) => Promise<T | null>

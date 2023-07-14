@@ -41,7 +41,7 @@ describe("File System Class", async () => {
     ])
 
     await cabinet.addUcans([
-      await selfDelegateCapabilities(agent, identifier, mounts),
+      await selfDelegateCapabilities(identifier),
     ])
   })
 

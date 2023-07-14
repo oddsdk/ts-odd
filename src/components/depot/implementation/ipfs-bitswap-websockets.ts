@@ -86,7 +86,7 @@ export async function implementation(
   { blockstoreName, gatewayUrl, peersUrl, storage }: ImplementationOptions,
 ): Promise<Implementation> {
   const blockstore = new BlockstoreDatastoreAdapter(
-    new LevelDatastore(blockstoreName),
+    new LevelDatastore(blockstoreName, { prefix: "" }),
   )
 
   // Transport
