@@ -21,11 +21,12 @@ import { Dependencies } from "./fs/types.js"
  * Load a user's file system.
  */
 export async function loadFileSystem<Annex extends AnnexParentType>(
-  { cabinet, cidLog, dependencies, eventEmitter }: {
+  { cabinet, cidLog, dependencies, eventEmitter, local }: {
     cabinet: Cabinet
     cidLog: CIDLog
     dependencies: Dependencies<FileSystem> & { account: Account.Implementation<Annex> }
     eventEmitter: Events.Emitter<Events.FileSystem>
+    local?: boolean
   },
 ): Promise<FileSystem> {
   const { depot, identifier, manners } = dependencies
@@ -37,7 +38,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
   const identifierDID = await dependencies.identifier.did()
   const identifierUcans = cabinet.audienceUcans(identifierDID)
 
-  const dataCid = navigator.onLine
+  const dataCid = navigator.onLine && (local === false || local === undefined)
     ? await dependencies.account.lookupDataRoot(identifierUcans, cabinet.ucansIndexedByCID)
     : null
 
@@ -82,7 +83,10 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
   if (cid) {
     await manners.fileSystem.hooks.beforeLoadExisting(cid, depot)
 
-    fs = await FileSystem.fromCID(cid, { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot })
+    fs = await FileSystem.fromCID(
+      cid,
+      { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot, localOnly: local },
+    )
 
     // Mount private nodes
     await Promise.all(
@@ -109,6 +113,8 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
     did,
     eventEmitter,
     updateDataRoot,
+
+    localOnly: local,
   })
 
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)

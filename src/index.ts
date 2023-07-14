@@ -118,7 +118,7 @@ export type FileSystemShortHands = {
   /**
    * Load the file system associated with the account system.
    */
-  load: () => Promise<FileSystem>
+  load: (opts: { local?: boolean }) => Promise<FileSystem>
 }
 
 //////////////////
@@ -252,7 +252,7 @@ export async function assemble<Annex extends AnnexParentType>(
   // Shorthands
   const fileSystemShortHands: FileSystemShortHands = {
     addSampleData: (fs: FileSystem) => addSampleData(fs),
-    load: () => loadFileSystem({ cidLog, cabinet, dependencies: components, eventEmitter: fsEvents }),
+    load: (opts) => loadFileSystem({ cidLog, cabinet, dependencies: components, eventEmitter: fsEvents, ...opts }),
   }
 
   // Create `Program`
