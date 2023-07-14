@@ -2,7 +2,6 @@ import * as AgentDID from "../../../agent/did.js"
 import * as Ucan from "../../../ucan/index.js"
 import * as Fission from "./fission/index.js"
 
-import { Query } from "../../../access/query.js"
 import { CID } from "../../../common/index.js"
 import { Agent, DNS, Manners } from "../../../components.js"
 import { FileSystem } from "../../../fs/class.js"

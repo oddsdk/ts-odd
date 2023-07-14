@@ -6,11 +6,11 @@ import * as Path from "./path/index.js"
 import * as Cabinet from "./repositories/cabinet.js"
 import * as CIDLog from "./repositories/cid-log.js"
 
-import { Query } from "./access/query.js"
+import { Query } from "./authority/query.js"
 import { Account, Agent, Channel, DNS, Depot, Identifier, Manners, Storage } from "./components.js"
 import { Components } from "./components.js"
-import { RequestOptions } from "./components/access/implementation.js"
 import { AnnexParentType } from "./components/account/implementation.js"
+import { RequestOptions } from "./components/authority/implementation.js"
 import { Configuration, namespace } from "./configuration.js"
 import { loadFileSystem } from "./fileSystem.js"
 import { FileSystem } from "./fs/class.js"
@@ -53,7 +53,7 @@ export { FileSystem } from "./fs/class.js"
  *
  * This will be your main interaction point with an ODD SDK program.
  * From here you can interact with the file system, manage your account,
- * and do access control.
+ * and manage authority.
  *
  * The `Annex` type parameter is the type of `annex` part of the account
  * system implementation. Using a different account system could mean
@@ -61,23 +61,6 @@ export { FileSystem } from "./fs/class.js"
  */
 export type Program<Annex extends Account.AnnexParentType> =
   & {
-    /**
-     * Access control system.
-     *
-     * TODO: Unfinished
-     */
-    access: {
-      /**
-       * Is my program allowed to do what I want to do?
-       */
-      isGranted: (query?: Query) => Promise<
-        { granted: true } | { granted: false; reason: string }
-      >
-
-      provide: () => Promise<void>
-      request: (options: RequestOptions) => Promise<void>
-    }
-
     /**
      * Manage the account.
      */
@@ -88,6 +71,23 @@ export type Program<Annex extends Account.AnnexParentType> =
       canRegister: (formValues: Record<string, string>) => Promise<
         { ok: true } | { ok: false; reason: string }
       >
+    }
+
+    /**
+     * Authority system.
+     *
+     * TODO: Unfinished
+     */
+    authority: {
+      /**
+       * Is my program allowed to do what I want to do?
+       */
+      isGranted: (query?: Query) => Promise<
+        { granted: true } | { granted: false; reason: string }
+      >
+
+      provide: () => Promise<void>
+      request: (options: RequestOptions) => Promise<void>
     }
 
     /**
@@ -131,8 +131,8 @@ export type FileSystemShortHands = {
  * This will give you a `Program` object which will your main interaction point.
  *
  * This gives you three systems to work with:
- * - `access`, the access control system, request or provide access to parts of the file system and account system.
  * - `account`, the account system, use this to register an account.
+ * - `authority`, the authority system, request or provide authority to parts of the (or entire) file system and account system.
  * - `fileSystem`, the file system.
  *
  * This object also has a few other functions, for example to load a filesystem.
@@ -207,8 +207,8 @@ export async function assemble<Annex extends AnnexParentType>(
     await components.manners.cabinet.hooks.inventoryChanged(collection)
   })
 
-  // Access
-  const access = {
+  // Authority
+  const authority = {
     async isGranted(query?: Query): Promise<{ granted: true } | { granted: false; reason: string }> {
       // TODO:
       // This should take the query in consideration.
@@ -264,7 +264,7 @@ export async function assemble<Annex extends AnnexParentType>(
 
     components,
 
-    access,
+    authority,
     account: {
       register: Auth.register({ account, agent, identifier, cabinet }),
       canRegister: account.canRegister,

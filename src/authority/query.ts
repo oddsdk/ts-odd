@@ -45,7 +45,7 @@ export function fromJSON(query: string): Query {
       return fileSystemQueryFromJSON(obj)
 
     default:
-      throw new Error("Invalid access query")
+      throw new Error("Invalid authority query")
   }
 }
 

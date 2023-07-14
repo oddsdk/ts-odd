@@ -26,10 +26,6 @@ export function implementation(opts: ImplementationOptions): Implementation<File
           // has full access to the file system. Here we create a new
           // private node that is mounted at the root path (ie. root private dir)
           return fs.mountPrivateNode({ path: Path.root() })
-
-          // Other clients that may have partial access to the file system
-          // gain access through received UCANs. The file system class checks
-          // for write access
         },
         beforeLoadExisting: async () => {},
         beforeLoadNew: async () => {},

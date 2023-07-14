@@ -1,4 +1,3 @@
-import { Query } from "../../access/query.js"
 import { CID } from "../../common/cid.js"
 import { Dictionary as UcanDictionary, Ucan } from "../../ucan/types.js"
 
