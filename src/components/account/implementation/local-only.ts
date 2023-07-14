@@ -36,7 +36,7 @@ export async function canUpdateDataRoot(
   identifierUcans: Ucan.Ucan[],
   ucanDictionary: Ucan.Dictionary,
 ): Promise<boolean> {
-  return true
+  return Object.values(ucanDictionary).filter(u => u.payload.att.some(a => a.with.scheme === "ucan")).length >= 1
 }
 
 export async function lookupDataRoot(
