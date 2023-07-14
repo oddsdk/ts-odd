@@ -40,22 +40,44 @@ import { MountedPrivateNode, MountedPrivateNodes } from "./types/internal.js"
 import { PrivateReference } from "./types/private-ref.js"
 
 export class FileSystem {
-  private privateNodes: MountedPrivateNodes = {}
-  private rng: Rng.Rng
+  #blockStore: BlockStore
+  #cabinet: Cabinet
+  #cidLog: CIDLog
+  #dependencies: Dependencies<FileSystem>
+  #did: () => Promise<string>
+  #eventEmitter: EventEmitter<Events.FileSystem>
+  #localOnly: boolean
+  #settleTimeBeforePublish: number
+  #rootTree: RootTree.RootTree
+  #updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>
+
+  #privateNodes: MountedPrivateNodes = {}
+  #rng: Rng.Rng
 
   constructor(
-    private blockStore: BlockStore,
-    private cabinet: Cabinet,
-    private cidLog: CIDLog,
-    private dependencies: Dependencies<FileSystem>,
-    private did: () => Promise<string>,
-    private eventEmitter: EventEmitter<Events.FileSystem>,
-    private localOnly: boolean,
-    private settleTimeBeforePublish: number,
-    private rootTree: RootTree.RootTree,
-    private updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>,
+    blockStore: BlockStore,
+    cabinet: Cabinet,
+    cidLog: CIDLog,
+    dependencies: Dependencies<FileSystem>,
+    did: () => Promise<string>,
+    eventEmitter: EventEmitter<Events.FileSystem>,
+    localOnly: boolean,
+    settleTimeBeforePublish: number,
+    rootTree: RootTree.RootTree,
+    updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>,
   ) {
-    this.rng = Rng.makeRngInterface()
+    this.#blockStore = blockStore
+    this.#cabinet = cabinet
+    this.#cidLog = cidLog
+    this.#dependencies = dependencies
+    this.#did = did
+    this.#eventEmitter = eventEmitter
+    this.#localOnly = localOnly
+    this.#settleTimeBeforePublish = settleTimeBeforePublish
+    this.#rootTree = rootTree
+    this.#updateDataRoot = updateDataRoot
+
+    this.#rng = Rng.makeRngInterface()
   }
 
   // INITIALISATION
@@ -142,11 +164,11 @@ export class FileSystem {
 
         if (capsuleRef) {
           const ref = PrivateRefs.toWnfsRef(capsuleRef)
-          privateNode = await PrivateNode.load(ref, this.rootTree.privateForest, this.blockStore)
+          privateNode = await PrivateNode.load(ref, this.#rootTree.privateForest, this.#blockStore)
         } else {
           privateNode = Path.isFile(path)
-            ? new PrivateFile(new Namefilter(), new Date(), this.rng).asNode()
-            : new PrivateDirectory(new Namefilter(), new Date(), this.rng).asNode()
+            ? new PrivateFile(new Namefilter(), new Date(), this.#rng).asNode()
+            : new PrivateDirectory(new Namefilter(), new Date(), this.#rng).asNode()
         }
 
         return [
@@ -157,17 +179,17 @@ export class FileSystem {
       }),
     )
 
-    this.privateNodes = {
-      ...this.privateNodes,
+    this.#privateNodes = {
+      ...this.#privateNodes,
       ...Object.fromEntries(newNodes),
     }
 
     return Promise.all(
       newNodes.map(async ([_, n]: [string, MountedPrivateNode]) => {
-        const storeResult = await n.node.store(this.rootTree.privateForest, this.blockStore, this.rng)
+        const storeResult = await n.node.store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
         const [privateRef, privateForest] = storeResult
 
-        this.rootTree = { ...this.rootTree, privateForest }
+        this.#rootTree = { ...this.#rootTree, privateForest }
 
         return {
           path: n.path,
@@ -178,26 +200,26 @@ export class FileSystem {
   }
 
   unmountPrivateNode(path: Path.Distinctive<Path.Segments>): void {
-    delete this.privateNodes[Path.toPosix(path)]
+    delete this.#privateNodes[Path.toPosix(path)]
   }
 
   // QUERY
   // -----
 
   async contentCID(path: Path.File<Partitioned<Public>>): Promise<CID | null> {
-    return this.transactionContext().contentCID(path)
+    return this.#transactionContext().contentCID(path)
   }
 
   async capsuleCID(path: Path.Distinctive<Partitioned<Public>>): Promise<CID | null> {
-    return this.transactionContext().capsuleCID(path)
+    return this.#transactionContext().capsuleCID(path)
   }
 
   async capsuleRef(path: Path.Distinctive<Partitioned<Private>>): Promise<PrivateReference | null> {
-    return this.transactionContext().capsuleRef(path)
+    return this.#transactionContext().capsuleRef(path)
   }
 
   async exists(path: Path.Distinctive<Partitioned<Partition>>): Promise<boolean> {
-    return this.transactionContext().exists(path)
+    return this.#transactionContext().exists(path)
   }
 
   async listDirectory(
@@ -215,7 +237,7 @@ export class FileSystem {
     path: Path.Directory<Partitioned<Partition>>,
     listOptions: { withItemKind: boolean } = { withItemKind: false },
   ): Promise<DirectoryItem[] | DirectoryItemWithKind[]> {
-    return this.transactionContext().listDirectory(path, listOptions)
+    return this.#transactionContext().listDirectory(path, listOptions)
   }
 
   ls = this.listDirectory
@@ -237,7 +259,7 @@ export class FileSystem {
     dataType: DataType,
     options?: { offset: number; length: number },
   ): Promise<AnySupportedDataType<V>> {
-    return this.transactionContext().read<DataType, V>(path, dataType, options)
+    return this.#transactionContext().read<DataType, V>(path, dataType, options)
   }
 
   // MUTATIONS
@@ -253,7 +275,7 @@ export class FileSystem {
     to: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
     mutationOptions: MutationOptions = {},
   ): Promise<MutationResult<Partition> | null> {
-    return this.infusedTransaction(
+    return this.#infusedTransaction(
       t => t.copy(from, to),
       to,
       mutationOptions,
@@ -272,7 +294,7 @@ export class FileSystem {
   ): Promise<MutationResult<Partition> & { path: Path.Directory<PartitionedNonEmpty<Partition>> }> {
     let finalPath = path
 
-    const mutationResult = await this.infusedTransaction(
+    const mutationResult = await this.#infusedTransaction(
       async t => {
         const creationResult = await t.createDirectory(path)
         finalPath = creationResult.path
@@ -308,7 +330,7 @@ export class FileSystem {
   ): Promise<MutationResult<Partition> & { path: Path.File<PartitionedNonEmpty<Partition>> }> {
     let finalPath = path
 
-    const mutationResult = await this.infusedTransaction(
+    const mutationResult = await this.#infusedTransaction(
       async t => {
         const creationResult = await t.createFile(path, dataType, data)
         finalPath = creationResult.path
@@ -331,7 +353,7 @@ export class FileSystem {
     path: Path.Directory<PartitionedNonEmpty<Partition>>,
     mutationOptions: MutationOptions = {},
   ): Promise<MutationResult<Partition>> {
-    return this.infusedTransaction(
+    return this.#infusedTransaction(
       t => t.ensureDirectory(path),
       path,
       mutationOptions,
@@ -350,7 +372,7 @@ export class FileSystem {
     to: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
     mutationOptions: MutationOptions = {},
   ): Promise<MutationResult<Partition>> {
-    return this.infusedTransaction(
+    return this.#infusedTransaction(
       t => t.move(from, to),
       to,
       mutationOptions,
@@ -386,7 +408,7 @@ export class FileSystem {
     newName: string,
     mutationOptions: MutationOptions = {},
   ): Promise<MutationResult<Partition>> {
-    return this.infusedTransaction(
+    return this.#infusedTransaction(
       t => t.rename(path, newName),
       Path.replaceTerminus(path, newName),
       mutationOptions,
@@ -412,7 +434,7 @@ export class FileSystem {
     data: DataForType<D, V>,
     mutationOptions: MutationOptions = {},
   ): Promise<MutationResult<Partition>> {
-    return this.infusedTransaction(
+    return this.#infusedTransaction(
       t => t.write(path, dataType, data),
       path,
       mutationOptions,
@@ -426,7 +448,7 @@ export class FileSystem {
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     mutationOptions: MutationOptions = {},
   ): Promise<TransactionResult> {
-    const context = this.transactionContext()
+    const context = this.#transactionContext()
 
     // Execute handler
     await handler(context)
@@ -434,15 +456,15 @@ export class FileSystem {
     // Commit transaction
     const { changedPaths, privateNodes, proofs, rootTree } = await TransactionContext.commit(context)
 
-    this.privateNodes = privateNodes
-    this.rootTree = rootTree
+    this.#privateNodes = privateNodes
+    this.#rootTree = rootTree
 
     // Determine data root
     const dataRoot = await this.calculateDataRoot()
 
     // Emit events
     changedPaths.forEach(changedPath => {
-      this.eventEmitter.emit("fileSystem:local-change", {
+      this.#eventEmitter.emit("fileSystem:local-change", {
         dataRoot,
         path: changedPath,
       })
@@ -450,8 +472,8 @@ export class FileSystem {
 
     // Publish
     const signal = mutationOptions.skipPublish === true
-      ? Promise.resolve(FileSystem.statusNotPublishing)
-      : this.publish(dataRoot, proofs)
+      ? Promise.resolve(FileSystem.#statusNotPublishing)
+      : this.#publish(dataRoot, proofs)
 
     // Fin
     return {
@@ -465,30 +487,30 @@ export class FileSystem {
 
   calculateDataRoot(): Promise<CID> {
     return RootTree.store({
-      blockStore: this.blockStore,
-      depot: this.dependencies.depot,
-      rootTree: this.rootTree,
+      blockStore: this.#blockStore,
+      depot: this.#dependencies.depot,
+      rootTree: this.#rootTree,
     })
   }
 
   // ㊙️  ▒▒  MUTATIONS
 
-  private async infusedTransaction(
+  async #infusedTransaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Public>>,
     mutationOptions?: MutationOptions,
   ): Promise<PublicMutationResult>
-  private async infusedTransaction(
+  async #infusedTransaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Private>>,
     mutationOptions?: MutationOptions,
   ): Promise<PrivateMutationResult>
-  private async infusedTransaction(
+  async #infusedTransaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Partition>>,
     mutationOptions?: MutationOptions,
   ): Promise<MutationResult<Partition>>
-  private async infusedTransaction(
+  async #infusedTransaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Partition>>,
     mutationOptions: MutationOptions = {},
@@ -499,13 +521,13 @@ export class FileSystem {
     switch (partition.name) {
       case "public": {
         const node = partition.segments.length === 0
-          ? this.rootTree.publicRoot.asNode()
-          : await this.rootTree.publicRoot.getNode(partition.segments, this.blockStore)
+          ? this.#rootTree.publicRoot.asNode()
+          : await this.#rootTree.publicRoot.getNode(partition.segments, this.#blockStore)
         if (!node) throw new Error("Failed to find needed public node for infusion")
 
         const fileOrDir: PublicFile | PublicDirectory = node.isFile() ? node.asFile() : node.asDir()
 
-        const capsuleCID = await fileOrDir.store(this.blockStore).then(a => CID.decode(a))
+        const capsuleCID = await fileOrDir.store(this.#blockStore).then(a => CID.decode(a))
         const contentCID = node.isFile() ? CID.decode(node.asFile().contentCid()) : capsuleCID
 
         return {
@@ -517,21 +539,21 @@ export class FileSystem {
       }
 
       case "private": {
-        const priv = findPrivateNode(partition.path, this.privateNodes)
+        const priv = findPrivateNode(partition.path, this.#privateNodes)
         const capsuleRef = priv.node.isFile()
           ? await priv.node
             .asFile()
-            .store(this.rootTree.privateForest, this.blockStore, this.rng)
+            .store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
           : await (
             priv.remainder.length === 0
               ? Promise.resolve(priv.node)
               : priv.node
                 .asDir()
-                .getNode(priv.remainder, searchLatest(), this.rootTree.privateForest, this.blockStore)
+                .getNode(priv.remainder, searchLatest(), this.#rootTree.privateForest, this.#blockStore)
           )
             .then(node => {
               if (!node) throw new Error("Failed to find needed private node for infusion")
-              return node.store(this.rootTree.privateForest, this.blockStore)
+              return node.store(this.#rootTree.privateForest, this.#blockStore)
             })
             .then(([ref]) => ref)
 
@@ -544,32 +566,32 @@ export class FileSystem {
     }
   }
 
-  private transactionContext(): TransactionContext<FileSystem> {
+  #transactionContext(): TransactionContext<FileSystem> {
     return new TransactionContext(
-      this.blockStore,
-      this.cabinet,
-      this.dependencies,
-      this.did,
-      { ...this.privateNodes },
-      this.rng,
-      { ...this.rootTree },
+      this.#blockStore,
+      this.#cabinet,
+      this.#dependencies,
+      this.#did,
+      { ...this.#privateNodes },
+      this.#rng,
+      { ...this.#rootTree },
     )
   }
 
   // ㊙️  ▒▒  PUBLISHING
 
-  private static statusNotPublishing: PublishingStatus = {
+  static #statusNotPublishing: PublishingStatus = {
     persisted: false,
     reason: "DISABLED_BY_OPTIONS",
   }
 
-  private debouncedDataRootUpdate = debounce(
+  #debouncedDataRootUpdate = debounce(
     async (args: [dataRoot: CID, proofs: Ucan[]][]): Promise<PublishingStatus[]> => {
       const [dataRoot, proofs] = args[args.length - 1]
 
-      await this.dependencies.depot.flush(dataRoot, proofs)
+      await this.#dependencies.depot.flush(dataRoot, proofs)
 
-      const { ok } = await this.updateDataRoot(
+      const { ok } = await this.#updateDataRoot(
         dataRoot,
         proofs,
       )
@@ -577,7 +599,7 @@ export class FileSystem {
       let status: PublishingStatus
 
       if (ok) {
-        this.eventEmitter.emit("fileSystem:publish", { dataRoot })
+        this.#eventEmitter.emit("fileSystem:publish", { dataRoot })
         status = { persisted: true, localOnly: false }
       } else {
         status = { persisted: false, reason: "DATA_ROOT_UPDATE_FAILED" }
@@ -585,7 +607,7 @@ export class FileSystem {
 
       return args.map(_ => status)
     },
-    (() => this.settleTimeBeforePublish) as any,
+    (() => this.#settleTimeBeforePublish) as any,
     {
       accumulate: true,
       leading: false,
@@ -595,14 +617,14 @@ export class FileSystem {
   /**
    * Updates the user's data root if it can find a UCAN that allows them to do so.
    */
-  private async publish(
+  async #publish(
     dataRoot: CID,
     proofs: Ucan[],
   ): Promise<PublishingStatus> {
-    if (this.localOnly) return { persisted: true, localOnly: true }
+    if (this.#localOnly) return { persisted: true, localOnly: true }
 
-    await this.cidLog.add([dataRoot])
-    const debounceResult = await this.debouncedDataRootUpdate(dataRoot, proofs)
+    await this.#cidLog.add([dataRoot])
+    const debounceResult = await this.#debouncedDataRootUpdate(dataRoot, proofs)
 
     // The type of `debounceResult` is not correct, issue with `@types/debounce-promise`
     return debounceResult as unknown as PublishingStatus
@@ -612,18 +634,18 @@ export class FileSystem {
 
   publicContext(): Queries.PublicContext<FileSystem> {
     return {
-      blockStore: this.blockStore,
-      dependencies: this.dependencies,
-      rootTree: this.rootTree,
+      blockStore: this.#blockStore,
+      dependencies: this.#dependencies,
+      rootTree: this.#rootTree,
     }
   }
 
   privateContext(): Queries.PrivateContext {
     return {
-      blockStore: this.blockStore,
-      privateNodes: this.privateNodes,
-      rng: this.rng,
-      rootTree: this.rootTree,
+      blockStore: this.#blockStore,
+      privateNodes: this.#privateNodes,
+      rng: this.#rng,
+      rootTree: this.#rootTree,
     }
   }
 }

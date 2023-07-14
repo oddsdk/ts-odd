@@ -28,18 +28,34 @@ import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js
 import { PrivateReference } from "./types/private-ref.js"
 
 export class TransactionContext<FS> {
-  private changedPaths: Set<Path.Distinctive<Partitioned<Partition>>>
+  #blockStore: BlockStore
+  #cabinet: Cabinet
+  #dependencies: Dependencies<FS>
+  #did: () => Promise<string>
+  #privateNodes: MountedPrivateNodes
+  #rng: Rng
+  #rootTree: RootTree
+
+  #changedPaths: Set<Path.Distinctive<Partitioned<Partition>>>
 
   constructor(
-    private blockStore: BlockStore,
-    private cabinet: Cabinet,
-    private dependencies: Dependencies<FS>,
-    private did: () => Promise<string>,
-    private privateNodes: MountedPrivateNodes,
-    private rng: Rng,
-    private rootTree: RootTree,
+    blockStore: BlockStore,
+    cabinet: Cabinet,
+    dependencies: Dependencies<FS>,
+    did: () => Promise<string>,
+    privateNodes: MountedPrivateNodes,
+    rng: Rng,
+    rootTree: RootTree,
   ) {
-    this.changedPaths = new Set()
+    this.#blockStore = blockStore
+    this.#cabinet = cabinet
+    this.#dependencies = dependencies
+    this.#did = did
+    this.#privateNodes = privateNodes
+    this.#rng = rng
+    this.#rootTree = rootTree
+
+    this.#changedPaths = new Set()
   }
 
   static async commit<FS>(context: TransactionContext<FS>): Promise<{
@@ -48,10 +64,10 @@ export class TransactionContext<FS> {
     proofs: Ucan[]
     rootTree: RootTree
   }> {
-    const changedPaths = Array.from(context.changedPaths)
-    const identifier = await context.dependencies.identifier.did()
-    const identifierUcans = context.cabinet.audienceUcans(identifier)
-    const fileSystemDID = await context.did()
+    const changedPaths = Array.from(context.#changedPaths)
+    const identifier = await context.#dependencies.identifier.did()
+    const identifierUcans = context.#cabinet.audienceUcans(identifier)
+    const fileSystemDID = await context.#did()
 
     // Proofs
     const proofs = await changedPaths.reduce(
@@ -87,27 +103,27 @@ export class TransactionContext<FS> {
 
         const nodePath = Path.removePartition(changedPath)
         const posixPath = Path.toPosix(nodePath, { absolute: true })
-        const maybeNode = context.privateNodes[posixPath]
+        const maybeNode = context.#privateNodes[posixPath]
 
         if (maybeNode) {
-          const [_, newForest] = await maybeNode.node.store(oldForest, context.blockStore, context.rng)
+          const [_, newForest] = await maybeNode.node.store(oldForest, context.#blockStore, context.#rng)
           return newForest
         } else {
           return oldForest
         }
       },
       Promise.resolve(
-        context.rootTree.privateForest,
+        context.#rootTree.privateForest,
       ),
     )
 
     // Replace forest
-    const rootTree = { ...context.rootTree, privateForest: newForest }
+    const rootTree = { ...context.#rootTree, privateForest: newForest }
 
     // Fin
     return {
       changedPaths: changedPaths,
-      privateNodes: context.privateNodes,
+      privateNodes: context.#privateNodes,
       proofs: proofs,
       rootTree: rootTree,
     }
@@ -116,9 +132,9 @@ export class TransactionContext<FS> {
   // QUERIES
 
   async contentCID(path: Path.File<Partitioned<Public>>): Promise<CID | null> {
-    const result = await this.rootTree.publicRoot.getNode(
+    const result = await this.#rootTree.publicRoot.getNode(
       pathSegmentsWithoutPartition(path),
-      this.blockStore,
+      this.#blockStore,
     )
 
     const maybeNode: PublicNode | null = result || null
@@ -128,17 +144,17 @@ export class TransactionContext<FS> {
   }
 
   async capsuleCID(path: Path.Distinctive<Partitioned<Public>>): Promise<CID | null> {
-    const result = await this.rootTree.publicRoot.getNode(
+    const result = await this.#rootTree.publicRoot.getNode(
       pathSegmentsWithoutPartition(path),
-      this.blockStore,
+      this.#blockStore,
     )
 
     const maybeNode: PublicNode | null = result || null
     return maybeNode
       ? CID.decode(
         maybeNode.isFile()
-          ? await maybeNode.asFile().store(this.blockStore)
-          : await maybeNode.asDir().store(this.blockStore),
+          ? await maybeNode.asFile().store(this.#blockStore)
+          : await maybeNode.asDir().store(this.#blockStore),
       )
       : null
   }
@@ -147,26 +163,26 @@ export class TransactionContext<FS> {
     let priv: PrivateNodeQueryResult
 
     try {
-      priv = findPrivateNode(path, this.privateNodes)
+      priv = findPrivateNode(path, this.#privateNodes)
     } catch {
       return null
     }
 
     return priv.remainder.length === 0 || priv.node.isFile()
       ? priv.node
-        .store(this.rootTree.privateForest, this.blockStore, this.rng)
+        .store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
         .then(([ref]: [PrivateRef, PrivateForest]) => PrivateRefs.fromWnfsRef(ref))
       : priv.node.asDir()
         .getNode(
           priv.remainder,
           searchLatest(),
-          this.rootTree.privateForest,
-          this.blockStore,
+          this.#rootTree.privateForest,
+          this.#blockStore,
         )
         .then(result => {
           return result
             ? result
-              .store(this.rootTree.privateForest, this.blockStore, this.rng)
+              .store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
               .then(([ref]: [PrivateRef, PrivateForest]) => PrivateRefs.fromWnfsRef(ref))
             : null
         })
@@ -248,7 +264,7 @@ export class TransactionContext<FS> {
       )
     } else if ("capsuleCID" in arg) {
       // Public content from capsule CID
-      const publicFile: PublicFile = await PublicFile.load(arg.capsuleCID.bytes, this.blockStore)
+      const publicFile: PublicFile = await PublicFile.load(arg.capsuleCID.bytes, this.#blockStore)
 
       return this.read<DataType, V>(
         { contentCID: CID.decode(publicFile.contentCid()) },
@@ -293,9 +309,9 @@ export class TransactionContext<FS> {
     if (Path.isFile(fromParam) && Path.isDirectory(toParam)) to = Path.combine(toParam, Path.file(Path.terminus(from)))
 
     if (Path.isFile(from) && Path.isFile(to)) {
-      return this.manualCopyFile(from, to)
+      return this.#manualCopyFile(from, to)
     } else if (Path.isDirectory(from) && Path.isDirectory(to)) {
-      return this.manualCopyDirectory(from, to)
+      return this.#manualCopyDirectory(from, to)
     }
 
     // NOOP
@@ -337,13 +353,13 @@ export class TransactionContext<FS> {
 
     switch (partition.name) {
       case "public":
-        return this.publicMutation(
+        return this.#publicMutation(
           partition.path,
           Mutations.publicCreateDirectory(),
         )
 
       case "private":
-        return this.privateMutation(
+        return this.#privateMutation(
           partition.path,
           Mutations.privateCreateDirectory(),
         )
@@ -362,7 +378,7 @@ export class TransactionContext<FS> {
     if (Path.isDirectory(fromParam) && Path.isFile(toParam)) throw new Error("Cannot move a directory to a file")
     if (Path.isFile(fromParam) && Path.isDirectory(toParam)) to = Path.combine(toParam, Path.file(Path.terminus(from)))
 
-    return this.manualMove(from, to)
+    return this.#manualMove(from, to)
   }
 
   mv = this.move
@@ -374,13 +390,13 @@ export class TransactionContext<FS> {
 
     switch (partition.name) {
       case "public":
-        return this.publicMutation(
+        return this.#publicMutation(
           partition.path,
           Mutations.publicRemove(),
         )
 
       case "private":
-        return this.privateMutation(
+        return this.#privateMutation(
           partition.path,
           Mutations.privateRemove(),
         )
@@ -409,13 +425,13 @@ export class TransactionContext<FS> {
 
     switch (partition.name) {
       case "public":
-        return this.publicMutation(
+        return this.#publicMutation(
           partition.path,
           Mutations.publicWrite(bytes),
         )
 
       case "private":
-        return this.privateMutation(
+        return this.#privateMutation(
           partition.path,
           Mutations.privateWrite(bytes),
         )
@@ -452,14 +468,14 @@ export class TransactionContext<FS> {
 
   // ㊙️  ▒▒  MUTATIONS
 
-  private async manualCopyFile(
+  async #manualCopyFile(
     from: Path.File<PartitionedNonEmpty<Partition>>,
     to: Path.File<PartitionedNonEmpty<Partition>>,
   ): Promise<void> {
     return this.write(to, "bytes", await this.read(from, "bytes"))
   }
 
-  private async manualCopyDirectory(
+  async #manualCopyDirectory(
     from: Path.Directory<PartitionedNonEmpty<Partition>>,
     to: Path.Directory<Partitioned<Partition>>,
   ): Promise<void> {
@@ -477,20 +493,20 @@ export class TransactionContext<FS> {
       await acc
 
       if (item.kind === "directory") {
-        return this.manualCopyDirectory(
+        return this.#manualCopyDirectory(
           Path.combine(from, Path.directory(item.name)),
           Path.combine(to, Path.directory(item.name)),
         )
       }
 
-      return this.manualCopyFile(
+      return this.#manualCopyFile(
         Path.combine(from, Path.file(item.name)),
         Path.combine(to, Path.file(item.name)),
       )
     }, Promise.resolve())
   }
 
-  private async manualMove(
+  async #manualMove(
     from: Path.Distinctive<PartitionedNonEmpty<Partition>>,
     to: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
   ): Promise<void> {
@@ -498,48 +514,48 @@ export class TransactionContext<FS> {
     return this.remove(from)
   }
 
-  private async publicMutation(
+  async #publicMutation(
     path: Path.Distinctive<Partitioned<Public>>,
     mut: Mutations.Public,
   ): Promise<void> {
     const result = await mut({
-      blockStore: this.blockStore,
-      dependencies: this.dependencies,
+      blockStore: this.#blockStore,
+      dependencies: this.#dependencies,
       pathSegments: Path.unwrap(Path.removePartition(path)),
-      rootTree: this.rootTree,
+      rootTree: this.#rootTree,
     })
 
     // Replace public root
-    this.rootTree = { ...this.rootTree, publicRoot: result.rootDir }
+    this.#rootTree = { ...this.#rootTree, publicRoot: result.rootDir }
   }
 
-  private async privateMutation(
+  async #privateMutation(
     path: Path.Distinctive<Partitioned<Private>>,
     mut: Mutations.Private,
   ): Promise<void> {
-    const priv = findPrivateNode(path, this.privateNodes)
+    const priv = findPrivateNode(path, this.#privateNodes)
 
     // Perform mutation
     const result = await mut({
       ...priv,
-      blockStore: this.blockStore,
-      privateNodes: this.privateNodes,
-      rng: this.rng,
-      rootTree: this.rootTree,
+      blockStore: this.#blockStore,
+      privateNodes: this.#privateNodes,
+      rng: this.#rng,
+      rootTree: this.#rootTree,
     })
 
     // Mark node as changed
-    this.changedPaths.add(
+    this.#changedPaths.add(
       Path.withPartition("private", priv.path),
     )
 
     // Replace forest
-    this.rootTree = { ...this.rootTree, privateForest: result.forest }
+    this.#rootTree = { ...this.#rootTree, privateForest: result.forest }
 
     // Replace private node
     const nodePosix = Path.toPosix(priv.path, { absolute: true })
 
-    this.privateNodes[nodePosix] = {
+    this.#privateNodes[nodePosix] = {
       node: result.rootDir.asNode(),
       path: priv.path,
     }
@@ -549,18 +565,18 @@ export class TransactionContext<FS> {
 
   publicContext(): Queries.PublicContext<FS> {
     return {
-      blockStore: this.blockStore,
-      dependencies: this.dependencies,
-      rootTree: this.rootTree,
+      blockStore: this.#blockStore,
+      dependencies: this.#dependencies,
+      rootTree: this.#rootTree,
     }
   }
 
   privateContext(): Queries.PrivateContext {
     return {
-      blockStore: this.blockStore,
-      privateNodes: this.privateNodes,
-      rng: this.rng,
-      rootTree: this.rootTree,
+      blockStore: this.#blockStore,
+      privateNodes: this.#privateNodes,
+      rng: this.#rng,
+      rootTree: this.#rootTree,
     }
   }
 }
