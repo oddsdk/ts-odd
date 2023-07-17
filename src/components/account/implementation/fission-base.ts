@@ -15,9 +15,56 @@ import { Implementation } from "../implementation.js"
 ////////
 
 export type Annex = {
-  requestVerificationCode: (formValues: Record<string, string>) => Promise<
-    { ok: true } | { ok: false; reason: string }
-  >
+  requestVerificationCode: (
+    formValues: Record<string, string>
+  ) => Promise<{ ok: true } | { ok: false; reason: string }>
+}
+
+export async function requestVerificationCode(
+  endpoints: Fission.Endpoints,
+  dependencies: Dependencies,
+  formValues: Record<string, string>
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  let email = formValues.email
+
+  if (!email)
+    return {
+      ok: false,
+      reason: `Email is missing from the form values record. It has the following keys: ${Object.keys(
+        formValues
+      ).join(", ")}.`,
+    }
+
+  email = email.trim()
+
+  const rawtoken = await Ucan.build({
+    audience: await Fission.did(endpoints, dependencies.dns),
+    issuer: await Ucan.keyPair(dependencies.agent),
+    capabilities: [DELEGATE_ALL_PROOFS],
+    facts: [{ placeholder: "none" }], // For rs-ucan compat (obsolete, but req'd for 0.2.x)
+    proofs: [], // rs-ucan compat
+  })
+
+  const token = Ucan.encode(rawtoken)
+
+  formValues.did = await dependencies.agent.did()
+
+  const response = await fetch(
+    Fission.apiUrl(endpoints, "/auth/email/verify"),
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(formValues),
+    }
+  )
+
+  // The server
+  return response.ok
+    ? { ok: true }
+    : { ok: false, reason: `Server error: ${response.statusText}` }
 }
 
 export type Dependencies = {
@@ -33,10 +80,8 @@ export type Dependencies = {
 export async function canRegister(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
-  formValues: Record<string, string>,
-): Promise<
-  { ok: true } | { ok: false; reason: string }
-> {
+  formValues: Record<string, string>
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   let username = formValues.username
 
   if (!username) {
@@ -94,13 +139,13 @@ export async function register(
       issuer: await Ucan.keyPair(dependencies.agent),
 
       proofs: [Ucan.encode(identifierUcan)],
-    }),
+    })
   )
 
   const response = await fetch(Fission.apiUrl(endpoints, "/user"), {
     method: "PUT",
     headers: {
-      "authorization": `Bearer ${token}`,
+      authorization: `Bearer ${token}`,
       "content-type": "application/json",
     },
     body: JSON.stringify(formValues),
@@ -116,9 +161,7 @@ export async function register(
           issuer: await Ucan.keyPair(dependencies.agent),
           proofs: [Ucan.encode(identifierUcan)],
 
-          facts: [
-            { username },
-          ],
+          facts: [{ username }],
         }),
       ],
       // TODO: We need some UCANs here. We should get capabilities from the Fission server.
@@ -233,7 +276,8 @@ export function implementation(
 ): Implementation<Annex> {
   return {
     annex: {
-      requestVerificationCode: async () => ({ ok: true }), // TODO
+      requestVerificationCode: (...args) =>
+        requestVerificationCode(endpoints, dependencies, ...args),
     },
 
     canRegister: (...args) => canRegister(endpoints, dependencies, ...args),

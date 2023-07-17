@@ -13,6 +13,11 @@ export type Implementation = {
   signingKey: () => Promise<CryptoKeyPair>
 
   /**
+   * DID associated with this agent.
+   */
+  did: () => Promise<string>
+
+  /**
    * Decrypt something with the exchange key.
    */
   decrypt: (data: Uint8Array) => Promise<Uint8Array>

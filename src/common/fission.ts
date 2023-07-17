@@ -11,9 +11,11 @@ import { DNS } from "../components.js"
 export type Endpoints = {
   apiPath: string
   ipfsGateway: string
+  // FIXME deprecated, remove
   lobby: string
   server: string
   userDomain: string
+  did: string | null
 }
 
 export const PRODUCTION: Endpoints = {
@@ -30,6 +32,15 @@ export const STAGING: Endpoints = {
   lobby: "https://auth.runfission.net",
   server: "https://runfission.net",
   userDomain: "fissionuser.net",
+}
+
+export const DEVELOPMENT: Endpoints = {
+  apiPath: "/api",
+  ipfsGateway: "https://ipfs.runfission.net",
+  lobby: "https://auth.runfission.net",
+  server: "http://localhost:3000",
+  userDomain: "fissionuser.net",
+  did: "did:web:localhost",
 }
 
 /////////
@@ -58,6 +69,8 @@ export async function did(
   endpoints: Endpoints,
   dns: DNS.Implementation,
 ): Promise<string> {
+  if (endpoints.did) return Promise.resolve(endpoints.did)
+
   let host
   try {
     host = new URL(endpoints.server).host

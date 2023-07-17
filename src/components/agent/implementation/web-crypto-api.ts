@@ -1,7 +1,9 @@
+import { DIDKey } from "iso-did/key"
 import * as crypto from "../../../common/crypto.js"
 import { Store } from "../../../common/crypto/store.js"
 import { hasProp, isObject } from "../../../common/index.js"
 import { Implementation } from "../implementation.js"
+import { spki } from "iso-signatures/spki"
 
 // 🛠️
 
@@ -55,9 +57,12 @@ export async function implementation(
   const exchangeKey = await ensureKey(store, "exchange-key", createExchangeKey)
   const signingKey = await ensureKey(store, "signing-key", createSigningKey)
 
+  const exportedKey = await crypto.exportPublicKey(signingKey).then(spki.decode)
+
   return {
     exchangeKey: () => Promise.resolve(exchangeKey),
     signingKey: () => Promise.resolve(signingKey),
+    did: async () => DIDKey.fromPublicKey("RSA", exportedKey).toString(),
 
     decrypt: data => decrypt(data, exchangeKey.privateKey),
     encrypt: data => encrypt(data, exchangeKey.publicKey),
