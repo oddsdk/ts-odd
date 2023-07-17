@@ -335,8 +335,8 @@ export const compositions = {
    */
   async fission(
     settings: Configuration & {
-      staging?: boolean
-    },
+      environment?: string
+    }
   ) {
     // TODO
   },
