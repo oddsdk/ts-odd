@@ -39,7 +39,7 @@ export * from "./common/version.js"
 export * from "./components.js"
 export * from "./configuration.js"
 
-export * as Path from "./path/index.js"
+export * as path from "./path/index.js"
 
 export { CID, decodeCID, encodeCID } from "./common/cid.js"
 export { FileSystem } from "./fs/class.js"
