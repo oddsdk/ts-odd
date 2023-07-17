@@ -118,7 +118,7 @@ export type FileSystemShortHands = {
   /**
    * Load the file system associated with the account system.
    */
-  load: (opts: { local?: boolean }) => Promise<FileSystem>
+  load: (opts?: { local?: boolean }) => Promise<FileSystem>
 }
 
 //////////////////
