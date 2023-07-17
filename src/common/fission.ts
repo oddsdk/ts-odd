@@ -15,7 +15,7 @@ export type Endpoints = {
   lobby: string
   server: string
   userDomain: string
-  did: string | null
+  did?: string
 }
 
 export const PRODUCTION: Endpoints = {
