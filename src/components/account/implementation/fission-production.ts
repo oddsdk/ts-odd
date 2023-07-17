@@ -8,5 +8,5 @@ import * as FissionBase from "./fission-base.js"
 export { Annex } from "./fission-base.js"
 
 export function implementation(dependencies: FissionBase.Dependencies): Implementation<FissionBase.Annex> {
-  return FissionBase.implementation(FissionEndpoints.STAGING, dependencies)
+  return FissionBase.implementation(FissionEndpoints.PRODUCTION, dependencies)
 }
