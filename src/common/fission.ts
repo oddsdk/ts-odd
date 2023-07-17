@@ -18,12 +18,16 @@ export type Endpoints = {
   did?: string
 }
 
+// FIXME
+// n.b. currently only PRODUCTION is used, the others are not used
+
 export const PRODUCTION: Endpoints = {
   apiPath: "/v2/api",
   ipfsGateway: "https://ipfs.runfission.com",
   lobby: "https://auth.fission.codes",
-  server: "https://runfission.com",
+  server: "http://localhost:3000",
   userDomain: "fission.name",
+  did: "did:web:localhost:3000",
 }
 
 export const STAGING: Endpoints = {
@@ -40,7 +44,7 @@ export const DEVELOPMENT: Endpoints = {
   lobby: "https://auth.runfission.net",
   server: "http://localhost:3000",
   userDomain: "fissionuser.net",
-  did: "did:web:localhost",
+  did: "did:web:localhost:3000",
 }
 
 /////////
