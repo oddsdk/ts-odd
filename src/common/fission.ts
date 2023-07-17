@@ -22,7 +22,7 @@ export type Endpoints = {
 // n.b. currently only PRODUCTION is used, the others are not used
 
 export const PRODUCTION: Endpoints = {
-  apiPath: "/v2/api",
+  apiPath: "/api",
   ipfsGateway: "https://ipfs.runfission.com",
   lobby: "https://auth.fission.codes",
   server: "http://localhost:3000",
