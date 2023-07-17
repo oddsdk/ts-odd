@@ -7,6 +7,7 @@ import * as Cabinet from "./repositories/cabinet.js"
 import * as CIDLog from "./repositories/cid-log.js"
 
 import { Query } from "./authority/query.js"
+import { Store } from "./common/crypto/store.js"
 import { Account, Agent, Channel, DNS, Depot, Identifier, Manners, Storage } from "./components.js"
 import { Components } from "./components.js"
 import { AnnexParentType } from "./components/account/implementation.js"
@@ -329,9 +330,22 @@ export async function assemble<Annex extends AnnexParentType>(
  * Full component sets.
  */
 export const compositions = {
-  // TODO: Fission stack
+  /**
+   * The default Fission stack using web crypto auth.
+   */
+  async fission(
+    settings: Configuration & {
+      staging?: boolean
+    },
+  ) {
+    // TODO
+  },
 }
 
+/**
+ * Create a component set given any combination of components.
+ * Uses the default-components set to fill in the missing ones.
+ */
 export async function gatherComponents<Annex extends AnnexParentType>(
   setup: Partial<Components<Annex>> & { account: Account.Implementation<Annex> } & Configuration,
 ): Promise<Components<Annex>>
@@ -342,13 +356,17 @@ export async function gatherComponents(
   setup: Partial<Components<any>> & Configuration,
 ): Promise<Components<any>> {
   const config = extractConfig(setup)
+  const storageName = namespace(config)
 
   const dns = setup.dns || defaultComponents.dns()
   const manners = setup.manners || defaultComponents.manners(config)
-  const storage = setup.storage || defaultComponents.storage(config)
+  const storage = setup.storage || defaultComponents.storage(storageName)
 
-  const agent = setup.agent || await defaultComponents.agent(config)
-  const identifier = setup.identifier || await defaultComponents.identifier(config)
+  const agentStore = defaultComponents.storage(`${storageName}/agent`)
+  const identifierStore = defaultComponents.storage(`${storageName}/identifier`)
+
+  const agent = setup.agent || await defaultComponents.agent(config, { store: agentStore })
+  const identifier = setup.identifier || await defaultComponents.identifier(config, { store: identifierStore })
   const account = setup.account || defaultComponents.account({ agent, dns, manners })
 
   const channel = setup.channel || defaultComponents.channel()
@@ -383,9 +401,8 @@ export const defaultComponents = {
 
   agent(
     config: Configuration,
+    { store }: { store: Store },
   ): Promise<Agent.Implementation> {
-    const store = localforage.createInstance({ name: `${namespace(config)}/agent` })
-
     return WebCryptoAgent.implementation({
       store,
     })
@@ -411,9 +428,8 @@ export const defaultComponents = {
 
   identifier(
     config: Configuration,
+    { store }: { store: Store },
   ): Promise<Identifier.Implementation> {
-    const store = localforage.createInstance({ name: `${namespace(config)}/identifier` })
-
     return WebCryptoIdentifier.implementation({
       store,
     })
@@ -425,10 +441,8 @@ export const defaultComponents = {
     })
   },
 
-  storage(config: Configuration): Storage.Implementation {
-    return IndexedDBStorage.implementation({
-      name: namespace(config),
-    })
+  storage(name: string): Storage.Implementation {
+    return IndexedDBStorage.implementation({ name })
   },
 }
 
