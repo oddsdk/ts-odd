@@ -4,9 +4,20 @@
 
 - **Uses the rs-wnfs implementation of the Webnative file system**.
 - **Upgrades to UCAN 0.9**
+- **File system is not loaded automatically anymore.**
+- **Abstracts the account and identifier/identity systems.**
+- **Merges the interfaces of linking and the capabilities component.**
+  And now features a much more flexible interface so that each
+  consumer of UCANs can redelegate too (ie. each delegate is also an authority)
+- Adds various new file system methods, including transactions.
+- Adds a `flush` method to the depot component to allow for other block storage systems.
 - Improves the `Program` type.
 - Improves several types of the paths module.
+- Better organisation of UCANs and other secrets.
 - Removes sessions.
+- Removes crypto component.
+- Reference component has been removed, functionality has been moved to other components or into their own component.
+- Backwards compatibility with older Webnative clients has been removed.
 
 ### V0.37.2
 
