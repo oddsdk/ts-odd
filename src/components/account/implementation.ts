@@ -9,7 +9,7 @@ export type AnnexParentType = Record<string, Function>
 
 export type Implementation<Annex extends AnnexParentType> = {
   /**
-   * Additional methods you want to be part of `program.accounst`
+   * Additional methods you want to be part of `program.accounts`
    */
   annex: Annex
 
