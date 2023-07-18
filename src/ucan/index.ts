@@ -23,19 +23,19 @@ export * from "./types.js"
 // 🛠️
 
 export async function build(
-  params: BuildParams,
+  params: BuildParams
 ): Promise<Ucan> {
   return Ucans.build(
-    await plugins(),
+    await plugins()
   )(
-    params,
+    params
   )
 }
 
 export async function cid(ucan: Ucan): Promise<CID> {
   const ucanString = Ucans.encode(ucan)
   const multihash = await sha256.digest(
-    Uint8arrays.fromString(ucanString, "utf8"),
+    Uint8arrays.fromString(ucanString, "utf8")
   )
 
   return CID.createV1(Raw.code, multihash)
@@ -97,7 +97,7 @@ class Plugins extends Ucans.Plugins {
         ...EDDSA.verifier,
         ...RSA.verifier,
       },
-      { cache: true },
+      { cache: true }
     )
 
     const dk = DIDKey.fromString(did)

@@ -172,19 +172,19 @@ const { Branch } = odd.path
 
 // List the user's private files
 await fs.ls(
-  odd.path.directory(Branch.Private),
+  odd.path.directory(Branch.Private)
 )
 
 // Create a sub directory and add some content
 const contentPath = odd.file(
   Branch.Private,
   "Sub Directory",
-  "hello.txt",
+  "hello.txt"
 )
 
 await fs.write(
   contentPath,
-  new TextEncoder().encode("👋"), // Uint8Array
+  new TextEncoder().encode("👋") // Uint8Array
 )
 
 // Persist changes and announce them to your other devices
@@ -192,7 +192,7 @@ await fs.publish()
 
 // Read the file
 const content = new TextDecoder().decode(
-  await fs.read(contentPath),
+  await fs.read(contentPath)
 )
 ```
 

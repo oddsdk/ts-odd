@@ -64,7 +64,7 @@ export class FileSystem {
     localOnly: boolean,
     settleTimeBeforePublish: number,
     rootTree: RootTree.RootTree,
-    updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>,
+    updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>
   ) {
     this.#blockStore = blockStore
     this.#cabinet = cabinet
@@ -105,7 +105,7 @@ export class FileSystem {
       localOnly || false,
       settleTimeBeforePublish || 2500,
       rootTree,
-      updateDataRoot,
+      updateDataRoot
     )
   }
 
@@ -131,7 +131,7 @@ export class FileSystem {
       localOnly || false,
       settleTimeBeforePublish || 2500,
       rootTree,
-      updateDataRoot,
+      updateDataRoot
     )
   }
 
@@ -153,7 +153,7 @@ export class FileSystem {
     nodes: {
       path: Path.Distinctive<Path.Segments>
       capsuleRef?: PrivateReference
-    }[],
+    }[]
   ): Promise<{
     path: Path.Distinctive<Path.Segments>
     capsuleRef: PrivateReference
@@ -176,7 +176,7 @@ export class FileSystem {
           Path.toPosix(path, { absolute: true }),
           { node: privateNode, path },
         ]
-      }),
+      })
     )
 
     this.#privateNodes = {
@@ -195,7 +195,7 @@ export class FileSystem {
           path: n.path,
           capsuleRef: PrivateRefs.fromWnfsRef(privateRef),
         }
-      }),
+      })
     )
   }
 
@@ -224,18 +224,18 @@ export class FileSystem {
 
   async listDirectory(
     path: Path.Directory<Partitioned<Partition>>,
-    listOptions: { withItemKind: true },
+    listOptions: { withItemKind: true }
   ): Promise<DirectoryItemWithKind[]>
   async listDirectory(
     path: Path.Directory<Partitioned<Partition>>,
-    listOptions: { withItemKind: false },
+    listOptions: { withItemKind: false }
+  ): Promise<DirectoryItem[]>
+  async listDirectory(
+    path: Path.Directory<Partitioned<Partition>>
   ): Promise<DirectoryItem[]>
   async listDirectory(
     path: Path.Directory<Partitioned<Partition>>,
-  ): Promise<DirectoryItem[]>
-  async listDirectory(
-    path: Path.Directory<Partitioned<Partition>>,
-    listOptions: { withItemKind: boolean } = { withItemKind: false },
+    listOptions: { withItemKind: boolean } = { withItemKind: false }
   ): Promise<DirectoryItem[] | DirectoryItemWithKind[]> {
     return this.#transactionContext().listDirectory(path, listOptions)
   }
@@ -250,14 +250,14 @@ export class FileSystem {
       capsuleRef: PrivateReference
     },
     dataType: D,
-    options?: { offset: number; length: number },
+    options?: { offset: number; length: number }
   ): Promise<DataForType<D, V>>
   async read<V = unknown>(
     path: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
       capsuleRef: PrivateReference
     },
     dataType: DataType,
-    options?: { offset: number; length: number },
+    options?: { offset: number; length: number }
   ): Promise<AnySupportedDataType<V>> {
     return this.#transactionContext().read<DataType, V>(path, dataType, options)
   }
@@ -268,17 +268,17 @@ export class FileSystem {
   async copy<From extends Partition, To extends Partition>(
     from: Path.Distinctive<PartitionedNonEmpty<From>>,
     to: Path.File<PartitionedNonEmpty<To>> | Path.Directory<Partitioned<To>>,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<MutationResult<To>>
   async copy(
     from: Path.Distinctive<PartitionedNonEmpty<Partition>>,
     to: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<MutationResult<Partition> | null> {
     return this.#infusedTransaction(
       t => t.copy(from, to),
       to,
-      mutationOptions,
+      mutationOptions
     )
   }
 
@@ -286,11 +286,11 @@ export class FileSystem {
 
   async createDirectory<P extends Partition>(
     path: Path.Directory<PartitionedNonEmpty<P>>,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<MutationResult<P> & { path: Path.Directory<PartitionedNonEmpty<Partition>> }>
   async createDirectory(
     path: Path.Directory<PartitionedNonEmpty<Partition>>,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<MutationResult<Partition> & { path: Path.Directory<PartitionedNonEmpty<Partition>> }> {
     let finalPath = path
 
@@ -300,7 +300,7 @@ export class FileSystem {
         finalPath = creationResult.path
       },
       path,
-      mutationOptions,
+      mutationOptions
     )
 
     return {
@@ -317,7 +317,7 @@ export class FileSystem {
     path: Path.File<PartitionedNonEmpty<P>>,
     dataType: DataType,
     data: DataForType<D, V>,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<MutationResult<P> & { path: Path.File<PartitionedNonEmpty<Partition>> }>
   async createFile<
     D extends DataType,
@@ -326,7 +326,7 @@ export class FileSystem {
     path: Path.File<PartitionedNonEmpty<Partition>>,
     dataType: DataType,
     data: DataForType<D, V>,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<MutationResult<Partition> & { path: Path.File<PartitionedNonEmpty<Partition>> }> {
     let finalPath = path
 
@@ -336,7 +336,7 @@ export class FileSystem {
         finalPath = creationResult.path
       },
       path,
-      mutationOptions,
+      mutationOptions
     )
 
     return {
@@ -347,16 +347,16 @@ export class FileSystem {
 
   async ensureDirectory<P extends Partition>(
     path: Path.Directory<PartitionedNonEmpty<P>>,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<MutationResult<P>>
   async ensureDirectory(
     path: Path.Directory<PartitionedNonEmpty<Partition>>,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<MutationResult<Partition>> {
     return this.#infusedTransaction(
       t => t.ensureDirectory(path),
       path,
-      mutationOptions,
+      mutationOptions
     )
   }
 
@@ -365,17 +365,17 @@ export class FileSystem {
   async move<From extends Partition, To extends Partition>(
     from: Path.Distinctive<PartitionedNonEmpty<From>>,
     to: Path.File<PartitionedNonEmpty<To>> | Path.Directory<Partitioned<To>>,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<MutationResult<To>>
   async move(
     from: Path.Distinctive<PartitionedNonEmpty<Partition>>,
     to: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<MutationResult<Partition>> {
     return this.#infusedTransaction(
       t => t.move(from, to),
       to,
-      mutationOptions,
+      mutationOptions
     )
   }
 
@@ -383,11 +383,11 @@ export class FileSystem {
 
   async remove(
     path: Path.Distinctive<PartitionedNonEmpty<Partition>>,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<DataRootChange> {
     const transactionResult = await this.transaction(
       t => t.remove(path),
-      mutationOptions,
+      mutationOptions
     )
 
     return {
@@ -401,17 +401,17 @@ export class FileSystem {
   async rename<P extends Partition>(
     path: Path.Distinctive<PartitionedNonEmpty<P>>,
     newName: string,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<MutationResult<P>>
   async rename(
     path: Path.Distinctive<PartitionedNonEmpty<Partition>>,
     newName: string,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<MutationResult<Partition>> {
     return this.#infusedTransaction(
       t => t.rename(path, newName),
       Path.replaceTerminus(path, newName),
-      mutationOptions,
+      mutationOptions
     )
   }
 
@@ -423,7 +423,7 @@ export class FileSystem {
     path: Path.File<PartitionedNonEmpty<P>>,
     dataType: DataType,
     data: DataForType<D, V>,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<MutationResult<P>>
   async write<
     D extends DataType,
@@ -432,12 +432,12 @@ export class FileSystem {
     path: Path.File<PartitionedNonEmpty<Partition>>,
     dataType: DataType,
     data: DataForType<D, V>,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<MutationResult<Partition>> {
     return this.#infusedTransaction(
       t => t.write(path, dataType, data),
       path,
-      mutationOptions,
+      mutationOptions
     )
   }
 
@@ -446,7 +446,7 @@ export class FileSystem {
 
   async transaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<TransactionResult> {
     const context = this.#transactionContext()
 
@@ -498,22 +498,22 @@ export class FileSystem {
   async #infusedTransaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Public>>,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<PublicMutationResult>
   async #infusedTransaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Private>>,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<PrivateMutationResult>
   async #infusedTransaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Partition>>,
-    mutationOptions?: MutationOptions,
+    mutationOptions?: MutationOptions
   ): Promise<MutationResult<Partition>>
   async #infusedTransaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     path: Path.Distinctive<Partitioned<Partition>>,
-    mutationOptions: MutationOptions = {},
+    mutationOptions: MutationOptions = {}
   ): Promise<MutationResult<Partition>> {
     const transactionResult = await this.transaction(handler, mutationOptions)
     const partition = determinePartition(path)
@@ -574,7 +574,7 @@ export class FileSystem {
       this.#did,
       { ...this.#privateNodes },
       this.#rng,
-      { ...this.#rootTree },
+      { ...this.#rootTree }
     )
   }
 
@@ -593,7 +593,7 @@ export class FileSystem {
 
       const { ok } = await this.#updateDataRoot(
         dataRoot,
-        proofs,
+        proofs
       )
 
       let status: PublishingStatus
@@ -611,7 +611,7 @@ export class FileSystem {
     {
       accumulate: true,
       leading: false,
-    },
+    }
   )
 
   /**
@@ -619,7 +619,7 @@ export class FileSystem {
    */
   async #publish(
     dataRoot: CID,
-    proofs: Ucan[],
+    proofs: Ucan[]
   ): Promise<PublishingStatus> {
     if (this.#localOnly) return { persisted: true, localOnly: true }
 

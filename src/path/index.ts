@@ -147,7 +147,7 @@ export function appData(app: AppInfo, suffix: DirectoryPath<Segments>): Director
 export function appData(app: AppInfo, suffix: DistinctivePath<Segments>): DistinctivePath<PartitionedNonEmpty<Private>>
 export function appData(
   app: AppInfo,
-  suffix?: DistinctivePath<Segments>,
+  suffix?: DistinctivePath<Segments>
 ): DistinctivePath<PartitionedNonEmpty<Private>> {
   const appDir = directory(RootBranch.Private, "Apps", app.creator, app.name)
   return suffix ? combine(appDir, suffix) : appDir
@@ -180,7 +180,7 @@ export function fromPosix(path: string): DistinctivePath<Segments> {
  */
 export function toPosix(
   path: DistinctivePath<Segments>,
-  { absolute }: { absolute: boolean } = { absolute: false },
+  { absolute }: { absolute: boolean } = { absolute: false }
 ): string {
   const prefix = absolute ? "/" : ""
   const joinedPath = unwrap(path).join("/")
@@ -197,47 +197,47 @@ export function toPosix(
  */
 export function combine<P extends Partition>(
   a: DirectoryPath<PartitionedNonEmpty<P>>,
-  b: FilePath<Segments>,
+  b: FilePath<Segments>
 ): FilePath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(
   a: DirectoryPath<Partitioned<P>>,
-  b: FilePath<SegmentsNonEmpty>,
+  b: FilePath<SegmentsNonEmpty>
 ): FilePath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(
   a: DirectoryPath<Partitioned<P>>,
-  b: FilePath<Segments>,
+  b: FilePath<Segments>
 ): FilePath<Partitioned<P>>
 export function combine(a: DirectoryPath<Segments>, b: FilePath<SegmentsNonEmpty>): FilePath<SegmentsNonEmpty>
 export function combine(a: DirectoryPath<Segments>, b: FilePath<Segments>): FilePath<Segments>
 export function combine<P extends Partition>(
   a: DirectoryPath<PartitionedNonEmpty<P>>,
-  b: DirectoryPath<Segments>,
+  b: DirectoryPath<Segments>
 ): DirectoryPath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(
   a: DirectoryPath<Partitioned<P>>,
-  b: DirectoryPath<SegmentsNonEmpty>,
+  b: DirectoryPath<SegmentsNonEmpty>
 ): DirectoryPath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(
   a: DirectoryPath<Partitioned<P>>,
-  b: DirectoryPath<Segments>,
+  b: DirectoryPath<Segments>
 ): DirectoryPath<Partitioned<P>>
 export function combine(a: DirectoryPath<Segments>, b: DirectoryPath<SegmentsNonEmpty>): DirectoryPath<SegmentsNonEmpty>
 export function combine(a: DirectoryPath<Segments>, b: DirectoryPath<Segments>): DirectoryPath<Segments>
 export function combine<P extends Partition>(
   a: DirectoryPath<PartitionedNonEmpty<P>>,
-  b: DistinctivePath<Segments>,
+  b: DistinctivePath<Segments>
 ): DistinctivePath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(
   a: DirectoryPath<Partitioned<P>>,
-  b: DistinctivePath<SegmentsNonEmpty>,
+  b: DistinctivePath<SegmentsNonEmpty>
 ): DistinctivePath<PartitionedNonEmpty<P>>
 export function combine<P extends Partition>(
   a: DirectoryPath<Partitioned<P>>,
-  b: DistinctivePath<Segments>,
+  b: DistinctivePath<Segments>
 ): DistinctivePath<Partitioned<P>>
 export function combine(
   a: DirectoryPath<Segments>,
-  b: DistinctivePath<SegmentsNonEmpty>,
+  b: DistinctivePath<SegmentsNonEmpty>
 ): DistinctivePath<SegmentsNonEmpty>
 export function combine(a: DirectoryPath<Segments>, b: DistinctivePath<Segments>): DistinctivePath<Segments>
 export function combine(a: DirectoryPath<Segments>, b: DistinctivePath<Segments>): DistinctivePath<Segments> {
@@ -276,7 +276,7 @@ export function isPartition(partition: Partition, path: DistinctivePath<Segments
  * Is this a partitioned `DistinctivePath`?
  */
 export function isPartitioned<P extends Partition>(
-  path: DistinctivePath<Segments>,
+  path: DistinctivePath<Segments>
 ): path is DistinctivePath<Partitioned<P>> {
   const soCalledPartition = unwrap(path)[0]
   return [RootBranch.Private, RootBranch.Public, "private", "public"].includes(soCalledPartition)
@@ -286,7 +286,7 @@ export function isPartitioned<P extends Partition>(
  * Is this partitioned `DistinctivePath` non-empty?
  */
 export function isPartitionedNonEmpty<P extends Partition>(
-  path: DistinctivePath<Segments>,
+  path: DistinctivePath<Segments>
 ): path is DistinctivePath<PartitionedNonEmpty<P>> {
   return isPartitioned(path) && length(path) > 1
 }
@@ -342,7 +342,7 @@ export function map<A, B>(fn: (p: A) => B, path: DistinctivePath<A>): Distinctiv
  * Get the parent directory of a `DistinctivePath`.
  */
 export function parent(
-  path: DistinctivePath<[Partition, Segment, Segment, ...Segments]>,
+  path: DistinctivePath<[Partition, Segment, Segment, ...Segments]>
 ): DirectoryPath<PartitionedNonEmpty<Partition>>
 export function parent(path: DistinctivePath<[Segment, Segment, Segment, ...Segments]>): DirectoryPath<SegmentsNonEmpty>
 export function parent(path: DistinctivePath<PartitionedNonEmpty<Partition>>): DirectoryPath<Partitioned<Partition>>
@@ -364,38 +364,38 @@ export function parent(path: DistinctivePath<Segments>): Maybe<DirectoryPath<Seg
 export function removePartition(path: DistinctivePath<Segments>): DistinctivePath<Segments> {
   return map(
     p => isDirectory(path) || p.length > 1 ? p.slice(1) : p,
-    path,
+    path
   )
 }
 
 export function replaceTerminus(
   path: FilePath<PartitionedNonEmpty<Partition>>,
-  terminus: string,
+  terminus: string
 ): FilePath<PartitionedNonEmpty<Partition>>
 export function replaceTerminus(
   path: DirectoryPath<PartitionedNonEmpty<Partition>>,
-  terminus: string,
+  terminus: string
 ): DirectoryPath<PartitionedNonEmpty<Partition>>
 export function replaceTerminus(
   path: DistinctivePath<PartitionedNonEmpty<Partition>>,
-  terminus: string,
+  terminus: string
 ): DistinctivePath<PartitionedNonEmpty<Partition>>
 export function replaceTerminus(path: FilePath<SegmentsNonEmpty>, terminus: string): FilePath<SegmentsNonEmpty>
 export function replaceTerminus(
   path: DirectoryPath<SegmentsNonEmpty>,
-  terminus: string,
+  terminus: string
 ): DirectoryPath<SegmentsNonEmpty>
 export function replaceTerminus(
   path: DistinctivePath<SegmentsNonEmpty>,
-  terminus: string,
+  terminus: string
 ): DistinctivePath<SegmentsNonEmpty>
 export function replaceTerminus(
   path: DistinctivePath<SegmentsNonEmpty> | DistinctivePath<SegmentsNonEmpty>,
-  terminus: string,
+  terminus: string
 ): DistinctivePath<SegmentsNonEmpty> {
   return combine(
     parent(path),
-    fromKind(kind(path), terminus),
+    fromKind(kind(path), terminus)
   )
 }
 
@@ -452,32 +452,32 @@ export function unwrap<P>(path: DistinctivePath<P>): P {
  */
 export function withPartition<P extends Partition>(
   partition: P,
-  path: DirectoryPath<SegmentsNonEmpty>,
+  path: DirectoryPath<SegmentsNonEmpty>
 ): DirectoryPath<PartitionedNonEmpty<P>>
 export function withPartition<P extends Partition>(
   partition: P,
-  path: DirectoryPath<Segments>,
+  path: DirectoryPath<Segments>
 ): DirectoryPath<Partitioned<P>>
 export function withPartition<P extends Partition>(
   partition: P,
-  path: FilePath<SegmentsNonEmpty>,
+  path: FilePath<SegmentsNonEmpty>
 ): FilePath<PartitionedNonEmpty<P>>
 export function withPartition<P extends Partition>(partition: P, path: FilePath<Segments>): FilePath<Partitioned<P>>
 export function withPartition<P extends Partition>(
   partition: P,
-  path: DistinctivePath<SegmentsNonEmpty>,
+  path: DistinctivePath<SegmentsNonEmpty>
 ): DistinctivePath<PartitionedNonEmpty<P>>
 export function withPartition<P extends Partition>(
   partition: P,
-  path: DistinctivePath<Segments>,
+  path: DistinctivePath<Segments>
 ): DistinctivePath<Partitioned<P>>
 export function withPartition<P extends Partition>(
   partition: P,
-  path: DistinctivePath<Segments>,
+  path: DistinctivePath<Segments>
 ): DistinctivePath<Partitioned<P>> {
   return combine(
     directory(partition),
-    path,
+    path
   )
 }
 

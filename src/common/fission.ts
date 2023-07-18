@@ -71,7 +71,7 @@ const didCache: {
  */
 export async function did(
   endpoints: Endpoints,
-  dns: DNS.Implementation,
+  dns: DNS.Implementation
 ): Promise<string> {
   if (endpoints.did) return Promise.resolve(endpoints.did)
 

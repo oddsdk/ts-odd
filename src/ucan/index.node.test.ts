@@ -16,9 +16,9 @@ describe("UCAN", async () => {
     })
 
     expect(
-      await Ucan.isValid(agent, ucan),
+      await Ucan.isValid(agent, ucan)
     ).toBe(
-      true,
+      true
     )
   })
 })

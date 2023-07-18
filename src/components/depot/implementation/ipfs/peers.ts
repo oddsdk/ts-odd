@@ -15,7 +15,7 @@ export function fetchPeers(peersUrl: string): Promise<string[]> {
 
 export async function listPeers(
   storage: Storage.Implementation,
-  peersUrl: string,
+  peersUrl: string
 ): Promise<Multiaddr[]> {
   let peers
 

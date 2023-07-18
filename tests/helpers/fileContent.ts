@@ -8,7 +8,7 @@ type FileContent = fc.Arbitrary<
 
 export const fileContent: () => FileContent = () => {
   return fc.oneof(
-    { arbitrary: rawFileContent(), weight: 1 },
+    { arbitrary: rawFileContent(), weight: 1 }
   )
 }
 

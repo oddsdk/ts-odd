@@ -11,10 +11,10 @@ export * as dataRoot from "./data-root.js"
 export async function isUsernameAvailable(
   endpoints: Endpoints,
   dnsLookup: DNS.Implementation,
-  username: string,
+  username: string
 ): Promise<boolean> {
   const result = await dnsLookup.lookupDnsLink(
-    `${encodeURIComponent(username)}.${endpoints.userDomain}`,
+    `${encodeURIComponent(username)}.${endpoints.userDomain}`
   )
 
   return !result

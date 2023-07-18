@@ -41,7 +41,7 @@ export function getByCode(code: number): BlockCodec<number, any> {
     throw new Error(
       `No codec was registered for the code: ${
         numberHex(code)
-      }. Is it part of the multicodec table (https://github.com/multiformats/multicodec/blob/master/table.csv)?`,
+      }. Is it part of the multicodec table (https://github.com/multiformats/multicodec/blob/master/table.csv)?`
     )
   }
   return codec

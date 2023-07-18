@@ -48,7 +48,7 @@ export default abstract class Repository<C, I> {
   async add(newItems: I[]): Promise<void> {
     const col = await newItems.reduce(
       async (acc: Promise<C>, item) => this.mergeCollections(await acc, await this.toCollection(item)),
-      Promise.resolve(this.collection),
+      Promise.resolve(this.collection)
     )
 
     this.collection = col
@@ -57,7 +57,7 @@ export default abstract class Repository<C, I> {
 
     await this.storage.setItem(
       this.storageName,
-      this.toJSON(this.collection),
+      this.toJSON(this.collection)
     )
   }
 

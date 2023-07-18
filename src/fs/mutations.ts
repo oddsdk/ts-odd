@@ -26,14 +26,14 @@ export const publicCreateDirectory = () => async <FS>(params: PublicParams<FS>):
   return params.rootTree.publicRoot.mkdir(
     params.pathSegments,
     new Date(),
-    params.blockStore,
+    params.blockStore
   )
 }
 
 export const publicRemove = () => async <FS>(params: PublicParams<FS>): Promise<WnfsPublicResult> => {
   return params.rootTree.publicRoot.rm(
     params.pathSegments,
-    params.blockStore,
+    params.blockStore
   )
 }
 
@@ -44,7 +44,7 @@ export const publicWrite = (bytes: Uint8Array) => async <FS>(params: PublicParam
     params.pathSegments,
     importResult.cid.bytes,
     new Date(),
-    params.blockStore,
+    params.blockStore
   )
 }
 
@@ -70,7 +70,7 @@ export const privateCreateDirectory = () => (params: PrivateParams): Promise<Wnf
     new Date(),
     params.rootTree.privateForest,
     params.blockStore,
-    params.rng,
+    params.rng
   )
 }
 
@@ -83,7 +83,7 @@ export const privateRemove = () => (params: PrivateParams): Promise<WnfsPrivateR
     params.remainder,
     searchLatest(),
     params.rootTree.privateForest,
-    params.blockStore,
+    params.blockStore
   )
 }
 
@@ -99,6 +99,6 @@ export const privateWrite = (bytes: Uint8Array) => (params: PrivateParams): Prom
     new Date(),
     params.rootTree.privateForest,
     params.blockStore,
-    params.rng,
+    params.rng
   )
 }

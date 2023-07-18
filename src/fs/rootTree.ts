@@ -60,7 +60,7 @@ export async function fromCID({ blockStore, cid, depot }: {
   async function handleLink<T>(
     name: string,
     present: (cid: CID) => Promise<T>,
-    missing: () => T,
+    missing: () => T
   ): Promise<T> {
     if (links[name]) {
       return present(links[name])
@@ -73,19 +73,19 @@ export async function fromCID({ blockStore, cid, depot }: {
   const exchangeRoot = await handleLink(
     RootBranch.Exchange,
     (cid) => PublicDirectory.load(cid.bytes, blockStore),
-    () => new PublicDirectory(currentTime),
+    () => new PublicDirectory(currentTime)
   )
 
   const publicRoot = await handleLink(
     RootBranch.Public,
     (cid) => PublicDirectory.load(cid.bytes, blockStore),
-    () => new PublicDirectory(currentTime),
+    () => new PublicDirectory(currentTime)
   )
 
   const privateForest = await handleLink(
     RootBranch.Private,
     (cid) => PrivateForest.load(cid.bytes, blockStore),
-    () => new PrivateForest(),
+    () => new PrivateForest()
   )
 
   const version = await handleLink(
@@ -96,7 +96,7 @@ export async function fromCID({ blockStore, cid, depot }: {
       if (!semVer) throw new Error(`Invalid file system version detected '${string}'`)
       return semVer
     },
-    () => Version.v2,
+    () => Version.v2
   )
 
   // Compose
@@ -116,7 +116,7 @@ export async function linksFromCID(depot: Depot.Implementation, cid: CID): Promi
   // which is stored as DAG-PB.
   const node = await DAG.getPB(
     depot,
-    cid,
+    cid
   )
 
   return node.Links.reduce((acc: Record<string, CID>, link: PBLink) => {
@@ -140,10 +140,10 @@ export async function store({ blockStore, depot, rootTree }: {
   const version = await depot.putBlock(
     Raw.encode(
       new TextEncoder().encode(
-        SemVer.toString(rootTree.version),
-      ),
+        SemVer.toString(rootTree.version)
+      )
     ),
-    Raw.code,
+    Raw.code
   )
 
   // Store root tree
@@ -166,7 +166,7 @@ export async function store({ blockStore, depot, rootTree }: {
         Name: RootBranch.Version,
         Hash: version,
       },
-    ],
+    ]
   )
 
   // Fin

@@ -12,7 +12,7 @@ export function fsWriteUcans(collection: Ucan[]): Ucan[] {
 export function lookupFsWriteUcan(
   collection: Ucan[],
   fileSystemDID: string,
-  path: Path.DistinctivePath<Path.Segments>,
+  path: Path.DistinctivePath<Path.Segments>
 ): Ucan | null {
   return lookupFsUcan(
     fsWriteUcans(collection),
@@ -24,7 +24,7 @@ export function lookupFsWriteUcan(
       })
     },
     fileSystemDID,
-    path,
+    path
   )
 }
 
@@ -40,7 +40,7 @@ export function rootIssuer(ucan: Ucan, ucanDictionary: Dictionary): string {
         if (!prfUcan) throw new Error("Missing a UCAN in the repository")
 
         return rootIssuer(prfUcan, ucanDictionary)
-      },
+      }
     )
   } else {
     return ucan.payload.iss
@@ -55,7 +55,7 @@ function lookupFsUcan(
   fsUcans: Ucan[],
   matcher: (pathSoFar: Path.Distinctive<Path.Segments>) => (ucan: Ucan) => boolean,
   fileSystemDID: string,
-  path: Path.DistinctivePath<Path.Segments>,
+  path: Path.DistinctivePath<Path.Segments>
 ): Ucan | null {
   const pathParts = Path.unwrap(path)
 
@@ -66,11 +66,11 @@ function lookupFsUcan(
       return [
         ...acc,
         ...fsUcans.filter(
-          matcher(pathSoFar),
+          matcher(pathSoFar)
         ),
       ]
     },
-    [],
+    []
   )
 
   // TODO: Need to sort by ability level, ie. prefer super user over anything else

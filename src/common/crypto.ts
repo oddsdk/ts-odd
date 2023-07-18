@@ -64,7 +64,7 @@ export function importRsaKey(key: Uint8Array, alg: RSA_ALG, keyUsages: KeyUsage[
       hash: RSA_HASHING_ALGORITHM,
     },
     false,
-    keyUsages,
+    keyUsages
   )
 }
 
@@ -76,7 +76,7 @@ export async function rsaDecrypt(data: Uint8Array, privateKey: CryptoKey | Uint8
     isCryptoKey(privateKey)
       ? privateKey
       : await importRsaKey(privateKey, RSA_EXCHANGE_ALGORITHM, ["decrypt"]),
-    data,
+    data
   )
 
   return new Uint8Array(arrayBuffer)
@@ -90,7 +90,7 @@ export async function rsaEncrypt(data: Uint8Array, publicKey: CryptoKey | Uint8A
     isCryptoKey(publicKey)
       ? publicKey
       : await importRsaKey(publicKey, RSA_EXCHANGE_ALGORITHM, ["encrypt"]),
-    data,
+    data
   )
 
   return new Uint8Array(arrayBuffer)
@@ -109,7 +109,7 @@ export function rsaGenerateKey(keyUse: KeyUse): Promise<CryptoKeyPair> {
     false,
     keyUse === "exchange"
       ? ["encrypt", "decrypt"]
-      : ["sign", "verify"],
+      : ["sign", "verify"]
   )
 }
 
@@ -117,7 +117,7 @@ export async function rsaSign(data: Uint8Array, signingKey: CryptoKeyPair): Prom
   const arrayBuffer = await webcrypto.subtle.sign(
     { name: RSA_SIGNING_ALGORITHM, saltLength: RSA_SALT_LENGTH },
     signingKey.privateKey,
-    data,
+    data
   )
 
   return new Uint8Array(arrayBuffer)
@@ -128,6 +128,6 @@ export async function rsaVerify({ message, publicKey, signature }: VerifyArgs): 
     { name: RSA_SIGNING_ALGORITHM, saltLength: RSA_SALT_LENGTH },
     await importRsaKey(publicKey, RSA_SIGNING_ALGORITHM, ["verify"]),
     signature,
-    message,
+    message
   )
 }

@@ -63,6 +63,6 @@ export function toWnfsRef(ref: PrivateReference) {
   return new PrivateRef(
     ref.label,
     ref.temporalKey,
-    ref.contentCID.bytes,
+    ref.contentCID.bytes
   )
 }

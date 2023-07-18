@@ -1,9 +1,9 @@
 import { DIDKey } from "iso-did/key"
+import { spki } from "iso-signatures/spki"
 import * as crypto from "../../../common/crypto.js"
 import { Store } from "../../../common/crypto/store.js"
 import { hasProp, isObject } from "../../../common/index.js"
 import { Implementation } from "../implementation.js"
-import { spki } from "iso-signatures/spki"
 
 // 🛠️
 
@@ -18,7 +18,7 @@ export async function createSigningKey(): Promise<CryptoKeyPair> {
 export async function ensureKey(
   store: Store,
   name: string,
-  keyCreator: () => Promise<CryptoKeyPair>,
+  keyCreator: () => Promise<CryptoKeyPair>
 ): Promise<CryptoKeyPair> {
   const e = await store.getItem(name)
   if (e && isObject(e)) return e as unknown as CryptoKeyPair
@@ -30,21 +30,21 @@ export async function ensureKey(
 
 export function decrypt(
   data: Uint8Array,
-  privateExchangeKey: CryptoKey,
+  privateExchangeKey: CryptoKey
 ): Promise<Uint8Array> {
   return crypto.rsa.decrypt(data, privateExchangeKey)
 }
 
 export function encrypt(
   data: Uint8Array,
-  publicExchangeKey: CryptoKey,
+  publicExchangeKey: CryptoKey
 ): Promise<Uint8Array> {
   return crypto.rsa.encrypt(data, publicExchangeKey)
 }
 
 export function sign(
   data: Uint8Array,
-  signingKey: CryptoKeyPair,
+  signingKey: CryptoKeyPair
 ): Promise<Uint8Array> {
   return crypto.rsa.sign(data, signingKey)
 }
@@ -52,7 +52,7 @@ export function sign(
 // 🛳️
 
 export async function implementation(
-  { store }: { store: Store },
+  { store }: { store: Store }
 ): Promise<Implementation> {
   const exchangeKey = await ensureKey(store, "exchange-key", createExchangeKey)
   const signingKey = await ensureKey(store, "signing-key", createSigningKey)

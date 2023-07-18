@@ -2,7 +2,7 @@ import { Capability, Dictionary, Facts, Ucan } from "./types.js"
 
 export function listCapabilities(
   ucan: Ucan,
-  dict: Dictionary,
+  dict: Dictionary
 ): Capability[] {
   const caps = ucan.payload.att
   const proofs = ucan.payload.prf.map(cid => dict[cid])
@@ -12,13 +12,13 @@ export function listCapabilities(
       if (maybeUcan) return [...acc, ...listCapabilities(maybeUcan, dict)]
       return acc
     },
-    caps,
+    caps
   )
 }
 
 export function listFacts(
   ucan: Ucan,
-  dict: Dictionary,
+  dict: Dictionary
 ): Facts {
   const facts = (ucan.payload.fct || []).reduce((acc, f) => {
     return { ...acc, ...f }
@@ -31,6 +31,6 @@ export function listFacts(
       if (maybeUcan) return { ...acc, ...listFacts(maybeUcan, dict) }
       return acc
     },
-    facts,
+    facts
   )
 }

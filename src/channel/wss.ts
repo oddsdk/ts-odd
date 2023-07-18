@@ -7,7 +7,7 @@ import type { Maybe } from "../common/types.js"
 
 export const createWssChannel = async (
   socketEndpoint: string,
-  options: ChannelOptions,
+  options: ChannelOptions
 ): Promise<Channel> => {
   const { handleMessage } = options
 

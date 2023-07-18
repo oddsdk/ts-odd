@@ -51,7 +51,7 @@ export class Repo extends Repository<CID[], CID> {
 
   toJSON(a: CID[]): string {
     return JSON.stringify(
-      a.map(encodeCID),
+      a.map(encodeCID)
     )
   }
 
@@ -71,9 +71,9 @@ export class Repo extends Repository<CID[], CID> {
 
   indexOf(item: CID): number {
     return this.collection.map(
-      c => c.toString(),
+      c => c.toString()
     ).indexOf(
-      item.toString(),
+      item.toString()
     )
   }
 

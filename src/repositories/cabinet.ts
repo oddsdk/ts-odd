@@ -79,7 +79,7 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
           return acc
         }
       },
-      [],
+      []
     )
 
     this.ucansIndexedByAudience = entries.reduce(
@@ -90,7 +90,7 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
           [v.ucan.payload.aud]: [...(acc[v.ucan.payload.aud] || []), v.ucan],
         }
       },
-      {},
+      {}
     )
 
     this.ucansIndexedByCID = entries.reduce(
@@ -101,7 +101,7 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
           [k]: v.ucan,
         }
       },
-      {},
+      {}
     )
   }
 
@@ -117,7 +117,7 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
           [k]: decodeItem(v),
         }
       },
-      {},
+      {}
     )
   }
 
@@ -129,7 +129,7 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
           [k]: encodeItem(v),
         }
       },
-      {},
+      {}
     )
 
     return JSON.stringify(encodedObj)

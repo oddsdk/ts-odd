@@ -13,7 +13,7 @@ import * as Codecs from "./codecs.js"
 
 export function fromBytes(
   storeCodecId: Codecs.CodecIdentifier,
-  bytes: Uint8Array,
+  bytes: Uint8Array
 ): unknown {
   const storeCodec = Codecs.getByIdentifier(storeCodecId)
   return storeCodec.decode(bytes)
@@ -21,7 +21,7 @@ export function fromBytes(
 
 export function toBytes(
   storeCodecId: Codecs.CodecIdentifier,
-  dagNode: unknown,
+  dagNode: unknown
 ): Uint8Array {
   const storeCodec = Codecs.getByIdentifier(storeCodecId)
   return storeCodec.encode(dagNode)

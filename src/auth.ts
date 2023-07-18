@@ -15,7 +15,7 @@ export const register = <Annex extends AnnexParentType>(
     agent: Agent.Implementation
     identifier: Identifier.Implementation
     cabinet: Cabinet
-  },
+  }
 ) =>
 async (formValues: Record<string, string>): Promise<
   { ok: true } | { ok: false; reason: string }

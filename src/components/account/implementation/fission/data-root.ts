@@ -21,7 +21,7 @@ export async function lookup(
     dns: DNS.Implementation
     manners: Manners.Implementation<FileSystem>
   },
-  username: string,
+  username: string
 ): Promise<CID | null> {
   const maybeRoot = await lookupOnFisson(endpoints, dependencies, username)
   if (!maybeRoot) return null
@@ -46,19 +46,19 @@ export async function lookupOnFisson(
   dependencies: {
     manners: Manners.Implementation<FileSystem>
   },
-  username: string,
+  username: string
 ): Promise<CID | null> {
   try {
     const resp = await fetch(
       Fission.apiUrl(endpoints, `user/data/${username}`),
-      { cache: "reload" }, // don't use cache
+      { cache: "reload" } // don't use cache
     )
     const cid = await resp.json()
     return decodeCID(cid)
   } catch (err) {
     dependencies.manners.log(
       "Could not locate user root on Fission server: ",
-      TypeChecks.hasProp(err, "toString") ? (err as any).toString() : err,
+      TypeChecks.hasProp(err, "toString") ? (err as any).toString() : err
     )
     return null
   }
@@ -78,7 +78,7 @@ export async function update(
     manners: Manners.Implementation<FileSystem>
   },
   cidInstance: CID,
-  proof: Ucan.Ucan,
+  proof: Ucan.Ucan
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const cid = cidInstance.toString()
 
@@ -96,7 +96,7 @@ export async function update(
           proofs: [(await Ucan.cid(proof)).toString()],
 
           capabilities: [DELEGATE_ALL_PROOFS],
-        }),
+        })
       )
 
       return { "authorization": `Bearer ${jwt}` }
@@ -130,7 +130,7 @@ async function fetchWithRetry(
   url: string,
   retryOptions: RetryOptions,
   fetchOptions: RequestInit,
-  retry = 0,
+  retry = 0
 ): Promise<Response> {
   const headers = await retryOptions.headers()
   const response = await fetch(url, {
@@ -143,7 +143,7 @@ async function fetchWithRetry(
       return await new Promise((resolve, reject) =>
         setTimeout(
           () => fetchWithRetry(url, retryOptions, fetchOptions, retry + 1).then(resolve, reject),
-          retryOptions.retryDelay,
+          retryOptions.retryDelay
         )
       )
     } else {

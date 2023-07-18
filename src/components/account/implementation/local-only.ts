@@ -21,7 +21,7 @@ export async function canRegister(): Promise<
 
 export async function register(
   formValues: Record<string, string>,
-  identifierUcan: Ucan.Ucan,
+  identifierUcan: Ucan.Ucan
 ): Promise<
   { ok: true; ucans: Ucan.Ucan[] } | { ok: false; reason: string }
 > {
@@ -34,21 +34,21 @@ export async function register(
 
 export async function canUpdateDataRoot(
   identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary,
+  ucanDictionary: Ucan.Dictionary
 ): Promise<boolean> {
   return Object.values(ucanDictionary).filter(u => u.payload.att.some(a => a.with.scheme === "ucan")).length >= 1
 }
 
 export async function lookupDataRoot(
   identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary,
+  ucanDictionary: Ucan.Dictionary
 ): Promise<CID | null> {
   return null // Use the local CID log instead
 }
 
 export async function updateDataRoot(
   dataRoot: CID,
-  proofs: Ucan.Ucan[],
+  proofs: Ucan.Ucan[]
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   return { ok: true }
 }
@@ -59,19 +59,19 @@ export async function updateDataRoot(
 
 export async function did(
   identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary,
+  ucanDictionary: Ucan.Dictionary
 ): Promise<string> {
   const rootIssuers: Set<string> = identifierUcans.reduce(
     (set: Set<string>, identifierUcan): Set<string> => {
       const iss = rootIssuer(identifierUcan, ucanDictionary)
       return set.add(iss)
     },
-    new Set() as Set<string>,
+    new Set() as Set<string>
   )
 
   if (rootIssuers.size > 1) {
     console.warn(
-      "Encounter more than one root issuer in the identifier UCANs set. This should ideally not happen. Using the first one in the set.",
+      "Encounter more than one root issuer in the identifier UCANs set. This should ideally not happen. Using the first one in the set."
     )
   }
 

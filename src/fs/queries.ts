@@ -31,7 +31,7 @@ export type PublicContext<FS> = Omit<PublicParams<FS>, "pathSegments">
 export async function publicQuery<FS, T>(
   path: Path.Distinctive<Partitioned<Path.Public>>,
   qry: Public<T>,
-  context: PublicContext<FS>,
+  context: PublicContext<FS>
 ): Promise<T> {
   return qry({
     blockStore: context.blockStore,
@@ -44,7 +44,7 @@ export async function publicQuery<FS, T>(
 export const publicExists = () => async <FS>(params: PublicParams<FS>): Promise<boolean> => {
   const result = await params.rootTree.publicRoot.getNode(
     params.pathSegments,
-    params.blockStore,
+    params.blockStore
   )
 
   return !!result
@@ -53,7 +53,7 @@ export const publicExists = () => async <FS>(params: PublicParams<FS>): Promise<
 export const publicListDirectory = () => async <FS>(params: PublicParams<FS>): Promise<DirectoryItem[]> => {
   return params.rootTree.publicRoot.ls(
     params.pathSegments,
-    params.blockStore,
+    params.blockStore
   )
 }
 
@@ -73,7 +73,7 @@ export const publicListDirectoryWithKind =
         kind,
         path: Path.combine(
           Path.directory("public", ...params.pathSegments),
-          Path.fromKind(kind, item.name),
+          Path.fromKind(kind, item.name)
         ),
       }
     })
@@ -85,7 +85,7 @@ export const publicRead =
   (options?: { offset: number; length: number }) => async <FS>(params: PublicParams<FS>): Promise<Uint8Array> => {
     const result = await params.rootTree.publicRoot.read(
       params.pathSegments,
-      params.blockStore,
+      params.blockStore
     )
 
     return publicReadFromCID(CID.decode(result), options)(params)
@@ -101,7 +101,7 @@ export const publicReadFromCID =
 
     if (fsEntry.type === "file" || fsEntry.type === "raw") {
       return Uint8arrays.concat(
-        await all(fsEntry.content({ offset, length })),
+        await all(fsEntry.content({ offset, length }))
       )
     } else {
       throw new Error(`Expected a file, found a '${fsEntry.type}' (CID: ${cid.toString()})`)
@@ -125,7 +125,7 @@ export type PrivateContext = Omit<PrivateParams, keyof PrivateNodeQueryResult>
 export async function privateQuery<T>(
   path: Path.Distinctive<Partitioned<Path.Private>>,
   qry: Private<T>,
-  context: PrivateContext,
+  context: PrivateContext
 ): Promise<T> {
   const priv = findPrivateNode(path, context.privateNodes)
 
@@ -146,7 +146,7 @@ export const privateExists = () => async (params: PrivateParams): Promise<boolea
     params.remainder,
     searchLatest(),
     params.rootTree.privateForest,
-    params.blockStore,
+    params.blockStore
   )
 
   return !!result
@@ -158,7 +158,7 @@ export const privateListDirectory = () => async (params: PrivateParams): Promise
     params.remainder,
     searchLatest(),
     params.rootTree.privateForest,
-    params.blockStore,
+    params.blockStore
   )
   return result
 }
@@ -172,14 +172,14 @@ export const privateListDirectoryWithKind = () => async (params: PrivateParams):
       params.remainder,
       searchLatest(),
       params.rootTree.privateForest,
-      params.blockStore,
+      params.blockStore
     ).then(a => a.asDir())
   const items: DirectoryItem[] = await dir.ls([], searchLatest(), params.rootTree.privateForest, params.blockStore)
     .then(a => a.result)
 
   const parentPath = Path.combine(
     Path.directory("private", ...Path.unwrap(params.path)),
-    Path.directory(...params.remainder),
+    Path.directory(...params.remainder)
   )
 
   if (!Path.isDirectory(parentPath)) {
@@ -191,7 +191,7 @@ export const privateListDirectoryWithKind = () => async (params: PrivateParams):
       item.name,
       searchLatest(),
       params.rootTree.privateForest,
-      params.blockStore,
+      params.blockStore
     )
     const kind = node.isDir() ? Path.Kind.Directory : Path.Kind.File
 
@@ -200,7 +200,7 @@ export const privateListDirectoryWithKind = () => async (params: PrivateParams):
       kind,
       path: Path.combine(
         parentPath,
-        Path.fromKind(kind, item.name),
+        Path.fromKind(kind, item.name)
       ),
     }
   })
@@ -223,7 +223,7 @@ export const privateRead =
         params.remainder,
         searchLatest(),
         params.rootTree.privateForest,
-        params.blockStore,
+        params.blockStore
       )
       bytes = result
     }
@@ -242,7 +242,7 @@ export const privateReadFromReference =
     const node = await PrivateNode.load(
       ref,
       context.rootTree.privateForest,
-      context.blockStore,
+      context.blockStore
     )
 
     if (node.isFile()) {

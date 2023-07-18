@@ -16,7 +16,7 @@ import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js
  */
 export function findPrivateNode(
   path: Path.Distinctive<Partitioned<Path.Private>>,
-  privateNodes: MountedPrivateNodes,
+  privateNodes: MountedPrivateNodes
 ): PrivateNodeQueryResult {
   const pathKind = Path.kind(path)
   const pathWithoutPartition = Path.removePartition(path)
@@ -25,7 +25,7 @@ export function findPrivateNode(
   for (let i = 0; i <= pathSegments.length; i++) {
     const path = Path.fromKind(
       i === pathSegments.length ? pathKind : Path.Kind.Directory,
-      ...pathSegments.slice(0, i),
+      ...pathSegments.slice(0, i)
     )
 
     const result = privateNodes[Path.toPosix(path, { absolute: true })]
@@ -42,13 +42,13 @@ export function findPrivateNode(
 }
 
 export function partition<P extends Partition>(
-  path: Path.Distinctive<PartitionedNonEmpty<P>>,
+  path: Path.Distinctive<PartitionedNonEmpty<P>>
 ): PartitionDiscoveryNonEmpty<P>
 export function partition<P extends Partition>(
-  path: Path.Distinctive<Partitioned<P>>,
+  path: Path.Distinctive<Partitioned<P>>
 ): PartitionDiscovery<P>
 export function partition(
-  path: Path.Distinctive<Partitioned<Partition>>,
+  path: Path.Distinctive<Partitioned<Partition>>
 ): {
   name: "public" | "private"
   path: Path.Distinctive<Partitioned<Partition>>

@@ -12,12 +12,12 @@ describe("is defined", () => {
           { arbitrary: fc.object(), weight: 10 },
           { arbitrary: fc.string(), weight: 5 },
           { arbitrary: fc.integer(), weight: 1 },
-          { arbitrary: fc.double(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
         ),
         data => {
           expect(check.isDefined(data)).toEqual(true)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -46,12 +46,12 @@ describe("not null", () => {
           { arbitrary: fc.object(), weight: 10 },
           { arbitrary: fc.string(), weight: 5 },
           { arbitrary: fc.integer(), weight: 1 },
-          { arbitrary: fc.double(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
         ),
         data => {
           expect(check.notNull(data)).toEqual(true)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -80,12 +80,12 @@ describe("is just", () => {
           { arbitrary: fc.object(), weight: 10 },
           { arbitrary: fc.string(), weight: 5 },
           { arbitrary: fc.integer(), weight: 1 },
-          { arbitrary: fc.double(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
         ),
         data => {
           expect(check.isJust(data)).toEqual(true)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -114,12 +114,12 @@ describe("is value", () => {
           { arbitrary: fc.object(), weight: 10 },
           { arbitrary: fc.string(), weight: 5 },
           { arbitrary: fc.integer(), weight: 1 },
-          { arbitrary: fc.double(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
         ),
         data => {
           expect(check.isValue(data)).toEqual(true)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -156,12 +156,12 @@ describe("is boolean", () => {
           { arbitrary: fc.object(), weight: 10 },
           { arbitrary: fc.string(), weight: 5 },
           { arbitrary: fc.integer(), weight: 1 },
-          { arbitrary: fc.double(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
         ),
         data => {
           expect(check.isBool(data)).toEqual(false)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -181,12 +181,12 @@ describe("is num", () => {
         fc.oneof(
           { arbitrary: fc.integer(), weight: 1 },
           { arbitrary: fc.float(), weight: 1 },
-          { arbitrary: fc.double(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
         ),
         data => {
           expect(check.isNum(data)).toEqual(true)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -207,12 +207,12 @@ describe("is num", () => {
       fc.property(
         fc.oneof(
           { arbitrary: fc.object(), weight: 10 },
-          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.string(), weight: 5 }
         ),
         data => {
           expect(check.isNum(data)).toEqual(false)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -238,7 +238,7 @@ describe("is string", () => {
     fc.assert(
       fc.property(fc.string(), data => {
         expect(check.isString(data)).toEqual(true)
-      }),
+      })
     )
 
     fc.assert(
@@ -246,12 +246,12 @@ describe("is string", () => {
         fc.oneof(
           { arbitrary: fc.object(), weight: 10 },
           { arbitrary: fc.integer(), weight: 1 },
-          { arbitrary: fc.double(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
         ),
         data => {
           expect(check.isString(data)).toEqual(false)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -277,7 +277,7 @@ describe("is object", () => {
     fc.assert(
       fc.property(fc.object(), data => {
         expect(check.isObject(data)).toEqual(true)
-      }),
+      })
     )
 
     fc.assert(
@@ -285,12 +285,12 @@ describe("is object", () => {
         fc.oneof(
           { arbitrary: fc.string(), weight: 5 },
           { arbitrary: fc.integer(), weight: 1 },
-          { arbitrary: fc.double(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
         ),
         data => {
           expect(check.isObject(data)).toEqual(false)
-        },
-      ),
+        }
+      )
     )
   })
 

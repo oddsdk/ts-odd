@@ -27,7 +27,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
     dependencies: Dependencies<FileSystem> & { account: Account.Implementation<Annex> }
     eventEmitter: Events.Emitter<Events.FileSystem>
     local?: boolean
-  },
+  }
 ): Promise<FileSystem> {
   const { depot, identifier, manners } = dependencies
 
@@ -85,7 +85,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
 
     fs = await FileSystem.fromCID(
       cid,
-      { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot, localOnly: local },
+      { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot, localOnly: local }
     )
 
     // Mount private nodes
@@ -95,7 +95,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
           path: Path.removePartition(a.path),
           capsuleRef: a.key,
         })
-      }),
+      })
     )
 
     await manners.fileSystem.hooks.afterLoadExisting(fs, depot)
@@ -158,7 +158,7 @@ export function fileSystemIdentifier<Annex extends AnnexParentType>({ account, c
  * Create a UCAN that self-delegates the file system capabilities.
  */
 export async function selfDelegateCapabilities(
-  identifier: Identifier.Implementation,
+  identifier: Identifier.Implementation
 ) {
   const identifierDID = await identifier.did()
 

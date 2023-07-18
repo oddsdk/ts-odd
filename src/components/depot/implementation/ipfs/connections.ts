@@ -134,7 +134,7 @@ export function report(peer: Multiaddr, status: Status): void {
   const offline = peerConnections.every(connection => !connection.status.connected)
   const lastConnectedAt: number = peerConnections.reduce(
     (newest, { status }) => newest >= (status.lastConnectedAt || 0) ? newest : (status.lastConnectedAt || 0),
-    0,
+    0
   )
 
   const activeConnections = peerConnections.filter(connection => connection.status.latency !== null)

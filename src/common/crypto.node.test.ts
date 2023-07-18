@@ -13,9 +13,9 @@ describe("Crypto", async () => {
         message: data,
         publicKey: await Crypto.exportPublicKey(key),
         signature: signature,
-      }),
+      })
     ).toBe(
-      true,
+      true
     )
   })
 })

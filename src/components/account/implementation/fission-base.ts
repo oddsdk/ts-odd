@@ -27,13 +27,16 @@ export async function requestVerificationCode(
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   let email = formValues.email
 
-  if (!email)
+  if (!email) {
     return {
       ok: false,
-      reason: `Email is missing from the form values record. It has the following keys: ${Object.keys(
-        formValues
-      ).join(", ")}.`,
+      reason: `Email is missing from the form values record. It has the following keys: ${
+        Object.keys(
+          formValues
+        ).join(", ")
+      }.`,
     }
+  }
 
   email = email.trim()
 
@@ -118,7 +121,7 @@ export async function register(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
   formValues: Record<string, string>,
-  identifierUcan: Ucan.Ucan,
+  identifierUcan: Ucan.Ucan
 ): Promise<
   { ok: true; ucans: Ucan.Ucan[] } | { ok: false; reason: string }
 > {
@@ -180,10 +183,10 @@ export async function register(
 
 export async function canUpdateDataRoot(
   identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary,
+  ucanDictionary: Ucan.Dictionary
 ): Promise<boolean> {
   const facts = identifierUcans.map(
-    ucan => listFacts(ucan, ucanDictionary),
+    ucan => listFacts(ucan, ucanDictionary)
   )
 
   // TODO: Check if we have the capability to update the data root.
@@ -195,17 +198,17 @@ export async function lookupDataRoot(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
   identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary,
+  ucanDictionary: Ucan.Dictionary
 ): Promise<CID | null> {
   const facts = identifierUcans.reduce(
     (acc: Record<string, unknown>, ucan) => ({ ...acc, ...listFacts(ucan, ucanDictionary) }),
-    {},
+    {}
   )
 
   const username = facts["username"]
   if (!username) {
     throw new Error(
-      "Expected a username to be found in the facts of the delegation chains of the given identifier UCANs",
+      "Expected a username to be found in the facts of the delegation chains of the given identifier UCANs"
     )
   }
   if (typeof username !== "string") throw new Error("Expected username to be a string, but it isn't.")
@@ -213,7 +216,7 @@ export async function lookupDataRoot(
   return Fission.dataRoot.lookup(
     endpoints,
     dependencies,
-    username,
+    username
   )
 }
 
@@ -221,7 +224,7 @@ export async function updateDataRoot(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
   dataRoot: CID,
-  proofs: Ucan.Ucan[],
+  proofs: Ucan.Ucan[]
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const ucan = await Ucan.build({
     // Delegate to self
@@ -230,7 +233,7 @@ export async function updateDataRoot(
 
     capabilities: [DELEGATE_ALL_PROOFS],
     proofs: await Promise.all(
-      proofs.map(prf => Ucan.cid(prf).then(c => c.toString())),
+      proofs.map(prf => Ucan.cid(prf).then(c => c.toString()))
     ),
   })
 
@@ -238,7 +241,7 @@ export async function updateDataRoot(
     endpoints,
     dependencies,
     dataRoot,
-    ucan,
+    ucan
   )
 }
 
@@ -252,12 +255,12 @@ export async function did(identifierUcans: Ucan.Ucan[], ucanDictionary: Ucan.Dic
       const iss = rootIssuer(identifierUcan, ucanDictionary)
       return set.add(iss)
     },
-    new Set() as Set<string>,
+    new Set() as Set<string>
   )
 
   if (rootIssuers.size > 1) {
     console.warn(
-      "Encounter more than one root issuer in the identifier UCANs set. This should ideally not happen. Using the first one in the set.",
+      "Encounter more than one root issuer in the identifier UCANs set. This should ideally not happen. Using the first one in the set."
     )
   }
 
@@ -272,12 +275,11 @@ export async function did(identifierUcans: Ucan.Ucan[], ucanDictionary: Ucan.Dic
 
 export function implementation(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies
 ): Implementation<Annex> {
   return {
     annex: {
-      requestVerificationCode: (...args) =>
-        requestVerificationCode(endpoints, dependencies, ...args),
+      requestVerificationCode: (...args) => requestVerificationCode(endpoints, dependencies, ...args),
     },
 
     canRegister: (...args) => canRegister(endpoints, dependencies, ...args),

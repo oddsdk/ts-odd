@@ -9,14 +9,14 @@ import { Implementation } from "../implementation.js"
 
 export function establish(
   endpoints: Endpoints,
-  options: ChannelOptions,
+  options: ChannelOptions
 ): Promise<Channel> {
   const host = `${endpoints.server}${endpoints.apiPath}`.replace(/^https?:\/\//, "wss://")
   const accountDID = "TODO"
 
   return createWssChannel(
     `${host}/user/link/${accountDID}`,
-    options,
+    options
   )
 }
 
@@ -25,7 +25,7 @@ export function establish(
 ////////
 
 export function implementation(
-  endpoints: Endpoints,
+  endpoints: Endpoints
 ): Implementation {
   return {
     establish: (...args) => establish(endpoints, ...args),

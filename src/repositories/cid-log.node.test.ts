@@ -46,8 +46,8 @@ describe("cid-log", () => {
           const log = cidLog.getAll()
 
           isEqualCIDsSet(log, cids)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -68,8 +68,8 @@ describe("cid-log", () => {
           const index = cidLog.indexOf(cid)
 
           expect(index).toEqual(idx)
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -89,8 +89,8 @@ describe("cid-log", () => {
           const newest = cidLog.newest()
 
           expect(newest.toString()).toEqual(cid.toString())
-        },
-      ),
+        }
+      )
     )
   })
 
@@ -109,8 +109,8 @@ describe("cid-log", () => {
           const log = cidLog.getAll()
 
           isEqualCIDsSet(log, [])
-        },
-      ),
+        }
+      )
     )
   })
 })

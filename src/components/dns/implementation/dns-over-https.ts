@@ -89,7 +89,7 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
   const txt = await lookupTxtRecord(
     domain.startsWith("_dnslink.")
       ? domain
-      : `_dnslink.${domain}`,
+      : `_dnslink.${domain}`
   )
 
   return txt && !txt.includes("/ipns/")

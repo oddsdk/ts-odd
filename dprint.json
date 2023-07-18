@@ -2,13 +2,15 @@
   "typescript": {
     "semiColons": "asi",
     "importDeclaration.sortNamedImports": "caseSensitive",
-    "module.sortExportDeclarations": "caseSensitive"
+    "module.sortExportDeclarations": "caseSensitive",
+    "arguments.trailingCommas": "never",
+    "parameters.trailingCommas": "never"
   },
-  "json": {
-  },
-  "markdown": {
-  },
-  "includes": ["**/*.{ts,tsx,js,jsx,cjs,mjs,json,md}"],
+  "json": {},
+  "markdown": {},
+  "includes": [
+    "**/*.{ts,tsx,js,jsx,cjs,mjs,json,md}"
+  ],
   "excludes": [
     "**/node_modules",
     "**/*-lock.json"

@@ -145,17 +145,17 @@ export type FileSystemShortHands = {
  * which might not be needed, or available, in certain environments or using certain components.
  */
 export async function program<Annex extends AnnexParentType>(
-  settings: Partial<Components<Annex>> & { account: Account.Implementation<Annex> } & Configuration,
+  settings: Partial<Components<Annex>> & { account: Account.Implementation<Annex> } & Configuration
 ): Promise<Program<Annex>>
 export async function program(
-  settings: Partial<Omit<Components<FissionAccountsProduction.Annex>, "account">> & Configuration,
+  settings: Partial<Omit<Components<FissionAccountsProduction.Annex>, "account">> & Configuration
 ): Promise<Program<FissionAccountsProduction.Annex>>
 export async function program(
-  settings: Partial<Components<any>> & Configuration,
+  settings: Partial<Components<any>> & Configuration
 ): Promise<Program<any>> {
   if (!settings) {
     throw new Error(
-      "Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter",
+      "Expected a settings object of the type `Partial<Components> & Configuration` as the first parameter"
     )
   }
 
@@ -172,7 +172,25 @@ export async function program(
 // PREDEFINED COMPONENTS //
 ///////////////////////////
 
-// TODO: Add back predefined components
+/**
+ * Predefined account configurations.
+ */
+export const account = {
+  /**
+   * Fission's account system.
+   */
+  fission() {
+    //
+  },
+
+  /**
+   * An account system that doesn't actually do anything.
+   * Can be used to test various account-related things locally.
+   */
+  localOnly() {
+    //
+  },
+}
 
 //////////////
 // ASSEMBLE //
@@ -192,7 +210,7 @@ export async function program(
  */
 export async function assemble<Annex extends AnnexParentType>(
   config: Configuration,
-  components: Components<Annex>,
+  components: Components<Annex>
 ): Promise<Program<Annex>> {
   const { account, agent, identifier } = components
 
@@ -347,13 +365,13 @@ export const compositions = {
  * Uses the default-components set to fill in the missing ones.
  */
 export async function gatherComponents<Annex extends AnnexParentType>(
-  setup: Partial<Components<Annex>> & { account: Account.Implementation<Annex> } & Configuration,
+  setup: Partial<Components<Annex>> & { account: Account.Implementation<Annex> } & Configuration
 ): Promise<Components<Annex>>
 export async function gatherComponents(
-  setup: Partial<Omit<Components<FissionAccountsProduction.Annex>, "account">> & Configuration,
+  setup: Partial<Omit<Components<FissionAccountsProduction.Annex>, "account">> & Configuration
 ): Promise<Components<FissionAccountsProduction.Annex>>
 export async function gatherComponents(
-  setup: Partial<Components<any>> & Configuration,
+  setup: Partial<Components<any>> & Configuration
 ): Promise<Components<any>> {
   const config = extractConfig(setup)
   const storageName = namespace(config)
@@ -394,14 +412,14 @@ export const defaultComponents = {
       agent: Agent.Implementation
       dns: DNS.Implementation
       manners: Manners.Implementation<FileSystem>
-    },
+    }
   ): Account.Implementation<FissionAccountsProduction.Annex> {
     return FissionAccountsProduction.implementation({ agent, dns, manners })
   },
 
   agent(
     config: Configuration,
-    { store }: { store: Store },
+    { store }: { store: Store }
   ): Promise<Agent.Implementation> {
     return WebCryptoAgent.implementation({
       store,
@@ -414,11 +432,11 @@ export const defaultComponents = {
 
   depot(
     { storage }: { storage: Storage.Implementation },
-    config: Configuration,
+    config: Configuration
   ): Promise<Depot.Implementation> {
     return FissionIpfsProduction.implementation(
       storage,
-      `${namespace(config)}/blockstore`,
+      `${namespace(config)}/blockstore`
     )
   },
 
@@ -428,7 +446,7 @@ export const defaultComponents = {
 
   identifier(
     config: Configuration,
-    { store }: { store: Store },
+    { store }: { store: Store }
   ): Promise<Identifier.Implementation> {
     return WebCryptoIdentifier.implementation({
       store,
@@ -470,7 +488,7 @@ export async function isSupported(): Promise<boolean> {
 ////////
 
 export function extractConfig<Annex extends AnnexParentType>(
-  opts: Partial<Components<Annex>> & Configuration,
+  opts: Partial<Components<Annex>> & Configuration
 ): Configuration {
   return {
     namespace: opts.namespace,

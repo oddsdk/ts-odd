@@ -68,6 +68,7 @@
     "prebuild": "rimraf lib dist && node scripts/gen-version.js",
     "build": "tsc && npm run build:minified",
     "build:minified": "node scripts/build-minified.js",
+    "format": "dprint fmt",
     "start": "tsc -w",
     "test": "mocha",
     "test:gh-action": "TEST_ENV=gh-action npm run test",

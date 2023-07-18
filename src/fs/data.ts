@@ -14,7 +14,7 @@ export function dataFromBytes<V>(dataType: DataType, bytes: Uint8Array): AnySupp
 
     case "json":
       return JSON.parse(
-        new TextDecoder().decode(bytes),
+        new TextDecoder().decode(bytes)
       )
 
     case "utf8":
@@ -36,7 +36,7 @@ export function dataToBytes(dataType: DataType, data: any): Uint8Array {
 
     case "json":
       return new TextEncoder().encode(
-        JSON.stringify(data),
+        JSON.stringify(data)
       )
 
     case "utf8":

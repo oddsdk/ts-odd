@@ -32,7 +32,7 @@ export async function createTransport(
   blockstore: Blockstore,
   storage: Storage.Implementation,
   peersUrl: string,
-  logging: boolean = false,
+  logging: boolean = false
 ): Promise<Transport> {
   const libp2p = await createLibp2p({
     connectionEncryption: [noise()],
@@ -47,7 +47,7 @@ export async function createTransport(
   // Connect to peers
   const peers = await Peers.listPeers(
     storage,
-    peersUrl,
+    peersUrl
   )
 
   peers.forEach(peer => {
@@ -83,10 +83,10 @@ export type ImplementationOptions = {
 }
 
 export async function implementation(
-  { blockstoreName, gatewayUrl, peersUrl, storage }: ImplementationOptions,
+  { blockstoreName, gatewayUrl, peersUrl, storage }: ImplementationOptions
 ): Promise<Implementation> {
   const blockstore = new BlockstoreDatastoreAdapter(
-    new LevelDatastore(blockstoreName, { prefix: "" }),
+    new LevelDatastore(blockstoreName, { prefix: "" })
   )
 
   // Transport

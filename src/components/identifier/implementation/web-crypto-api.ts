@@ -10,12 +10,12 @@ import { Implementation } from "../implementation.js"
 // 🛳️
 
 export async function implementation(
-  { store }: { store: Store },
+  { store }: { store: Store }
 ): Promise<Implementation> {
   const signingKey = await WebCryptoAPIAgent.ensureKey(
     store,
     "signing-key",
-    WebCryptoAPIAgent.createSigningKey,
+    WebCryptoAPIAgent.createSigningKey
   )
 
   const exportedKey = await exportPublicKey(signingKey).then(spki.decode)
