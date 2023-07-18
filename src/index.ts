@@ -205,8 +205,8 @@ export const account = {
  *
  * The agent is responsible for signing UCANs that are sent
  * to other services. This is not done by the identifier so
- * that the identifier doesn't need to sign things. The reason
- * this is useful is because an identifier might need to ask
+ * that the identifier doesn't need to sign things each time.
+ * The reason this is useful is because an identifier might need to ask
  * the user for permission to sign, whereas the agent does not.
  * That means the user isn't bothered with popups every few minutes
  * when for example the remote data root is updated.
