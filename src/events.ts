@@ -30,15 +30,15 @@ export type FileSystem = {
   "fileSystem:publish": { dataRoot: CID }
 }
 
-export type CapabilityConsumer = {
-  "capabilities:challenge": any // TODO
+export type AuthorityRequestor = {
+  "authority:challenge": any // TODO
 }
 
-export type CapabilityProvider = {
-  "capabilities:approved": void
-  "capabilities:challenge": any // TODO
-  "capabilities:dismissed": void
-  "capabilities:query": { capabilities: Record<string, any> } // TODO
+export type AuthorityProvider = {
+  "authority:approved": void
+  "authority:challenge": any // TODO
+  "authority:dismissed": void
+  "authority:query": Record<string, any> // TODO
 }
 
 export type Repositories<Collection> = {
