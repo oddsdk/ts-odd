@@ -20,6 +20,16 @@ export type Annex = {
   ) => Promise<{ ok: true } | { ok: false; reason: string }>
 }
 
+export type Dependencies = {
+  agent: Agent.Implementation
+  dns: DNS.Implementation
+  manners: Manners.Implementation<FileSystem>
+}
+
+//////////////
+// CREATION //
+//////////////
+
 export async function requestVerificationCode(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
@@ -69,16 +79,6 @@ export async function requestVerificationCode(
     ? { ok: true }
     : { ok: false, reason: `Server error: ${response.statusText}` }
 }
-
-export type Dependencies = {
-  agent: Agent.Implementation
-  dns: DNS.Implementation
-  manners: Manners.Implementation<FileSystem>
-}
-
-//////////////
-// CREATION //
-//////////////
 
 export async function canRegister(
   endpoints: Fission.Endpoints,

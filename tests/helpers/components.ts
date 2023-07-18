@@ -8,7 +8,7 @@ import { sha256 } from "multiformats/hashes/sha2"
 import * as WebCryptoAgent from "../../src/components/agent/implementation/web-crypto-api.js"
 import * as DOH from "../../src/components/dns/implementation/dns-over-https.js"
 import * as WebCryptoIdentifier from "../../src/components/identifier/implementation/web-crypto-api.js"
-import * as ProperManners from "../../src/components/manners/implementation/base.js"
+import * as ProperManners from "../../src/components/manners/implementation/default.js"
 import * as MemoryStorage from "../../src/components/storage/implementation/memory.js"
 
 import * as Codecs from "../../src/dag/codecs.js"

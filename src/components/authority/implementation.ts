@@ -13,11 +13,11 @@ export type RequestOptions = {
 export type Provider = {
   type: "provider"
 
-  provide(ucans: Ucan[], eventEmitter: EventEmitter<Events.CapabilityProvider>): Promise<void>
+  provide(ucans: Ucan[], eventEmitter: EventEmitter<Events.AuthorityProvider>): Promise<void>
 }
 
-export type Consumer = {
-  type: "consumer"
+export type Requestor = {
+  type: "requestor"
 
-  request: (options: RequestOptions, eventEmitter: EventEmitter<Events.CapabilityConsumer>) => Promise<void>
+  request: (options: RequestOptions, eventEmitter: EventEmitter<Events.AuthorityRequestor>) => Promise<void>
 }

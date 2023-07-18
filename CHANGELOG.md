@@ -18,6 +18,7 @@
 - Removes crypto component.
 - Reference component has been removed, functionality has been moved to other components or into their own component.
 - Backwards compatibility with older Webnative clients has been removed.
+- Predefined components are imported using dynamic imports to reduce bundle size.
 
 ### V0.37.2
 
