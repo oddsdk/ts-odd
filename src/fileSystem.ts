@@ -20,16 +20,16 @@ import { Dependencies } from "./fs/types.js"
 /**
  * Load a user's file system.
  */
-export async function loadFileSystem<Annex extends AnnexParentType>(
-  { cabinet, cidLog, dependencies, eventEmitter, local }: {
-    cabinet: Cabinet
-    cidLog: CIDLog
-    dependencies: Dependencies<FileSystem> & { account: Account.Implementation<Annex> }
-    eventEmitter: Events.Emitter<Events.FileSystem>
-    local?: boolean
-  }
-): Promise<FileSystem> {
-  const { depot, identifier, manners } = dependencies
+export async function loadFileSystem<Annex extends AnnexParentType>(args: {
+  cabinet: Cabinet
+  cidLog: CIDLog
+  dependencies: Dependencies<FileSystem> & { account: Account.Implementation<Annex> }
+  did?: string
+  eventEmitter: Events.Emitter<Events.FileSystem>
+  local?: boolean
+}): Promise<FileSystem> {
+  const { cabinet, cidLog, dependencies, eventEmitter, local } = args
+  const { account, depot, identifier, manners } = dependencies
 
   let cid: Maybe<CID>
   let fs: FileSystem
@@ -39,7 +39,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
   const identifierUcans = cabinet.audienceUcans(identifierDID)
 
   const dataCid = navigator.onLine && (local === false || local === undefined)
-    ? await dependencies.account.lookupDataRoot(identifierUcans, cabinet.ucansIndexedByCID)
+    ? await account.lookupDataRoot(identifierUcans, cabinet.ucansIndexedByCID)
     : null
 
   const logIdx = dataCid ? cidLog.indexOf(dataCid) : -1
@@ -77,7 +77,12 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
   }
 
   // If a file system exists, load it and return it
-  const did = fileSystemIdentifier({ ...dependencies, cabinet })
+  const did = async (): Promise<string> => {
+    return local
+      ? await identifier.did()
+      : await accountDID({ account, cabinet, identifier })
+  }
+
   const updateDataRoot = dependencies.account.updateDataRoot
 
   if (cid) {
@@ -139,19 +144,16 @@ export async function loadFileSystem<Annex extends AnnexParentType>(
 }
 
 /**
- * Determines the DID used for the file system.
+ * Determines the
  */
-export function fileSystemIdentifier<Annex extends AnnexParentType>({ account, cabinet, identifier }: {
+export async function accountDID<Annex extends AnnexParentType>({ account, cabinet, identifier }: {
   account: Account.Implementation<Annex>
   cabinet: Cabinet
   identifier: Identifier.Implementation
-}) {
-  return async () => {
-    const identifierDID = await identifier.did()
-    const identifierUcans = cabinet.audienceUcans(identifierDID)
-
-    return account.did(identifierUcans, cabinet.ucansIndexedByCID)
-  }
+}): Promise<string> {
+  const identifierDID = await identifier.did()
+  const identifierUcans = cabinet.audienceUcans(identifierDID)
+  return account.did(identifierUcans, cabinet.ucansIndexedByCID)
 }
 
 /**

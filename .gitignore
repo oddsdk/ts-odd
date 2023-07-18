@@ -5,6 +5,7 @@
 /node_modules
 /src/vendor
 /yarn-error.log
+/.vscode
 /.zed
 
 

@@ -621,9 +621,9 @@ export class FileSystem {
     dataRoot: CID,
     proofs: Ucan[]
   ): Promise<PublishingStatus> {
-    if (this.#localOnly) return { persisted: true, localOnly: true }
-
     await this.#cidLog.add([dataRoot])
+
+    if (this.#localOnly) return { persisted: true, localOnly: true }
     const debounceResult = await this.#debouncedDataRootUpdate(dataRoot, proofs)
 
     // The type of `debounceResult` is not correct, issue with `@types/debounce-promise`
