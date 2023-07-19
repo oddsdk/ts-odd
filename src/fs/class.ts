@@ -48,7 +48,7 @@ export class FileSystem {
   #localOnly: boolean
   #settleTimeBeforePublish: number
   #rootTree: RootTree.RootTree
-  #updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>
+  #updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
 
   #privateNodes: MountedPrivateNodes = {}
   #rng: Rng.Rng
@@ -65,7 +65,7 @@ export class FileSystem {
     localOnly: boolean,
     settleTimeBeforePublish: number,
     rootTree: RootTree.RootTree,
-    updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>
+    updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
   ) {
     this.#blockStore = blockStore
     this.#cabinet = cabinet
@@ -593,14 +593,14 @@ export class FileSystem {
 
       await this.#dependencies.depot.flush(dataRoot, proofs)
 
-      const { ok } = await this.#updateDataRoot(
+      const { updated } = await this.#updateDataRoot(
         dataRoot,
         proofs
       )
 
       let status: PublishingStatus
 
-      if (ok) {
+      if (updated) {
         this.#eventEmitter.emit("fileSystem:publish", { dataRoot })
         status = { persisted: true, localOnly: false }
       } else {

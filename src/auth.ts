@@ -18,7 +18,7 @@ export const register = <Annex extends AnnexParentType>(
   }
 ) =>
 async (formValues: Record<string, string>): Promise<
-  { ok: true } | { ok: false; reason: string }
+  { registered: true } | { registered: false; reason: string }
 > => {
   // Do delegation from identifier to agent
   const agentDelegation = await identifierToAgentDelegation({ agent, identifier })
@@ -27,9 +27,9 @@ async (formValues: Record<string, string>): Promise<
   // Call account register implementation
   const result = await account.register(formValues, agentDelegation)
 
-  if (result.ok) {
+  if (result.registered) {
     await cabinet.addUcans(result.ucans)
-    return { ok: true }
+    return { registered: true }
   } else {
     return result
   }

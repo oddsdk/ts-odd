@@ -1,4 +1,5 @@
-import { CID } from "../../../common/index.js"
+import { CID, decodeCID, encodeCID } from "../../../common/cid.js"
+import { Storage } from "../../../components.js"
 import * as Ucan from "../../../ucan/index.js"
 import { rootIssuer } from "../../../ucan/lookup.js"
 import { Implementation } from "../implementation.js"
@@ -8,24 +9,25 @@ import { Implementation } from "../implementation.js"
 ////////
 
 export type Annex = Record<string, never>
+export type Dependencies = { storage: Storage.Implementation }
 
 //////////////
 // CREATION //
 //////////////
 
 export async function canRegister(): Promise<
-  { ok: true } | { ok: false; reason: string }
+  { canRegister: true } | { canRegister: false; reason: string }
 > {
-  return { ok: true }
+  return { canRegister: true }
 }
 
 export async function register(
   formValues: Record<string, string>,
   identifierUcan: Ucan.Ucan
 ): Promise<
-  { ok: true; ucans: Ucan.Ucan[] } | { ok: false; reason: string }
+  { registered: true; ucans: Ucan.Ucan[] } | { registered: false; reason: string }
 > {
-  return { ok: true, ucans: [] }
+  return { registered: true, ucans: [] }
 }
 
 ///////////////
@@ -36,21 +38,24 @@ export async function canUpdateDataRoot(
   identifierUcans: Ucan.Ucan[],
   ucanDictionary: Ucan.Dictionary
 ): Promise<boolean> {
-  return Object.values(ucanDictionary).filter(u => u.payload.att.some(a => a.with.scheme === "ucan")).length >= 1
+  return true
 }
 
 export async function lookupDataRoot(
+  dependencies: Dependencies,
   identifierUcans: Ucan.Ucan[],
   ucanDictionary: Ucan.Dictionary
 ): Promise<CID | null> {
-  return null // Use the local CID log instead
+  return decodeCID(dependencies.storage.getItem("data-root"))
 }
 
 export async function updateDataRoot(
+  dependencies: Dependencies,
   dataRoot: CID,
   proofs: Ucan.Ucan[]
-): Promise<{ ok: true } | { ok: false; reason: string }> {
-  return { ok: true }
+): Promise<{ updated: true } | { updated: false; reason: string }> {
+  await dependencies.storage.setItem("data-root", encodeCID(dataRoot))
+  return { updated: true }
 }
 
 ///////////
@@ -84,7 +89,9 @@ export async function did(
 // 🛳 //
 ////////
 
-export function implementation(): Implementation<Annex> {
+export function implementation(
+  dependencies: Dependencies
+): Implementation<Annex> {
   return {
     annex: {},
 
@@ -92,8 +99,8 @@ export function implementation(): Implementation<Annex> {
     register,
 
     canUpdateDataRoot,
-    lookupDataRoot,
-    updateDataRoot,
+    lookupDataRoot: (...args) => lookupDataRoot(dependencies, ...args),
+    updateDataRoot: (...args) => updateDataRoot(dependencies, ...args),
 
     did,
   }

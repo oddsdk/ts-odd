@@ -17,7 +17,7 @@ import { Implementation } from "../implementation.js"
 export type Annex = {
   requestVerificationCode: (
     formValues: Record<string, string>
-  ) => Promise<{ ok: true } | { ok: false; reason: string }>
+  ) => Promise<{ requested: true } | { requested: false; reason: string }>
 }
 
 export type Dependencies = {
@@ -34,12 +34,12 @@ export async function requestVerificationCode(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
   formValues: Record<string, string>
-): Promise<{ ok: true } | { ok: false; reason: string }> {
+): Promise<{ requested: true } | { requested: false; reason: string }> {
   let email = formValues.email
 
   if (!email) {
     return {
-      ok: false,
+      requested: false,
       reason: `Email is missing from the form values record. It has the following keys: ${
         Object.keys(
           formValues
@@ -76,20 +76,20 @@ export async function requestVerificationCode(
 
   // The server
   return response.ok
-    ? { ok: true }
-    : { ok: false, reason: `Server error: ${response.statusText}` }
+    ? { requested: true }
+    : { requested: false, reason: `Server error: ${response.statusText}` }
 }
 
 export async function canRegister(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
   formValues: Record<string, string>
-): Promise<{ ok: true } | { ok: false; reason: string }> {
+): Promise<{ canRegister: true } | { canRegister: false; reason: string }> {
   let username = formValues.username
 
   if (!username) {
     return {
-      ok: false,
+      canRegister: false,
       reason: `Username is missing from the form values record. It has the following keys: ${
         Object.keys(formValues).join(", ")
       }.`,
@@ -100,20 +100,20 @@ export async function canRegister(
 
   if (Fission.isUsernameValid(username) === false) {
     return {
-      ok: false,
+      canRegister: false,
       reason: "Username is not valid.",
     }
   }
 
   if (await Fission.isUsernameAvailable(endpoints, dependencies.dns, username) === false) {
     return {
-      ok: false,
+      canRegister: false,
       reason: "Username is not available.",
     }
   }
 
   return {
-    ok: true,
+    canRegister: true,
   }
 }
 
@@ -123,13 +123,13 @@ export async function register(
   formValues: Record<string, string>,
   identifierUcan: Ucan.Ucan
 ): Promise<
-  { ok: true; ucans: Ucan.Ucan[] } | { ok: false; reason: string }
+  { registered: true; ucans: Ucan.Ucan[] } | { registered: false; reason: string }
 > {
   let username = formValues.username
 
   if (!username) {
     return {
-      ok: false,
+      registered: false,
       reason: `Username is missing from the form values record. It has the following keys: ${
         Object.keys(formValues).join(", ")
       }.`,
@@ -156,7 +156,7 @@ export async function register(
 
   if (response.status < 300) {
     return {
-      ok: true,
+      registered: true,
       ucans: [
         // TODO: This should be done by the server
         await Ucan.build({
@@ -172,7 +172,7 @@ export async function register(
   }
 
   return {
-    ok: false,
+    registered: false,
     reason: `Server error: ${response.statusText}`,
   }
 }
@@ -225,7 +225,7 @@ export async function updateDataRoot(
   dependencies: Dependencies,
   dataRoot: CID,
   proofs: Ucan.Ucan[]
-): Promise<{ ok: true } | { ok: false; reason: string }> {
+): Promise<{ updated: true } | { updated: false; reason: string }> {
   const ucan = await Ucan.build({
     // Delegate to self
     audience: await AgentDID.signing(dependencies.agent),

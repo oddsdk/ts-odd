@@ -62,7 +62,7 @@ export type FileSystemOptions<FS> = {
   eventEmitter: EventEmitter<Events.FileSystem>
   localOnly?: boolean
   settleTimeBeforePublish?: number
-  updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ ok: true } | { ok: false; reason: string }>
+  updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
 }
 
 export type MutationOptions = {

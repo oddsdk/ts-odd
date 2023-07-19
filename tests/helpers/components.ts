@@ -5,6 +5,7 @@ import { MemoryBlockstore } from "blockstore-core/memory"
 import { CID } from "multiformats"
 import { sha256 } from "multiformats/hashes/sha2"
 
+import * as LocalAccount from "../../src/components/account/implementation/local-only.js"
 import * as WebCryptoAgent from "../../src/components/agent/implementation/web-crypto-api.js"
 import * as DOH from "../../src/components/dns/implementation/dns-over-https.js"
 import * as WebCryptoIdentifier from "../../src/components/identifier/implementation/web-crypto-api.js"
@@ -18,14 +19,8 @@ import { Account, Agent, Channel, Components, DNS, Depot, Identifier, Manners, S
 import { Configuration } from "../../src/configuration.js"
 import { CodecIdentifier } from "../../src/dag/codecs.js"
 import { FileSystem } from "../../src/fs/class.js"
-import { Dictionary as UcanDictionary, Ucan } from "../../src/ucan/types.js"
+import { Ucan } from "../../src/ucan/types.js"
 import { Storage as InMemoryStorage } from "./localforage/in-memory-storage.js"
-
-////////
-// 🧩 //
-////////
-
-type Annex = Record<string, never>
 
 ////////
 // 🚀 //
@@ -112,27 +107,7 @@ const agent: Agent.Implementation = await WebCryptoAgent.implementation({
 // ACCOUNT //
 /////////////
 
-let inMemoryDataRoot: CID | null = null
-
-const account: Account.Implementation<Annex> = {
-  annex: {},
-
-  canRegister: async () => ({ ok: true }),
-  register: async (formValues: Record<string, string>, identifierUcan: Ucan) => {
-    return { ok: true, ucans: [] }
-  },
-
-  canUpdateDataRoot: async () => true,
-  lookupDataRoot: async () => inMemoryDataRoot,
-  updateDataRoot: async (dataRoot: CID, proofs: Ucan[]) => {
-    inMemoryDataRoot = dataRoot
-    return { ok: true }
-  },
-
-  did: async (identifierUcans: Ucan[], ucanDictionary: UcanDictionary) => {
-    return identifier.did()
-  },
-}
+const account: Account.Implementation<LocalAccount.Annex> = LocalAccount.implementation({ storage })
 
 ////////////////
 // IDENTIFIER //
@@ -146,7 +121,7 @@ const identifier: Identifier.Implementation = await WebCryptoIdentifier.implemen
 // 🛳 //
 ////////
 
-const components: Components<Annex> = {
+const components: Components<LocalAccount.Annex> = {
   depot,
   manners,
   storage,

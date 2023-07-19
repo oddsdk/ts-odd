@@ -79,7 +79,7 @@ export async function update(
   },
   cidInstance: CID,
   proof: Ucan.Ucan
-): Promise<{ ok: true } | { ok: false; reason: string }> {
+): Promise<{ updated: true } | { updated: false; reason: string }> {
   const cid = cidInstance.toString()
 
   // Debug
@@ -106,14 +106,14 @@ export async function update(
     retryOn: [502, 503, 504],
   }, {
     method: "PUT",
-  }).then((response: Response): { ok: true } | { ok: false; reason: string } => {
+  }).then((response: Response): { updated: true } | { updated: false; reason: string } => {
     if (response.status < 300) dependencies.manners.log("🪴 DNSLink updated:", cid)
     else dependencies.manners.log("🔥 Failed to update DNSLink for:", cid)
-    return response.ok ? { ok: true } : { ok: false, reason: response.statusText }
+    return response.ok ? { updated: true } : { updated: false, reason: response.statusText }
   }).catch(err => {
     dependencies.manners.log("🔥 Failed to update DNSLink for:", cid)
     console.error(err)
-    return { ok: false, reason: err }
+    return { updated: false, reason: err }
   })
 }
 

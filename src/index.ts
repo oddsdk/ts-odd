@@ -54,10 +54,10 @@ export type Program<Annex extends Account.AnnexParentType> =
      */
     account: Account.Implementation<Annex>["annex"] & {
       register: (formValues: Record<string, string>) => Promise<
-        { ok: true } | { ok: false; reason: string }
+        { registered: true } | { registered: false; reason: string }
       >
       canRegister: (formValues: Record<string, string>) => Promise<
-        { ok: true } | { ok: false; reason: string }
+        { canRegister: true } | { canRegister: false; reason: string }
       >
     }
 
@@ -194,9 +194,12 @@ export const account = {
    * An account system that doesn't actually do anything.
    * Can be used to test various account-related things locally.
    */
-  async localOnly(): Promise<Account.Implementation<Record<string, never>>> {
+  async localOnly(settings: {
+    // Dependencies
+    storage: Storage.Implementation
+  }): Promise<Account.Implementation<Record<string, never>>> {
     const { implementation } = await import("./components/account/implementation/local-only.js")
-    return implementation()
+    return implementation(settings)
   },
 }
 
