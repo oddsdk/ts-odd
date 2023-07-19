@@ -195,7 +195,7 @@ export const account = {
    * Can be used to test various account-related things locally.
    */
   async localOnly(): Promise<Account.Implementation<Record<string, never>>> {
-    const { implementation } = await import(`./components/account/implementation/local-only.js`)
+    const { implementation } = await import("./components/account/implementation/local-only.js")
     return implementation()
   },
 }
@@ -217,7 +217,7 @@ export const agent = {
    * using non-exportable keys.
    */
   async webCryptoAPI({ store }: { store: Store }): Promise<Agent.Implementation> {
-    const { implementation } = await import(`./components/agent/implementation/web-crypto-api.js`)
+    const { implementation } = await import("./components/agent/implementation/web-crypto-api.js")
     return implementation({ store })
   },
 }
@@ -291,7 +291,7 @@ export const dns = {
    * Look up DNS using HTTPS (Cloudflare & Google)
    */
   async doh(): Promise<DNS.Implementation> {
-    const { implementation } = await import(`./components/dns/implementation/dns-over-https.js`)
+    const { implementation } = await import("./components/dns/implementation/dns-over-https.js")
     return implementation()
   },
 }
@@ -310,7 +310,7 @@ export const dns = {
  */
 export const identifier = {
   async webCryptoAPI({ store }: { store: Store }): Promise<Identifier.Implementation> {
-    const { implementation } = await import(`./components/identifier/implementation/web-crypto-api.js`)
+    const { implementation } = await import("./components/identifier/implementation/web-crypto-api.js")
     return implementation({ store })
   },
 }
@@ -326,7 +326,7 @@ export const manners = {
    * The default ODD SDK behaviour.
    */
   async default(settings: Configuration): Promise<Manners.Implementation<FileSystem>> {
-    const { implementation } = await import(`./components/manners/implementation/default.js`)
+    const { implementation } = await import("./components/manners/implementation/default.js")
     return implementation({ configuration: settings })
   },
 }
@@ -342,7 +342,7 @@ export const storage = {
    * IndexedDB through the `localForage` library, automatically namespaced.
    */
   async indexedDB(settings: { name: string }): Promise<Storage.Implementation> {
-    const { implementation } = await import(`./components/storage/implementation/indexed-db.js`)
+    const { implementation } = await import("./components/storage/implementation/indexed-db.js")
     return implementation(settings)
   },
 
@@ -350,7 +350,7 @@ export const storage = {
    * In-memory store.
    */
   async memory(): Promise<Storage.Implementation> {
-    const { implementation } = await import(`./components/storage/implementation/memory.js`)
+    const { implementation } = await import("./components/storage/implementation/memory.js")
     return implementation()
   },
 }
