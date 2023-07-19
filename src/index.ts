@@ -93,11 +93,18 @@ export type Program<Annex extends Account.AnnexParentType> =
      */
     fileSystem: FileSystemShortHands
   }
+  & Shorthands
   & Events.ListenTo<Events.All>
 
 export enum ProgramError {
   InsecureContext = "INSECURE_CONTEXT",
   UnsupportedBrowser = "UNSUPPORTED_BROWSER",
+}
+
+export type Shorthands = {
+  accountDID: () => Promise<string>
+  agentDID: () => Promise<string>
+  identifierDID: () => Promise<string>
 }
 
 export type FileSystemShortHands = {
@@ -434,9 +441,27 @@ export async function assemble<Annex extends AnnexParentType>(
     load: () => loadFileSystem({ cidLog, cabinet, dependencies: components, eventEmitter: fsEvents }),
   }
 
+  const shortHands: Shorthands = {
+    async accountDID(): Promise<string> {
+      const audience = await components.identifier.did()
+      const identifierUcans = cabinet.audienceUcans(audience)
+
+      return components.account.did(identifierUcans, cabinet.ucansIndexedByCID)
+    },
+
+    async agentDID() {
+      return components.agent.did()
+    },
+
+    async identifierDID() {
+      return components.identifier.did()
+    },
+  }
+
   // Create `Program`
   const program = {
     ...Events.listenTo(allEvents),
+    ...shortHands,
 
     configuration: { ...config },
     fileSystem: { ...fileSystemShortHands },
