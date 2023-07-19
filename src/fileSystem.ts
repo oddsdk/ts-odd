@@ -144,7 +144,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
 }
 
 /**
- * Determines the
+ * Fetches the account DID.
  */
 export async function accountDID<Annex extends AnnexParentType>({ account, cabinet, identifier }: {
   account: Account.Implementation<Annex>

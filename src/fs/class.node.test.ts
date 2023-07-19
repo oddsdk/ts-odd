@@ -49,8 +49,8 @@ describe("File System Class", async () => {
   // -------
 
   it("loads a file system and capsule references + content cids", async () => {
-    const publicPath = Path.file("public", "public.txt")
-    const privatePath = Path.file("private", "private.txt")
+    const publicPath = Path.file("public", "nested-public", "public.txt")
+    const privatePath = Path.file("private", "nested-private", "private.txt")
 
     const { contentCID } = await fs.write(publicPath, "utf8", "public")
     const { capsuleRef, dataRoot } = await fs.write(privatePath, "utf8", "private")
@@ -76,6 +76,58 @@ describe("File System Class", async () => {
     ])
 
     expect(await loadedFs.read(publicPath, "utf8")).toEqual("public")
+    expect(await loadedFs.read(privatePath, "utf8")).toEqual("private")
+  })
+
+  it("loads a file system and capsule references + content cids after multiple changes", async () => {
+    const publicPath = Path.file("public", "nested-public", "public.txt")
+    const privatePath = Path.file("private", "nested-private", "private.txt")
+
+    await fs.write(publicPath, "utf8", "public")
+    await fs.write(privatePath, "utf8", "private")
+
+    await fs.write(Path.file("public", "part.two"), "utf8", "public-2")
+    const { dataRoot } = await fs.write(Path.file("private", "part.two"), "utf8", "private-2")
+    const capsuleRef = await fs.capsuleRef(Path.directory("private"))
+
+    const cidLog = await CIDLog.create({ storage })
+    const cabinet = await Cabinet.create({ storage })
+
+    const did = () => accountDID({ account, identifier, cabinet })
+    const updateDataRoot = account.updateDataRoot
+
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
+
+    if (capsuleRef) {
+      await loadedFs.mountPrivateNodes([
+        { path: Path.root(), capsuleRef },
+      ])
+    }
+
+    expect(await loadedFs.read(publicPath, "utf8")).toEqual("public")
+    expect(await loadedFs.read(privatePath, "utf8")).toEqual("private")
+  })
+
+  it("loads a private file system given an older capsule reference", async () => {
+    const privatePath = Path.file("private", "nested-private", "private.txt")
+    const oldCapsuleRef = await fs.capsuleRef(Path.directory("private"))
+
+    const { dataRoot } = await fs.write(privatePath, "utf8", "private")
+
+    const cidLog = await CIDLog.create({ storage })
+    const cabinet = await Cabinet.create({ storage })
+
+    const did = () => accountDID({ account, identifier, cabinet })
+    const updateDataRoot = account.updateDataRoot
+
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
+
+    if (oldCapsuleRef) {
+      await loadedFs.mountPrivateNodes([
+        { path: Path.root(), capsuleRef: oldCapsuleRef },
+      ])
+    }
+
     expect(await loadedFs.read(privatePath, "utf8")).toEqual("private")
   })
 
