@@ -71,7 +71,7 @@ export async function did(
 
   if (rootIssuers.size > 1) {
     console.warn(
-      "Encounter more than one root issuer in the identifier UCANs set. This should ideally not happen. Using the first one in the set."
+      "Encountered more than one root issuer in the identifier UCANs set. This should ideally not happen. Using the first one in the set."
     )
   }
 
