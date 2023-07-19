@@ -2,7 +2,7 @@ import { DIDKey } from "iso-did/key"
 import { spki } from "iso-signatures/spki"
 import * as crypto from "../../../common/crypto.js"
 import { Store } from "../../../common/crypto/store.js"
-import { hasProp, isObject } from "../../../common/index.js"
+import { isObject } from "../../../common/index.js"
 import { Implementation } from "../implementation.js"
 
 // 🛠️
