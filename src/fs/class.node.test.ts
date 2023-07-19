@@ -12,7 +12,7 @@ import * as CIDLog from "../repositories/cid-log.js"
 import { account, agent, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
 import { CID } from "../common/cid.js"
 import { createEmitter } from "../events.js"
-import { fileSystemIdentifier, selfDelegateCapabilities } from "../fileSystem.js"
+import { accountDID, selfDelegateCapabilities } from "../fileSystem.js"
 import { FileSystem } from "./class.js"
 
 describe("File System Class", async () => {
@@ -31,7 +31,7 @@ describe("File System Class", async () => {
     const cidLog = await CIDLog.create({ storage })
     const cabinet = await Cabinet.create({ storage })
 
-    const did = fileSystemIdentifier({ account, identifier, cabinet })
+    const did = () => accountDID({ account, identifier, cabinet })
     const updateDataRoot = account.updateDataRoot
 
     fs = await FileSystem.empty({ ...fsOpts, cidLog, cabinet, did, updateDataRoot })
@@ -67,7 +67,7 @@ describe("File System Class", async () => {
     const cidLog = await CIDLog.create({ storage })
     const cabinet = await Cabinet.create({ storage })
 
-    const did = fileSystemIdentifier({ account, identifier, cabinet })
+    const did = () => accountDID({ account, identifier, cabinet })
     const updateDataRoot = account.updateDataRoot
 
     const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
