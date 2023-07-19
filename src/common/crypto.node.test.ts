@@ -18,4 +18,18 @@ describe("Crypto", async () => {
       true
     )
   })
+
+  it("encrypts and decrypts using RSA", async () => {
+    const data = new TextEncoder().encode("🙈")
+    const key = await Crypto.rsa.generateKey("exchange")
+    const encrypted = await Crypto.rsa.encrypt(data, key.publicKey)
+
+    expect(
+      await Crypto.rsa.decrypt(encrypted, key.privateKey).then(
+        a => new TextDecoder().decode(a)
+      )
+    ).toBe(
+      "🙈"
+    )
+  })
 })
