@@ -82,6 +82,8 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
 
   // If a file system exists, load it and return it
   const did = async (): Promise<string> => {
+    if (args.did) return args.did
+
     return isAuthed
       ? await accountDID({ account, cabinet, identifier })
       : await identifier.did()
