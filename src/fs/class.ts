@@ -44,7 +44,6 @@ export class FileSystem {
   #cabinet: Cabinet
   #cidLog: CIDLog
   #dependencies: Dependencies<FileSystem>
-  #did: () => Promise<string>
   #eventEmitter: EventEmitter<Events.FileSystem>
   #localOnly: boolean
   #settleTimeBeforePublish: number
@@ -53,6 +52,8 @@ export class FileSystem {
 
   #privateNodes: MountedPrivateNodes = {}
   #rng: Rng.Rng
+
+  did: () => Promise<string>
 
   constructor(
     blockStore: BlockStore,
@@ -70,7 +71,6 @@ export class FileSystem {
     this.#cabinet = cabinet
     this.#cidLog = cidLog
     this.#dependencies = dependencies
-    this.#did = did
     this.#eventEmitter = eventEmitter
     this.#localOnly = localOnly
     this.#settleTimeBeforePublish = settleTimeBeforePublish
@@ -78,6 +78,8 @@ export class FileSystem {
     this.#updateDataRoot = updateDataRoot
 
     this.#rng = Rng.makeRngInterface()
+
+    this.did = did
   }
 
   // INITIALISATION
@@ -571,7 +573,7 @@ export class FileSystem {
       this.#blockStore,
       this.#cabinet,
       this.#dependencies,
-      this.#did,
+      this.did,
       { ...this.#privateNodes },
       this.#rng,
       { ...this.#rootTree }
