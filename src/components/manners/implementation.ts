@@ -36,17 +36,6 @@ export type Implementation<FS> = {
   }
 
   /**
-   * Cabinet configuration.
-   *
-   * Responsible for storing UCANs and keys.
-   */
-  cabinet: {
-    hooks: {
-      inventoryChanged: (cabinetItems: CabinetCollection) => Promise<void>
-    }
-  }
-
-  /**
    * Configure how the wnfs wasm module should be loaded.
    *
    * This only has an effect if you're using file systems of version 3 or higher.

@@ -379,7 +379,8 @@ export async function assemble<Annex extends AnnexParentType>(
   const cabinet = await Cabinet.create({ storage: components.storage })
 
   cabinet.events.on("collection:changed", async ({ collection }) => {
-    await components.manners.cabinet.hooks.inventoryChanged(collection)
+    // TODO: emit authority:inventory-changed event
+    // NOTE: This event exists so that UCANs can be stored encrypted on WNFS when using passkeys
   })
 
   // Authority

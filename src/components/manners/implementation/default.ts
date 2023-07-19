@@ -10,13 +10,6 @@ export function implementation(opts: ImplementationOptions): Implementation<File
     log: opts.configuration.debug ? console.log : () => {},
     warn: opts.configuration.debug ? console.warn : () => {},
 
-    // Cabinet
-    cabinet: {
-      hooks: {
-        inventoryChanged: async () => {},
-      },
-    },
-
     // File system
     fileSystem: {
       hooks: {
