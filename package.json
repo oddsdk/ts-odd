@@ -1,6 +1,6 @@
 {
   "name": "@oddjs/odd",
-  "version": "next",
+  "version": "0.40.0-prerelease",
   "description": "ODD SDK",
   "keywords": [
     "WebCrypto",
