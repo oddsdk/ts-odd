@@ -120,7 +120,7 @@ export type FileSystemShortHands = {
  *
  * This gives you three systems to work with:
  * - `account`, the account system, use this to register an account.
- * - `authority`, the authority system, request or provide authority to parts of the (or entire) file system and account system.
+ * - `authority`, the authority system, request or provide authority to parts of (or the entire) file system and account system.
  * - `fileSystem`, the file system.
  *
  * This object also has a few other functions, for example to load a filesystem.
