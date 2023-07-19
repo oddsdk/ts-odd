@@ -26,9 +26,8 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
   dependencies: Dependencies<FileSystem> & { account: Account.Implementation<Annex> }
   did?: string
   eventEmitter: Events.Emitter<Events.FileSystem>
-  local?: boolean
 }): Promise<FileSystem> {
-  const { cabinet, cidLog, dependencies, eventEmitter, local } = args
+  const { cabinet, cidLog, dependencies, eventEmitter } = args
   const { account, depot, identifier, manners } = dependencies
 
   let cid: Maybe<CID>
@@ -37,8 +36,9 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
   // Determine the correct CID of the file system to load
   const identifierDID = await dependencies.identifier.did()
   const identifierUcans = cabinet.audienceUcans(identifierDID)
+  const isAuthed = await account.canUpdateDataRoot(identifierUcans, cabinet.ucansIndexedByCID)
 
-  const dataCid = navigator.onLine && (local === false || local === undefined)
+  const dataCid = navigator.onLine && isAuthed
     ? await account.lookupDataRoot(identifierUcans, cabinet.ucansIndexedByCID)
     : null
 
@@ -48,8 +48,12 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
     // Offline, use local CID
     cid = cidLog.newest()
     if (cid) manners.log("📓 Working offline, using local CID:", cid.toString())
-
-    throw new Error("Offline, don't have a file system to work with.")
+    else manners.log("📓 Working offline, creating a new file system")
+  } else if (!isAuthed) {
+    // Not authed
+    cid = cidLog.newest()
+    if (cid) manners.log("📓 Using local CID:", cid.toString())
+    else manners.log("📓 Creating a new file system")
   } else if (!dataCid) {
     // No DNS CID yet
     cid = cidLog.newest()
@@ -78,9 +82,9 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
 
   // If a file system exists, load it and return it
   const did = async (): Promise<string> => {
-    return local
-      ? await identifier.did()
-      : await accountDID({ account, cabinet, identifier })
+    return isAuthed
+      ? await accountDID({ account, cabinet, identifier })
+      : await identifier.did()
   }
 
   const updateDataRoot = dependencies.account.updateDataRoot
@@ -90,7 +94,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
 
     fs = await FileSystem.fromCID(
       cid,
-      { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot, localOnly: local }
+      { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot, localOnly: !isAuthed }
     )
 
     // Mount private nodes
@@ -119,7 +123,7 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
     eventEmitter,
     updateDataRoot,
 
-    localOnly: local,
+    localOnly: !isAuthed,
   })
 
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)

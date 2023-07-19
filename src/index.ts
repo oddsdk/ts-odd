@@ -106,7 +106,7 @@ export type FileSystemShortHands = {
   /**
    * Load the file system associated with the account system.
    */
-  load: (opts?: { local?: boolean }) => Promise<FileSystem>
+  load: () => Promise<FileSystem>
 }
 
 //////////////////
@@ -363,13 +363,6 @@ export const storage = {
  * Build an ODD Program based on a given set of `Components`.
  * These are various customisable components that determine how an ODD app works.
  * Use `program` to work with a default, or partial, set of components.
- *
- * Additionally this does a few other things:
- * - Loads the user's file system if needed.
- * - Provides shorthands to functions so you don't have to pass in components.
- * - Enables the ODD extension.
- *
- * See the `program.fileSystem.load` function if you want to load the user's file system yourself.
  */
 export async function assemble<Annex extends AnnexParentType>(
   config: Configuration,
@@ -434,7 +427,7 @@ export async function assemble<Annex extends AnnexParentType>(
   // Shorthands
   const fileSystemShortHands: FileSystemShortHands = {
     addSampleData: (fs: FileSystem) => addSampleData(fs),
-    load: (opts) => loadFileSystem({ cidLog, cabinet, dependencies: components, eventEmitter: fsEvents, ...opts }),
+    load: () => loadFileSystem({ cidLog, cabinet, dependencies: components, eventEmitter: fsEvents }),
   }
 
   // Create `Program`
