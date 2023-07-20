@@ -1,7 +1,7 @@
 import expect from "expect"
 
 import * as InMemoryCryptoStore from "../common/crypto/store/in-memory.js"
-import * as WebCryptoAgent from "../components/agent/implementation/web-crypto-api.js"
+import * as WebCryptoAgent from "../components/agent/web-crypto-api.js"
 
 import * as Ucan from "./index.js"
 

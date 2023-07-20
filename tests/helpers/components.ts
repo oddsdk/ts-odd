@@ -5,12 +5,12 @@ import { MemoryBlockstore } from "blockstore-core/memory"
 import { CID } from "multiformats"
 import { sha256 } from "multiformats/hashes/sha2"
 
-import * as LocalAccount from "../../src/components/account/implementation/local-only.js"
-import * as WebCryptoAgent from "../../src/components/agent/implementation/web-crypto-api.js"
-import * as DOH from "../../src/components/dns/implementation/dns-over-https.js"
-import * as WebCryptoIdentifier from "../../src/components/identifier/implementation/web-crypto-api.js"
-import * as ProperManners from "../../src/components/manners/implementation/default.js"
-import * as MemoryStorage from "../../src/components/storage/implementation/memory.js"
+import * as LocalAccount from "../../src/components/account/local.js"
+import * as WebCryptoAgent from "../../src/components/agent/web-crypto-api.js"
+import * as DOH from "../../src/components/dns/dns-over-https.js"
+import * as WebCryptoIdentifier from "../../src/components/identifier/web-crypto-api.js"
+import * as ProperManners from "../../src/components/manners/default.js"
+import * as MemoryStorage from "../../src/components/storage/memory.js"
 
 import * as Codecs from "../../src/dag/codecs.js"
 
@@ -70,7 +70,7 @@ const storage: Storage.Implementation = MemoryStorage.implementation()
 /////////////
 
 const manners: Manners.Implementation<FileSystem> = {
-  ...ProperManners.implementation({ configuration }),
+  ...ProperManners.implementation(configuration),
 
   wnfsWasmLookup: async () => {
     const pathToThisModule = new URL(import.meta.url).pathname

@@ -1,4 +1,4 @@
-import { Implementation } from "../implementation.js"
+import { Implementation } from "./implementation.js"
 
 // FUNDAMENTALS
 

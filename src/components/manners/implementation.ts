@@ -5,11 +5,6 @@ import type { Configuration } from "../../configuration.js"
 import * as Depot from "../../components/depot/implementation.js"
 import { PrivateReference } from "../../fs/types/private-ref.js"
 import * as Path from "../../path/index.js"
-import { CabinetCollection } from "../../repositories/cabinet.js"
-
-export type ImplementationOptions = {
-  configuration: Configuration
-}
 
 export type Implementation<FS> = {
   log: (...args: unknown[]) => void

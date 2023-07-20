@@ -1,7 +1,9 @@
 import { AppInfo } from "./appInfo.js"
 import { isString } from "./common/type-checks.js"
 
-// CONFIGURATION
+///////////////////
+// CONFIGURATION //
+///////////////////
 
 export type Configuration = {
   namespace: string | AppInfo
@@ -52,7 +54,9 @@ export type Configuration = {
   userMessages?: UserMessages
 }
 
-// PIECES
+////////////
+// PIECES //
+////////////
 
 export type UserMessages = {
   versionMismatch: {
@@ -61,13 +65,26 @@ export type UserMessages = {
   }
 }
 
-// 🛠
+////////
+// 🛠 //
+////////
 
 /**
  * App identifier.
  */
 export function appId(app: AppInfo): string {
   return `${app.creator}/${app.name}`
+}
+
+export function extract(
+  obj: Record<string, unknown> & Configuration
+): Configuration {
+  return {
+    namespace: obj.namespace,
+    debug: obj.debug,
+    fileSystem: obj.fileSystem,
+    userMessages: obj.userMessages,
+  }
 }
 
 /**

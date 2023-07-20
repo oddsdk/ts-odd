@@ -9,7 +9,7 @@ const globalName = "oddjs"
 console.log("📦 Bundling & minifying...")
 
 await esbuild.build({
-  entryPoints: ["src/index.ts"],
+  entryPoints: ["src/index.ts", "src/compositions/fission.ts"],
   outdir: "dist",
   bundle: true,
   splitting: true,

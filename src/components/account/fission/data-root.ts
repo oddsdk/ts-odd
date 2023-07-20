@@ -1,13 +1,13 @@
 import { CID } from "multiformats/cid"
 
-import * as Fission from "../../../../common/fission.js"
-import * as TypeChecks from "../../../../common/type-checks.js"
-import * as Ucan from "../../../../ucan/index.js"
+import * as Fission from "../../../common/fission.js"
+import * as TypeChecks from "../../../common/type-checks.js"
+import * as Ucan from "../../../ucan/index.js"
 
-import { decodeCID } from "../../../../common/cid.js"
-import { Agent, DNS, Manners } from "../../../../components.js"
-import { FileSystem } from "../../../../fs/class.js"
-import { DELEGATE_ALL_PROOFS } from "../../../../ucan/capabilities.js"
+import { decodeCID } from "../../../common/cid.js"
+import { Agent, DNS, Manners } from "../../../components.js"
+import { FileSystem } from "../../../fs/class.js"
+import { DELEGATE_ALL_PROOFS } from "../../../ucan/capabilities.js"
 
 /**
  * Get the CID of a user's data root.

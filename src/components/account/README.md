@@ -1,0 +1,1 @@
+An account system is responsible for user accounts and having a location for where the data root is stored. This allows for the file system to be loaded on another device, even if the related devices are offline.

@@ -1,14 +1,15 @@
-import * as AgentDID from "../../../agent/did.js"
-import * as Ucan from "../../../ucan/index.js"
-import * as Fission from "./fission/index.js"
+import * as AgentDID from "../../agent/did.js"
+import * as Fission from "../../common/fission.js"
+import * as Ucan from "../../ucan/index.js"
 
-import { CID } from "../../../common/index.js"
-import { Agent, DNS, Manners } from "../../../components.js"
-import { FileSystem } from "../../../fs/class.js"
-import { DELEGATE_ALL_PROOFS } from "../../../ucan/capabilities.js"
-import { listFacts } from "../../../ucan/chain.js"
-import { rootIssuer } from "../../../ucan/lookup.js"
-import { Implementation } from "../implementation.js"
+import { CID } from "../../common/index.js"
+import { Agent, DNS, Manners } from "../../components.js"
+import { FileSystem } from "../../fs/class.js"
+import { DELEGATE_ALL_PROOFS } from "../../ucan/capabilities.js"
+import { listFacts } from "../../ucan/chain.js"
+import { rootIssuer } from "../../ucan/lookup.js"
+import { DataRoot, isUsernameAvailable, isUsernameValid } from "./fission/index.js"
+import { Implementation } from "./implementation.js"
 
 ////////
 // 🧩 //
@@ -100,7 +101,7 @@ export async function canRegister(
 
   username = username.trim()
 
-  if (Fission.isUsernameValid(username) === false) {
+  if (isUsernameValid(username) === false) {
     return {
       canRegister: false,
       reason: "Username is not valid.",
@@ -108,7 +109,7 @@ export async function canRegister(
   }
 
   if (
-    (await Fission.isUsernameAvailable(
+    (await isUsernameAvailable(
       endpoints,
       dependencies.dns,
       username
@@ -251,7 +252,7 @@ export async function lookupDataRoot(
     throw new Error("Expected username to be a string, but it isn't.")
   }
 
-  return Fission.dataRoot.lookup(endpoints, dependencies, username)
+  return DataRoot.lookup(endpoints, dependencies, username)
 }
 
 export async function updateDataRoot(
@@ -271,7 +272,7 @@ export async function updateDataRoot(
     ),
   })
 
-  return Fission.dataRoot.update(endpoints, dependencies, dataRoot, ucan)
+  return DataRoot.update(endpoints, dependencies, dataRoot, ucan)
 }
 
 ///////////
@@ -306,9 +307,11 @@ export async function did(
 ////////
 
 export function implementation(
-  endpoints: Fission.Endpoints,
-  dependencies: Dependencies
+  dependencies: Dependencies,
+  optionalEndpoints?: Fission.Endpoints
 ): Implementation<Annex> {
+  const endpoints = optionalEndpoints || Fission.PRODUCTION
+
   return {
     annex: {
       requestVerificationCode: (...args) => requestVerificationCode(endpoints, dependencies, ...args),
