@@ -1,47 +1,56 @@
-import * as Uint8arrays from "uint8arrays"
+import expect from "expect"
 import { exporter } from "ipfs-unixfs-exporter"
 import all from "it-all"
-import expect from "expect"
+import * as Uint8arrays from "uint8arrays"
 
 import * as Events from "../events.js"
 import * as Path from "../path/index.js"
 
+import * as Cabinet from "../repositories/cabinet.js"
+import * as CIDLog from "../repositories/cid-log.js"
+
+import { account, agent, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
 import { CID } from "../common/cid.js"
-import { FileSystem } from "./class.js"
-import { crypto, depot, manners, reference } from "../../tests/helpers/components.js"
 import { createEmitter } from "../events.js"
+import { accountDID, selfDelegateCapabilities } from "../fileSystem.js"
+import { FileSystem } from "./class.js"
 
-
-describe("File System Class", () => {
-
+describe("File System Class", async () => {
   let fs: FileSystem
 
   const fsOpts = {
-    account: { rootDID: "ROOT_DID" },
-    dependencies: { crypto, depot, manners, reference },
+    dependencies: { account, agent, depot, identifier, manners },
     eventEmitter: createEmitter<Events.FileSystem>(),
     settleTimeBeforePublish: 250,
   }
-
 
   // HOOKS
   // -----
 
   beforeEach(async () => {
-    fs = await FileSystem.empty(fsOpts)
+    const cidLog = await CIDLog.create({ storage })
+    const cabinet = await Cabinet.create({ storage })
 
-    await fs.mountPrivateNodes([
-      { path: Path.root() }
+    const did = () => accountDID({ account, identifier, cabinet })
+    const updateDataRoot = account.updateDataRoot
+
+    fs = await FileSystem.empty({ ...fsOpts, cidLog, cabinet, did, updateDataRoot })
+
+    const mounts = await fs.mountPrivateNodes([
+      { path: Path.root() },
+    ])
+
+    await cabinet.addUcans([
+      await selfDelegateCapabilities(identifier),
     ])
   })
-
 
   // LOADING
   // -------
 
   it("loads a file system and capsule references + content cids", async () => {
-    const publicPath = Path.file("public", "public.txt")
-    const privatePath = Path.file("private", "private.txt")
+    const publicPath = Path.file("public", "nested-public", "public.txt")
+    const privatePath = Path.file("private", "nested-private", "private.txt")
 
     const { contentCID } = await fs.write(publicPath, "utf8", "public")
     const { capsuleRef, dataRoot } = await fs.write(privatePath, "utf8", "private")
@@ -55,15 +64,76 @@ describe("File System Class", () => {
       "public"
     )
 
-    const loadedFs = await FileSystem.fromCID(dataRoot, fsOpts)
+    const cidLog = await CIDLog.create({ storage })
+    const cabinet = await Cabinet.create({ storage })
+
+    const did = () => accountDID({ account, identifier, cabinet })
+    const updateDataRoot = account.updateDataRoot
+
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
     await loadedFs.mountPrivateNodes([
-      { path: Path.removePartition(privatePath), capsuleRef }
+      { path: Path.removePartition(privatePath), capsuleRef },
     ])
 
     expect(await loadedFs.read(publicPath, "utf8")).toEqual("public")
     expect(await loadedFs.read(privatePath, "utf8")).toEqual("private")
   })
 
+  it("loads a file system and capsule references + content cids after multiple changes", async () => {
+    const publicPath = Path.file("public", "nested-public", "public.txt")
+    const privatePath = Path.file("private", "nested-private", "private.txt")
+
+    await fs.write(publicPath, "utf8", "public")
+    await fs.write(privatePath, "utf8", "private")
+
+    await fs.write(Path.file("public", "part.two"), "utf8", "public-2")
+    const { dataRoot } = await fs.write(Path.file("private", "part.two"), "utf8", "private-2")
+    const capsuleRef = await fs.capsuleRef(Path.directory("private"))
+
+    const cidLog = await CIDLog.create({ storage })
+    const cabinet = await Cabinet.create({ storage })
+
+    const did = () => accountDID({ account, identifier, cabinet })
+    const updateDataRoot = account.updateDataRoot
+
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
+
+    if (capsuleRef) {
+      await loadedFs.mountPrivateNodes([
+        { path: Path.root(), capsuleRef },
+      ])
+    } else {
+      throw new Error("Expected a capsule ref")
+    }
+
+    expect(await loadedFs.read(publicPath, "utf8")).toEqual("public")
+    expect(await loadedFs.read(privatePath, "utf8")).toEqual("private")
+  })
+
+  // TODO: Currently fails because of a bug in rs-wnfs
+  it.skip("loads a private file system given an older capsule reference", async () => {
+    const privatePath = Path.file("private", "nested-private", "private.txt")
+    const oldCapsuleRef = await fs.capsuleRef(Path.directory("private"))
+
+    const did = () => accountDID({ account, identifier, cabinet })
+    const updateDataRoot = account.updateDataRoot
+
+    const cidLog = await CIDLog.create({ storage })
+    const cabinet = await Cabinet.create({ storage })
+
+    const { dataRoot } = await fs.write(privatePath, "utf8", "private")
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
+
+    if (oldCapsuleRef) {
+      await loadedFs.mountPrivateNodes([
+        { path: Path.root(), capsuleRef: oldCapsuleRef },
+      ])
+    } else {
+      throw new Error("Expected a capsule ref")
+    }
+
+    expect(await loadedFs.read(privatePath, "utf8")).toEqual("private")
+  })
 
   // READING & WRITING
   // -----------------
@@ -72,7 +142,9 @@ describe("File System Class", () => {
     const path = Path.file("public", "a")
 
     const { contentCID } = await fs.write(
-      path, "bytes", new TextEncoder().encode("🚀")
+      path,
+      "bytes",
+      new TextEncoder().encode("🚀")
     )
 
     expect(
@@ -86,7 +158,9 @@ describe("File System Class", () => {
     const path = Path.file("private", "a")
 
     const { capsuleRef } = await fs.write(
-      path, "json", { foo: "bar", a: 1 }
+      path,
+      "json",
+      { foo: "bar", a: 1 }
     )
 
     expect(
@@ -177,7 +251,6 @@ describe("File System Class", () => {
     )
   })
 
-
   it("retrieves private content using a reference", async () => {
     const { capsuleRef } = await fs.write(Path.file("private", "file"), "utf8", "🔐")
 
@@ -187,7 +260,6 @@ describe("File System Class", () => {
       "🔐"
     )
   })
-
 
   // DIRECTORIES
   // -----------
@@ -224,10 +296,10 @@ describe("File System Class", () => {
     await fs.write(Path.file("public", "a", "b-file"), "utf8", "💃")
 
     const a = await fs.listDirectory(Path.directory("public"))
-    expect(a.map(i => i.name)).toEqual([ "a", "a-file" ])
+    expect(a.map(i => i.name)).toEqual(["a", "a-file"])
 
     const b = await fs.listDirectory(Path.directory("public", "a"))
-    expect(b.map(i => i.name)).toEqual([ "b", "b-file" ])
+    expect(b.map(i => i.name)).toEqual(["b", "b-file"])
   })
 
   it("lists public directories with item kind", async () => {
@@ -242,12 +314,12 @@ describe("File System Class", () => {
     await fs.write(pathFileB, "utf8", "💃")
 
     const a = await fs.listDirectory(Path.directory("public"), { withItemKind: true })
-    expect(a.map(i => i.kind)).toEqual([ Path.Kind.Directory, Path.Kind.File ])
-    expect(a.map(i => i.path)).toEqual([ pathDirA, pathFileA ])
+    expect(a.map(i => i.kind)).toEqual([Path.Kind.Directory, Path.Kind.File])
+    expect(a.map(i => i.path)).toEqual([pathDirA, pathFileA])
 
     const b = await fs.listDirectory(Path.directory("public", "a"), { withItemKind: true })
-    expect(b.map(i => i.kind)).toEqual([ Path.Kind.Directory, Path.Kind.File ])
-    expect(b.map(i => i.path)).toEqual([ pathDirB, pathFileB ])
+    expect(b.map(i => i.kind)).toEqual([Path.Kind.Directory, Path.Kind.File])
+    expect(b.map(i => i.path)).toEqual([pathDirB, pathFileB])
   })
 
   it("lists private directories", async () => {
@@ -257,10 +329,10 @@ describe("File System Class", () => {
     await fs.write(Path.file("private", "a", "b-file"), "utf8", "💃")
 
     const a = await fs.listDirectory(Path.directory("private"))
-    expect(a.map(i => i.name)).toEqual([ "a", "a-file" ])
+    expect(a.map(i => i.name)).toEqual(["a", "a-file"])
 
     const b = await fs.listDirectory(Path.directory("private", "a"))
-    expect(b.map(i => i.name)).toEqual([ "b", "b-file" ])
+    expect(b.map(i => i.name)).toEqual(["b", "b-file"])
   })
 
   it("lists private directories with item kind", async () => {
@@ -275,12 +347,12 @@ describe("File System Class", () => {
     await fs.write(pathFileB, "utf8", "💃")
 
     const a = await fs.listDirectory(Path.directory("private"), { withItemKind: true })
-    expect(a.map(i => i.kind)).toEqual([ Path.Kind.Directory, Path.Kind.File ])
-    expect(a.map(i => i.path)).toEqual([ pathDirA, pathFileA ])
+    expect(a.map(i => i.kind)).toEqual([Path.Kind.Directory, Path.Kind.File])
+    expect(a.map(i => i.path)).toEqual([pathDirA, pathFileA])
 
     const b = await fs.listDirectory(Path.directory("private", "a"), { withItemKind: true })
-    expect(b.map(i => i.kind)).toEqual([ Path.Kind.Directory, Path.Kind.File ])
-    expect(b.map(i => i.path)).toEqual([ pathDirB, pathFileB ])
+    expect(b.map(i => i.kind)).toEqual([Path.Kind.Directory, Path.Kind.File])
+    expect(b.map(i => i.path)).toEqual([pathDirB, pathFileB])
   })
 
   it("creates directories", async () => {
@@ -336,7 +408,6 @@ describe("File System Class", () => {
       true
     )
   })
-
 
   // CIDS & REFS
   // -----------
@@ -417,7 +488,6 @@ describe("File System Class", () => {
     )
   })
 
-
   // REMOVE
   // ------
 
@@ -472,7 +542,6 @@ describe("File System Class", () => {
       false
     )
   })
-
 
   // COPYING
   // -------
@@ -614,7 +683,6 @@ describe("File System Class", () => {
       true
     )
   })
-
 
   // MOVING
   // ------
@@ -793,7 +861,6 @@ describe("File System Class", () => {
     expect(await fs.exists(fromPath)).toBe(false)
   })
 
-
   // RENAMING
   // --------
 
@@ -865,7 +932,6 @@ describe("File System Class", () => {
     )
   })
 
-
   // PUBLISHING
   // ----------
 
@@ -919,7 +985,6 @@ describe("File System Class", () => {
     expect(published).toBe(false)
   })
 
-
   // EVENTS
   // ------
   // Other than "publish"
@@ -941,7 +1006,6 @@ describe("File System Class", () => {
       mutationResult.dataRoot.toString()
     )
   })
-
 
   // TRANSACTIONS
   // ------------
@@ -965,13 +1029,12 @@ describe("File System Class", () => {
     await fs.transaction(async t => {
       await t.write(Path.file("private", "file"), "utf8", "💃")
       throw new Error("Whoops")
-    }).catch(e => { })
+    }).catch(e => {})
 
     try {
-      fs.read(Path.file("private", "file"), "utf8")
+      await fs.read(Path.file("private", "file"), "utf8")
     } catch (e) {
       expect(e).toBeTruthy()
     }
   })
-
 })

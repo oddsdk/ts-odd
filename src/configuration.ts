@@ -1,30 +1,20 @@
 import { AppInfo } from "./appInfo.js"
 import { isString } from "./common/type-checks.js"
-import { appId, Permissions, ROOT_FILESYSTEM_PERMISSIONS } from "./permissions.js"
-
 
 // CONFIGURATION
-
 
 export type Configuration = {
   namespace: string | AppInfo
 
   /**
-   * Enable debug mode.
-   *
-   * @default false
+   * Enable debug mode and configure it if needed.
    */
-  debug?: boolean
-
-  /**
-   * Debugging settings.
-   */
-  debugging?: {
+  debug?: boolean | {
     /**
-    * Should I emit window post messages with session and filesystem information?
-    *
-    * @default true
-    */
+     * Should I emit window post messages with session and filesystem information?
+     *
+     * @default true
+     */
     emitWindowPostMessages?: boolean
 
     /**
@@ -40,13 +30,6 @@ export type Configuration = {
    */
   fileSystem?: {
     /**
-     * Should I load the file system immediately?
-     *
-     * @default true
-     */
-    loadImmediately?: boolean
-
-    /**
      * Set the file system version.
      *
      * This will only affect new file systems created.
@@ -59,11 +42,6 @@ export type Configuration = {
   }
 
   /**
-   * Permissions to ask a root authority.
-   */
-  permissions?: Permissions
-
-  /**
    * Configure messages that the ODD SDK sends to users.
    *
    * `versionMismatch.newer` is shown when the ODD SDK detects
@@ -74,10 +52,7 @@ export type Configuration = {
   userMessages?: UserMessages
 }
 
-
-
 // PIECES
-
 
 export type UserMessages = {
   versionMismatch: {
@@ -86,15 +61,14 @@ export type UserMessages = {
   }
 }
 
-
-
 // 🛠
 
-
-export function addRootFileSystemPermissions(config: Configuration): Configuration {
-  return { ...config, permissions: { ...config.permissions, ...ROOT_FILESYSTEM_PERMISSIONS } }
+/**
+ * App identifier.
+ */
+export function appId(app: AppInfo): string {
+  return `${app.creator}/${app.name}`
 }
-
 
 /**
  * Generate a namespace string based on a configuration.

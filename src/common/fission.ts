@@ -1,5 +1,4 @@
-import * as DOH from "../components/reference/dns-over-https.js"
-
+import { DNS } from "../components.js"
 
 /**
  * Fission endpoints.
@@ -12,38 +11,49 @@ import * as DOH from "../components/reference/dns-over-https.js"
 export type Endpoints = {
   apiPath: string
   ipfsGateway: string
+  // FIXME deprecated, remove
   lobby: string
   server: string
   userDomain: string
+  did?: string
 }
 
+// FIXME
+// n.b. currently only PRODUCTION is used, the others are not used
 
 export const PRODUCTION: Endpoints = {
-  apiPath: "/v2/api",
+  apiPath: "/api",
   ipfsGateway: "https://ipfs.runfission.com",
   lobby: "https://auth.fission.codes",
-  server: "https://runfission.com",
-  userDomain: "fission.name"
+  server: "http://localhost:3000",
+  userDomain: "fission.name",
+  did: "did:web:localhost:3000",
 }
-
 
 export const STAGING: Endpoints = {
   apiPath: "/v2/api",
   ipfsGateway: "https://ipfs.runfission.net",
   lobby: "https://auth.runfission.net",
   server: "https://runfission.net",
-  userDomain: "fissionuser.net"
+  userDomain: "fissionuser.net",
 }
 
+export const DEVELOPMENT: Endpoints = {
+  apiPath: "/api",
+  ipfsGateway: "https://ipfs.runfission.net",
+  lobby: "https://auth.runfission.net",
+  server: "http://localhost:3000",
+  userDomain: "fissionuser.net",
+  did: "did:web:localhost:3000",
+}
+
+/////////
+// API //
+/////////
 
 export function apiUrl(endpoints: Endpoints, suffix?: string): string {
   return `${endpoints.server}${endpoints.apiPath}${suffix?.length ? "/" + suffix.replace(/^\/+/, "") : ""}`
 }
-
-
-
-// API
-
 
 const didCache: {
   did: string | null
@@ -55,12 +65,16 @@ const didCache: {
   lastFetched: 0,
 }
 
-
 /**
  * Lookup the DID of a Fission API.
  * This function caches the DID for 3 hours.
  */
-export async function did(endpoints: Endpoints): Promise<string> {
+export async function did(
+  endpoints: Endpoints,
+  dns: DNS.Implementation
+): Promise<string> {
+  if (endpoints.did) return Promise.resolve(endpoints.did)
+
   let host
   try {
     host = new URL(endpoints.server).host
@@ -70,10 +84,10 @@ export async function did(endpoints: Endpoints): Promise<string> {
   const now = Date.now() // in milliseconds
 
   if (
-    didCache.host !== host ||
-    didCache.lastFetched + 1000 * 60 * 60 * 3 <= now
+    didCache.host !== host
+    || didCache.lastFetched + 1000 * 60 * 60 * 3 <= now
   ) {
-    didCache.did = await DOH.lookupTxtRecord("_did." + host)
+    didCache.did = await dns.lookupTxtRecord("_did." + host)
     didCache.host = host
     didCache.lastFetched = now
   }

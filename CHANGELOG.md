@@ -3,8 +3,22 @@
 ### Next
 
 - **Uses the rs-wnfs implementation of the Webnative file system**.
+- **Upgrades to UCAN 0.9**
+- **File system is not loaded automatically anymore.**
+- **Abstracts the account and identifier/identity systems.**
+- **Merges the interfaces of linking and the capabilities component.**
+  And now features a much more flexible interface so that each
+  consumer of UCANs can redelegate too (ie. each delegate is also an authority)
+- Adds various new file system methods, including transactions.
+- Adds a `flush` method to the depot component to allow for other block storage systems.
+- Improves the `Program` type.
 - Improves several types of the paths module.
-
+- Better organisation of UCANs and other secrets.
+- Removes sessions.
+- Removes crypto component.
+- Reference component has been removed, functionality has been moved to other components or into their own component.
+- Backwards compatibility with older Webnative clients has been removed.
+- Predefined components are imported using dynamic imports to reduce bundle size.
 
 ### V0.37.2
 
@@ -17,7 +31,6 @@
 - Moves events onto top-level program and renames them. For example, the `local-change` is now `fileSystem:local-change`.
 - Adds session create and destroy events
 - Rename Webnative SDK to ODD SDK and update external URLs
-
 
 ### V0.36.3
 
@@ -55,7 +68,6 @@ Fixes an issue with the CID log, which, in certain scenarios, caused Webnative t
 
 - Fixes persistance issue with `fs.mv()`
 - Fixes various issues with file/directory history.
-
 
 ### v0.35.2
 
@@ -408,7 +420,7 @@ Upgrade to CIDv1.
       privatePaths: ["Music"],
       publicPaths: ["Mixtapes"],
     },
-  });
+  })
   ```
 
 - Those prerequisites are passed to the `wn.redirectToLobby` function.
@@ -464,11 +476,11 @@ Upgrade to CIDv1.
 Removed the default import from the index file. Now you use the SDK as follows, browser stays the same.
 
 ```js
-import * as sdk from "fission-sdk";
-import { initialise } from "fission-sdk";
+import * as sdk from "fission-sdk"
+import { initialise } from "fission-sdk"
 
-sdk.initialise();
-initialise();
+sdk.initialise()
+initialise()
 ```
 
 ### v0.14.0

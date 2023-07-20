@@ -8,5 +8,6 @@
   "excludeExternals": true,
   "name": "ODD SDK",
   "out": "docs",
-  "theme": "default"
+  "theme": "default",
+  "readme": "./README.md"
 }

@@ -5,7 +5,8 @@
 /node_modules
 /src/vendor
 /yarn-error.log
-/fission-ipfs
+/.vscode
+/.zed
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/yarn,node,elm

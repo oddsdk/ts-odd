@@ -1,16 +1,15 @@
 import * as Raw from "multiformats/codecs/raw"
 
 import { PBLink } from "@ipld/dag-pb"
-import { PublicDirectory, PrivateForest, BlockStore } from "wnfs"
+import { BlockStore, PrivateForest, PublicDirectory } from "wnfs"
 
-import * as DAG from "../dag/index.js"
 import * as SemVer from "../common/semver.js"
+import * as Depot from "../components/depot/implementation.js"
+import * as DAG from "../dag/index.js"
 import * as Version from "./version.js"
 
 import { CID } from "../common/cid.js"
-import { Depot } from "../components.js"
 import { RootBranch } from "../path/index.js"
-
 
 /**
  * The tree that ties different file systems together.
@@ -30,7 +29,6 @@ export type RootTree = {
   version: SemVer.SemVer
 }
 
-
 /**
  * Create a new `RootTree`.
  */
@@ -45,13 +43,12 @@ export function empty(): RootTree {
   }
 }
 
-
 /**
  * Load an existing `RootTree`.
  */
 export async function fromCID({ blockStore, cid, depot }: {
-  blockStore: BlockStore,
-  cid: CID,
+  blockStore: BlockStore
+  cid: CID
   depot: Depot.Implementation
 }): Promise<RootTree> {
   const currentTime = new Date()
@@ -65,8 +62,8 @@ export async function fromCID({ blockStore, cid, depot }: {
     present: (cid: CID) => Promise<T>,
     missing: () => T
   ): Promise<T> {
-    if (links[ name ]) {
-      return present(links[ name ])
+    if (links[name]) {
+      return present(links[name])
     } else {
       console.warn(`Missing '${name}' link in the root tree from '${cid.toString()}'. Creating a new link.`)
       return missing()
@@ -111,7 +108,6 @@ export async function fromCID({ blockStore, cid, depot }: {
   }
 }
 
-
 /**
  * Retrieve the links of a root tree.
  */
@@ -124,16 +120,15 @@ export async function linksFromCID(depot: Depot.Implementation, cid: CID): Promi
   )
 
   return node.Links.reduce((acc: Record<string, CID>, link: PBLink) => {
-    return link.Name ? { ...acc, [ link.Name ]: link.Hash } : acc
+    return link.Name ? { ...acc, [link.Name]: link.Hash } : acc
   }, {})
 }
-
 
 /**
  * Store
  */
 export async function store({ blockStore, depot, rootTree }: {
-  blockStore: BlockStore,
+  blockStore: BlockStore
   depot: Depot.Implementation
   rootTree: RootTree
 }): Promise<CID> {
@@ -157,19 +152,19 @@ export async function store({ blockStore, depot, rootTree }: {
     [
       {
         Name: RootBranch.Exchange,
-        Hash: CID.decode(exchangeRoot)
+        Hash: CID.decode(exchangeRoot),
       },
       {
         Name: RootBranch.Private,
-        Hash: CID.decode(privateForest)
+        Hash: CID.decode(privateForest),
       },
       {
         Name: RootBranch.Public,
-        Hash: CID.decode(publicRoot)
+        Hash: CID.decode(publicRoot),
       },
       {
         Name: RootBranch.Version,
-        Hash: version
+        Hash: version,
       },
     ]
   )

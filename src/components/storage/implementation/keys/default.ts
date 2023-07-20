@@ -1,9 +1,6 @@
 import { Implementation } from "../../implementation.js"
 
-
-export const KEYS: Implementation[ "KEYS" ] = {
-  ACCOUNT_UCAN: "account-ucan",
+export const KEYS: Implementation["KEYS"] = {
+  CABINET: "cabinet",
   CID_LOG: "cid-log",
-  SESSION: "session",
-  UCANS: "permissioned-ucans",
 }

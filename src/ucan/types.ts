@@ -1,34 +1,31 @@
-export type SessionKey = {
-  sessionKey: string
+import * as Ucans from "@ucans/core"
+
+export { Capability, Ucan } from "@ucans/core"
+export type Facts = Record<string, unknown>
+
+export type BuildParams = {
+  // from/to
+  audience: string
+  issuer: Keypair
+
+  // capabilities
+  capabilities?: Array<Ucans.Capability>
+
+  // time bounds
+  lifetimeInSeconds?: number // expiration overrides lifetimeInSeconds
+  expiration?: number
+  notBefore?: number
+
+  // proofs / other info
+  facts?: Array<Ucans.Fact>
+  proofs?: Array<string>
+  addNonce?: boolean
 }
 
-export type Fact = SessionKey | Record<string, string>
+/**
+ * Ucan dictionary,
+ * UCANs indexed by CID string representing the UCAN.
+ */
+export type Dictionary = Record<string, Ucans.Ucan>
 
-export type Resource =
-  "*" | Record<string, string>
-
-export type Potency = string |  Record<string, unknown> | undefined | null
-
-export type UcanHeader = {
-  alg: string
-  typ: string
-  uav: string
-}
-
-export type UcanPayload = {
-  aud: string
-  exp: number
-  fct: Array<Fact>
-  iss: string
-  nbf: number
-  prf: string | null
-  ptc: Potency
-  rsc: Resource
-}
-
-export type Ucan = {
-  header: UcanHeader
-  payload: UcanPayload
-  signature: string | null
-}
-
+export type Keypair = Ucans.DidableKey

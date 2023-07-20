@@ -1,20 +1,19 @@
 import { promises as fs } from "fs"
 
-import pkg from "../package.json" assert { type: "json" };
-import lock from "../package-lock.json" assert { type: "json" };
-
+import lock from "../package-lock.json" assert { type: "json" }
+import pkg from "../package.json" assert { type: "json" }
 
 const version = pkg.version
 const wnfsVersionBound = pkg.dependencies.wnfs
 
 if (wnfsVersionBound == null) {
-    throw new Error(`Expected 'wnfs' in dependencies, but not found`)
+  throw new Error(`Expected 'wnfs' in dependencies, but not found`)
 }
 
-const resolvedWasmWnfsVersion = lock.packages[ "node_modules/wnfs" ].version
+const resolvedWasmWnfsVersion = lock.packages["node_modules/wnfs"].version
 
 if (resolvedWasmWnfsVersion == null) {
-    throw new Error(`Couldn't find resolved wnfs version in package-lock.json file`)
+  throw new Error(`Couldn't find resolved wnfs version in package-lock.json file`)
 }
 
 let versionModule = ""

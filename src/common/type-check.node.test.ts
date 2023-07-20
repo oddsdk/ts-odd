@@ -1,22 +1,23 @@
+import expect from "expect"
 import * as fc from "fast-check"
 import * as check from "./type-checks.js"
-import expect from "expect"
-
 
 const IT_FC = "property tests"
-
 
 describe("is defined", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isDefined(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          expect(check.isDefined(data)).toEqual(true)
+        }
+      )
     )
   })
 
@@ -37,18 +38,20 @@ describe("is defined", () => {
   })
 })
 
-
 describe("not null", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.notNull(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          expect(check.notNull(data)).toEqual(true)
+        }
+      )
     )
   })
 
@@ -72,14 +75,17 @@ describe("not null", () => {
 describe("is just", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isJust(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          expect(check.isJust(data)).toEqual(true)
+        }
+      )
     )
   })
 
@@ -103,14 +109,17 @@ describe("is just", () => {
 describe("is value", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isValue(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          expect(check.isValue(data)).toEqual(true)
+        }
+      )
     )
   })
 
@@ -142,14 +151,17 @@ describe("is boolean", () => {
 
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isBool(data)).toEqual(false)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          expect(check.isBool(data)).toEqual(false)
+        }
+      )
     )
   })
 
@@ -165,13 +177,16 @@ describe("is boolean", () => {
 describe("is num", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.float(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isNum(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.float(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          expect(check.isNum(data)).toEqual(true)
+        }
+      )
     )
   })
 
@@ -189,12 +204,15 @@ describe("is num", () => {
 
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-      ), data => {
-        expect(check.isNum(data)).toEqual(false)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 }
+        ),
+        data => {
+          expect(check.isNum(data)).toEqual(false)
+        }
+      )
     )
   })
 
@@ -215,7 +233,6 @@ describe("is num", () => {
   })
 })
 
-
 describe("is string", () => {
   it(IT_FC, () => {
     fc.assert(
@@ -225,13 +242,16 @@ describe("is string", () => {
     )
 
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isString(data)).toEqual(false)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          expect(check.isString(data)).toEqual(false)
+        }
+      )
     )
   })
 
@@ -261,13 +281,16 @@ describe("is object", () => {
     )
 
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isObject(data)).toEqual(false)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          expect(check.isObject(data)).toEqual(false)
+        }
+      )
     )
   })
 
