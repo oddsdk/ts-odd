@@ -40,11 +40,9 @@ export async function requestVerificationCode(
   if (!email) {
     return {
       requested: false,
-      reason: `Email is missing from the form values record. It has the following keys: ${
-        Object.keys(
-          formValues
-        ).join(", ")
-      }.`,
+      reason: `Email is missing from the form values record. It has the following keys: ${Object.keys(
+        formValues
+      ).join(", ")}.`,
     }
   }
 
@@ -53,14 +51,14 @@ export async function requestVerificationCode(
   const rawtoken = await Ucan.build({
     audience: await Fission.did(endpoints, dependencies.dns),
     issuer: await Ucan.keyPair(dependencies.agent),
-    capabilities: [DELEGATE_ALL_PROOFS],
+    capabilities: [DELEGATE_ALL_PROOFS], // FIXME this is incorrect.
     facts: [{ placeholder: "none" }], // For rs-ucan compat (obsolete, but req'd for 0.2.x)
     proofs: [], // rs-ucan compat
   })
 
   const token = Ucan.encode(rawtoken)
 
-  formValues.did = await dependencies.agent.did()
+  // formValues.did = await dependencies.agent.did()
 
   const response = await fetch(
     Fission.apiUrl(endpoints, "/auth/email/verify"),
@@ -90,9 +88,9 @@ export async function canRegister(
   if (!username) {
     return {
       canRegister: false,
-      reason: `Username is missing from the form values record. It has the following keys: ${
-        Object.keys(formValues).join(", ")
-      }.`,
+      reason: `Username is missing from the form values record. It has the following keys: ${Object.keys(
+        formValues
+      ).join(", ")}.`,
     }
   }
 
@@ -105,7 +103,13 @@ export async function canRegister(
     }
   }
 
-  if (await Fission.isUsernameAvailable(endpoints, dependencies.dns, username) === false) {
+  if (
+    (await Fission.isUsernameAvailable(
+      endpoints,
+      dependencies.dns,
+      username
+    )) === false
+  ) {
     return {
       canRegister: false,
       reason: "Username is not available.",
@@ -123,16 +127,36 @@ export async function register(
   formValues: Record<string, string>,
   identifierUcan: Ucan.Ucan
 ): Promise<
-  { registered: true; ucans: Ucan.Ucan[] } | { registered: false; reason: string }
+  | { registered: true; ucans: Ucan.Ucan[] }
+  | { registered: false; reason: string }
 > {
-  let username = formValues.username
+  const email = formValues.email
+  if (!email) {
+    return {
+      registered: false,
+      reason: `Email is missing from the form values record. It has the following keys: ${Object.keys(
+        formValues
+      ).join(", ")}.`,
+    }
+  }
 
+  const username = formValues.username
   if (!username) {
     return {
       registered: false,
-      reason: `Username is missing from the form values record. It has the following keys: ${
-        Object.keys(formValues).join(", ")
-      }.`,
+      reason: `Username is missing from the form values record. It has the following keys: ${Object.keys(
+        formValues
+      ).join(", ")}.`,
+    }
+  }
+
+  const code = formValues.code
+  if (!code) {
+    return {
+      registered: false,
+      reason: `Verification code is missing from the form values record. It has the following keys: ${Object.keys(
+        formValues
+      ).join(", ")}.`,
     }
   }
 
@@ -140,13 +164,14 @@ export async function register(
     await Ucan.build({
       audience: await Fission.did(endpoints, dependencies.dns),
       issuer: await Ucan.keyPair(dependencies.agent),
-
+      capabilities: [DELEGATE_ALL_PROOFS], // FIXME this is incorrect
       proofs: [Ucan.encode(identifierUcan)],
+      facts: [{ code }],
     })
   )
 
-  const response = await fetch(Fission.apiUrl(endpoints, "/user"), {
-    method: "PUT",
+  const response = await fetch(Fission.apiUrl(endpoints, "/account"), {
+    method: "POST",
     headers: {
       authorization: `Bearer ${token}`,
       "content-type": "application/json",
@@ -185,13 +210,11 @@ export async function canUpdateDataRoot(
   identifierUcans: Ucan.Ucan[],
   ucanDictionary: Ucan.Dictionary
 ): Promise<boolean> {
-  const facts = identifierUcans.map(
-    ucan => listFacts(ucan, ucanDictionary)
-  )
+  const facts = identifierUcans.map((ucan) => listFacts(ucan, ucanDictionary))
 
   // TODO: Check if we have the capability to update the data root.
   //       Or in the case of the old Fission server, any account UCAN.
-  return facts.some(f => !!f["username"])
+  return facts.some((f) => !!f["username"])
 }
 
 export async function lookupDataRoot(
@@ -201,7 +224,10 @@ export async function lookupDataRoot(
   ucanDictionary: Ucan.Dictionary
 ): Promise<CID | null> {
   const facts = identifierUcans.reduce(
-    (acc: Record<string, unknown>, ucan) => ({ ...acc, ...listFacts(ucan, ucanDictionary) }),
+    (acc: Record<string, unknown>, ucan) => ({
+      ...acc,
+      ...listFacts(ucan, ucanDictionary),
+    }),
     {}
   )
 
@@ -211,13 +237,10 @@ export async function lookupDataRoot(
       "Expected a username to be found in the facts of the delegation chains of the given identifier UCANs"
     )
   }
-  if (typeof username !== "string") throw new Error("Expected username to be a string, but it isn't.")
+  if (typeof username !== "string")
+    throw new Error("Expected username to be a string, but it isn't.")
 
-  return Fission.dataRoot.lookup(
-    endpoints,
-    dependencies,
-    username
-  )
+  return Fission.dataRoot.lookup(endpoints, dependencies, username)
 }
 
 export async function updateDataRoot(
@@ -233,23 +256,21 @@ export async function updateDataRoot(
 
     capabilities: [DELEGATE_ALL_PROOFS],
     proofs: await Promise.all(
-      proofs.map(prf => Ucan.cid(prf).then(c => c.toString()))
+      proofs.map((prf) => Ucan.cid(prf).then((c) => c.toString()))
     ),
   })
 
-  return Fission.dataRoot.update(
-    endpoints,
-    dependencies,
-    dataRoot,
-    ucan
-  )
+  return Fission.dataRoot.update(endpoints, dependencies, dataRoot, ucan)
 }
 
 ///////////
 // UCANS //
 ///////////
 
-export async function did(identifierUcans: Ucan.Ucan[], ucanDictionary: Ucan.Dictionary): Promise<string> {
+export async function did(
+  identifierUcans: Ucan.Ucan[],
+  ucanDictionary: Ucan.Dictionary
+): Promise<string> {
   const rootIssuers: Set<string> = identifierUcans.reduce(
     (set: Set<string>, identifierUcan): Set<string> => {
       const iss = rootIssuer(identifierUcan, ucanDictionary)
@@ -279,15 +300,18 @@ export function implementation(
 ): Implementation<Annex> {
   return {
     annex: {
-      requestVerificationCode: (...args) => requestVerificationCode(endpoints, dependencies, ...args),
+      requestVerificationCode: (...args) =>
+        requestVerificationCode(endpoints, dependencies, ...args),
     },
 
     canRegister: (...args) => canRegister(endpoints, dependencies, ...args),
     register: (...args) => register(endpoints, dependencies, ...args),
 
     canUpdateDataRoot: (...args) => canUpdateDataRoot(...args),
-    lookupDataRoot: (...args) => lookupDataRoot(endpoints, dependencies, ...args),
-    updateDataRoot: (...args) => updateDataRoot(endpoints, dependencies, ...args),
+    lookupDataRoot: (...args) =>
+      lookupDataRoot(endpoints, dependencies, ...args),
+    updateDataRoot: (...args) =>
+      updateDataRoot(endpoints, dependencies, ...args),
 
     did,
   }
