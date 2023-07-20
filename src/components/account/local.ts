@@ -1,8 +1,8 @@
-import { CID, decodeCID, encodeCID } from "../../../common/cid.js"
-import { Storage } from "../../../components.js"
-import * as Ucan from "../../../ucan/index.js"
-import { rootIssuer } from "../../../ucan/lookup.js"
-import { Implementation } from "../implementation.js"
+import { CID, decodeCID, encodeCID } from "../../common/cid.js"
+import { Storage } from "../../components.js"
+import * as Ucan from "../../ucan/index.js"
+import { rootIssuer } from "../../ucan/lookup.js"
+import { Implementation } from "./implementation.js"
 
 ////////
 // 🧩 //
@@ -46,7 +46,8 @@ export async function lookupDataRoot(
   identifierUcans: Ucan.Ucan[],
   ucanDictionary: Ucan.Dictionary
 ): Promise<CID | null> {
-  return decodeCID(dependencies.storage.getItem("data-root"))
+  const maybeRoot = await dependencies.storage.getItem("data-root")
+  return maybeRoot ? decodeCID(maybeRoot) : null
 }
 
 export async function updateDataRoot(

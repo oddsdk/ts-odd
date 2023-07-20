@@ -1,11 +1,11 @@
 import { DIDKey } from "iso-did/key"
 import { spki } from "iso-signatures/spki"
 
-import * as WebCryptoAPIAgent from "../../agent/implementation/web-crypto-api.js"
+import * as WebCryptoAPIAgent from "../agent/web-crypto-api.js"
 
-import { exportPublicKey } from "../../../common/crypto.js"
-import { Store } from "../../../common/crypto/store.js"
-import { Implementation } from "../implementation.js"
+import { exportPublicKey } from "../../common/crypto.js"
+import { Store } from "../../common/crypto/store.js"
+import { Implementation } from "./implementation.js"
 
 // 🛳️
 

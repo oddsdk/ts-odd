@@ -1,9 +1,9 @@
-import { Endpoints } from "../../../../common/fission.js"
-import { DNS } from "../../../../components.js"
+import { Endpoints } from "../../../common/fission.js"
+import { DNS } from "../../../components.js"
 import { USERNAME_BLOCKLIST } from "./blocklist.js"
 
-export * from "../../../../common/fission.js"
-export * as dataRoot from "./data-root.js"
+export * from "../../../common/fission.js"
+export * as DataRoot from "./data-root.js"
 
 /**
  * Check if a username is available.

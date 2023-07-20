@@ -1,7 +1,7 @@
 import { Multiaddr, multiaddr } from "@multiformats/multiaddr"
 
-import * as TypeChecks from "../../../../common/type-checks.js"
-import * as Storage from "../../../../components/storage/implementation.js"
+import * as TypeChecks from "../../../common/type-checks.js"
+import * as Storage from "../../../components/storage/implementation.js"
 
 export function fetchPeers(peersUrl: string): Promise<string[]> {
   return fetch(peersUrl)
