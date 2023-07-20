@@ -32,6 +32,8 @@ await esbuild.build({
 
 fs.renameSync("dist/index.js", "dist/index.esm.min.js")
 fs.renameSync("dist/index.js.map", "dist/index.esm.min.js.map")
+fs.renameSync("dist/compositions/fission.js", "dist/compositions/fission.esm.min.js")
+fs.renameSync("dist/compositions/fission.js.map", "dist/compositions/fission.esm.min.js.map")
 
 // UMD
 
@@ -55,8 +57,8 @@ const UMD = {
 }
 
 await esbuild.build({
-  entryPoints: ["src/index.ts"],
-  outfile: "dist/index.umd.min.js",
+  entryPoints: ["src/index.ts", "src/compositions/fission.ts"],
+  outdir: "dist/umd/",
   bundle: true,
   minify: true,
   sourcemap: true,
@@ -76,6 +78,11 @@ await esbuild.build({
   banner: { js: UMD.banner },
   footer: { js: UMD.footer },
 })
+
+fs.renameSync("dist/umd/index.js", "dist/umd/index.umd.min.js")
+fs.renameSync("dist/umd/index.js.map", "dist/umd/index.umd.min.js.map")
+fs.renameSync("dist/umd/compositions/fission.js", "dist/umd/compositions/fission.umd.min.js")
+fs.renameSync("dist/umd/compositions/fission.js.map", "dist/umd/compositions/fission.umd.min.js.map")
 
 // GZIP
 
