@@ -1,3 +1,4 @@
+import * as Fission from "../common/fission.js"
 import { Components } from "../components.js"
 import { Configuration } from "../configuration.js"
 import * as Config from "../configuration.js"
@@ -22,13 +23,26 @@ export async function components(
   const config = Config.extract(settings)
   const namespace = Config.namespace(config)
 
+  // Determine environment
+  let endpoints = Fission.PRODUCTION
+
+  switch (settings.environment?.toLowerCase()) {
+    case "development":
+      endpoints = Fission.DEVELOPMENT
+      break
+    case "staging":
+      endpoints = Fission.STAGING
+      break
+  }
+
+  // Collect components
   const storage = Storage.implementation({ name: namespace })
   const agentStore = Storage.implementation({ name: `${namespace}/agent` })
   const identifierStore = Storage.implementation({ name: `${namespace}/identifier` })
-  const depot = await Depot.implementation(storage, `${namespace}/blockstore`)
+  const depot = await Depot.implementation(storage, `${namespace}/blockstore`, endpoints)
 
   const agent = await Agent.implementation({ store: agentStore })
-  const channel = Channel.implementation()
+  const channel = Channel.implementation(endpoints)
   const dns = DNS.implementation()
   const identifier = await Identifier.implementation({ store: identifierStore })
   const manners = Manners.implementation(config)
@@ -37,8 +51,9 @@ export async function components(
     agent,
     dns,
     manners,
-  })
+  }, endpoints)
 
+  // Fin
   return {
     account,
     agent,
