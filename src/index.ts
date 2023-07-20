@@ -5,7 +5,7 @@ import * as Cabinet from "./repositories/cabinet.js"
 import * as CIDLog from "./repositories/cid-log.js"
 
 import { Query } from "./authority/query.js"
-import { Account, Agent, Channel, DNS, Depot, Identifier, Manners, Storage } from "./components.js"
+import { Account } from "./components.js"
 import { Components } from "./components.js"
 import { AnnexParentType } from "./components/account/implementation.js"
 import { RequestOptions } from "./components/authority/implementation.js"
