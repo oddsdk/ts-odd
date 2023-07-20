@@ -40,9 +40,11 @@ export async function requestVerificationCode(
   if (!email) {
     return {
       requested: false,
-      reason: `Email is missing from the form values record. It has the following keys: ${Object.keys(
-        formValues
-      ).join(", ")}.`,
+      reason: `Email is missing from the form values record. It has the following keys: ${
+        Object.keys(
+          formValues
+        ).join(", ")
+      }.`,
     }
   }
 
@@ -88,9 +90,11 @@ export async function canRegister(
   if (!username) {
     return {
       canRegister: false,
-      reason: `Username is missing from the form values record. It has the following keys: ${Object.keys(
-        formValues
-      ).join(", ")}.`,
+      reason: `Username is missing from the form values record. It has the following keys: ${
+        Object.keys(
+          formValues
+        ).join(", ")
+      }.`,
     }
   }
 
@@ -134,9 +138,11 @@ export async function register(
   if (!email) {
     return {
       registered: false,
-      reason: `Email is missing from the form values record. It has the following keys: ${Object.keys(
-        formValues
-      ).join(", ")}.`,
+      reason: `Email is missing from the form values record. It has the following keys: ${
+        Object.keys(
+          formValues
+        ).join(", ")
+      }.`,
     }
   }
 
@@ -144,9 +150,11 @@ export async function register(
   if (!username) {
     return {
       registered: false,
-      reason: `Username is missing from the form values record. It has the following keys: ${Object.keys(
-        formValues
-      ).join(", ")}.`,
+      reason: `Username is missing from the form values record. It has the following keys: ${
+        Object.keys(
+          formValues
+        ).join(", ")
+      }.`,
     }
   }
 
@@ -154,9 +162,11 @@ export async function register(
   if (!code) {
     return {
       registered: false,
-      reason: `Verification code is missing from the form values record. It has the following keys: ${Object.keys(
-        formValues
-      ).join(", ")}.`,
+      reason: `Verification code is missing from the form values record. It has the following keys: ${
+        Object.keys(
+          formValues
+        ).join(", ")
+      }.`,
     }
   }
 
@@ -237,8 +247,9 @@ export async function lookupDataRoot(
       "Expected a username to be found in the facts of the delegation chains of the given identifier UCANs"
     )
   }
-  if (typeof username !== "string")
+  if (typeof username !== "string") {
     throw new Error("Expected username to be a string, but it isn't.")
+  }
 
   return Fission.dataRoot.lookup(endpoints, dependencies, username)
 }
@@ -300,18 +311,15 @@ export function implementation(
 ): Implementation<Annex> {
   return {
     annex: {
-      requestVerificationCode: (...args) =>
-        requestVerificationCode(endpoints, dependencies, ...args),
+      requestVerificationCode: (...args) => requestVerificationCode(endpoints, dependencies, ...args),
     },
 
     canRegister: (...args) => canRegister(endpoints, dependencies, ...args),
     register: (...args) => register(endpoints, dependencies, ...args),
 
     canUpdateDataRoot: (...args) => canUpdateDataRoot(...args),
-    lookupDataRoot: (...args) =>
-      lookupDataRoot(endpoints, dependencies, ...args),
-    updateDataRoot: (...args) =>
-      updateDataRoot(endpoints, dependencies, ...args),
+    lookupDataRoot: (...args) => lookupDataRoot(endpoints, dependencies, ...args),
+    updateDataRoot: (...args) => updateDataRoot(endpoints, dependencies, ...args),
 
     did,
   }
