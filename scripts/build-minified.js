@@ -86,7 +86,7 @@ fs.renameSync("dist/umd/compositions/fission.js.map", "dist/umd/compositions/fis
 
 // GZIP
 
-const glob = await globby("dist/*.js")
+const glob = await globby("dist/**/*.js")
 
 glob.forEach(jsFile => {
   const outfile = jsFile
