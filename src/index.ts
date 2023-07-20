@@ -17,6 +17,32 @@ import { loadFileSystem } from "./fileSystem.js"
 import { FileSystem } from "./fs/class.js"
 import { addSampleData } from "./fs/data/sample.js"
 
+/////////////////////
+// IMPLEMENTATIONS //
+/////////////////////
+
+import * as AccountFissionDevelopment from "./components/account/implementation/fission-development.js"
+import * as AccountFissionProduction from "./components/account/implementation/fission-production.js"
+import * as AccountFissionStaging from "./components/account/implementation/fission-staging.js"
+import * as AccountLocalOnly from "./components/account/implementation/local-only.js"
+
+import * as AgentWebCrypto from "./components/agent/implementation/web-crypto-api.js"
+
+import * as ChannelFissionDevelopment from "./components/channel/implementation/fission-development.js"
+import * as ChannelFissionProduction from "./components/channel/implementation/fission-production.js"
+import * as ChannelFissionStaging from "./components/channel/implementation/fission-staging.js"
+
+import * as DepotIpfsFissionDevelopment from "./components/depot/implementation/fission-ipfs-development.js"
+import * as DepotIpfsFissionProduction from "./components/depot/implementation/fission-ipfs-production.js"
+import * as DepotIpfsFissionStaging from "./components/depot/implementation/fission-ipfs-staging.js"
+
+import * as DOH from "./components/dns/implementation/dns-over-https.js"
+import * as IdentifierWebCrypto from "./components/identifier/implementation/web-crypto-api.js"
+import * as MannersDefault from "./components/manners/implementation/default.js"
+
+import * as StorageIndexedDB from "./components/storage/implementation/indexed-db.js"
+import * as StorageMemory from "./components/storage/implementation/memory.js"
+
 ////////////////
 // RE-EXPORTS //
 ////////////////
@@ -188,7 +214,18 @@ export const account = {
   }): Promise<Account.Implementation<FissionAccountsAnnex>> {
     const env = settings?.environment || "production"
     const { agent, dns, manners } = settings
-    const { implementation } = await import(`./components/account/implementation/fission-${env}.js`)
+    const implementation = (() => {
+      switch (env) {
+        case "development":
+          return AccountFissionDevelopment.implementation
+        case "production":
+          return AccountFissionProduction.implementation
+        case "staging":
+          return AccountFissionStaging.implementation
+        default:
+          throw new Error("Unsupported environment")
+      }
+    })()
 
     return implementation({
       agent,
@@ -205,8 +242,7 @@ export const account = {
     // Dependencies
     storage: Storage.Implementation
   }): Promise<Account.Implementation<Record<string, never>>> {
-    const { implementation } = await import("./components/account/implementation/local-only.js")
-    return implementation(settings)
+    return AccountLocalOnly.implementation(settings)
   },
 }
 
@@ -227,8 +263,7 @@ export const agent = {
    * using non-exportable keys.
    */
   async webCryptoAPI({ store }: { store: Store }): Promise<Agent.Implementation> {
-    const { implementation } = await import("./components/agent/implementation/web-crypto-api.js")
-    return implementation({ store })
+    return AgentWebCrypto.implementation({ store })
   },
 }
 
@@ -255,7 +290,19 @@ export const channel = {
     environment?: string
   }): Promise<Channel.Implementation> {
     const env = settings?.environment || "production"
-    const { implementation } = await import(`./components/channel/implementation/fission-${env}.js`)
+    const implementation = (() => {
+      switch (env) {
+        case "development":
+          return ChannelFissionDevelopment.implementation
+        case "production":
+          return ChannelFissionProduction.implementation
+        case "staging":
+          return ChannelFissionStaging.implementation
+        default:
+          throw new Error("Unsupported environment")
+      }
+    })()
+
     return implementation()
   },
 }
@@ -282,7 +329,18 @@ export const depot = {
     const env = settings.environment || "production"
     const storageName = namespace(settings)
 
-    const { implementation } = await import(`./components/depot/implementation/fission-ipfs-${env}.js`)
+    const implementation = (() => {
+      switch (env) {
+        case "development":
+          return DepotIpfsFissionDevelopment.implementation
+        case "production":
+          return DepotIpfsFissionProduction.implementation
+        case "staging":
+          return DepotIpfsFissionStaging.implementation
+        default:
+          throw new Error("Unsupported environment")
+      }
+    })()
 
     return implementation(
       settings.storage,
@@ -301,8 +359,7 @@ export const dns = {
    * Look up DNS using HTTPS (Cloudflare & Google)
    */
   async doh(): Promise<DNS.Implementation> {
-    const { implementation } = await import("./components/dns/implementation/dns-over-https.js")
-    return implementation()
+    return DOH.implementation()
   },
 }
 
@@ -320,8 +377,7 @@ export const dns = {
  */
 export const identifier = {
   async webCryptoAPI({ store }: { store: Store }): Promise<Identifier.Implementation> {
-    const { implementation } = await import("./components/identifier/implementation/web-crypto-api.js")
-    return implementation({ store })
+    return IdentifierWebCrypto.implementation({ store })
   },
 }
 
@@ -336,8 +392,7 @@ export const manners = {
    * The default ODD SDK behaviour.
    */
   async default(settings: Configuration): Promise<Manners.Implementation<FileSystem>> {
-    const { implementation } = await import("./components/manners/implementation/default.js")
-    return implementation({ configuration: settings })
+    return MannersDefault.implementation({ configuration: settings })
   },
 }
 
@@ -352,16 +407,14 @@ export const storage = {
    * IndexedDB through the `localForage` library, automatically namespaced.
    */
   async indexedDB(settings: { name: string }): Promise<Storage.Implementation> {
-    const { implementation } = await import("./components/storage/implementation/indexed-db.js")
-    return implementation(settings)
+    return StorageIndexedDB.implementation(settings)
   },
 
   /**
    * In-memory store.
    */
   async memory(): Promise<Storage.Implementation> {
-    const { implementation } = await import("./components/storage/implementation/memory.js")
-    return implementation()
+    return StorageMemory.implementation()
   },
 }
 

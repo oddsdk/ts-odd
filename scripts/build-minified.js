@@ -17,7 +17,7 @@ await esbuild.build({
   sourcemap: true,
   platform: "browser",
   format: "esm",
-  target: "es2020",
+  target: "es2021",
   globalName,
   define: {
     "global": "globalThis",
