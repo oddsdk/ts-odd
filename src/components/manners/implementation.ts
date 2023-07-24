@@ -2,7 +2,6 @@ import { CID } from "multiformats"
 
 import * as Depot from "../../components/depot/implementation.js"
 import * as Events from "../../events/index.js"
-import { PrivateReference } from "../../fs/types/private-ref.js"
 import * as Path from "../../path/index.js"
 
 export type Implementation<FS> = {
@@ -21,7 +20,7 @@ export type Implementation<FS> = {
       afterLoadNew: (fs: FS, depot: Depot.Implementation) => Promise<
         null | {
           path: Path.Distinctive<Path.Segments>
-          capsuleRef: PrivateReference
+          capsuleKey: Uint8Array
         }
       >
       beforeLoadExisting: (cid: CID, depot: Depot.Implementation) => Promise<void>

@@ -1,8 +1,7 @@
-import { BlockStore, PrivateForest, PrivateRef, PublicFile, PublicNode } from "wnfs"
+import { AccessKey, BlockStore, PrivateForest, PublicFile, PublicNode } from "wnfs"
 
 import * as Path from "../path/index.js"
 import * as Mutations from "./mutations.js"
-import * as PrivateRefs from "./private-ref.js"
 import * as Queries from "./queries.js"
 
 import { CID } from "../common/cid.js"
@@ -24,7 +23,6 @@ import {
   DirectoryItemWithKind,
 } from "./types.js"
 import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js"
-import { PrivateReference } from "./types/private-ref.js"
 
 /** @group File System */
 export class TransactionContext<FS> {
@@ -160,7 +158,7 @@ export class TransactionContext<FS> {
   }
 
   /** @group Querying */
-  async capsuleRef(path: Path.Distinctive<Partitioned<Private>>): Promise<PrivateReference | null> {
+  async capsuleKey(path: Path.Distinctive<Partitioned<Private>>): Promise<Uint8Array | null> {
     let priv: PrivateNodeQueryResult
 
     try {
@@ -172,7 +170,7 @@ export class TransactionContext<FS> {
     return priv.remainder.length === 0 || priv.node.isFile()
       ? priv.node
         .store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
-        .then(([ref]: [PrivateRef, PrivateForest]) => PrivateRefs.fromWnfsRef(ref))
+        .then(([accessKey]: [AccessKey, PrivateForest]) => accessKey.toBytes())
       : priv.node.asDir()
         .getNode(
           priv.remainder,
@@ -184,7 +182,7 @@ export class TransactionContext<FS> {
           return result
             ? result
               .store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
-              .then(([ref]: [PrivateRef, PrivateForest]) => PrivateRefs.fromWnfsRef(ref))
+              .then(([accessKey]: [AccessKey, PrivateForest]) => accessKey.toBytes())
             : null
         })
   }
@@ -245,14 +243,14 @@ export class TransactionContext<FS> {
   /** @group Querying */
   async read<D extends DataType, V = unknown>(
     arg: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
-      capsuleRef: PrivateReference
+      capsuleKey: Uint8Array
     },
     dataType: DataType,
     options?: { offset: number; length: number }
   ): Promise<DataForType<D, V>>
   async read<V = unknown>(
     arg: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
-      capsuleRef: PrivateReference
+      capsuleKey: Uint8Array
     },
     dataType: DataType,
     options?: { offset: number; length: number }
@@ -276,10 +274,10 @@ export class TransactionContext<FS> {
         dataType,
         options
       )
-    } else if ("capsuleRef" in arg) {
-      // Private content from capsule reference
-      bytes = await Queries.privateReadFromReference(
-        PrivateRefs.toWnfsRef(arg.capsuleRef),
+    } else if ("capsuleKey" in arg) {
+      // Private content from capsule key
+      bytes = await Queries.privateReadFromAccessKey(
+        AccessKey.fromBytes(arg.capsuleKey),
         options
       )(
         this.#privateContext()

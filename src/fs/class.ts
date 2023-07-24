@@ -1,12 +1,21 @@
 import debounce from "debounce-promise"
 import { CID } from "multiformats/cid"
-import { BlockStore, Namefilter, PrivateDirectory, PrivateFile, PrivateNode, PublicDirectory, PublicFile } from "wnfs"
+import {
+  AccessKey,
+  BlockStore,
+  PrivateDirectory,
+  PrivateFile,
+  PrivateForest,
+  PrivateNode,
+  PublicDirectory,
+  PublicFile,
+} from "wnfs"
 
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
 
 import * as Events from "../events/index.js"
 import * as Path from "../path/index.js"
-import * as PrivateRefs from "./private-ref.js"
+import * as Queries from "./queries.js"
 import * as Rng from "./rng.js"
 import * as RootTree from "./rootTree.js"
 import * as Store from "./store.js"
@@ -36,7 +45,6 @@ import {
   TransactionResult,
 } from "./types.js"
 import { MountedPrivateNode, MountedPrivateNodes } from "./types/internal.js"
-import { PrivateReference } from "./types/private-ref.js"
 
 /** @group File System */
 export class FileSystem {
@@ -92,7 +100,7 @@ export class FileSystem {
     await WASM.load({ manners: dependencies.manners })
 
     const blockStore = Store.fromDepot(dependencies.depot)
-    const rootTree = RootTree.empty()
+    const rootTree = await RootTree.empty()
 
     return new FileSystem(
       blockStore,
@@ -196,10 +204,10 @@ export class FileSystem {
    */
   async mountPrivateNode(node: {
     path: Path.Distinctive<Path.Segments>
-    capsuleRef?: PrivateReference
+    capsuleKey?: Uint8Array
   }): Promise<{
     path: Path.Distinctive<Path.Segments>
-    capsuleRef: PrivateReference
+    capsuleKey: Uint8Array
   }> {
     const mounts = await this.mountPrivateNodes([node])
     return mounts[0]
@@ -212,23 +220,23 @@ export class FileSystem {
   async mountPrivateNodes(
     nodes: {
       path: Path.Distinctive<Path.Segments>
-      capsuleRef?: PrivateReference
+      capsuleKey?: Uint8Array
     }[]
   ): Promise<{
     path: Path.Distinctive<Path.Segments>
-    capsuleRef: PrivateReference
+    capsuleKey: Uint8Array
   }[]> {
     const newNodes = await Promise.all(
-      nodes.map(async ({ path, capsuleRef }): Promise<[string, MountedPrivateNode]> => {
+      nodes.map(async ({ path, capsuleKey }): Promise<[string, MountedPrivateNode]> => {
         let privateNode: PrivateNode
 
-        if (capsuleRef) {
-          const ref = PrivateRefs.toWnfsRef(capsuleRef)
-          privateNode = await PrivateNode.load(ref, this.#rootTree.privateForest, this.#blockStore)
+        if (capsuleKey) {
+          const accessKey = AccessKey.fromBytes(capsuleKey)
+          privateNode = await PrivateNode.load(accessKey, this.#rootTree.privateForest, this.#blockStore)
         } else {
           privateNode = Path.isFile(path)
-            ? new PrivateFile(new Namefilter(), new Date(), this.#rng).asNode()
-            : new PrivateDirectory(new Namefilter(), new Date(), this.#rng).asNode()
+            ? new PrivateFile(this.#rootTree.privateForest.emptyName(), new Date(), this.#rng).asNode()
+            : new PrivateDirectory(this.#rootTree.privateForest.emptyName(), new Date(), this.#rng).asNode()
         }
 
         return [
@@ -247,13 +255,13 @@ export class FileSystem {
     return Promise.all(
       newNodes.map(async ([_, n]: [string, MountedPrivateNode]) => {
         const storeResult = await n.node.store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
-        const [privateRef, privateForest] = storeResult
+        const [accessKey, privateForest] = storeResult
 
         this.#rootTree = { ...this.#rootTree, privateForest }
 
         return {
           path: n.path,
-          capsuleRef: PrivateRefs.fromWnfsRef(privateRef),
+          capsuleKey: accessKey.toBytes(),
         }
       })
     )
@@ -281,8 +289,8 @@ export class FileSystem {
   }
 
   /** @group Querying */
-  async capsuleRef(path: Path.Distinctive<Partitioned<Private>>): Promise<PrivateReference | null> {
-    return this.#transactionContext().capsuleRef(path)
+  async capsuleKey(path: Path.Distinctive<Partitioned<Private>>): Promise<Uint8Array | null> {
+    return this.#transactionContext().capsuleKey(path)
   }
 
   /** @group Querying */
@@ -318,14 +326,14 @@ export class FileSystem {
     V = unknown,
   >(
     path: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
-      capsuleRef: PrivateReference
+      capsuleKey: Uint8Array
     },
     dataType: D,
     options?: { offset: number; length: number }
   ): Promise<DataForType<D, V>>
   async read<V = unknown>(
     path: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
-      capsuleRef: PrivateReference
+      capsuleKey: Uint8Array
     },
     dataType: DataType,
     options?: { offset: number; length: number }
@@ -625,7 +633,7 @@ export class FileSystem {
 
       case "private": {
         const priv = findPrivateNode(partition.path, this.#privateNodes)
-        const capsuleRef = priv.node.isFile()
+        const accessKey = priv.node.isFile()
           ? await priv.node
             .asFile()
             .store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
@@ -640,12 +648,12 @@ export class FileSystem {
               if (!node) throw new Error("Failed to find needed private node for infusion")
               return node.store(this.#rootTree.privateForest, this.#blockStore)
             })
-            .then(([ref]) => ref)
+            .then(([key]) => key)
 
         return {
           dataRoot: transactionResult.dataRoot,
           publishingStatus: transactionResult.publishingStatus,
-          capsuleRef: PrivateRefs.fromWnfsRef(capsuleRef),
+          capsuleKey: accessKey.toBytes(),
         }
       }
     }

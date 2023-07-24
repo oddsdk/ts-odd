@@ -56,7 +56,6 @@ export { RequestOptions } from "./components/authority/implementation.js"
 export { CodecIdentifier } from "./dag/codecs.js"
 export { FileSystem } from "./fs/class.js"
 export { TransactionContext } from "./fs/transaction.js"
-export { PrivateReference } from "./fs/types/private-ref.js"
 export { Dictionary as UcanDictionary } from "./ucan/dictionary.js"
 
 ///////////////////////

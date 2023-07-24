@@ -9,7 +9,6 @@ import { CID } from "../common/cid.js"
 import { Partition, Partitioned } from "../path/index.js"
 import { Dictionary } from "../ucan/dictionary.js"
 import { Ucan } from "../ucan/types.js"
-import { PrivateReference } from "./types/private-ref.js"
 
 ////////
 // 🧩 //
@@ -93,7 +92,7 @@ export type PublicMutationResult = DataRootChange & {
 
 /** @group File System */
 export type PrivateMutationResult = DataRootChange & {
-  capsuleRef: PrivateReference
+  capsuleKey: Uint8Array
 }
 
 /** @group File System */

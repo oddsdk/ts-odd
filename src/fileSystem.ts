@@ -85,7 +85,7 @@ export async function loadFileSystem(args: {
       (cabinet.accessKeys[fs.did] || []).map(async a => {
         return fs.mountPrivateNode({
           path: Path.removePartition(a.path),
-          capsuleRef: a.key,
+          capsuleKey: a.key,
         })
       })
     )
@@ -114,7 +114,7 @@ export async function loadFileSystem(args: {
   if (maybeMount) {
     await cabinet.addAccessKey({
       did: fs.did,
-      key: maybeMount.capsuleRef,
+      key: maybeMount.capsuleKey,
       path: Path.combine(Path.directory("private"), maybeMount.path),
     })
   }

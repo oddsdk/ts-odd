@@ -1,8 +1,11 @@
 import * as Raw from "multiformats/codecs/raw"
+import * as Uint8Arrays from "uint8arrays"
 
 import { PBLink } from "@ipld/dag-pb"
+import { webcrypto } from "iso-base/crypto"
 import { BlockStore, PrivateForest, PublicDirectory } from "wnfs"
 
+import * as Crypto from "../common/crypto.js"
 import * as SemVer from "../common/semver.js"
 import * as Depot from "../components/depot/implementation.js"
 import * as DAG from "../dag/index.js"
@@ -10,6 +13,7 @@ import * as Version from "./version.js"
 
 import { CID } from "../common/cid.js"
 import { RootBranch } from "../path/index.js"
+import { makeRngInterface } from "./rng.js"
 
 /**
  * The tree that ties different file systems together.
@@ -30,15 +34,32 @@ export type RootTree = {
 }
 
 /**
+ * Create a new `PrivateForest`
+ */
+export async function createPrivateForest(): Promise<PrivateForest> {
+  const rng = makeRngInterface()
+  const rsaKey = await Crypto.rsa.generateKey("sign")
+  const rsaMod = await webcrypto.subtle
+    .exportKey("jwk", rsaKey.publicKey)
+    .then(a => {
+      if (a.n) return a.n
+      else throw new Error("Expected public RSA key to have `n` property")
+    })
+    .then(n => Uint8Arrays.fromString(n, "base64url"))
+
+  return new PrivateForest(rng, rsaMod)
+}
+
+/**
  * Create a new `RootTree`.
  */
-export function empty(): RootTree {
+export async function empty(): Promise<RootTree> {
   const currentTime = new Date()
 
   return {
     exchangeRoot: new PublicDirectory(currentTime),
     publicRoot: new PublicDirectory(currentTime),
-    privateForest: new PrivateForest(),
+    privateForest: await createPrivateForest(),
     version: Version.v2,
   }
 }
@@ -60,13 +81,13 @@ export async function fromCID({ blockStore, cid, depot }: {
   async function handleLink<T>(
     name: string,
     present: (cid: CID) => Promise<T>,
-    missing: () => T
+    missing: () => T | Promise<T>
   ): Promise<T> {
     if (links[name]) {
       return present(links[name])
     } else {
       console.warn(`Missing '${name}' link in the root tree from '${cid.toString()}'. Creating a new link.`)
-      return missing()
+      return await missing()
     }
   }
 
@@ -85,7 +106,7 @@ export async function fromCID({ blockStore, cid, depot }: {
   const privateForest = await handleLink(
     RootBranch.Private,
     (cid) => PrivateForest.load(cid.bytes, blockStore),
-    () => new PrivateForest()
+    () => createPrivateForest()
   )
 
   const version = await handleLink(

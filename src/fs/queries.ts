@@ -1,7 +1,7 @@
 import { exporter as exportUnixFs } from "ipfs-unixfs-exporter"
 import all from "it-all"
 import * as Uint8arrays from "uint8arrays"
-import { BlockStore, PrivateDirectory, PrivateFile, PrivateNode, PrivateRef, PublicDirectory, PublicNode } from "wnfs"
+import { AccessKey, BlockStore, PrivateDirectory, PrivateFile, PrivateNode, PublicDirectory, PublicNode } from "wnfs"
 
 import * as Path from "../path/index.js"
 
@@ -231,8 +231,8 @@ export const privateRead =
     return bytes
   }
 
-export const privateReadFromReference =
-  (ref: PrivateRef, options?: { offset: number; length: number }) =>
+export const privateReadFromAccessKey =
+  (accessKey: AccessKey, options?: { offset: number; length: number }) =>
   async (context: PrivateContext): Promise<Uint8Array> => {
     // TODO: Respect `offset` and `length` options when private streaming API is exposed in rs-wnfs
     const offset = options?.offset
@@ -240,7 +240,7 @@ export const privateReadFromReference =
 
     // Retrieve node
     const node = await PrivateNode.load(
-      ref,
+      accessKey,
       context.rootTree.privateForest,
       context.blockStore
     )

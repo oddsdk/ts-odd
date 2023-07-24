@@ -53,12 +53,12 @@ describe("File System Class", async () => {
   // LOADING
   // -------
 
-  it("loads a file system and capsule references + content cids", async () => {
+  it("loads a file system and capsule keys + content cids", async () => {
     const publicPath = Path.file("public", "nested-public", "public.txt")
     const privatePath = Path.file("private", "nested-private", "private.txt")
 
     const { contentCID } = await fs.write(publicPath, "utf8", "public")
-    const { capsuleRef, dataRoot } = await fs.write(privatePath, "utf8", "private")
+    const { capsuleKey, dataRoot } = await fs.write(privatePath, "utf8", "private")
 
     const unixFsEntry = await exporter(contentCID, depot.blockstore)
     const contentBytes = Uint8arrays.concat(await all(unixFsEntry.content()))
@@ -76,14 +76,14 @@ describe("File System Class", async () => {
 
     const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, ucanDictionary })
     await loadedFs.mountPrivateNodes([
-      { path: Path.removePartition(privatePath), capsuleRef },
+      { path: Path.removePartition(privatePath), capsuleKey },
     ])
 
     assert.equal(await loadedFs.read(publicPath, "utf8"), "public")
     assert.equal(await loadedFs.read(privatePath, "utf8"), "private")
   })
 
-  it("loads a file system and capsule references + content cids after multiple changes", async () => {
+  it("loads a file system and capsule keys + content cids after multiple changes", async () => {
     const publicPath = Path.file("public", "nested-public", "public.txt")
     const privatePath = Path.file("private", "nested-private", "private.txt")
 
@@ -92,7 +92,7 @@ describe("File System Class", async () => {
 
     await fs.write(Path.file("public", "part.two"), "utf8", "public-2")
     const { dataRoot } = await fs.write(Path.file("private", "part.two"), "utf8", "private-2")
-    const capsuleRef = await fs.capsuleRef(Path.directory("private"))
+    const capsuleKey = await fs.capsuleKey(Path.directory("private"))
 
     const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
@@ -102,22 +102,21 @@ describe("File System Class", async () => {
 
     const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, ucanDictionary })
 
-    if (capsuleRef) {
+    if (capsuleKey) {
       await loadedFs.mountPrivateNodes([
-        { path: Path.root(), capsuleRef },
+        { path: Path.root(), capsuleKey },
       ])
     } else {
-      throw new Error("Expected a capsule ref")
+      throw new Error("Expected a capsule key")
     }
 
     assert.equal(await loadedFs.read(publicPath, "utf8"), "public")
     assert.equal(await loadedFs.read(privatePath, "utf8"), "private")
   })
 
-  // TODO: Currently fails because of a bug in rs-wnfs
-  it.skip("loads a private file system given an older capsule reference", async () => {
+  it("loads a private file system given an older capsule key", async () => {
     const privatePath = Path.file("private", "nested-private", "private.txt")
-    const oldCapsuleRef = await fs.capsuleRef(Path.directory("private"))
+    const oldCapsuleKey = await fs.capsuleKey(Path.directory("private"))
 
     const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
@@ -128,12 +127,12 @@ describe("File System Class", async () => {
     const { dataRoot } = await fs.write(privatePath, "utf8", "private")
     const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, ucanDictionary })
 
-    if (oldCapsuleRef) {
+    if (oldCapsuleKey) {
       await loadedFs.mountPrivateNodes([
-        { path: Path.root(), capsuleRef: oldCapsuleRef },
+        { path: Path.root(), capsuleKey: oldCapsuleKey },
       ])
     } else {
-      throw new Error("Expected a capsule ref")
+      throw new Error("Expected a capsule key")
     }
 
     assert.equal(await loadedFs.read(privatePath, "utf8"), "private")
@@ -157,7 +156,7 @@ describe("File System Class", async () => {
   it("writes and reads private files", async () => {
     const path = Path.file("private", "a")
 
-    const { capsuleRef } = await fs.write(
+    const { capsuleKey } = await fs.write(
       path,
       "json",
       { foo: "bar", a: 1 }
@@ -242,11 +241,11 @@ describe("File System Class", async () => {
     )
   })
 
-  it("retrieves private content using a reference", async () => {
-    const { capsuleRef } = await fs.write(Path.file("private", "file"), "utf8", "🔐")
+  it("retrieves private content using a capsule key", async () => {
+    const { capsuleKey } = await fs.write(Path.file("private", "file"), "utf8", "🔐")
 
     assert.equal(
-      await fs.read({ capsuleRef }, "utf8"),
+      await fs.read({ capsuleKey }, "utf8"),
       "🔐"
     )
   })
@@ -432,36 +431,36 @@ describe("File System Class", async () => {
     )
   })
 
-  it("can get a capsule reference for an existing private file", async () => {
+  it("can get a capsule key for an existing private file", async () => {
     const path = Path.file("private", "a", "b", "file")
 
-    const { capsuleRef } = await fs.write(path, "utf8", "💃")
-    const ref = await fs.capsuleRef(path)
+    const { capsuleKey } = await fs.write(path, "utf8", "💃")
+    const key = await fs.capsuleKey(path)
 
     assert.equal(
-      ref ? JSON.stringify(ref) : null,
-      JSON.stringify(capsuleRef)
+      key ? JSON.stringify(key) : null,
+      JSON.stringify(capsuleKey)
     )
   })
 
   it("can get a capsule CID for an existing private directory", async () => {
     const path = Path.directory("private", "a", "b", "directory")
 
-    const { capsuleRef } = await fs.ensureDirectory(path)
-    const ref = await fs.capsuleRef(path)
+    const { capsuleKey } = await fs.ensureDirectory(path)
+    const key = await fs.capsuleKey(path)
 
     assert.equal(
-      ref ? JSON.stringify(ref) : null,
-      JSON.stringify(capsuleRef)
+      key ? JSON.stringify(key) : null,
+      JSON.stringify(capsuleKey)
     )
   })
 
   it("can get a capsule CID for a mounted private directory", async () => {
     const path = Path.directory("private")
-    const ref = await fs.capsuleRef(path)
+    const key = await fs.capsuleKey(path)
 
     assert.notEqual(
-      ref ? JSON.stringify(ref) : null,
+      key ? JSON.stringify(key) : null,
       null
     )
   })
@@ -792,7 +791,7 @@ describe("File System Class", async () => {
     const toPath = Path.file("private", "a", "b", "c", "d", "file")
 
     const { capsuleCID } = await fs.write(fromPath, "utf8", "💃")
-    const { capsuleRef } = await fs.move(fromPath, toPath)
+    const { capsuleKey } = await fs.move(fromPath, toPath)
 
     assert.equal(await fs.read(toPath, "utf8"), "💃")
     assert.equal(await fs.exists(fromPath), false)
@@ -802,7 +801,7 @@ describe("File System Class", async () => {
     const fromPath = Path.file("private", "a", "b", "file")
     const toPath = Path.file("public", "a", "b", "c", "d", "file")
 
-    const { capsuleRef } = await fs.write(fromPath, "utf8", "💃")
+    const { capsuleKey } = await fs.write(fromPath, "utf8", "💃")
     const { capsuleCID } = await fs.move(fromPath, toPath)
 
     assert.equal(await fs.read(toPath, "utf8"), "💃")
