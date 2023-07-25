@@ -22,10 +22,4 @@ export type BuildParams = {
   addNonce?: boolean
 }
 
-/**
- * Ucan dictionary,
- * UCANs indexed by CID string representing the UCAN.
- */
-export type Dictionary = Record<string, Ucans.Ucan>
-
 export type Keypair = Ucans.DidableKey

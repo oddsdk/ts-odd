@@ -1,6 +1,7 @@
 import { CID } from "./common/cid.js"
 import { EventEmitter } from "./common/event-emitter.js"
 import { DistinctivePath, Partition, Partitioned } from "./path/index.js"
+import { Ucan } from "./ucan/types.js"
 
 export { EventEmitter, EventEmitter as Emitter }
 
@@ -26,19 +27,19 @@ export type ListenTo<EventMap> = Pick<
 >
 
 export type FileSystem = {
-  "fileSystem:local-change": { dataRoot: CID; path: DistinctivePath<Partitioned<Partition>> }
-  "fileSystem:publish": { dataRoot: CID }
+  "local-change": { dataRoot: CID; path: DistinctivePath<Partitioned<Partition>> }
+  "publish": { dataRoot: CID; proofs: Ucan[] }
 }
 
 export type AuthorityRequestor = {
-  "authority:challenge": any // TODO
+  "challenge": any // TODO
 }
 
 export type AuthorityProvider = {
-  "authority:approved": void
-  "authority:challenge": any // TODO
-  "authority:dismissed": void
-  "authority:query": Record<string, any> // TODO
+  "approved": void
+  "challenge": any // TODO
+  "dismissed": void
+  "query": Record<string, any> // TODO
 }
 
 export type Repositories<Collection> = {

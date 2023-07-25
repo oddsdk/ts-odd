@@ -20,7 +20,9 @@ import { BuildParams, Keypair } from "./types.js"
 export { encode, encodeHeader, encodePayload, isExpired, isTooEarly, parse, verify } from "@ucans/core"
 export * from "./types.js"
 
-// 🛠️
+////////
+// 🛠️ //
+////////
 
 export async function build(
   params: BuildParams
@@ -83,6 +85,10 @@ export async function keyPair(agent: Agent.Implementation): Promise<Keypair> {
 export async function plugins(): Promise<Ucans.Plugins> {
   return new Plugins([], {})
 }
+
+////////
+// ㊙️ //
+////////
 
 class Plugins extends Ucans.Plugins {
   verifyIssuerAlg(did: string, jwtAlg: string): boolean {

@@ -8,10 +8,10 @@ import Repository, { RepositoryOptions } from "../repository.js"
 // 🛠️ //
 ////////
 
-export function create({ storage }: { storage: Storage.Implementation }): Promise<Repo> {
+export function create({ did, storage }: { did: string; storage: Storage.Implementation }): Promise<Repo> {
   return Repo.create({
     storage,
-    storageName: storage.KEYS.CID_LOG,
+    storageName: `${storage.KEYS.CID_LOG}/${did}`,
   })
 }
 

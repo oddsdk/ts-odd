@@ -1,7 +1,8 @@
-import { CID, decodeCID, encodeCID } from "../../common/cid.js"
-import { Storage } from "../../components.js"
-import * as Ucan from "../../ucan/index.js"
-import { rootIssuer } from "../../ucan/lookup.js"
+import * as Identifier from "../identifier/implementation.js"
+
+import { AccountQuery } from "../../authority/query.js"
+import { Dictionary } from "../../ucan/dictionary.js"
+import { Ucan } from "../../ucan/index.js"
 import { Implementation } from "./implementation.js"
 
 ////////
@@ -9,7 +10,6 @@ import { Implementation } from "./implementation.js"
 ////////
 
 export type Annex = Record<string, never>
-export type Dependencies = { storage: Storage.Implementation }
 
 //////////////
 // CREATION //
@@ -23,40 +23,11 @@ export async function canRegister(): Promise<
 
 export async function register(
   formValues: Record<string, string>,
-  identifierUcan: Ucan.Ucan
+  identifierUcan: Ucan
 ): Promise<
-  { registered: true; ucans: Ucan.Ucan[] } | { registered: false; reason: string }
+  { registered: true; ucans: Ucan[] } | { registered: false; reason: string }
 > {
   return { registered: true, ucans: [] }
-}
-
-///////////////
-// DATA ROOT //
-///////////////
-
-export async function canUpdateDataRoot(
-  identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary
-): Promise<boolean> {
-  return true
-}
-
-export async function lookupDataRoot(
-  dependencies: Dependencies,
-  identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary
-): Promise<CID | null> {
-  const maybeRoot = await dependencies.storage.getItem("data-root")
-  return maybeRoot ? decodeCID(maybeRoot) : null
-}
-
-export async function updateDataRoot(
-  dependencies: Dependencies,
-  dataRoot: CID,
-  proofs: Ucan.Ucan[]
-): Promise<{ updated: true } | { updated: false; reason: string }> {
-  await dependencies.storage.setItem("data-root", encodeCID(dataRoot))
-  return { updated: true }
 }
 
 ///////////
@@ -64,12 +35,16 @@ export async function updateDataRoot(
 ///////////
 
 export async function did(
-  identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary
+  identifier: Identifier.Implementation,
+  ucanDictionary: Dictionary
 ): Promise<string> {
+  const identifierUcans = ucanDictionary.lookupByAudience(
+    await identifier.did()
+  )
+
   const rootIssuers: Set<string> = identifierUcans.reduce(
     (set: Set<string>, identifierUcan): Set<string> => {
-      const iss = rootIssuer(identifierUcan, ucanDictionary)
+      const iss = ucanDictionary.rootIssuer(identifierUcan)
       return set.add(iss)
     },
     new Set() as Set<string>
@@ -86,23 +61,32 @@ export async function did(
   return root
 }
 
+export async function hasSufficientAuthority(
+  identifier: Identifier.Implementation,
+  ucanDictionary: Dictionary
+): Promise<
+  { suffices: true } | { suffices: false; reason: string }
+> {
+  return { suffices: true }
+}
+
+export async function provideAuthority(accountQuery: AccountQuery): Promise<Ucan[]> {
+  return [] // TODO
+}
+
 ////////
 // 🛳 //
 ////////
 
-export function implementation(
-  dependencies: Dependencies
-): Implementation<Annex> {
+export function implementation(): Implementation<Annex> {
   return {
-    annex: {},
+    annex: () => ({}),
 
     canRegister,
     register,
 
-    canUpdateDataRoot,
-    lookupDataRoot: (...args) => lookupDataRoot(dependencies, ...args),
-    updateDataRoot: (...args) => updateDataRoot(dependencies, ...args),
-
     did,
+    hasSufficientAuthority,
+    provideAuthority,
   }
 }

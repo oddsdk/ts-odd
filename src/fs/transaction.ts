@@ -7,9 +7,8 @@ import * as Queries from "./queries.js"
 
 import { CID } from "../common/cid.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
-import { Cabinet } from "../repositories/cabinet.js"
-import { Ucan } from "../ucan/index.js"
-import { lookupFsWriteUcan } from "../ucan/lookup.js"
+import { Dictionary } from "../ucan/dictionary.js"
+import { Ucan } from "../ucan/types.js"
 import { addOrIncreaseNameNumber, pathSegmentsWithoutPartition, searchLatest } from "./common.js"
 import { dataFromBytes, dataToBytes } from "./data.js"
 import { throwNoAccess } from "./errors.js"
@@ -29,31 +28,31 @@ import { PrivateReference } from "./types/private-ref.js"
 
 export class TransactionContext<FS> {
   #blockStore: BlockStore
-  #cabinet: Cabinet
   #dependencies: Dependencies<FS>
-  #did: () => Promise<string>
+  #did: string
   #privateNodes: MountedPrivateNodes
   #rng: Rng
   #rootTree: RootTree
+  #ucanDictionary: Dictionary
 
   #changedPaths: Set<Path.Distinctive<Partitioned<Partition>>>
 
   constructor(
     blockStore: BlockStore,
-    cabinet: Cabinet,
     dependencies: Dependencies<FS>,
-    did: () => Promise<string>,
+    did: string,
     privateNodes: MountedPrivateNodes,
     rng: Rng,
-    rootTree: RootTree
+    rootTree: RootTree,
+    ucanDictionary: Dictionary
   ) {
     this.#blockStore = blockStore
-    this.#cabinet = cabinet
     this.#dependencies = dependencies
     this.#did = did
     this.#privateNodes = privateNodes
     this.#rng = rng
     this.#rootTree = rootTree
+    this.#ucanDictionary = ucanDictionary
 
     this.#changedPaths = new Set()
   }
@@ -65,17 +64,13 @@ export class TransactionContext<FS> {
     rootTree: RootTree
   }> {
     const changedPaths = Array.from(context.#changedPaths)
-    const identifier = await context.#dependencies.identifier.did()
-    const identifierUcans = context.#cabinet.audienceUcans(identifier)
-    const fileSystemDID = await context.#did()
 
     // Proofs
     const proofs = await changedPaths.reduce(
       async (accPromise: Promise<Ucan[]>, changedPath: Path.Distinctive<Partitioned<Partition>>): Promise<Ucan[]> => {
         const acc = await accPromise
-        const proof = lookupFsWriteUcan(
-          identifierUcans,
-          fileSystemDID,
+        const proof = context.#ucanDictionary.lookupFsWriteUcan(
+          context.#did,
           changedPath
         )
 

@@ -1,17 +1,16 @@
 import { CID } from "multiformats/cid"
 
 import type { Cabinet } from "./repositories/cabinet.js"
-import type { Repo as CIDLog } from "./repositories/cid-log.js"
 
-import * as Events from "./events.js"
 import * as Path from "./path/index.js"
+import * as CIDLog from "./repositories/cid-log.js"
 import * as Ucan from "./ucan/index.js"
 
 import { Maybe } from "./common/index.js"
-import { Account, Identifier } from "./components.js"
-import { AnnexParentType } from "./components/account/implementation.js"
+import { Identifier, Storage } from "./components.js"
 import { FileSystem } from "./fs/class.js"
 import { Dependencies } from "./fs/types.js"
+import { Dictionary } from "./ucan/dictionary.js"
 
 ////////
 // 🛠️ //
@@ -20,48 +19,38 @@ import { Dependencies } from "./fs/types.js"
 /**
  * Load a user's file system.
  */
-export async function loadFileSystem<Annex extends AnnexParentType>(args: {
+export async function loadFileSystem(args: {
   cabinet: Cabinet
-  cidLog: CIDLog
-  dependencies: Dependencies<FileSystem> & { account: Account.Implementation<Annex> }
-  did?: string
-  eventEmitter: Events.Emitter<Events.FileSystem>
+  dataRoot?: CID
+  dataRootUpdater?: (
+    dataRoot: CID,
+    proofs: Ucan.Ucan[]
+  ) => Promise<{ updated: true } | { updated: false; reason: string }>
+  dependencies: Dependencies<FileSystem> & {
+    identifier: Identifier.Implementation
+    storage: Storage.Implementation
+  }
+  did: string
 }): Promise<FileSystem> {
-  const { cabinet, cidLog, dependencies, eventEmitter } = args
-  const { account, depot, identifier, manners } = dependencies
+  const { cabinet, dataRootUpdater, dependencies, did } = args
+  const { depot, identifier, manners, storage } = dependencies
 
-  let cid: Maybe<CID>
+  let cid: Maybe<CID> = args.dataRoot || null
   let fs: FileSystem
 
+  // Create CIDLog, namespaced by identifier
+  const cidLog = await CIDLog.create({ storage, did })
+
   // Determine the correct CID of the file system to load
-  const identifierDID = await dependencies.identifier.did()
-  const identifierUcans = cabinet.audienceUcans(identifierDID)
-  const isAuthed = await account.canUpdateDataRoot(identifierUcans, cabinet.ucansIndexedByCID)
+  const logIdx = cid ? cidLog.indexOf(cid) : -1
 
-  const dataCid = navigator.onLine && isAuthed
-    ? await account.lookupDataRoot(identifierUcans, cabinet.ucansIndexedByCID)
-    : null
-
-  const logIdx = dataCid ? cidLog.indexOf(dataCid) : -1
-
-  if (!navigator.onLine) {
-    // Offline, use local CID
-    cid = cidLog.newest()
-    if (cid) manners.log("📓 Working offline, using local CID:", cid.toString())
-    else manners.log("📓 Working offline, creating a new file system")
-  } else if (!isAuthed) {
-    // Not authed
+  if (!cid) {
+    // No DNS CID yet
     cid = cidLog.newest()
     if (cid) manners.log("📓 Using local CID:", cid.toString())
     else manners.log("📓 Creating a new file system")
-  } else if (!dataCid) {
-    // No DNS CID yet
-    cid = cidLog.newest()
-    if (cid) manners.log("📓 No DNSLink, using local CID:", cid.toString())
-    else manners.log("📓 Creating a new file system")
   } else if (logIdx === cidLog.length() - 1) {
     // DNS is up to date
-    cid = dataCid
     manners.log("📓 DNSLink is up to date:", cid.toString())
   } else if (logIdx !== -1 && logIdx < cidLog.length() - 1) {
     // DNS is outdated
@@ -71,7 +60,6 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
     manners.log("📓 DNSLink is outdated (" + idxLog + "), using local CID:", cid.toString())
   } else {
     // DNS is newer
-    cid = dataCid
     await cidLog.add([cid])
     manners.log("📓 DNSLink is newer:", cid.toString())
 
@@ -81,27 +69,20 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
   }
 
   // If a file system exists, load it and return it
-  const did = async (): Promise<string> => {
-    if (args.did) return args.did
-
-    return isAuthed
-      ? await accountDID({ account, cabinet, identifier })
-      : await identifier.did()
-  }
-
-  const updateDataRoot = dependencies.account.updateDataRoot
+  const ucanDictionary = new Dictionary(cabinet)
+  const updateDataRoot = dataRootUpdater
 
   if (cid) {
     await manners.fileSystem.hooks.beforeLoadExisting(cid, depot)
 
     fs = await FileSystem.fromCID(
       cid,
-      { cabinet, cidLog, dependencies, did, eventEmitter, updateDataRoot, localOnly: !isAuthed }
+      { cidLog, dependencies, did, ucanDictionary, updateDataRoot }
     )
 
     // Mount private nodes
     await Promise.all(
-      cabinet.accessKeys.map(async a => {
+      (cabinet.accessKeys[fs.did] || []).map(async a => {
         return fs.mountPrivateNode({
           path: Path.removePartition(a.path),
           capsuleRef: a.key,
@@ -118,23 +99,21 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
   await manners.fileSystem.hooks.beforeLoadNew(depot)
 
   fs = await FileSystem.empty({
-    cabinet,
     cidLog,
     dependencies,
     did,
-    eventEmitter,
+    ucanDictionary,
     updateDataRoot,
-
-    localOnly: !isAuthed,
   })
 
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)
 
   // Self delegate file system UCAN & add stuff to cabinet
-  const fileSystemDelegation = await selfDelegateCapabilities(identifier)
+  const fileSystemDelegation = await selfDelegateCapabilities(identifier, fs.did)
   await cabinet.addUcan(fileSystemDelegation)
   if (maybeMount) {
     await cabinet.addAccessKey({
+      did: fs.did,
       key: maybeMount.capsuleRef,
       path: Path.combine(Path.directory("private"), maybeMount.path),
     })
@@ -150,23 +129,11 @@ export async function loadFileSystem<Annex extends AnnexParentType>(args: {
 }
 
 /**
- * Fetches the account DID.
- */
-export async function accountDID<Annex extends AnnexParentType>({ account, cabinet, identifier }: {
-  account: Account.Implementation<Annex>
-  cabinet: Cabinet
-  identifier: Identifier.Implementation
-}): Promise<string> {
-  const identifierDID = await identifier.did()
-  const identifierUcans = cabinet.audienceUcans(identifierDID)
-  return account.did(identifierUcans, cabinet.ucansIndexedByCID)
-}
-
-/**
  * Create a UCAN that self-delegates the file system capabilities.
  */
 export async function selfDelegateCapabilities(
-  identifier: Identifier.Implementation
+  identifier: Identifier.Implementation,
+  audience: string
 ) {
   const identifierDID = await identifier.did()
 
@@ -177,7 +144,7 @@ export async function selfDelegateCapabilities(
       jwtAlg: await identifier.ucanAlgorithm(),
       sign: identifier.sign,
     },
-    audience: identifierDID,
+    audience,
 
     // capabilities
     capabilities: [
