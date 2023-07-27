@@ -1,4 +1,4 @@
-import expect from "expect"
+import assert from "assert"
 import { exporter } from "ipfs-unixfs-exporter"
 import all from "it-all"
 import * as Uint8arrays from "uint8arrays"
@@ -58,11 +58,7 @@ describe("File System Class", async () => {
     const unixFsEntry = await exporter(contentCID, depot.blockstore)
     const contentBytes = Uint8arrays.concat(await all(unixFsEntry.content()))
 
-    expect(
-      new TextDecoder().decode(contentBytes)
-    ).toEqual(
-      "public"
-    )
+    assert.equal(new TextDecoder().decode(contentBytes), "public")
 
     const cidLog = await CIDLog.create({ storage })
     const cabinet = await Cabinet.create({ storage })
@@ -75,8 +71,8 @@ describe("File System Class", async () => {
       { path: Path.removePartition(privatePath), capsuleRef },
     ])
 
-    expect(await loadedFs.read(publicPath, "utf8")).toEqual("public")
-    expect(await loadedFs.read(privatePath, "utf8")).toEqual("private")
+    assert.equal(await loadedFs.read(publicPath, "utf8"), "public")
+    assert.equal(await loadedFs.read(privatePath, "utf8"), "private")
   })
 
   it("loads a file system and capsule references + content cids after multiple changes", async () => {
@@ -103,11 +99,11 @@ describe("File System Class", async () => {
         { path: Path.root(), capsuleRef },
       ])
     } else {
-      throw new Error("Expected a capsule ref")
+      throw new Error("asserted a capsule ref")
     }
 
-    expect(await loadedFs.read(publicPath, "utf8")).toEqual("public")
-    expect(await loadedFs.read(privatePath, "utf8")).toEqual("private")
+    assert.equal(await loadedFs.read(publicPath, "utf8"), "public")
+    assert.equal(await loadedFs.read(privatePath, "utf8"), "private")
   })
 
   // TODO: Currently fails because of a bug in rs-wnfs
@@ -129,10 +125,10 @@ describe("File System Class", async () => {
         { path: Path.root(), capsuleRef: oldCapsuleRef },
       ])
     } else {
-      throw new Error("Expected a capsule ref")
+      throw new Error("asserted a capsule ref")
     }
 
-    expect(await loadedFs.read(privatePath, "utf8")).toEqual("private")
+    assert.equal(await loadedFs.read(privatePath, "utf8"), "private")
   })
 
   // READING & WRITING
@@ -147,11 +143,7 @@ describe("File System Class", async () => {
       new TextEncoder().encode("🚀")
     )
 
-    expect(
-      await fs.read(path, "utf8")
-    ).toEqual(
-      "🚀"
-    )
+    assert.equal(await fs.read(path, "utf8"), "🚀")
   })
 
   it("writes and reads private files", async () => {
@@ -163,9 +155,8 @@ describe("File System Class", async () => {
       { foo: "bar", a: 1 }
     )
 
-    expect(
-      await fs.read(path, "json")
-    ).toEqual(
+    assert.equal(
+      await fs.read(path, "json"),
       { foo: "bar", a: 1 }
     )
   })
@@ -177,33 +168,24 @@ describe("File System Class", async () => {
     await fs.write(pathPublic, "utf8", "🌍")
     await fs.write(pathPrivate, "utf8", "🔐")
 
-    expect(await fs.exists(pathPublic)).toBe(true)
-    expect(await fs.exists(pathPrivate)).toBe(true)
+    assert(await fs.exists(pathPublic))
+    assert(await fs.exists(pathPrivate))
   })
 
   it("creates files", async () => {
     await fs.write(Path.file("private", "File"), "utf8", "🧞")
     await fs.createFile(Path.file("private", "File"), "utf8", "🧞")
 
-    expect(
-      await fs.exists(Path.file("private", "File (1)"))
-    ).toBe(
-      true
-    )
+    assert(await fs.exists(Path.file("private", "File (1)")))
 
     await fs.createFile(Path.file("private", "File"), "utf8", "🧞")
 
-    expect(
-      await fs.exists(Path.file("private", "File (2)"))
-    ).toBe(
-      true
-    )
+    assert(await fs.exists(Path.file("private", "File (2)")))
 
     await fs.createFile(Path.file("private", "File (1)"), "utf8", "🧞")
 
-    expect(
-      await fs.read(Path.file("private", "File (3)"), "utf8")
-    ).toEqual(
+    assert.equal(
+      await fs.read(Path.file("private", "File (3)"), "utf8"),
       "🧞"
     )
   })
@@ -212,25 +194,16 @@ describe("File System Class", async () => {
     await fs.write(Path.file("private", "File.7z"), "utf8", "🧞")
     await fs.createFile(Path.file("private", "File.7z"), "utf8", "🧞")
 
-    expect(
-      await fs.exists(Path.file("private", "File (1).7z"))
-    ).toBe(
-      true
-    )
+    assert(await fs.exists(Path.file("private", "File (1).7z")))
 
     await fs.createFile(Path.file("private", "File.7z"), "utf8", "🧞")
 
-    expect(
-      await fs.exists(Path.file("private", "File (2).7z"))
-    ).toBe(
-      true
-    )
+    assert(await fs.exists(Path.file("private", "File (2).7z")))
 
     await fs.createFile(Path.file("private", "File (1).7z"), "utf8", "🧞")
 
-    expect(
-      await fs.read(Path.file("private", "File (3).7z"), "utf8")
-    ).toEqual(
+    assert.equal(
+      await fs.read(Path.file("private", "File (3).7z"), "utf8"),
       "🧞"
     )
   })
@@ -238,15 +211,13 @@ describe("File System Class", async () => {
   it("retrieves public content using a CID", async () => {
     const { contentCID, capsuleCID } = await fs.write(Path.file("public", "file"), "utf8", "🌍")
 
-    expect(
-      await fs.read({ contentCID }, "utf8")
-    ).toEqual(
+    assert.equal(
+      await fs.read({ contentCID }, "utf8"),
       "🌍"
     )
 
-    expect(
-      await fs.read({ capsuleCID }, "utf8")
-    ).toEqual(
+    assert.equal(
+      await fs.read({ capsuleCID }, "utf8"),
       "🌍"
     )
   })
@@ -254,9 +225,8 @@ describe("File System Class", async () => {
   it("retrieves private content using a reference", async () => {
     const { capsuleRef } = await fs.write(Path.file("private", "file"), "utf8", "🔐")
 
-    expect(
-      await fs.read({ capsuleRef }, "utf8")
-    ).toEqual(
+    assert.equal(
+      await fs.read({ capsuleRef }, "utf8"),
       "🔐"
     )
   })
@@ -273,13 +243,13 @@ describe("File System Class", async () => {
     await fs.ensureDirectory(Path.directory("private", "a", "b"))
     await fs.ensureDirectory(Path.directory("private", "a", "b", "c"))
 
-    expect(await fs.exists(Path.directory("public", "a"))).toBe(true)
-    expect(await fs.exists(Path.directory("public", "a", "b"))).toBe(true)
-    expect(await fs.exists(Path.directory("public", "a", "b", "c"))).toBe(true)
+    assert(await fs.exists(Path.directory("public", "a")))
+    assert(await fs.exists(Path.directory("public", "a", "b")))
+    assert(await fs.exists(Path.directory("public", "a", "b", "c")))
 
-    expect(await fs.exists(Path.directory("private", "a"))).toBe(true)
-    expect(await fs.exists(Path.directory("private", "a", "b"))).toBe(true)
-    expect(await fs.exists(Path.directory("private", "a", "b", "c"))).toBe(true)
+    assert(await fs.exists(Path.directory("private", "a")))
+    assert(await fs.exists(Path.directory("private", "a", "b")))
+    assert(await fs.exists(Path.directory("private", "a", "b", "c")))
 
     // Does not throw for existing dirs
     await fs.ensureDirectory(Path.directory("public", "a"))
@@ -296,10 +266,10 @@ describe("File System Class", async () => {
     await fs.write(Path.file("public", "a", "b-file"), "utf8", "💃")
 
     const a = await fs.listDirectory(Path.directory("public"))
-    expect(a.map(i => i.name)).toEqual(["a", "a-file"])
+    assert.equal(a.map(i => i.name), ["a", "a-file"])
 
     const b = await fs.listDirectory(Path.directory("public", "a"))
-    expect(b.map(i => i.name)).toEqual(["b", "b-file"])
+    assert.equal(b.map(i => i.name), ["b", "b-file"])
   })
 
   it("lists public directories with item kind", async () => {
@@ -314,12 +284,12 @@ describe("File System Class", async () => {
     await fs.write(pathFileB, "utf8", "💃")
 
     const a = await fs.listDirectory(Path.directory("public"), { withItemKind: true })
-    expect(a.map(i => i.kind)).toEqual([Path.Kind.Directory, Path.Kind.File])
-    expect(a.map(i => i.path)).toEqual([pathDirA, pathFileA])
+    assert.equal(a.map(i => i.kind), [Path.Kind.Directory, Path.Kind.File])
+    assert.equal(a.map(i => i.path), [pathDirA, pathFileA])
 
     const b = await fs.listDirectory(Path.directory("public", "a"), { withItemKind: true })
-    expect(b.map(i => i.kind)).toEqual([Path.Kind.Directory, Path.Kind.File])
-    expect(b.map(i => i.path)).toEqual([pathDirB, pathFileB])
+    assert.equal(b.map(i => i.kind), [Path.Kind.Directory, Path.Kind.File])
+    assert.equal(b.map(i => i.path), [pathDirB, pathFileB])
   })
 
   it("lists private directories", async () => {
@@ -329,10 +299,10 @@ describe("File System Class", async () => {
     await fs.write(Path.file("private", "a", "b-file"), "utf8", "💃")
 
     const a = await fs.listDirectory(Path.directory("private"))
-    expect(a.map(i => i.name)).toEqual(["a", "a-file"])
+    assert.equal(a.map(i => i.name), ["a", "a-file"])
 
     const b = await fs.listDirectory(Path.directory("private", "a"))
-    expect(b.map(i => i.name)).toEqual(["b", "b-file"])
+    assert.equal(b.map(i => i.name), ["b", "b-file"])
   })
 
   it("lists private directories with item kind", async () => {
@@ -347,19 +317,19 @@ describe("File System Class", async () => {
     await fs.write(pathFileB, "utf8", "💃")
 
     const a = await fs.listDirectory(Path.directory("private"), { withItemKind: true })
-    expect(a.map(i => i.kind)).toEqual([Path.Kind.Directory, Path.Kind.File])
-    expect(a.map(i => i.path)).toEqual([pathDirA, pathFileA])
+    assert.equal(a.map(i => i.kind), [Path.Kind.Directory, Path.Kind.File])
+    assert.equal(a.map(i => i.path), [pathDirA, pathFileA])
 
     const b = await fs.listDirectory(Path.directory("private", "a"), { withItemKind: true })
-    expect(b.map(i => i.kind)).toEqual([Path.Kind.Directory, Path.Kind.File])
-    expect(b.map(i => i.path)).toEqual([pathDirB, pathFileB])
+    assert.equal(b.map(i => i.kind), [Path.Kind.Directory, Path.Kind.File])
+    assert.equal(b.map(i => i.path), [pathDirB, pathFileB])
   })
 
   it("creates directories", async () => {
     await fs.ensureDirectory(Path.directory("private", "Directory"))
     await fs.createDirectory(Path.directory("private", "Directory"))
 
-    expect(
+    assert(
       await fs.exists(Path.directory("private", "Directory (1)"))
     ).toBe(
       true
@@ -367,7 +337,7 @@ describe("File System Class", async () => {
 
     await fs.createDirectory(Path.directory("private", "Directory"))
 
-    expect(
+    assert(
       await fs.exists(Path.directory("private", "Directory (2)"))
     ).toBe(
       true
@@ -375,7 +345,7 @@ describe("File System Class", async () => {
 
     await fs.createDirectory(Path.directory("private", "Directory (1)"))
 
-    expect(
+    assert(
       await fs.exists(Path.directory("private", "Directory (3)"))
     ).toBe(
       true
@@ -386,7 +356,7 @@ describe("File System Class", async () => {
     await fs.ensureDirectory(Path.directory("private", "Directory.7z"))
     await fs.createDirectory(Path.directory("private", "Directory.7z"))
 
-    expect(
+    assert(
       await fs.exists(Path.directory("private", "Directory.7z (1)"))
     ).toBe(
       true
@@ -394,7 +364,7 @@ describe("File System Class", async () => {
 
     await fs.createDirectory(Path.directory("private", "Directory.7z"))
 
-    expect(
+    assert(
       await fs.exists(Path.directory("private", "Directory.7z (2)"))
     ).toBe(
       true
@@ -402,7 +372,7 @@ describe("File System Class", async () => {
 
     await fs.createDirectory(Path.directory("private", "Directory.7z (1)"))
 
-    expect(
+    assert(
       await fs.exists(Path.directory("private", "Directory.7z (3)"))
     ).toBe(
       true
@@ -418,7 +388,7 @@ describe("File System Class", async () => {
     const { contentCID } = await fs.write(path, "utf8", "💃")
     const cid = await fs.contentCID(path)
 
-    expect(
+    assert(
       cid?.toString()
     ).toEqual(
       contentCID.toString()
@@ -431,7 +401,7 @@ describe("File System Class", async () => {
     const { capsuleCID } = await fs.write(path, "utf8", "💃")
     const cid = await fs.capsuleCID(path)
 
-    expect(
+    assert(
       cid?.toString()
     ).toEqual(
       capsuleCID.toString()
@@ -444,7 +414,7 @@ describe("File System Class", async () => {
     const { capsuleCID } = await fs.ensureDirectory(path)
     const cid = await fs.capsuleCID(path)
 
-    expect(
+    assert(
       cid?.toString()
     ).toEqual(
       capsuleCID.toString()
@@ -457,7 +427,7 @@ describe("File System Class", async () => {
     const { capsuleRef } = await fs.write(path, "utf8", "💃")
     const ref = await fs.capsuleRef(path)
 
-    expect(
+    assert(
       ref ? JSON.stringify(ref) : null
     ).toEqual(
       JSON.stringify(capsuleRef)
@@ -470,7 +440,7 @@ describe("File System Class", async () => {
     const { capsuleRef } = await fs.ensureDirectory(path)
     const ref = await fs.capsuleRef(path)
 
-    expect(
+    assert(
       ref ? JSON.stringify(ref) : null
     ).toEqual(
       JSON.stringify(capsuleRef)
@@ -481,7 +451,7 @@ describe("File System Class", async () => {
     const path = Path.directory("private")
     const ref = await fs.capsuleRef(path)
 
-    expect(
+    assert(
       ref ? JSON.stringify(ref) : null
     ).not.toBe(
       null
@@ -497,7 +467,7 @@ describe("File System Class", async () => {
     await fs.write(path, "utf8", "💃")
     await fs.remove(path)
 
-    expect(
+    assert(
       await fs.exists(path)
     ).toBe(
       false
@@ -510,7 +480,7 @@ describe("File System Class", async () => {
     await fs.write(path, "utf8", "💃")
     await fs.remove(path)
 
-    expect(
+    assert(
       await fs.exists(path)
     ).toBe(
       false
@@ -523,7 +493,7 @@ describe("File System Class", async () => {
     await fs.ensureDirectory(path)
     await fs.remove(path)
 
-    expect(
+    assert(
       await fs.exists(path)
     ).toBe(
       false
@@ -536,7 +506,7 @@ describe("File System Class", async () => {
     await fs.ensureDirectory(path)
     await fs.remove(path)
 
-    expect(
+    assert(
       await fs.exists(path)
     ).toBe(
       false
@@ -553,7 +523,7 @@ describe("File System Class", async () => {
     await fs.write(fromPath, "utf8", "💃")
     await fs.copy(fromPath, toPath)
 
-    expect(await fs.read(toPath, "utf8")).toEqual("💃")
+    assert(await fs.read(toPath, "utf8")).toEqual("💃")
   })
 
   it("copies public files into a directory that already exists", async () => {
@@ -565,7 +535,7 @@ describe("File System Class", async () => {
     await fs.write(fromPath, "utf8", "💃")
     await fs.copy(fromPath, toPath)
 
-    expect(await fs.read(toPath, "utf8")).toEqual("💃")
+    assert(await fs.read(toPath, "utf8")).toEqual("💃")
   })
 
   it("copies private files", async () => {
@@ -575,7 +545,7 @@ describe("File System Class", async () => {
     await fs.write(fromPath, "utf8", "💃")
     await fs.copy(fromPath, toPath)
 
-    expect(await fs.read(toPath, "utf8")).toEqual("💃")
+    assert(await fs.read(toPath, "utf8")).toEqual("💃")
   })
 
   it("copies private files into a directory that already exists", async () => {
@@ -587,7 +557,7 @@ describe("File System Class", async () => {
     await fs.write(fromPath, "utf8", "💃")
     await fs.copy(fromPath, toPath)
 
-    expect(await fs.read(toPath, "utf8")).toEqual("💃")
+    assert(await fs.read(toPath, "utf8")).toEqual("💃")
   })
 
   it("copies public directories", async () => {
@@ -601,25 +571,25 @@ describe("File System Class", async () => {
 
     await fs.copy(fromPath, toPath)
 
-    expect(
+    assert(
       await fs.read(Path.combine(toPath, Path.file("file")), "utf8")
     ).toEqual(
       "💃"
     )
 
-    expect(
+    assert(
       await fs.read(Path.combine(toPath, Path.file("nested", "file")), "utf8")
     ).toEqual(
       "🧞"
     )
 
-    expect(
+    assert(
       await fs.exists(Path.combine(toPath, Path.directory("nested-empty")))
     ).toBe(
       true
     )
 
-    expect(
+    assert(
       await fs.exists(Path.combine(toPath, Path.directory("nested-2", "deeply-nested")))
     ).toBe(
       true
@@ -630,7 +600,7 @@ describe("File System Class", async () => {
       Path.directory("public")
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("public", "b", "c", "nested-2", "deeply-nested"))
     ).toBe(
       true
@@ -648,25 +618,25 @@ describe("File System Class", async () => {
 
     await fs.copy(fromPath, toPath)
 
-    expect(
+    assert(
       await fs.read(Path.combine(toPath, Path.file("file")), "utf8")
     ).toEqual(
       "💃"
     )
 
-    expect(
+    assert(
       await fs.read(Path.combine(toPath, Path.file("nested", "file")), "utf8")
     ).toEqual(
       "🧞"
     )
 
-    expect(
+    assert(
       await fs.exists(Path.combine(toPath, Path.directory("nested-empty")))
     ).toBe(
       true
     )
 
-    expect(
+    assert(
       await fs.exists(Path.combine(toPath, Path.directory("nested-2", "deeply-nested")))
     ).toBe(
       true
@@ -677,7 +647,7 @@ describe("File System Class", async () => {
       Path.directory("private")
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("private", "b", "c", "nested-2", "deeply-nested"))
     ).toBe(
       true
@@ -694,8 +664,8 @@ describe("File System Class", async () => {
     await fs.write(fromPath, "utf8", "💃")
     await fs.move(fromPath, toPath)
 
-    expect(await fs.read(toPath, "utf8")).toEqual("💃")
-    expect(await fs.exists(fromPath)).toBe(false)
+    assert(await fs.read(toPath, "utf8")).toEqual("💃")
+    assert(await fs.exists(fromPath)).toBe(false)
   })
 
   it("moves private files", async () => {
@@ -705,8 +675,8 @@ describe("File System Class", async () => {
     await fs.write(fromPath, "utf8", "💃")
     await fs.move(fromPath, toPath)
 
-    expect(await fs.read(toPath, "utf8")).toEqual("💃")
-    expect(await fs.exists(fromPath)).toBe(false)
+    assert(await fs.read(toPath, "utf8")).toEqual("💃")
+    assert(await fs.exists(fromPath)).toBe(false)
   })
 
   it("moves public directories", async () => {
@@ -720,31 +690,31 @@ describe("File System Class", async () => {
 
     await fs.move(fromPath, toPath)
 
-    expect(
+    assert(
       await fs.read(Path.combine(toPath, Path.file("file")), "utf8")
     ).toEqual(
       "💃"
     )
 
-    expect(
+    assert(
       await fs.read(Path.combine(toPath, Path.file("nested", "file")), "utf8")
     ).toEqual(
       "🧞"
     )
 
-    expect(
+    assert(
       await fs.exists(Path.combine(toPath, Path.directory("nested-empty")))
     ).toBe(
       true
     )
 
-    expect(
+    assert(
       await fs.exists(Path.combine(toPath, Path.directory("nested-2", "deeply-nested")))
     ).toBe(
       true
     )
 
-    expect(
+    assert(
       await fs.exists(fromPath)
     ).toBe(
       false
@@ -755,19 +725,19 @@ describe("File System Class", async () => {
       Path.directory("public")
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("public", "b", "c", "nested-2", "deeply-nested"))
     ).toBe(
       false
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("public", "a"))
     ).toBe(
       false
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("public", "a", "b", "c", "d", "e", "nested-2", "deeply-nested"))
     ).toBe(
       false
@@ -785,31 +755,31 @@ describe("File System Class", async () => {
 
     await fs.move(fromPath, toPath)
 
-    expect(
+    assert(
       await fs.read(Path.combine(toPath, Path.file("file")), "utf8")
     ).toEqual(
       "💃"
     )
 
-    expect(
+    assert(
       await fs.read(Path.combine(toPath, Path.file("nested", "file")), "utf8")
     ).toEqual(
       "🧞"
     )
 
-    expect(
+    assert(
       await fs.exists(Path.combine(toPath, Path.directory("nested-empty")))
     ).toBe(
       true
     )
 
-    expect(
+    assert(
       await fs.exists(Path.combine(toPath, Path.directory("nested-2", "deeply-nested")))
     ).toBe(
       true
     )
 
-    expect(
+    assert(
       await fs.exists(fromPath)
     ).toBe(
       false
@@ -820,19 +790,19 @@ describe("File System Class", async () => {
       Path.directory("private")
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("public", "b", "c", "nested-2", "deeply-nested"))
     ).toBe(
       false
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("public", "a"))
     ).toBe(
       false
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("public", "a", "b", "c", "d", "e", "nested-2", "deeply-nested"))
     ).toBe(
       false
@@ -846,8 +816,8 @@ describe("File System Class", async () => {
     const { capsuleCID } = await fs.write(fromPath, "utf8", "💃")
     const { capsuleRef } = await fs.move(fromPath, toPath)
 
-    expect(await fs.read(toPath, "utf8")).toEqual("💃")
-    expect(await fs.exists(fromPath)).toBe(false)
+    assert(await fs.read(toPath, "utf8")).toEqual("💃")
+    assert(await fs.exists(fromPath)).toBe(false)
   })
 
   it("moves a private file to the public partition", async () => {
@@ -857,8 +827,8 @@ describe("File System Class", async () => {
     const { capsuleRef } = await fs.write(fromPath, "utf8", "💃")
     const { capsuleCID } = await fs.move(fromPath, toPath)
 
-    expect(await fs.read(toPath, "utf8")).toEqual("💃")
-    expect(await fs.exists(fromPath)).toBe(false)
+    assert(await fs.read(toPath, "utf8")).toEqual("💃")
+    assert(await fs.exists(fromPath)).toBe(false)
   })
 
   // RENAMING
@@ -868,13 +838,13 @@ describe("File System Class", async () => {
     await fs.write(Path.file("public", "a"), "bytes", new Uint8Array())
     await fs.rename(Path.file("public", "a"), "b")
 
-    expect(
+    assert(
       await fs.exists(Path.file("public", "a"))
     ).toBe(
       false
     )
 
-    expect(
+    assert(
       await fs.exists(Path.file("public", "b"))
     ).toBe(
       true
@@ -885,13 +855,13 @@ describe("File System Class", async () => {
     await fs.write(Path.file("private", "a"), "bytes", new Uint8Array())
     await fs.rename(Path.file("private", "a"), "b")
 
-    expect(
+    assert(
       await fs.exists(Path.file("private", "a"))
     ).toBe(
       false
     )
 
-    expect(
+    assert(
       await fs.exists(Path.file("private", "b"))
     ).toBe(
       true
@@ -902,13 +872,13 @@ describe("File System Class", async () => {
     await fs.ensureDirectory(Path.directory("public", "a"))
     await fs.rename(Path.directory("public", "a"), "b")
 
-    expect(
+    assert(
       await fs.exists(Path.directory("public", "a"))
     ).toBe(
       false
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("public", "b"))
     ).toBe(
       true
@@ -919,13 +889,13 @@ describe("File System Class", async () => {
     await fs.ensureDirectory(Path.directory("private", "a"))
     await fs.rename(Path.directory("private", "a"), "b")
 
-    expect(
+    assert(
       await fs.exists(Path.directory("private", "a"))
     ).toBe(
       false
     )
 
-    expect(
+    assert(
       await fs.exists(Path.directory("private", "b"))
     ).toBe(
       true
@@ -954,16 +924,16 @@ describe("File System Class", async () => {
     const c = await fs.write(Path.file("private", "c"), "bytes", new Uint8Array())
     const d = await fs.write(Path.file("private", "d"), "bytes", new Uint8Array())
 
-    expect(
+    assert(
       (await promise).toString()
     ).toEqual(
       d.dataRoot.toString()
     )
 
-    expect((await a.publishingStatus).persisted).toBe(true)
-    expect((await b.publishingStatus).persisted).toBe(true)
-    expect((await c.publishingStatus).persisted).toBe(true)
-    expect((await d.publishingStatus).persisted).toBe(true)
+    assert((await a.publishingStatus).persisted)
+    assert((await b.publishingStatus).persisted)
+    assert((await c.publishingStatus).persisted)
+    assert((await d.publishingStatus).persisted)
   })
 
   it("doesn't publish when asked not to do so", async () => {
@@ -982,7 +952,7 @@ describe("File System Class", async () => {
 
     await new Promise(resolve => setTimeout(resolve, fsOpts.settleTimeBeforePublish * 1.5))
 
-    expect(published).toBe(false)
+    assert(published).toBe(false)
   })
 
   // EVENTS
@@ -1000,7 +970,7 @@ describe("File System Class", async () => {
 
     const mutationResult = await fs.write(Path.file("private", "file"), "bytes", new Uint8Array())
 
-    expect(
+    assert(
       (await eventPromise).toString()
     ).toEqual(
       mutationResult.dataRoot.toString()
@@ -1016,7 +986,7 @@ describe("File System Class", async () => {
       await t.write(Path.file("public", "file"), "bytes", await t.read(Path.file("private", "file"), "bytes"))
     })
 
-    expect(
+    assert(
       await fs.read(Path.file("public", "file"), "utf8")
     ).toEqual(
       "💃"
@@ -1024,7 +994,7 @@ describe("File System Class", async () => {
   })
 
   it("doesn't commit a transaction when an error occurs inside of the transaction", async () => {
-    expect.assertions(1)
+    assert.assertions(1)
 
     await fs.transaction(async t => {
       await t.write(Path.file("private", "file"), "utf8", "💃")
@@ -1034,7 +1004,7 @@ describe("File System Class", async () => {
     try {
       await fs.read(Path.file("private", "file"), "utf8")
     } catch (e) {
-      expect(e).toBeTruthy()
+      assert(e).toBeTruthy()
     }
   })
 })

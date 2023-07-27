@@ -73,9 +73,31 @@ const manners: Manners.Implementation<FileSystem> = {
   ...ProperManners.implementation(configuration),
 
   wnfsWasmLookup: async () => {
-    const pathToThisModule = new URL(import.meta.url).pathname
-    const dirOfThisModule = NodePath.parse(pathToThisModule).dir
-    return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wnfs_wasm_bg.wasm`))
+    if (typeof self === "undefined") {
+      return undefined
+    } else {
+      // const pathToThisModule = new URL(import.meta.url).pathname
+      // const dirOfThisModule = NodePath.parse(pathToThisModule).dir
+      // return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wnfs_wasm_bg.wasm`))
+    }
+
+    //  const response = await fetch("https://unpkg.com/wnfs@0.1.23/wnfs_wasm_bg.wasm")
+    // const buffer = await response.arrayBuffer()
+
+    // return buffer
+    // return fetch(`https://unpkg.com/wnfs@0.1.23/wnfs_wasm_bg.wasm`)
+
+    // const pathToThisModule = new URL(import.meta.url).pathname
+    // console.log('PATH',pathToThisModule)
+    // const dirOfThisModule = NodePath.parse(pathToThisModule).dir
+
+    // const wnfs = await import (`${dirOfThisModule}/../../node_modules/wnfs/wnfs_wasm_bg.wasm`)
+    // console.log('wnfs', wnfs)
+
+    // return wnfs
+    // return await fetch(`${dirOfThisModule}/../../node_modules/wnfs/wnfs_wasm_bg.wasm`)
+
+    // return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wnfs_wasm_bg.wasm`))
   },
 }
 

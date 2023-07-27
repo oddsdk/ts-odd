@@ -1,4 +1,4 @@
-import expect from "expect"
+import assert from "assert"
 
 import * as Crypto from "./crypto.js"
 
@@ -8,14 +8,12 @@ describe("Crypto", async () => {
     const key = await Crypto.rsa.generateKey("sign")
     const signature = await Crypto.rsa.sign(data, key)
 
-    expect(
+    assert(
       await Crypto.rsa.verify({
         message: data,
         publicKey: await Crypto.exportPublicKey(key),
         signature: signature,
       })
-    ).toBe(
-      true
     )
   })
 
@@ -24,11 +22,10 @@ describe("Crypto", async () => {
     const key = await Crypto.rsa.generateKey("exchange")
     const encrypted = await Crypto.rsa.encrypt(data, key.publicKey)
 
-    expect(
+    assert.equal(
       await Crypto.rsa.decrypt(encrypted, key.privateKey).then(
         a => new TextDecoder().decode(a)
-      )
-    ).toBe(
+      ),
       "🙈"
     )
   })
