@@ -32,5 +32,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Format Check
+        run: npx dprint check
+
       - name: Build & Test
         run: npm run test:prod
