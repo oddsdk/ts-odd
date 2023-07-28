@@ -1,64 +1,64 @@
-import expect from "expect"
+import { strict as assert } from "assert"
 import { isUsernameValid } from "./index.js"
 
 describe("isUsernameValid", () => {
   it("allows basic usernames", () => {
-    expect(isUsernameValid("simple")).toBe(true)
+    assert.equal(isUsernameValid("simple"), true)
   })
 
   it("allows internal hyphens", () => {
-    expect(isUsernameValid("happy-name")).toBe(true)
+    assert.equal(isUsernameValid("happy-name"), true)
   })
 
   it("allows numbers", () => {
-    expect(isUsernameValid("not-the-90s-anymore")).toBe(true)
+    assert.equal(isUsernameValid("not-the-90s-anymore"), true)
   })
 
   it("allows internal underscores", () => {
-    expect(isUsernameValid("under_score")).toBe(true)
+    assert.equal(isUsernameValid("under_score"), true)
   })
 
   it("does not allow blocklisted words", () => {
-    expect(isUsernameValid("recovery")).toBe(false)
+    assert.equal(isUsernameValid("recovery"), false)
   })
 
   it("is not case sensitive", () => {
-    expect(isUsernameValid("reCovErY")).toBe(false)
+    assert.equal(isUsernameValid("reCovErY"), false)
   })
 
   it("does not allow empty strings", () => {
-    expect(isUsernameValid("")).toBe(false)
+    assert.equal(isUsernameValid(""), false)
   })
 
   it("does not allow special characters", () => {
-    expect(isUsernameValid("plus+plus")).toBe(false)
+    assert.equal(isUsernameValid("plus+plus"), false)
   })
 
   it("does not allow prefixed hyphens", () => {
-    expect(isUsernameValid("-startswith")).toBe(false)
+    assert.equal(isUsernameValid("-startswith"), false)
   })
 
   it("does not allow suffixed hyphens", () => {
-    expect(isUsernameValid("endswith-")).toBe(false)
+    assert.equal(isUsernameValid("endswith-"), false)
   })
 
   it("does not allow prefixed underscores", () => {
-    expect(isUsernameValid("_startswith")).toBe(false)
+    assert.equal(isUsernameValid("_startswith"), false)
   })
 
   it("does not allow spaces", () => {
-    expect(isUsernameValid("with space")).toBe(false)
+    assert.equal(isUsernameValid("with space"), false)
   })
 
   it("does not allow dots", () => {
-    expect(isUsernameValid("with.dot")).toBe(false)
+    assert.equal(isUsernameValid("with.dot"), false)
   })
 
   it("does not allow two dots", () => {
-    expect(isUsernameValid("has.two.dots")).toBe(false)
+    assert.equal(isUsernameValid("has.two.dots"), false)
   })
 
   it("does not allow special characters", () => {
-    expect(isUsernameValid("name&with#chars")).toBe(false)
+    assert.equal(isUsernameValid("name&with#chars"), false)
   })
 })

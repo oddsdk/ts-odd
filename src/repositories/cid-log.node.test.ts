@@ -1,5 +1,5 @@
 import * as DagCBOR from "@ipld/dag-cbor"
-import expect from "expect"
+import { strict as assert } from "assert"
 import * as fc from "fast-check"
 import { CID } from "multiformats/cid"
 import { sha256 } from "multiformats/hashes/sha2"
@@ -17,7 +17,7 @@ async function generateCids(data: Uint8Array[]): Promise<CID[]> {
 }
 
 function isEqualCIDsSet(a: CID[], b: CID[]) {
-  return expect(a.map(c => c.toString())).toEqual(b.map(c => c.toString()))
+  return assert.deepEqual(a.map(c => c.toString()), b.map(c => c.toString()))
 }
 
 describe("cid-log", () => {
@@ -30,7 +30,7 @@ describe("cid-log", () => {
 
   it("gets an empty log when key is missing", async () => {
     const log = cidLog.getAll()
-    expect(log).toEqual([])
+    assert.deepEqual(log, [])
   })
 
   it("adds cids and gets an ordered log", async () => {
@@ -67,7 +67,7 @@ describe("cid-log", () => {
           // Get the index of test cid after all CIDs have been added
           const index = cidLog.indexOf(cid)
 
-          expect(index).toEqual(idx)
+          assert.equal(index, idx)
         }
       )
     )
@@ -88,7 +88,7 @@ describe("cid-log", () => {
           // Get the newest cid after all CIDs have been added
           const newest = cidLog.newest()
 
-          expect(newest.toString()).toEqual(cid.toString())
+          assert.equal(newest.toString(), cid.toString())
         }
       )
     )

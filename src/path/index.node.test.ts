@@ -1,4 +1,4 @@
-import expect from "expect"
+import { strict as assert } from "assert"
 import * as fc from "fast-check"
 import * as Path from "./index.js"
 import { DirectoryPath, FilePath, RootBranch } from "./index.js"
@@ -9,13 +9,14 @@ describe("Path functions", () => {
   it("creates directory paths", () => {
     fc.assert(
       fc.property(fc.array(fc.hexaString()), data => {
-        expect(Path.directory(...data)).toEqual({
-          directory: data,
-        })
+        assert.deepEqual(
+          Path.directory(...data),
+          { directory: data }
+        )
       })
     )
 
-    expect(() => Path.directory("/")).toThrow()
+    assert.throws(() => Path.directory("/"))
 
     // Type testing
     const a: Path.Directory<Path.Partitioned<Path.Private>> = Path.directory("private")
@@ -26,13 +27,14 @@ describe("Path functions", () => {
   it("creates file paths", () => {
     fc.assert(
       fc.property(fc.array(fc.hexaString()), data => {
-        expect(Path.file(...data)).toEqual({
-          file: data,
-        })
+        assert.deepEqual(
+          Path.file(...data),
+          { file: data }
+        )
       })
     )
 
-    expect(() => Path.file("/")).toThrow()
+    assert.throws(() => Path.file("/"))
 
     // Type testing
     const a: Path.File<Path.PartitionedNonEmpty<Path.Private>> = Path.file("private", "a")
@@ -42,9 +44,10 @@ describe("Path functions", () => {
   it("creates directory paths with fromKind", () => {
     fc.assert(
       fc.property(fc.array(fc.hexaString()), data => {
-        expect(Path.fromKind(Path.Kind.Directory, ...data)).toEqual({
-          directory: data,
-        })
+        assert.deepEqual(
+          Path.fromKind(Path.Kind.Directory, ...data),
+          { directory: data }
+        )
       })
     )
 
@@ -57,9 +60,10 @@ describe("Path functions", () => {
   it("creates file paths with fromKind", () => {
     fc.assert(
       fc.property(fc.array(fc.hexaString()), data => {
-        expect(Path.fromKind(Path.Kind.File, ...data)).toEqual({
-          file: data,
-        })
+        assert.deepEqual(
+          Path.fromKind(Path.Kind.File, ...data),
+          { file: data }
+        )
       })
     )
 
@@ -71,53 +75,45 @@ describe("Path functions", () => {
   // POSIX
 
   it("creates a path from a POSIX formatted string", () => {
-    expect(
-      Path.fromPosix("foo/bar/")
-    ).toEqual(
+    assert.deepEqual(
+      Path.fromPosix("foo/bar/"),
       { directory: ["foo", "bar"] }
     )
 
-    expect(
-      Path.fromPosix("/foo/bar/")
-    ).toEqual(
+    assert.deepEqual(
+      Path.fromPosix("/foo/bar/"),
       { directory: ["foo", "bar"] }
     )
 
-    expect(
-      Path.fromPosix("/")
-    ).toEqual(
+    assert.deepEqual(
+      Path.fromPosix("/"),
       { directory: [] }
     )
 
-    expect(
-      Path.fromPosix("foo/bar")
-    ).toEqual(
+    assert.deepEqual(
+      Path.fromPosix("foo/bar"),
       { file: ["foo", "bar"] }
     )
 
-    expect(
-      Path.fromPosix("/foo/bar")
-    ).toEqual(
+    assert.deepEqual(
+      Path.fromPosix("/foo/bar"),
       { file: ["foo", "bar"] }
     )
   })
 
   it("converts a path to the POSIX format", () => {
-    expect(
-      Path.toPosix({ directory: ["foo", "bar"] })
-    ).toEqual(
+    assert.equal(
+      Path.toPosix({ directory: ["foo", "bar"] }),
       "foo/bar/"
     )
 
-    expect(
-      Path.toPosix({ directory: [] })
-    ).toEqual(
+    assert.equal(
+      Path.toPosix({ directory: [] }),
       ""
     )
 
-    expect(
-      Path.toPosix({ file: ["foo", "bar"] })
-    ).toEqual(
+    assert.equal(
+      Path.toPosix({ file: ["foo", "bar"] }),
       "foo/bar"
     )
   })
@@ -134,9 +130,8 @@ describe("Path functions", () => {
       appInfo
     )
 
-    expect(
-      root
-    ).toEqual(
+    assert.deepEqual(
+      root,
       { directory: [RootBranch.Private, "Apps", appInfo.creator, appInfo.name] }
     )
 
@@ -145,9 +140,8 @@ describe("Path functions", () => {
       Path.directory("a")
     )
 
-    expect(
-      dir
-    ).toEqual(
+    assert.deepEqual(
+      dir,
       { directory: [RootBranch.Private, "Apps", appInfo.creator, appInfo.name, "a"] }
     )
 
@@ -156,9 +150,8 @@ describe("Path functions", () => {
       Path.file("a")
     )
 
-    expect(
-      file
-    ).toEqual(
+    assert.deepEqual(
+      file,
       { file: [RootBranch.Private, "Apps", appInfo.creator, appInfo.name, "a"] }
     )
   })
@@ -169,9 +162,8 @@ describe("Path functions", () => {
       Path.directory("b")
     )
 
-    expect(
-      dir
-    ).toEqual(
+    assert.deepEqual(
+      dir,
       { directory: ["a", "b"] }
     )
 
@@ -180,9 +172,8 @@ describe("Path functions", () => {
       Path.file("b")
     )
 
-    expect(
-      file
-    ).toEqual(
+    assert.deepEqual(
+      file,
       { file: ["a", "b"] }
     )
 
@@ -219,171 +210,179 @@ describe("Path functions", () => {
   })
 
   it("supports isOnRootBranch", () => {
-    expect(
+    assert.equal(
       Path.isOnRootBranch(
         RootBranch.Private,
         Path.directory(RootBranch.Private, "a")
-      )
-    ).toBe(true)
+      ),
+      true
+    )
 
-    expect(
+    assert.equal(
       Path.isOnRootBranch(
         RootBranch.Public,
         Path.directory(RootBranch.Private, "a")
-      )
-    ).toBe(false)
+      ),
+      false
+    )
   })
 
   it("supports isDirectory", () => {
-    expect(
+    assert.equal(
       Path.isDirectory(
         Path.directory(RootBranch.Private)
-      )
-    ).toBe(true)
+      ),
+      true
+    )
 
-    expect(
+    assert.equal(
       Path.isDirectory(
         Path.file("foo")
-      )
-    ).toBe(false)
+      ),
+      false
+    )
   })
 
   it("supports isFile", () => {
-    expect(
+    assert.equal(
       Path.isFile(
         Path.file("foo")
-      )
-    ).toBe(true)
+      ),
+      true
+    )
 
-    expect(
+    assert.equal(
       Path.isFile(
         Path.directory(RootBranch.Private)
-      )
-    ).toBe(false)
+      ),
+      false
+    )
   })
 
   it("supports isRootDirectory", () => {
-    expect(
+    assert.equal(
       Path.isRootDirectory(
         Path.root()
-      )
-    ).toBe(true)
+      ),
+      true
+    )
 
-    expect(
+    assert.equal(
       Path.isRootDirectory(
         Path.directory()
-      )
-    ).toBe(true)
+      ),
+      true
+    )
 
-    expect(
+    assert.equal(
       Path.isRootDirectory(
         Path.directory(RootBranch.Private)
-      )
-    ).toBe(false)
+      ),
+      false
+    )
   })
 
   it("supports isSamePartition", () => {
-    expect(
+    assert.equal(
       Path.isSamePartition(
         Path.directory(RootBranch.Private),
         Path.directory(RootBranch.Private)
-      )
-    ).toBe(true)
+      ),
+      true
+    )
 
-    expect(
+    assert.equal(
       Path.isSamePartition(
         Path.directory(RootBranch.Private),
         Path.directory(RootBranch.Public)
-      )
-    ).toBe(false)
+      ),
+      false
+    )
   })
 
   it("supports isSameKind", () => {
-    expect(
+    assert.equal(
       Path.isSameKind(
         Path.directory(),
         Path.file()
-      )
-    ).toBe(false)
+      ),
+      false
+    )
 
-    expect(
+    assert.equal(
       Path.isSameKind(
         Path.file(),
         Path.directory()
-      )
-    ).toBe(false)
+      ),
+      false
+    )
 
-    expect(
+    assert.equal(
       Path.isSameKind(
         Path.directory(),
         Path.directory()
-      )
-    ).toBe(true)
+      ),
+      true
+    )
 
-    expect(
+    assert.equal(
       Path.isSameKind(
         Path.file(),
         Path.file()
-      )
-    ).toBe(true)
+      ),
+      true
+    )
   })
 
   it("has kind", () => {
-    expect(
-      Path.kind(Path.directory())
-    ).toEqual(
+    assert.equal(
+      Path.kind(Path.directory()),
       Path.Kind.Directory
     )
 
-    expect(
-      Path.kind(Path.file())
-    ).toEqual(
+    assert.equal(
+      Path.kind(Path.file()),
       Path.Kind.File
     )
   })
 
   it("supports map", () => {
-    expect(
+    assert.deepEqual(
       Path.map(
         p => [...p, "bar"],
         Path.directory("foo")
-      )
-    ).toEqual(
+      ),
       { directory: ["foo", "bar"] }
     )
 
-    expect(
+    assert.deepEqual(
       Path.map(
         p => [...p, "bar"],
         Path.file("foo")
-      )
-    ).toEqual(
+      ),
       { file: ["foo", "bar"] }
     )
   })
 
   it("supports parent", () => {
-    expect(
+    assert.deepEqual(
       Path.parent(
         Path.directory("foo")
-      )
-    ).toEqual(
+      ),
       Path.root()
     )
 
-    expect(
+    assert.deepEqual(
       Path.parent(
         Path.file("foo")
-      )
-    ).toEqual(
+      ),
       Path.root()
     )
 
-    expect(
+    assert.equal(
       Path.parent(
         Path.root()
-      )
-    ).toEqual(
+      ),
       null
     )
 
@@ -418,30 +417,27 @@ describe("Path functions", () => {
   })
 
   it("supports removePartition", () => {
-    expect(
+    assert.deepEqual(
       Path.removePartition(
         Path.directory("foo")
-      )
-    ).toEqual(
+      ),
       { directory: [] }
     )
 
-    expect(
+    assert.deepEqual(
       Path.removePartition(
         Path.directory("foo", "bar")
-      )
-    ).toEqual(
+      ),
       Path.directory("bar")
     )
   })
 
   it("supports replaceTerminus", () => {
-    expect(
+    assert.deepEqual(
       Path.replaceTerminus(
         Path.file("private", "a", "b"),
         "c"
-      )
-    ).toEqual(
+      ),
       Path.file("private", "a", "c")
     )
 
@@ -464,19 +460,17 @@ describe("Path functions", () => {
   })
 
   it("correctly unwraps", () => {
-    expect(
+    assert.deepEqual(
       Path.unwrap(
         Path.directory("foo")
-      )
-    ).toEqual(
+      ),
       ["foo"]
     )
 
-    expect(
+    assert.deepEqual(
       Path.unwrap(
         Path.file("foo")
-      )
-    ).toEqual(
+      ),
       ["foo"]
     )
   })
