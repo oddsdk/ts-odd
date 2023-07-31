@@ -21,6 +21,12 @@ export type Annex = {
     formValues: Record<string, string>
   ) => Promise<{ requested: true } | { requested: false; reason: string }>
 
+  /**
+   * Create a progressive volume for a Fission account.
+   *
+   * This method can be used to load a file system before an account is registered.
+   * When you register an account, you can just keep using it as before.
+   */
   volume: () => Promise<{ // TODO: Allow passing in username to look up data roots of other Fission users
     dataRoot?: CID
     dataRootUpdater: (
@@ -241,7 +247,19 @@ export async function volume(
   did: string
 }> {
   const dataRootUpdater = async (dataRoot: CID, proofs: Ucan.Ucan[]) => {
+    const { suffices } = await hasSufficientAuthority(identifier, ucanDictionary)
+    if (!suffices) return { updated: false, reason: "Not authenticated yet, lacking authority." }
     return updateDataRoot(endpoints, dependencies, identifier, ucanDictionary, dataRoot, proofs)
+  }
+
+  const { suffices } = await hasSufficientAuthority(identifier, ucanDictionary)
+
+  if (!suffices) {
+    return {
+      dataRoot: undefined,
+      dataRootUpdater,
+      did: await identifier.did(),
+    }
   }
 
   if (!navigator.onLine) {
