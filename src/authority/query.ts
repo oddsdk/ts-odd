@@ -26,7 +26,7 @@ export type FileSystemQuery = {
 // 🏔️️ //
 ////////
 
-export const account = {
+export const account: AccountQuery = {
   query: "account",
 }
 
