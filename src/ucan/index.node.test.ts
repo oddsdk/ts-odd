@@ -1,4 +1,4 @@
-import expect from "expect"
+import { strict as assert } from "assert"
 
 import * as InMemoryCryptoStore from "../common/crypto/store/in-memory.js"
 import * as WebCryptoAgent from "../components/agent/web-crypto-api.js"
@@ -15,9 +15,8 @@ describe("UCAN", async () => {
       issuer: await Ucan.keyPair(agent),
     })
 
-    expect(
-      await Ucan.isValid(agent, ucan)
-    ).toBe(
+    assert.equal(
+      await Ucan.isValid(agent, ucan),
       true
     )
   })
