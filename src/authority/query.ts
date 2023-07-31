@@ -26,6 +26,10 @@ export type FileSystemQuery = {
 // 🏔️️ //
 ////////
 
+export const account = {
+  query: "account",
+}
+
 export const fileSystem = {
   rootAccess: [{
     query: "fileSystem",

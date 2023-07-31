@@ -1,7 +1,7 @@
 import * as Auth from "./auth.js"
 import * as Cabinet from "./repositories/cabinet.js"
 
-import { FileSystemQuery } from "./authority/query.js"
+import { FileSystemQuery, Query } from "./authority/query.js"
 import { CID } from "./common/cid.js"
 import { Account } from "./components.js"
 import { Components } from "./components.js"
@@ -70,7 +70,7 @@ export type Program<Annex extends Account.AnnexParentType> =
        * Does my program have the authority to work with these part of the file system?
        * And does the configured account system have the required authority?
        */
-      has: (fileSystemQueries: FileSystemQuery | FileSystemQuery[]) => Promise<
+      has: (fileSystemQueries: Query | Query[]) => Promise<
         { has: true } | { has: false; reason: string }
       >
 
@@ -166,21 +166,31 @@ export async function program<Annex extends AnnexParentType>(
   // Authority
   const authority = {
     async has(
-      fileSystemQueries: FileSystemQuery | FileSystemQuery[]
+      query: Query | Query[]
     ): Promise<{ has: true } | { has: false; reason: string }> {
       const audience = await identifier.did()
+      const queries = Array.isArray(query) ? query : [query]
 
       // Account access
-      const accountAccess = await account.hasSufficientAuthority(identifier, ucanDictionary)
-      if (!accountAccess.suffices) {
-        return {
-          has: false,
-          reason: accountAccess.reason,
+      if (queries.some(q => q.query === "account")) {
+        const accountAccess = await account.hasSufficientAuthority(identifier, ucanDictionary)
+        if (!accountAccess.suffices) {
+          return {
+            has: false,
+            reason: accountAccess.reason,
+          }
         }
       }
 
       // File system access
-      const fsQueries = Array.isArray(fileSystemQueries) ? fileSystemQueries : [fileSystemQueries]
+      const fsQueries = queries.reduce(
+        (acc: FileSystemQuery[], q) => {
+          if (q.query === "fileSystem") return [...acc, q]
+          return acc
+        },
+        []
+      )
+
       const hasAccessToFsPaths = fsQueries.reduce(
         (acc, query) => {
           if (acc === false) return false
