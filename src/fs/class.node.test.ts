@@ -956,10 +956,19 @@ describe("File System Class", async () => {
   })
 
   it("doesn't commit a transaction when an error occurs inside of the transaction", async () => {
-    await fs.transaction(async t => {
-      await t.write(Path.file("private", "file"), "utf8", "💃")
-      throw new Error("Whoops")
-    }).catch(e => {})
+    const tracker = new assert.CallTracker()
+
+    async function transaction() {
+      await fs.transaction(async t => {
+        await t.write(Path.file("private", "file"), "utf8", "💃")
+        throw new Error("Whoops")
+      }).catch(e => {})
+    }
+
+    const tracked = tracker.calls(transaction, 1)
+
+    await tracked()
+    tracker.verify()
 
     try {
       await fs.read(Path.file("private", "file"), "utf8")
