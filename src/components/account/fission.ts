@@ -24,8 +24,8 @@ export type Annex = {
   /**
    * Create a progressive volume for a Fission account.
    *
-   * This method can be used to load a file system before an account is registered.
-   * When you register an account, you can just keep using it as before.
+   * This method can be used to load a local-only file system before an account is registered.
+   * When you register an account, the file system will sync with the Fission server, making it available through Fission IPFS nodes.
    */
   volume: () => Promise<{ // TODO: Allow passing in username to look up data roots of other Fission users
     dataRoot?: CID

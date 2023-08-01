@@ -133,7 +133,7 @@ export type FileSystemShortHands = {
  * An ODD program revolves around two main things, the file system (WNFS) and authorization (UCANs).
  * Both of these can be used entirely locally without depending on an external service.
  *
- * On top of that we've built components that can be swapped out with different
+ * We've built components that can be swapped out with different
  * implementations. For example, the file system consists out of IPLD blocks,
  * how these blocks are stored and/or synced remotely is determined by the `depot` component.
  * You could have an implementation that just stores the blocks in memory and forgets
