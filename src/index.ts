@@ -96,7 +96,7 @@ export type Program<Annex extends Account.AnnexParentType> =
   & Shorthands
 
 export type Shorthands = {
-  dids: {
+  did: {
     account: () => Promise<string | null>
     agent: () => Promise<string>
     identifier: () => Promise<string>
@@ -235,7 +235,7 @@ export async function program<Annex extends AnnexParentType>(
   }
 
   const shortHands: Shorthands = {
-    dids: {
+    did: {
       async account(): Promise<string | null> {
         return account.did(identifier, ucanDictionary)
       },
