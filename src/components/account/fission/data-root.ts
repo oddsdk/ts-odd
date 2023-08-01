@@ -7,7 +7,6 @@ import * as Ucan from "../../../ucan/index.js"
 import { decodeCID } from "../../../common/cid.js"
 import { Agent, DNS, Manners } from "../../../components.js"
 import { FileSystem } from "../../../fs/class.js"
-import { DELEGATE_ALL_PROOFS } from "../../../ucan/capabilities.js"
 
 /**
  * Get the CID of a user's data root.
@@ -23,6 +22,8 @@ export async function lookup(
   },
   username: string
 ): Promise<CID | null> {
+  // TODO: Use only DNS once implemented on the server.
+  //       DNS queries will be resolved immediately through the server.
   const maybeRoot = await lookupOnFisson(endpoints, dependencies, username)
   if (!maybeRoot) return null
   if (maybeRoot !== null) return maybeRoot
@@ -50,14 +51,15 @@ export async function lookupOnFisson(
 ): Promise<CID | null> {
   try {
     const resp = await fetch(
-      Fission.apiUrl(endpoints, `user/data/${username}`),
+      Fission.apiUrl(endpoints, `/account/${username}/volume/cid`),
       { cache: "reload" } // don't use cache
     )
-    const cid = await resp.json()
-    return decodeCID(cid)
+    if (resp.status === 204) return null
+    const volume = await resp.json()
+    return decodeCID(volume.cid)
   } catch (err) {
     dependencies.manners.log(
-      "Could not locate user root on Fission server: ",
+      "Could not locate data root on the Fission server: ",
       TypeChecks.hasProp(err, "toString") ? (err as any).toString() : err
     )
     return null
@@ -78,7 +80,8 @@ export async function update(
     manners: Manners.Implementation<FileSystem>
   },
   cidInstance: CID,
-  proof: Ucan.Ucan
+  proofs: Ucan.Ucan[],
+  username: string
 ): Promise<{ updated: true } | { updated: false; reason: string }> {
   const cid = cidInstance.toString()
 
@@ -86,26 +89,27 @@ export async function update(
   dependencies.manners.log("🌊 Updating your DNSLink:", cid)
 
   // Make API call
-  return fetchWithRetry(Fission.apiUrl(endpoints, `user/data/${cid}`), {
+  return fetchWithRetry(Fission.apiUrl(endpoints, `/account/${encodeURIComponent(username)}/volume/cid`), {
     headers: async () => {
       const jwt = Ucan.encode(
         await Ucan.build({
           audience: await Fission.did(endpoints, dependencies.dns),
           issuer: await Ucan.keyPair(dependencies.agent),
 
-          proofs: [(await Ucan.cid(proof)).toString()],
-
-          capabilities: [DELEGATE_ALL_PROOFS],
+          proofs: await Promise.all(proofs.map(
+            async proof => (await Ucan.cid(proof)).toString()
+          )),
         })
       )
 
-      return { "authorization": `Bearer ${jwt}` }
+      return { "authorization": `Bearer ${jwt}`, "content-type": "application/json" }
     },
     retries: 100,
     retryDelay: 5000,
     retryOn: [502, 503, 504],
   }, {
     method: "PUT",
+    body: JSON.stringify({ cid }),
   }).then((response: Response): { updated: true } | { updated: false; reason: string } => {
     if (response.status < 300) dependencies.manners.log("🪴 DNSLink updated:", cid)
     else dependencies.manners.log("🔥 Failed to update DNSLink for:", cid)

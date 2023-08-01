@@ -16,6 +16,32 @@ export class Dictionary {
   // LOOKUPS //
   /////////////
 
+  descendUntilMatching(
+    ucan: Ucan,
+    matcher: (ucan: Ucan) => boolean
+  ): Ucan | null {
+    if (matcher(ucan)) return ucan
+    return ucan.payload.prf.reduce(
+      (acc: Ucan | null, prfCID) => {
+        if (acc) return acc
+        const prf = this.lookupByCID(prfCID)
+        return prf && matcher(prf) ? prf : null
+      },
+      null
+    )
+  }
+
+  findMatching(matcher: (ucan: Ucan) => boolean): Ucan | null {
+    return this.#cabinet.ucans.reduce(
+      (acc: Ucan | null, ucan) => {
+        if (acc) return acc
+        if (matcher(ucan)) return ucan
+        return this.descendUntilMatching(ucan, matcher)
+      },
+      null
+    )
+  }
+
   listCapabilities(ucan: Ucan): Capability[] {
     const caps = ucan.payload.att
     const proofs = ucan.payload.prf.map(cid => this.#cabinet.ucansIndexedByCID[cid])
@@ -49,12 +75,18 @@ export class Dictionary {
     return (this.#cabinet.ucansIndexedByAudience[audience] || []).slice(0)
   }
 
-  lookupFsWriteUcan(
+  lookupByCID(cid: string): Ucan | null {
+    return this.#cabinet.ucansIndexedByCID[cid] || null
+  }
+
+  lookupFileSystemUcan(
     fileSystemDID: string,
     path: Path.DistinctivePath<Path.Segments>
   ): Ucan | null {
-    return this.#lookupFsUcan(
-      this.lookupFsWriteUcans(),
+    const fsUcans = this.lookupFileSystemUcans()
+
+    return this.#lookupFileSystemUcan(
+      this.lookupFileSystemUcans(),
       pathSoFar => ucan => {
         const hierPart = `//${fileSystemDID}/${Path.toPosix(pathSoFar)}`
 
@@ -66,11 +98,11 @@ export class Dictionary {
     )
   }
 
-  lookupFsWriteUcans(): Ucan[] {
+  lookupFileSystemUcans(): Ucan[] {
     return this.#cabinet.ucans.filter(ucan => ucan.payload.att.some(cap => cap.with.scheme === "wnfs"))
   }
 
-  #lookupFsUcan(
+  #lookupFileSystemUcan(
     fsUcans: Ucan[],
     matcher: (pathSoFar: Path.Distinctive<Path.Segments>) => (ucan: Ucan) => boolean,
     path: Path.DistinctivePath<Path.Segments>

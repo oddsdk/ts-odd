@@ -1,0 +1,252 @@
+import * as Fission from "../../../../common/fission.js"
+import * as Ucan from "../../../../ucan/index.js"
+import * as Common from "./common.js"
+
+import { AccountQuery } from "../../../../authority/query.js"
+import { Implementation } from "../../implementation.js"
+import { isUsernameAvailable, isUsernameValid } from "../index.js"
+import { Dependencies } from "./common.js"
+
+////////
+// 🧩 //
+////////
+
+export type Annex = Common.Annex & {
+  requestVerificationCode: (
+    formValues: Record<string, string>
+  ) => Promise<{ requested: true } | { requested: false; reason: string }>
+}
+
+//////////////
+// CREATION //
+//////////////
+
+export async function requestVerificationCode(
+  endpoints: Fission.Endpoints,
+  dependencies: Dependencies,
+  formValues: Record<string, string>
+): Promise<{ requested: true } | { requested: false; reason: string }> {
+  let email = formValues.email
+
+  if (!email) {
+    return {
+      requested: false,
+      reason: `Email is missing from the form values record`,
+    }
+  }
+
+  email = email.trim()
+
+  const ucan = await Ucan.build({
+    audience: await Fission.did(endpoints, dependencies.dns),
+    issuer: await Ucan.keyPair(dependencies.agent),
+    facts: [{ placeholder: "none" }], // For rs-ucan compat (obsolete, but req'd for 0.2.x)
+    proofs: [], // rs-ucan compat
+  })
+
+  const response = await fetch(
+    Fission.apiUrl(endpoints, "/auth/email/verify"),
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${Ucan.encode(ucan)}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(formValues),
+    }
+  )
+
+  // The server
+  return response.ok
+    ? { requested: true }
+    : { requested: false, reason: `Server error: ${response.statusText}` }
+}
+
+export async function canRegister(
+  endpoints: Fission.Endpoints,
+  dependencies: Dependencies,
+  formValues: Record<string, string>
+): Promise<{ canRegister: true } | { canRegister: false; reason: string }> {
+  if (typeof formValues.accountType !== "string") {
+    return {
+      canRegister: false,
+      reason: "An `accountType` form value is required, this can either be `app` or `verified`",
+    }
+  }
+
+  // No validation needed for app accounts
+  if (formValues.accountType === "app") {
+    return {
+      canRegister: true,
+    }
+  }
+
+  // Verified accounts
+  let username = formValues.username?.trim()
+  if (!username) {
+    return {
+      canRegister: false,
+      reason: `Username is missing from the form values record`,
+    }
+  }
+
+  if (isUsernameValid(username) === false) {
+    return {
+      canRegister: false,
+      reason: "Username is not valid.",
+    }
+  }
+
+  if (
+    (await isUsernameAvailable(
+      endpoints,
+      dependencies.dns,
+      username
+    )) === false
+  ) {
+    return {
+      canRegister: false,
+      reason: "Username is not available.",
+    }
+  }
+
+  const email = formValues.email?.trim()
+  if (!email) {
+    return {
+      canRegister: false,
+      reason: `Email is missing from the form values record`,
+    }
+  }
+
+  const code = formValues.code?.trim()
+  if (!code) {
+    return {
+      canRegister: false,
+      reason: `Verification code is missing from the form values record`,
+    }
+  }
+
+  return {
+    canRegister: true,
+  }
+}
+
+export async function register(
+  endpoints: Fission.Endpoints,
+  dependencies: Dependencies,
+  formValues: Record<string, string>,
+  identifierUcan: Ucan.Ucan
+): Promise<
+  | { registered: true; ucans: Ucan.Ucan[] }
+  | { registered: false; reason: string }
+> {
+  const form = await canRegister(endpoints, dependencies, formValues)
+  if (!form.canRegister) {
+    return {
+      registered: false,
+      reason: form.reason,
+    }
+  }
+
+  if (formValues.accountType === "app") {
+    return registerAppAccount(endpoints, dependencies, formValues, identifierUcan)
+  } else if (formValues.accountType === "verified") {
+    return registerVerifiedAccount(endpoints, dependencies, formValues, identifierUcan)
+  } else {
+    throw new Error("Invalid account type")
+  }
+}
+
+async function registerAppAccount(
+  endpoints: Fission.Endpoints,
+  dependencies: Dependencies,
+  formValues: Record<string, string>,
+  identifierUcan: Ucan.Ucan
+): Promise<
+  | { registered: true; ucans: Ucan.Ucan[] }
+  | { registered: false; reason: string }
+> {
+  throw new Error("Not implemented yet")
+}
+
+async function registerVerifiedAccount(
+  endpoints: Fission.Endpoints,
+  dependencies: Dependencies,
+  formValues: Record<string, string>,
+  identifierUcan: Ucan.Ucan
+): Promise<
+  | { registered: true; ucans: Ucan.Ucan[] }
+  | { registered: false; reason: string }
+> {
+  const email = formValues.email.trim()
+  const username = formValues.username.trim()
+  const code = formValues.code.trim()
+
+  const token = Ucan.encode(
+    await Ucan.build({
+      audience: await Fission.did(endpoints, dependencies.dns),
+      issuer: await Ucan.keyPair(dependencies.agent),
+      proofs: [Ucan.encode(identifierUcan)],
+      facts: [{ code }],
+    })
+  )
+
+  const response = await fetch(Fission.apiUrl(endpoints, "/account"), {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(formValues),
+  })
+
+  if (response.status < 300) {
+    const obj = await response.json()
+    const ucan = Ucan.decode(obj.ucan)
+
+    console.log(ucan)
+
+    return {
+      registered: true,
+      ucans: [ucan],
+    }
+  }
+
+  return {
+    registered: false,
+    reason: `Server error: ${response.statusText}`,
+  }
+}
+
+////////////////////////////
+// IDENTIFIER & AUTHORITY //
+////////////////////////////
+
+export async function provideAuthority(accountQuery: AccountQuery): Promise<Ucan.Ucan[]> {
+  return [] // TODO
+}
+
+////////
+// 🛳 //
+////////
+
+export function implementation(
+  dependencies: Dependencies,
+  optionalEndpoints?: Fission.Endpoints
+): Implementation<Annex> {
+  const endpoints = optionalEndpoints || Fission.PRODUCTION
+
+  return {
+    annex: (identifier, ucanDictionary) => ({
+      requestVerificationCode: (...args) => requestVerificationCode(endpoints, dependencies, ...args),
+      volume: (...args) => Common.volume(endpoints, dependencies, identifier, ucanDictionary, ...args),
+    }),
+
+    canRegister: (...args) => canRegister(endpoints, dependencies, ...args),
+    register: (...args) => register(endpoints, dependencies, ...args),
+
+    did: (...args) => Common.did(dependencies, ...args),
+    hasSufficientAuthority: (...args) => Common.hasSufficientAuthority(dependencies, ...args),
+    provideAuthority,
+  }
+}

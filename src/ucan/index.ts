@@ -1,4 +1,5 @@
 import * as Ucans from "@ucans/core"
+import * as UcanCaps from "@ucans/core/capability/index"
 import * as Raw from "multiformats/codecs/raw"
 import * as Uint8arrays from "uint8arrays"
 
@@ -17,7 +18,7 @@ import * as Agent from "../components/agent/implementation.js"
 import { CID } from "../common/cid.js"
 import { BuildParams, Keypair } from "./types.js"
 
-export { encode, encodeHeader, encodePayload, isExpired, isTooEarly, parse, verify } from "@ucans/core"
+export { encodeHeader, encodePayload, isExpired, isTooEarly, parse, verify } from "@ucans/core"
 export * from "./types.js"
 
 ////////
@@ -27,11 +28,50 @@ export * from "./types.js"
 export async function build(
   params: BuildParams
 ): Promise<Ucan> {
-  return Ucans.build(
-    await plugins()
-  )(
-    params
+  const plugs = await plugins()
+  const keypair = params.issuer
+
+  const oldPayload = Ucans.buildPayload({ ...params, issuer: keypair.did() })
+  const adjustedPayload = adjustPayloadTo090(oldPayload)
+
+  const header: Ucans.UcanHeader = {
+    alg: keypair.jwtAlg,
+    typ: "JWT",
+    ucv: { major: 0, minor: 9, patch: "0-canary" as unknown as number }, // hack to get talking to rs-ucan
+  }
+
+  // Issuer key type must match UCAN algorithm
+  if (!plugs.verifyIssuerAlg(adjustedPayload.iss as string, keypair.jwtAlg)) {
+    throw new Error("The issuer's key type must match the given key type.")
+  }
+
+  // Encode parts
+  const encodedHeader = Ucans.encodeHeader(header)
+  const encodedPayload = Uint8arrays.toString(
+    Uint8arrays.fromString(
+      JSON.stringify(
+        {
+          ...adjustedPayload,
+          att: adjustedPayload.att.map(UcanCaps.encode),
+        }
+      ),
+      "utf8"
+    ),
+    "base64url"
   )
+
+  // Sign
+  const signedData = `${encodedHeader}.${encodedPayload}`
+  const toSign = Uint8arrays.fromString(signedData, "utf8")
+  const sig = await keypair.sign(toSign)
+
+  // 📦
+  return Object.freeze({
+    header,
+    payload: oldPayload,
+    signedData,
+    signature: Uint8arrays.toString(sig, "base64url"),
+  })
 }
 
 export async function cid(ucan: Ucan): Promise<CID> {
@@ -53,6 +93,10 @@ export function decode(encoded: string): Ucan {
     signedData: `${encodedHeader}.${encodedPayload}`,
     signature: signature,
   }
+}
+
+export function encode(ucan: Ucan): string {
+  return `${ucan.signedData}.${ucan.signature}`
 }
 
 export function isSelfSigned(ucan: Ucan): boolean {
@@ -89,6 +133,18 @@ export async function plugins(): Promise<Ucans.Plugins> {
 ////////
 // ㊙️ //
 ////////
+
+function adjustPayloadTo090(payload: Ucans.UcanPayload) {
+  return {
+    iss: payload.iss,
+    aud: payload.aud,
+    exp: payload.exp || Math.floor(Date.now() / 1000) + 120,
+    nbf: payload.nbf || Math.floor(Date.now() / 1000),
+    att: payload.att,
+    fct: payload.fct || [],
+    prf: payload.prf,
+  }
+}
 
 class Plugins extends Ucans.Plugins {
   verifyIssuerAlg(did: string, jwtAlg: string): boolean {

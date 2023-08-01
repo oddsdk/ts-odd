@@ -1,4 +1,5 @@
 import * as Auth from "./auth.js"
+import * as Path from "./path/index.js"
 import * as Cabinet from "./repositories/cabinet.js"
 
 import { FileSystemQuery, Query } from "./authority/query.js"
@@ -70,7 +71,7 @@ export type Program<Annex extends Account.AnnexParentType> =
        * Does my program have the authority to work with these part of the file system?
        * And does the configured account system have the required authority?
        */
-      has: (fileSystemQueries: Query | Query[]) => Promise<
+      has: (fileSystemQueries: Query | (Query | Query[])[]) => Promise<
         { has: true } | { has: false; reason: string }
       >
 
@@ -166,10 +167,10 @@ export async function program<Annex extends AnnexParentType>(
   // Authority
   const authority = {
     async has(
-      query: Query | Query[]
+      query: Query | (Query | Query[])[]
     ): Promise<{ has: true } | { has: false; reason: string }> {
       const audience = await identifier.did()
-      const queries = Array.isArray(query) ? query : [query]
+      const queries = (Array.isArray(query) ? query : [query]).flat()
 
       // Account access
       if (queries.some(q => q.query === "account")) {
@@ -191,7 +192,7 @@ export async function program<Annex extends AnnexParentType>(
         []
       )
 
-      const hasAccessToFsPaths = fsQueries.reduce(
+      const hasAccessToFsPaths = fsQueries.filter(q => Path.isPartition("private", q.path)).reduce(
         (acc, query) => {
           if (acc === false) return false
           return cabinet.hasAccessKey(audience, query.path)

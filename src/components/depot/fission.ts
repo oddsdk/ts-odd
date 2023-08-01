@@ -17,6 +17,7 @@ export async function implementation(
     blockstoreName,
     storage,
     gatewayUrl: endpoints.ipfsGateway,
-    peersUrl: endpoints.server + "/ipfs/peers",
+    // FIXME: peersUrl: endpoints.server + "/ipfs/peers",
+    peersUrl: "https://runfission.com/ipfs/peers",
   })
 }

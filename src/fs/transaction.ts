@@ -69,7 +69,7 @@ export class TransactionContext<FS> {
     const proofs = await changedPaths.reduce(
       async (accPromise: Promise<Ucan[]>, changedPath: Path.Distinctive<Partitioned<Partition>>): Promise<Ucan[]> => {
         const acc = await accPromise
-        const proof = context.#ucanDictionary.lookupFsWriteUcan(
+        const proof = context.#ucanDictionary.lookupFileSystemUcan(
           context.#did,
           changedPath
         )

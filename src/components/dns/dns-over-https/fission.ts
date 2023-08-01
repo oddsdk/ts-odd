@@ -1,25 +1,18 @@
-import { Implementation } from "./implementation.js"
+import { Endpoints } from "../../../common/fission.js"
+import { Implementation } from "../implementation.js"
 
-// FUNDAMENTALS
+//////////////////
+// FUNDAMENTALS //
+//////////////////
 
 /**
- * Lookup DNS TXT record using Google DNS-over-HTTPS
+ * Lookup DNS TXT record using Fission's DNS-over-HTTPS endpoint.
  *
  * @param domain The domain to get the TXT record from.
  * @returns Contents of the TXT record.
  */
-export async function googleLookup(domain: string): Promise<string | null> {
-  return dnsOverHttps(`https://dns.google/resolve?name=${domain}&type=txt`)
-}
-
-/**
- * Lookup DNS TXT record using Cloudflare DNS-over-HTTPS
- *
- * @param domain The domain to get the TXT record from.
- * @returns Contents of the TXT record.
- */
-export function cloudflareLookup(domain: string): Promise<string | null> {
-  return dnsOverHttps(`https://cloudflare-dns.com/dns-query?name=${domain}&type=txt`)
+export async function fissionLookup(endpoints: Endpoints, domain: string): Promise<string | null> {
+  return dnsOverHttps(`${endpoints.server}/dns-query?name=${domain}&type=txt`)
 }
 
 /**
@@ -62,7 +55,9 @@ export function dnsOverHttps(url: string): Promise<string | null> {
     })
 }
 
-// 🛠
+////////
+// 🛠 //
+////////
 
 /**
  * Lookup a DNS TXT record.
@@ -72,11 +67,8 @@ export function dnsOverHttps(url: string): Promise<string | null> {
  * @param domain The domain to get the TXT record from.
  * @returns Contents of the TXT record.
  */
-export async function lookupTxtRecord(domain: string): Promise<string | null> {
-  return Promise.any([
-    googleLookup(domain),
-    cloudflareLookup(domain),
-  ])
+export async function lookupTxtRecord(endpoints: Endpoints, domain: string): Promise<string | null> {
+  return fissionLookup(endpoints, domain)
 }
 
 /**
@@ -85,8 +77,9 @@ export async function lookupTxtRecord(domain: string): Promise<string | null> {
  * @param domain The domain to get the DNSLink from.
  * @returns Contents of the DNSLink with the "ipfs/" prefix removed.
  */
-export async function lookupDnsLink(domain: string): Promise<string | null> {
+export async function lookupDnsLink(endpoints: Endpoints, domain: string): Promise<string | null> {
   const txt = await lookupTxtRecord(
+    endpoints,
     domain.startsWith("_dnslink.")
       ? domain
       : `_dnslink.${domain}`
@@ -97,11 +90,13 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
     : null
 }
 
-// 🛳️
+////////
+// 🛳️ //
+////////
 
-export function implementation(): Implementation {
+export function implementation(endpoints: Endpoints): Implementation {
   return {
-    lookupDnsLink,
-    lookupTxtRecord,
+    lookupDnsLink: (...args) => lookupDnsLink(endpoints, ...args),
+    lookupTxtRecord: (...args) => lookupTxtRecord(endpoints, ...args),
   }
 }

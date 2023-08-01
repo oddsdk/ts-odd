@@ -1,4 +1,4 @@
-import { Endpoints } from "../../../common/fission.js"
+import { Endpoints, apiUrl } from "../../../common/fission.js"
 import { DNS } from "../../../components.js"
 import { USERNAME_BLOCKLIST } from "./blocklist.js"
 
@@ -13,11 +13,13 @@ export async function isUsernameAvailable(
   dnsLookup: DNS.Implementation,
   username: string
 ): Promise<boolean> {
-  const result = await dnsLookup.lookupDnsLink(
-    `${encodeURIComponent(username)}.${endpoints.userDomain}`
-  )
-
-  return !result
+  return fetch(
+    apiUrl(endpoints, `/account/${encodeURIComponent(username)}`)
+  ).then(r => {
+    if (r.status < 400) return false
+    else if (r.status === 404) return true
+    else throw new Error(`Server error: ${r.statusText}`)
+  })
 }
 
 /**
