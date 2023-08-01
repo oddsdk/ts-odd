@@ -23,6 +23,36 @@ export type FileSystemQuery = {
 }
 
 ////////
+// 🏔️️ //
+////////
+
+export const account: AccountQuery = {
+  query: "account",
+}
+
+export const fileSystem = {
+  rootAccess: [{
+    query: "fileSystem",
+    ability: "*",
+    path: Path.directory("public"),
+  }, {
+    query: "fileSystem",
+    ability: "*",
+    path: Path.directory("private"),
+  }] as FileSystemQuery[],
+  limitedAccess(
+    ability: typeof ALLOWED_FILE_SYSTEM_ABILITIES[number],
+    path: Path.Distinctive<Path.Partitioned<Path.Partition>>
+  ): FileSystemQuery {
+    return {
+      query: "fileSystem",
+      ability,
+      path,
+    }
+  },
+}
+
+////////
 // 🛠️ //
 ////////
 
@@ -49,13 +79,13 @@ export function fromJSON(query: string): Query {
   }
 }
 
-export function accountQueryFromJSON(obj: Record<string, any>): AccountQuery {
+function accountQueryFromJSON(obj: Record<string, any>): AccountQuery {
   return {
     query: obj.query,
   }
 }
 
-export function fileSystemQueryFromJSON(obj: Record<string, any>): FileSystemQuery {
+function fileSystemQueryFromJSON(obj: Record<string, any>): FileSystemQuery {
   if (ALLOWED_FILE_SYSTEM_ABILITIES.includes(obj.ability) === false) {
     throw new Error(`Ability in file-system query is not allowed: \`${obj.ability}\``)
   }

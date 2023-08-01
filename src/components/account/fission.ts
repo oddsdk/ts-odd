@@ -1,13 +1,14 @@
 import * as AgentDID from "../../agent/did.js"
 import * as Fission from "../../common/fission.js"
 import * as Ucan from "../../ucan/index.js"
+import * as Identifier from "../identifier/implementation.js"
 
+import { AccountQuery } from "../../authority/query.js"
 import { CID } from "../../common/index.js"
 import { Agent, DNS, Manners } from "../../components.js"
 import { FileSystem } from "../../fs/class.js"
 import { DELEGATE_ALL_PROOFS } from "../../ucan/capabilities.js"
-import { listFacts } from "../../ucan/chain.js"
-import { rootIssuer } from "../../ucan/lookup.js"
+import { Dictionary } from "../../ucan/dictionary.js"
 import { DataRoot, isUsernameAvailable, isUsernameValid } from "./fission/index.js"
 import { Implementation } from "./implementation.js"
 
@@ -19,6 +20,21 @@ export type Annex = {
   requestVerificationCode: (
     formValues: Record<string, string>
   ) => Promise<{ requested: true } | { requested: false; reason: string }>
+
+  /**
+   * Create a progressive volume for a Fission account.
+   *
+   * This method can be used to load a local-only file system before an account is registered.
+   * When you register an account, the file system will sync with the Fission server, making it available through Fission IPFS nodes.
+   */
+  volume: () => Promise<{ // TODO: Allow passing in username to look up data roots of other Fission users
+    dataRoot?: CID
+    dataRootUpdater: (
+      dataRoot: CID,
+      proofs: Ucan.Ucan[]
+    ) => Promise<{ updated: true } | { updated: false; reason: string }>
+    did: string
+  }>
 }
 
 export type Dependencies = {
@@ -217,27 +233,51 @@ export async function register(
 // DATA ROOT //
 ///////////////
 
-export async function canUpdateDataRoot(
-  identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary
-): Promise<boolean> {
-  const facts = identifierUcans.map((ucan) => listFacts(ucan, ucanDictionary))
-
-  // TODO: Check if we have the capability to update the data root.
-  //       Or in the case of the old Fission server, any account UCAN.
-  return facts.some((f) => !!f["username"])
-}
-
-export async function lookupDataRoot(
+export async function volume(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
-  identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary
-): Promise<CID | null> {
+  identifier: Identifier.Implementation,
+  ucanDictionary: Dictionary
+): Promise<{
+  dataRoot?: CID
+  dataRootUpdater: (
+    dataRoot: CID,
+    proofs: Ucan.Ucan[]
+  ) => Promise<{ updated: true } | { updated: false; reason: string }>
+  did: string
+}> {
+  const dataRootUpdater = async (dataRoot: CID, proofs: Ucan.Ucan[]) => {
+    const { suffices } = await hasSufficientAuthority(identifier, ucanDictionary)
+    if (!suffices) return { updated: false, reason: "Not authenticated yet, lacking authority." }
+    return updateDataRoot(endpoints, dependencies, identifier, ucanDictionary, dataRoot, proofs)
+  }
+
+  const { suffices } = await hasSufficientAuthority(identifier, ucanDictionary)
+
+  if (!suffices) {
+    return {
+      dataRoot: undefined,
+      dataRootUpdater,
+      did: await identifier.did(),
+    }
+  }
+
+  if (!navigator.onLine) {
+    return {
+      dataRoot: undefined,
+      dataRootUpdater,
+      did: await did(identifier, ucanDictionary),
+    }
+  }
+
+  const identifierUcans = ucanDictionary.lookupByAudience(
+    await identifier.did()
+  )
+
   const facts = identifierUcans.reduce(
     (acc: Record<string, unknown>, ucan) => ({
       ...acc,
-      ...listFacts(ucan, ucanDictionary),
+      ...ucanDictionary.listFacts(ucan),
     }),
     {}
   )
@@ -252,15 +292,23 @@ export async function lookupDataRoot(
     throw new Error("Expected username to be a string, but it isn't.")
   }
 
-  return DataRoot.lookup(endpoints, dependencies, username)
+  return {
+    dataRoot: (await DataRoot.lookup(endpoints, dependencies, username)) || undefined,
+    dataRootUpdater,
+    did: await did(identifier, ucanDictionary),
+  }
 }
 
 export async function updateDataRoot(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
+  identifier: Identifier.Implementation,
+  ucanDictionary: Dictionary,
   dataRoot: CID,
   proofs: Ucan.Ucan[]
 ): Promise<{ updated: true } | { updated: false; reason: string }> {
+  if (!navigator.onLine) return { updated: false, reason: "NO_INTERNET_CONNECTION" }
+
   const ucan = await Ucan.build({
     // Delegate to self
     audience: await AgentDID.signing(dependencies.agent),
@@ -275,17 +323,21 @@ export async function updateDataRoot(
   return DataRoot.update(endpoints, dependencies, dataRoot, ucan)
 }
 
-///////////
-// UCANS //
-///////////
+////////////////////////////
+// IDENTIFIER & AUTHORITY //
+////////////////////////////
 
 export async function did(
-  identifierUcans: Ucan.Ucan[],
-  ucanDictionary: Ucan.Dictionary
+  identifier: Identifier.Implementation,
+  ucanDictionary: Dictionary
 ): Promise<string> {
+  const identifierUcans = ucanDictionary.lookupByAudience(
+    await identifier.did()
+  )
+
   const rootIssuers: Set<string> = identifierUcans.reduce(
     (set: Set<string>, identifierUcan): Set<string> => {
-      const iss = rootIssuer(identifierUcan, ucanDictionary)
+      const iss = ucanDictionary.rootIssuer(identifierUcan)
       return set.add(iss)
     },
     new Set() as Set<string>
@@ -300,6 +352,32 @@ export async function did(
   const root = Array.from(rootIssuers.values())[0]
   if (!root) throw new Error("Expected a root issuer to be found")
   return root
+
+  // TODO: Get public key from fission server generated key pair
+  //       -> issuer from fission-server issued UCAN
+}
+
+export async function hasSufficientAuthority(
+  identifier: Identifier.Implementation,
+  ucanDictionary: Dictionary
+): Promise<
+  { suffices: true } | { suffices: false; reason: string }
+> {
+  const identifierUcans = ucanDictionary.lookupByAudience(
+    await identifier.did()
+  )
+
+  const facts = identifierUcans.map(
+    ucan => ucanDictionary.listFacts(ucan)
+  )
+
+  // TODO: Check if we have all our needed capabilities.
+  const suffices = facts.some((f) => !!f["username"])
+  return suffices ? { suffices } : { suffices, reason: "Missing the needed capabilities" }
+}
+
+export async function provideAuthority(accountQuery: AccountQuery): Promise<Ucan.Ucan[]> {
+  return [] // TODO
 }
 
 ////////
@@ -313,17 +391,16 @@ export function implementation(
   const endpoints = optionalEndpoints || Fission.PRODUCTION
 
   return {
-    annex: {
+    annex: (identifier, ucanDictionary) => ({
       requestVerificationCode: (...args) => requestVerificationCode(endpoints, dependencies, ...args),
-    },
+      volume: (...args) => volume(endpoints, dependencies, identifier, ucanDictionary, ...args),
+    }),
 
     canRegister: (...args) => canRegister(endpoints, dependencies, ...args),
     register: (...args) => register(endpoints, dependencies, ...args),
 
-    canUpdateDataRoot: (...args) => canUpdateDataRoot(...args),
-    lookupDataRoot: (...args) => lookupDataRoot(endpoints, dependencies, ...args),
-    updateDataRoot: (...args) => updateDataRoot(endpoints, dependencies, ...args),
-
     did,
+    hasSufficientAuthority,
+    provideAuthority,
   }
 }

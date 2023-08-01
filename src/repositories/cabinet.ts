@@ -13,7 +13,7 @@ import Repository, { RepositoryOptions } from "../repository.js"
 
 export type CabinetItem =
   | { type: "ucan"; ucan: Ucan.Ucan }
-  | { type: "access-key"; key: PrivateReference; path: Path.Distinctive<Path.Segments> } // TODO: Update rs-wnfs, use AccessKey structure
+  | { type: "access-key"; did: string; key: PrivateReference; path: Path.Distinctive<Path.Segments> }
 
 export type CabinetCollection = Record<string, CabinetItem>
 
@@ -35,13 +35,15 @@ export function create({ storage }: { storage: Storage.Implementation }): Promis
 export { Repo as Cabinet }
 
 export class Repo extends Repository<CabinetCollection, CabinetItem> {
-  public accessKeys: { path: Path.Distinctive<Path.Segments>; key: PrivateReference }[]
+  public accessKeys: Record<string, { key: PrivateReference; path: Path.Distinctive<Path.Segments> }[]>
+  public ucans: Ucan.Ucan[]
   public ucansIndexedByAudience: Record<string, Ucan.Ucan[]>
   public ucansIndexedByCID: Record<string, Ucan.Ucan>
 
   private constructor(options: RepositoryOptions) {
     super(options)
-    this.accessKeys = []
+    this.accessKeys = {}
+    this.ucans = []
     this.ucansIndexedByAudience = {}
     this.ucansIndexedByCID = {}
   }
@@ -62,7 +64,7 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
   async toCollection(item: CabinetItem): Promise<CabinetCollection> {
     switch (item.type) {
       case "access-key":
-        return { [Path.toPosix(item.path)]: item }
+        return { [`${item.did}/${Path.toPosix(item.path)}`]: item }
       case "ucan":
         return { [(await Ucan.cid(item.ucan)).toString()]: item }
     }
@@ -71,23 +73,39 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
   async collectionUpdateCallback(collection: CabinetCollection) {
     const entries = Object.entries(collection)
 
-    this.accessKeys = entries.reduce(
-      (acc: { path: Path.Distinctive<Path.Segments>; key: PrivateReference }[], [_k, item]) => {
+    const { accessKeys, ucans } = entries.reduce(
+      (acc, [_k, item]) => {
         if (item.type === "access-key") {
-          return [...acc, { path: item.path, key: item.key }]
+          return {
+            ...acc,
+            accessKeys: {
+              ...acc.accessKeys,
+              [item.did]: [...(acc.accessKeys[item.did] || []), { key: item.key, path: item.path }],
+            },
+          }
+        } else if (item.type === "ucan") {
+          return { ...acc, ucans: [...acc.ucans, item.ucan] }
         } else {
           return acc
         }
       },
-      []
+      {
+        accessKeys: {},
+        ucans: [],
+      } as {
+        accessKeys: Record<string, { key: PrivateReference; path: Path.Distinctive<Path.Segments> }[]>
+        ucans: Ucan.Ucan[]
+      }
     )
 
-    this.ucansIndexedByAudience = entries.reduce(
-      (acc: Record<string, Ucan.Ucan[]>, [k, v]) => {
-        if (v.type !== "ucan") return acc
+    this.accessKeys = accessKeys
+    this.ucans = ucans
+
+    this.ucansIndexedByAudience = ucans.reduce(
+      (acc: Record<string, Ucan.Ucan[]>, ucan) => {
         return {
           ...acc,
-          [v.ucan.payload.aud]: [...(acc[v.ucan.payload.aud] || []), v.ucan],
+          [ucan.payload.aud]: [...(acc[ucan.payload.aud] || []), ucan],
         }
       },
       {}
@@ -135,12 +153,6 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
     return JSON.stringify(encodedObj)
   }
 
-  // LOOKUPS
-
-  audienceUcans(audience: string): Ucan.Ucan[] {
-    return this.ucansIndexedByAudience[audience] || []
-  }
-
   // EXTRA
 
   addUcan(ucan: Ucan.Ucan): Promise<void> {
@@ -151,18 +163,18 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
     return this.add(ucans.map(u => ({ type: "ucan", ucan: u })))
   }
 
-  addAccessKey(item: { path: Path.Distinctive<Path.Segments>; key: PrivateReference }) {
+  addAccessKey(item: { did: string; key: PrivateReference; path: Path.Distinctive<Path.Segments> }) {
     return this.addAccessKeys([item])
   }
 
-  addAccessKeys(items: { path: Path.Distinctive<Path.Segments>; key: PrivateReference }[]) {
+  addAccessKeys(items: { did: string; key: PrivateReference; path: Path.Distinctive<Path.Segments> }[]) {
     return this.add(items.map(item => {
       return { type: "access-key", ...item }
     }))
   }
 
-  hasAccessKey(path: Path.Distinctive<Path.Segments>): boolean {
-    return !!this.collection[Path.toPosix(path)]
+  hasAccessKey(did: string, path: Path.Distinctive<Path.Segments>): boolean {
+    return !!this.collection[`${did}/${Path.toPosix(path)}`]
   }
 }
 
@@ -175,11 +187,12 @@ export function decodeItem(item: unknown): CabinetItem {
 
   switch (item.type) {
     case "access-key":
-      if ("key" in item && "path" in item && isObject(item.key) && isString(item.path)) {
+      if (isObject(item.key) && isString(item.path) && isString(item.did)) {
         return {
           type: item.type,
           path: Path.fromPosix(item.path),
           key: PrivateRef.decode(item.key as Record<string, string>),
+          did: item.did,
         }
       } else {
         throw new Error("Encoded access-key cabinet-item did not have the expected `key` and `path` attributes")
@@ -203,7 +216,7 @@ export function decodeItem(item: unknown): CabinetItem {
 export function encodeItem(item: CabinetItem): any {
   switch (item.type) {
     case "access-key":
-      return { type: "access-key", key: PrivateRef.encode(item.key), path: Path.toPosix(item.path) }
+      return { type: "access-key", key: PrivateRef.encode(item.key), path: Path.toPosix(item.path), did: item.did }
     case "ucan":
       return { type: "ucan", ucan: Ucan.encode(item.ucan) }
   }

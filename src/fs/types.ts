@@ -1,18 +1,14 @@
-import type { Cabinet } from "../repositories/cabinet.js"
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
 
-import * as Agent from "../components/agent/implementation.js"
 import * as Depot from "../components/depot/implementation.js"
-import * as Identifier from "../components/identifier/implementation.js"
 import * as Manners from "../components/manners/implementation.js"
 
-import * as Events from "../events.js"
 import * as Path from "../path/index.js"
 
 import { CID } from "../common/cid.js"
-import { EventEmitter } from "../events.js"
 import { Partition, Partitioned } from "../path/index.js"
-import { Ucan } from "../ucan/index.js"
+import { Dictionary } from "../ucan/dictionary.js"
+import { Ucan } from "../ucan/types.js"
 import { PrivateReference } from "./types/private-ref.js"
 
 ////////
@@ -38,9 +34,7 @@ export type DataForType<D extends DataType, V = unknown> = D extends "bytes" ? U
   : never
 
 export type Dependencies<FS> = {
-  agent: Agent.Implementation
   depot: Depot.Implementation
-  identifier: Identifier.Implementation
   manners: Manners.Implementation<FS>
 }
 
@@ -55,14 +49,12 @@ export type DirectoryItemWithKind = DirectoryItem & {
 }
 
 export type FileSystemOptions<FS> = {
-  cabinet: Cabinet
   cidLog: CIDLog
   dependencies: Dependencies<FS>
-  did: () => Promise<string>
-  eventEmitter: EventEmitter<Events.FileSystem>
-  localOnly?: boolean
+  did: string
   settleTimeBeforePublish?: number
-  updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+  ucanDictionary: Dictionary
+  updateDataRoot?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
 }
 
 export type MutationOptions = {
@@ -101,7 +93,5 @@ export type TransactionResult = {
 }
 
 export type PublishingStatus =
-  | { persisted: true; localOnly: boolean }
-  | { persisted: false; reason: "NO_INTERNET_CONNECTION" }
-  | { persisted: false; reason: "DATA_ROOT_UPDATE_FAILED" }
-  | { persisted: false; reason: "DISABLED_BY_OPTIONS" }
+  | { persisted: true }
+  | { persisted: false; reason: string }

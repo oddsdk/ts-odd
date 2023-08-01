@@ -2,7 +2,6 @@ import debounce from "debounce-promise"
 import { CID } from "multiformats/cid"
 import { BlockStore, Namefilter, PrivateDirectory, PrivateFile, PrivateNode, PublicDirectory, PublicFile } from "wnfs"
 
-import type { Cabinet } from "../repositories/cabinet.js"
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
 
 import * as Events from "../events.js"
@@ -14,8 +13,10 @@ import * as RootTree from "./rootTree.js"
 import * as Store from "./store.js"
 import * as WASM from "./wasm.js"
 
+import { EventListener } from "../common/event-emitter.js"
 import { EventEmitter } from "../events.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
+import { Dictionary } from "../ucan/dictionary.js"
 import { Ucan } from "../ucan/index.js"
 import { searchLatest } from "./common.js"
 import { findPrivateNode, partition as determinePartition } from "./mounts.js"
@@ -41,42 +42,38 @@ import { PrivateReference } from "./types/private-ref.js"
 
 export class FileSystem {
   #blockStore: BlockStore
-  #cabinet: Cabinet
   #cidLog: CIDLog
   #dependencies: Dependencies<FileSystem>
   #eventEmitter: EventEmitter<Events.FileSystem>
-  #localOnly: boolean
   #settleTimeBeforePublish: number
   #rootTree: RootTree.RootTree
-  #updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+  #ucanDictionary: Dictionary
+  #updateDataRoot?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
 
   #privateNodes: MountedPrivateNodes = {}
   #rng: Rng.Rng
 
-  did: () => Promise<string>
+  did: string
 
   constructor(
     blockStore: BlockStore,
-    cabinet: Cabinet,
     cidLog: CIDLog,
     dependencies: Dependencies<FileSystem>,
-    did: () => Promise<string>,
-    eventEmitter: EventEmitter<Events.FileSystem>,
-    localOnly: boolean,
+    did: string,
     settleTimeBeforePublish: number,
     rootTree: RootTree.RootTree,
-    updateDataRoot: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+    ucanDictionary: Dictionary,
+    updateDataRoot?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
   ) {
     this.#blockStore = blockStore
-    this.#cabinet = cabinet
     this.#cidLog = cidLog
     this.#dependencies = dependencies
-    this.#eventEmitter = eventEmitter
-    this.#localOnly = localOnly
     this.#settleTimeBeforePublish = settleTimeBeforePublish
     this.#rootTree = rootTree
+    this.#ucanDictionary = ucanDictionary
     this.#updateDataRoot = updateDataRoot
 
+    this.#eventEmitter = Events.createEmitter<Events.FileSystem>()
     this.#rng = Rng.makeRngInterface()
 
     this.did = did
@@ -89,8 +86,7 @@ export class FileSystem {
    * Creates a file system with an empty public tree & an empty private tree at the root.
    */
   static async empty(opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cabinet, cidLog, dependencies, did, eventEmitter, localOnly, settleTimeBeforePublish, updateDataRoot } =
-      opts
+    const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
 
     await WASM.load({ manners: dependencies.manners })
 
@@ -99,14 +95,12 @@ export class FileSystem {
 
     return new FileSystem(
       blockStore,
-      cabinet,
       cidLog,
       dependencies,
       did,
-      eventEmitter,
-      localOnly || false,
       settleTimeBeforePublish || 2500,
       rootTree,
+      ucanDictionary,
       updateDataRoot
     )
   }
@@ -115,8 +109,7 @@ export class FileSystem {
    * Loads an existing file system from a CID.
    */
   static async fromCID(cid: CID, opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cabinet, cidLog, dependencies, did, eventEmitter, localOnly, settleTimeBeforePublish, updateDataRoot } =
-      opts
+    const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
 
     await WASM.load({ manners: dependencies.manners })
 
@@ -125,17 +118,29 @@ export class FileSystem {
 
     return new FileSystem(
       blockStore,
-      cabinet,
       cidLog,
       dependencies,
       did,
-      eventEmitter,
-      localOnly || false,
       settleTimeBeforePublish || 2500,
       rootTree,
+      ucanDictionary,
       updateDataRoot
     )
   }
+
+  // EVENTS
+  // ------
+
+  addListener<K extends keyof Events.FileSystem>(eventName: K, listener: EventListener<Events.FileSystem[K]>): void {
+    return this.#eventEmitter.addListener(eventName, listener)
+  }
+
+  removeListener<K extends keyof Events.FileSystem>(eventName: K, listener: EventListener<Events.FileSystem[K]>): void {
+    return this.#eventEmitter.removeListener(eventName, listener)
+  }
+
+  on = this.addListener
+  off = this.removeListener
 
   // MOUNTS
   // ------
@@ -466,9 +471,9 @@ export class FileSystem {
 
     // Emit events
     changedPaths.forEach(changedPath => {
-      this.#eventEmitter.emit("fileSystem:local-change", {
+      this.#eventEmitter.emit("local-change", {
         dataRoot,
-        path: changedPath,
+        path: changedPath, // TODO: Check if this is correct
       })
     })
 
@@ -571,12 +576,12 @@ export class FileSystem {
   #transactionContext(): TransactionContext<FileSystem> {
     return new TransactionContext(
       this.#blockStore,
-      this.#cabinet,
       this.#dependencies,
       this.did,
       { ...this.#privateNodes },
       this.#rng,
-      { ...this.#rootTree }
+      { ...this.#rootTree },
+      this.#ucanDictionary
     )
   }
 
@@ -593,18 +598,27 @@ export class FileSystem {
 
       await this.#dependencies.depot.flush(dataRoot, proofs)
 
-      const { updated } = await this.#updateDataRoot(
+      let status: PublishingStatus
+
+      if (!this.#updateDataRoot) {
+        status = {
+          persisted: false,
+          reason: "DATA_ROOT_UPDATER_NOT_CONFIGURED",
+        }
+
+        return args.map(_ => status)
+      }
+
+      const rootUpdate = await this.#updateDataRoot(
         dataRoot,
         proofs
       )
 
-      let status: PublishingStatus
-
-      if (updated) {
-        this.#eventEmitter.emit("fileSystem:publish", { dataRoot })
-        status = { persisted: true, localOnly: false }
+      if (rootUpdate.updated) {
+        this.#eventEmitter.emit("publish", { dataRoot, proofs })
+        status = { persisted: true }
       } else {
-        status = { persisted: false, reason: "DATA_ROOT_UPDATE_FAILED" }
+        status = { persisted: false, reason: rootUpdate.reason }
       }
 
       return args.map(_ => status)
@@ -624,8 +638,6 @@ export class FileSystem {
     proofs: Ucan[]
   ): Promise<PublishingStatus> {
     await this.#cidLog.add([dataRoot])
-
-    if (this.#localOnly) return { persisted: true, localOnly: true }
     const debounceResult = await this.#debouncedDataRootUpdate(dataRoot, proofs)
 
     // The type of `debounceResult` is not correct, issue with `@types/debounce-promise`

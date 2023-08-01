@@ -24,7 +24,8 @@ describe("cid-log", () => {
   let cidLog: CIDLog.Repo
 
   before(async () => {
-    cidLog = await CIDLog.create({ storage })
+    const did = "testing"
+    cidLog = await CIDLog.create({ did, storage })
     await cidLog.clear()
   })
 

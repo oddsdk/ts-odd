@@ -3,16 +3,15 @@ import { exporter } from "ipfs-unixfs-exporter"
 import all from "it-all"
 import * as Uint8arrays from "uint8arrays"
 
-import * as Events from "../events.js"
 import * as Path from "../path/index.js"
-
 import * as Cabinet from "../repositories/cabinet.js"
 import * as CIDLog from "../repositories/cid-log.js"
 
 import { account, agent, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
 import { CID } from "../common/cid.js"
-import { createEmitter } from "../events.js"
-import { accountDID, selfDelegateCapabilities } from "../fileSystem.js"
+import { selfDelegateCapabilities } from "../fileSystem.js"
+import { Dictionary } from "../ucan/dictionary.js"
+import { Ucan } from "../ucan/types.js"
 import { FileSystem } from "./class.js"
 
 describe("File System Class", async () => {
@@ -20,7 +19,6 @@ describe("File System Class", async () => {
 
   const fsOpts = {
     dependencies: { account, agent, depot, identifier, manners },
-    eventEmitter: createEmitter<Events.FileSystem>(),
     settleTimeBeforePublish: 250,
   }
 
@@ -28,20 +26,27 @@ describe("File System Class", async () => {
   // -----
 
   beforeEach(async () => {
-    const cidLog = await CIDLog.create({ storage })
+    const did = await identifier.did()
+    const cidLog = await CIDLog.create({ did, storage })
+
     const cabinet = await Cabinet.create({ storage })
+    const ucanDictionary = new Dictionary(cabinet)
 
-    const did = () => accountDID({ account, identifier, cabinet })
-    const updateDataRoot = account.updateDataRoot
+    const updateDataRoot = async (
+      dataRoot: CID,
+      proofs: Ucan[]
+    ): Promise<{ updated: true } | { updated: false; reason: string }> => {
+      return { updated: true }
+    }
 
-    fs = await FileSystem.empty({ ...fsOpts, cidLog, cabinet, did, updateDataRoot })
+    fs = await FileSystem.empty({ ...fsOpts, cidLog, did, ucanDictionary, updateDataRoot })
 
     const mounts = await fs.mountPrivateNodes([
       { path: Path.root() },
     ])
 
     await cabinet.addUcans([
-      await selfDelegateCapabilities(identifier),
+      await selfDelegateCapabilities(identifier, did),
     ])
   })
 
@@ -63,13 +68,13 @@ describe("File System Class", async () => {
       "public"
     )
 
-    const cidLog = await CIDLog.create({ storage })
+    const did = await identifier.did()
+    const cidLog = await CIDLog.create({ did, storage })
+
     const cabinet = await Cabinet.create({ storage })
+    const ucanDictionary = new Dictionary(cabinet)
 
-    const did = () => accountDID({ account, identifier, cabinet })
-    const updateDataRoot = account.updateDataRoot
-
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, ucanDictionary })
     await loadedFs.mountPrivateNodes([
       { path: Path.removePartition(privatePath), capsuleRef },
     ])
@@ -89,13 +94,13 @@ describe("File System Class", async () => {
     const { dataRoot } = await fs.write(Path.file("private", "part.two"), "utf8", "private-2")
     const capsuleRef = await fs.capsuleRef(Path.directory("private"))
 
-    const cidLog = await CIDLog.create({ storage })
+    const did = await identifier.did()
+    const cidLog = await CIDLog.create({ did, storage })
+
     const cabinet = await Cabinet.create({ storage })
+    const ucanDictionary = new Dictionary(cabinet)
 
-    const did = () => accountDID({ account, identifier, cabinet })
-    const updateDataRoot = account.updateDataRoot
-
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, ucanDictionary })
 
     if (capsuleRef) {
       await loadedFs.mountPrivateNodes([
@@ -114,14 +119,14 @@ describe("File System Class", async () => {
     const privatePath = Path.file("private", "nested-private", "private.txt")
     const oldCapsuleRef = await fs.capsuleRef(Path.directory("private"))
 
-    const did = () => accountDID({ account, identifier, cabinet })
-    const updateDataRoot = account.updateDataRoot
+    const did = await identifier.did()
+    const cidLog = await CIDLog.create({ did, storage })
 
-    const cidLog = await CIDLog.create({ storage })
     const cabinet = await Cabinet.create({ storage })
+    const ucanDictionary = new Dictionary(cabinet)
 
     const { dataRoot } = await fs.write(privatePath, "utf8", "private")
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, cabinet, did, updateDataRoot })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, ucanDictionary })
 
     if (oldCapsuleRef) {
       await loadedFs.mountPrivateNodes([
@@ -877,11 +882,11 @@ describe("File System Class", async () => {
       setTimeout(reject, 10000)
 
       const listener = ({ dataRoot }: { dataRoot: CID }) => {
-        fsOpts.eventEmitter.off("fileSystem:publish", listener)
+        fs.off("publish", listener)
         resolve(dataRoot)
       }
 
-      fsOpts.eventEmitter.on("fileSystem:publish", listener)
+      fs.on("publish", listener)
     })
 
     const a = await fs.write(Path.file("private", "a"), "bytes", new Uint8Array())
@@ -903,7 +908,7 @@ describe("File System Class", async () => {
   it("doesn't publish when asked not to do so", async () => {
     let published = false
 
-    fsOpts.eventEmitter.on("fileSystem:publish", () => {
+    fs.on("publish", () => {
       published = true
     })
 
@@ -927,7 +932,7 @@ describe("File System Class", async () => {
     const eventPromise: Promise<CID> = new Promise((resolve, reject) => {
       setTimeout(reject, 10000)
 
-      fsOpts.eventEmitter.on("fileSystem:local-change", ({ dataRoot }) => {
+      fs.on("local-change", ({ dataRoot }) => {
         resolve(dataRoot)
       })
     })

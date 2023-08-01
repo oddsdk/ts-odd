@@ -120,16 +120,16 @@ function listen(connection: Connection, config: Config): Listeners {
     })
   }
 
-  config.eventEmitters.fileSystem.on("fileSystem:local-change", handleLocalChange)
-  config.eventEmitters.fileSystem.on("fileSystem:publish", handlePublish)
+  config.eventEmitters.fileSystem.on("local-change", handleLocalChange)
+  config.eventEmitters.fileSystem.on("publish", handlePublish)
 
   return { handleLocalChange, handlePublish }
 }
 
 function stopListening(config: Config, listeners: Listeners) {
   if (listeners) {
-    config.eventEmitters.fileSystem.removeListener("fileSystem:local-change", listeners.handleLocalChange)
-    config.eventEmitters.fileSystem.removeListener("fileSystem:publish", listeners.handlePublish)
+    config.eventEmitters.fileSystem.removeListener("local-change", listeners.handleLocalChange)
+    config.eventEmitters.fileSystem.removeListener("publish", listeners.handlePublish)
   }
 }
 

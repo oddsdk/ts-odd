@@ -137,6 +137,7 @@ export async function implementation(
     // FLUSH
 
     flush: async (_dataRoot: CID, _proofs: Ucan[]): Promise<void> => {
+      if (!navigator.onLine) return
       await initiateTransport()
     },
   }

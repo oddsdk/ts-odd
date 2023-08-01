@@ -107,7 +107,7 @@ const agent: Agent.Implementation = await WebCryptoAgent.implementation({
 // ACCOUNT //
 /////////////
 
-const account: Account.Implementation<LocalAccount.Annex> = LocalAccount.implementation({ storage })
+const account: Account.Implementation<LocalAccount.Annex> = LocalAccount.implementation()
 
 ////////////////
 // IDENTIFIER //
