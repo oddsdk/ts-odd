@@ -17,7 +17,11 @@
       {
         devShell = pkgs.mkShell {
           name = "oddjs";
-          buildInputs = with pkgs; [ nodejs-18_x ];
+          buildInputs = with pkgs; [
+            nodejs-18_x
+            nodePackages.rimraf
+            nodePackages.typescript
+          ];
         };
       });
 }
