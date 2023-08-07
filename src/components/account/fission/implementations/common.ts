@@ -1,4 +1,3 @@
-import * as AgentDID from "../../../../agent/did.js"
 import * as Fission from "../../../../common/fission.js"
 import * as Ucan from "../../../../ucan/index.js"
 import * as Identifier from "../../../identifier/implementation.js"
@@ -33,6 +32,7 @@ export type Annex = {
 export type Dependencies = {
   agent: Agent.Implementation
   dns: DNS.Implementation
+  identifier: Identifier.Implementation // TODO: Remove
   manners: Manners.Implementation<FileSystem>
 }
 
@@ -74,17 +74,13 @@ export async function volume(
     return {
       dataRoot: undefined,
       dataRootUpdater,
-      did: identifierDID, // FIXME: Needs to be → didUsedForRegistration || identifierDID
+      did: await fileSystemDID(dependencies, identifier, ucanDictionary) || identifierDID,
     }
   }
 
-  // FIXME: This should be the identifier DID ideally,
-  //        new fission-server doesn't support nested UCANs yet (ie. proofs)
-  const audience = await dependencies.agent.did()
-
-  // Find UCAN with username in it
-  const usernameUCAN = findUsernameUCAN(audience, ucanDictionary)
-  const username = usernameUCAN ? findUsernameFact(usernameUCAN) : null
+  // Find account-proof UCAN
+  const accountProof = findAccountProofUCAN(identifierDID, ucanDictionary)
+  const username = accountProof ? findUsernameFact(accountProof) : null
 
   if (!username) {
     throw new Error(
@@ -95,7 +91,7 @@ export async function volume(
   return {
     dataRoot: await DataRoot.lookup(endpoints, dependencies, username).then(a => a || undefined),
     dataRootUpdater,
-    did: identifierDID, // FIXME: Needs to be → didUsedForRegistration || identifierDID
+    did: await fileSystemDID(dependencies, identifier, ucanDictionary) || identifierDID,
   }
 }
 
@@ -109,13 +105,9 @@ export async function updateDataRoot(
 ): Promise<{ updated: true } | { updated: false; reason: string }> {
   if (!navigator.onLine) return { updated: false, reason: "NO_INTERNET_CONNECTION" }
 
-  // FIXME: This should be the identifier DID ideally,
-  //        new fission-server doesn't support nested UCANs yet (ie. proofs)
-  const audience = await dependencies.agent.did()
-
-  // Find UCAN with username in it
-  const usernameUCAN = findUsernameUCAN(audience, ucanDictionary)
-  const username = usernameUCAN ? findUsernameFact(usernameUCAN) : null
+  // Find account-proof UCAN
+  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
+  const username = accountProof ? findUsernameFact(accountProof) : null
 
   if (!username) {
     return { updated: false, reason: "Expected a username to be stored in the UCAN facts" }
@@ -134,16 +126,26 @@ export async function did(
   identifier: Identifier.Implementation,
   ucanDictionary: Dictionary
 ): Promise<string | null> {
-  // FIXME: This should be the identifier DID ideally,
-  //        new fission-server doesn't support nested UCANs yet (ie. proofs)
-  const audience = await dependencies.agent.did()
-
-  // Find UCAN with username in it
-  const usernameUCAN = findUsernameUCAN(audience, ucanDictionary)
+  // Find account-proof UCAN
+  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
 
   // DID is issuer of that username UCAN
-  return usernameUCAN
-    ? usernameUCAN.payload.iss
+  return accountProof
+    ? accountProof.payload.iss
+    : null
+}
+
+export async function fileSystemDID(
+  dependencies: Dependencies,
+  identifier: Identifier.Implementation,
+  ucanDictionary: Dictionary
+) {
+  // Find account-proof UCAN
+  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
+
+  // DID is issuer of that username UCAN
+  return accountProof
+    ? accountProof.payload.aud
     : null
 }
 
@@ -154,31 +156,19 @@ export async function hasSufficientAuthority(
 ): Promise<
   { suffices: true } | { suffices: false; reason: string }
 > {
-  // FIXME: This should be the identifier DID ideally,
-  //        new fission-server doesn't support nested UCANs yet (ie. proofs)
-  const audience = await dependencies.agent.did()
-
-  // Find UCAN with username in it
-  const usernameUCAN = findUsernameUCAN(audience, ucanDictionary)
-
-  // Suffices
-  return usernameUCAN ? { suffices: true } : { suffices: false, reason: "Missing the needed account capabilities" }
+  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
+  return accountProof ? { suffices: true } : { suffices: false, reason: "Missing the needed account capabilities" }
 }
 
 ////////
 // 🛠️ //
 ////////
 
-export function findUsernameFact(ucan: Ucan.Ucan): string | null {
-  const fact = (ucan.payload.fct || []).find(f => !!f["username"])
-  if (!fact) return null
-
-  const u = fact["username"]
-  if (typeof u === "string") return u
-  return null
-}
-
-export function findUsernameUCAN(
+/**
+ * Find the original UCAN the user got back from the Fission server
+ * after registration. This UCAN will have the username fact.
+ */
+export function findAccountProofUCAN(
   audience: string,
   ucanDictionary: Dictionary
 ): Ucan.Ucan | null {
@@ -194,4 +184,47 @@ export function findUsernameUCAN(
     },
     null
   )
+}
+
+/**
+ * Find the account UCAN.
+ *
+ * The account UCAN could be the account-proof UCAN (see function above)
+ * or the chain that has the account-proof UCAN in it.
+ *
+ * In other words, if the device that originally registered the account
+ * linked to another device, it would delegate the account-proof UCAN
+ * to the other device. If then asked for the account UCAN on that other
+ * device it would be the delegated UCAN.
+ */
+export function findAccountUCAN(
+  audience: string,
+  ucanDictionary: Dictionary
+) {
+  const matcher = (ucan: Ucan.Ucan) => !!findUsernameFact(ucan)
+
+  // Grab the UCANs addressed to this audience (ideally current identifier),
+  // then look for the username fact ucan in the delegation chains of those UCANs.
+  return ucanDictionary.lookupByAudience(audience).reduce(
+    (acc: Ucan.Ucan | null, ucan) => {
+      if (acc) return acc
+      if (matcher(ucan)) return ucan
+      const hasProof = !!ucanDictionary.descendUntilMatching(ucan, matcher)
+      if (hasProof) return ucan
+      return null
+    },
+    null
+  )
+}
+
+/**
+ * Look through the facts of a UCAN and get the username fact.
+ */
+export function findUsernameFact(ucan: Ucan.Ucan): string | null {
+  const fact = (ucan.payload.fct || []).find(f => !!f["username"])
+  if (!fact) return null
+
+  const u = fact["username"]
+  if (typeof u === "string") return u
+  return null
 }

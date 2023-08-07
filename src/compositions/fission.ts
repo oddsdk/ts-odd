@@ -117,12 +117,14 @@ export async function components(
       case "delegated":
         return Account.delegated({
           agent,
+          identifier,
           dns,
           manners,
         }, endpoints)
       case "standard":
         return Account.standard({
           agent,
+          identifier,
           dns,
           manners,
         }, endpoints)

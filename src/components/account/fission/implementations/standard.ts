@@ -36,12 +36,18 @@ export async function requestVerificationCode(
   }
 
   email = email.trim()
+  const identifierDID = await dependencies.identifier.did()
 
   const ucan = await Ucan.build({
     audience: await Fission.did(endpoints, dependencies.dns),
-    issuer: await Ucan.keyPair(dependencies.agent),
-    facts: [{ placeholder: "none" }], // For rs-ucan compat (obsolete, but req'd for 0.2.x)
-    proofs: [], // rs-ucan compat
+    // issuer: await Ucan.keyPair(dependencies.agent), FIXME: Should use agent
+    issuer: {
+      did: () => identifierDID,
+      jwtAlg: await dependencies.identifier.ucanAlgorithm(),
+      sign: data => dependencies.identifier.sign(data),
+    },
+    facts: [],
+    proofs: [],
   })
 
   const response = await fetch(
@@ -178,15 +184,20 @@ async function registerVerifiedAccount(
   | { registered: true; ucans: Ucan.Ucan[] }
   | { registered: false; reason: string }
 > {
-  const email = formValues.email.trim()
-  const username = formValues.username.trim()
   const code = formValues.code.trim()
+  const identifierDID = await dependencies.identifier.did()
 
   const token = Ucan.encode(
     await Ucan.build({
       audience: await Fission.did(endpoints, dependencies.dns),
-      issuer: await Ucan.keyPair(dependencies.agent),
-      proofs: [Ucan.encode(identifierUcan)],
+      // issuer: await Ucan.keyPair(dependencies.agent), FIXME: Should use agent
+      issuer: {
+        did: () => identifierDID,
+        jwtAlg: await dependencies.identifier.ucanAlgorithm(),
+        sign: data => dependencies.identifier.sign(data),
+      },
+      // proofs: [Ucan.encode(identifierUcan)],
+      proofs: [],
       facts: [{ code }],
     })
   )
@@ -212,9 +223,14 @@ async function registerVerifiedAccount(
     }
   }
 
+  const error = await response
+    .json()
+    .then(j => j["errors"][0]["detail"])
+    .catch(() => response.statusText)
+
   return {
     registered: false,
-    reason: `Server error: ${response.statusText}`,
+    reason: `Server error: ${error}`,
   }
 }
 

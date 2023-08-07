@@ -5,7 +5,7 @@ import * as TypeChecks from "../../../common/type-checks.js"
 import * as Ucan from "../../../ucan/index.js"
 
 import { decodeCID } from "../../../common/cid.js"
-import { Agent, DNS, Manners } from "../../../components.js"
+import { Agent, DNS, Identifier, Manners } from "../../../components.js"
 import { FileSystem } from "../../../fs/class.js"
 
 /**
@@ -76,6 +76,7 @@ export async function update(
   endpoints: Fission.Endpoints,
   dependencies: {
     agent: Agent.Implementation
+    identifier: Identifier.Implementation
     dns: DNS.Implementation
     manners: Manners.Implementation<FileSystem>
   },
@@ -84,6 +85,7 @@ export async function update(
   username: string
 ): Promise<{ updated: true } | { updated: false; reason: string }> {
   const cid = cidInstance.toString()
+  const identifierDID = await dependencies.identifier.did()
 
   // Debug
   dependencies.manners.log("🌊 Updating your DNSLink:", cid)
@@ -94,7 +96,12 @@ export async function update(
       const jwt = Ucan.encode(
         await Ucan.build({
           audience: await Fission.did(endpoints, dependencies.dns),
-          issuer: await Ucan.keyPair(dependencies.agent),
+          // issuer: await Ucan.keyPair(dependencies.agent), FIXME: Should use agent
+          issuer: {
+            did: () => identifierDID,
+            jwtAlg: await dependencies.identifier.ucanAlgorithm(),
+            sign: data => dependencies.identifier.sign(data),
+          },
 
           proofs: await Promise.all(proofs.map(
             async proof => (await Ucan.cid(proof)).toString()
