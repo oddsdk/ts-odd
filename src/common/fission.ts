@@ -32,7 +32,7 @@ export const STAGING: Endpoints = {
 
 export const DEVELOPMENT: Endpoints = {
   apiPath: "/api",
-  ipfsGateway: "https://ipfs.runfission.net",
+  ipfsGateway: "http://localhost:8080",
   server: "http://localhost:3000",
   userDomain: "fissionuser.net",
   did: "did:web:localhost:3000",

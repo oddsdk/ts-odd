@@ -104,13 +104,13 @@ export async function components(
   const storage = Storage.implementation({ name: namespace })
   const agentStore = Storage.implementation({ name: `${namespace}/agent` })
   const identifierStore = Storage.implementation({ name: `${namespace}/identifier` })
-  const depot = await Depot.implementation(storage, `${namespace}/blockstore`, endpoints)
 
   const agent = await Agent.implementation({ store: agentStore })
   const channel = Channel.implementation(endpoints)
   const dns = DNS.implementation(endpoints)
   const identifier = await Identifier.implementation({ store: identifierStore })
   const manners = Manners.implementation(config)
+  const depot = await Depot.implementation(manners, storage, `${namespace}/blockstore`, endpoints)
 
   const account = (() => {
     switch (settings?.accountType || "standard") {

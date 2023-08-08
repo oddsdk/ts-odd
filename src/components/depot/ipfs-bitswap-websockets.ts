@@ -1,23 +1,26 @@
 import { noise } from "@chainsafe/libp2p-noise"
 import { mplex } from "@libp2p/mplex"
 import { webSockets } from "@libp2p/websockets"
+import * as filters from "@libp2p/websockets/filters"
+import { webTransport } from "@libp2p/webtransport"
+import { LevelBlockstore } from "blockstore-level"
 import { Blockstore } from "interface-blockstore"
 import { Bitswap, createBitswap } from "ipfs-bitswap"
 import { Libp2p, createLibp2p } from "libp2p"
-
-import { BlockstoreDatastoreAdapter } from "blockstore-datastore-adapter"
-import { LevelDatastore } from "datastore-level"
+import { pingService } from "libp2p/ping"
 
 import { CID } from "multiformats/cid"
 import { sha256 } from "multiformats/hashes/sha2"
 
 import { Maybe } from "../../common/types.js"
-import { Storage } from "../../components.js"
+import { Manners, Storage } from "../../components.js"
 import * as Codecs from "../../dag/codecs.js"
 import { CodecIdentifier } from "../../dag/codecs.js"
+import { FileSystem } from "../../fs/class.js"
 import { Ucan } from "../../ucan/index.js"
 import { Implementation } from "./implementation.js"
 
+import { Multiaddr } from "@multiformats/multiaddr"
 import * as Connections from "./ipfs/connections.js"
 import * as Peers from "./ipfs/peers.js"
 
@@ -30,34 +33,64 @@ export type Transport = {
 
 export async function createTransport(
   blockstore: Blockstore,
+  manners: Manners.Implementation<FileSystem>,
   storage: Storage.Implementation,
-  peersUrl: string,
-  logging: boolean = false
+  peersUrl: string
 ): Promise<Transport> {
-  const libp2p = await createLibp2p({
+  const libp2pOptions = {
     connectionEncryption: [noise()],
     streamMuxers: [mplex()],
-    transports: [webSockets()],
-  })
+    transports: [
+      webSockets({ filter: filters.all }),
+      webTransport(),
+    ],
+    services: {
+      ping: pingService(),
+    },
+    connectionGater: {
+      denyDialMultiaddr: async (multiAddr: Multiaddr) => {
+        const str = multiAddr.toString()
+        return !str.endsWith("/ws") && !str.includes("/wss/") && !str.includes("/webtransport/")
+      },
+    },
+  }
+
+  const libp2p = await createLibp2p(libp2pOptions)
 
   // Bitswap
   const bitswap = createBitswap(libp2p, blockstore)
   bitswap.start()
 
   // Connect to peers
-  const peers = await Peers.listPeers(
-    storage,
-    peersUrl
-  )
+  async function listPeers(): Promise<Multiaddr[]> {
+    const peers = await Peers.listPeers(
+      storage,
+      peersUrl
+    )
+
+    return peers.reduce(
+      async (acc: Promise<Multiaddr[]>, p) => {
+        const a = await acc
+        if (await libp2pOptions.connectionGater.denyDialMultiaddr(p) === false) {
+          return [...a, p]
+        } else {
+          return a
+        }
+      },
+      Promise.resolve([])
+    )
+  }
+
+  const peers = await listPeers()
 
   peers.forEach(peer => {
     Connections.resetPeerTimeoutsTracking(peer)
-    Connections.tryConnecting(libp2p, peer, logging)
+    Connections.tryConnecting(libp2p, peer, manners)
   })
 
   // Try connecting when browser comes online
   globalThis.addEventListener("online", async () => {
-    ;(await Peers.listPeers(storage, peersUrl))
+    ;(await listPeers())
       .filter(peer => {
         const peerStr = peer.toString()
         return !peerStr.includes("/localhost/")
@@ -65,7 +98,7 @@ export async function createTransport(
           && !peerStr.includes("/0.0.0.0/")
       })
       .forEach(peer => {
-        Connections.tryConnecting(libp2p, peer, logging)
+        Connections.tryConnecting(libp2p, peer, manners)
       })
   })
 
@@ -78,16 +111,15 @@ export async function createTransport(
 export type ImplementationOptions = {
   blockstoreName: string
   gatewayUrl: string
+  manners: Manners.Implementation<FileSystem>
   peersUrl: string
   storage: Storage.Implementation
 }
 
 export async function implementation(
-  { blockstoreName, gatewayUrl, peersUrl, storage }: ImplementationOptions
+  { blockstoreName, gatewayUrl, manners, peersUrl, storage }: ImplementationOptions
 ): Promise<Implementation> {
-  const blockstore = new BlockstoreDatastoreAdapter(
-    new LevelDatastore(blockstoreName, { prefix: "" })
-  )
+  const blockstore = new LevelBlockstore(blockstoreName, { prefix: "" })
 
   // Transport
   // ---------
@@ -95,7 +127,7 @@ export async function implementation(
 
   const initiateTransport = async () => {
     if (t) return t
-    t = await createTransport(blockstore, storage, peersUrl)
+    t = await createTransport(blockstore, manners, storage, peersUrl)
     return t
   }
 
