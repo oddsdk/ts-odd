@@ -34,7 +34,7 @@ export const DEVELOPMENT: Endpoints = {
   apiPath: "/api",
   ipfsGateway: "http://localhost:8080",
   server: "http://localhost:3000",
-  userDomain: "fissionuser.net",
+  userDomain: "fission.app", // FIXME: The domain configured in the fission server is not correct
   did: "did:web:localhost:3000",
 }
 

@@ -33,7 +33,7 @@ export function dnsOverHttps(url: string): Promise<string | null> {
   })
     .then(r => r.json())
     .then(r => {
-      if (r.Answer) {
+      if (r.Answer && r.Answer.length) {
         // Remove double-quotes from beginning and end of the resulting string (if present)
         const answers: Array<string> = r.Answer.map((a: { data: string }) => {
           return (a.data || "").replace(/^"+|"+$/g, "")

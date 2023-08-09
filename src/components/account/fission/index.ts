@@ -13,13 +13,11 @@ export async function isUsernameAvailable(
   dnsLookup: DNS.Implementation,
   username: string
 ): Promise<boolean> {
-  return fetch(
-    apiUrl(endpoints, `/account/${encodeURIComponent(username)}`)
-  ).then(r => {
-    if (r.status < 400) return false
-    else if (r.status === 404) return true
-    else throw new Error(`Server error: ${r.statusText}`)
-  })
+  const result = await dnsLookup.lookupTxtRecord(
+    `_did.${username}.${endpoints.userDomain}`
+  )
+
+  return !result
 }
 
 /**

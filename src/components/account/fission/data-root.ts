@@ -22,14 +22,12 @@ export async function lookup(
   },
   username: string
 ): Promise<CID | null> {
-  // TODO: Use only DNS once implemented on the server.
-  //       DNS queries will be resolved immediately through the server.
-  const maybeRoot = await lookupOnFisson(endpoints, dependencies, username)
-  if (!maybeRoot) return null
-  if (maybeRoot !== null) return maybeRoot
+  // const maybeRoot = await lookupOnFisson(endpoints, dependencies, username)
+  // if (!maybeRoot) return null
+  // if (maybeRoot !== null) return maybeRoot
 
   try {
-    const cid = await dependencies.dns.lookupDnsLink(username + ".files." + endpoints.userDomain)
+    const cid = await dependencies.dns.lookupDnsLink(username + "." + endpoints.userDomain)
     return !cid ? null : decodeCID(cid)
   } catch (err) {
     console.error(err)
