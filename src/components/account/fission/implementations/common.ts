@@ -6,7 +6,7 @@ import { CID } from "../../../../common/index.js"
 import { Agent, DNS, Manners } from "../../../../components.js"
 import { FileSystem } from "../../../../fs/class.js"
 import { Dictionary } from "../../../../ucan/dictionary.js"
-import { DataRoot } from "../index.js"
+import { DataRoot, lookupUserDID } from "../index.js"
 
 ////////
 // 🧩 //
@@ -19,7 +19,7 @@ export type Annex = {
    * This method can be used to load a local-only file system before an account is registered.
    * When you register an account, the file system will sync with the Fission server, making it available through Fission IPFS nodes.
    */
-  volume: () => Promise<{ // TODO: Allow passing in username to look up data roots of other Fission users
+  volume: (username?: string) => Promise<{
     dataRoot?: CID
     dataRootUpdater: (
       dataRoot: CID,
@@ -41,6 +41,30 @@ export type Dependencies = {
 ///////////////
 
 export async function volume(
+  endpoints: Fission.Endpoints,
+  dependencies: Dependencies,
+  identifier: Identifier.Implementation,
+  ucanDictionary: Dictionary,
+  username?: string
+): Promise<{
+  dataRoot?: CID
+  dataRootUpdater: (
+    dataRoot: CID,
+    proofs: Ucan.Ucan[]
+  ) => Promise<{ updated: true } | { updated: false; reason: string }>
+  did: string
+}> {
+  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
+  const accountUsername = accountProof ? findUsernameFact(accountProof) : null
+
+  if (username && username !== accountUsername) {
+    return otherVolume(endpoints, dependencies, identifier, ucanDictionary, username)
+  } else {
+    return accountVolume(endpoints, dependencies, identifier, ucanDictionary)
+  }
+}
+
+export async function accountVolume(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies,
   identifier: Identifier.Implementation,
@@ -92,6 +116,38 @@ export async function volume(
     dataRoot: await DataRoot.lookup(endpoints, dependencies, username).then(a => a || undefined),
     dataRootUpdater,
     did: await fileSystemDID(dependencies, identifier, ucanDictionary) || identifierDID,
+  }
+}
+
+export async function otherVolume(
+  endpoints: Fission.Endpoints,
+  dependencies: Dependencies,
+  identifier: Identifier.Implementation,
+  ucanDictionary: Dictionary,
+  username: string
+): Promise<{
+  dataRoot?: CID
+  dataRootUpdater: (
+    dataRoot: CID,
+    proofs: Ucan.Ucan[]
+  ) => Promise<{ updated: true } | { updated: false; reason: string }>
+  did: string
+}> {
+  if (!navigator.onLine) throw new Error("Cannot load another user's volume while offline")
+
+  const userDID = await lookupUserDID(endpoints, dependencies.dns, username)
+  if (!userDID) throw new Error("User not found")
+
+  const dataRootUpdater = async (dataRoot: CID, proofs: Ucan.Ucan[]) => {
+    // TODO: Add ability to update data root of another user
+    //       For this we need account capability to update the volume pointer.
+    throw new Error("Not implemented yet")
+  }
+
+  return {
+    dataRoot: await DataRoot.lookup(endpoints, dependencies, username).then(a => a || undefined),
+    dataRootUpdater,
+    did: userDID,
   }
 }
 
@@ -179,7 +235,6 @@ export function findAccountProofUCAN(
   return ucanDictionary.lookupByAudience(audience).reduce(
     (acc: Ucan.Ucan | null, ucan) => {
       if (acc) return acc
-      if (matcher(ucan)) return ucan
       return ucanDictionary.descendUntilMatching(ucan, matcher)
     },
     null
@@ -208,7 +263,6 @@ export function findAccountUCAN(
   return ucanDictionary.lookupByAudience(audience).reduce(
     (acc: Ucan.Ucan | null, ucan) => {
       if (acc) return acc
-      if (matcher(ucan)) return ucan
       const hasProof = !!ucanDictionary.descendUntilMatching(ucan, matcher)
       if (hasProof) return ucan
       return null

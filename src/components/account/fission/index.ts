@@ -13,10 +13,7 @@ export async function isUsernameAvailable(
   dnsLookup: DNS.Implementation,
   username: string
 ): Promise<boolean> {
-  const result = await dnsLookup.lookupTxtRecord(
-    `_did.${username}.${endpoints.userDomain}`
-  )
-
+  const result = await lookupUserDID(endpoints, dnsLookup, username)
   return !result
 }
 
@@ -29,4 +26,14 @@ export function isUsernameValid(username: string): boolean {
     && !username.startsWith("_")
     && /^[a-zA-Z0-9_-]+$/.test(username)
     && !USERNAME_BLOCKLIST.includes(username.toLowerCase())
+}
+
+export function lookupUserDID(
+  endpoints: Endpoints,
+  dnsLookup: DNS.Implementation,
+  username: string
+): Promise<string | null> {
+  return dnsLookup.lookupTxtRecord(
+    `_did.${username}.${endpoints.userDomain}`
+  )
 }
