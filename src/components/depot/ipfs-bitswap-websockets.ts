@@ -17,7 +17,6 @@ import { Maybe } from "../../common/types.js"
 import { Manners, Storage } from "../../components.js"
 import * as Codecs from "../../dag/codecs.js"
 import { CodecIdentifier } from "../../dag/codecs.js"
-import { FileSystem } from "../../fs/class.js"
 import { Ucan } from "../../ucan/index.js"
 import { Implementation } from "./implementation.js"
 
@@ -32,9 +31,9 @@ export type Transport = {
   libp2p: Libp2p
 }
 
-export async function createTransport(
+export async function createTransport<FS>(
   blockstore: Blockstore,
-  manners: Manners.Implementation<FileSystem>,
+  manners: Manners.Implementation<FS>,
   storage: Storage.Implementation,
   peersUrl: string
 ): Promise<Transport> {
@@ -109,16 +108,16 @@ export async function createTransport(
 
 // 🛳
 
-export type ImplementationOptions = {
+export type ImplementationOptions<FS> = {
   blockstoreName: string
   gatewayUrl: string
-  manners: Manners.Implementation<FileSystem>
+  manners: Manners.Implementation<FS>
   peersUrl: string
   storage: Storage.Implementation
 }
 
-export async function implementation(
-  { blockstoreName, gatewayUrl, manners, peersUrl, storage }: ImplementationOptions
+export async function implementation<FS>(
+  { blockstoreName, gatewayUrl, manners, peersUrl, storage }: ImplementationOptions<FS>
 ): Promise<Implementation> {
   const blockstore = new LevelBlockstore(blockstoreName, { prefix: "" })
 

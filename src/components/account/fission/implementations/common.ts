@@ -4,7 +4,6 @@ import * as Identifier from "../../../identifier/implementation.js"
 
 import { CID } from "../../../../common/index.js"
 import { Agent, DNS, Manners } from "../../../../components.js"
-import { FileSystem } from "../../../../fs/class.js"
 import { Dictionary } from "../../../../ucan/dictionary.js"
 import { DataRoot, lookupUserDID } from "../index.js"
 
@@ -29,20 +28,20 @@ export type Annex = {
   }>
 }
 
-export type Dependencies = {
+export type Dependencies<FS> = {
   agent: Agent.Implementation
   dns: DNS.Implementation
   identifier: Identifier.Implementation // TODO: Remove
-  manners: Manners.Implementation<FileSystem>
+  manners: Manners.Implementation<FS>
 }
 
 ///////////////
 // DATA ROOT //
 ///////////////
 
-export async function volume(
+export async function volume<FS>(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
   ucanDictionary: Dictionary,
   username?: string
@@ -64,9 +63,9 @@ export async function volume(
   }
 }
 
-export async function accountVolume(
+export async function accountVolume<FS>(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
   ucanDictionary: Dictionary
 ): Promise<{
@@ -119,9 +118,9 @@ export async function accountVolume(
   }
 }
 
-export async function otherVolume(
+export async function otherVolume<FS>(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
   ucanDictionary: Dictionary,
   username: string
@@ -151,9 +150,9 @@ export async function otherVolume(
   }
 }
 
-export async function updateDataRoot(
+export async function updateDataRoot<FS>(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
   ucanDictionary: Dictionary,
   dataRoot: CID,
@@ -177,8 +176,8 @@ export async function updateDataRoot(
 // IDENTIFIER & AUTHORITY //
 ////////////////////////////
 
-export async function did(
-  dependencies: Dependencies,
+export async function did<FS>(
+  dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
   ucanDictionary: Dictionary
 ): Promise<string | null> {
@@ -191,8 +190,8 @@ export async function did(
     : null
 }
 
-export async function fileSystemDID(
-  dependencies: Dependencies,
+export async function fileSystemDID<FS>(
+  dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
   ucanDictionary: Dictionary
 ) {
@@ -205,8 +204,8 @@ export async function fileSystemDID(
     : null
 }
 
-export async function hasSufficientAuthority(
-  dependencies: Dependencies,
+export async function hasSufficientAuthority<FS>(
+  dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
   ucanDictionary: Dictionary
 ): Promise<

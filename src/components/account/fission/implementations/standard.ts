@@ -21,9 +21,9 @@ export type Annex = Common.Annex & {
 // CREATION //
 //////////////
 
-export async function requestVerificationCode(
+export async function requestVerificationCode<FS>(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies<FS>,
   formValues: Record<string, string>
 ): Promise<{ requested: true } | { requested: false; reason: string }> {
   let email = formValues.email
@@ -68,9 +68,9 @@ export async function requestVerificationCode(
     : { requested: false, reason: `Server error: ${response.statusText}` }
 }
 
-export async function canRegister(
+export async function canRegister<FS>(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies<FS>,
   formValues: Record<string, string>
 ): Promise<{ canRegister: true } | { canRegister: false; reason: string }> {
   if (typeof formValues.accountType !== "string") {
@@ -137,9 +137,9 @@ export async function canRegister(
   }
 }
 
-export async function register(
+export async function register<FS>(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies<FS>,
   formValues: Record<string, string>,
   identifierUcan: Ucan.Ucan
 ): Promise<
@@ -163,9 +163,9 @@ export async function register(
   }
 }
 
-async function registerAppAccount(
+async function registerAppAccount<FS>(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies<FS>,
   formValues: Record<string, string>,
   identifierUcan: Ucan.Ucan
 ): Promise<
@@ -175,9 +175,9 @@ async function registerAppAccount(
   throw new Error("Not implemented yet")
 }
 
-async function registerVerifiedAccount(
+async function registerVerifiedAccount<FS>(
   endpoints: Fission.Endpoints,
-  dependencies: Dependencies,
+  dependencies: Dependencies<FS>,
   formValues: Record<string, string>,
   identifierUcan: Ucan.Ucan
 ): Promise<
@@ -246,8 +246,8 @@ export async function provideAuthority(accountQuery: AccountQuery): Promise<Ucan
 // 🛳 //
 ////////
 
-export function implementation(
-  dependencies: Dependencies,
+export function implementation<FS>(
+  dependencies: Dependencies<FS>,
   optionalEndpoints?: Fission.Endpoints
 ): Implementation<Annex> {
   const endpoints = optionalEndpoints || Fission.PRODUCTION

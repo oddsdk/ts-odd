@@ -6,7 +6,6 @@ import * as Ucan from "../../../ucan/index.js"
 
 import { decodeCID } from "../../../common/cid.js"
 import { Agent, DNS, Identifier, Manners } from "../../../components.js"
-import { FileSystem } from "../../../fs/class.js"
 
 /**
  * Get the CID of a user's data root.
@@ -14,11 +13,11 @@ import { FileSystem } from "../../../fs/class.js"
  *
  * @param username The username of the user that we want to get the data root of.
  */
-export async function lookup(
+export async function lookup<FS>(
   endpoints: Fission.Endpoints,
   dependencies: {
     dns: DNS.Implementation
-    manners: Manners.Implementation<FileSystem>
+    manners: Manners.Implementation<FS>
   },
   username: string
 ): Promise<CID | null> {
@@ -40,10 +39,10 @@ export async function lookup(
  *
  * @param username The username of the user that we want to get the data root of.
  */
-export async function lookupOnFisson(
+export async function lookupOnFisson<FS>(
   endpoints: Fission.Endpoints,
   dependencies: {
-    manners: Manners.Implementation<FileSystem>
+    manners: Manners.Implementation<FS>
   },
   username: string
 ): Promise<CID | null> {
@@ -70,13 +69,13 @@ export async function lookupOnFisson(
  * @param cid The CID of the data root.
  * @param proof The proof to use in the UCAN sent to the API.
  */
-export async function update(
+export async function update<FS>(
   endpoints: Fission.Endpoints,
   dependencies: {
     agent: Agent.Implementation
     identifier: Identifier.Implementation
     dns: DNS.Implementation
-    manners: Manners.Implementation<FileSystem>
+    manners: Manners.Implementation<FS>
   },
   cidInstance: CID,
   proofs: Ucan.Ucan[],

@@ -20,7 +20,7 @@ export async function components(
   settings: Configuration & {
     environment?: string
   }
-): Promise<Components<Account.Annex>> {
+): Promise<Components<Account.Annex, Channel.Context>> {
   const config = Config.extract(settings)
   const namespace = Config.namespace(config)
 

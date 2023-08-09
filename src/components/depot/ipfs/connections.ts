@@ -3,7 +3,6 @@ import { Libp2p } from "libp2p"
 import { PingService } from "libp2p/ping"
 
 import { Manners } from "../../../components.js"
-import { FileSystem } from "../../../fs/class.js"
 
 const latestPeerTimeoutIds: { [peer: string]: null | ReturnType<typeof setTimeout> } = {}
 
@@ -101,10 +100,10 @@ export function resetPeerTimeoutsTracking(peer: Multiaddr): void {
   latestPeerTimeoutIds[peer.toString()] = null
 }
 
-export function tryConnecting(
+export function tryConnecting<FS>(
   libp2p: LibP2PwServices,
   peer: Multiaddr,
-  manners: Manners.Implementation<FileSystem>
+  manners: Manners.Implementation<FS>
 ): void {
   ping(libp2p, peer).then(({ latency }) => {
     manners.log(`🪐 Connected to ${peer}`)

@@ -61,27 +61,27 @@ export async function components(
     accountImplementation: "delegated"
     environment?: string | Fission.Endpoints
   }
-): Promise<Components<Account.Annexes.Delegated>>
+): Promise<Components<Account.Annexes.Delegated, Channel.Context>>
 export async function components(
   config: Configuration,
   settings?: {
     accountImplementation: "standard"
     environment?: string | Fission.Endpoints
   }
-): Promise<Components<Account.Annexes.Standard>>
+): Promise<Components<Account.Annexes.Standard, Channel.Context>>
 export async function components(
   config: Configuration,
   settings?: {
     environment?: string | Fission.Endpoints
   }
-): Promise<Components<DefaultAnnex>>
+): Promise<Components<DefaultAnnex, Channel.Context>>
 export async function components(
   config: Configuration,
   settings?: {
     accountType?: AccountImplementations
     environment?: string | Fission.Endpoints
   }
-): Promise<Components<Account.Annexes.Delegated | Account.Annexes.Standard>> {
+): Promise<Components<Account.Annexes.Delegated | Account.Annexes.Standard, Channel.Context>> {
   const namespace = Config.namespace(config)
 
   // Determine environment
@@ -105,11 +105,11 @@ export async function components(
   const agentStore = Storage.implementation({ name: `${namespace}/agent` })
   const identifierStore = Storage.implementation({ name: `${namespace}/identifier` })
 
-  const agent = await Agent.implementation({ store: agentStore })
-  const channel = Channel.implementation(endpoints)
   const dns = DNS.implementation(endpoints)
-  const identifier = await Identifier.implementation({ store: identifierStore })
   const manners = Manners.implementation(config)
+  const channel = Channel.implementation(manners, endpoints)
+  const agent = await Agent.implementation({ store: agentStore })
+  const identifier = await Identifier.implementation({ store: identifierStore })
   const depot = await Depot.implementation(manners, storage, `${namespace}/blockstore`, endpoints)
 
   const account = (() => {

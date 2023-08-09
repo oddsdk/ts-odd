@@ -13,10 +13,10 @@ import { FileSystem } from "./fs/class.js"
 // COMPONENTS //
 ////////////////
 
-export type Components<Annex extends Account.AnnexParentType> = {
+export type Components<Annex extends Account.AnnexParentType, ChannelContext> = {
   account: Account.Implementation<Annex>
   agent: Agent.Implementation
-  channel: Channel.Implementation
+  channel: Channel.Implementation<ChannelContext>
   depot: Depot.Implementation
   dns: DNS.Implementation
   identifier: Identifier.Implementation

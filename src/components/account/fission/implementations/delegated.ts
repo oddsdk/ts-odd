@@ -50,8 +50,8 @@ export async function provideAuthority(accountQuery: AccountQuery): Promise<Ucan
 // 🛳 //
 ////////
 
-export function implementation(
-  dependencies: Dependencies,
+export function implementation<FS>(
+  dependencies: Dependencies<FS>,
   optionalEndpoints?: Fission.Endpoints
 ): Implementation<Annex> {
   const endpoints = optionalEndpoints || Fission.PRODUCTION

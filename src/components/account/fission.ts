@@ -18,8 +18,8 @@ export { Annexes, Dependencies }
  * This implementation depends on given UCANs in order to operate,
  * it cannot register accounts.
  */
-export function delegated(
-  dependencies: Dependencies,
+export function delegated<FS>(
+  dependencies: Dependencies<FS>,
   optionalEndpoints?: Fission.Endpoints
 ): Implementation<Delegated.Annex> {
   const endpoints = optionalEndpoints || Fission.PRODUCTION
@@ -30,8 +30,8 @@ export function delegated(
  * The account implementation for app & verified Fission accounts.
  * This type of account can register apps.
  */
-export function standard(
-  dependencies: Dependencies,
+export function standard<FS>(
+  dependencies: Dependencies<FS>,
   optionalEndpoints?: Fission.Endpoints
 ): Implementation<Standard.Annex> {
   const endpoints = optionalEndpoints || Fission.PRODUCTION

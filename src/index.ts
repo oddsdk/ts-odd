@@ -47,7 +47,7 @@ export { FileSystem } from "./fs/class.js"
  * system implementation. Using a different account system could mean
  * you have different extensions located in the `program.account` object.
  */
-export type Program<Annex extends Account.AnnexParentType> =
+export type Program<Annex extends Account.AnnexParentType, ChannelContext> =
   & {
     /**
      * Manage the account.
@@ -82,7 +82,7 @@ export type Program<Annex extends Account.AnnexParentType> =
     /**
      * Components used to build this program.
      */
-    components: Components<Annex>
+    components: Components<Annex, ChannelContext>
 
     /**
      * Configuration used to build this program.
@@ -141,10 +141,10 @@ export type FileSystemShortHands = {
  * about them on page reload, or you could store the blocks in indexedDB and connect
  * to an IPFS peer that will fetch the blocks.
  */
-export async function program<Annex extends AnnexParentType>(
+export async function program<Annex extends AnnexParentType, ChannelContext>(
   config: Configuration,
-  components: Components<Annex>
-): Promise<Program<Annex>> {
+  components: Components<Annex, ChannelContext>
+): Promise<Program<Annex, ChannelContext>> {
   const { account, agent, identifier } = components
 
   // Is supported?
