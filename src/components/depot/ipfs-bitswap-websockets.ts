@@ -1,4 +1,5 @@
 import { noise } from "@chainsafe/libp2p-noise"
+import { yamux } from "@chainsafe/libp2p-yamux"
 import { mplex } from "@libp2p/mplex"
 import { webSockets } from "@libp2p/websockets"
 import * as filters from "@libp2p/websockets/filters"
@@ -39,7 +40,7 @@ export async function createTransport(
 ): Promise<Transport> {
   const libp2pOptions = {
     connectionEncryption: [noise()],
-    streamMuxers: [mplex()],
+    streamMuxers: [yamux(), mplex()],
     transports: [
       webSockets({ filter: filters.all }),
       webTransport(),
@@ -50,7 +51,7 @@ export async function createTransport(
     connectionGater: {
       denyDialMultiaddr: async (multiAddr: Multiaddr) => {
         const str = multiAddr.toString()
-        return !str.endsWith("/ws") && !str.includes("/wss/") && !str.includes("/webtransport/")
+        return !str.includes("/ws/") && !str.includes("/wss/") && !str.includes("/webtransport/")
       },
     },
   }
