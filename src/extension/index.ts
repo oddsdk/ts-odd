@@ -128,8 +128,8 @@ function listen(connection: Connection, config: Config): Listeners {
 
 function stopListening(config: Config, listeners: Listeners) {
   if (listeners) {
-    config.eventEmitters.fileSystem.removeListener("local-change", listeners.handleLocalChange)
-    config.eventEmitters.fileSystem.removeListener("publish", listeners.handlePublish)
+    config.eventEmitters.fileSystem.off("local-change", listeners.handleLocalChange)
+    config.eventEmitters.fileSystem.off("publish", listeners.handlePublish)
   }
 }
 

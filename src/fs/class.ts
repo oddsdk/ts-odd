@@ -13,7 +13,6 @@ import * as RootTree from "./rootTree.js"
 import * as Store from "./store.js"
 import * as WASM from "./wasm.js"
 
-import { EventListener } from "../common/event-emitter.js"
 import { EventEmitter } from "../events.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
 import { Dictionary } from "../ucan/dictionary.js"
@@ -131,16 +130,14 @@ export class FileSystem {
   // EVENTS
   // ------
 
-  addListener<K extends keyof Events.FileSystem>(eventName: K, listener: EventListener<Events.FileSystem[K]>): void {
-    return this.#eventEmitter.addListener(eventName, listener)
-  }
-
-  removeListener<K extends keyof Events.FileSystem>(eventName: K, listener: EventListener<Events.FileSystem[K]>): void {
-    return this.#eventEmitter.removeListener(eventName, listener)
-  }
-
-  on = this.addListener
-  off = this.removeListener
+  on = (...args: Parameters<Events.Emitter<Events.FileSystem>["on"]>) => this.#eventEmitter.on(...args)
+  onAny = (...args: Parameters<Events.Emitter<Events.FileSystem>["onAny"]>) => this.#eventEmitter.onAny(...args)
+  off = (...args: Parameters<Events.Emitter<Events.FileSystem>["off"]>) => this.#eventEmitter.off(...args)
+  offAny = (...args: Parameters<Events.Emitter<Events.FileSystem>["offAny"]>) => this.#eventEmitter.offAny(...args)
+  once = (...args: Parameters<Events.Emitter<Events.FileSystem>["once"]>) => this.#eventEmitter.once(...args)
+  anyEvent = (...args: Parameters<Events.Emitter<Events.FileSystem>["anyEvent"]>) =>
+    this.#eventEmitter.anyEvent(...args)
+  events = (...args: Parameters<Events.Emitter<Events.FileSystem>["events"]>) => this.#eventEmitter.events(...args)
 
   // MOUNTS
   // ------

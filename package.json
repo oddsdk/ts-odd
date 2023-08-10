@@ -94,6 +94,7 @@
     "@ucans/core": "^0.12.0",
     "blockstore-level": "^1.1.3",
     "debounce-promise": "^3.1.2",
+    "emittery": "^1.0.1",
     "events": "^3.3.0",
     "fission-bloom-filters": "1.7.1",
     "interface-blockstore": "^5.2.5",

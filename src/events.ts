@@ -1,9 +1,13 @@
+import Emittery from "emittery"
+
 import { CID } from "./common/cid.js"
-import { EventEmitter } from "./common/event-emitter.js"
 import { DistinctivePath, Partition, Partitioned } from "./path/index.js"
 import { Ucan } from "./ucan/types.js"
 
-export { EventEmitter, EventEmitter as Emitter }
+export type Emitter<EventMap> = InstanceType<typeof Emittery<EventMap>>
+export type Listener<EventMap> = (eventData: EventMap) => void | Promise<void>
+
+export { Emitter as EventEmitter, Listener as EventListener }
 
 /**
  * Events interface.
@@ -22,8 +26,8 @@ export { EventEmitter, EventEmitter as Emitter }
  * ```
  */
 export type ListenTo<EventMap> = Pick<
-  EventEmitter<EventMap>,
-  "addListener" | "removeListener" | "on" | "off"
+  Emitter<EventMap>,
+  "on" | "onAny" | "off" | "offAny" | "once" | "anyEvent" | "events"
 >
 
 export type AuthorityRequestor = {
@@ -51,33 +55,18 @@ export type Repositories<Collection> = {
   "collection:changed": { collection: Collection }
 }
 
-export function createEmitter<EventMap>(): EventEmitter<EventMap> {
-  return new EventEmitter()
+export function createEmitter<EventMap>(): Emitter<EventMap> {
+  return new Emittery<EventMap>()
 }
 
-export function listenTo<EventMap>(emitter: EventEmitter<EventMap>): ListenTo<EventMap> {
+export function listenTo<EventMap>(emitter: Emitter<EventMap>): ListenTo<EventMap> {
   return {
-    addListener: emitter.addListener.bind(emitter),
-    removeListener: emitter.removeListener.bind(emitter),
     on: emitter.on.bind(emitter),
+    onAny: emitter.onAny.bind(emitter),
     off: emitter.off.bind(emitter),
+    offAny: emitter.offAny.bind(emitter),
+    once: emitter.once.bind(emitter),
+    anyEvent: emitter.anyEvent.bind(emitter),
+    events: emitter.events.bind(emitter),
   }
-}
-
-export function merge<A, B>(a: EventEmitter<A>, b: EventEmitter<B>): EventEmitter<A & B> {
-  const merged = createEmitter<A & B>()
-  const aEmit = a.emit
-  const bEmit = b.emit
-
-  a.emit = <K extends keyof A>(eventName: K, event: (A & B)[K]) => {
-    aEmit.call(a, eventName, event)
-    merged.emit(eventName, event)
-  }
-
-  b.emit = <K extends keyof B>(eventName: K, event: (A & B)[K]) => {
-    bEmit.call(b, eventName, event)
-    merged.emit(eventName, event)
-  }
-
-  return merged
 }
