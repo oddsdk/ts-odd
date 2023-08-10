@@ -1,5 +1,5 @@
-import * as Storage from "./components/storage/implementation"
-import * as Events from "./events.js"
+import * as Storage from "./components/storage/implementation.js"
+import * as Events from "./events/index.js"
 
 ////////
 // 🧩 //

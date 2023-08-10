@@ -1,28 +1,31 @@
 import Emittery from "emittery"
 
-import { CID } from "./common/cid.js"
-import { DistinctivePath, Partition, Partitioned } from "./path/index.js"
-import { Ucan } from "./ucan/types.js"
+import { CID } from "../common/cid.js"
+import { DistinctivePath, Partition, Partitioned } from "../path/index.js"
+import { Ucan } from "../ucan/types.js"
 
-export type Emitter<EventMap> = InstanceType<typeof Emittery<EventMap>>
+export type Emitter<EventMap> = InstanceType<typeof Emittery<EventMap, EventMap>>
 export type Listener<EventMap> = (eventData: EventMap) => void | Promise<void>
 
 export { Emitter as EventEmitter, Listener as EventListener }
 
+/** @protected */
+export { Emittery as EmitterClass }
+
 /**
  * Events interface.
  *
- * Subscribe to events using `on` and unsubscribe using `off`,
- * alternatively you can use `addListener` and `removeListener`.
+ * Subscribe to events using `on` and unsubscribe using `off`.
+ * There's also `once`, `onAny`, `offAny`, `anyEvent` and `events`.
  *
  * ```ts
- * program.on("fileSystem:local-change", ({ path, root }) => {
+ * fileSystem.on("local-change", ({ path, root }) => {
  *   console.log("The file system has changed locally 🔔")
  *   console.log("Changed path:", path)
  *   console.log("New data root CID:", root)
  * })
  *
- * program.off("fileSystem:publish")
+ * fileSystem.off("publish")
  * ```
  */
 export type ListenTo<EventMap> = Pick<
@@ -31,13 +34,13 @@ export type ListenTo<EventMap> = Pick<
 >
 
 export type AuthorityRequestor = {
-  "challenge": any // TODO
+  "challenge": undefined // TODO
 }
 
 export type AuthorityProvider = {
-  "approved": void
-  "challenge": any // TODO
-  "dismissed": void
+  "approved": undefined
+  "challenge": undefined // TODO
+  "dismissed": undefined
   "query": Record<string, any> // TODO
 }
 
@@ -56,7 +59,7 @@ export type Repositories<Collection> = {
 }
 
 export function createEmitter<EventMap>(): Emitter<EventMap> {
-  return new Emittery<EventMap>()
+  return new Emittery<EventMap, EventMap>()
 }
 
 export function listenTo<EventMap>(emitter: Emitter<EventMap>): ListenTo<EventMap> {

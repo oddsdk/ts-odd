@@ -1,9 +1,11 @@
+/** @group File System */
 import { CID } from "multiformats/cid"
 
 ////////
 // 🛳️ //
 ////////
 
+/** @group File System */
 export { CID }
 
 ////////
@@ -24,6 +26,8 @@ export const EMPTY_CID = "Qmc5m94Gu7z62RC8waSKkZUrCCBJPyHbkpmGzEePxy2oXJ"
  * Decode a possibly string-encoded CID.
  * Passing an already decoded CID instance works too.
  * @throws Throws an error if a CID cannot be decoded!
+ *
+ * @group File System
  */
 export function decodeCID(val: CID | object | string): CID {
   const cid = CID.asCID(val)
@@ -38,6 +42,8 @@ export function decodeCID(val: CID | object | string): CID {
 
 /**
  * Encode a CID as a string.
+ *
+ * @group File System
  */
 export function encodeCID(cid: CID | string): string {
   return typeof cid === "string" ? cid : cid.toString()

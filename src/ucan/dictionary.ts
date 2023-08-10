@@ -6,6 +6,7 @@ import { Capability, Facts, Ucan } from "./types.js"
 export class Dictionary {
   #cabinet: Cabinet
 
+  /** @internal */
   constructor(
     cabinet: Cabinet
   ) {

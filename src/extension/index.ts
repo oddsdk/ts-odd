@@ -3,7 +3,7 @@ import type { CID } from "../common/cid.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
 
 import { VERSION } from "../common/version.js"
-import * as Events from "../events.js"
+import * as Events from "../events/index.js"
 
 ////////////
 // CREATE //

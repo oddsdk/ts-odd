@@ -1,3 +1,20 @@
+/**
+ * Documentation for `@oddjs/odd/compositions/fission`.
+ *
+ * ```
+ * import * as fission from "@oddjs/odd/compositions/fission"
+ * import * as odd from "@oddjs/odd"
+ *
+ * const config = { namespace: "odd-example" }
+ *
+ * odd.program(
+ *   config,
+ *   await fission.components(config)
+ * )
+ * ```
+ * @module
+ */
+
 import * as Fission from "../common/fission.js"
 import { Components } from "../components.js"
 import { Configuration } from "../configuration.js"
@@ -12,8 +29,12 @@ import * as Identifier from "../components/identifier/web-crypto-api.js"
 import * as Manners from "../components/manners/default.js"
 import * as Storage from "../components/storage/indexed-db.js"
 
+export * from "../common/fission.js"
+
 export { Annexes } from "../components/account/fission.js"
 export type DefaultAnnex = Account.Annexes.Standard
+
+export { Context as ChannelContext } from "../components/channel/fission.js"
 
 /**
  * Account type.
@@ -54,6 +75,8 @@ export const accountImplementations = {
 
 /**
  * The default Fission stack.
+ *
+ * @group 🚀
  */
 export async function components(
   config: Configuration,

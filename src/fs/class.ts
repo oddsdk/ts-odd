@@ -4,16 +4,15 @@ import { BlockStore, Namefilter, PrivateDirectory, PrivateFile, PrivateNode, Pub
 
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
 
-import * as Events from "../events.js"
+import * as Events from "../events/index.js"
 import * as Path from "../path/index.js"
 import * as PrivateRefs from "./private-ref.js"
-import * as Queries from "./queries.js"
 import * as Rng from "./rng.js"
 import * as RootTree from "./rootTree.js"
 import * as Store from "./store.js"
 import * as WASM from "./wasm.js"
 
-import { EventEmitter } from "../events.js"
+import { EventEmitter } from "../events/index.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
 import { Dictionary } from "../ucan/dictionary.js"
 import { Ucan } from "../ucan/index.js"
@@ -39,6 +38,7 @@ import {
 import { MountedPrivateNode, MountedPrivateNodes } from "./types/internal.js"
 import { PrivateReference } from "./types/private-ref.js"
 
+/** @group File System */
 export class FileSystem {
   #blockStore: BlockStore
   #cidLog: CIDLog
@@ -54,6 +54,7 @@ export class FileSystem {
 
   did: string
 
+  /** @hidden */
   constructor(
     blockStore: BlockStore,
     cidLog: CIDLog,
@@ -83,6 +84,7 @@ export class FileSystem {
 
   /**
    * Creates a file system with an empty public tree & an empty private tree at the root.
+   * @internal
    */
   static async empty(opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
     const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
@@ -106,6 +108,7 @@ export class FileSystem {
 
   /**
    * Loads an existing file system from a CID.
+   * @internal
    */
   static async fromCID(cid: CID, opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
     const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
@@ -130,18 +133,56 @@ export class FileSystem {
   // EVENTS
   // ------
 
+  /**
+   * {@inheritDoc events.EmitterClass.on}
+   * @group Events
+   */
   on = (...args: Parameters<Events.Emitter<Events.FileSystem>["on"]>) => this.#eventEmitter.on(...args)
+
+  /**
+   * {@inheritDoc events.EmitterClass.onAny}
+   * @group Events
+   */
   onAny = (...args: Parameters<Events.Emitter<Events.FileSystem>["onAny"]>) => this.#eventEmitter.onAny(...args)
+
+  /**
+   * {@inheritDoc events.EmitterClass.off}
+   * @group Events
+   */
   off = (...args: Parameters<Events.Emitter<Events.FileSystem>["off"]>) => this.#eventEmitter.off(...args)
+
+  /**
+   * {@inheritDoc events.EmitterClass.offAny}
+   * @group Events
+   */
   offAny = (...args: Parameters<Events.Emitter<Events.FileSystem>["offAny"]>) => this.#eventEmitter.offAny(...args)
+
+  /**
+   * {@inheritDoc events.EmitterClass.once}
+   * @group Events
+   */
   once = (...args: Parameters<Events.Emitter<Events.FileSystem>["once"]>) => this.#eventEmitter.once(...args)
+
+  /**
+   * {@inheritDoc events.EmitterClass.anyEvent}
+   * @group Events
+   */
   anyEvent = (...args: Parameters<Events.Emitter<Events.FileSystem>["anyEvent"]>) =>
     this.#eventEmitter.anyEvent(...args)
+
+  /**
+   * {@inheritDoc events.EmitterClass.events}
+   * @group Events
+   */
   events = (...args: Parameters<Events.Emitter<Events.FileSystem>["events"]>) => this.#eventEmitter.events(...args)
 
   // MOUNTS
   // ------
 
+  /**
+   * Mount a private node onto the file system.
+   * @group Mounting
+   */
   async mountPrivateNode(node: {
     path: Path.Distinctive<Path.Segments>
     capsuleRef?: PrivateReference
@@ -153,6 +194,10 @@ export class FileSystem {
     return mounts[0]
   }
 
+  /**
+   * Mount private nodes onto the file system.
+   * @group Mounting
+   */
   async mountPrivateNodes(
     nodes: {
       path: Path.Distinctive<Path.Segments>
@@ -203,6 +248,10 @@ export class FileSystem {
     )
   }
 
+  /**
+   * Unmount a private node from the file system.
+   * @group Mounting
+   */
   unmountPrivateNode(path: Path.Distinctive<Path.Segments>): void {
     delete this.#privateNodes[Path.toPosix(path)]
   }
@@ -210,22 +259,27 @@ export class FileSystem {
   // QUERY
   // -----
 
+  /** @group Querying */
   async contentCID(path: Path.File<Partitioned<Public>>): Promise<CID | null> {
     return this.#transactionContext().contentCID(path)
   }
 
+  /** @group Querying */
   async capsuleCID(path: Path.Distinctive<Partitioned<Public>>): Promise<CID | null> {
     return this.#transactionContext().capsuleCID(path)
   }
 
+  /** @group Querying */
   async capsuleRef(path: Path.Distinctive<Partitioned<Private>>): Promise<PrivateReference | null> {
     return this.#transactionContext().capsuleRef(path)
   }
 
+  /** @group Querying */
   async exists(path: Path.Distinctive<Partitioned<Partition>>): Promise<boolean> {
     return this.#transactionContext().exists(path)
   }
 
+  /** @group Querying */
   async listDirectory(
     path: Path.Directory<Partitioned<Partition>>,
     listOptions: { withItemKind: true }
@@ -244,8 +298,10 @@ export class FileSystem {
     return this.#transactionContext().listDirectory(path, listOptions)
   }
 
+  /** @group Querying */
   ls = this.listDirectory
 
+  /** @group Querying */
   async read<
     D extends DataType,
     V = unknown,
@@ -269,6 +325,7 @@ export class FileSystem {
   // MUTATIONS
   // ---------
 
+  /** @group Mutating */
   async copy<From extends Partition, To extends Partition>(
     from: Path.Distinctive<PartitionedNonEmpty<From>>,
     to: Path.File<PartitionedNonEmpty<To>> | Path.Directory<Partitioned<To>>,
@@ -286,8 +343,10 @@ export class FileSystem {
     )
   }
 
+  /** @group Mutating */
   cp = this.copy
 
+  /** @group Mutating */
   async createDirectory<P extends Partition>(
     path: Path.Directory<PartitionedNonEmpty<P>>,
     mutationOptions?: MutationOptions
@@ -313,6 +372,7 @@ export class FileSystem {
     }
   }
 
+  /** @group Mutating */
   async createFile<
     P extends Partition,
     D extends DataType,
@@ -349,6 +409,7 @@ export class FileSystem {
     }
   }
 
+  /** @group Mutating */
   async ensureDirectory<P extends Partition>(
     path: Path.Directory<PartitionedNonEmpty<P>>,
     mutationOptions?: MutationOptions
@@ -364,8 +425,10 @@ export class FileSystem {
     )
   }
 
+  /** @group Mutating */
   mkdir = this.ensureDirectory
 
+  /** @group Mutating */
   async move<From extends Partition, To extends Partition>(
     from: Path.Distinctive<PartitionedNonEmpty<From>>,
     to: Path.File<PartitionedNonEmpty<To>> | Path.Directory<Partitioned<To>>,
@@ -383,8 +446,10 @@ export class FileSystem {
     )
   }
 
+  /** @group Mutating */
   mv = this.move
 
+  /** @group Mutating */
   async remove(
     path: Path.Distinctive<PartitionedNonEmpty<Partition>>,
     mutationOptions: MutationOptions = {}
@@ -400,8 +465,10 @@ export class FileSystem {
     }
   }
 
+  /** @group Mutating */
   rm = this.remove
 
+  /** @group Mutating */
   async rename<P extends Partition>(
     path: Path.Distinctive<PartitionedNonEmpty<P>>,
     newName: string,
@@ -419,6 +486,7 @@ export class FileSystem {
     )
   }
 
+  /** @group Mutating */
   async write<
     P extends Partition,
     D extends DataType,
@@ -448,6 +516,7 @@ export class FileSystem {
   // TRANSACTIONS
   // ------------
 
+  /** @group Transacting */
   async transaction(
     handler: (t: TransactionContext<FileSystem>) => Promise<void>,
     mutationOptions: MutationOptions = {}
@@ -489,6 +558,7 @@ export class FileSystem {
 
   // 🛠️
 
+  /** @group Misc */
   calculateDataRoot(): Promise<CID> {
     return RootTree.store({
       blockStore: this.#blockStore,
@@ -639,24 +709,5 @@ export class FileSystem {
 
     // The type of `debounceResult` is not correct, issue with `@types/debounce-promise`
     return debounceResult as unknown as PublishingStatus
-  }
-
-  // ㊙️
-
-  publicContext(): Queries.PublicContext<FileSystem> {
-    return {
-      blockStore: this.#blockStore,
-      dependencies: this.#dependencies,
-      rootTree: this.#rootTree,
-    }
-  }
-
-  privateContext(): Queries.PrivateContext {
-    return {
-      blockStore: this.#blockStore,
-      privateNodes: this.#privateNodes,
-      rng: this.#rng,
-      rootTree: this.#rootTree,
-    }
   }
 }

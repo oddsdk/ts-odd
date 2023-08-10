@@ -1,7 +1,7 @@
 import type { Implementation } from "./implementation.js"
 
 import { Configuration } from "../../configuration.js"
-import * as Events from "../../events.js"
+import * as Events from "../../events/index.js"
 import { FileSystem } from "../../fs/class.js"
 import * as Path from "../../path/index.js"
 
@@ -23,9 +23,15 @@ export const fileSystemHooks = {
 
 export function onlineBehaviour<FS>(
   log: Implementation<FS>["log"],
+  warn: Implementation<FS>["warn"],
   programEmitter: Events.Emitter<Events.Program>
 ): () => boolean {
-  let online = navigator.onLine
+  if (!globalThis.navigator) {
+    warn("`navigator` object not available, setting `online` to `false`!")
+    return () => false
+  }
+
+  let online = globalThis.navigator.onLine
 
   globalThis.addEventListener("offline", async () => {
     online = false
@@ -69,7 +75,7 @@ export function implementation(config: Configuration): Implementation<FileSystem
 
     program: {
       eventEmitter: programEmitter,
-      online: onlineBehaviour(log, programEmitter),
+      online: onlineBehaviour(log, warn, programEmitter),
     },
   }
 }

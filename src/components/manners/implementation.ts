@@ -1,7 +1,7 @@
 import { CID } from "multiformats"
 
 import * as Depot from "../../components/depot/implementation.js"
-import * as Events from "../../events.js"
+import * as Events from "../../events/index.js"
 import { PrivateReference } from "../../fs/types/private-ref.js"
 import * as Path from "../../path/index.js"
 

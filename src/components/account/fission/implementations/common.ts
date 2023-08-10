@@ -141,7 +141,7 @@ export async function otherVolume<FS>(
 
   const dataRootUpdater = async (dataRoot: CID, proofs: Ucan.Ucan[]) => {
     // TODO: Add ability to update data root of another user
-    //       For this we need account capability to update the volume pointer.
+    //       For this we need the account capability to update the volume pointer.
     throw new Error("Not implemented yet")
   }
 

@@ -1,10 +1,10 @@
-import * as Storage from "../components/storage/implementation"
+import * as Storage from "../components/storage/implementation.js"
 import * as PrivateRef from "../fs/private-ref.js"
 import * as Path from "../path/index.js"
 import * as Ucan from "../ucan/index.js"
 
 import { isObject, isString } from "../common/type-checks.js"
-import { PrivateReference } from "../fs/types/private-ref"
+import { PrivateReference } from "../fs/types/private-ref.js"
 import Repository, { RepositoryOptions } from "../repository.js"
 
 ////////

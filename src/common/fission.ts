@@ -42,6 +42,9 @@ export const DEVELOPMENT: Endpoints = {
 // API //
 /////////
 
+/**
+ * Construct an API url given some Fission endpoints.
+ */
 export function apiUrl(endpoints: Endpoints, suffix?: string): string {
   return `${endpoints.server}${endpoints.apiPath}${suffix?.length ? "/" + suffix.replace(/^\/+/, "") : ""}`
 }

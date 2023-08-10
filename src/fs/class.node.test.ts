@@ -880,13 +880,7 @@ describe("File System Class", async () => {
 
     const promise: Promise<CID> = new Promise((resolve, reject) => {
       setTimeout(reject, 10000)
-
-      const listener = ({ dataRoot }: { dataRoot: CID }) => {
-        fs.off("publish", listener)
-        resolve(dataRoot)
-      }
-
-      fs.on("publish", listener)
+      fs.once("publish").then(event => event.dataRoot).then(resolve, reject)
     })
 
     const a = await fs.write(Path.file("private", "a"), "bytes", new Uint8Array())

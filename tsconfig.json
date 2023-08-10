@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
-    "target": "ES2021",
-    "module": "ES2020",
+    "moduleResolution": "node16",
+    "target": "es2022",
+    "module": "es2022",
     "lib": [
       "dom",
-      "es2021",
+      "es2022",
       "webworker"
     ],
     "strict": true,

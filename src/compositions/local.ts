@@ -1,3 +1,20 @@
+/**
+ * Documentation for `@oddjs/odd/compositions/local`.
+ *
+ * ```
+ * import * as local from "@oddjs/odd/compositions/local"
+ * import * as odd from "@oddjs/odd"
+ *
+ * const config = { namespace: "odd-example" }
+ *
+ * odd.program(
+ *   config,
+ *   await local.components(config)
+ * )
+ * ```
+ * @module
+ */
+
 import { Components } from "../components.js"
 import { Configuration } from "../configuration.js"
 import * as Config from "../configuration.js"
@@ -12,9 +29,12 @@ import * as Manners from "../components/manners/default.js"
 import * as Storage from "../components/storage/indexed-db.js"
 
 export { Annex } from "../components/account/local.js"
+export { Context as ChannelContext } from "../components/channel/local.js"
 
 /**
  * The default Fission stack using web crypto auth and IPFS.
+ *
+ * @group 🚀
  */
 export async function components(
   settings: Configuration & {

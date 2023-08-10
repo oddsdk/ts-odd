@@ -1,13 +1,39 @@
 {
+  "entryPointStrategy": "expand",
   "entryPoints": [
-    "./src/index.ts"
+    "./src/index.ts",
+    "./src/compositions/fission.ts",
+    "./src/compositions/local.ts"
   ],
   "exclude": [
     "**/*.test.ts"
   ],
-  "excludeExternals": true,
   "name": "ODD SDK",
   "out": "docs",
   "theme": "default",
-  "readme": "./README.md"
+  "readme": "./README.md",
+  "groupOrder": [
+    "🚀",
+    "Program",
+    "Configuration",
+    "File System",
+    "---",
+    "Mounting",
+    "Events",
+    "Querying",
+    "Mutating",
+    "Transacting",
+    "---",
+    "Namespaces",
+    "Classes",
+    "Functions",
+    "Variables",
+    "*"
+  ],
+  "excludeNotDocumented": false,
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "plugin": [
+    "typedoc-plugin-rename-defaults"
+  ]
 }
