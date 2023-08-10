@@ -93,7 +93,7 @@ export async function accountVolume<FS>(
     }
   }
 
-  if (!navigator.onLine) {
+  if (!dependencies.manners.program.online()) {
     return {
       dataRoot: undefined,
       dataRootUpdater,
@@ -132,7 +132,9 @@ export async function otherVolume<FS>(
   ) => Promise<{ updated: true } | { updated: false; reason: string }>
   did: string
 }> {
-  if (!navigator.onLine) throw new Error("Cannot load another user's volume while offline")
+  if (!dependencies.manners.program.online()) {
+    throw new Error("Cannot load another user's volume while offline")
+  }
 
   const userDID = await lookupUserDID(endpoints, dependencies.dns, username)
   if (!userDID) throw new Error("User not found")
@@ -158,7 +160,9 @@ export async function updateDataRoot<FS>(
   dataRoot: CID,
   proofs: Ucan.Ucan[]
 ): Promise<{ updated: true } | { updated: false; reason: string }> {
-  if (!navigator.onLine) return { updated: false, reason: "NO_INTERNET_CONNECTION" }
+  if (!dependencies.manners.program.online()) {
+    return { updated: false, reason: "NO_INTERNET_CONNECTION" }
+  }
 
   // Find account-proof UCAN
   const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)

@@ -26,11 +26,6 @@ export type ListenTo<EventMap> = Pick<
   "addListener" | "removeListener" | "on" | "off"
 >
 
-export type FileSystem = {
-  "local-change": { dataRoot: CID; path: DistinctivePath<Partitioned<Partition>> }
-  "publish": { dataRoot: CID; proofs: Ucan[] }
-}
-
 export type AuthorityRequestor = {
   "challenge": any // TODO
 }
@@ -42,11 +37,19 @@ export type AuthorityProvider = {
   "query": Record<string, any> // TODO
 }
 
+export type FileSystem = {
+  "local-change": { dataRoot: CID; path: DistinctivePath<Partitioned<Partition>> }
+  "publish": { dataRoot: CID; proofs: Ucan[] }
+}
+
+export type Program = {
+  "offline": void
+  "online": void
+}
+
 export type Repositories<Collection> = {
   "collection:changed": { collection: Collection }
 }
-
-export type All = FileSystem
 
 export function createEmitter<EventMap>(): EventEmitter<EventMap> {
   return new EventEmitter()

@@ -1,4 +1,5 @@
 import * as Auth from "./auth.js"
+import * as Events from "./events.js"
 import * as Path from "./path/index.js"
 import * as Cabinet from "./repositories/cabinet.js"
 
@@ -94,6 +95,7 @@ export type Program<Annex extends Account.AnnexParentType, ChannelContext> =
      */
     fileSystem: FileSystemShortHands
   }
+  & Events.ListenTo<Events.Program>
   & Shorthands
 
 export type Shorthands = {
@@ -252,6 +254,7 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
   // Create `Program`
   const program = {
     ...shortHands,
+    ...Events.listenTo(components.manners.program.eventEmitter),
 
     configuration: { ...config },
     fileSystem: { ...fileSystemShortHands },

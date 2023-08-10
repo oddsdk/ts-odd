@@ -18,7 +18,7 @@ export async function load<FS>({ manners }: { manners: Manners.Implementation<FS
   manners.log(`🗃️ Loading file system WASM code`)
   const before = performance.now()
   // init accepts Promises as arguments
-  await init(await manners.wnfsWasmLookup(WASM_WNFS_VERSION))
+  await init(await manners.fileSystem.wasmLookup(WASM_WNFS_VERSION))
   const time = performance.now() - before
   manners.log(`🧪 Loaded file system WASM code (${time.toFixed(0)}ms)`)
 }

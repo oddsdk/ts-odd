@@ -89,7 +89,7 @@ export async function createTransport<FS>(
   })
 
   // Try connecting when browser comes online
-  globalThis.addEventListener("online", async () => {
+  manners.program.eventEmitter.on("online", async () => {
     ;(await listPeers())
       .filter(peer => {
         const peerStr = peer.toString()
@@ -169,7 +169,7 @@ export async function implementation<FS>(
     // FLUSH
 
     flush: async (_dataRoot: CID, _proofs: Ucan[]): Promise<void> => {
-      if (!navigator.onLine) return
+      if (!manners.program.online()) return
       await initiateTransport()
     },
   }
