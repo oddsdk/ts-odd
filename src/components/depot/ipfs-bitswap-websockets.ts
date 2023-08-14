@@ -45,7 +45,11 @@ export async function createTransport<FS>(
       webTransport(),
     ],
     services: {
-      ping: pingService(),
+      ping: pingService({
+        maxInboundStreams: 100,
+        maxOutboundStreams: 100,
+        runOnTransientConnection: false,
+      }),
     },
     connectionGater: {
       denyDialMultiaddr: async (multiAddr: Multiaddr) => {
