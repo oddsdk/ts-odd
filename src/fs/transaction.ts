@@ -83,7 +83,7 @@ export class TransactionContext<FS> {
           )
         }
 
-        return acc
+        return [...acc, proof]
       },
       Promise.resolve([])
     )
