@@ -4,8 +4,10 @@ import { CID } from "../common/cid.js"
 import { DistinctivePath, Partition, Partitioned } from "../path/index.js"
 import { Ucan } from "../ucan/types.js"
 
-export type Emitter<EventMap> = InstanceType<typeof Emittery<EventMap, EventMap>>
-export type Listener<EventMap> = (eventData: EventMap) => void | Promise<void>
+export type Emitter<EventMap extends Record<string, unknown>> = InstanceType<typeof Emittery<EventMap, EventMap>>
+export type Listener<EventMap extends Record<string, unknown>, Name extends keyof EventMap> = (
+  eventData: EventMap[Name]
+) => void | Promise<void>
 
 export { Emitter as EventEmitter, Listener as EventListener }
 
@@ -28,7 +30,7 @@ export { Emittery as EmitterClass }
  * fileSystem.off("publish")
  * ```
  */
-export type ListenTo<EventMap> = Pick<
+export type ListenTo<EventMap extends Record<string, unknown>> = Pick<
   Emitter<EventMap>,
   "on" | "onAny" | "off" | "offAny" | "once" | "anyEvent" | "events"
 >
@@ -58,11 +60,11 @@ export type Repositories<Collection> = {
   "collection:changed": { collection: Collection }
 }
 
-export function createEmitter<EventMap>(): Emitter<EventMap> {
+export function createEmitter<EventMap extends Record<string, unknown>>(): Emitter<EventMap> {
   return new Emittery<EventMap, EventMap>()
 }
 
-export function listenTo<EventMap>(emitter: Emitter<EventMap>): ListenTo<EventMap> {
+export function listenTo<EventMap extends Record<string, unknown>>(emitter: Emitter<EventMap>): ListenTo<EventMap> {
   return {
     on: emitter.on.bind(emitter),
     onAny: emitter.onAny.bind(emitter),

@@ -137,44 +137,55 @@ export class FileSystem {
    * {@inheritDoc events.EmitterClass.on}
    * @group Events
    */
-  on = (...args: Parameters<Events.Emitter<Events.FileSystem>["on"]>) => this.#eventEmitter.on(...args)
+  on = <Name extends keyof Events.FileSystem>(eventName: Name, listener: Events.Listener<Events.FileSystem, Name>) =>
+    this.#eventEmitter.on(eventName, listener)
 
   /**
    * {@inheritDoc events.EmitterClass.onAny}
    * @group Events
    */
-  onAny = (...args: Parameters<Events.Emitter<Events.FileSystem>["onAny"]>) => this.#eventEmitter.onAny(...args)
+  onAny = (
+    listener: (
+      eventName: keyof Events.FileSystem,
+      eventData: Events.FileSystem[keyof Events.FileSystem]
+    ) => void | Promise<void>
+  ) => this.#eventEmitter.onAny(listener)
 
   /**
    * {@inheritDoc events.EmitterClass.off}
    * @group Events
    */
-  off = (...args: Parameters<Events.Emitter<Events.FileSystem>["off"]>) => this.#eventEmitter.off(...args)
+  off = <Name extends keyof Events.FileSystem>(eventName: Name, listener: Events.Listener<Events.FileSystem, Name>) =>
+    this.#eventEmitter.off(eventName, listener)
 
   /**
    * {@inheritDoc events.EmitterClass.offAny}
    * @group Events
    */
-  offAny = (...args: Parameters<Events.Emitter<Events.FileSystem>["offAny"]>) => this.#eventEmitter.offAny(...args)
+  offAny = (
+    listener: (
+      eventName: keyof Events.FileSystem,
+      eventData: Events.FileSystem[keyof Events.FileSystem]
+    ) => void | Promise<void>
+  ) => this.#eventEmitter.offAny(listener)
 
   /**
    * {@inheritDoc events.EmitterClass.once}
    * @group Events
    */
-  once = (...args: Parameters<Events.Emitter<Events.FileSystem>["once"]>) => this.#eventEmitter.once(...args)
+  once = <Name extends keyof Events.FileSystem>(eventName: Name) => this.#eventEmitter.once(eventName)
 
   /**
    * {@inheritDoc events.EmitterClass.anyEvent}
    * @group Events
    */
-  anyEvent = (...args: Parameters<Events.Emitter<Events.FileSystem>["anyEvent"]>) =>
-    this.#eventEmitter.anyEvent(...args)
+  anyEvent = () => this.#eventEmitter.anyEvent()
 
   /**
    * {@inheritDoc events.EmitterClass.events}
    * @group Events
    */
-  events = (...args: Parameters<Events.Emitter<Events.FileSystem>["events"]>) => this.#eventEmitter.events(...args)
+  events = <Name extends keyof Events.FileSystem>(eventName: Name) => this.#eventEmitter.events(eventName)
 
   // MOUNTS
   // ------
