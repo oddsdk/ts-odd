@@ -1,7 +1,8 @@
 import type { Implementation } from "./implementation.js"
 
 import { Configuration } from "../../configuration.js"
-import * as Events from "../../events/index.js"
+import { EventEmitter, createEmitter } from "../../events/emitter.js"
+import * as Events from "../../events/program.js"
 import { FileSystem } from "../../fs/class.js"
 import * as Path from "../../path/index.js"
 
@@ -24,7 +25,7 @@ export const fileSystemHooks = {
 export function onlineBehaviour<FS>(
   log: Implementation<FS>["log"],
   warn: Implementation<FS>["warn"],
-  programEmitter: Events.Emitter<Events.Program>
+  programEmitter: EventEmitter<Events.Program>
 ): () => boolean {
   if (!globalThis.navigator) {
     warn("`navigator` object not available, setting `online` to `false`!")
@@ -57,7 +58,7 @@ export function wasmLookup(wnfsVersion: string): Promise<BufferSource | Response
 ////////
 
 export function implementation(config: Configuration): Implementation<FileSystem> {
-  const programEmitter = Events.createEmitter<Events.Program>()
+  const programEmitter = createEmitter<Events.Program>()
 
   // Loggers
   const log = config.debug ? console.log : () => {}

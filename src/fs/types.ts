@@ -1,5 +1,3 @@
-import type { Repo as CIDLog } from "../repositories/cid-log.js"
-
 import * as Depot from "../components/depot/implementation.js"
 import * as Manners from "../components/manners/implementation.js"
 
@@ -7,8 +5,6 @@ import * as Path from "../path/index.js"
 
 import { CID } from "../common/cid.js"
 import { Partition, Partitioned } from "../path/index.js"
-import { Dictionary } from "../ucan/dictionary.js"
-import { Ucan } from "../ucan/types.js"
 
 ////////
 // 🧩 //
@@ -50,16 +46,6 @@ export type DirectoryItemWithKind = DirectoryItem & {
   path: Path.Distinctive<Path.PartitionedNonEmpty<Partition>>
 }
 
-/** @internal */
-export type FileSystemOptions<FS> = {
-  cidLog: CIDLog
-  dependencies: Dependencies<FS>
-  did: string
-  settleTimeBeforePublish?: number
-  ucanDictionary: Dictionary
-  updateDataRoot?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
-}
-
 /** @group File System */
 export type MutationOptions = {
   skipPublish?: boolean
@@ -69,6 +55,9 @@ export type MutationOptions = {
 export type MutationResult<P extends Partition> = P extends Path.Public ? PublicMutationResult
   : P extends Path.Private ? PrivateMutationResult
   : never
+
+/** @group File System */
+export type MutationType = "added-or-updated" | "removed"
 
 /** @group File System */
 export type PartitionDiscovery<P extends Partition> = P extends Path.Public
@@ -97,7 +86,7 @@ export type PrivateMutationResult = DataRootChange & {
 
 /** @group File System */
 export type TransactionResult = {
-  changedPaths: Path.Distinctive<Partitioned<Partition>>[]
+  changes: { path: Path.Distinctive<Partitioned<Partition>>; type: MutationType }[]
   dataRoot: CID
   publishingStatus: Promise<PublishingStatus>
 }

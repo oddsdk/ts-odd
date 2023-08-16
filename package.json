@@ -100,6 +100,7 @@
     "interface-blockstore": "^5.2.5",
     "interface-datastore": "^8.2.4",
     "ipfs-bitswap": "^19.0.0",
+    "ipfs-unixfs": "^11.0.1",
     "ipfs-unixfs-exporter": "^13.1.6",
     "ipfs-unixfs-importer": "^15.1.7",
     "iso-base": "^1.1.2",

@@ -1,7 +1,7 @@
 import * as Raw from "multiformats/codecs/raw"
 import * as Uint8Arrays from "uint8arrays"
 
-import { PBLink } from "@ipld/dag-pb"
+import { PBLink, PBNode } from "@ipld/dag-pb"
 import { webcrypto } from "iso-base/crypto"
 import { BlockStore, PrivateForest, PublicDirectory } from "wnfs"
 
@@ -9,6 +9,7 @@ import * as Crypto from "../common/crypto.js"
 import * as SemVer from "../common/semver.js"
 import * as Depot from "../components/depot/implementation.js"
 import * as DAG from "../dag/index.js"
+import * as Unix from "./unix.js"
 import * as Version from "./version.js"
 
 import { CID } from "../common/cid.js"
@@ -29,7 +30,7 @@ export type RootTree = {
   exchangeRoot: PublicDirectory
   publicRoot: PublicDirectory
   privateForest: PrivateForest
-  // TODO: unix: ?
+  unix: PBNode
   version: SemVer.SemVer
 }
 
@@ -60,6 +61,7 @@ export async function empty(): Promise<RootTree> {
     exchangeRoot: new PublicDirectory(currentTime),
     publicRoot: new PublicDirectory(currentTime),
     privateForest: await createPrivateForest(),
+    unix: Unix.createDirectory(currentTime),
     version: Version.v2,
   }
 }
@@ -109,6 +111,12 @@ export async function fromCID({ blockStore, cid, depot }: {
     () => createPrivateForest()
   )
 
+  const unix = await handleLink(
+    RootBranch.Unix,
+    (cid) => Unix.load(cid, depot),
+    () => Unix.createDirectory(currentTime)
+  )
+
   const version = await handleLink(
     RootBranch.Version,
     async (cid) => {
@@ -125,6 +133,7 @@ export async function fromCID({ blockStore, cid, depot }: {
     exchangeRoot,
     publicRoot,
     privateForest,
+    unix,
     version,
   }
 }
@@ -158,6 +167,7 @@ export async function store({ blockStore, depot, rootTree }: {
   const privateForest = await rootTree.privateForest.store(blockStore)
   const publicRoot = await rootTree.publicRoot.store(blockStore)
 
+  const unixTree = await Unix.store(rootTree.unix, depot)
   const version = await depot.putBlock(
     Raw.encode(
       new TextEncoder().encode(
@@ -182,6 +192,10 @@ export async function store({ blockStore, depot, rootTree }: {
       {
         Name: RootBranch.Public,
         Hash: CID.decode(publicRoot),
+      },
+      {
+        Name: RootBranch.Unix,
+        Hash: unixTree,
       },
       {
         Name: RootBranch.Version,

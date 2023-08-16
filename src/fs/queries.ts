@@ -1,9 +1,7 @@
-import { exporter as exportUnixFs } from "ipfs-unixfs-exporter"
-import all from "it-all"
-import * as Uint8arrays from "uint8arrays"
 import { AccessKey, BlockStore, PrivateDirectory, PrivateFile, PrivateNode, PublicDirectory, PublicNode } from "wnfs"
 
 import * as Path from "../path/index.js"
+import * as Unix from "./unix.js"
 
 import { CID } from "../common/cid.js"
 import { Partitioned } from "../path/index.js"
@@ -94,18 +92,7 @@ export const publicRead =
 export const publicReadFromCID =
   (cid: CID, options?: { offset: number; length: number }) =>
   async <FS>(context: PublicContext<FS>): Promise<Uint8Array> => {
-    const offset = options?.offset
-    const length = options?.length
-
-    const fsEntry = await exportUnixFs(cid, context.dependencies.depot.blockstore)
-
-    if (fsEntry.type === "file" || fsEntry.type === "raw") {
-      return Uint8arrays.concat(
-        await all(fsEntry.content({ offset, length }))
-      )
-    } else {
-      throw new Error(`Expected a file, found a '${fsEntry.type}' (CID: ${cid.toString()})`)
-    }
+    return Unix.exportFile(cid, context.dependencies.depot, options)
   }
 
 /////////////

@@ -1,11 +1,13 @@
-import { strict as assert } from "assert"
-import { exporter } from "ipfs-unixfs-exporter"
-import all from "it-all"
+import * as NodeFS from "node:fs/promises"
 import * as Uint8arrays from "uint8arrays"
+
+import { strict as assert } from "assert"
+import { assertUnixFsDirectory, assertUnixFsFile, assertUnixNodeRemoval } from "../../tests/helpers/filesystem.js"
 
 import * as Path from "../path/index.js"
 import * as Cabinet from "../repositories/cabinet.js"
 import * as CIDLog from "../repositories/cid-log.js"
+import * as Unix from "./unix.js"
 
 import { account, agent, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
 import { CID } from "../common/cid.js"
@@ -60,8 +62,7 @@ describe("File System Class", async () => {
     const { contentCID } = await fs.write(publicPath, "utf8", "public")
     const { capsuleKey, dataRoot } = await fs.write(privatePath, "utf8", "private")
 
-    const unixFsEntry = await exporter(contentCID, depot.blockstore)
-    const contentBytes = Uint8arrays.concat(await all(unixFsEntry.content()))
+    const contentBytes = await Unix.exportFile(contentCID, depot)
 
     assert.equal(
       new TextDecoder().decode(contentBytes),
@@ -143,14 +144,12 @@ describe("File System Class", async () => {
 
   it("writes and reads public files", async () => {
     const path = Path.file("public", "a")
+    const bytes = new TextEncoder().encode("🚀")
 
-    const { contentCID } = await fs.write(
-      path,
-      "bytes",
-      new TextEncoder().encode("🚀")
-    )
+    const { contentCID } = await fs.write(path, "bytes", bytes)
 
     assert.equal(await fs.read(path, "utf8"), "🚀")
+    await assertUnixFsFile(fsOpts, fs, path, bytes)
   })
 
   it("writes and reads private files", async () => {
@@ -177,6 +176,8 @@ describe("File System Class", async () => {
 
     assert.equal(await fs.exists(pathPublic), true)
     assert.equal(await fs.exists(pathPrivate), true)
+
+    await assertUnixFsFile(fsOpts, fs, pathPublic, new TextEncoder().encode("🌍"))
   })
 
   it("creates files", async () => {
@@ -276,6 +277,9 @@ describe("File System Class", async () => {
 
     await fs.ensureDirectory(Path.directory("private", "a"))
     await fs.ensureDirectory(Path.directory("private", "a", "b"))
+
+    await assertUnixFsDirectory(fsOpts, fs, Path.directory("public", "a"))
+    await assertUnixFsDirectory(fsOpts, fs, Path.directory("public", "a", "b"))
   })
 
   it("lists public directories", async () => {
@@ -478,6 +482,8 @@ describe("File System Class", async () => {
       await fs.exists(path),
       false
     )
+
+    await assertUnixNodeRemoval(fsOpts, fs, path)
   })
 
   it("removes private files", async () => {
@@ -502,6 +508,8 @@ describe("File System Class", async () => {
       await fs.exists(path),
       false
     )
+
+    await assertUnixNodeRemoval(fsOpts, fs, path)
   })
 
   it("removes private directories", async () => {

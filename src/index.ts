@@ -16,7 +16,7 @@
  */
 
 import * as Auth from "./auth.js"
-import * as Events from "./events/index.js"
+import * as Events from "./events/program.js"
 import * as Path from "./path/index.js"
 import * as Cabinet from "./repositories/cabinet.js"
 
@@ -27,6 +27,7 @@ import { Components } from "./components.js"
 import { AnnexParentType } from "./components/account/implementation.js"
 import { RequestOptions } from "./components/authority/implementation.js"
 import { Configuration, namespace } from "./configuration.js"
+import { ListenTo, listenTo } from "./events/listen.js"
 import { loadFileSystem } from "./fileSystem.js"
 import { FileSystem } from "./fs/class.js"
 import { addSampleData } from "./fs/data/sample.js"
@@ -107,7 +108,7 @@ export type Program<Annex extends Account.AnnexParentType, ChannelContext> =
      */
     identity: IdentityCategory
   }
-  & Events.ListenTo<Events.Program>
+  & ListenTo<Events.Program>
 
 ////////////////////////
 // PROGRAM CATEGORIES //
@@ -328,7 +329,7 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
 
   // Create `Program`
   const program = {
-    ...Events.listenTo(components.manners.program.eventEmitter),
+    ...listenTo(components.manners.program.eventEmitter),
 
     components,
 

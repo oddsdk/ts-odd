@@ -3,6 +3,7 @@ import { AccessKey, BlockStore, PrivateForest, PublicFile, PublicNode } from "wn
 import * as Path from "../path/index.js"
 import * as Mutations from "./mutations.js"
 import * as Queries from "./queries.js"
+import * as Unix from "./unix.js"
 
 import { CID } from "../common/cid.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
@@ -21,6 +22,7 @@ import {
   Dependencies,
   DirectoryItem,
   DirectoryItemWithKind,
+  MutationType,
 } from "./types.js"
 import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js"
 
@@ -34,7 +36,10 @@ export class TransactionContext<FS> {
   #rootTree: RootTree
   #ucanDictionary: Dictionary
 
-  #changedPaths: Set<Path.Distinctive<Partitioned<Partition>>>
+  #changes: Set<{
+    type: MutationType
+    path: Path.Distinctive<Partitioned<Partition>>
+  }>
 
   /** @internal */
   constructor(
@@ -54,31 +59,31 @@ export class TransactionContext<FS> {
     this.#rootTree = rootTree
     this.#ucanDictionary = ucanDictionary
 
-    this.#changedPaths = new Set()
+    this.#changes = new Set()
   }
 
   /** @internal */
   static async commit<FS>(context: TransactionContext<FS>): Promise<{
-    changedPaths: Array<Path.Distinctive<Partitioned<Partition>>>
+    changes: { path: Path.Distinctive<Partitioned<Partition>>; type: MutationType }[]
     privateNodes: MountedPrivateNodes
     proofs: Ucan[]
     rootTree: RootTree
   }> {
-    const changedPaths = Array.from(context.#changedPaths)
+    const changes = Array.from(context.#changes)
 
     // Proofs
-    const proofs = await changedPaths.reduce(
-      async (accPromise: Promise<Ucan[]>, changedPath: Path.Distinctive<Partitioned<Partition>>): Promise<Ucan[]> => {
+    const proofs = await changes.reduce(
+      async (accPromise: Promise<Ucan[]>, change): Promise<Ucan[]> => {
         const acc = await accPromise
         const proof = context.#ucanDictionary.lookupFileSystemUcan(
           context.#did,
-          changedPath
+          change.path
         )
 
         // Throw error if no write access to this path
         if (!proof) {
           throwNoAccess(
-            changedPath,
+            change.path,
             "write"
           )
         }
@@ -89,17 +94,18 @@ export class TransactionContext<FS> {
     )
 
     // Private forest
-    const newForest = await changedPaths.reduce(
-      async (oldForestPromise, changedPath): Promise<PrivateForest> => {
+    const newForest = await changes.reduce(
+      async (oldForestPromise, change): Promise<PrivateForest> => {
         const oldForest = await oldForestPromise
 
-        if (!Path.isPartition("private", changedPath)) {
+        if (!Path.isPartition("private", change.path)) {
           return oldForest
         }
 
-        const nodePath = Path.removePartition(changedPath)
-        const posixPath = Path.toPosix(nodePath, { absolute: true })
-        const maybeNode = context.#privateNodes[posixPath]
+        const maybeNode = findPrivateNode(
+          change.path as Path.Distinctive<Path.Partitioned<Path.Private>>,
+          context.#privateNodes
+        )
 
         if (maybeNode) {
           const [_, newForest] = await maybeNode.node.store(oldForest, context.#blockStore, context.#rng)
@@ -113,12 +119,47 @@ export class TransactionContext<FS> {
       )
     )
 
+    // Unix tree
+    const unixTree = await changes.reduce(
+      async (oldRootPromise, change) => {
+        const oldRoot = await oldRootPromise
+
+        if (!Path.isPartition("public", change.path)) {
+          return oldRoot
+        }
+
+        const path = Path.removePartition(change.path)
+
+        if (change.type === "removed") {
+          return Unix.removeNodeFromTree(
+            oldRoot,
+            path,
+            context.#dependencies.depot
+          )
+        }
+
+        const contentCID = Path.isFile(change.path) && Path.isPartitionedNonEmpty<Path.Public>(change.path)
+          ? await context.contentCID(change.path).then(a => a || undefined)
+          : undefined
+
+        return Unix.insertNodeIntoTree(
+          oldRoot,
+          path,
+          context.#dependencies.depot,
+          contentCID
+        )
+      },
+      Promise.resolve(
+        context.#rootTree.unix
+      )
+    )
+
     // Replace forest
-    const rootTree = { ...context.#rootTree, privateForest: newForest }
+    const rootTree = { ...context.#rootTree, privateForest: newForest, unix: unixTree }
 
     // Fin
     return {
-      changedPaths: changedPaths,
+      changes: changes,
       privateNodes: context.#privateNodes,
       proofs: proofs,
       rootTree: rootTree,
@@ -363,13 +404,15 @@ export class TransactionContext<FS> {
       case "public":
         return this.#publicMutation(
           partition.path,
-          Mutations.publicCreateDirectory()
+          Mutations.publicCreateDirectory(),
+          Mutations.TYPES.ADDED_OR_UPDATED
         )
 
       case "private":
         return this.#privateMutation(
           partition.path,
-          Mutations.privateCreateDirectory()
+          Mutations.privateCreateDirectory(),
+          Mutations.TYPES.ADDED_OR_UPDATED
         )
     }
   }
@@ -402,13 +445,15 @@ export class TransactionContext<FS> {
       case "public":
         return this.#publicMutation(
           partition.path,
-          Mutations.publicRemove()
+          Mutations.publicRemove(),
+          Mutations.TYPES.REMOVED
         )
 
       case "private":
         return this.#privateMutation(
           partition.path,
-          Mutations.privateRemove()
+          Mutations.privateRemove(),
+          Mutations.TYPES.REMOVED
         )
     }
   }
@@ -440,13 +485,15 @@ export class TransactionContext<FS> {
       case "public":
         return this.#publicMutation(
           partition.path,
-          Mutations.publicWrite(bytes)
+          Mutations.publicWrite(bytes),
+          Mutations.TYPES.ADDED_OR_UPDATED
         )
 
       case "private":
         return this.#privateMutation(
           partition.path,
-          Mutations.privateWrite(bytes)
+          Mutations.privateWrite(bytes),
+          Mutations.TYPES.ADDED_OR_UPDATED
         )
     }
   }
@@ -529,7 +576,8 @@ export class TransactionContext<FS> {
 
   async #publicMutation(
     path: Path.Distinctive<Partitioned<Public>>,
-    mut: Mutations.Public
+    mut: Mutations.Public,
+    mutType: MutationType
   ): Promise<void> {
     const result = await mut({
       blockStore: this.#blockStore,
@@ -540,11 +588,18 @@ export class TransactionContext<FS> {
 
     // Replace public root
     this.#rootTree = { ...this.#rootTree, publicRoot: result.rootDir }
+
+    // Mark node as changed
+    this.#changes.add({
+      type: mutType,
+      path: path,
+    })
   }
 
   async #privateMutation(
     path: Path.Distinctive<Partitioned<Private>>,
-    mut: Mutations.Private
+    mut: Mutations.Private,
+    mutType: MutationType
   ): Promise<void> {
     const priv = findPrivateNode(path, this.#privateNodes)
 
@@ -558,9 +613,10 @@ export class TransactionContext<FS> {
     })
 
     // Mark node as changed
-    this.#changedPaths.add(
-      Path.withPartition("private", priv.path)
-    )
+    this.#changes.add({
+      type: mutType,
+      path: Path.withPartition("private", path),
+    })
 
     // Replace forest
     this.#rootTree = { ...this.#rootTree, privateForest: result.forest }

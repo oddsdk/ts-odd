@@ -1,27 +1,18 @@
 import debounce from "debounce-promise"
 import { CID } from "multiformats/cid"
-import {
-  AccessKey,
-  BlockStore,
-  PrivateDirectory,
-  PrivateFile,
-  PrivateForest,
-  PrivateNode,
-  PublicDirectory,
-  PublicFile,
-} from "wnfs"
+import { AccessKey, BlockStore, PrivateDirectory, PrivateFile, PrivateNode, PublicDirectory, PublicFile } from "wnfs"
 
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
 
-import * as Events from "../events/index.js"
+import * as Events from "../events/fileSystem.js"
 import * as Path from "../path/index.js"
-import * as Queries from "./queries.js"
 import * as Rng from "./rng.js"
 import * as RootTree from "./rootTree.js"
 import * as Store from "./store.js"
 import * as WASM from "./wasm.js"
 
-import { EventEmitter } from "../events/index.js"
+import { EventEmitter, createEmitter } from "../events/emitter.js"
+import { EventListener } from "../events/listen.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
 import { Dictionary } from "../ucan/dictionary.js"
 import { Ucan } from "../ucan/index.js"
@@ -36,7 +27,6 @@ import {
   Dependencies,
   DirectoryItem,
   DirectoryItemWithKind,
-  FileSystemOptions,
   MutationOptions,
   MutationResult,
   PrivateMutationResult,
@@ -45,6 +35,16 @@ import {
   TransactionResult,
 } from "./types.js"
 import { MountedPrivateNode, MountedPrivateNodes } from "./types/internal.js"
+
+/** @internal */
+export type FileSystemOptions<FS> = {
+  cidLog: CIDLog
+  dependencies: Dependencies<FS>
+  did: string
+  settleTimeBeforePublish?: number
+  ucanDictionary: Dictionary
+  updateDataRoot?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+}
 
 /** @group File System */
 export class FileSystem {
@@ -81,7 +81,7 @@ export class FileSystem {
     this.#ucanDictionary = ucanDictionary
     this.#updateDataRoot = updateDataRoot
 
-    this.#eventEmitter = Events.createEmitter<Events.FileSystem>()
+    this.#eventEmitter = createEmitter<Events.FileSystem>()
     this.#rng = Rng.makeRngInterface()
 
     this.did = did
@@ -145,7 +145,7 @@ export class FileSystem {
    * {@inheritDoc events.EmitterClass.on}
    * @group Events
    */
-  on = <Name extends keyof Events.FileSystem>(eventName: Name, listener: Events.Listener<Events.FileSystem, Name>) =>
+  on = <Name extends keyof Events.FileSystem>(eventName: Name, listener: EventListener<Events.FileSystem, Name>) =>
     this.#eventEmitter.on(eventName, listener)
 
   /**
@@ -163,7 +163,7 @@ export class FileSystem {
    * {@inheritDoc events.EmitterClass.off}
    * @group Events
    */
-  off = <Name extends keyof Events.FileSystem>(eventName: Name, listener: Events.Listener<Events.FileSystem, Name>) =>
+  off = <Name extends keyof Events.FileSystem>(eventName: Name, listener: EventListener<Events.FileSystem, Name>) =>
     this.#eventEmitter.off(eventName, listener)
 
   /**
@@ -546,7 +546,7 @@ export class FileSystem {
     await handler(context)
 
     // Commit transaction
-    const { changedPaths, privateNodes, proofs, rootTree } = await TransactionContext.commit(context)
+    const { changes, privateNodes, proofs, rootTree } = await TransactionContext.commit(context)
 
     this.#privateNodes = privateNodes
     this.#rootTree = rootTree
@@ -555,10 +555,10 @@ export class FileSystem {
     const dataRoot = await this.calculateDataRoot()
 
     // Emit events
-    changedPaths.forEach(changedPath => {
+    changes.forEach(change => {
       this.#eventEmitter.emit("local-change", {
         dataRoot,
-        path: changedPath, // TODO: Check if this is correct
+        ...change,
       })
     })
 
@@ -569,7 +569,7 @@ export class FileSystem {
 
     // Fin
     return {
-      changedPaths,
+      changes,
       dataRoot,
       publishingStatus: signal,
     }

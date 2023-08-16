@@ -1,7 +1,8 @@
 import { CID } from "multiformats"
 
 import * as Depot from "../../components/depot/implementation.js"
-import * as Events from "../../events/index.js"
+import { EventEmitter } from "../../events/emitter.js"
+import * as Events from "../../events/program.js"
 import * as Path from "../../path/index.js"
 
 export type Implementation<FS> = {
@@ -41,7 +42,7 @@ export type Implementation<FS> = {
    * Program manners.
    */
   program: {
-    eventEmitter: Events.Emitter<Events.Program>
+    eventEmitter: EventEmitter<Events.Program>
 
     /**
      * Is the Program online or not?

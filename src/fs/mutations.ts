@@ -1,13 +1,22 @@
-import { importBytes as importUnixFsBytes } from "ipfs-unixfs-importer"
 import { BlockStore } from "wnfs"
 
 import * as Path from "../path/index.js"
+import * as Unix from "./unix.js"
 
 import { searchLatest } from "./common.js"
 import { Rng } from "./rng.js"
 import { RootTree } from "./rootTree.js"
-import { Dependencies } from "./types.js"
+import { Dependencies, MutationType } from "./types.js"
 import { MountedPrivateNodes, PrivateNodeQueryResult, WnfsPrivateResult, WnfsPublicResult } from "./types/internal.js"
+
+////////
+// 🏔️ //
+////////
+
+export const TYPES: Record<string, MutationType> = {
+  ADDED_OR_UPDATED: "added-or-updated",
+  REMOVED: "removed",
+}
 
 ////////////
 // PUBLIC //
@@ -38,11 +47,11 @@ export const publicRemove = () => async <FS>(params: PublicParams<FS>): Promise<
 }
 
 export const publicWrite = (bytes: Uint8Array) => async <FS>(params: PublicParams<FS>): Promise<WnfsPublicResult> => {
-  const importResult = await importUnixFsBytes(bytes, params.dependencies.depot.blockstore)
+  const cid = await Unix.importFile(bytes, params.dependencies.depot)
 
   return params.rootTree.publicRoot.write(
     params.pathSegments,
-    importResult.cid.bytes,
+    cid.bytes,
     new Date(),
     params.blockStore
   )

@@ -168,6 +168,15 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
   }
 
   addAccessKeys(items: { did: string; key: Uint8Array; path: Path.Distinctive<Path.Segments> }[]) {
+    // Delete old access keys matching the same DID and path,
+    // in case we want to make a new file system.
+    items.forEach(item => {
+      if (this.hasAccessKey(item.did, item.path)) {
+        delete this.collection[`${item.did}/${Path.toPosix(item.path)}`]
+      }
+    })
+
+    // Add new ones
     return this.add(items.map(item => {
       return { type: "access-key", ...item }
     }))
