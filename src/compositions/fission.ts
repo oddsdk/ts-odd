@@ -66,7 +66,7 @@ export const accountImplementations = {
    *
    * App accounts don't require an email address, meaning you can
    * set up some external identifier verification, but it's not required.
-   * More importantly, the app developer pays for the storage of app accounts.
+   * More importantly, the app developer pays for the storage used by app accounts.
    */
   standard(config: Configuration, environment?: string | Fission.Endpoints) {
     return components(config, { accountImplementation: "standard", environment })
