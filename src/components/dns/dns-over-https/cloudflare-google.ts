@@ -1,6 +1,8 @@
-import { Implementation } from "./implementation.js"
+import { Implementation } from "../implementation.js"
 
-// FUNDAMENTALS
+//////////////////
+// FUNDAMENTALS //
+//////////////////
 
 /**
  * Lookup DNS TXT record using Google DNS-over-HTTPS
@@ -62,7 +64,9 @@ export function dnsOverHttps(url: string): Promise<string | null> {
     })
 }
 
-// 🛠
+////////
+// 🛠 //
+////////
 
 /**
  * Lookup a DNS TXT record.
@@ -97,7 +101,9 @@ export async function lookupDnsLink(domain: string): Promise<string | null> {
     : null
 }
 
-// 🛳️
+////////
+// 🛳️ //
+////////
 
 export function implementation(): Implementation {
   return {

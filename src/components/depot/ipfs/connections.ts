@@ -1,5 +1,8 @@
 import { Multiaddr } from "@multiformats/multiaddr"
 import { Libp2p } from "libp2p"
+import { PingService } from "libp2p/ping"
+
+import { Manners } from "../../../components.js"
 
 const latestPeerTimeoutIds: { [peer: string]: null | ReturnType<typeof setTimeout> } = {}
 
@@ -14,6 +17,8 @@ export type Status = {
   lastConnectedAt: number | null
   latency: number | null
 }
+
+export type LibP2PwServices = Libp2p<{ ping: PingService }>
 
 /** 🎛️ Connection interval knobs
  *
@@ -31,7 +36,7 @@ const BACKOFF_INIT = {
   currentBackoff: 1000,
 }
 
-export function keepAlive(libp2p: Libp2p, peer: Multiaddr, backoff: BackOff, status: Status): void {
+export function keepAlive(libp2p: LibP2PwServices, peer: Multiaddr, backoff: BackOff, status: Status): void {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
 
   if (backoff.currentBackoff < KEEP_TRYING_INTERVAL) {
@@ -61,7 +66,12 @@ export function keepAlive(libp2p: Libp2p, peer: Multiaddr, backoff: BackOff, sta
   })
 }
 
-export async function reconnect(libp2p: Libp2p, peer: Multiaddr, backoff: BackOff, status: Status): Promise<void> {
+export async function reconnect(
+  libp2p: LibP2PwServices,
+  peer: Multiaddr,
+  backoff: BackOff,
+  status: Status
+): Promise<void> {
   const updatedStatus = { ...status, connected: false, latency: null }
 
   report(peer, updatedStatus)
@@ -90,34 +100,35 @@ export function resetPeerTimeoutsTracking(peer: Multiaddr): void {
   latestPeerTimeoutIds[peer.toString()] = null
 }
 
-export function tryConnecting(libp2p: Libp2p, peer: Multiaddr, logging: boolean): void {
+export function tryConnecting<FS>(
+  libp2p: LibP2PwServices,
+  peer: Multiaddr,
+  manners: Manners.Implementation<FS>
+): void {
   ping(libp2p, peer).then(({ latency }) => {
-    return libp2p
-      .dial(peer)
-      .then(() => {
-        if (logging) console.log(`🪐 Connected to ${peer}`)
+    manners.log(`🪐 Connected to ${peer}`)
 
-        const status = { connected: true, lastConnectedAt: Date.now(), latency }
-        report(peer, status)
+    const status = { connected: true, lastConnectedAt: Date.now(), latency }
+    report(peer, status)
 
-        // Ensure permanent connection to a peer
-        // NOTE: This is a temporary solution while we wait for
-        //       https://github.com/libp2p/js-libp2p/issues/744
-        //       (see "Keep alive" bit)
-        setTimeout(() => keepAlive(libp2p, peer, BACKOFF_INIT, status), KEEP_ALIVE_INTERVAL)
-      })
-  }).catch(() => {
-    if (logging) console.log(`🪓 Could not connect to ${peer}`)
+    // Ensure permanent connection to a peer
+    // NOTE: This is a temporary solution while we wait for
+    //       https://github.com/libp2p/js-libp2p/issues/744
+    //       (see "Keep alive" bit)
+    setTimeout(() => keepAlive(libp2p, peer, BACKOFF_INIT, status), KEEP_ALIVE_INTERVAL)
+  }).catch(err => {
+    console.error(err)
+    manners.log(`🪓 Could not connect to ${peer}`)
 
     const status = { connected: false, lastConnectedAt: null, latency: null }
 
     report(peer, status)
-    keepAlive(libp2p, peer, BACKOFF_INIT, status)
+    // keepAlive(libp2p, peer, BACKOFF_INIT, status)
   })
 }
 
-export async function ping(libp2p: Libp2p, peer: Multiaddr): Promise<{ latency: number }> {
-  return libp2p.ping(peer).then(latency => ({ latency }))
+export async function ping(libp2p: LibP2PwServices, peer: Multiaddr): Promise<{ latency: number }> {
+  return libp2p.services.ping.ping(peer).then(latency => ({ latency }))
 }
 
 // REPORTING

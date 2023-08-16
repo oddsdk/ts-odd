@@ -1,4 +1,23 @@
+/**
+ * Documentation for `@oddjs/odd`.
+ *
+ * ```
+ * import * as fission from "@oddjs/odd/compositions/fission"
+ * import * as odd from "@oddjs/odd"
+ *
+ * const config = { namespace: "odd-example" }
+ *
+ * odd.program(
+ *   config,
+ *   await fission.components(config)
+ * )
+ * ```
+ * @module odd
+ */
+
 import * as Auth from "./auth.js"
+import * as Events from "./events/index.js"
+import * as Path from "./path/index.js"
 import * as Cabinet from "./repositories/cabinet.js"
 
 import { FileSystemQuery, Query } from "./authority/query.js"
@@ -21,15 +40,24 @@ import { Ucan } from "./ucan/types.js"
 export * from "./appInfo.js"
 export * from "./common/types.js"
 export * from "./common/version.js"
-export * from "./components.js"
 export * from "./configuration.js"
+export * from "./fs/types.js"
+
+export * as Components from "./components.js"
 
 export * as authority from "./authority/query.js"
+export * as events from "./events/index.js"
 export * as path from "./path/index.js"
+export * as ucan from "./ucan/index.js"
 
-export { FileSystemQuery } from "./authority/query.js"
+export { Channel, ChannelData, ChannelOptions } from "./channel.js"
 export { CID, decodeCID, encodeCID } from "./common/cid.js"
+export { RequestOptions } from "./components/authority/implementation.js"
+export { CodecIdentifier } from "./dag/codecs.js"
 export { FileSystem } from "./fs/class.js"
+export { TransactionContext } from "./fs/transaction.js"
+export { PrivateReference } from "./fs/types/private-ref.js"
+export { Dictionary as UcanDictionary } from "./ucan/dictionary.js"
 
 ///////////////////////
 // TYPES & CONSTANTS //
@@ -45,43 +73,25 @@ export { FileSystem } from "./fs/class.js"
  * The `Annex` type parameter is the type of `annex` part of the account
  * system implementation. Using a different account system could mean
  * you have different extensions located in the `program.account` object.
+ *
+ * @group 🚀
  */
-export type Program<Annex extends Account.AnnexParentType> =
+export type Program<Annex extends Account.AnnexParentType, ChannelContext> =
   & {
     /**
-     * Manage the account.
+     * {@inheritDoc AccountCategory}
      */
-    account: ReturnType<Account.Implementation<Annex>["annex"]> & {
-      register: (formValues: Record<string, string>) => Promise<
-        { registered: true } | { registered: false; reason: string }
-      >
-      canRegister: (formValues: Record<string, string>) => Promise<
-        { canRegister: true } | { canRegister: false; reason: string }
-      >
-    }
+    account: AccountCategory<Annex>
 
     /**
-     * Authority system.
-     *
-     * TODO: Unfinished
+     * {@inheritDoc AuthorityCategory}
      */
-    authority: {
-      /**
-       * Does my program have the authority to work with these part of the file system?
-       * And does the configured account system have the required authority?
-       */
-      has: (fileSystemQueries: Query | Query[]) => Promise<
-        { has: true } | { has: false; reason: string }
-      >
-
-      provide: () => Promise<void>
-      request: (options: RequestOptions) => Promise<void>
-    }
+    authority: AuthorityCategory
 
     /**
      * Components used to build this program.
      */
-    components: Components<Annex>
+    components: Components<Annex, ChannelContext>
 
     /**
      * Configuration used to build this program.
@@ -89,31 +99,100 @@ export type Program<Annex extends Account.AnnexParentType> =
     configuration: Configuration
 
     /**
-     * Various file system methods.
+     * {@inheritDoc FileSystemCategory}
      */
-    fileSystem: FileSystemShortHands
-  }
-  & Shorthands
+    fileSystem: FileSystemCategory
 
-export type Shorthands = {
-  did: {
-    account: () => Promise<string | null>
-    agent: () => Promise<string>
-    identifier: () => Promise<string>
+    /**
+     * {@inheritDoc IdentityCategory}
+     */
+    identity: IdentityCategory
   }
+  & Events.ListenTo<Events.Program>
+
+////////////////////////
+// PROGRAM CATEGORIES //
+////////////////////////
+
+/**
+ * Account system.
+ *
+ * @group Program
+ */
+export type AccountCategory<Annex extends AnnexParentType> = ReturnType<Account.Implementation<Annex>["annex"]> & {
+  register: (formValues: Record<string, string>) => Promise<
+    { registered: true } | { registered: false; reason: string }
+  >
+  canRegister: (formValues: Record<string, string>) => Promise<
+    { canRegister: true } | { canRegister: false; reason: string }
+  >
 }
 
-export type FileSystemShortHands = {
+/**
+ * Authority system.
+ *
+ * TODO: Unfinished
+ *
+ * @group Program
+ */
+export type AuthorityCategory = {
+  /**
+   * Does my program have the authority to work with these part of the file system?
+   * And does the configured account system have the required authority?
+   */
+  has: (fileSystemQueries: Query | (Query | Query[])[]) => Promise<
+    { has: true } | { has: false; reason: string }
+  >
+
+  provide: () => Promise<void>
+  request: (options: RequestOptions) => Promise<void>
+}
+
+/**
+ * File system.
+ *
+ * @group Program
+ */
+export type FileSystemCategory = {
+  /**
+   * Add some sample data to a file system.
+   */
   addSampleData: (fs: FileSystem) => Promise<void>
 
   /**
-   * Load the file system associated with the account system.
+   * Load a file system.
+   *
+   * ```
+   * // Empty file system
+   * program.fileSystem.load({ did: "did:some-identifier" })
+   *
+   * // Existing file system
+   * program.fileSystem.load({ dataRoot: cid, did: "did:some-identifier" })
+   *
+   * // Existing file system that updates external data-root pointer when mutation occurs (and publishing is not disabled)
+   * const updateFn = (dataRoot, proofs) => updateRemoteDataRoot(...)
+   * program.fileSystem.load({ dataRoot: cid, dataRootUpdater: updateFn, did: "did:some-identifier" })
+   * ```
    */
   load: (params: {
     dataRoot?: CID
-    dataRootUpdater?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+    dataRootUpdater?: (
+      dataRoot: CID,
+      proofs: Ucan[]
+    ) => Promise<{ updated: true } | { updated: false; reason: string }>
     did: string
   }) => Promise<FileSystem>
+}
+
+/**
+ * Identity system.
+ *
+ * @group Program
+ */
+export type IdentityCategory = {
+  account: () => Promise<string | null>
+  agent: () => Promise<string>
+  identifier: () => Promise<string>
 }
 
 //////////////////
@@ -121,7 +200,7 @@ export type FileSystemShortHands = {
 //////////////////
 
 /**
- * 🚀 Build an ODD program.
+ * Build an ODD program.
  *
  * This will give you a `Program` object which will your main interaction point.
  *
@@ -139,11 +218,13 @@ export type FileSystemShortHands = {
  * You could have an implementation that just stores the blocks in memory and forgets
  * about them on page reload, or you could store the blocks in indexedDB and connect
  * to an IPFS peer that will fetch the blocks.
+ *
+ * @group 🚀
  */
-export async function program<Annex extends AnnexParentType>(
+export async function program<Annex extends AnnexParentType, ChannelContext>(
   config: Configuration,
-  components: Components<Annex>
-): Promise<Program<Annex>> {
+  components: Components<Annex, ChannelContext>
+): Promise<Program<Annex, ChannelContext>> {
   const { account, agent, identifier } = components
 
   // Is supported?
@@ -166,10 +247,10 @@ export async function program<Annex extends AnnexParentType>(
   // Authority
   const authority = {
     async has(
-      query: Query | Query[]
+      query: Query | (Query | Query[])[]
     ): Promise<{ has: true } | { has: false; reason: string }> {
       const audience = await identifier.did()
-      const queries = Array.isArray(query) ? query : [query]
+      const queries = (Array.isArray(query) ? query : [query]).flat()
 
       // Account access
       if (queries.some(q => q.query === "account")) {
@@ -191,7 +272,7 @@ export async function program<Annex extends AnnexParentType>(
         []
       )
 
-      const hasAccessToFsPaths = fsQueries.reduce(
+      const hasAccessToFsPaths = fsQueries.filter(q => Path.isPartition("private", q.path)).reduce(
         (acc, query) => {
           if (acc === false) return false
           return cabinet.hasAccessKey(audience, query.path)
@@ -215,8 +296,8 @@ export async function program<Annex extends AnnexParentType>(
     async request() {},
   }
 
-  // Shorthands
-  const fileSystemShortHands: FileSystemShortHands = {
+  // Categories
+  const fileSystemCategory: Program<Annex, ChannelContext>["fileSystem"] = {
     addSampleData: (fs: FileSystem) => addSampleData(fs),
     load: async (params: {
       dataRoot?: CID
@@ -234,30 +315,32 @@ export async function program<Annex extends AnnexParentType>(
     },
   }
 
-  const shortHands: Shorthands = {
-    did: {
-      async account(): Promise<string | null> {
-        return account.did(identifier, ucanDictionary)
-      },
-      async agent() {
-        return agent.did()
-      },
-      async identifier() {
-        return identifier.did()
-      },
+  const identityCategory: Program<Annex, ChannelContext>["identity"] = {
+    async account(): Promise<string | null> {
+      return account.did(identifier, ucanDictionary)
+    },
+    async agent() {
+      return agent.did()
+    },
+    async identifier() {
+      return identifier.did()
     },
   }
 
   // Create `Program`
   const program = {
-    ...shortHands,
-
-    configuration: { ...config },
-    fileSystem: { ...fileSystemShortHands },
+    ...Events.listenTo(components.manners.program.eventEmitter),
 
     components,
 
+    configuration: { ...config },
+
+    // Categories
     authority,
+
+    identity: identityCategory,
+    fileSystem: fileSystemCategory,
+
     account: {
       register: Auth.register({ account, agent, identifier, cabinet }),
       canRegister: account.canRegister,

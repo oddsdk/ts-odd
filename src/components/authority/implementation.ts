@@ -1,7 +1,7 @@
-import * as Events from "../../events.js"
+import * as Events from "../../events/index.js"
 
 import { Query } from "../../authority/query.js"
-import { EventEmitter } from "../../events.js"
+import { EventEmitter } from "../../events/index.js"
 import { Ucan } from "../../ucan/index.js"
 
 export type RequestOptions = {

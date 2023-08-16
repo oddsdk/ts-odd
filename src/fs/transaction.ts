@@ -26,6 +26,7 @@ import {
 import { MountedPrivateNodes, PrivateNodeQueryResult } from "./types/internal.js"
 import { PrivateReference } from "./types/private-ref.js"
 
+/** @group File System */
 export class TransactionContext<FS> {
   #blockStore: BlockStore
   #dependencies: Dependencies<FS>
@@ -37,6 +38,7 @@ export class TransactionContext<FS> {
 
   #changedPaths: Set<Path.Distinctive<Partitioned<Partition>>>
 
+  /** @internal */
   constructor(
     blockStore: BlockStore,
     dependencies: Dependencies<FS>,
@@ -57,6 +59,7 @@ export class TransactionContext<FS> {
     this.#changedPaths = new Set()
   }
 
+  /** @internal */
   static async commit<FS>(context: TransactionContext<FS>): Promise<{
     changedPaths: Array<Path.Distinctive<Partitioned<Partition>>>
     privateNodes: MountedPrivateNodes
@@ -69,7 +72,7 @@ export class TransactionContext<FS> {
     const proofs = await changedPaths.reduce(
       async (accPromise: Promise<Ucan[]>, changedPath: Path.Distinctive<Partitioned<Partition>>): Promise<Ucan[]> => {
         const acc = await accPromise
-        const proof = context.#ucanDictionary.lookupFsWriteUcan(
+        const proof = context.#ucanDictionary.lookupFileSystemUcan(
           context.#did,
           changedPath
         )
@@ -126,6 +129,7 @@ export class TransactionContext<FS> {
 
   // QUERIES
 
+  /** @group Querying */
   async contentCID(path: Path.File<Partitioned<Public>>): Promise<CID | null> {
     const result = await this.#rootTree.publicRoot.getNode(
       pathSegmentsWithoutPartition(path),
@@ -138,6 +142,7 @@ export class TransactionContext<FS> {
       : null
   }
 
+  /** @group Querying */
   async capsuleCID(path: Path.Distinctive<Partitioned<Public>>): Promise<CID | null> {
     const result = await this.#rootTree.publicRoot.getNode(
       pathSegmentsWithoutPartition(path),
@@ -154,6 +159,7 @@ export class TransactionContext<FS> {
       : null
   }
 
+  /** @group Querying */
   async capsuleRef(path: Path.Distinctive<Partitioned<Private>>): Promise<PrivateReference | null> {
     let priv: PrivateNodeQueryResult
 
@@ -183,8 +189,9 @@ export class TransactionContext<FS> {
         })
   }
 
+  /** @group Querying */
   async exists(path: Path.Distinctive<Partitioned<Partition>>): Promise<boolean> {
-    return this.query(
+    return this.#query(
       path,
       {
         public: Queries.publicExists(),
@@ -193,6 +200,7 @@ export class TransactionContext<FS> {
     )
   }
 
+  /** @group Querying */
   async listDirectory(
     path: Path.Directory<Partitioned<Partition>>,
     listOptions: { withItemKind: true }
@@ -213,7 +221,7 @@ export class TransactionContext<FS> {
     listOptions: { withItemKind: boolean } = { withItemKind: false }
   ): Promise<DirectoryItem[] | DirectoryItemWithKind[]> {
     if (listOptions.withItemKind) {
-      return this.query(
+      return this.#query(
         path,
         {
           public: Queries.publicListDirectoryWithKind(),
@@ -222,7 +230,7 @@ export class TransactionContext<FS> {
       )
     }
 
-    return this.query(
+    return this.#query(
       path,
       {
         public: Queries.publicListDirectory(),
@@ -231,8 +239,10 @@ export class TransactionContext<FS> {
     )
   }
 
+  /** @group Querying */
   ls = this.listDirectory
 
+  /** @group Querying */
   async read<D extends DataType, V = unknown>(
     arg: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
       capsuleRef: PrivateReference
@@ -255,7 +265,7 @@ export class TransactionContext<FS> {
         arg.contentCID,
         options
       )(
-        this.publicContext()
+        this.#publicContext()
       )
     } else if ("capsuleCID" in arg) {
       // Public content from capsule CID
@@ -272,11 +282,11 @@ export class TransactionContext<FS> {
         PrivateRefs.toWnfsRef(arg.capsuleRef),
         options
       )(
-        this.privateContext()
+        this.#privateContext()
       )
     } else if ("file" in arg || "directory" in arg) {
       // Public or private from path
-      bytes = await this.query(
+      bytes = await this.#query(
         arg,
         {
           public: Queries.publicRead(options),
@@ -293,6 +303,7 @@ export class TransactionContext<FS> {
 
   // MUTATIONS
 
+  /** @group Mutating */
   async copy(
     fromParam: Path.Distinctive<PartitionedNonEmpty<Partition>>,
     toParam: Path.File<PartitionedNonEmpty<Partition>> | Path.Directory<Partitioned<Partition>>
@@ -313,8 +324,10 @@ export class TransactionContext<FS> {
     throw new Error(`Copy no-op, from '${Path.toPosix(from)}' to '${Path.toPosix(to)}'`)
   }
 
+  /** @group Mutating */
   cp = this.copy
 
+  /** @group Mutating */
   async createDirectory(
     path: Path.Directory<PartitionedNonEmpty<Partition>>
   ): Promise<{ path: Path.Directory<PartitionedNonEmpty<Partition>> }> {
@@ -327,6 +340,7 @@ export class TransactionContext<FS> {
     }
   }
 
+  /** @group Mutating */
   async createFile<D extends DataType, V = unknown>(
     path: Path.File<PartitionedNonEmpty<Partition>>,
     dataType: DataType,
@@ -341,6 +355,7 @@ export class TransactionContext<FS> {
     }
   }
 
+  /** @group Mutating */
   async ensureDirectory(
     path: Path.Directory<PartitionedNonEmpty<Partition>>
   ): Promise<void> {
@@ -376,8 +391,10 @@ export class TransactionContext<FS> {
     return this.#manualMove(from, to)
   }
 
+  /** @group Mutating */
   mv = this.move
 
+  /** @group Mutating */
   async remove(
     path: Path.Distinctive<PartitionedNonEmpty<Partition>>
   ): Promise<void> {
@@ -398,8 +415,10 @@ export class TransactionContext<FS> {
     }
   }
 
+  /** @group Mutating */
   rm = this.remove
 
+  /** @group Mutating */
   async rename(
     path: Path.Distinctive<PartitionedNonEmpty<Partition>>,
     newName: string
@@ -410,6 +429,7 @@ export class TransactionContext<FS> {
     return this.move(fromPath, toPath)
   }
 
+  /** @group Mutating */
   async write<D extends DataType, V = unknown>(
     path: Path.File<PartitionedNonEmpty<Partition>>,
     dataType: DataType,
@@ -435,7 +455,7 @@ export class TransactionContext<FS> {
 
   // ㊙️  ▒▒  QUERIES
 
-  query<T>(
+  #query<T>(
     path: Path.Distinctive<Partitioned<Partition>>,
     queryFunctions: {
       public: Queries.Public<T>
@@ -449,14 +469,14 @@ export class TransactionContext<FS> {
         return Queries.publicQuery(
           partition.path,
           queryFunctions.public,
-          this.publicContext()
+          this.#publicContext()
         )
 
       case "private":
         return Queries.privateQuery(
           partition.path,
           queryFunctions.private,
-          this.privateContext()
+          this.#privateContext()
         )
     }
   }
@@ -558,7 +578,7 @@ export class TransactionContext<FS> {
 
   // ㊙️
 
-  publicContext(): Queries.PublicContext<FS> {
+  #publicContext(): Queries.PublicContext<FS> {
     return {
       blockStore: this.#blockStore,
       dependencies: this.#dependencies,
@@ -566,7 +586,7 @@ export class TransactionContext<FS> {
     }
   }
 
-  privateContext(): Queries.PrivateContext {
+  #privateContext(): Queries.PrivateContext {
     return {
       blockStore: this.#blockStore,
       privateNodes: this.#privateNodes,

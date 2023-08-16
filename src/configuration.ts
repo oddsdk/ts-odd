@@ -5,6 +5,7 @@ import { isString } from "./common/type-checks.js"
 // CONFIGURATION //
 ///////////////////
 
+/** @group Configuration */
 export type Configuration = {
   namespace: string | AppInfo
 
@@ -58,6 +59,7 @@ export type Configuration = {
 // PIECES //
 ////////////
 
+/** @group Configuration */
 export type UserMessages = {
   versionMismatch: {
     newer(version: string): Promise<void>
@@ -71,11 +73,18 @@ export type UserMessages = {
 
 /**
  * App identifier.
+ *
+ * @group Configuration
  */
 export function appId(app: AppInfo): string {
   return `${app.creator}/${app.name}`
 }
 
+/**
+ * Extract a `Configuration` from an object containing one.
+ *
+ * @group Configuration
+ */
 export function extract(
   obj: Record<string, unknown> & Configuration
 ): Configuration {
@@ -89,6 +98,8 @@ export function extract(
 
 /**
  * Generate a namespace string based on a configuration.
+ *
+ * @group Configuration
  */
 export function namespace(config: Configuration): string {
   return isString(config.namespace) ? config.namespace : appId(config.namespace)

@@ -4,46 +4,37 @@ import { DNS } from "../components.js"
  * Fission endpoints.
  *
  * `apiPath` Path of the API on the Fission server.
- * `lobby` Location of the authentication lobby.
+ * `ipfsGateway` Location of the IPFS gateway.
  * `server` Location of the Fission server.
  * `userDomain` User's domain to use, will be prefixed by username.
  */
 export type Endpoints = {
   apiPath: string
   ipfsGateway: string
-  // FIXME deprecated, remove
-  lobby: string
   server: string
   userDomain: string
   did?: string
 }
 
-// FIXME
-// n.b. currently only PRODUCTION is used, the others are not used
-
 export const PRODUCTION: Endpoints = {
   apiPath: "/api",
   ipfsGateway: "https://ipfs.runfission.com",
-  lobby: "https://auth.fission.codes",
-  server: "http://localhost:3000",
+  server: "https://runfission.com",
   userDomain: "fission.name",
-  did: "did:web:localhost:3000",
 }
 
 export const STAGING: Endpoints = {
-  apiPath: "/v2/api",
+  apiPath: "/api",
   ipfsGateway: "https://ipfs.runfission.net",
-  lobby: "https://auth.runfission.net",
   server: "https://runfission.net",
   userDomain: "fissionuser.net",
 }
 
 export const DEVELOPMENT: Endpoints = {
   apiPath: "/api",
-  ipfsGateway: "https://ipfs.runfission.net",
-  lobby: "https://auth.runfission.net",
+  ipfsGateway: "http://localhost:8080",
   server: "http://localhost:3000",
-  userDomain: "fissionuser.net",
+  userDomain: "fission.app", // FIXME: The domain configured in the fission server is not correct
   did: "did:web:localhost:3000",
 }
 
@@ -51,6 +42,9 @@ export const DEVELOPMENT: Endpoints = {
 // API //
 /////////
 
+/**
+ * Construct an API url given some Fission endpoints.
+ */
 export function apiUrl(endpoints: Endpoints, suffix?: string): string {
   return `${endpoints.server}${endpoints.apiPath}${suffix?.length ? "/" + suffix.replace(/^\/+/, "") : ""}`
 }
@@ -73,7 +67,7 @@ export async function did(
   endpoints: Endpoints,
   dns: DNS.Implementation
 ): Promise<string> {
-  if (endpoints.did) return Promise.resolve(endpoints.did)
+  if (endpoints.did) return endpoints.did
 
   let host
   try {

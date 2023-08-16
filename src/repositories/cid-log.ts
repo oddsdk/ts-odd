@@ -1,7 +1,7 @@
 import { CID } from "multiformats/cid"
 
 import { decodeCID, encodeCID } from "../common/cid.js"
-import * as Storage from "../components/storage/implementation"
+import * as Storage from "../components/storage/implementation.js"
 import Repository, { RepositoryOptions } from "../repository.js"
 
 ////////

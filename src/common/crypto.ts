@@ -1,4 +1,4 @@
-import { webcrypto } from "one-webcrypto"
+import { webcrypto } from "iso-base/crypto"
 import { isCryptoKey } from "./type-checks.js"
 
 ////////

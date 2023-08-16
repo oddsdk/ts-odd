@@ -7,7 +7,7 @@ import { sha256 } from "multiformats/hashes/sha2"
 
 import * as LocalAccount from "../../src/components/account/local.js"
 import * as WebCryptoAgent from "../../src/components/agent/web-crypto-api.js"
-import * as DOH from "../../src/components/dns/dns-over-https.js"
+import * as DOH from "../../src/components/dns/dns-over-https/cloudflare-google.js"
 import * as WebCryptoIdentifier from "../../src/components/identifier/web-crypto-api.js"
 import * as ProperManners from "../../src/components/manners/default.js"
 import * as MemoryStorage from "../../src/components/storage/memory.js"
@@ -69,13 +69,25 @@ const storage: Storage.Implementation = MemoryStorage.implementation()
 // MANNERS //
 /////////////
 
-const manners: Manners.Implementation<FileSystem> = {
-  ...ProperManners.implementation(configuration),
+const properManners = ProperManners.implementation(configuration)
 
-  wnfsWasmLookup: async () => {
-    const pathToThisModule = new URL(import.meta.url).pathname
-    const dirOfThisModule = NodePath.parse(pathToThisModule).dir
-    return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wnfs_wasm_bg.wasm`))
+const manners: Manners.Implementation<FileSystem> = {
+  ...properManners,
+
+  fileSystem: {
+    ...properManners.fileSystem,
+
+    async wasmLookup() {
+      const pathToThisModule = new URL(import.meta.url).pathname
+      const dirOfThisModule = NodePath.parse(pathToThisModule).dir
+      return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wnfs_wasm_bg.wasm`))
+    },
+  },
+
+  program: {
+    ...properManners.program,
+
+    online: () => true,
   },
 }
 
@@ -83,8 +95,10 @@ const manners: Manners.Implementation<FileSystem> = {
 // CHANNEL //
 /////////////
 
-const channel: Channel.Implementation = {
-  establish: (options: ChannelOptions) => {
+export type ChannelContext = {}
+
+const channel: Channel.Implementation<ChannelContext> = {
+  establish: (options: ChannelOptions<ChannelContext>) => {
     throw new Error("Channels are not implemented for tests")
   },
 }
@@ -121,7 +135,7 @@ const identifier: Identifier.Implementation = await WebCryptoIdentifier.implemen
 // 🛳 //
 ////////
 
-const components: Components<LocalAccount.Annex> = {
+const components: Components<LocalAccount.Annex, ChannelContext> = {
   depot,
   manners,
   storage,

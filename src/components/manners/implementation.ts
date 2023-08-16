@@ -1,8 +1,7 @@
 import { CID } from "multiformats"
 
-import type { Configuration } from "../../configuration.js"
-
 import * as Depot from "../../components/depot/implementation.js"
+import * as Events from "../../events/index.js"
 import { PrivateReference } from "../../fs/types/private-ref.js"
 import * as Path from "../../path/index.js"
 
@@ -11,7 +10,7 @@ export type Implementation<FS> = {
   warn: (...args: unknown[]) => void
 
   /**
-   * File system.
+   * File system manners.
    */
   fileSystem: {
     /**
@@ -28,14 +27,26 @@ export type Implementation<FS> = {
       beforeLoadExisting: (cid: CID, depot: Depot.Implementation) => Promise<void>
       beforeLoadNew: (depot: Depot.Implementation) => Promise<void>
     }
+
+    /**
+     * Configure how the wnfs wasm module should be loaded.
+     *
+     * This only has an effect if you're using file systems of version 3 or higher.
+     *
+     * By default this loads the required version of the wasm wnfs module from unpkg.com.
+     */
+    wasmLookup: (wnfsVersion: string) => Promise<BufferSource | Response>
   }
 
   /**
-   * Configure how the wnfs wasm module should be loaded.
-   *
-   * This only has an effect if you're using file systems of version 3 or higher.
-   *
-   * By default this loads the required version of the wasm wnfs module from unpkg.com.
+   * Program manners.
    */
-  wnfsWasmLookup: (wnfsVersion: string) => Promise<BufferSource | Response>
+  program: {
+    eventEmitter: Events.Emitter<Events.Program>
+
+    /**
+     * Is the Program online or not?
+     */
+    online: () => boolean
+  }
 }

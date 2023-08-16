@@ -3,7 +3,7 @@ import type { CID } from "../common/cid.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
 
 import { VERSION } from "../common/version.js"
-import * as Events from "../events.js"
+import * as Events from "../events/index.js"
 
 ////////////
 // CREATE //
@@ -128,8 +128,8 @@ function listen(connection: Connection, config: Config): Listeners {
 
 function stopListening(config: Config, listeners: Listeners) {
   if (listeners) {
-    config.eventEmitters.fileSystem.removeListener("local-change", listeners.handleLocalChange)
-    config.eventEmitters.fileSystem.removeListener("publish", listeners.handlePublish)
+    config.eventEmitters.fileSystem.off("local-change", listeners.handleLocalChange)
+    config.eventEmitters.fileSystem.off("publish", listeners.handlePublish)
   }
 }
 

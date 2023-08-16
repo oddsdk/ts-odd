@@ -1,32 +1,81 @@
 import type { Implementation } from "./implementation.js"
 
 import { Configuration } from "../../configuration.js"
+import * as Events from "../../events/index.js"
 import { FileSystem } from "../../fs/class.js"
 import * as Path from "../../path/index.js"
 
-// 🛳
+////////
+// 🛠️ //
+////////
+
+export const fileSystemHooks = {
+  afterLoadExisting: async () => {},
+  afterLoadNew: async (fs: FileSystem) => {
+    // We assume that the client creating a new file system that
+    // has full access to the file system. Here we create a new
+    // private node that is mounted at the root path (ie. root private dir)
+    return fs.mountPrivateNode({ path: Path.root() })
+  },
+  beforeLoadExisting: async () => {},
+  beforeLoadNew: async () => {},
+}
+
+export function onlineBehaviour<FS>(
+  log: Implementation<FS>["log"],
+  warn: Implementation<FS>["warn"],
+  programEmitter: Events.Emitter<Events.Program>
+): () => boolean {
+  if (!globalThis.navigator) {
+    warn("`navigator` object not available, setting `online` to `false`!")
+    return () => false
+  }
+
+  let online = globalThis.navigator.onLine
+
+  globalThis.addEventListener("offline", async () => {
+    online = false
+    log("🌍 Program is offline")
+    programEmitter.emit("offline", void null)
+  })
+
+  globalThis.addEventListener("online", async () => {
+    online = true
+    log("🌍 Program is online")
+    programEmitter.emit("online", void null)
+  })
+
+  return () => online
+}
+
+export function wasmLookup(wnfsVersion: string): Promise<BufferSource | Response> {
+  return fetch(`https://unpkg.com/wnfs@${wnfsVersion}/wnfs_wasm_bg.wasm`)
+}
+
+////////
+// 🛳 //
+////////
 
 export function implementation(config: Configuration): Implementation<FileSystem> {
-  return {
-    log: config.debug ? console.log : () => {},
-    warn: config.debug ? console.warn : () => {},
+  const programEmitter = Events.createEmitter<Events.Program>()
 
-    // File system
+  // Loggers
+  const log = config.debug ? console.log : () => {}
+  const warn = config.debug ? console.warn : () => {}
+
+  // Fin
+  return {
+    log,
+    warn,
+
     fileSystem: {
-      hooks: {
-        afterLoadExisting: async () => {},
-        afterLoadNew: async (fs: FileSystem) => {
-          // We assume that the client creating a new file system that
-          // has full access to the file system. Here we create a new
-          // private node that is mounted at the root path (ie. root private dir)
-          return fs.mountPrivateNode({ path: Path.root() })
-        },
-        beforeLoadExisting: async () => {},
-        beforeLoadNew: async () => {},
-      },
+      hooks: fileSystemHooks,
+      wasmLookup,
     },
 
-    // WASM
-    wnfsWasmLookup: wnfsVersion => fetch(`https://unpkg.com/wnfs@${wnfsVersion}/wnfs_wasm_bg.wasm`),
+    program: {
+      eventEmitter: programEmitter,
+      online: onlineBehaviour(log, warn, programEmitter),
+    },
   }
 }

@@ -17,7 +17,7 @@ import { Dictionary } from "./ucan/dictionary.js"
 ////////
 
 /**
- * Load a user's file system.
+ * Load a file system.
  */
 export async function loadFileSystem(args: {
   cabinet: Cabinet

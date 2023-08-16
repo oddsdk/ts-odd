@@ -7,7 +7,7 @@ export function fetchPeers(peersUrl: string): Promise<string[]> {
   return fetch(peersUrl)
     .then(r => r.json())
     .then(r => Array.isArray(r) ? r : [])
-    .then(r => r.filter(p => TypeChecks.isString(p) && p.includes("/wss/")))
+    .then(r => r.filter(p => TypeChecks.isString(p)))
     .catch(() => {
       throw new Error("💥 Failed to fetch peer list")
     })

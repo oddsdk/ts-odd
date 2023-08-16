@@ -1,5 +1,4 @@
-import { BlockstoreDatastoreAdapter } from "blockstore-datastore-adapter"
-import { LevelDatastore } from "datastore-level"
+import { LevelBlockstore } from "blockstore-level"
 
 import { CID } from "multiformats/cid"
 import { sha256 } from "multiformats/hashes/sha2"
@@ -18,9 +17,7 @@ export type ImplementationOptions = {
 export async function implementation(
   { blockstoreName }: ImplementationOptions
 ): Promise<Implementation> {
-  const blockstore = new BlockstoreDatastoreAdapter(
-    new LevelDatastore(blockstoreName, { prefix: "" })
-  )
+  const blockstore = new LevelBlockstore(blockstoreName, { prefix: "" })
 
   // Implementation
   // --------------
