@@ -341,6 +341,18 @@ export class FileSystem {
     return this.#transactionContext().read<DataType, V>(path, dataType, options)
   }
 
+  /**
+   * Create a permalink to some public file system content.
+   * @group Querying
+   */
+  permalink(dataRoot: CID, path: Path.Distinctive<Path.Partitioned<Path.Partition>>): string {
+    if (this.#dependencies.depot.permalink) {
+      return this.#dependencies.depot.permalink(dataRoot, path)
+    } else {
+      throw new Error("Not implemented in the used depot component")
+    }
+  }
+
   // MUTATIONS
   // ---------
 
