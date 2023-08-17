@@ -127,6 +127,7 @@ describe("Path functions", () => {
     }
 
     const root: DirectoryPath<Path.PartitionedNonEmpty<Path.Private>> = Path.appData(
+      "private",
       appInfo
     )
 
@@ -136,6 +137,7 @@ describe("Path functions", () => {
     )
 
     const dir: DirectoryPath<Path.PartitionedNonEmpty<Path.Private>> = Path.appData(
+      "private",
       appInfo,
       Path.directory("a")
     )
@@ -145,14 +147,15 @@ describe("Path functions", () => {
       { directory: [RootBranch.Private, "Apps", appInfo.creator, appInfo.name, "a"] }
     )
 
-    const file: FilePath<Path.PartitionedNonEmpty<Path.Private>> = Path.appData(
+    const file: FilePath<Path.PartitionedNonEmpty<Path.Public>> = Path.appData(
+      "public",
       appInfo,
       Path.file("a")
     )
 
     assert.deepEqual(
       file,
-      { file: [RootBranch.Private, "Apps", appInfo.creator, appInfo.name, "a"] }
+      { file: [RootBranch.Public, "Apps", appInfo.creator, appInfo.name, "a"] }
     )
   })
 
