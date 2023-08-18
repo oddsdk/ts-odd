@@ -1,18 +1,17 @@
 import debounce from "debounce-promise"
 import { CID } from "multiformats/cid"
-import { BlockStore, Namefilter, PrivateDirectory, PrivateFile, PrivateNode, PublicDirectory, PublicFile } from "wnfs"
+import { AccessKey, BlockStore, PrivateDirectory, PrivateFile, PrivateNode, PublicDirectory, PublicFile } from "wnfs"
 
 import type { Repo as CIDLog } from "../repositories/cid-log.js"
 
-import * as Events from "../events/index.js"
+import * as Events from "../events/fileSystem.js"
 import * as Path from "../path/index.js"
-import * as PrivateRefs from "./private-ref.js"
 import * as Rng from "./rng.js"
 import * as RootTree from "./rootTree.js"
 import * as Store from "./store.js"
-import * as WASM from "./wasm.js"
 
-import { EventEmitter } from "../events/index.js"
+import { EventEmitter, createEmitter } from "../events/emitter.js"
+import { EventListener } from "../events/listen.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
 import { Dictionary } from "../ucan/dictionary.js"
 import { Ucan } from "../ucan/index.js"
@@ -27,7 +26,6 @@ import {
   Dependencies,
   DirectoryItem,
   DirectoryItemWithKind,
-  FileSystemOptions,
   MutationOptions,
   MutationResult,
   PrivateMutationResult,
@@ -36,7 +34,16 @@ import {
   TransactionResult,
 } from "./types.js"
 import { MountedPrivateNode, MountedPrivateNodes } from "./types/internal.js"
-import { PrivateReference } from "./types/private-ref.js"
+
+/** @internal */
+export type FileSystemOptions<FS> = {
+  cidLog: CIDLog
+  dependencies: Dependencies<FS>
+  did: string
+  settleTimeBeforePublish?: number
+  ucanDictionary: Dictionary
+  updateDataRoot?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+}
 
 /** @group File System */
 export class FileSystem {
@@ -73,7 +80,7 @@ export class FileSystem {
     this.#ucanDictionary = ucanDictionary
     this.#updateDataRoot = updateDataRoot
 
-    this.#eventEmitter = Events.createEmitter<Events.FileSystem>()
+    this.#eventEmitter = createEmitter<Events.FileSystem>()
     this.#rng = Rng.makeRngInterface()
 
     this.did = did
@@ -89,10 +96,8 @@ export class FileSystem {
   static async empty(opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
     const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
 
-    await WASM.load({ manners: dependencies.manners })
-
     const blockStore = Store.fromDepot(dependencies.depot)
-    const rootTree = RootTree.empty()
+    const rootTree = await RootTree.empty()
 
     return new FileSystem(
       blockStore,
@@ -112,8 +117,6 @@ export class FileSystem {
    */
   static async fromCID(cid: CID, opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
     const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
-
-    await WASM.load({ manners: dependencies.manners })
 
     const blockStore = Store.fromDepot(dependencies.depot)
     const rootTree = await RootTree.fromCID({ blockStore, cid, depot: dependencies.depot })
@@ -137,7 +140,7 @@ export class FileSystem {
    * {@inheritDoc events.EmitterClass.on}
    * @group Events
    */
-  on = <Name extends keyof Events.FileSystem>(eventName: Name, listener: Events.Listener<Events.FileSystem, Name>) =>
+  on = <Name extends keyof Events.FileSystem>(eventName: Name, listener: EventListener<Events.FileSystem, Name>) =>
     this.#eventEmitter.on(eventName, listener)
 
   /**
@@ -155,7 +158,7 @@ export class FileSystem {
    * {@inheritDoc events.EmitterClass.off}
    * @group Events
    */
-  off = <Name extends keyof Events.FileSystem>(eventName: Name, listener: Events.Listener<Events.FileSystem, Name>) =>
+  off = <Name extends keyof Events.FileSystem>(eventName: Name, listener: EventListener<Events.FileSystem, Name>) =>
     this.#eventEmitter.off(eventName, listener)
 
   /**
@@ -196,10 +199,10 @@ export class FileSystem {
    */
   async mountPrivateNode(node: {
     path: Path.Distinctive<Path.Segments>
-    capsuleRef?: PrivateReference
+    capsuleKey?: Uint8Array
   }): Promise<{
     path: Path.Distinctive<Path.Segments>
-    capsuleRef: PrivateReference
+    capsuleKey: Uint8Array
   }> {
     const mounts = await this.mountPrivateNodes([node])
     return mounts[0]
@@ -212,23 +215,23 @@ export class FileSystem {
   async mountPrivateNodes(
     nodes: {
       path: Path.Distinctive<Path.Segments>
-      capsuleRef?: PrivateReference
+      capsuleKey?: Uint8Array
     }[]
   ): Promise<{
     path: Path.Distinctive<Path.Segments>
-    capsuleRef: PrivateReference
+    capsuleKey: Uint8Array
   }[]> {
     const newNodes = await Promise.all(
-      nodes.map(async ({ path, capsuleRef }): Promise<[string, MountedPrivateNode]> => {
+      nodes.map(async ({ path, capsuleKey }): Promise<[string, MountedPrivateNode]> => {
         let privateNode: PrivateNode
 
-        if (capsuleRef) {
-          const ref = PrivateRefs.toWnfsRef(capsuleRef)
-          privateNode = await PrivateNode.load(ref, this.#rootTree.privateForest, this.#blockStore)
+        if (capsuleKey) {
+          const accessKey = AccessKey.fromBytes(capsuleKey)
+          privateNode = await PrivateNode.load(accessKey, this.#rootTree.privateForest, this.#blockStore)
         } else {
           privateNode = Path.isFile(path)
-            ? new PrivateFile(new Namefilter(), new Date(), this.#rng).asNode()
-            : new PrivateDirectory(new Namefilter(), new Date(), this.#rng).asNode()
+            ? new PrivateFile(this.#rootTree.privateForest.emptyName(), new Date(), this.#rng).asNode()
+            : new PrivateDirectory(this.#rootTree.privateForest.emptyName(), new Date(), this.#rng).asNode()
         }
 
         return [
@@ -247,13 +250,13 @@ export class FileSystem {
     return Promise.all(
       newNodes.map(async ([_, n]: [string, MountedPrivateNode]) => {
         const storeResult = await n.node.store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
-        const [privateRef, privateForest] = storeResult
+        const [accessKey, privateForest] = storeResult
 
         this.#rootTree = { ...this.#rootTree, privateForest }
 
         return {
           path: n.path,
-          capsuleRef: PrivateRefs.fromWnfsRef(privateRef),
+          capsuleKey: accessKey.toBytes(),
         }
       })
     )
@@ -281,8 +284,8 @@ export class FileSystem {
   }
 
   /** @group Querying */
-  async capsuleRef(path: Path.Distinctive<Partitioned<Private>>): Promise<PrivateReference | null> {
-    return this.#transactionContext().capsuleRef(path)
+  async capsuleKey(path: Path.Distinctive<Partitioned<Private>>): Promise<Uint8Array | null> {
+    return this.#transactionContext().capsuleKey(path)
   }
 
   /** @group Querying */
@@ -318,19 +321,31 @@ export class FileSystem {
     V = unknown,
   >(
     path: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
-      capsuleRef: PrivateReference
+      capsuleKey: Uint8Array
     },
     dataType: D,
     options?: { offset: number; length: number }
   ): Promise<DataForType<D, V>>
   async read<V = unknown>(
     path: Path.File<PartitionedNonEmpty<Partition>> | { contentCID: CID } | { capsuleCID: CID } | {
-      capsuleRef: PrivateReference
+      capsuleKey: Uint8Array
     },
     dataType: DataType,
     options?: { offset: number; length: number }
   ): Promise<AnySupportedDataType<V>> {
     return this.#transactionContext().read<DataType, V>(path, dataType, options)
+  }
+
+  /**
+   * Create a permalink to some public file system content.
+   * @group Querying
+   */
+  permalink(dataRoot: CID, path: Path.Distinctive<Path.Partitioned<Path.Partition>>): string {
+    if (this.#dependencies.depot.permalink) {
+      return this.#dependencies.depot.permalink(dataRoot, path)
+    } else {
+      throw new Error("Not implemented in the used depot component")
+    }
   }
 
   // MUTATIONS
@@ -538,7 +553,7 @@ export class FileSystem {
     await handler(context)
 
     // Commit transaction
-    const { changedPaths, privateNodes, proofs, rootTree } = await TransactionContext.commit(context)
+    const { changes, privateNodes, proofs, rootTree } = await TransactionContext.commit(context)
 
     this.#privateNodes = privateNodes
     this.#rootTree = rootTree
@@ -547,10 +562,10 @@ export class FileSystem {
     const dataRoot = await this.calculateDataRoot()
 
     // Emit events
-    changedPaths.forEach(changedPath => {
+    changes.forEach(change => {
       this.#eventEmitter.emit("local-change", {
         dataRoot,
-        path: changedPath, // TODO: Check if this is correct
+        ...change,
       })
     })
 
@@ -561,7 +576,7 @@ export class FileSystem {
 
     // Fin
     return {
-      changedPaths,
+      changes,
       dataRoot,
       publishingStatus: signal,
     }
@@ -625,7 +640,7 @@ export class FileSystem {
 
       case "private": {
         const priv = findPrivateNode(partition.path, this.#privateNodes)
-        const capsuleRef = priv.node.isFile()
+        const accessKey = priv.node.isFile()
           ? await priv.node
             .asFile()
             .store(this.#rootTree.privateForest, this.#blockStore, this.#rng)
@@ -640,12 +655,12 @@ export class FileSystem {
               if (!node) throw new Error("Failed to find needed private node for infusion")
               return node.store(this.#rootTree.privateForest, this.#blockStore)
             })
-            .then(([ref]) => ref)
+            .then(([key]) => key)
 
         return {
           dataRoot: transactionResult.dataRoot,
           publishingStatus: transactionResult.publishingStatus,
-          capsuleRef: PrivateRefs.fromWnfsRef(capsuleRef),
+          capsuleKey: accessKey.toBytes(),
         }
       }
     }

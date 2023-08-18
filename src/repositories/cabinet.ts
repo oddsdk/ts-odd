@@ -1,10 +1,10 @@
+import * as Uint8Arrays from "uint8arrays"
+
 import * as Storage from "../components/storage/implementation.js"
-import * as PrivateRef from "../fs/private-ref.js"
 import * as Path from "../path/index.js"
 import * as Ucan from "../ucan/index.js"
 
 import { isObject, isString } from "../common/type-checks.js"
-import { PrivateReference } from "../fs/types/private-ref.js"
 import Repository, { RepositoryOptions } from "../repository.js"
 
 ////////
@@ -13,7 +13,7 @@ import Repository, { RepositoryOptions } from "../repository.js"
 
 export type CabinetItem =
   | { type: "ucan"; ucan: Ucan.Ucan }
-  | { type: "access-key"; did: string; key: PrivateReference; path: Path.Distinctive<Path.Segments> }
+  | { type: "access-key"; did: string; key: Uint8Array; path: Path.Distinctive<Path.Segments> }
 
 export type CabinetCollection = Record<string, CabinetItem>
 
@@ -35,7 +35,7 @@ export function create({ storage }: { storage: Storage.Implementation }): Promis
 export { Repo as Cabinet }
 
 export class Repo extends Repository<CabinetCollection, CabinetItem> {
-  public accessKeys: Record<string, { key: PrivateReference; path: Path.Distinctive<Path.Segments> }[]>
+  public accessKeys: Record<string, { key: Uint8Array; path: Path.Distinctive<Path.Segments> }[]>
   public ucans: Ucan.Ucan[]
   public ucansIndexedByAudience: Record<string, Ucan.Ucan[]>
   public ucansIndexedByCID: Record<string, Ucan.Ucan>
@@ -93,7 +93,7 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
         accessKeys: {},
         ucans: [],
       } as {
-        accessKeys: Record<string, { key: PrivateReference; path: Path.Distinctive<Path.Segments> }[]>
+        accessKeys: Record<string, { key: Uint8Array; path: Path.Distinctive<Path.Segments> }[]>
         ucans: Ucan.Ucan[]
       }
     )
@@ -163,11 +163,20 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
     return this.add(ucans.map(u => ({ type: "ucan", ucan: u })))
   }
 
-  addAccessKey(item: { did: string; key: PrivateReference; path: Path.Distinctive<Path.Segments> }) {
+  addAccessKey(item: { did: string; key: Uint8Array; path: Path.Distinctive<Path.Segments> }) {
     return this.addAccessKeys([item])
   }
 
-  addAccessKeys(items: { did: string; key: PrivateReference; path: Path.Distinctive<Path.Segments> }[]) {
+  addAccessKeys(items: { did: string; key: Uint8Array; path: Path.Distinctive<Path.Segments> }[]) {
+    // Delete old access keys matching the same DID and path,
+    // in case we want to make a new file system.
+    items.forEach(item => {
+      if (this.hasAccessKey(item.did, item.path)) {
+        delete this.collection[`${item.did}/${Path.toPosix(item.path)}`]
+      }
+    })
+
+    // Add new ones
     return this.add(items.map(item => {
       return { type: "access-key", ...item }
     }))
@@ -187,11 +196,11 @@ export function decodeItem(item: unknown): CabinetItem {
 
   switch (item.type) {
     case "access-key":
-      if (isObject(item.key) && isString(item.path) && isString(item.did)) {
+      if (isString(item.key) && isString(item.path) && isString(item.did)) {
         return {
           type: item.type,
           path: Path.fromPosix(item.path),
-          key: PrivateRef.decode(item.key as Record<string, string>),
+          key: Uint8Arrays.fromString(item.key, "base64pad"),
           did: item.did,
         }
       } else {
@@ -216,7 +225,12 @@ export function decodeItem(item: unknown): CabinetItem {
 export function encodeItem(item: CabinetItem): any {
   switch (item.type) {
     case "access-key":
-      return { type: "access-key", key: PrivateRef.encode(item.key), path: Path.toPosix(item.path), did: item.did }
+      return {
+        type: "access-key",
+        key: Uint8Arrays.toString(item.key, "base64pad"),
+        path: Path.toPosix(item.path),
+        did: item.did,
+      }
     case "ucan":
       return { type: "ucan", ucan: Ucan.encode(item.ucan) }
   }

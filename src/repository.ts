@@ -1,5 +1,6 @@
 import * as Storage from "./components/storage/implementation.js"
-import * as Events from "./events/index.js"
+import { EventEmitter, createEmitter } from "./events/emitter.js"
+import * as Events from "./events/repository.js"
 
 ////////
 // 🧩 //
@@ -15,7 +16,7 @@ export type RepositoryOptions = {
 ///////////
 
 export default abstract class Repository<C, I> {
-  events: Events.Emitter<Events.Repositories<C>>
+  events: EventEmitter<Events.Repository<C>>
   collection: C
   storage: Storage.Implementation
   storageName: string
@@ -26,7 +27,7 @@ export default abstract class Repository<C, I> {
 
   constructor({ storage, storageName }: RepositoryOptions) {
     this.collection = this.emptyCollection()
-    this.events = Events.createEmitter()
+    this.events = createEmitter()
     this.storage = storage
     this.storageName = storageName
   }
@@ -51,22 +52,25 @@ export default abstract class Repository<C, I> {
       Promise.resolve(this.collection)
     )
 
-    this.collection = col
-    await this.collectionUpdateCallback(col)
-    this.events.emit("collection:changed", { collection: col })
-
-    await this.storage.setItem(
-      this.storageName,
-      this.toJSON(this.collection)
-    )
+    return this.set(col)
   }
 
   clear(): Promise<void> {
-    this.collection = this.emptyCollection()
-    return this.storage.removeItem(this.storageName)
+    return this.set(this.emptyCollection())
   }
 
   async collectionUpdateCallback(collection: C) {}
+
+  async set(collection: C): Promise<void> {
+    this.collection = collection
+    await this.collectionUpdateCallback(collection)
+    this.events.emit("collection:changed", { collection })
+
+    await this.storage.setItem(
+      this.storageName,
+      this.toJSON(collection)
+    )
+  }
 
   // ENCODING
 

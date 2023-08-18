@@ -56,6 +56,6 @@ export async function getRaw(depot: Depot.Implementation, cid: CID): Promise<Uin
 /////////
 
 export function putPB(depot: Depot.Implementation, links: DagPB.PBLink[]): Promise<CID> {
-  const node = DagPB.createNode(new Uint8Array(), links)
+  const node = DagPB.createNode(new Uint8Array([8, 1]), links)
   return depot.putBlock(DagPB.encode(node), DagPB.code)
 }

@@ -3,7 +3,8 @@ import type { CID } from "../common/cid.js"
 import type { DistinctivePath, Partition } from "../path/index.js"
 
 import { VERSION } from "../common/version.js"
-import * as Events from "../events/index.js"
+import { EventEmitter } from "../events/emitter.js"
+import * as Events from "../events/fileSystem.js"
 
 ////////////
 // CREATE //
@@ -16,7 +17,7 @@ type Config = {
   capabilities?: Permissions
   dependencies: Dependencies
   eventEmitters: {
-    fileSystem: Events.Emitter<Events.FileSystem>
+    fileSystem: EventEmitter<Events.FileSystem>
   }
 }
 

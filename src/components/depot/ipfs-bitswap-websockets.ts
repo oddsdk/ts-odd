@@ -17,6 +17,7 @@ import { Maybe } from "../../common/types.js"
 import { Manners, Storage } from "../../components.js"
 import * as Codecs from "../../dag/codecs.js"
 import { CodecIdentifier } from "../../dag/codecs.js"
+import * as Path from "../../path/index.js"
 import { Ucan } from "../../ucan/index.js"
 import { Implementation } from "./implementation.js"
 
@@ -175,6 +176,17 @@ export async function implementation<FS>(
     flush: async (_dataRoot: CID, _proofs: Ucan[]): Promise<void> => {
       if (!manners.program.online()) return
       await initiateTransport()
+    },
+
+    // PERMALINK
+
+    permalink: (dataRoot: CID, path: Path.Distinctive<Path.Partitioned<Path.Partition>>) => {
+      if (!Path.isPartition("public", path)) {
+        throw new Error("Only public paths are supported in this implementation")
+      }
+
+      const pathString = Path.toPosix(Path.removePartition(path))
+      return `${gatewayUrl}/ipfs/${dataRoot.toString()}/unix/${pathString}`
     },
   }
 }

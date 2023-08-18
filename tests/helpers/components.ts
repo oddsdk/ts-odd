@@ -1,6 +1,3 @@
-import NodeFs from "fs"
-import NodePath from "path"
-
 import { MemoryBlockstore } from "blockstore-core/memory"
 import { CID } from "multiformats"
 import { sha256 } from "multiformats/hashes/sha2"
@@ -35,15 +32,13 @@ export const configuration: Configuration = {
 // DEPOT //
 ///////////
 
-export const inMemoryDepot: Record<string, Uint8Array> = {}
+const memoryBlockstore = new MemoryBlockstore()
 
 const depot: Depot.Implementation = {
-  blockstore: new MemoryBlockstore(),
+  blockstore: memoryBlockstore,
 
-  getBlock: (cid: CID) => {
-    const data = inMemoryDepot[cid.toString()]
-    if (!data) throw new Error("CID not stored in depot")
-    return Promise.resolve(data)
+  getBlock: async (cid: CID) => {
+    return memoryBlockstore.get(cid)
   },
 
   putBlock: async (data: Uint8Array, codecId: CodecIdentifier) => {
@@ -51,7 +46,7 @@ const depot: Depot.Implementation = {
     const multihash = await sha256.digest(data)
     const cid = CID.createV1(codec.code, multihash)
 
-    inMemoryDepot[cid.toString()] = data
+    await memoryBlockstore.put(cid, data)
 
     return cid
   },
@@ -76,12 +71,6 @@ const manners: Manners.Implementation<FileSystem> = {
 
   fileSystem: {
     ...properManners.fileSystem,
-
-    async wasmLookup() {
-      const pathToThisModule = new URL(import.meta.url).pathname
-      const dirOfThisModule = NodePath.parse(pathToThisModule).dir
-      return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wnfs_wasm_bg.wasm`))
-    },
   },
 
   program: {

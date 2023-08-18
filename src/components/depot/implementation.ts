@@ -2,6 +2,7 @@ import { Blockstore } from "interface-blockstore"
 import { CID } from "multiformats/cid"
 
 import { CodecIdentifier } from "../../dag/codecs.js"
+import * as Path from "../../path/index.js"
 import { Ucan } from "../../ucan/index.js"
 
 export type Implementation = {
@@ -23,4 +24,11 @@ export type Implementation = {
    * or simply push all "changed" blocks to some other block store.
    */
   flush: (dataRoot: CID, proofs: Ucan[]) => Promise<void>
+
+  /**
+   * Create a permalink to some public file system content.
+   *
+   * NOTE: This is optional and does not need to be implemented.
+   */
+  permalink?: (dataRoot: CID, path: Path.Distinctive<Path.Partitioned<Path.Partition>>) => string
 }

@@ -141,15 +141,28 @@ export function root(): DirectoryPath<Segments> {
 /**
  * Utility function create an app data path.
  */
-export function appData(app: AppInfo): DirectoryPath<PartitionedNonEmpty<Private>>
-export function appData(app: AppInfo, suffix: FilePath<Segments>): FilePath<PartitionedNonEmpty<Private>>
-export function appData(app: AppInfo, suffix: DirectoryPath<Segments>): DirectoryPath<PartitionedNonEmpty<Private>>
-export function appData(app: AppInfo, suffix: DistinctivePath<Segments>): DistinctivePath<PartitionedNonEmpty<Private>>
-export function appData(
+export function appData<P extends Partition>(partition: P, app: AppInfo): DirectoryPath<PartitionedNonEmpty<P>>
+export function appData<P extends Partition>(
+  partition: P,
+  app: AppInfo,
+  suffix: FilePath<Segments>
+): FilePath<PartitionedNonEmpty<P>>
+export function appData<P extends Partition>(
+  partition: P,
+  app: AppInfo,
+  suffix: DirectoryPath<Segments>
+): DirectoryPath<PartitionedNonEmpty<P>>
+export function appData<P extends Partition>(
+  partition: P,
+  app: AppInfo,
+  suffix: DistinctivePath<Segments>
+): DistinctivePath<PartitionedNonEmpty<P>>
+export function appData<P extends Partition>(
+  partition: P,
   app: AppInfo,
   suffix?: DistinctivePath<Segments>
-): DistinctivePath<PartitionedNonEmpty<Private>> {
-  const appDir = directory(RootBranch.Private, "Apps", app.creator, app.name)
+): DistinctivePath<PartitionedNonEmpty<P>> {
+  const appDir = directory(partition, "Apps", app.creator, app.name)
   return suffix ? combine(appDir, suffix) : appDir
 }
 

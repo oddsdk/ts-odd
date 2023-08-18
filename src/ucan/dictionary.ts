@@ -87,7 +87,7 @@ export class Dictionary {
     const fsUcans = this.lookupFileSystemUcans()
 
     return this.#lookupFileSystemUcan(
-      this.lookupFileSystemUcans(),
+      fsUcans,
       pathSoFar => ucan => {
         const hierPart = `//${fileSystemDID}/${Path.toPosix(pathSoFar)}`
 

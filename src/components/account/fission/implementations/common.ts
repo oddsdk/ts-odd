@@ -1,4 +1,5 @@
 import * as Fission from "../../../../common/fission.js"
+import * as Path from "../../../../path/index.js"
 import * as Ucan from "../../../../ucan/index.js"
 import * as Identifier from "../../../identifier/implementation.js"
 
