@@ -49,10 +49,6 @@ export function onlineBehaviour<FS>(
   return () => online
 }
 
-export function wasmLookup(wnfsVersion: string): Promise<BufferSource | Response> {
-  return fetch(`https://unpkg.com/wnfs@${wnfsVersion}/wnfs_wasm_bg.wasm`)
-}
-
 ////////
 // 🛳 //
 ////////
@@ -71,7 +67,6 @@ export function implementation(config: Configuration): Implementation<FileSystem
 
     fileSystem: {
       hooks: fileSystemHooks,
-      wasmLookup,
     },
 
     program: {

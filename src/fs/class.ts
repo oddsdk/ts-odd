@@ -9,7 +9,6 @@ import * as Path from "../path/index.js"
 import * as Rng from "./rng.js"
 import * as RootTree from "./rootTree.js"
 import * as Store from "./store.js"
-import * as WASM from "./wasm.js"
 
 import { EventEmitter, createEmitter } from "../events/emitter.js"
 import { EventListener } from "../events/listen.js"
@@ -97,8 +96,6 @@ export class FileSystem {
   static async empty(opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
     const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
 
-    await WASM.load({ manners: dependencies.manners })
-
     const blockStore = Store.fromDepot(dependencies.depot)
     const rootTree = await RootTree.empty()
 
@@ -120,8 +117,6 @@ export class FileSystem {
    */
   static async fromCID(cid: CID, opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
     const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
-
-    await WASM.load({ manners: dependencies.manners })
 
     const blockStore = Store.fromDepot(dependencies.depot)
     const rootTree = await RootTree.fromCID({ blockStore, cid, depot: dependencies.depot })

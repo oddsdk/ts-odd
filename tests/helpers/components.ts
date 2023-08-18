@@ -1,6 +1,3 @@
-import NodeFs from "fs"
-import NodePath from "path"
-
 import { MemoryBlockstore } from "blockstore-core/memory"
 import { CID } from "multiformats"
 import { sha256 } from "multiformats/hashes/sha2"
@@ -74,12 +71,6 @@ const manners: Manners.Implementation<FileSystem> = {
 
   fileSystem: {
     ...properManners.fileSystem,
-
-    async wasmLookup() {
-      const pathToThisModule = new URL(import.meta.url).pathname
-      const dirOfThisModule = NodePath.parse(pathToThisModule).dir
-      return NodeFs.readFileSync(NodePath.join(dirOfThisModule, `../../node_modules/wnfs/wnfs_wasm_bg.wasm`))
-    },
   },
 
   program: {

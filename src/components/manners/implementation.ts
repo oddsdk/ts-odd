@@ -27,15 +27,6 @@ export type Implementation<FS> = {
       beforeLoadExisting: (cid: CID, depot: Depot.Implementation) => Promise<void>
       beforeLoadNew: (depot: Depot.Implementation) => Promise<void>
     }
-
-    /**
-     * Configure how the wnfs wasm module should be loaded.
-     *
-     * This only has an effect if you're using file systems of version 3 or higher.
-     *
-     * By default this loads the required version of the wasm wnfs module from unpkg.com.
-     */
-    wasmLookup: (wnfsVersion: string) => Promise<BufferSource | Response>
   }
 
   /**
