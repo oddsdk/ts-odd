@@ -31,8 +31,8 @@ import { ListenTo, listenTo } from "./events/listen.js"
 import { loadFileSystem } from "./fileSystem.js"
 import { FileSystem } from "./fs/class.js"
 import { addSampleData } from "./fs/data/sample.js"
-import { Dictionary } from "./ucan/dictionary.js"
-import { Ucan } from "./ucan/types.js"
+import { Inventory } from "./ticket/inventory.js"
+import { Ticket } from "./ticket/types.js"
 
 ////////////////
 // RE-EXPORTS //
@@ -49,7 +49,6 @@ export * as Components from "./components.js"
 export * as authority from "./authority/query.js"
 export * as events from "./events/index.js"
 export * as path from "./path/index.js"
-export * as ucan from "./ucan/index.js"
 
 export { Channel, ChannelData, ChannelOptions } from "./channel.js"
 export { CID, decodeCID, encodeCID } from "./common/cid.js"
@@ -57,7 +56,8 @@ export { RequestOptions } from "./components/authority/implementation.js"
 export { CodecIdentifier } from "./dag/codecs.js"
 export { FileSystem } from "./fs/class.js"
 export { TransactionContext } from "./fs/transaction.js"
-export { Dictionary as UcanDictionary } from "./ucan/dictionary.js"
+export { Inventory } from "./ticket/inventory.js"
+export { Ticket } from "./ticket/types.js"
 
 ///////////////////////
 // TYPES & CONSTANTS //
@@ -178,7 +178,7 @@ export type FileSystemCategory = {
     dataRoot?: CID
     dataRootUpdater?: (
       dataRoot: CID,
-      proofs: Ucan[]
+      proofs: Ticket[]
     ) => Promise<{ updated: true } | { updated: false; reason: string }>
     did: string
   }) => Promise<FileSystem>
@@ -225,7 +225,7 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
   config: Configuration,
   components: Components<Annex, ChannelContext>
 ): Promise<Program<Annex, ChannelContext>> {
-  const { account, agent, identifier } = components
+  const { account, agent, authority, identifier } = components
 
   // Is supported?
   await Promise.all(
@@ -237,7 +237,7 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
 
   // Create repositories
   const cabinet = await Cabinet.create({ storage: components.storage })
-  const ucanDictionary = new Dictionary(cabinet)
+  const tickets = new Inventory(components.authority, cabinet)
 
   cabinet.events.on("collection:changed", async ({ collection }) => {
     // TODO: emit authority:inventory-changed event
@@ -245,7 +245,7 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
   })
 
   // Authority
-  const authority = {
+  const authorityCategory = {
     async has(
       query: Query | (Query | Query[])[]
     ): Promise<{ has: true } | { has: false; reason: string }> {
@@ -254,7 +254,7 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
 
       // Account access
       if (queries.some(q => q.query === "account")) {
-        const accountAccess = await account.hasSufficientAuthority(identifier, ucanDictionary)
+        const accountAccess = await account.hasSufficientAuthority(identifier, tickets)
         if (!accountAccess.suffices) {
           return {
             has: false,
@@ -296,14 +296,14 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
     async request() {},
   }
 
-  // Categories
+  // Other categories
   const fileSystemCategory: Program<Annex, ChannelContext>["fileSystem"] = {
     addSampleData: (fs: FileSystem) => addSampleData(fs),
     load: async (params: {
       dataRoot?: CID
       dataRootUpdater?: (
         dataRoot: CID,
-        proofs: Ucan[]
+        proofs: Ticket[]
       ) => Promise<{ updated: true } | { updated: false; reason: string }>
       did: string
     }) => {
@@ -317,7 +317,7 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
 
   const identityCategory: Program<Annex, ChannelContext>["identity"] = {
     async account(): Promise<string | null> {
-      return account.did(identifier, ucanDictionary)
+      return account.did(identifier, tickets)
     },
     async agent() {
       return agent.did()
@@ -336,16 +336,15 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
     configuration: { ...config },
 
     // Categories
-    authority,
-
+    authority: authorityCategory,
     identity: identityCategory,
     fileSystem: fileSystemCategory,
 
     account: {
-      register: Auth.register({ account, agent, identifier, cabinet }),
+      register: Auth.register({ account, agent, authority, identifier, cabinet }),
       canRegister: account.canRegister,
 
-      ...components.account.annex(identifier, ucanDictionary),
+      ...components.account.annex(identifier, tickets),
     },
   }
 

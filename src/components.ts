@@ -1,5 +1,6 @@
 import * as Account from "./components/account/implementation.js"
 import * as Agent from "./components/agent/implementation.js"
+import * as Authority from "./components/authority/implementation.js"
 import * as Channel from "./components/channel/implementation.js"
 import * as Depot from "./components/depot/implementation.js"
 import * as DNS from "./components/dns/implementation.js"
@@ -16,6 +17,7 @@ import { FileSystem } from "./fs/class.js"
 export type Components<Annex extends Account.AnnexParentType, ChannelContext> = {
   account: Account.Implementation<Annex>
   agent: Agent.Implementation
+  authority: Authority.Implementation
   channel: Channel.Implementation<ChannelContext>
   depot: Depot.Implementation
   dns: DNS.Implementation
@@ -27,4 +29,4 @@ export type Components<Annex extends Account.AnnexParentType, ChannelContext> = 
 // CONVENIENCE EXPORTS //
 /////////////////////////
 
-export { Account, Agent, Channel, Depot, DNS, Identifier, Manners, Storage }
+export { Account, Agent, Authority, Channel, Depot, DNS, Identifier, Manners, Storage }

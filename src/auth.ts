@@ -1,8 +1,6 @@
-import * as AgentDID from "./agent/did.js"
 import { Cabinet } from "./repositories/cabinet.js"
-import * as Ucan from "./ucan/index.js"
 
-import { Account, Agent, Identifier } from "./components.js"
+import { Account, Agent, Authority, Identifier } from "./components.js"
 import { AnnexParentType } from "./components/account/implementation.js"
 
 //////////////
@@ -10,9 +8,10 @@ import { AnnexParentType } from "./components/account/implementation.js"
 //////////////
 
 export const register = <Annex extends AnnexParentType>(
-  { account, agent, identifier, cabinet }: {
+  { account, agent, authority, identifier, cabinet }: {
     account: Account.Implementation<Annex>
     agent: Agent.Implementation
+    authority: Authority.Implementation
     identifier: Identifier.Implementation
     cabinet: Cabinet
   }
@@ -21,44 +20,16 @@ async (formValues: Record<string, string>): Promise<
   { registered: true } | { registered: false; reason: string }
 > => {
   // Do delegation from identifier to agent
-  const agentDelegation = await identifierToAgentDelegation({ agent, identifier })
-  await cabinet.addUcan(agentDelegation)
+  const agentDelegation = await authority.clerk.tickets.misc.identifierToAgentDelegation(identifier, agent)
+  await cabinet.addTicket("misc", agentDelegation)
 
   // Call account register implementation
   const result = await account.register(formValues, agentDelegation)
 
   if (result.registered) {
-    await cabinet.addUcans(result.ucans)
+    await cabinet.addTickets("account", result.tickets)
     return { registered: true }
   } else {
     return result
   }
-}
-
-////////
-// ㊙️ //
-////////
-
-async function identifierToAgentDelegation({ agent, identifier }: {
-  agent: Agent.Implementation
-  identifier: Identifier.Implementation
-}) {
-  const identifierDID = await identifier.did()
-
-  return Ucan.build({
-    issuer: {
-      did: () => identifierDID,
-      jwtAlg: await identifier.ucanAlgorithm(),
-      sign: identifier.sign,
-    },
-    audience: await AgentDID.signing(agent),
-    capabilities: [
-      // Powerbox concept:
-      // Every capability given to the identifier may be used by the agent.
-      {
-        with: { scheme: "ucan", hierPart: `${identifierDID}/*` },
-        can: { namespace: "ucan", segments: ["*"] },
-      },
-    ],
-  })
 }

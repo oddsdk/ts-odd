@@ -21,6 +21,7 @@ import * as Config from "../configuration.js"
 
 import * as Account from "../components/account/local.js"
 import * as Agent from "../components/agent/web-crypto-api.js"
+import * as Authority from "../components/authority/ts-ucan.js"
 import * as Channel from "../components/channel/local.js"
 import * as Depot from "../components/depot/local.js"
 import * as DNS from "../components/dns/dns-over-https/cloudflare-google.js"
@@ -56,11 +57,13 @@ export async function components(
   const identifier = await Identifier.implementation({ store: identifierStore })
   const manners = Manners.implementation(config)
   const account = Account.implementation()
+  const authority = Authority.implementation(identifier)
 
   // Fin
   return {
     account,
     agent,
+    authority,
     channel,
     depot,
     dns,

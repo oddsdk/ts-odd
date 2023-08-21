@@ -2,20 +2,23 @@ import * as Uint8Arrays from "uint8arrays"
 
 import * as Storage from "../components/storage/implementation.js"
 import * as Path from "../path/index.js"
-import * as Ucan from "../ucan/index.js"
 
+import { CID, decodeCID, encodeCID } from "../common/cid.js"
 import { isObject, isString } from "../common/type-checks.js"
 import Repository, { RepositoryOptions } from "../repository.js"
+import { cid as ticketCID } from "../ticket/index.js"
+import { Category, Ticket, isCategory } from "../ticket/types.js"
 
 ////////
 // 🧩 //
 ////////
 
 export type CabinetItem =
-  | { type: "ucan"; ucan: Ucan.Ucan }
   | { type: "access-key"; did: string; key: Uint8Array; path: Path.Distinctive<Path.Segments> }
+  | { type: "ticket" } & TicketWithContext
 
 export type CabinetCollection = Record<string, CabinetItem>
+export type TicketWithContext = { category: Category; cid: CID; ticket: Ticket }
 
 ////////
 // 🛠️ //
@@ -36,16 +39,16 @@ export { Repo as Cabinet }
 
 export class Repo extends Repository<CabinetCollection, CabinetItem> {
   public accessKeys: Record<string, { key: Uint8Array; path: Path.Distinctive<Path.Segments> }[]>
-  public ucans: Ucan.Ucan[]
-  public ucansIndexedByAudience: Record<string, Ucan.Ucan[]>
-  public ucansIndexedByCID: Record<string, Ucan.Ucan>
+  public tickets: TicketWithContext[]
+  public ticketsIndexedByAudience: Record<string, TicketWithContext[]>
+  public ticketsIndexedByCID: Record<string, TicketWithContext>
 
   private constructor(options: RepositoryOptions) {
     super(options)
     this.accessKeys = {}
-    this.ucans = []
-    this.ucansIndexedByAudience = {}
-    this.ucansIndexedByCID = {}
+    this.tickets = []
+    this.ticketsIndexedByAudience = {}
+    this.ticketsIndexedByCID = {}
   }
 
   // IMPLEMENTATION
@@ -65,15 +68,15 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
     switch (item.type) {
       case "access-key":
         return { [`${item.did}/${Path.toPosix(item.path)}`]: item }
-      case "ucan":
-        return { [(await Ucan.cid(item.ucan)).toString()]: item }
+      case "ticket":
+        return { [item.cid.toString()]: item }
     }
   }
 
   async collectionUpdateCallback(collection: CabinetCollection) {
     const entries = Object.entries(collection)
 
-    const { accessKeys, ucans } = entries.reduce(
+    const { accessKeys, tickets } = entries.reduce(
       (acc, [_k, item]) => {
         if (item.type === "access-key") {
           return {
@@ -83,40 +86,40 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
               [item.did]: [...(acc.accessKeys[item.did] || []), { key: item.key, path: item.path }],
             },
           }
-        } else if (item.type === "ucan") {
-          return { ...acc, ucans: [...acc.ucans, item.ucan] }
+        } else if (item.type === "ticket") {
+          return { ...acc, tickets: [...acc.tickets, item] }
         } else {
           return acc
         }
       },
       {
         accessKeys: {},
-        ucans: [],
+        tickets: [],
       } as {
         accessKeys: Record<string, { key: Uint8Array; path: Path.Distinctive<Path.Segments> }[]>
-        ucans: Ucan.Ucan[]
+        tickets: TicketWithContext[]
       }
     )
 
     this.accessKeys = accessKeys
-    this.ucans = ucans
+    this.tickets = tickets
 
-    this.ucansIndexedByAudience = ucans.reduce(
-      (acc: Record<string, Ucan.Ucan[]>, ucan) => {
+    this.ticketsIndexedByAudience = tickets.reduce(
+      (acc: Record<string, TicketWithContext[]>, ticket) => {
         return {
           ...acc,
-          [ucan.payload.aud]: [...(acc[ucan.payload.aud] || []), ucan],
+          [ticket.ticket.audience]: [...(acc[ticket.ticket.audience] || []), ticket],
         }
       },
       {}
     )
 
-    this.ucansIndexedByCID = entries.reduce(
-      (acc: Record<string, Ucan.Ucan>, [k, v]) => {
-        if (v.type !== "ucan") return acc
+    this.ticketsIndexedByCID = entries.reduce(
+      (acc: Record<string, TicketWithContext>, [k, v]) => {
+        if (v.type !== "ticket") return acc
         return {
           ...acc,
-          [k]: v.ucan,
+          [k]: v,
         }
       },
       {}
@@ -155,12 +158,21 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
 
   // EXTRA
 
-  addUcan(ucan: Ucan.Ucan): Promise<void> {
-    return this.addUcans([ucan])
+  addTicket(category: Category, ticket: Ticket): Promise<void> {
+    return this.addTickets(category, [ticket])
   }
 
-  addUcans(ucans: Ucan.Ucan[]): Promise<void> {
-    return this.add(ucans.map(u => ({ type: "ucan", ucan: u })))
+  async addTickets(category: Category, tickets: Ticket[]): Promise<void> {
+    const items: Array<{ type: "ticket" } & TicketWithContext> = await Promise.all(
+      tickets.map(async t => ({
+        type: "ticket",
+        category,
+        cid: await ticketCID(t),
+        ticket: t,
+      }))
+    )
+
+    return this.add(items)
   }
 
   addAccessKey(item: { did: string; key: Uint8Array; path: Path.Distinctive<Path.Segments> }) {
@@ -207,14 +219,28 @@ export function decodeItem(item: unknown): CabinetItem {
         throw new Error("Encoded access-key cabinet-item did not have the expected `key` and `path` attributes")
       }
 
-    case "ucan":
-      if ("ucan" in item && isString(item.ucan)) {
+    case "ticket":
+      if (
+        isString(item.category)
+        && isCategory(item.category)
+        && isString(item.cid)
+        && isObject(item.ticket)
+        && isString(item.ticket.issuer)
+        && isString(item.ticket.audience)
+        && isString(item.ticket.token)
+      ) {
         return {
           type: item.type,
-          ucan: Ucan.decode(item.ucan),
+          category: item.category,
+          cid: decodeCID(item.cid),
+          ticket: {
+            issuer: item.ticket.issuer,
+            audience: item.ticket.audience,
+            token: item.ticket.token,
+          },
         }
       } else {
-        throw new Error("Encoded ucan cabinet-item did not have the expected `ucan attribute")
+        throw new Error("Encoded ticket cabinet-item did not have the expected attributes")
       }
 
     default:
@@ -231,7 +257,7 @@ export function encodeItem(item: CabinetItem): any {
         path: Path.toPosix(item.path),
         did: item.did,
       }
-    case "ucan":
-      return { type: "ucan", ucan: Ucan.encode(item.ucan) }
+    case "ticket":
+      return { ...item, cid: encodeCID(item.cid) }
   }
 }

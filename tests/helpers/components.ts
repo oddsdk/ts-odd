@@ -4,6 +4,7 @@ import { sha256 } from "multiformats/hashes/sha2"
 
 import * as LocalAccount from "../../src/components/account/local.js"
 import * as WebCryptoAgent from "../../src/components/agent/web-crypto-api.js"
+import * as TsUcanAuthority from "../../src/components/authority/ts-ucan.js"
 import * as DOH from "../../src/components/dns/dns-over-https/cloudflare-google.js"
 import * as WebCryptoIdentifier from "../../src/components/identifier/web-crypto-api.js"
 import * as ProperManners from "../../src/components/manners/default.js"
@@ -12,11 +13,22 @@ import * as MemoryStorage from "../../src/components/storage/memory.js"
 import * as Codecs from "../../src/dag/codecs.js"
 
 import { ChannelOptions } from "../../src/channel.js"
-import { Account, Agent, Channel, Components, DNS, Depot, Identifier, Manners, Storage } from "../../src/components.js"
+import {
+  Account,
+  Agent,
+  Authority,
+  Channel,
+  Components,
+  DNS,
+  Depot,
+  Identifier,
+  Manners,
+  Storage,
+} from "../../src/components.js"
 import { Configuration } from "../../src/configuration.js"
 import { CodecIdentifier } from "../../src/dag/codecs.js"
 import { FileSystem } from "../../src/fs/class.js"
-import { Ucan } from "../../src/ucan/types.js"
+import { Ticket } from "../../src/ticket/types.js"
 import { Storage as InMemoryStorage } from "./localforage/in-memory-storage.js"
 
 ////////
@@ -51,7 +63,7 @@ const depot: Depot.Implementation = {
     return cid
   },
 
-  flush: async (dataRoot: CID, proofs: Ucan[]) => {},
+  flush: async (dataRoot: CID, proofs: Ticket[]) => {},
 }
 
 /////////////
@@ -84,7 +96,7 @@ const manners: Manners.Implementation<FileSystem> = {
 // CHANNEL //
 /////////////
 
-export type ChannelContext = {}
+export type ChannelContext = []
 
 const channel: Channel.Implementation<ChannelContext> = {
   establish: (options: ChannelOptions<ChannelContext>) => {
@@ -120,6 +132,12 @@ const identifier: Identifier.Implementation = await WebCryptoIdentifier.implemen
   store: new InMemoryStorage(),
 })
 
+////////////////
+// IDENTIFIER //
+////////////////
+
+const authority: Authority.Implementation = TsUcanAuthority.implementation(identifier)
+
 ////////
 // 🛳 //
 ////////
@@ -133,6 +151,7 @@ const components: Components<LocalAccount.Annex, ChannelContext> = {
   agent,
   account,
   identifier,
+  authority,
 }
 
-export { account, agent, channel, components, depot, dns, identifier, manners, storage }
+export { account, agent, authority, channel, components, depot, dns, identifier, manners, storage }

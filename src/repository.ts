@@ -64,7 +64,7 @@ export default abstract class Repository<C, I> {
   async set(collection: C): Promise<void> {
     this.collection = collection
     await this.collectionUpdateCallback(collection)
-    this.events.emit("collection:changed", { collection })
+    await this.events.emit("collection:changed", { collection })
 
     await this.storage.setItem(
       this.storageName,

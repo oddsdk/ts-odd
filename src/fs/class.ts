@@ -13,8 +13,8 @@ import * as Store from "./store.js"
 import { EventEmitter, createEmitter } from "../events/emitter.js"
 import { EventListener } from "../events/listen.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
-import { Dictionary } from "../ucan/dictionary.js"
-import { Ucan } from "../ucan/index.js"
+import { Inventory } from "../ticket/inventory.js"
+import { Ticket } from "../ticket/types.js"
 import { searchLatest } from "./common.js"
 import { findPrivateNode, partition as determinePartition } from "./mounts.js"
 import { TransactionContext } from "./transaction.js"
@@ -41,8 +41,8 @@ export type FileSystemOptions<FS> = {
   dependencies: Dependencies<FS>
   did: string
   settleTimeBeforePublish?: number
-  ucanDictionary: Dictionary
-  updateDataRoot?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+  tickets: Inventory
+  updateDataRoot?: (dataRoot: CID, proofs: Ticket[]) => Promise<{ updated: true } | { updated: false; reason: string }>
 }
 
 /** @group File System */
@@ -53,8 +53,8 @@ export class FileSystem {
   #eventEmitter: EventEmitter<Events.FileSystem>
   #settleTimeBeforePublish: number
   #rootTree: RootTree.RootTree
-  #ucanDictionary: Dictionary
-  #updateDataRoot?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+  #tickets: Inventory
+  #updateDataRoot?: (dataRoot: CID, proofs: Ticket[]) => Promise<{ updated: true } | { updated: false; reason: string }>
 
   #privateNodes: MountedPrivateNodes = {}
   #rng: Rng.Rng
@@ -69,15 +69,18 @@ export class FileSystem {
     did: string,
     settleTimeBeforePublish: number,
     rootTree: RootTree.RootTree,
-    ucanDictionary: Dictionary,
-    updateDataRoot?: (dataRoot: CID, proofs: Ucan[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+    tickets: Inventory,
+    updateDataRoot?: (
+      dataRoot: CID,
+      proofs: Ticket[]
+    ) => Promise<{ updated: true } | { updated: false; reason: string }>
   ) {
     this.#blockStore = blockStore
     this.#cidLog = cidLog
     this.#dependencies = dependencies
     this.#settleTimeBeforePublish = settleTimeBeforePublish
     this.#rootTree = rootTree
-    this.#ucanDictionary = ucanDictionary
+    this.#tickets = tickets
     this.#updateDataRoot = updateDataRoot
 
     this.#eventEmitter = createEmitter<Events.FileSystem>()
@@ -94,7 +97,7 @@ export class FileSystem {
    * @internal
    */
   static async empty(opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
+    const { cidLog, dependencies, did, settleTimeBeforePublish, tickets, updateDataRoot } = opts
 
     const blockStore = Store.fromDepot(dependencies.depot)
     const rootTree = await RootTree.empty()
@@ -106,7 +109,7 @@ export class FileSystem {
       did,
       settleTimeBeforePublish || 2500,
       rootTree,
-      ucanDictionary,
+      tickets,
       updateDataRoot
     )
   }
@@ -116,7 +119,7 @@ export class FileSystem {
    * @internal
    */
   static async fromCID(cid: CID, opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cidLog, dependencies, did, settleTimeBeforePublish, ucanDictionary, updateDataRoot } = opts
+    const { cidLog, dependencies, did, settleTimeBeforePublish, tickets, updateDataRoot } = opts
 
     const blockStore = Store.fromDepot(dependencies.depot)
     const rootTree = await RootTree.fromCID({ blockStore, cid, depot: dependencies.depot })
@@ -128,7 +131,7 @@ export class FileSystem {
       did,
       settleTimeBeforePublish || 2500,
       rootTree,
-      ucanDictionary,
+      tickets,
       updateDataRoot
     )
   }
@@ -562,8 +565,8 @@ export class FileSystem {
     const dataRoot = await this.calculateDataRoot()
 
     // Emit events
-    changes.forEach(change => {
-      this.#eventEmitter.emit("local-change", {
+    changes.forEach(async change => {
+      await this.#eventEmitter.emit("local-change", {
         dataRoot,
         ...change,
       })
@@ -674,7 +677,7 @@ export class FileSystem {
       { ...this.#privateNodes },
       this.#rng,
       { ...this.#rootTree },
-      this.#ucanDictionary
+      this.#tickets
     )
   }
 
@@ -686,7 +689,7 @@ export class FileSystem {
   }
 
   #debouncedDataRootUpdate = debounce(
-    async (args: [dataRoot: CID, proofs: Ucan[]][]): Promise<PublishingStatus[]> => {
+    async (args: [dataRoot: CID, proofs: Ticket[]][]): Promise<PublishingStatus[]> => {
       const [dataRoot, proofs] = args[args.length - 1]
 
       await this.#dependencies.depot.flush(dataRoot, proofs)
@@ -708,7 +711,7 @@ export class FileSystem {
       )
 
       if (rootUpdate.updated) {
-        this.#eventEmitter.emit("publish", { dataRoot, proofs })
+        await this.#eventEmitter.emit("publish", { dataRoot, proofs })
         status = { persisted: true }
       } else {
         status = { persisted: false, reason: rootUpdate.reason }
@@ -728,7 +731,7 @@ export class FileSystem {
    */
   async #publish(
     dataRoot: CID,
-    proofs: Ucan[]
+    proofs: Ticket[]
   ): Promise<PublishingStatus> {
     await this.#cidLog.add([dataRoot])
     const debounceResult = await this.#debouncedDataRootUpdate(dataRoot, proofs)

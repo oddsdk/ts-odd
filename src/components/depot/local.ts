@@ -5,7 +5,7 @@ import { sha256 } from "multiformats/hashes/sha2"
 
 import * as Codecs from "../../dag/codecs.js"
 import { CodecIdentifier } from "../../dag/codecs.js"
-import { Ucan } from "../../ucan/index.js"
+import { Ticket } from "../../ticket/types.js"
 import { Implementation } from "./implementation.js"
 
 // 🛳
@@ -45,6 +45,6 @@ export async function implementation(
 
     // FLUSH
 
-    flush: async (_dataRoot: CID, _proofs: Ucan[]): Promise<void> => {},
+    flush: async (_dataRoot: CID, _proofs: Ticket[]): Promise<void> => {},
   }
 }

@@ -22,6 +22,7 @@ import * as Config from "../configuration.js"
 
 import * as Account from "../components/account/fission.js"
 import * as Agent from "../components/agent/web-crypto-api.js"
+import * as Authority from "../components/authority/ts-ucan.js"
 import * as Channel from "../components/channel/fission.js"
 import * as Depot from "../components/depot/fission.js"
 import * as DNS from "../components/dns/dns-over-https/fission.js"
@@ -134,6 +135,7 @@ export async function components(
   const agent = await Agent.implementation({ store: agentStore })
   const identifier = await Identifier.implementation({ store: identifierStore })
   const depot = await Depot.implementation(manners, storage, `${namespace}/blockstore`, endpoints)
+  const authority = Authority.implementation(identifier)
 
   const account = (() => {
     switch (settings?.accountType || "standard") {
@@ -160,6 +162,7 @@ export async function components(
   return {
     account,
     agent,
+    authority,
     channel,
     depot,
     dns,

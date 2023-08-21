@@ -2,10 +2,12 @@ import { CID } from "multiformats/cid"
 
 import * as Fission from "../../../common/fission.js"
 import * as TypeChecks from "../../../common/type-checks.js"
-import * as Ucan from "../../../ucan/index.js"
+import * as Ucan from "../../../ucan/ts-ucan/index.js"
 
 import { decodeCID } from "../../../common/cid.js"
 import { Agent, DNS, Identifier, Manners } from "../../../components.js"
+import { cid as ticketCID } from "../../../ticket/index.js"
+import { Ticket } from "../../../ticket/types.js"
 
 /**
  * Get the CID of a user's data root.
@@ -78,7 +80,7 @@ export async function update<FS>(
     manners: Manners.Implementation<FS>
   },
   cidInstance: CID,
-  proofs: Ucan.Ucan[],
+  proofs: Ticket[],
   username: string
 ): Promise<{ updated: true } | { updated: false; reason: string }> {
   const cid = cidInstance.toString()
@@ -101,7 +103,7 @@ export async function update<FS>(
           },
 
           proofs: await Promise.all(proofs.map(
-            async proof => (await Ucan.cid(proof)).toString()
+            async proof => ticketCID(proof).toString()
           )),
         })
       )

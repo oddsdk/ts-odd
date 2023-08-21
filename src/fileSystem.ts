@@ -4,13 +4,13 @@ import type { Cabinet } from "./repositories/cabinet.js"
 
 import * as Path from "./path/index.js"
 import * as CIDLog from "./repositories/cid-log.js"
-import * as Ucan from "./ucan/index.js"
 
 import { Maybe } from "./common/index.js"
-import { Identifier, Storage } from "./components.js"
+import { Authority, Storage } from "./components.js"
 import { FileSystem } from "./fs/class.js"
 import { Dependencies } from "./fs/types.js"
-import { Dictionary } from "./ucan/dictionary.js"
+import { Inventory } from "./ticket/inventory.js"
+import { Ticket } from "./ticket/types.js"
 
 ////////
 // 🛠️ //
@@ -24,16 +24,16 @@ export async function loadFileSystem(args: {
   dataRoot?: CID
   dataRootUpdater?: (
     dataRoot: CID,
-    proofs: Ucan.Ucan[]
+    proofs: Ticket[]
   ) => Promise<{ updated: true } | { updated: false; reason: string }>
   dependencies: Dependencies<FileSystem> & {
-    identifier: Identifier.Implementation
+    authority: Authority.Implementation
     storage: Storage.Implementation
   }
   did: string
 }): Promise<FileSystem> {
   const { cabinet, dataRootUpdater, dependencies, did } = args
-  const { depot, identifier, manners, storage } = dependencies
+  const { authority, depot, manners, storage } = dependencies
 
   let cid: Maybe<CID> = args.dataRoot || null
   let fs: FileSystem
@@ -69,7 +69,7 @@ export async function loadFileSystem(args: {
   }
 
   // If a file system exists, load it and return it
-  const ucanDictionary = new Dictionary(cabinet)
+  const tickets = new Inventory(authority, cabinet)
   const updateDataRoot = dataRootUpdater
 
   if (cid) {
@@ -77,7 +77,7 @@ export async function loadFileSystem(args: {
 
     fs = await FileSystem.fromCID(
       cid,
-      { cidLog, dependencies, did, ucanDictionary, updateDataRoot }
+      { cidLog, dependencies, did, tickets, updateDataRoot }
     )
 
     // Mount private nodes
@@ -102,15 +102,20 @@ export async function loadFileSystem(args: {
     cidLog,
     dependencies,
     did,
-    ucanDictionary,
+    tickets,
     updateDataRoot,
   })
 
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)
 
   // Self delegate file system UCAN & add stuff to cabinet
-  const fileSystemDelegation = await selfDelegateCapabilities(identifier, fs.did)
-  await cabinet.addUcan(fileSystemDelegation)
+  const fileSystemTicket = await authority.clerk.tickets.fileSystem.create(
+    Path.root(),
+    fs.did
+  )
+
+  await cabinet.addTicket("file_system", fileSystemTicket)
+
   if (maybeMount) {
     await cabinet.addAccessKey({
       did: fs.did,
@@ -126,32 +131,4 @@ export async function loadFileSystem(args: {
 
   // Fin
   return fs
-}
-
-/**
- * Create a UCAN that self-delegates the file system capabilities.
- */
-export async function selfDelegateCapabilities(
-  identifier: Identifier.Implementation,
-  audience: string
-) {
-  const identifierDID = await identifier.did()
-
-  return Ucan.build({
-    // from & to
-    issuer: {
-      did: () => identifierDID,
-      jwtAlg: await identifier.ucanAlgorithm(),
-      sign: identifier.sign,
-    },
-    audience,
-
-    // capabilities
-    capabilities: [
-      {
-        with: { scheme: "wnfs", hierPart: `//${identifierDID}/` },
-        can: { namespace: "fs", segments: ["*"] },
-      },
-    ],
-  })
 }

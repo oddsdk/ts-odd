@@ -18,10 +18,10 @@ import { Manners, Storage } from "../../components.js"
 import * as Codecs from "../../dag/codecs.js"
 import { CodecIdentifier } from "../../dag/codecs.js"
 import * as Path from "../../path/index.js"
-import { Ucan } from "../../ucan/index.js"
 import { Implementation } from "./implementation.js"
 
 import { Multiaddr } from "@multiformats/multiaddr"
+import { Ticket } from "../../ticket/types.js"
 import * as Connections from "./ipfs/connections.js"
 import * as Peers from "./ipfs/peers.js"
 
@@ -173,7 +173,7 @@ export async function implementation<FS>(
 
     // FLUSH
 
-    flush: async (_dataRoot: CID, _proofs: Ucan[]): Promise<void> => {
+    flush: async (_dataRoot: CID, _proofs: Ticket[]): Promise<void> => {
       if (!manners.program.online()) return
       await initiateTransport()
     },
