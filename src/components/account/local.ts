@@ -1,7 +1,7 @@
 import * as Identifier from "../identifier/implementation.js"
 
 import { AccountQuery } from "../../authority/query.js"
-import { Inventory } from "../../ticket/inventory.js"
+import { Inventory } from "../../inventory.js"
 import { Ticket } from "../../ticket/types.js"
 import { Implementation } from "./implementation.js"
 

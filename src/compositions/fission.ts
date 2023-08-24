@@ -22,7 +22,7 @@ import * as Config from "../configuration.js"
 
 import * as Account from "../components/account/fission.js"
 import * as Agent from "../components/agent/web-crypto-api.js"
-import * as Authority from "../components/authority/ts-ucan.js"
+import * as Authority from "../components/authority/browser-url.js"
 import * as Channel from "../components/channel/fission.js"
 import * as Depot from "../components/depot/fission.js"
 import * as DNS from "../components/dns/dns-over-https/fission.js"
@@ -35,7 +35,7 @@ export * from "../common/fission.js"
 export { Annexes } from "../components/account/fission.js"
 export type DefaultAnnex = Account.Annexes.Standard
 
-export { Context as ChannelContext } from "../components/channel/fission.js"
+export { ProvideParams, ProvideResponse, RequestParams, RequestResponse } from "../components/authority/browser-url.js"
 
 /**
  * Account type.
@@ -85,27 +85,51 @@ export async function components(
     accountImplementation: "delegated"
     environment?: string | Fission.Endpoints
   }
-): Promise<Components<Account.Annexes.Delegated, Channel.Context>>
+): Promise<
+  Components<
+    Account.Annexes.Delegated,
+    Authority.ProvideResponse,
+    Authority.RequestResponse
+  >
+>
 export async function components(
   config: Configuration,
   settings?: {
     accountImplementation: "standard"
     environment?: string | Fission.Endpoints
   }
-): Promise<Components<Account.Annexes.Standard, Channel.Context>>
+): Promise<
+  Components<
+    Account.Annexes.Standard,
+    Authority.ProvideResponse,
+    Authority.RequestResponse
+  >
+>
 export async function components(
   config: Configuration,
   settings?: {
     environment?: string | Fission.Endpoints
   }
-): Promise<Components<DefaultAnnex, Channel.Context>>
+): Promise<
+  Components<
+    DefaultAnnex,
+    Authority.ProvideResponse,
+    Authority.RequestResponse
+  >
+>
 export async function components(
   config: Configuration,
   settings?: {
     accountType?: AccountImplementations
     environment?: string | Fission.Endpoints
   }
-): Promise<Components<Account.Annexes.Delegated | Account.Annexes.Standard, Channel.Context>> {
+): Promise<
+  Components<
+    Account.Annexes.Delegated | Account.Annexes.Standard,
+    Authority.ProvideResponse,
+    Authority.RequestResponse
+  >
+> {
   const namespace = Config.namespace(config)
 
   // Determine environment

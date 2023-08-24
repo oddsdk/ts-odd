@@ -1,11 +1,11 @@
-import * as AgentDID from "../../agent/did.js"
-import * as Path from "../../path/index.js"
-import * as Ucan from "../../ucan/ts-ucan/index.js"
-import * as Agent from "../agent/implementation.js"
-import * as Identifier from "../identifier/implementation.js"
+import * as AgentDID from "../../../agent/did.js"
+import * as Path from "../../../path/index.js"
+import * as Ucan from "../../../ucan/ts-ucan/index.js"
+import * as Agent from "../../agent/implementation.js"
+import * as Identifier from "../../identifier/implementation.js"
 
-import { Ticket } from "../../ticket/types.js"
-import { Implementation } from "./implementation.js"
+import { Ticket } from "../../../ticket/types.js"
+import { Clerk } from "../implementation.js"
 
 ///////////
 // CLERK //
@@ -83,17 +83,15 @@ export function matchFileSystemTicket(
 
 export function implementation(
   identifier: Identifier.Implementation
-): Implementation {
+): Clerk {
   return {
-    clerk: {
-      tickets: {
-        fileSystem: {
-          create: (...args) => createFileSystemTicket(identifier, ...args),
-          matcher: matchFileSystemTicket,
-        },
-        misc: {
-          identifierToAgentDelegation,
-        },
+    tickets: {
+      fileSystem: {
+        create: (...args) => createFileSystemTicket(identifier, ...args),
+        matcher: matchFileSystemTicket,
+      },
+      misc: {
+        identifierToAgentDelegation,
       },
     },
   }

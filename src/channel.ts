@@ -7,9 +7,9 @@ export type Channel = {
   send: (data: ChannelData) => void
 }
 
-export type ChannelOptions<Context> = {
-  context: Context
-  onmessage: (event: MessageEvent) => void
+export type ChannelOptions = {
+  onmessage: (event: MessageEvent, channel: Channel) => void
+  topic: string
 }
 
 export type ChannelData = string | ArrayBufferLike | Blob | ArrayBufferView

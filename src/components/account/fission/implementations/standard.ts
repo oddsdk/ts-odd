@@ -233,14 +233,6 @@ async function registerVerifiedAccount<FS>(
   }
 }
 
-////////////////////////////
-// IDENTIFIER & AUTHORITY //
-////////////////////////////
-
-export async function provideAuthority(accountQuery: AccountQuery): Promise<Ticket[]> {
-  return [] // TODO
-}
-
 ////////
 // 🛳 //
 ////////
@@ -262,6 +254,6 @@ export function implementation<FS>(
 
     did: (...args) => Common.did(dependencies, ...args),
     hasSufficientAuthority: (...args) => Common.hasSufficientAuthority(dependencies, ...args),
-    provideAuthority,
+    provideAuthority: Common.provideAuthority,
   }
 }

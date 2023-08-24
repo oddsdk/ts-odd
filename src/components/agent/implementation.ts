@@ -1,4 +1,4 @@
-import type { Alg as SignatureAlgorithm, KeyType } from "iso-did/core"
+import type { Alg as SignatureAlgorithm, KeyType } from "iso-did/key"
 
 export type Implementation = {
   /**
@@ -33,7 +33,7 @@ export type Implementation = {
   sign: (data: Uint8Array) => Promise<Uint8Array>
 
   /**
-   * This goes hand in hand with the DID `keyTypes` record from the crypto component.
+   * The algorithm of the signing key.
    */
   keyAlgorithm: () => Promise<KeyType>
 

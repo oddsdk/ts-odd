@@ -7,11 +7,11 @@ import { AnnexParentType } from "./components/account/implementation.js"
 // REGISTER //
 //////////////
 
-export const register = <Annex extends AnnexParentType>(
+export const register = <Annex extends AnnexParentType, P, R>(
   { account, agent, authority, identifier, cabinet }: {
     account: Account.Implementation<Annex>
     agent: Agent.Implementation
-    authority: Authority.Implementation
+    authority: Authority.Implementation<P, R>
     identifier: Identifier.Implementation
     cabinet: Cabinet
   }

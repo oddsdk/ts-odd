@@ -2,9 +2,10 @@ import * as Fission from "../../../../common/fission.js"
 import * as Ucan from "../../../../ucan/ts-ucan/index.js"
 import * as Identifier from "../../../identifier/implementation.js"
 
+import { AccountQuery } from "../../../../authority/query.js"
 import { CID } from "../../../../common/index.js"
 import { Agent, DNS, Manners } from "../../../../components.js"
-import { Inventory } from "../../../../ticket/inventory.js"
+import { Inventory } from "../../../../inventory.js"
 import { Ticket } from "../../../../ticket/types.js"
 import { DataRoot, lookupUserDID } from "../index.js"
 
@@ -54,7 +55,7 @@ export async function volume<FS>(
   ) => Promise<{ updated: true } | { updated: false; reason: string }>
   did: string
 }> {
-  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
+  const accountProof = findAccountProofTicket(await identifier.did(), tickets)
   const accountUsername = accountProof ? findUsernameFact(accountProof) : null
 
   if (username && username !== accountUsername) {
@@ -103,7 +104,7 @@ export async function accountVolume<FS>(
   }
 
   // Find account-proof UCAN
-  const accountProof = findAccountProofUCAN(identifierDID, tickets)
+  const accountProof = findAccountProofTicket(identifierDID, tickets)
   const username = accountProof ? findUsernameFact(accountProof) : null
 
   if (!username) {
@@ -123,7 +124,7 @@ export async function otherVolume<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  tickets: Inventory,
+  inventory: Inventory,
   username: string
 ): Promise<{
   dataRoot?: CID
@@ -157,7 +158,7 @@ export async function updateDataRoot<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  tickets: Inventory,
+  inventory: Inventory,
   dataRoot: CID,
   proofs: Ticket[]
 ): Promise<{ updated: true } | { updated: false; reason: string }> {
@@ -166,7 +167,7 @@ export async function updateDataRoot<FS>(
   }
 
   // Find account-proof UCAN
-  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
+  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
   const username = accountProof ? findUsernameFact(accountProof) : null
 
   if (!username) {
@@ -184,40 +185,54 @@ export async function updateDataRoot<FS>(
 export async function did<FS>(
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  tickets: Inventory
+  inventory: Inventory
 ): Promise<string | null> {
   // Find account-proof UCAN
-  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
+  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
 
   // DID is issuer of that username UCAN
   return accountProof
-    ? Ucan.decode(accountProof.token).payload.iss
+    ? accountProof.issuer
     : null
 }
 
 export async function fileSystemDID<FS>(
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  tickets: Inventory
+  inventory: Inventory
 ) {
   // Find account-proof UCAN
-  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
+  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
 
   // DID is issuer of that username UCAN
   return accountProof
-    ? Ucan.decode(accountProof.token).payload.aud
+    ? accountProof.audience
     : null
 }
 
 export async function hasSufficientAuthority<FS>(
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  tickets: Inventory
+  inventory: Inventory
 ): Promise<
   { suffices: true } | { suffices: false; reason: string }
 > {
-  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
+  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
   return accountProof ? { suffices: true } : { suffices: false, reason: "Missing the needed account capabilities" }
+}
+
+export async function provideAuthority(
+  accountQuery: AccountQuery,
+  identifier: Identifier.Implementation,
+  inventory: Inventory
+): Promise<Ticket[]> {
+  const maybeTicket = findAccountTicket(
+    await identifier.did(),
+    inventory
+  )
+
+  if (!maybeTicket) return []
+  return [maybeTicket]
 }
 
 ////////
@@ -228,18 +243,18 @@ export async function hasSufficientAuthority<FS>(
  * Find the original UCAN the user got back from the Fission server
  * after registration. This UCAN will have the username fact.
  */
-export function findAccountProofUCAN(
+export function findAccountProofTicket(
   audience: string,
-  tickets: Inventory
+  inventory: Inventory
 ): Ticket | null {
   const matcher = (ticket: Ticket) => !!findUsernameFact(ticket)
 
   // Grab the UCANs addressed to this audience (ideally current identifier),
   // then look for the username fact ucan in the delegation chains of those UCANs.
-  return tickets.lookupByAudience(audience).reduce(
+  return inventory.lookupTicketByAudience(audience).reduce(
     (acc: Ticket | null, ticket) => {
       if (acc) return acc
-      return tickets.descendUntilMatching(ticket, matcher, Ucan.ticketProofResolver)
+      return inventory.descendUntilMatchingTicket(ticket, matcher, Ucan.ticketProofResolver)
     },
     null
   )
@@ -254,20 +269,20 @@ export function findAccountProofUCAN(
  * In other words, if the device that originally registered the account
  * linked to another device, it would delegate the account-proof UCAN
  * to the other device. If then asked for the account UCAN on that other
- * device it would be the delegated UCAN.
+ * device it would be the delegation UCAN.
  */
-export function findAccountUCAN(
+export function findAccountTicket(
   audience: string,
   tickets: Inventory
-) {
+): Ticket | null {
   const matcher = (ticket: Ticket) => !!findUsernameFact(ticket)
 
   // Grab the UCANs addressed to this audience (ideally current identifier),
   // then look for the username fact ucan in the delegation chains of those UCANs.
-  return tickets.lookupByAudience(audience).reduce(
+  return tickets.lookupTicketByAudience(audience).reduce(
     (acc: Ticket | null, ticket) => {
       if (acc) return acc
-      const hasProof = !!tickets.descendUntilMatching(ticket, matcher, Ucan.ticketProofResolver)
+      const hasProof = !!tickets.descendUntilMatchingTicket(ticket, matcher, Ucan.ticketProofResolver)
       if (hasProof) return ticket
       return null
     },

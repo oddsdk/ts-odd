@@ -6,19 +6,13 @@ import { Manners } from "../../components.js"
 import { Implementation } from "./implementation.js"
 
 ////////
-// 🧩 //
-////////
-
-export type Context = { did: string }
-
-////////
 // 🛠️ //
 ////////
 
 export function establish<FS>(
   manners: Manners.Implementation<FS>,
   endpoints: Endpoints,
-  options: ChannelOptions<Context>
+  options: ChannelOptions
 ): Promise<Channel> {
   const host = `${endpoints.server}${endpoints.apiPath}`
     .replace(/^https:\/\//, "wss://")
@@ -26,7 +20,7 @@ export function establish<FS>(
 
   return createWebsocketChannel(
     manners,
-    `${host}/account/link/${options.context.did}`,
+    `${host}/relay/${options.topic}`,
     options
   )
 }
@@ -38,7 +32,7 @@ export function establish<FS>(
 export function implementation<FS>(
   manners: Manners.Implementation<FS>,
   optionalEndpoints?: Endpoints
-): Implementation<Context> {
+): Implementation {
   const endpoints = optionalEndpoints || Fission.PRODUCTION
 
   return {

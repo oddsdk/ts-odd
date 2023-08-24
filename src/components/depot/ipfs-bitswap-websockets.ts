@@ -147,7 +147,7 @@ export async function implementation<FS>(
       if (await blockstore.has(cid)) return blockstore.get(cid)
 
       // TODO: Can we use CAR files to get a bunch of blocks at once?
-      return fetch(`${gatewayUrl.replace(/\/+$/, "")}/api/v0/block/get?arg=${cid.toString()}`)
+      return fetch(`${gatewayUrl.replace(/\/+$/, "")}/ipfs/${cid.toString()}?format=raw`)
         .then(r => {
           if (r.ok) return r.arrayBuffer()
           throw new Error("Failed to fetch block from gateway")

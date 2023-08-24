@@ -86,6 +86,8 @@ The reason we have two components here is so the `Identifier` doesn't need to si
 
 Typically the `Agent` will use a temporary session key pair and the `Identifier` is the more permanent identifier. Example flow: Identifier delegates to agent, agent contacts remote account service, account service issues UCANs addressed to identifier. Those UCANs are then used throughout the SDK to check for capabilities, etc.
 
+The storage DID used for the file system is always the identifier DID.
+
 ### Authority
 
 This component is responsible for providing and requesting authority, which technically means providing and requesting UCANs and file system secrets (access keys).

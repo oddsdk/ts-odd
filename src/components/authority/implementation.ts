@@ -1,30 +1,17 @@
-import * as Events from "../../events/authority.js"
 import * as Path from "../../path/index.js"
-
+import * as Account from "../account/implementation.js"
 import * as Agent from "../agent/implementation.js"
 import * as Identifier from "../identifier/implementation.js"
 
+import { AccessKeyWithContext } from "../../accessKey.js"
 import { Query } from "../../authority/query.js"
-import { EventEmitter } from "../../events/emitter.js"
 import { Ticket } from "../../ticket/types.js"
+import { ProvideParams } from "./browser-url/provider.js"
+import { RequestParams } from "./browser-url/requestor.js"
 
-export type RequestOptions = {
-  extraParams?: Record<string, string>
-  query?: Query
-  returnUrl?: string
-}
-
-export type Provider = {
-  type: "provider"
-
-  provide(tickets: Ticket[], eventEmitter: EventEmitter<Events.AuthorityProvider>): Promise<void>
-}
-
-export type Requestor = {
-  type: "requestor"
-
-  request: (options: RequestOptions, eventEmitter: EventEmitter<Events.AuthorityRequestor>) => Promise<void>
-}
+///////////
+// CLERK //
+///////////
 
 /**
  * Responsible for managing tickets or parts thereof.
@@ -63,9 +50,29 @@ export type Clerk = {
   }
 }
 
-/**
- * Implementation.
- */
-export type Implementation = {
+///////////////
+// REQUESTOR //
+///////////////
+
+export type AuthorityArtefacts<RequestResponse> = {
+  accessKeys: AccessKeyWithContext[]
+  accountTickets: Ticket[]
+  authorisedQueries: Query[]
+  fileSystemTickets: Ticket[]
+  requestResponse: RequestResponse
+}
+
+export type RequestOptions = {
+  extraParams?: Record<string, string>
+  returnUrl?: string
+}
+
+////////////////////
+// IMPLEMENTATION //
+////////////////////
+
+export type Implementation<ProvideResponse, RequestResponse> = {
   clerk: Clerk
+  provide<AccountAnnex extends Account.AnnexParentType>(params: ProvideParams<AccountAnnex>): Promise<ProvideResponse>
+  request(params: RequestParams): Promise<AuthorityArtefacts<RequestResponse> | null>
 }

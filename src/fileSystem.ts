@@ -9,7 +9,7 @@ import { Maybe } from "./common/index.js"
 import { Authority, Storage } from "./components.js"
 import { FileSystem } from "./fs/class.js"
 import { Dependencies } from "./fs/types.js"
-import { Inventory } from "./ticket/inventory.js"
+import { Inventory } from "./inventory.js"
 import { Ticket } from "./ticket/types.js"
 
 ////////
@@ -19,7 +19,7 @@ import { Ticket } from "./ticket/types.js"
 /**
  * Load a file system.
  */
-export async function loadFileSystem(args: {
+export async function loadFileSystem<P, R>(args: {
   cabinet: Cabinet
   dataRoot?: CID
   dataRootUpdater?: (
@@ -27,7 +27,7 @@ export async function loadFileSystem(args: {
     proofs: Ticket[]
   ) => Promise<{ updated: true } | { updated: false; reason: string }>
   dependencies: Dependencies<FileSystem> & {
-    authority: Authority.Implementation
+    authority: Authority.Implementation<P, R>
     storage: Storage.Implementation
   }
   did: string
@@ -69,7 +69,7 @@ export async function loadFileSystem(args: {
   }
 
   // If a file system exists, load it and return it
-  const tickets = new Inventory(authority, cabinet)
+  const inventory = new Inventory(authority.clerk, cabinet)
   const updateDataRoot = dataRootUpdater
 
   if (cid) {
@@ -77,7 +77,7 @@ export async function loadFileSystem(args: {
 
     fs = await FileSystem.fromCID(
       cid,
-      { cidLog, dependencies, did, tickets, updateDataRoot }
+      { cidLog, dependencies, did, inventory, updateDataRoot }
     )
 
     // Mount private nodes
@@ -102,7 +102,7 @@ export async function loadFileSystem(args: {
     cidLog,
     dependencies,
     did,
-    tickets,
+    inventory,
     updateDataRoot,
   })
 

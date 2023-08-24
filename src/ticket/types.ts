@@ -1,3 +1,5 @@
+import { CID } from "../common/cid.js"
+
 const CATEGORIES = ["account", "file_system", "misc"] as const
 
 /**
@@ -19,3 +21,8 @@ export type Category = typeof CATEGORIES[number]
 export function isCategory(string: string): string is Category {
   return CATEGORIES.includes(string as Category)
 }
+
+/**
+ * Ticket with context.
+ */
+export type TicketWithContext = { category: Category; cid: CID; ticket: Ticket }

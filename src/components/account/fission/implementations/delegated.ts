@@ -1,7 +1,6 @@
 import * as Fission from "../../../../common/fission.js"
 import * as Common from "./common.js"
 
-import { AccountQuery } from "../../../../authority/query.js"
 import { Ticket } from "../../../../ticket/types.js"
 import { Implementation } from "../../implementation.js"
 import { Annex, Dependencies } from "./common.js"
@@ -38,14 +37,6 @@ export async function register(
   }
 }
 
-////////////////////////////
-// IDENTIFIER & AUTHORITY //
-////////////////////////////
-
-export async function provideAuthority(accountQuery: AccountQuery): Promise<Ticket[]> {
-  return [] // TODO
-}
-
 ////////
 // 🛳 //
 ////////
@@ -66,6 +57,6 @@ export function implementation<FS>(
 
     did: (...args) => Common.did(dependencies, ...args),
     hasSufficientAuthority: (...args) => Common.hasSufficientAuthority(dependencies, ...args),
-    provideAuthority,
+    provideAuthority: Common.provideAuthority,
   }
 }
