@@ -1,7 +1,7 @@
 import { strict as assert } from "assert"
 
-import * as InMemoryCryptoStore from "../common/crypto/store/in-memory.js"
-import * as WebCryptoAgent from "../components/agent/web-crypto-api.js"
+import * as InMemoryCryptoStore from "../../common/crypto/store/in-memory.js"
+import * as WebCryptoAgent from "../../components/agent/web-crypto-api.js"
 
 import * as Ucan from "./index.js"
 

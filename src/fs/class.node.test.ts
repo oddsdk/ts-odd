@@ -1,6 +1,3 @@
-import * as NodeFS from "node:fs/promises"
-import * as Uint8arrays from "uint8arrays"
-
 import { strict as assert } from "assert"
 import { assertUnixFsDirectory, assertUnixFsFile, assertUnixNodeRemoval } from "../../tests/helpers/filesystem.js"
 
@@ -9,11 +6,10 @@ import * as Cabinet from "../repositories/cabinet.js"
 import * as CIDLog from "../repositories/cid-log.js"
 import * as Unix from "./unix.js"
 
-import { account, agent, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
+import { account, agent, authority, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
 import { CID } from "../common/cid.js"
-import { selfDelegateCapabilities } from "../fileSystem.js"
-import { Dictionary } from "../ucan/dictionary.js"
-import { Ucan } from "../ucan/types.js"
+import { Inventory } from "../ticket/inventory.js"
+import { Ticket } from "../ticket/types.js"
 import { FileSystem } from "./class.js"
 
 describe("File System Class", async () => {
@@ -32,24 +28,28 @@ describe("File System Class", async () => {
     const cidLog = await CIDLog.create({ did, storage })
 
     const cabinet = await Cabinet.create({ storage })
-    const ucanDictionary = new Dictionary(cabinet)
+    const tickets = new Inventory(authority, cabinet)
 
     const updateDataRoot = async (
       dataRoot: CID,
-      proofs: Ucan[]
+      proofs: Ticket[]
     ): Promise<{ updated: true } | { updated: false; reason: string }> => {
       return { updated: true }
     }
 
-    fs = await FileSystem.empty({ ...fsOpts, cidLog, did, ucanDictionary, updateDataRoot })
+    fs = await FileSystem.empty({ ...fsOpts, cidLog, did, tickets, updateDataRoot })
 
     const mounts = await fs.mountPrivateNodes([
       { path: Path.root() },
     ])
 
-    await cabinet.addUcans([
-      await selfDelegateCapabilities(identifier, did),
-    ])
+    await cabinet.addTicket(
+      "file_system",
+      await authority.clerk.tickets.fileSystem.create(
+        Path.root(),
+        did
+      )
+    )
   })
 
   // LOADING
@@ -73,9 +73,9 @@ describe("File System Class", async () => {
     const cidLog = await CIDLog.create({ did, storage })
 
     const cabinet = await Cabinet.create({ storage })
-    const ucanDictionary = new Dictionary(cabinet)
+    const tickets = new Inventory(authority, cabinet)
 
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, ucanDictionary })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, tickets })
     await loadedFs.mountPrivateNodes([
       { path: Path.removePartition(privatePath), capsuleKey },
     ])
@@ -99,9 +99,9 @@ describe("File System Class", async () => {
     const cidLog = await CIDLog.create({ did, storage })
 
     const cabinet = await Cabinet.create({ storage })
-    const ucanDictionary = new Dictionary(cabinet)
+    const tickets = new Inventory(authority, cabinet)
 
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, ucanDictionary })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, tickets })
 
     if (capsuleKey) {
       await loadedFs.mountPrivateNodes([
@@ -123,10 +123,10 @@ describe("File System Class", async () => {
     const cidLog = await CIDLog.create({ did, storage })
 
     const cabinet = await Cabinet.create({ storage })
-    const ucanDictionary = new Dictionary(cabinet)
+    const tickets = new Inventory(authority, cabinet)
 
     const { dataRoot } = await fs.write(privatePath, "utf8", "private")
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, ucanDictionary })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, tickets })
 
     if (oldCapsuleKey) {
       await loadedFs.mountPrivateNodes([

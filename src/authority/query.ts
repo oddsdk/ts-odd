@@ -16,9 +16,11 @@ export type AccountQuery = {
   query: "account"
 }
 
+export type FileSystemAbility = typeof ALLOWED_FILE_SYSTEM_ABILITIES[number]
+
 export type FileSystemQuery = {
   query: "fileSystem"
-  ability: typeof ALLOWED_FILE_SYSTEM_ABILITIES[number]
+  ability: FileSystemAbility
   path: Path.Distinctive<Path.Partitioned<Path.Partition>>
 }
 
@@ -85,12 +87,12 @@ function accountQueryFromJSON(obj: Record<string, any>): AccountQuery {
   }
 }
 
-function fileSystemQueryFromJSON(obj: Record<string, any>): FileSystemQuery {
-  if (ALLOWED_FILE_SYSTEM_ABILITIES.includes(obj.ability) === false) {
+function fileSystemQueryFromJSON(obj: Record<string, unknown>): FileSystemQuery {
+  if (ALLOWED_FILE_SYSTEM_ABILITIES.includes(obj.ability as FileSystemAbility) === false) {
     throw new Error(`Ability in file-system query is not allowed: \`${obj.ability}\``)
   }
 
-  const path = Path.fromPosix(obj.path)
+  const path = Path.fromPosix(obj.path as string)
   let partitionedPath: Path.Distinctive<Path.Partitioned<Path.Partition>>
 
   if (Path.isPartitioned(path)) {
@@ -100,8 +102,8 @@ function fileSystemQueryFromJSON(obj: Record<string, any>): FileSystemQuery {
   }
 
   return {
-    query: obj.query,
-    ability: obj.ability,
+    query: "fileSystem",
+    ability: obj.ability as FileSystemAbility,
     path: partitionedPath,
   }
 }

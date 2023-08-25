@@ -22,6 +22,7 @@ module.exports = {
       },
     }],
     "@typescript-eslint/no-empty-function": ["off"],
+    "@typescript-eslint/no-explicit-any": ["off"],
     "@typescript-eslint/no-use-before-define": ["off"],
     "@typescript-eslint/semi": ["error", "never"],
     "@typescript-eslint/ban-ts-comment": 1,

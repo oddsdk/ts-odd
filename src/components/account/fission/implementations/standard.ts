@@ -1,8 +1,9 @@
 import * as Fission from "../../../../common/fission.js"
-import * as Ucan from "../../../../ucan/index.js"
+import * as Ucan from "../../../../ucan/ts-ucan/index.js"
 import * as Common from "./common.js"
 
 import { AccountQuery } from "../../../../authority/query.js"
+import { Ticket } from "../../../../ticket/types.js"
 import { Implementation } from "../../implementation.js"
 import { isUsernameAvailable, isUsernameValid } from "../index.js"
 import { Dependencies } from "./common.js"
@@ -141,9 +142,9 @@ export async function register<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   formValues: Record<string, string>,
-  identifierUcan: Ucan.Ucan
+  identifierTicket: Ticket
 ): Promise<
-  | { registered: true; ucans: Ucan.Ucan[] }
+  | { registered: true; tickets: Ticket[] }
   | { registered: false; reason: string }
 > {
   const form = await canRegister(endpoints, dependencies, formValues)
@@ -155,9 +156,9 @@ export async function register<FS>(
   }
 
   if (formValues.accountType === "app") {
-    return registerAppAccount(endpoints, dependencies, formValues, identifierUcan)
+    return registerAppAccount(endpoints, dependencies, formValues, identifierTicket)
   } else if (formValues.accountType === "verified") {
-    return registerVerifiedAccount(endpoints, dependencies, formValues, identifierUcan)
+    return registerVerifiedAccount(endpoints, dependencies, formValues, identifierTicket)
   } else {
     throw new Error("Invalid account type")
   }
@@ -167,9 +168,9 @@ async function registerAppAccount<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   formValues: Record<string, string>,
-  identifierUcan: Ucan.Ucan
+  identifierTicket: Ticket
 ): Promise<
-  | { registered: true; ucans: Ucan.Ucan[] }
+  | { registered: true; tickets: Ticket[] }
   | { registered: false; reason: string }
 > {
   throw new Error("Not implemented yet")
@@ -179,9 +180,9 @@ async function registerVerifiedAccount<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   formValues: Record<string, string>,
-  identifierUcan: Ucan.Ucan
+  identifierTicket: Ticket
 ): Promise<
-  | { registered: true; ucans: Ucan.Ucan[] }
+  | { registered: true; tickets: Ticket[] }
   | { registered: false; reason: string }
 > {
   const code = formValues.code.trim()
@@ -215,11 +216,9 @@ async function registerVerifiedAccount<FS>(
     const obj = await response.json()
     const ucan = Ucan.decode(obj.ucan)
 
-    console.log(ucan)
-
     return {
       registered: true,
-      ucans: [ucan],
+      tickets: [Ucan.toTicket(ucan)],
     }
   }
 
@@ -238,7 +237,7 @@ async function registerVerifiedAccount<FS>(
 // IDENTIFIER & AUTHORITY //
 ////////////////////////////
 
-export async function provideAuthority(accountQuery: AccountQuery): Promise<Ucan.Ucan[]> {
+export async function provideAuthority(accountQuery: AccountQuery): Promise<Ticket[]> {
   return [] // TODO
 }
 

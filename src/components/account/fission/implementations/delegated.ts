@@ -1,8 +1,8 @@
 import * as Fission from "../../../../common/fission.js"
-import * as Ucan from "../../../../ucan/index.js"
 import * as Common from "./common.js"
 
 import { AccountQuery } from "../../../../authority/query.js"
+import { Ticket } from "../../../../ticket/types.js"
 import { Implementation } from "../../implementation.js"
 import { Annex, Dependencies } from "./common.js"
 
@@ -27,9 +27,9 @@ export async function canRegister(
 
 export async function register(
   formValues: Record<string, string>,
-  identifierUcan: Ucan.Ucan
+  identifierTicket: Ticket
 ): Promise<
-  | { registered: true; ucans: Ucan.Ucan[] }
+  | { registered: true; tickets: Ticket[] }
   | { registered: false; reason: string }
 > {
   return {
@@ -42,7 +42,7 @@ export async function register(
 // IDENTIFIER & AUTHORITY //
 ////////////////////////////
 
-export async function provideAuthority(accountQuery: AccountQuery): Promise<Ucan.Ucan[]> {
+export async function provideAuthority(accountQuery: AccountQuery): Promise<Ticket[]> {
   return [] // TODO
 }
 

@@ -1,6 +1,5 @@
 import * as Ucans from "@ucans/core"
 import * as UcanCaps from "@ucans/core/capability/index"
-import * as Raw from "multiformats/codecs/raw"
 import * as Uint8arrays from "uint8arrays"
 
 import * as ECDSA from "iso-signatures/verifiers/ecdsa"
@@ -10,16 +9,13 @@ import * as RSA from "iso-signatures/verifiers/rsa"
 
 import { Ucan } from "@ucans/core"
 import { DIDKey } from "iso-did/key"
-import { sha256 } from "multiformats/hashes/sha2"
 
-import * as AgentDID from "../agent/did.js"
-import * as Agent from "../components/agent/implementation.js"
+import * as AgentDID from "../../agent/did.js"
+import * as Agent from "../../components/agent/implementation.js"
 
-import { CID } from "../common/cid.js"
+import { CID, decodeCID } from "../../common/cid.js"
+import { Ticket } from "../../ticket/types.js"
 import { BuildParams, Keypair } from "./types.js"
-
-export { encodeHeader, encodePayload, isExpired, isTooEarly, parse, verify } from "@ucans/core"
-export * from "./types.js"
 
 ////////
 // 🛠️ //
@@ -74,15 +70,6 @@ export async function build(
   })
 }
 
-export async function cid(ucan: Ucan): Promise<CID> {
-  const ucanString = Ucans.encode(ucan)
-  const multihash = await sha256.digest(
-    Uint8arrays.fromString(ucanString, "utf8")
-  )
-
-  return CID.createV1(Raw.code, multihash)
-}
-
 export function decode(encoded: string): Ucan {
   const [encodedHeader, encodedPayload, signature] = encoded.split(".")
   const parts = Ucans.parse(encoded)
@@ -97,10 +84,6 @@ export function decode(encoded: string): Ucan {
 
 export function encode(ucan: Ucan): string {
   return `${ucan.signedData}.${ucan.signature}`
-}
-
-export function isSelfSigned(ucan: Ucan): boolean {
-  return ucan.payload.iss === ucan.payload.aud
 }
 
 export async function isValid(agent: Agent.Implementation, ucan: Ucan): Promise<boolean> {
@@ -128,6 +111,19 @@ export async function keyPair(agent: Agent.Implementation): Promise<Keypair> {
 
 export async function plugins(): Promise<Ucans.Plugins> {
   return new Plugins([], {})
+}
+
+export function ticketProofResolver(ticket: Ticket): CID[] {
+  const ucan = decode(ticket.token)
+  return ucan.payload.prf.map(decodeCID)
+}
+
+export function toTicket(ucan: Ucan): Ticket {
+  return {
+    issuer: ucan.payload.iss,
+    audience: ucan.payload.aud,
+    token: encode(ucan),
+  }
 }
 
 ////////

@@ -3,7 +3,7 @@ import { CID } from "multiformats/cid"
 
 import { CodecIdentifier } from "../../dag/codecs.js"
 import * as Path from "../../path/index.js"
-import { Ucan } from "../../ucan/index.js"
+import { Ticket } from "../../ticket/types.js"
 
 export type Implementation = {
   blockstore: Blockstore
@@ -23,7 +23,7 @@ export type Implementation = {
    * Here you could set up an IPFS peer connection,
    * or simply push all "changed" blocks to some other block store.
    */
-  flush: (dataRoot: CID, proofs: Ucan[]) => Promise<void>
+  flush: (dataRoot: CID, proofs: Ticket[]) => Promise<void>
 
   /**
    * Create a permalink to some public file system content.

@@ -1,11 +1,11 @@
 import * as Fission from "../../../../common/fission.js"
-import * as Path from "../../../../path/index.js"
-import * as Ucan from "../../../../ucan/index.js"
+import * as Ucan from "../../../../ucan/ts-ucan/index.js"
 import * as Identifier from "../../../identifier/implementation.js"
 
 import { CID } from "../../../../common/index.js"
 import { Agent, DNS, Manners } from "../../../../components.js"
-import { Dictionary } from "../../../../ucan/dictionary.js"
+import { Inventory } from "../../../../ticket/inventory.js"
+import { Ticket } from "../../../../ticket/types.js"
 import { DataRoot, lookupUserDID } from "../index.js"
 
 ////////
@@ -23,7 +23,7 @@ export type Annex = {
     dataRoot?: CID
     dataRootUpdater: (
       dataRoot: CID,
-      proofs: Ucan.Ucan[]
+      proofs: Ticket[]
     ) => Promise<{ updated: true } | { updated: false; reason: string }>
     did: string
   }>
@@ -44,23 +44,23 @@ export async function volume<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  ucanDictionary: Dictionary,
+  tickets: Inventory,
   username?: string
 ): Promise<{
   dataRoot?: CID
   dataRootUpdater: (
     dataRoot: CID,
-    proofs: Ucan.Ucan[]
+    proofs: Ticket[]
   ) => Promise<{ updated: true } | { updated: false; reason: string }>
   did: string
 }> {
-  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
+  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
   const accountUsername = accountProof ? findUsernameFact(accountProof) : null
 
   if (username && username !== accountUsername) {
-    return otherVolume(endpoints, dependencies, identifier, ucanDictionary, username)
+    return otherVolume(endpoints, dependencies, identifier, tickets, username)
   } else {
-    return accountVolume(endpoints, dependencies, identifier, ucanDictionary)
+    return accountVolume(endpoints, dependencies, identifier, tickets)
   }
 }
 
@@ -68,22 +68,22 @@ export async function accountVolume<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  ucanDictionary: Dictionary
+  tickets: Inventory
 ): Promise<{
   dataRoot?: CID
   dataRootUpdater: (
     dataRoot: CID,
-    proofs: Ucan.Ucan[]
+    proofs: Ticket[]
   ) => Promise<{ updated: true } | { updated: false; reason: string }>
   did: string
 }> {
-  const dataRootUpdater = async (dataRoot: CID, proofs: Ucan.Ucan[]) => {
-    const { suffices } = await hasSufficientAuthority(dependencies, identifier, ucanDictionary)
+  const dataRootUpdater = async (dataRoot: CID, proofs: Ticket[]) => {
+    const { suffices } = await hasSufficientAuthority(dependencies, identifier, tickets)
     if (!suffices) return { updated: false, reason: "Not authenticated yet, lacking authority." }
-    return updateDataRoot(endpoints, dependencies, identifier, ucanDictionary, dataRoot, proofs)
+    return updateDataRoot(endpoints, dependencies, identifier, tickets, dataRoot, proofs)
   }
 
-  const { suffices } = await hasSufficientAuthority(dependencies, identifier, ucanDictionary)
+  const { suffices } = await hasSufficientAuthority(dependencies, identifier, tickets)
   const identifierDID = await identifier.did()
 
   if (!suffices) {
@@ -98,12 +98,12 @@ export async function accountVolume<FS>(
     return {
       dataRoot: undefined,
       dataRootUpdater,
-      did: await fileSystemDID(dependencies, identifier, ucanDictionary) || identifierDID,
+      did: await fileSystemDID(dependencies, identifier, tickets) || identifierDID,
     }
   }
 
   // Find account-proof UCAN
-  const accountProof = findAccountProofUCAN(identifierDID, ucanDictionary)
+  const accountProof = findAccountProofUCAN(identifierDID, tickets)
   const username = accountProof ? findUsernameFact(accountProof) : null
 
   if (!username) {
@@ -115,7 +115,7 @@ export async function accountVolume<FS>(
   return {
     dataRoot: await DataRoot.lookup(endpoints, dependencies, username).then(a => a || undefined),
     dataRootUpdater,
-    did: await fileSystemDID(dependencies, identifier, ucanDictionary) || identifierDID,
+    did: await fileSystemDID(dependencies, identifier, tickets) || identifierDID,
   }
 }
 
@@ -123,13 +123,13 @@ export async function otherVolume<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  ucanDictionary: Dictionary,
+  tickets: Inventory,
   username: string
 ): Promise<{
   dataRoot?: CID
   dataRootUpdater: (
     dataRoot: CID,
-    proofs: Ucan.Ucan[]
+    proofs: Ticket[]
   ) => Promise<{ updated: true } | { updated: false; reason: string }>
   did: string
 }> {
@@ -140,7 +140,7 @@ export async function otherVolume<FS>(
   const userDID = await lookupUserDID(endpoints, dependencies.dns, username)
   if (!userDID) throw new Error("User not found")
 
-  const dataRootUpdater = async (dataRoot: CID, proofs: Ucan.Ucan[]) => {
+  const dataRootUpdater = async (dataRoot: CID, proofs: Ticket[]) => {
     // TODO: Add ability to update data root of another user
     //       For this we need the account capability to update the volume pointer.
     throw new Error("Not implemented yet")
@@ -157,16 +157,16 @@ export async function updateDataRoot<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  ucanDictionary: Dictionary,
+  tickets: Inventory,
   dataRoot: CID,
-  proofs: Ucan.Ucan[]
+  proofs: Ticket[]
 ): Promise<{ updated: true } | { updated: false; reason: string }> {
   if (!dependencies.manners.program.online()) {
     return { updated: false, reason: "NO_INTERNET_CONNECTION" }
   }
 
   // Find account-proof UCAN
-  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
+  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
   const username = accountProof ? findUsernameFact(accountProof) : null
 
   if (!username) {
@@ -184,39 +184,39 @@ export async function updateDataRoot<FS>(
 export async function did<FS>(
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  ucanDictionary: Dictionary
+  tickets: Inventory
 ): Promise<string | null> {
   // Find account-proof UCAN
-  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
+  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
 
   // DID is issuer of that username UCAN
   return accountProof
-    ? accountProof.payload.iss
+    ? Ucan.decode(accountProof.token).payload.iss
     : null
 }
 
 export async function fileSystemDID<FS>(
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  ucanDictionary: Dictionary
+  tickets: Inventory
 ) {
   // Find account-proof UCAN
-  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
+  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
 
   // DID is issuer of that username UCAN
   return accountProof
-    ? accountProof.payload.aud
+    ? Ucan.decode(accountProof.token).payload.aud
     : null
 }
 
 export async function hasSufficientAuthority<FS>(
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  ucanDictionary: Dictionary
+  tickets: Inventory
 ): Promise<
   { suffices: true } | { suffices: false; reason: string }
 > {
-  const accountProof = findAccountProofUCAN(await identifier.did(), ucanDictionary)
+  const accountProof = findAccountProofUCAN(await identifier.did(), tickets)
   return accountProof ? { suffices: true } : { suffices: false, reason: "Missing the needed account capabilities" }
 }
 
@@ -230,16 +230,16 @@ export async function hasSufficientAuthority<FS>(
  */
 export function findAccountProofUCAN(
   audience: string,
-  ucanDictionary: Dictionary
-): Ucan.Ucan | null {
-  const matcher = (ucan: Ucan.Ucan) => !!findUsernameFact(ucan)
+  tickets: Inventory
+): Ticket | null {
+  const matcher = (ticket: Ticket) => !!findUsernameFact(ticket)
 
   // Grab the UCANs addressed to this audience (ideally current identifier),
   // then look for the username fact ucan in the delegation chains of those UCANs.
-  return ucanDictionary.lookupByAudience(audience).reduce(
-    (acc: Ucan.Ucan | null, ucan) => {
+  return tickets.lookupByAudience(audience).reduce(
+    (acc: Ticket | null, ticket) => {
       if (acc) return acc
-      return ucanDictionary.descendUntilMatching(ucan, matcher)
+      return tickets.descendUntilMatching(ticket, matcher, Ucan.ticketProofResolver)
     },
     null
   )
@@ -258,17 +258,17 @@ export function findAccountProofUCAN(
  */
 export function findAccountUCAN(
   audience: string,
-  ucanDictionary: Dictionary
+  tickets: Inventory
 ) {
-  const matcher = (ucan: Ucan.Ucan) => !!findUsernameFact(ucan)
+  const matcher = (ticket: Ticket) => !!findUsernameFact(ticket)
 
   // Grab the UCANs addressed to this audience (ideally current identifier),
   // then look for the username fact ucan in the delegation chains of those UCANs.
-  return ucanDictionary.lookupByAudience(audience).reduce(
-    (acc: Ucan.Ucan | null, ucan) => {
+  return tickets.lookupByAudience(audience).reduce(
+    (acc: Ticket | null, ticket) => {
       if (acc) return acc
-      const hasProof = !!ucanDictionary.descendUntilMatching(ucan, matcher)
-      if (hasProof) return ucan
+      const hasProof = !!tickets.descendUntilMatching(ticket, matcher, Ucan.ticketProofResolver)
+      if (hasProof) return ticket
       return null
     },
     null
@@ -278,7 +278,8 @@ export function findAccountUCAN(
 /**
  * Look through the facts of a UCAN and get the username fact.
  */
-export function findUsernameFact(ucan: Ucan.Ucan): string | null {
+export function findUsernameFact(ticket: Ticket): string | null {
+  const ucan = Ucan.decode(ticket.token)
   const fact = (ucan.payload.fct || []).find(f => !!f["username"])
   if (!fact) return null
 

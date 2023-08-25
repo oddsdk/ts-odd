@@ -7,8 +7,8 @@ import * as Unix from "./unix.js"
 
 import { CID } from "../common/cid.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
-import { Dictionary } from "../ucan/dictionary.js"
-import { Ucan } from "../ucan/types.js"
+import { Inventory } from "../ticket/inventory.js"
+import { Ticket } from "../ticket/types.js"
 import { addOrIncreaseNameNumber, pathSegmentsWithoutPartition, searchLatest } from "./common.js"
 import { dataFromBytes, dataToBytes } from "./data.js"
 import { throwNoAccess } from "./errors.js"
@@ -34,7 +34,7 @@ export class TransactionContext<FS> {
   #privateNodes: MountedPrivateNodes
   #rng: Rng
   #rootTree: RootTree
-  #ucanDictionary: Dictionary
+  #tickets: Inventory
 
   #changes: Set<{
     type: MutationType
@@ -49,7 +49,7 @@ export class TransactionContext<FS> {
     privateNodes: MountedPrivateNodes,
     rng: Rng,
     rootTree: RootTree,
-    ucanDictionary: Dictionary
+    tickets: Inventory
   ) {
     this.#blockStore = blockStore
     this.#dependencies = dependencies
@@ -57,7 +57,7 @@ export class TransactionContext<FS> {
     this.#privateNodes = privateNodes
     this.#rng = rng
     this.#rootTree = rootTree
-    this.#ucanDictionary = ucanDictionary
+    this.#tickets = tickets
 
     this.#changes = new Set()
   }
@@ -66,18 +66,18 @@ export class TransactionContext<FS> {
   static async commit<FS>(context: TransactionContext<FS>): Promise<{
     changes: { path: Path.Distinctive<Partitioned<Partition>>; type: MutationType }[]
     privateNodes: MountedPrivateNodes
-    proofs: Ucan[]
+    proofs: Ticket[]
     rootTree: RootTree
   }> {
     const changes = Array.from(context.#changes)
 
     // Proofs
     const proofs = await changes.reduce(
-      async (accPromise: Promise<Ucan[]>, change): Promise<Ucan[]> => {
+      async (accPromise: Promise<Ticket[]>, change): Promise<Ticket[]> => {
         const acc = await accPromise
-        const proof = context.#ucanDictionary.lookupFileSystemUcan(
-          context.#did,
-          change.path
+        const proof = context.#tickets.lookupFileSystemTicket(
+          change.path,
+          context.#did
         )
 
         // Throw error if no write access to this path
