@@ -159,7 +159,7 @@ export async function components(
   const agent = await Agent.implementation({ store: agentStore })
   const identifier = await Identifier.implementation({ store: identifierStore })
   const depot = await Depot.implementation(manners, storage, `${namespace}/blockstore`, endpoints)
-  const authority = Authority.implementation(identifier)
+  const authority = Authority.implementation()
 
   const account = (() => {
     switch (settings?.accountType || "standard") {

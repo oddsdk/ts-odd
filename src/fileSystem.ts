@@ -6,11 +6,11 @@ import * as Path from "./path/index.js"
 import * as CIDLog from "./repositories/cid-log.js"
 
 import { Maybe } from "./common/index.js"
-import { Authority, Storage } from "./components.js"
+import { Authority, Identifier, Storage } from "./components.js"
 import { FileSystem } from "./fs/class.js"
-import { Dependencies } from "./fs/types.js"
+import { Dependencies, FileSystemCarrier } from "./fs/types.js"
 import { Inventory } from "./inventory.js"
-import { Ticket } from "./ticket/types.js"
+import { Names } from "./repositories/names.js"
 
 ////////
 // 🛠️ //
@@ -21,22 +21,53 @@ import { Ticket } from "./ticket/types.js"
  */
 export async function loadFileSystem<P, R>(args: {
   cabinet: Cabinet
-  dataRoot?: CID
-  dataRootUpdater?: (
-    dataRoot: CID,
-    proofs: Ticket[]
-  ) => Promise<{ updated: true } | { updated: false; reason: string }>
+  carrier: FileSystemCarrier
   dependencies: Dependencies<FileSystem> & {
     authority: Authority.Implementation<P, R>
+    identifier: Identifier.Implementation
+    storage: Storage.Implementation
+  }
+  names: Names
+}): Promise<FileSystem> {
+  if (args.carrier.futile) {
+    throw new Error(
+      "Cannot load a file system using a futile carrier. This usually means you're in the middle of an important process in which the file system cannot be loaded yet."
+    )
+  }
+
+  // DID is known, so we expect an existing file system.
+  if ("did" in args.carrier.id) {
+    return loadExisting({
+      ...args,
+      did: args.carrier.id.did,
+    })
+  }
+
+  // DID is unknown, that means a new file system.
+  return createNew({
+    ...args,
+    didName: args.carrier.id.name,
+  })
+}
+
+////////
+// ㊙️ //
+////////
+
+async function loadExisting<P, R>(args: {
+  cabinet: Cabinet
+  carrier: FileSystemCarrier
+  dependencies: Dependencies<FileSystem> & {
+    authority: Authority.Implementation<P, R>
+    identifier: Identifier.Implementation
     storage: Storage.Implementation
   }
   did: string
 }): Promise<FileSystem> {
-  const { cabinet, dataRootUpdater, dependencies, did } = args
+  const { cabinet, carrier, dependencies, did } = args
   const { authority, depot, manners, storage } = dependencies
 
-  let cid: Maybe<CID> = args.dataRoot || null
-  let fs: FileSystem
+  let cid: Maybe<CID> = "dataRoot" in carrier ? carrier.dataRoot || null : null
 
   // Create CIDLog, namespaced by identifier
   const cidLog = await CIDLog.create({ storage, did })
@@ -47,8 +78,11 @@ export async function loadFileSystem<P, R>(args: {
   if (!cid) {
     // No DNS CID yet
     cid = cidLog.newest()
-    if (cid) manners.log("📓 Using local CID:", cid.toString())
-    else manners.log("📓 Creating a new file system")
+    if (cid) {
+      manners.log("📓 Using local CID:", cid.toString())
+    } else {
+      throw new Error(`Expected a file system to exists for the DID: ${did}`)
+    }
   } else if (logIdx === cidLog.length() - 1) {
     // DNS is up to date
     manners.log("📓 DNSLink is up to date:", cid.toString())
@@ -68,37 +102,71 @@ export async function loadFileSystem<P, R>(args: {
     // that are only stored locally.
   }
 
-  // If a file system exists, load it and return it
+  // File system class instance
   const inventory = new Inventory(authority.clerk, cabinet)
-  const updateDataRoot = dataRootUpdater
+  const updateDataRoot = carrier.dataRootUpdater
 
-  if (cid) {
-    await manners.fileSystem.hooks.beforeLoadExisting(cid, depot)
+  await manners.fileSystem.hooks.beforeLoadExisting(cid, depot)
 
-    fs = await FileSystem.fromCID(
-      cid,
-      { cidLog, dependencies, did, inventory, updateDataRoot }
-    )
+  const fs = await FileSystem.fromCID(
+    cid,
+    { cidLog, dependencies, did, inventory, updateDataRoot }
+  )
 
-    // Mount private nodes
-    await Promise.all(
-      (cabinet.accessKeys[fs.did] || []).map(async a => {
-        return fs.mountPrivateNode({
-          path: Path.removePartition(a.path),
-          capsuleKey: a.key,
-        })
+  // Mount private nodes
+  await Promise.all(
+    (cabinet.accessKeys[fs.did] || []).map(async a => {
+      return fs.mountPrivateNode({
+        path: Path.removePartition(a.path),
+        capsuleKey: a.key,
       })
-    )
+    })
+  )
 
-    await manners.fileSystem.hooks.afterLoadExisting(fs, depot)
+  await manners.fileSystem.hooks.afterLoadExisting(fs, depot)
 
-    return fs
+  return fs
+}
+
+async function createNew<P, R>(args: {
+  cabinet: Cabinet
+  carrier: FileSystemCarrier
+  dependencies: Dependencies<FileSystem> & {
+    authority: Authority.Implementation<P, R>
+    identifier: Identifier.Implementation
+    storage: Storage.Implementation
   }
+  didName: string
+  names: Names
+}) {
+  const { cabinet, carrier, dependencies, didName, names } = args
+  const { authority, depot, manners, storage } = dependencies
 
-  // Otherwise make a new one
+  manners.log("📓 Creating a new file system")
+
+  // Self delegate file system UCAN & add stuff to cabinet
+  const fileSystemTicket = await authority.clerk.tickets.fileSystem.origin(
+    Path.root(),
+    await dependencies.identifier.did()
+  )
+
+  await cabinet.addTicket("file_system", fileSystemTicket)
+
+  // The file system DID is the issuer of the initial file system ticket
+  const did = fileSystemTicket.issuer
+
+  await names.add({ name: didName, subject: did })
+
+  // Create CIDLog, namespaced by identifier
+  const cidLog = await CIDLog.create({ storage, did })
+
+  // Create new FileSystem instance
+  const inventory = new Inventory(authority.clerk, cabinet)
+  const updateDataRoot = carrier.dataRootUpdater
+
   await manners.fileSystem.hooks.beforeLoadNew(depot)
 
-  fs = await FileSystem.empty({
+  const fs = await FileSystem.empty({
     cidLog,
     dependencies,
     did,
@@ -107,14 +175,6 @@ export async function loadFileSystem<P, R>(args: {
   })
 
   const maybeMount = await manners.fileSystem.hooks.afterLoadNew(fs, depot)
-
-  // Self delegate file system UCAN & add stuff to cabinet
-  const fileSystemTicket = await authority.clerk.tickets.fileSystem.create(
-    Path.root(),
-    fs.did
-  )
-
-  await cabinet.addTicket("file_system", fileSystemTicket)
 
   if (maybeMount) {
     await cabinet.addAccessKey({

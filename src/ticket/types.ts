@@ -1,6 +1,6 @@
 import { CID } from "../common/cid.js"
 
-const CATEGORIES = ["account", "file_system", "misc"] as const
+const CATEGORIES = ["account", "agent", "file_system"] as const
 
 /**
  * A ticket is a [UCAN](https://github.com/ucan-wg/spec) or UCAN-like token.

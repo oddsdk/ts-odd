@@ -18,22 +18,6 @@ export async function cid(ticket: Ticket): Promise<CID> {
   return CID.createV1(Raw.code, multihash)
 }
 
-export function collectUnique(tickets: Ticket[]): Ticket[] {
-  return tickets.reduce((acc, ticket) => {
-    if (acc.tokens.includes(ticket.token)) {
-      return acc
-    }
-
-    return {
-      tickets: [...acc.tickets, ticket],
-      tokens: [...acc.tokens, ticket.token],
-    }
-  }, {
-    tickets: [] as Ticket[],
-    tokens: [] as string[],
-  }).tickets
-}
-
 export function isTicket(ticket: unknown): ticket is Ticket {
   return isObject(ticket) && isString(ticket.issuer) && isString(ticket.audience) && isString(ticket.token)
 }

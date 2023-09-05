@@ -7,6 +7,7 @@ import { base58btc } from "multiformats/bases/base58"
 import * as Uint8Arrays from "uint8arrays"
 
 import { isBlob, isObject, isString } from "../../../common/type-checks.js"
+import { Names } from "../../../repositories/names.js"
 
 ////////
 // 🏔️️ //

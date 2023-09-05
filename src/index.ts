@@ -20,6 +20,7 @@ import * as AuthorityEvents from "./events/authority.js"
 import * as Events from "./events/program.js"
 import * as Path from "./path/index.js"
 import * as Cabinet from "./repositories/cabinet.js"
+import * as Names from "./repositories/names.js"
 
 import { FileSystemQuery, Query } from "./authority/query.js"
 import { CID } from "./common/cid.js"
@@ -33,8 +34,8 @@ import { ListenTo, listenTo } from "./events/listen.js"
 import { loadFileSystem } from "./fileSystem.js"
 import { FileSystem } from "./fs/class.js"
 import { addSampleData } from "./fs/data/sample.js"
+import { DataRootUpdater, FileSystemCarrier } from "./fs/types.js"
 import { Inventory } from "./inventory.js"
-import { Ticket } from "./ticket/types.js"
 
 ////////////////
 // RE-EXPORTS //
@@ -185,14 +186,7 @@ export type FileSystemCategory = {
    * program.fileSystem.load({ dataRoot: cid, dataRootUpdater: updateFn, did: "did:some-identifier" })
    * ```
    */
-  load: (params: {
-    dataRoot?: CID
-    dataRootUpdater?: (
-      dataRoot: CID,
-      proofs: Ticket[]
-    ) => Promise<{ updated: true } | { updated: false; reason: string }>
-    did: string
-  }) => Promise<FileSystem>
+  load: (params: FileSystemCarrier) => Promise<FileSystem>
 }
 
 /**
@@ -262,6 +256,8 @@ export async function program<
 
   // Create repositories
   const cabinet = await Cabinet.create({ storage: components.storage })
+  const names = await Names.create({ storage: components.storage })
+
   const inventory = new Inventory(components.authority.clerk, cabinet)
 
   cabinet.events.on("collection:changed", async ({ collection }) => {
@@ -278,7 +274,6 @@ export async function program<
     async has(
       query: Query | (Query | Query[])[]
     ): Promise<{ has: true } | { has: false; reason: string }> {
-      const audience = await identifier.did()
       const queries = (Array.isArray(query) ? query : [query]).flat()
 
       // Account access
@@ -304,7 +299,9 @@ export async function program<
       const hasAccessToFsPaths = fsQueries.filter(q => Path.isPartition("private", q.path)).reduce(
         (acc, query) => {
           if (acc === false) return false
-          return cabinet.hasAccessKey(audience, query.path)
+          const did = names.resolveId(query.id)
+          if (!did) return false
+          return cabinet.hasAccessKey(did, query.path)
         },
         true
       )
@@ -332,6 +329,7 @@ export async function program<
         eventEmitter: authorityEmitter,
         inventory,
         queries,
+        names,
       })
     },
 
@@ -351,9 +349,18 @@ export async function program<
       })
 
       if (response) {
-        await cabinet.addTickets("account", response.accountTickets)
-        await cabinet.addTickets("file_system", response.fileSystemTickets)
+        const accountTickets = response.accountTickets.map(i => i.tickets).flat()
+        const fileSystemTickets = response.fileSystemTickets.map(i => i.tickets).flat()
+
+        await cabinet.addTickets("account", accountTickets)
+        await cabinet.addTickets("file_system", fileSystemTickets)
         await cabinet.addAccessKeys(response.accessKeys)
+
+        names.add(
+          Object.entries(response.resolvedNames).map(([k, v]) => {
+            return { name: k, subject: v }
+          })
+        )
 
         await authorityEmitter.emit("request:authorised", { queries: response.authorisedQueries })
         await authorityEmitter.emit("request:authorized", { queries: response.authorisedQueries })
@@ -370,19 +377,8 @@ export async function program<
   // Other categories
   const fileSystemCategory: FileSystemCategory = {
     addSampleData: (fs: FileSystem) => addSampleData(fs),
-    load: async (params: {
-      dataRoot?: CID
-      dataRootUpdater?: (
-        dataRoot: CID,
-        proofs: Ticket[]
-      ) => Promise<{ updated: true } | { updated: false; reason: string }>
-      did: string
-    }) => {
-      const dataRoot = params.dataRoot
-      const dataRootUpdater = params.dataRootUpdater
-      const did = params.did
-
-      return loadFileSystem({ cabinet, dataRoot, dataRootUpdater, dependencies: components, did })
+    load: async (params: FileSystemCarrier) => {
+      return loadFileSystem({ cabinet, names, carrier: params, dependencies: components })
     },
   }
 
@@ -412,10 +408,10 @@ export async function program<
     fileSystem: fileSystemCategory,
 
     account: {
-      register: Auth.register({ account, agent, authority, identifier, cabinet }),
+      register: Auth.register({ account, agent, authority, identifier, cabinet, names }),
       canRegister: account.canRegister,
 
-      ...components.account.annex(identifier, inventory),
+      ...components.account.annex(identifier, inventory, names),
     },
   }
 

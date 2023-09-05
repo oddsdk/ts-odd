@@ -1,8 +1,9 @@
 import * as Fission from "../../../../common/fission.js"
 import * as Ucan from "../../../../ucan/ts-ucan/index.js"
+import * as Identifier from "../../../identifier/implementation.js"
 import * as Common from "./common.js"
 
-import { AccountQuery } from "../../../../authority/query.js"
+import { Names } from "../../../../repositories/names.js"
 import { Ticket } from "../../../../ticket/types.js"
 import { Implementation } from "../../implementation.js"
 import { isUsernameAvailable, isUsernameValid } from "../index.js"
@@ -41,7 +42,6 @@ export async function requestVerificationCode<FS>(
 
   const ucan = await Ucan.build({
     audience: await Fission.did(endpoints, dependencies.dns),
-    // issuer: await Ucan.keyPair(dependencies.agent), FIXME: Should use agent
     issuer: {
       did: () => identifierDID,
       jwtAlg: await dependencies.identifier.ucanAlgorithm(),
@@ -141,8 +141,9 @@ export async function canRegister<FS>(
 export async function register<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
-  formValues: Record<string, string>,
-  identifierTicket: Ticket
+  identifier: Identifier.Implementation,
+  names: Names,
+  formValues: Record<string, string>
 ): Promise<
   | { registered: true; tickets: Ticket[] }
   | { registered: false; reason: string }
@@ -156,9 +157,9 @@ export async function register<FS>(
   }
 
   if (formValues.accountType === "app") {
-    return registerAppAccount(endpoints, dependencies, formValues, identifierTicket)
+    return registerAppAccount(endpoints, dependencies, identifier, names, formValues)
   } else if (formValues.accountType === "verified") {
-    return registerVerifiedAccount(endpoints, dependencies, formValues, identifierTicket)
+    return registerVerifiedAccount(endpoints, dependencies, identifier, names, formValues)
   } else {
     throw new Error("Invalid account type")
   }
@@ -167,8 +168,9 @@ export async function register<FS>(
 async function registerAppAccount<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
-  formValues: Record<string, string>,
-  identifierTicket: Ticket
+  identifier: Identifier.Implementation,
+  names: Names,
+  formValues: Record<string, string>
 ): Promise<
   | { registered: true; tickets: Ticket[] }
   | { registered: false; reason: string }
@@ -179,8 +181,9 @@ async function registerAppAccount<FS>(
 async function registerVerifiedAccount<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
-  formValues: Record<string, string>,
-  identifierTicket: Ticket
+  identifier: Identifier.Implementation,
+  names: Names,
+  formValues: Record<string, string>
 ): Promise<
   | { registered: true; tickets: Ticket[] }
   | { registered: false; reason: string }
@@ -191,13 +194,11 @@ async function registerVerifiedAccount<FS>(
   const token = Ucan.encode(
     await Ucan.build({
       audience: await Fission.did(endpoints, dependencies.dns),
-      // issuer: await Ucan.keyPair(dependencies.agent), FIXME: Should use agent
       issuer: {
         did: () => identifierDID,
         jwtAlg: await dependencies.identifier.ucanAlgorithm(),
         sign: data => dependencies.identifier.sign(data),
       },
-      // proofs: [Ucan.encode(identifierUcan)],
       proofs: [],
       facts: [{ code }],
     })
@@ -244,9 +245,9 @@ export function implementation<FS>(
   const endpoints = optionalEndpoints || Fission.PRODUCTION
 
   return {
-    annex: (identifier, ucanDictionary) => ({
+    annex: (identifier, inventory, names) => ({
       requestVerificationCode: (...args) => requestVerificationCode(endpoints, dependencies, ...args),
-      volume: (...args) => Common.volume(endpoints, dependencies, identifier, ucanDictionary, ...args),
+      volume: (...args) => Common.volume(endpoints, dependencies, identifier, inventory, names, ...args),
     }),
 
     canRegister: (...args) => canRegister(endpoints, dependencies, ...args),

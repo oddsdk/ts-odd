@@ -19,6 +19,7 @@ import { Channel as ChannelType } from "../../../channel.js"
 import { isObject, isString } from "../../../common/type-checks.js"
 import { EventEmitter } from "../../../events/emitter.js"
 import { Inventory } from "../../../inventory.js"
+import { Names } from "../../../repositories/names.js"
 import { Ticket } from "../../../ticket/types.js"
 import {
   CIPHER_TEXT_ENCODING,
@@ -43,6 +44,7 @@ export type ProvideParams<AccountAnnex extends Account.AnnexParentType> = {
   eventEmitter: EventEmitter<Events.Authority>
   inventory: Inventory
   queries: Query.Query[]
+  names: Names
 }
 
 export async function provide<AccountAnnex extends Account.AnnexParentType>(
@@ -126,6 +128,7 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
   challenge: Uint8Array
   dependencies: MessageHandlerParams<AccountAnnex>["dependencies"]
   inventory: Inventory
+  names: Names
 
   constructor(
     params: MessageHandlerParams<AccountAnnex> & {
@@ -137,6 +140,7 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
     this.challenge = params.challenge
     this.dependencies = params.dependencies
     this.inventory = params.inventory
+    this.names = params.names
   }
 
   ////////////////////////
@@ -202,6 +206,8 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
 
     const remoteIdentifierDID = payload.identifier
 
+    console.log(payload)
+
     const queries = payload.queries.map(Query.fromJSON)
     const allContained = queries.every(child => {
       return queries.some(parent => Query.isContained({ parent, child }))
@@ -249,6 +255,8 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
       sign: this.dependencies.identifier.sign,
     }
 
+    const resolvedNames: Record<string, string> = {}
+
     const fsQueries = queries.reduce(
       (acc, q) => q.query === "fileSystem" ? [...acc, q] : acc,
       [] as Query.FileSystemQuery[]
@@ -282,54 +290,76 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
         })
 
         const nested = await Promise.all(promises)
-        return nested.flat()
+        const collectedTickets = nested.flat()
+
+        return {
+          query: q,
+          tickets: collectedTickets,
+        }
       })
 
     const accountTicketsBundles = await Promise.all(accountTicketPromises)
-    const accountTickets = Tickets.collectUnique(accountTicketsBundles.flat())
+    const accountTickets = accountTicketsBundles
 
     const fileSystemTicketPromises = fsQueries
-      .map(q => this.inventory.lookupFileSystemTicket(q.path, q.did))
-      .reduce((acc, a) => a ? [...acc, a] : acc, [] as Ticket[])
-      .map(async t => {
+      .map(query => {
+        const did = this.names.resolveId(query.id)
+        if (!did) return []
+
+        if ("name" in query.id) {
+          resolvedNames[query.id.name] = did
+        }
+
+        const ticket = this.inventory.lookupFileSystemTicket(query.path, did)
+        if (!ticket) return []
+
+        return [{ ticket, query }]
+      })
+      .flat()
+      .map(async item => {
         const ucan = await Ucan.build({
           audience: remoteIdentifierDID,
           issuer: identifierKeyPair,
-          proofs: [(await Tickets.cid(t)).toString()],
+          proofs: [(await Tickets.cid(item.ticket)).toString()],
         })
 
         const ticket = Ucan.toTicket(ucan)
-
-        return this.inventory.bundleTickets(
+        const tickets = this.inventory.bundleTickets(
           ticket,
           Ucan.ticketProofResolver
         )
+
+        return { query: item.query, tickets }
       })
 
     const fileSystemTicketBundles = await Promise.all(fileSystemTicketPromises)
-    const fileSystemTickets = Tickets.collectUnique(fileSystemTicketBundles.flat())
+    const fileSystemTickets = fileSystemTicketBundles
 
     const accessKeys = fsQueries
       .filter(q => Path.isPartition("private", q.path))
-      .map(q => this.inventory.findAccessKey(q.path, q.did))
-      .reduce(
-        (acc, a) => a ? [...acc, a] : acc,
-        [] as AccessKeyWithContext[]
-      )
+      .map(q => {
+        const did = this.names.resolveId(q.id)
+        if (!did) return []
+        const key = this.inventory.findAccessKey(q.path, did)
+        if (!key) return []
+        return [{ query: q, key }]
+      })
+      .flat()
 
     this.sendMessage(
       "query",
       encryptJSONPayload(cipher, {
-        approved: queries.map(Query.toJSON),
         accountTickets,
         fileSystemTickets,
         accessKeys: accessKeys.map(a => {
           return {
-            did: a.did,
-            key: Uint8Arrays.toString(a.key, CIPHER_TEXT_ENCODING),
-            path: Path.toPosix(a.path),
+            did: a.key.did,
+            key: Uint8Arrays.toString(a.key.key, CIPHER_TEXT_ENCODING),
+            query: a.query,
+            path: Path.toPosix(a.key.path),
           }
         }),
+        resolvedNames,
       })
     )
 

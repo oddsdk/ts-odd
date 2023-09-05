@@ -239,43 +239,57 @@ class RequestorSession extends Session {
       !isObject(payload)
       || !Array.isArray(payload.accessKeys)
       || !Array.isArray(payload.accountTickets)
-      || !Array.isArray(payload.approved)
       || !Array.isArray(payload.fileSystemTickets)
       || !payload.accessKeys.every((p: unknown) =>
-        isObject(p) && isString(p.did) && isString(p.key) && isString(p.path)
+        isObject(p) && isString(p.did) && isObject(p.query) && isString(p.key) && isString(p.path)
       )
-      || !payload.accountTickets.every((p: unknown) => isObject(p))
-      || !payload.approved.every((p: unknown) => isString(p) || isObject(p))
-      || !payload.fileSystemTickets.every((p: unknown) => isObject(p))
+      || !payload.accountTickets.every((p: unknown) => isObject(p) && isObject(p.query) && Array.isArray(p.tickets))
+      || !payload.fileSystemTickets.every((p: unknown) => isObject(p) && isObject(p.query) && Array.isArray(p.tickets))
+      || !isObject(payload.resolvedNames)
+      || !Object.values(payload.resolvedNames).every((s: unknown) => isString(s))
     ) {
       return this.earlyExit(`Ignoring queries from ${msg.did}, improperly encoded query approvals.`, payload)
     }
 
-    const accountTickets = payload.accountTickets.reduce(
-      (acc, t) => isTicket(t) ? [...acc, t] : acc,
-      [] as Ticket[]
-    )
+    let authorisedQueries: Query.Query[] = []
 
-    const fileSystemTickets = payload.fileSystemTickets.reduce(
-      (acc, t) => isTicket(t) ? [...acc, t] : acc,
-      [] as Ticket[]
-    )
+    const accountTickets = payload.accountTickets.map(i => {
+      const query = Query.fromJSON(i.query)
+      authorisedQueries.push(query)
+      const tickets: Ticket[] = i.tickets.reduce(
+        (acc: Ticket[], t: unknown) => isTicket(t) ? [...acc, t] : acc,
+        []
+      )
+
+      return { query, tickets }
+    })
+
+    const fileSystemTickets = payload.fileSystemTickets.map(i => {
+      const query = Query.fromJSON(i.query)
+      authorisedQueries.push(query)
+      const tickets: Ticket[] = i.tickets.reduce(
+        (acc: Ticket[], t: unknown) => isTicket(t) ? [...acc, t] : acc,
+        []
+      )
+
+      return { query, tickets }
+    })
 
     const accessKeys = payload.accessKeys.map(a => {
       return {
         did: a.did,
         key: Uint8Arrays.fromString(a.key, CIPHER_TEXT_ENCODING),
+        query: Query.fromJSON(a.query),
         path: Path.fromPosix(a.path),
       }
     })
-
-    const queries = payload.approved.map(q => Query.fromJSON(q))
 
     this.resolve({
       accessKeys,
       accountTickets,
       fileSystemTickets,
-      authorisedQueries: queries,
+      authorisedQueries,
+      resolvedNames: payload.resolvedNames as Record<string, string>,
       requestResponse: {},
     })
 

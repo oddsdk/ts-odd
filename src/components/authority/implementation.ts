@@ -20,9 +20,9 @@ export type Clerk = {
   tickets: {
     fileSystem: {
       /**
-       * Given a root path, create file system ticket.
+       * Given a root path, create the origin file system ticket.
        */
-      create: (path: Path.DistinctivePath<Path.Segments>, audience: string) => Promise<Ticket>
+      origin: (path: Path.DistinctivePath<Path.Segments>, audience: string) => Promise<Ticket>
       /**
        * Given a root path, find a matching file system ticket.
        */
@@ -44,7 +44,8 @@ export type Clerk = {
        */
       identifierToAgentDelegation: (
         identifier: Identifier.Implementation,
-        agent: Agent.Implementation
+        agent: Agent.Implementation,
+        proofs: Ticket[]
       ) => Promise<Ticket>
     }
   }
@@ -56,9 +57,10 @@ export type Clerk = {
 
 export type AuthorityArtefacts<RequestResponse> = {
   accessKeys: AccessKeyWithContext[]
-  accountTickets: Ticket[]
+  accountTickets: { query: Query; tickets: Ticket[] }[]
   authorisedQueries: Query[]
-  fileSystemTickets: Ticket[]
+  fileSystemTickets: { query: Query; tickets: Ticket[] }[]
+  resolvedNames: Record<string, string>
   requestResponse: RequestResponse
 }
 

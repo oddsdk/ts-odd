@@ -1,4 +1,4 @@
-import { isString } from "../common/type-checks.js"
+import { isObject, isString } from "../common/type-checks.js"
 import * as Path from "../path/index.js"
 
 ////////
@@ -22,7 +22,7 @@ export type FileSystemAbility = typeof ALLOWED_FILE_SYSTEM_ABILITIES[number]
 export type FileSystemQuery = {
   query: "fileSystem"
   ability: FileSystemAbility
-  did: string
+  id: { did: string } | { name: string }
   path: Path.Distinctive<Path.Partitioned<Path.Partition>>
 }
 
@@ -35,28 +35,28 @@ export const account: AccountQuery = {
 }
 
 export const fileSystem = {
-  rootAccess(did: string): FileSystemQuery[] {
+  rootAccess(id: { did: string } | { name: string }): FileSystemQuery[] {
     return [{
       query: "fileSystem",
       ability: "*",
-      did,
+      id,
       path: Path.directory("public"),
     }, {
       query: "fileSystem",
       ability: "*",
-      did,
+      id,
       path: Path.directory("private"),
     }]
   },
   limitedAccess(
     ability: typeof ALLOWED_FILE_SYSTEM_ABILITIES[number],
-    did: string,
+    id: { did: string } | { name: string },
     path: Path.Distinctive<Path.Partitioned<Path.Partition>>
   ): FileSystemQuery {
     return {
       query: "fileSystem",
-      did,
       ability,
+      id,
       path,
     }
   },
@@ -77,7 +77,7 @@ export function isContained({ parent, child }: { parent: Query; child: Query }):
       ? true
       : (child.ability === "*" ? false : parent.ability === child.ability)
 
-    const did = parent.did === child.did
+    const id = JSON.stringify(parent.id) === JSON.stringify(child.id)
 
     const unwrappedParentPath = Path.unwrap(parent.path)
     const path = Path.unwrap(child.path).reduce(
@@ -89,7 +89,7 @@ export function isContained({ parent, child }: { parent: Query; child: Query }):
       true
     )
 
-    return ability && did && path
+    return ability && id && path
   }
 
   // ?
@@ -139,14 +139,20 @@ function fileSystemQueryFromJSON(obj: Record<string, unknown>): FileSystemQuery 
     throw new Error(`Expected a path with a partition (private or public), got: ${obj.path}`)
   }
 
-  if (!isString(obj.did)) {
-    throw new Error("Expected a `did` property")
+  if (!isObject(obj.id)) {
+    throw new Error("Expected a `id` object")
   }
+
+  if (!isString(obj.id.did) || !isString(obj.id.name)) {
+    throw new Error("Expected the `id` object to have a `did` or a `name` property")
+  }
+
+  obj.id.did
 
   return {
     query: "fileSystem",
     ability: obj.ability as FileSystemAbility,
-    did: obj.did,
+    id: obj.id.did ? { did: obj.id.did } : { name: obj.id.name },
     path: partitionedPath,
   }
 }
@@ -162,7 +168,7 @@ export function toJSON(query: Query): object {
       return {
         query: query.query,
         ability: query.ability,
-        did: query.did,
+        id: query.id,
         path: Path.toPosix(query.path),
       }
   }

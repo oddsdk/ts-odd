@@ -4,7 +4,7 @@ import * as Storage from "../components/storage/implementation.js"
 import * as Path from "../path/index.js"
 
 import { AccessKeyWithContext } from "../accessKey.js"
-import { CID, decodeCID, encodeCID } from "../common/cid.js"
+import { decodeCID, encodeCID } from "../common/cid.js"
 import { isObject, isString } from "../common/type-checks.js"
 import Repository, { RepositoryOptions } from "../repository.js"
 import { cid as ticketCID } from "../ticket/index.js"

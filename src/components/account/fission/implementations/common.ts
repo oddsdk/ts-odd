@@ -5,10 +5,21 @@ import * as Identifier from "../../../identifier/implementation.js"
 import { AccountQuery } from "../../../../authority/query.js"
 import { CID } from "../../../../common/index.js"
 import { Agent, DNS, Manners } from "../../../../components.js"
+import { FileSystemCarrier } from "../../../../fs/types.js"
 import { Inventory } from "../../../../inventory.js"
+import { Names } from "../../../../repositories/names.js"
 import { Ticket } from "../../../../ticket/types.js"
 import { DataRoot, lookupUserDID } from "../index.js"
 
+////////
+// 🏔️ //
+////////
+
+export const NAMES = {
+  fileSystem(identifierDID: string) {
+    return `ACCOUNT_FILE_SYSTEM_DID#${identifierDID}`
+  },
+}
 ////////
 // 🧩 //
 ////////
@@ -20,14 +31,7 @@ export type Annex = {
    * This method can be used to load a local-only file system before an account is registered.
    * When you register an account, the file system will sync with the Fission server, making it available through Fission IPFS nodes.
    */
-  volume: (username?: string) => Promise<{
-    dataRoot?: CID
-    dataRootUpdater: (
-      dataRoot: CID,
-      proofs: Ticket[]
-    ) => Promise<{ updated: true } | { updated: false; reason: string }>
-    did: string
-  }>
+  volume: (username?: string) => Promise<FileSystemCarrier>
 }
 
 export type Dependencies<FS> = {
@@ -37,31 +41,26 @@ export type Dependencies<FS> = {
   manners: Manners.Implementation<FS>
 }
 
-///////////////
-// DATA ROOT //
-///////////////
+/////////////////
+// FILE SYSTEM //
+/////////////////
 
 export async function volume<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  tickets: Inventory,
+  inventory: Inventory,
+  names: Names,
   username?: string
-): Promise<{
-  dataRoot?: CID
-  dataRootUpdater: (
-    dataRoot: CID,
-    proofs: Ticket[]
-  ) => Promise<{ updated: true } | { updated: false; reason: string }>
-  did: string
-}> {
-  const accountProof = findAccountProofTicket(await identifier.did(), tickets)
+): Promise<FileSystemCarrier> {
+  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
   const accountUsername = accountProof ? findUsernameFact(accountProof) : null
 
   if (username && username !== accountUsername) {
-    return otherVolume(endpoints, dependencies, identifier, tickets, username)
+    throw new Error("Loading a volume of another user is currently disabled")
+    // TODO: return otherVolume(endpoints, dependencies, identifier, inventory, username)
   } else {
-    return accountVolume(endpoints, dependencies, identifier, tickets)
+    return accountVolume(endpoints, dependencies, identifier, inventory, names)
   }
 }
 
@@ -69,42 +68,53 @@ export async function accountVolume<FS>(
   endpoints: Fission.Endpoints,
   dependencies: Dependencies<FS>,
   identifier: Identifier.Implementation,
-  tickets: Inventory
-): Promise<{
-  dataRoot?: CID
-  dataRootUpdater: (
-    dataRoot: CID,
-    proofs: Ticket[]
-  ) => Promise<{ updated: true } | { updated: false; reason: string }>
-  did: string
-}> {
+  inventory: Inventory,
+  names: Names
+): Promise<FileSystemCarrier> {
   const dataRootUpdater = async (dataRoot: CID, proofs: Ticket[]) => {
-    const { suffices } = await hasSufficientAuthority(dependencies, identifier, tickets)
+    const { suffices } = await hasSufficientAuthority(dependencies, identifier, inventory)
     if (!suffices) return { updated: false, reason: "Not authenticated yet, lacking authority." }
-    return updateDataRoot(endpoints, dependencies, identifier, tickets, dataRoot, proofs)
+    return updateDataRoot(endpoints, dependencies, identifier, inventory, dataRoot, proofs)
   }
 
-  const { suffices } = await hasSufficientAuthority(dependencies, identifier, tickets)
+  const { suffices } = await hasSufficientAuthority(dependencies, identifier, inventory)
   const identifierDID = await identifier.did()
 
   if (!suffices) {
-    return {
-      dataRoot: undefined,
-      dataRootUpdater,
-      did: identifierDID,
-    }
+    const name = NAMES.fileSystem(identifierDID)
+    const did = names.subject(name)
+
+    console.log(name, did)
+
+    return did
+      ? { dataRootUpdater, id: { did } }
+      : { dataRootUpdater, id: { name } }
+  }
+
+  // Find account-proof UCAN
+  const accountProof = findAccountProofTicket(identifierDID, inventory)
+
+  if (!accountProof) {
+    throw new Error("Expected to find account proof")
+  }
+
+  const name = NAMES.fileSystem(accountProof.audience)
+  const did = names.subject(name)
+
+  if (!did) {
+    // futile, because a file system should not be loaded in this state.
+    return { dataRootUpdater, futile: true, id: { name } }
   }
 
   if (!dependencies.manners.program.online()) {
     return {
       dataRoot: undefined,
       dataRootUpdater,
-      did: await fileSystemDID(dependencies, identifier, tickets) || identifierDID,
+      id: { did },
     }
   }
 
-  // Find account-proof UCAN
-  const accountProof = findAccountProofTicket(identifierDID, tickets)
+  // TODO: Keep username in `names` as well
   const username = accountProof ? findUsernameFact(accountProof) : null
 
   if (!username) {
@@ -116,43 +126,39 @@ export async function accountVolume<FS>(
   return {
     dataRoot: await DataRoot.lookup(endpoints, dependencies, username).then(a => a || undefined),
     dataRootUpdater,
-    did: await fileSystemDID(dependencies, identifier, tickets) || identifierDID,
+    id: { did },
   }
 }
 
-export async function otherVolume<FS>(
-  endpoints: Fission.Endpoints,
-  dependencies: Dependencies<FS>,
-  identifier: Identifier.Implementation,
-  inventory: Inventory,
-  username: string
-): Promise<{
-  dataRoot?: CID
-  dataRootUpdater: (
-    dataRoot: CID,
-    proofs: Ticket[]
-  ) => Promise<{ updated: true } | { updated: false; reason: string }>
-  did: string
-}> {
-  if (!dependencies.manners.program.online()) {
-    throw new Error("Cannot load another user's volume while offline")
-  }
-
-  const userDID = await lookupUserDID(endpoints, dependencies.dns, username)
-  if (!userDID) throw new Error("User not found")
-
-  const dataRootUpdater = async (dataRoot: CID, proofs: Ticket[]) => {
-    // TODO: Add ability to update data root of another user
-    //       For this we need the account capability to update the volume pointer.
-    throw new Error("Not implemented yet")
-  }
-
-  return {
-    dataRoot: await DataRoot.lookup(endpoints, dependencies, username).then(a => a || undefined),
-    dataRootUpdater,
-    did: userDID,
-  }
-}
+// TODO: Disabled because it isn't using the correct DID
+//
+// export async function otherVolume<FS>(
+//   endpoints: Fission.Endpoints,
+//   dependencies: Dependencies<FS>,
+//   identifier: Identifier.Implementation,
+//   inventory: Inventory,
+//   username: string
+// ): Promise<FileSystemCarrier> {
+//   if (!dependencies.manners.program.online()) {
+//     throw new Error("Cannot load another user's volume while offline")
+//   }
+//
+//   const userDID = await lookupUserDID(endpoints, dependencies.dns, username)
+//   if (!userDID) throw new Error("User not found")
+//
+//   const dataRootUpdater = async (dataRoot: CID, proofs: Ticket[]) => {
+//     // TODO: Add ability to update data root of another user
+//     //       For this we need the account capability to update the volume pointer.
+//     throw new Error("Not implemented yet")
+//   }
+//
+//   return {
+//     dataRoot: await DataRoot.lookup(endpoints, dependencies, username).then(a => a || undefined),
+//     dataRootUpdater,
+//     // FIXME: This DID is not correct!
+//     did: userDID,
+//   }
+// }
 
 export async function updateDataRoot<FS>(
   endpoints: Fission.Endpoints,
@@ -273,16 +279,16 @@ export function findAccountProofTicket(
  */
 export function findAccountTicket(
   audience: string,
-  tickets: Inventory
+  inventory: Inventory
 ): Ticket | null {
   const matcher = (ticket: Ticket) => !!findUsernameFact(ticket)
 
   // Grab the UCANs addressed to this audience (ideally current identifier),
   // then look for the username fact ucan in the delegation chains of those UCANs.
-  return tickets.lookupTicketByAudience(audience).reduce(
+  return inventory.lookupTicketByAudience(audience).reduce(
     (acc: Ticket | null, ticket) => {
       if (acc) return acc
-      const hasProof = !!tickets.descendUntilMatchingTicket(ticket, matcher, Ucan.ticketProofResolver)
+      const hasProof = !!inventory.descendUntilMatchingTicket(ticket, matcher, Ucan.ticketProofResolver)
       if (hasProof) return ticket
       return null
     },

@@ -5,6 +5,7 @@ import * as Path from "../path/index.js"
 
 import { CID } from "../common/cid.js"
 import { Partition, Partitioned } from "../path/index.js"
+import { Ticket } from "../ticket/types.js"
 
 ////////
 // 🧩 //
@@ -28,6 +29,12 @@ export type DataForType<D extends DataType, V = unknown> = D extends "bytes" ? U
   : D extends "utf8" ? string
   : never
 
+/** @group File System */
+export type DataRootUpdater = (
+  dataRoot: CID,
+  proofs: Ticket[]
+) => Promise<{ updated: true } | { updated: false; reason: string }>
+
 /** @internal */
 export type Dependencies<FS> = {
   depot: Depot.Implementation
@@ -44,6 +51,14 @@ export type DirectoryItem = {
 export type DirectoryItemWithKind = DirectoryItem & {
   kind: Path.Kind
   path: Path.Distinctive<Path.PartitionedNonEmpty<Partition>>
+}
+
+/** @group File System */
+export type FileSystemCarrier = {
+  dataRoot?: CID
+  dataRootUpdater?: DataRootUpdater
+  futile?: boolean
+  id: { did: string } | { name: string }
 }
 
 /** @group File System */

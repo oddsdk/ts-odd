@@ -22,6 +22,7 @@ import {
   AnySupportedDataType,
   DataForType,
   DataRootChange,
+  DataRootUpdater,
   DataType,
   Dependencies,
   DirectoryItem,
@@ -42,7 +43,7 @@ export type FileSystemOptions<FS> = {
   did: string
   inventory: Inventory
   settleTimeBeforePublish?: number
-  updateDataRoot?: (dataRoot: CID, proofs: Ticket[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+  updateDataRoot?: DataRootUpdater
 }
 
 /** @group File System */
@@ -54,7 +55,7 @@ export class FileSystem {
   #inventory: Inventory
   #rootTree: RootTree.RootTree
   #settleTimeBeforePublish: number
-  #updateDataRoot?: (dataRoot: CID, proofs: Ticket[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+  #updateDataRoot?: DataRootUpdater
 
   #privateNodes: MountedPrivateNodes = {}
   #rng: Rng.Rng

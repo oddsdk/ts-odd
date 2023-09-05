@@ -62,7 +62,7 @@ export async function components(
   const identifier = await Identifier.implementation({ store: identifierStore })
   const manners = Manners.implementation(config)
   const account = Account.implementation()
-  const authority = Authority.implementation(identifier)
+  const authority = Authority.implementation()
 
   // Fin
   return {

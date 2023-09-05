@@ -1,5 +1,6 @@
 import { AccountQuery } from "../../authority/query.js"
 import { Inventory } from "../../inventory.js"
+import { Names } from "../../repositories/names.js"
 import { Ticket } from "../../ticket/types.js"
 import * as Identifier from "../identifier/implementation.js"
 
@@ -13,7 +14,7 @@ export type Implementation<Annex extends AnnexParentType> = {
   /**
    * Additional methods you want to be part of `program.account`
    */
-  annex: (identifier: Identifier.Implementation, inventory: Inventory) => Annex
+  annex: (identifier: Identifier.Implementation, inventory: Inventory, names: Names) => Annex
 
   // CREATION
 
@@ -27,7 +28,11 @@ export type Implementation<Annex extends AnnexParentType> = {
   /**
    * How to register an account with this account system.
    */
-  register: (formValues: Record<string, string>, identifierTicket: Ticket) => Promise<
+  register: (
+    identifier: Identifier.Implementation,
+    names: Names,
+    formValues: Record<string, string>
+  ) => Promise<
     { registered: true; tickets: Ticket[] } | { registered: false; reason: string }
   >
 
@@ -36,7 +41,10 @@ export type Implementation<Annex extends AnnexParentType> = {
   /**
    * The DID associated with this account.
    */
-  did(identifier: Identifier.Implementation, inventory: Inventory): Promise<string | null>
+  did(
+    identifier: Identifier.Implementation,
+    inventory: Inventory
+  ): Promise<string | null>
 
   /**
    * Check if we have everything we need (eg. capabilities) regarding the account.
