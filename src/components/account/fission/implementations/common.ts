@@ -20,6 +20,7 @@ export const NAMES = {
     return `ACCOUNT_FILE_SYSTEM_DID#${identifierDID}`
   },
 }
+
 ////////
 // 🧩 //
 ////////
@@ -53,7 +54,7 @@ export async function volume<FS>(
   names: Names,
   username?: string
 ): Promise<FileSystemCarrier> {
-  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
+  const accountProof = findAccountProofTicket(identifier.did(), inventory)
   const accountUsername = accountProof ? findUsernameFact(accountProof) : null
 
   if (username && username !== accountUsername) {
@@ -78,13 +79,11 @@ export async function accountVolume<FS>(
   }
 
   const { suffices } = await hasSufficientAuthority(dependencies, identifier, inventory)
-  const identifierDID = await identifier.did()
+  const identifierDID = identifier.did()
 
   if (!suffices) {
     const name = NAMES.fileSystem(identifierDID)
     const did = names.subject(name)
-
-    console.log(name, did)
 
     return did
       ? { dataRootUpdater, id: { did } }
@@ -173,7 +172,7 @@ export async function updateDataRoot<FS>(
   }
 
   // Find account-proof UCAN
-  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
+  const accountProof = findAccountProofTicket(identifier.did(), inventory)
   const username = accountProof ? findUsernameFact(accountProof) : null
 
   if (!username) {
@@ -194,7 +193,7 @@ export async function did<FS>(
   inventory: Inventory
 ): Promise<string | null> {
   // Find account-proof UCAN
-  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
+  const accountProof = findAccountProofTicket(identifier.did(), inventory)
 
   // DID is issuer of that username UCAN
   return accountProof
@@ -208,7 +207,7 @@ export async function fileSystemDID<FS>(
   inventory: Inventory
 ) {
   // Find account-proof UCAN
-  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
+  const accountProof = findAccountProofTicket(identifier.did(), inventory)
 
   // DID is issuer of that username UCAN
   return accountProof
@@ -223,7 +222,7 @@ export async function hasSufficientAuthority<FS>(
 ): Promise<
   { suffices: true } | { suffices: false; reason: string }
 > {
-  const accountProof = findAccountProofTicket(await identifier.did(), inventory)
+  const accountProof = findAccountProofTicket(identifier.did(), inventory)
   return accountProof ? { suffices: true } : { suffices: false, reason: "Missing the needed account capabilities" }
 }
 
@@ -233,7 +232,7 @@ export async function provideAuthority(
   inventory: Inventory
 ): Promise<Ticket[]> {
   const maybeTicket = findAccountTicket(
-    await identifier.did(),
+    identifier.did(),
     inventory
   )
 
@@ -257,7 +256,7 @@ export function findAccountProofTicket(
 
   // Grab the UCANs addressed to this audience (ideally current identifier),
   // then look for the username fact ucan in the delegation chains of those UCANs.
-  return inventory.lookupTicketByAudience(audience).reduce(
+  return inventory.lookupTicketsByAudience(audience).reduce(
     (acc: Ticket | null, ticket) => {
       if (acc) return acc
       return inventory.descendUntilMatchingTicket(ticket, matcher, Ucan.ticketProofResolver)
@@ -285,7 +284,7 @@ export function findAccountTicket(
 
   // Grab the UCANs addressed to this audience (ideally current identifier),
   // then look for the username fact ucan in the delegation chains of those UCANs.
-  return inventory.lookupTicketByAudience(audience).reduce(
+  return inventory.lookupTicketsByAudience(audience).reduce(
     (acc: Ticket | null, ticket) => {
       if (acc) return acc
       const hasProof = !!inventory.descendUntilMatchingTicket(ticket, matcher, Ucan.ticketProofResolver)

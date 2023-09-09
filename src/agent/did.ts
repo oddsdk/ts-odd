@@ -9,7 +9,7 @@ import * as Agent from "../components/agent/implementation.js"
  */
 export async function exchange(agent: Agent.Implementation): Promise<string> {
   const pubKey = await agent.exchangeKey().then(exportPublicKey).then(spki.decode)
-  const ksAlg = await agent.keyAlgorithm()
+  const ksAlg = agent.keyAlgorithm()
 
   return DIDKey.fromPublicKey(ksAlg, pubKey).toString()
 }
@@ -24,7 +24,7 @@ export { exchange as sharing }
  */
 export async function signing(agent: Agent.Implementation): Promise<string> {
   const pubKey = await agent.signingKey().then(exportPublicKey).then(spki.decode)
-  const ksAlg = await agent.keyAlgorithm()
+  const ksAlg = agent.keyAlgorithm()
 
   return DIDKey.fromPublicKey(ksAlg, pubKey).toString()
 }

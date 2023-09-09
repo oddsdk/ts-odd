@@ -143,16 +143,16 @@ function fileSystemQueryFromJSON(obj: Record<string, unknown>): FileSystemQuery 
     throw new Error("Expected a `id` object")
   }
 
-  if (!isString(obj.id.did) || !isString(obj.id.name)) {
+  if (!isString(obj.id.did) && !isString(obj.id.name)) {
     throw new Error("Expected the `id` object to have a `did` or a `name` property")
   }
-
-  obj.id.did
 
   return {
     query: "fileSystem",
     ability: obj.ability as FileSystemAbility,
-    id: obj.id.did ? { did: obj.id.did } : { name: obj.id.name },
+    id: isString(obj.id.did)
+      ? { did: obj.id.did }
+      : { name: obj.id.name as string },
     path: partitionedPath,
   }
 }

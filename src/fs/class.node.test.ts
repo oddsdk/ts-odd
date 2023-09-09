@@ -6,7 +6,16 @@ import * as Cabinet from "../repositories/cabinet.js"
 import * as CIDLog from "../repositories/cid-log.js"
 import * as Unix from "./unix.js"
 
-import { account, agent, authority, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
+import {
+  account,
+  agent,
+  authority,
+  clerk,
+  depot,
+  identifier,
+  manners,
+  storage,
+} from "../../tests/helpers/components.js"
 import { CID } from "../common/cid.js"
 import { Inventory } from "../inventory.js"
 import { Ticket } from "../ticket/types.js"
@@ -24,15 +33,21 @@ describe("File System Class", async () => {
     settleTimeBeforePublish: 250,
   }
 
+  const fsTicket = await clerk.tickets.fileSystem.origin(
+    Path.root(),
+    identifier.did()
+  )
+
+  const did = fsTicket.issuer
+
   // HOOKS
   // -----
 
   beforeEach(async () => {
-    const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
 
     const cabinet = await Cabinet.create({ storage })
-    const inventory = new Inventory(authority.clerk, cabinet)
+    const inventory = new Inventory(clerk, cabinet)
 
     const updateDataRoot = async (
       dataRoot: CID,
@@ -49,10 +64,8 @@ describe("File System Class", async () => {
 
     await cabinet.addTicket(
       "file_system",
-      await authority.clerk.tickets.fileSystem.create(
-        Path.root(),
-        did
-      )
+      fsTicket,
+      clerk.tickets.cid
     )
   })
 
@@ -73,11 +86,9 @@ describe("File System Class", async () => {
       "public"
     )
 
-    const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
-
     const cabinet = await Cabinet.create({ storage })
-    const inventory = new Inventory(authority.clerk, cabinet)
+    const inventory = new Inventory(clerk, cabinet)
 
     const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, inventory })
     await loadedFs.mountPrivateNodes([
@@ -101,11 +112,9 @@ describe("File System Class", async () => {
     const { dataRoot } = await fs.write(Path.file("private", "part.two"), "utf8", "private-2")
     const capsuleKey = await fs.capsuleKey(Path.directory("private"))
 
-    const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
-
     const cabinet = await Cabinet.create({ storage })
-    const inventory = new Inventory(authority.clerk, cabinet)
+    const inventory = new Inventory(clerk, cabinet)
 
     const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, inventory })
 
@@ -125,11 +134,9 @@ describe("File System Class", async () => {
     const privatePath = Path.file("private", "nested-private", "private.txt")
     const oldCapsuleKey = await fs.capsuleKey(Path.directory("private"))
 
-    const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
-
     const cabinet = await Cabinet.create({ storage })
-    const inventory = new Inventory(authority.clerk, cabinet)
+    const inventory = new Inventory(clerk, cabinet)
 
     const { dataRoot } = await fs.write(privatePath, "utf8", "private")
     const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, inventory })

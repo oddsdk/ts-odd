@@ -15,7 +15,7 @@ export type Implementation = {
   /**
    * DID associated with this agent.
    */
-  did: () => Promise<string>
+  did: () => string
 
   /**
    * Decrypt something with the exchange key.
@@ -35,10 +35,10 @@ export type Implementation = {
   /**
    * The algorithm of the signing key.
    */
-  keyAlgorithm: () => Promise<KeyType>
+  keyAlgorithm: () => KeyType
 
   /**
    * The JWT algorithm string for agent UCANs.
    */
-  ucanAlgorithm: () => Promise<SignatureAlgorithm>
+  ucanAlgorithm: () => SignatureAlgorithm
 }

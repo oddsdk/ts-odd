@@ -2,14 +2,14 @@
  * Documentation for `@oddjs/odd`.
  *
  * ```
- * import * as fission from "@oddjs/odd/compositions/fission"
+ * import * as local from "@oddjs/odd/compositions/local"
  * import * as odd from "@oddjs/odd"
  *
  * const config = { namespace: "odd-example" }
  *
  * odd.program(
  *   config,
- *   await fission.components(config)
+ *   await local.components(config)
  * )
  * ```
  * @module odd
@@ -23,7 +23,6 @@ import * as Cabinet from "./repositories/cabinet.js"
 import * as Names from "./repositories/names.js"
 
 import { FileSystemQuery, Query } from "./authority/query.js"
-import { CID } from "./common/cid.js"
 import { Account } from "./components.js"
 import { Components } from "./components.js"
 import { AnnexParentType } from "./components/account/implementation.js"
@@ -34,7 +33,7 @@ import { ListenTo, listenTo } from "./events/listen.js"
 import { loadFileSystem } from "./fileSystem.js"
 import { FileSystem } from "./fs/class.js"
 import { addSampleData } from "./fs/data/sample.js"
-import { DataRootUpdater, FileSystemCarrier } from "./fs/types.js"
+import { FileSystemCarrier } from "./fs/types.js"
 import { Inventory } from "./inventory.js"
 
 ////////////////
@@ -44,22 +43,23 @@ import { Inventory } from "./inventory.js"
 export * from "./appInfo.js"
 export * from "./common/types.js"
 export * from "./common/version.js"
+export * from "./components.js"
 export * from "./configuration.js"
 export * from "./fs/types.js"
 
-export * as Components from "./components.js"
-
 export * as authority from "./authority/query.js"
+export * as channel from "./channel.js"
 export * as events from "./events/index.js"
 export * as path from "./path/index.js"
 
-export { Channel, ChannelData, ChannelOptions } from "./channel.js"
 export { CID, decodeCID, encodeCID } from "./common/cid.js"
+export { Components } from "./components.js"
 export { RequestOptions } from "./components/authority/implementation.js"
 export { CodecIdentifier } from "./dag/codecs.js"
 export { FileSystem } from "./fs/class.js"
 export { TransactionContext } from "./fs/transaction.js"
 export { Inventory } from "./inventory.js"
+export { Names } from "./repositories/names.js"
 export { Ticket } from "./ticket/types.js"
 
 ///////////////////////
@@ -244,7 +244,7 @@ export async function program<
     AuthorityRequestResponse
   >
 > {
-  const { account, agent, authority, channel, identifier } = components
+  const { account, agent, authority, channel, clerk, identifier } = components
 
   // Is supported?
   await Promise.all(
@@ -258,7 +258,7 @@ export async function program<
   const cabinet = await Cabinet.create({ storage: components.storage })
   const names = await Names.create({ storage: components.storage })
 
-  const inventory = new Inventory(components.authority.clerk, cabinet)
+  const inventory = new Inventory(components.clerk, cabinet)
 
   cabinet.events.on("collection:changed", async ({ collection }) => {
     // TODO: emit authority:inventory-changed event
@@ -324,6 +324,7 @@ export async function program<
         dependencies: {
           account,
           channel,
+          clerk,
           identifier,
         },
         eventEmitter: authorityEmitter,
@@ -352,11 +353,26 @@ export async function program<
         const accountTickets = response.accountTickets.map(i => i.tickets).flat()
         const fileSystemTickets = response.fileSystemTickets.map(i => i.tickets).flat()
 
-        await cabinet.addTickets("account", accountTickets)
-        await cabinet.addTickets("file_system", fileSystemTickets)
+        await cabinet.addTickets("account", accountTickets, clerk.tickets.cid)
+        await cabinet.addTickets("file_system", fileSystemTickets, clerk.tickets.cid)
         await cabinet.addAccessKeys(response.accessKeys)
 
-        names.add(
+        const identifierAccountTickets = accountTickets.filter(
+          t => t.audience === identifier.did()
+        )
+
+        if (identifierAccountTickets.length) {
+          // Do delegation from identifier to agent
+          const agentDelegation = await clerk.tickets.misc.identifierToAgentDelegation(
+            identifier,
+            agent,
+            identifierAccountTickets
+          )
+
+          await cabinet.addTicket("agent", agentDelegation, clerk.tickets.cid)
+        }
+
+        await names.add(
           Object.entries(response.resolvedNames).map(([k, v]) => {
             return { name: k, subject: v }
           })
@@ -408,7 +424,7 @@ export async function program<
     fileSystem: fileSystemCategory,
 
     account: {
-      register: Auth.register({ account, agent, authority, identifier, cabinet, names }),
+      register: Auth.register({ account, agent, clerk, identifier, cabinet, names }),
       canRegister: account.canRegister,
 
       ...components.account.annex(identifier, inventory, names),

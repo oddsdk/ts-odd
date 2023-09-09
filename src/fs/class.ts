@@ -693,7 +693,7 @@ export class FileSystem {
     async (args: [dataRoot: CID, proofs: Ticket[]][]): Promise<PublishingStatus[]> => {
       const [dataRoot, proofs] = args[args.length - 1]
 
-      await this.#dependencies.depot.flush(dataRoot, proofs)
+      await this.#dependencies.depot.flush(dataRoot, proofs, this.#inventory)
 
       let status: PublishingStatus
 

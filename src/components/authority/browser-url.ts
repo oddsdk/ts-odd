@@ -1,6 +1,5 @@
 import * as Provider from "./browser-url/provider.js"
 import * as Requestor from "./browser-url/requestor.js"
-import * as DefaultClerk from "./clerk/default.js"
 
 import { ProvideResponse, RequestResponse } from "./browser-url/common.js"
 import { Implementation } from "./implementation.js"
@@ -17,6 +16,5 @@ export function implementation(): Implementation<ProvideResponse, RequestRespons
   return {
     provide: Provider.provide,
     request: Requestor.request,
-    clerk: DefaultClerk.implementation(),
   }
 }

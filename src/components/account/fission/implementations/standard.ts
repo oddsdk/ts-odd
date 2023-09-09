@@ -38,7 +38,7 @@ export async function requestVerificationCode<FS>(
   }
 
   email = email.trim()
-  const identifierDID = await dependencies.identifier.did()
+  const identifierDID = dependencies.identifier.did()
 
   const ucan = await Ucan.build({
     audience: await Fission.did(endpoints, dependencies.dns),
@@ -189,7 +189,7 @@ async function registerVerifiedAccount<FS>(
   | { registered: false; reason: string }
 > {
   const code = formValues.code.trim()
-  const identifierDID = await dependencies.identifier.did()
+  const identifierDID = dependencies.identifier.did()
 
   const token = Ucan.encode(
     await Ucan.build({

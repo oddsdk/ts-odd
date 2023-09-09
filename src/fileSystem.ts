@@ -6,7 +6,7 @@ import * as Path from "./path/index.js"
 import * as CIDLog from "./repositories/cid-log.js"
 
 import { Maybe } from "./common/index.js"
-import { Authority, Identifier, Storage } from "./components.js"
+import { Clerk, Identifier, Storage } from "./components.js"
 import { FileSystem } from "./fs/class.js"
 import { Dependencies, FileSystemCarrier } from "./fs/types.js"
 import { Inventory } from "./inventory.js"
@@ -19,11 +19,11 @@ import { Names } from "./repositories/names.js"
 /**
  * Load a file system.
  */
-export async function loadFileSystem<P, R>(args: {
+export async function loadFileSystem(args: {
   cabinet: Cabinet
   carrier: FileSystemCarrier
   dependencies: Dependencies<FileSystem> & {
-    authority: Authority.Implementation<P, R>
+    clerk: Clerk.Implementation
     identifier: Identifier.Implementation
     storage: Storage.Implementation
   }
@@ -54,18 +54,18 @@ export async function loadFileSystem<P, R>(args: {
 // ㊙️ //
 ////////
 
-async function loadExisting<P, R>(args: {
+async function loadExisting(args: {
   cabinet: Cabinet
   carrier: FileSystemCarrier
   dependencies: Dependencies<FileSystem> & {
-    authority: Authority.Implementation<P, R>
+    clerk: Clerk.Implementation
     identifier: Identifier.Implementation
     storage: Storage.Implementation
   }
   did: string
 }): Promise<FileSystem> {
   const { cabinet, carrier, dependencies, did } = args
-  const { authority, depot, manners, storage } = dependencies
+  const { clerk, depot, manners, storage } = dependencies
 
   let cid: Maybe<CID> = "dataRoot" in carrier ? carrier.dataRoot || null : null
 
@@ -103,7 +103,7 @@ async function loadExisting<P, R>(args: {
   }
 
   // File system class instance
-  const inventory = new Inventory(authority.clerk, cabinet)
+  const inventory = new Inventory(clerk, cabinet)
   const updateDataRoot = carrier.dataRootUpdater
 
   await manners.fileSystem.hooks.beforeLoadExisting(cid, depot)
@@ -128,11 +128,11 @@ async function loadExisting<P, R>(args: {
   return fs
 }
 
-async function createNew<P, R>(args: {
+async function createNew(args: {
   cabinet: Cabinet
   carrier: FileSystemCarrier
   dependencies: Dependencies<FileSystem> & {
-    authority: Authority.Implementation<P, R>
+    clerk: Clerk.Implementation
     identifier: Identifier.Implementation
     storage: Storage.Implementation
   }
@@ -140,17 +140,17 @@ async function createNew<P, R>(args: {
   names: Names
 }) {
   const { cabinet, carrier, dependencies, didName, names } = args
-  const { authority, depot, manners, storage } = dependencies
+  const { clerk, depot, manners, storage } = dependencies
 
   manners.log("📓 Creating a new file system")
 
   // Self delegate file system UCAN & add stuff to cabinet
-  const fileSystemTicket = await authority.clerk.tickets.fileSystem.origin(
+  const fileSystemTicket = await clerk.tickets.fileSystem.origin(
     Path.root(),
-    await dependencies.identifier.did()
+    dependencies.identifier.did()
   )
 
-  await cabinet.addTicket("file_system", fileSystemTicket)
+  await cabinet.addTicket("file_system", fileSystemTicket, clerk.tickets.cid)
 
   // The file system DID is the issuer of the initial file system ticket
   const did = fileSystemTicket.issuer
@@ -161,7 +161,7 @@ async function createNew<P, R>(args: {
   const cidLog = await CIDLog.create({ storage, did })
 
   // Create new FileSystem instance
-  const inventory = new Inventory(authority.clerk, cabinet)
+  const inventory = new Inventory(clerk, cabinet)
   const updateDataRoot = carrier.dataRootUpdater
 
   await manners.fileSystem.hooks.beforeLoadNew(depot)

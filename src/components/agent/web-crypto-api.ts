@@ -62,13 +62,13 @@ export async function implementation(
   return {
     exchangeKey: () => Promise.resolve(exchangeKey),
     signingKey: () => Promise.resolve(signingKey),
-    did: async () => DIDKey.fromPublicKey("RSA", exportedKey).toString(),
+    did: () => DIDKey.fromPublicKey("RSA", exportedKey).toString(),
 
     decrypt: data => decrypt(data, exchangeKey.privateKey),
     encrypt: data => encrypt(data, exchangeKey.publicKey),
     sign: data => sign(data, signingKey),
 
-    keyAlgorithm: () => Promise.resolve("RSA"),
-    ucanAlgorithm: () => Promise.resolve("RS256"),
+    keyAlgorithm: () => "RSA",
+    ucanAlgorithm: () => "RS256",
   }
 }

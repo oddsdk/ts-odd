@@ -39,10 +39,6 @@ export const close = (socket: WebSocket): () => void => {
 
 export const publish = (socket: WebSocket): (data: ChannelData) => void => {
   return function(data: ChannelData) {
-    const binary = typeof data === "string"
-      ? new TextEncoder().encode(data).buffer
-      : data
-
-    socket.send(binary)
+    socket.send(data)
   }
 }

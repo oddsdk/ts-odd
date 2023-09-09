@@ -10,7 +10,7 @@ import zlib from "zlib"
 const globalName = "oddjs"
 
 const CONFIG = {
-  entryPoints: ["src/index.ts", "src/compositions/fission.ts"],
+  entryPoints: ["src/index.ts", "src/compositions/local.ts"],
   outdir: "dist",
   bundle: true,
   splitting: true,
@@ -40,8 +40,8 @@ await esbuild.build(CONFIG)
 
 fs.renameSync("dist/index.js", "dist/index.esm.min.js")
 fs.renameSync("dist/index.js.map", "dist/index.esm.min.js.map")
-fs.renameSync("dist/compositions/fission.js", "dist/compositions/fission.esm.min.js")
-fs.renameSync("dist/compositions/fission.js.map", "dist/compositions/fission.esm.min.js.map")
+fs.renameSync("dist/compositions/local.js", "dist/compositions/local.esm.min.js")
+fs.renameSync("dist/compositions/local.js.map", "dist/compositions/local.esm.min.js.map")
 
 // GZIP
 

@@ -5,9 +5,9 @@ import * as Path from "../path/index.js"
 
 import { AccessKeyWithContext } from "../accessKey.js"
 import { decodeCID, encodeCID } from "../common/cid.js"
+import { CID } from "../common/cid.js"
 import { isObject, isString } from "../common/type-checks.js"
 import Repository, { RepositoryOptions } from "../repository.js"
-import { cid as ticketCID } from "../ticket/index.js"
 import { Category, Ticket, TicketWithContext, isCategory } from "../ticket/types.js"
 
 ////////
@@ -158,16 +158,16 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
 
   // EXTRA
 
-  addTicket(category: Category, ticket: Ticket): Promise<void> {
-    return this.addTickets(category, [ticket])
+  addTicket(category: Category, ticket: Ticket, cidCreator: (ticket: Ticket) => Promise<CID>): Promise<void> {
+    return this.addTickets(category, [ticket], cidCreator)
   }
 
-  async addTickets(category: Category, tickets: Ticket[]): Promise<void> {
+  async addTickets(category: Category, tickets: Ticket[], cidCreator: (ticket: Ticket) => Promise<CID>): Promise<void> {
     const ticketsWithContext: Array<{ type: "ticket" } & TicketWithContext> = await Promise.all(
       tickets.map(async t => ({
         type: "ticket",
         category,
-        cid: await ticketCID(t),
+        cid: await cidCreator(t),
         ticket: t,
       }))
     )

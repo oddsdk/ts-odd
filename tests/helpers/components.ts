@@ -5,6 +5,7 @@ import { sha256 } from "multiformats/hashes/sha2"
 import * as LocalAccount from "../../src/components/account/local.js"
 import * as WebCryptoAgent from "../../src/components/agent/web-crypto-api.js"
 import * as BrowserUrlAuthority from "../../src/components/authority/browser-url.js"
+import * as DefaultClerk from "../../src/components/clerk/default.js"
 import * as DOH from "../../src/components/dns/dns-over-https/cloudflare-google.js"
 import * as WebCryptoIdentifier from "../../src/components/identifier/web-crypto-api.js"
 import * as ProperManners from "../../src/components/manners/default.js"
@@ -18,6 +19,7 @@ import {
   Agent,
   Authority,
   Channel,
+  Clerk,
   Components,
   DNS,
   Depot,
@@ -137,7 +139,13 @@ const identifier: Identifier.Implementation = await WebCryptoIdentifier.implemen
 const authority: Authority.Implementation<
   BrowserUrlAuthority.ProvideResponse,
   BrowserUrlAuthority.RequestResponse
-> = BrowserUrlAuthority.implementation(identifier)
+> = BrowserUrlAuthority.implementation()
+
+///////////
+// CLERK //
+///////////
+
+const clerk: Clerk.Implementation = DefaultClerk.implementation()
 
 ////////
 // 🛳 //
@@ -148,6 +156,7 @@ const components: Components<
   BrowserUrlAuthority.ProvideResponse,
   BrowserUrlAuthority.RequestResponse
 > = {
+  clerk,
   depot,
   manners,
   storage,
@@ -159,4 +168,4 @@ const components: Components<
   authority,
 }
 
-export { account, agent, authority, channel, components, depot, dns, identifier, manners, storage }
+export { account, agent, authority, channel, clerk, components, depot, dns, identifier, manners, storage }

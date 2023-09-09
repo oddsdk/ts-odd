@@ -2,15 +2,14 @@ import { ed25519 } from "@noble/curves/ed25519"
 import { tag } from "iso-base/varint"
 import { base58btc } from "multiformats/bases/base58"
 
-import * as AgentDID from "../../../agent/did.js"
-import * as Path from "../../../path/index.js"
-import * as Tickets from "../../../ticket/index.js"
-import * as Ucan from "../../../ucan/ts-ucan/index.js"
-import * as Agent from "../../agent/implementation.js"
-import * as Identifier from "../../identifier/implementation.js"
+import * as AgentDID from "../../agent/did.js"
+import * as Path from "../../path/index.js"
+import * as Ucan from "../../ucan/ts-ucan/index.js"
+import * as Agent from "../agent/implementation.js"
+import * as Identifier from "../identifier/implementation.js"
 
-import { Ticket } from "../../../ticket/types.js"
-import { Clerk } from "../implementation.js"
+import { Ticket } from "../../ticket/types.js"
+import { Implementation } from "./implementation.js"
 
 ///////////
 // CLERK //
@@ -46,20 +45,41 @@ export async function createOriginFileSystemTicket(
   return Ucan.toTicket(ucan)
 }
 
+export async function delegate(
+  ticket: Ticket,
+  identifier: Identifier.Implementation,
+  remoteIdentifierDID: string
+): Promise<Ticket> {
+  const identifierDID = identifier.did()
+  const identifierKeyPair = {
+    did: () => identifierDID,
+    jwtAlg: identifier.ucanAlgorithm(),
+    sign: identifier.sign,
+  }
+
+  const ucan = await Ucan.build({
+    audience: remoteIdentifierDID,
+    issuer: identifierKeyPair,
+    proofs: [(await Ucan.ticketCID(ticket)).toString()],
+  })
+
+  return Ucan.toTicket(ucan)
+}
+
 export async function identifierToAgentDelegation(
   identifier: Identifier.Implementation,
   agent: Agent.Implementation,
   proofs: Ticket[]
 ): Promise<Ticket> {
-  const identifierDID = await identifier.did()
+  const identifierDID = identifier.did()
   const ucan = await Ucan.build({
     issuer: {
       did: () => identifierDID,
-      jwtAlg: await identifier.ucanAlgorithm(),
+      jwtAlg: identifier.ucanAlgorithm(),
       sign: identifier.sign,
     },
     audience: await AgentDID.signing(agent),
-    proofs: await Promise.all(proofs.map(t => Tickets.cid(t).toString())),
+    proofs: await Promise.all(proofs.map(t => Ucan.ticketCID(t).toString())),
   })
 
   return Ucan.toTicket(ucan)
@@ -68,8 +88,8 @@ export async function identifierToAgentDelegation(
 export function matchFileSystemTicket(
   path: Path.DistinctivePath<Path.Segments>,
   did: string
-): (ticket: Ticket) => boolean {
-  return (ticket: Ticket): boolean => {
+): (ticket: Ticket) => Promise<boolean> {
+  return async (ticket: Ticket): Promise<boolean> => {
     const hierPart = `//${did}/${Path.toPosix(path)}`
     const ucan = Ucan.decode(ticket.token)
 
@@ -83,9 +103,12 @@ export function matchFileSystemTicket(
 // 🛳️ //
 ////////
 
-export function implementation(): Clerk {
+export function implementation(): Implementation {
   return {
     tickets: {
+      cid: Ucan.ticketCID,
+      delegate,
+      proofResolver: async (ticket) => Ucan.ticketProofResolver(ticket),
       fileSystem: {
         origin: createOriginFileSystemTicket,
         matcher: matchFileSystemTicket,

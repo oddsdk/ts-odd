@@ -208,7 +208,7 @@ class RequestorSession extends Session {
     this.sendMessage(
       "query",
       encryptJSONPayload(cipher, {
-        identifier: await this.dependencies.identifier.did(),
+        identifier: this.dependencies.identifier.did(),
         queries: this.queries.map(Query.toJSON),
       })
     )

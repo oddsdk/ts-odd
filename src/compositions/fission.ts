@@ -24,6 +24,7 @@ import * as Account from "../components/account/fission.js"
 import * as Agent from "../components/agent/web-crypto-api.js"
 import * as Authority from "../components/authority/browser-url.js"
 import * as Channel from "../components/channel/fission.js"
+import * as Clerk from "../components/clerk/default.js"
 import * as Depot from "../components/depot/fission.js"
 import * as DNS from "../components/dns/dns-over-https/fission.js"
 import * as Identifier from "../components/identifier/web-crypto-api.js"
@@ -153,6 +154,7 @@ export async function components(
   const agentStore = Storage.implementation({ name: `${namespace}/agent` })
   const identifierStore = Storage.implementation({ name: `${namespace}/identifier` })
 
+  const clerk = Clerk.implementation()
   const dns = DNS.implementation(endpoints)
   const manners = Manners.implementation(config)
   const channel = Channel.implementation(manners, endpoints)
@@ -188,6 +190,7 @@ export async function components(
     agent,
     authority,
     channel,
+    clerk,
     depot,
     dns,
     identifier,

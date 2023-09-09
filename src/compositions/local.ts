@@ -23,6 +23,7 @@ import * as Account from "../components/account/local.js"
 import * as Agent from "../components/agent/web-crypto-api.js"
 import * as Authority from "../components/authority/browser-url.js"
 import * as Channel from "../components/channel/local.js"
+import * as Clerk from "../components/clerk/default.js"
 import * as Depot from "../components/depot/local.js"
 import * as DNS from "../components/dns/dns-over-https/cloudflare-google.js"
 import * as Identifier from "../components/identifier/web-crypto-api.js"
@@ -32,7 +33,7 @@ import * as Storage from "../components/storage/indexed-db.js"
 export { Annex } from "../components/account/local.js"
 
 /**
- * The default Fission stack using web crypto auth and IPFS.
+ * The local-only stack.
  *
  * @group 🚀
  */
@@ -58,6 +59,7 @@ export async function components(
 
   const agent = await Agent.implementation({ store: agentStore })
   const channel = Channel.implementation()
+  const clerk = Clerk.implementation()
   const dns = DNS.implementation()
   const identifier = await Identifier.implementation({ store: identifierStore })
   const manners = Manners.implementation(config)
@@ -70,6 +72,7 @@ export async function components(
     agent,
     authority,
     channel,
+    clerk,
     depot,
     dns,
     identifier,

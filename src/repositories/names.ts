@@ -5,12 +5,13 @@ import Repository, { RepositoryOptions } from "../repository.js"
 // 🧩 //
 ////////
 
+/** @internal */
 export type Item = {
   name: string
   subject: string // ie. the thing that is being named
 }
 
-// name → subject
+/** @internal */
 export type Collection = Record<string, string>
 
 ////////

@@ -7,7 +7,6 @@ import { base58btc } from "multiformats/bases/base58"
 import * as Uint8Arrays from "uint8arrays"
 
 import { isBlob, isObject, isString } from "../../../common/type-checks.js"
-import { Names } from "../../../repositories/names.js"
 
 ////////
 // 🏔️️ //
@@ -66,7 +65,7 @@ export async function decodeChannelData(
   }
 
   if (!isObject(json)) {
-    console.warn(`Received a message, but got some JSON that is not an object.`)
+    console.warn(`Received a message, but got some JSON that is not an object.`, json)
     return null
   }
 

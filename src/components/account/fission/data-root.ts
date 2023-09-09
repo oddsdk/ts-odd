@@ -6,7 +6,6 @@ import * as Ucan from "../../../ucan/ts-ucan/index.js"
 
 import { decodeCID } from "../../../common/cid.js"
 import { Agent, DNS, Identifier, Manners } from "../../../components.js"
-import { cid as ticketCID } from "../../../ticket/index.js"
 import { Ticket } from "../../../ticket/types.js"
 
 /**
@@ -84,7 +83,7 @@ export async function update<FS>(
   username: string
 ): Promise<{ updated: true } | { updated: false; reason: string }> {
   const cid = cidInstance.toString()
-  const identifierDID = await dependencies.identifier.did()
+  const identifierDID = dependencies.identifier.did()
 
   // Debug
   dependencies.manners.log("🌊 Updating your DNSLink:", cid)
@@ -98,12 +97,12 @@ export async function update<FS>(
           // issuer: await Ucan.keyPair(dependencies.agent), FIXME: Should use agent
           issuer: {
             did: () => identifierDID,
-            jwtAlg: await dependencies.identifier.ucanAlgorithm(),
+            jwtAlg: dependencies.identifier.ucanAlgorithm(),
             sign: data => dependencies.identifier.sign(data),
           },
 
           proofs: await Promise.all(proofs.map(
-            async proof => (await ticketCID(proof)).toString()
+            async proof => (await Ucan.ticketCID(proof)).toString()
           )),
         })
       )

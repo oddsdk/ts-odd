@@ -75,7 +75,7 @@ export class TransactionContext<FS> {
     const proofs = await changes.reduce(
       async (accPromise: Promise<Ticket[]>, change): Promise<Ticket[]> => {
         const acc = await accPromise
-        const proof = context.#inventory.lookupFileSystemTicket(
+        const proof = await context.#inventory.lookupFileSystemTicket(
           change.path,
           context.#did
         )

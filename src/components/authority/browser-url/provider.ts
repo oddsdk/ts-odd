@@ -8,19 +8,17 @@ import { base58btc } from "multiformats/bases/base58"
 import * as Query from "../../../authority/query.js"
 import * as Events from "../../../events/authority.js"
 import * as Path from "../../../path/index.js"
-import * as Tickets from "../../../ticket/index.js"
-import * as Ucan from "../../../ucan/ts-ucan/index.js"
 import * as Account from "../../account/implementation.js"
 import * as Channel from "../../channel/implementation.js"
+import * as Clerk from "../../clerk/implementation.js"
 import * as Identifier from "../../identifier/implementation.js"
 
-import { AccessKeyWithContext } from "../../../accessKey.js"
 import { Channel as ChannelType } from "../../../channel.js"
 import { isObject, isString } from "../../../common/type-checks.js"
 import { EventEmitter } from "../../../events/emitter.js"
 import { Inventory } from "../../../inventory.js"
 import { Names } from "../../../repositories/names.js"
-import { Ticket } from "../../../ticket/types.js"
+
 import {
   CIPHER_TEXT_ENCODING,
   Cipher,
@@ -39,6 +37,7 @@ export type ProvideParams<AccountAnnex extends Account.AnnexParentType> = {
   dependencies: {
     account: Account.Implementation<AccountAnnex>
     channel: Channel.Implementation
+    clerk: Clerk.Implementation
     identifier: Identifier.Implementation
   }
   eventEmitter: EventEmitter<Events.Authority>
@@ -206,8 +205,6 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
 
     const remoteIdentifierDID = payload.identifier
 
-    console.log(payload)
-
     const queries = payload.queries.map(Query.fromJSON)
     const allContained = queries.every(child => {
       return queries.some(parent => Query.isContained({ parent, child }))
@@ -248,13 +245,6 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
   ): Promise<void> {
     if (queries.length === 0) throw new Error("Cannot approve an empty list of queries.")
 
-    const identifierDID = await this.dependencies.identifier.did()
-    const identifierKeyPair = {
-      did: () => identifierDID,
-      jwtAlg: await this.dependencies.identifier.ucanAlgorithm(),
-      sign: this.dependencies.identifier.sign,
-    }
-
     const resolvedNames: Record<string, string> = {}
 
     const fsQueries = queries.reduce(
@@ -275,17 +265,15 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
         )
 
         const promises = tickets.map(async t => {
-          const ucan = await Ucan.build({
-            audience: remoteIdentifierDID,
-            issuer: identifierKeyPair,
-            proofs: [(await Tickets.cid(t)).toString()],
-          })
-
-          const ticket = Ucan.toTicket(ucan)
+          const ticket = await this.dependencies.clerk.tickets.delegate(
+            t,
+            this.dependencies.identifier,
+            remoteIdentifierDID
+          )
 
           return this.inventory.bundleTickets(
             ticket,
-            Ucan.ticketProofResolver
+            this.dependencies.clerk.tickets.proofResolver
           )
         })
 
@@ -293,7 +281,7 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
         const collectedTickets = nested.flat()
 
         return {
-          query: q,
+          query: Query.toJSON(q),
           tickets: collectedTickets,
         }
       })
@@ -301,8 +289,8 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
     const accountTicketsBundles = await Promise.all(accountTicketPromises)
     const accountTickets = accountTicketsBundles
 
-    const fileSystemTicketPromises = fsQueries
-      .map(query => {
+    const fileSystemTicketHolders = fsQueries
+      .map(async query => {
         const did = this.names.resolveId(query.id)
         if (!did) return []
 
@@ -310,23 +298,24 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
           resolvedNames[query.id.name] = did
         }
 
-        const ticket = this.inventory.lookupFileSystemTicket(query.path, did)
+        const ticket = await this.inventory.lookupFileSystemTicket(query.path, did)
         if (!ticket) return []
 
-        return [{ ticket, query }]
+        return [{ ticket, query: Query.toJSON(query) }]
       })
+
+    const fileSystemTicketPromises = (await Promise.all(fileSystemTicketHolders))
       .flat()
       .map(async item => {
-        const ucan = await Ucan.build({
-          audience: remoteIdentifierDID,
-          issuer: identifierKeyPair,
-          proofs: [(await Tickets.cid(item.ticket)).toString()],
-        })
+        const ticket = await this.dependencies.clerk.tickets.delegate(
+          item.ticket,
+          this.dependencies.identifier,
+          remoteIdentifierDID
+        )
 
-        const ticket = Ucan.toTicket(ucan)
-        const tickets = this.inventory.bundleTickets(
+        const tickets = await this.inventory.bundleTickets(
           ticket,
-          Ucan.ticketProofResolver
+          this.dependencies.clerk.tickets.proofResolver
         )
 
         return { query: item.query, tickets }
@@ -335,6 +324,8 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
     const fileSystemTicketBundles = await Promise.all(fileSystemTicketPromises)
     const fileSystemTickets = fileSystemTicketBundles
 
+    // TODO: Clear out duplicate tickets
+
     const accessKeys = fsQueries
       .filter(q => Path.isPartition("private", q.path))
       .map(q => {
@@ -342,7 +333,7 @@ class ProviderSession<AccountAnnex extends Account.AnnexParentType> extends Sess
         if (!did) return []
         const key = this.inventory.findAccessKey(q.path, did)
         if (!key) return []
-        return [{ query: q, key }]
+        return [{ query: Query.toJSON(q), key }]
       })
       .flat()
 
