@@ -1,53 +1,43 @@
 import { CID } from "multiformats"
 
-import type { Configuration } from "../../configuration.js"
-
-import * as Crypto from "../../components/crypto/implementation.js"
 import * as Depot from "../../components/depot/implementation.js"
-import * as Reference from "../../components/reference/implementation.js"
-import * as Storage from "../../components/storage/implementation.js"
+import { EventEmitter } from "../../events/emitter.js"
+import * as Events from "../../events/program.js"
+import * as Path from "../../path/index.js"
 
-import * as FileSystem from "../../fs/types.js"
-
-
-export type ImplementationOptions = {
-  configuration: Configuration
-}
-
-
-export type DataComponents = {
-  crypto: Crypto.Implementation
-  depot: Depot.Implementation
-  reference: Reference.Implementation
-  storage: Storage.Implementation
-}
-
-
-export type Implementation = {
+export type Implementation<FS> = {
   log: (...args: unknown[]) => void
   warn: (...args: unknown[]) => void
 
   /**
-   * Configure how the wnfs wasm module should be loaded.
-   *
-   * This only has an effect if you're using file systems of version 3 or higher.
-   *
-   * By default this loads the required version of the wasm wnfs module from unpkg.com.
-   */
-  wnfsWasmLookup: (wnfsVersion: string) => Promise<BufferSource | Response>
-
-  /**
-   * File system.
+   * File system manners.
    */
   fileSystem: {
     /**
      * Various file system hooks.
      */
     hooks: {
-      afterLoadExisting: (fs: FileSystem.API, account: FileSystem.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
-      afterLoadNew: (fs: FileSystem.API, account: FileSystem.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
-      beforeLoadExisting: (cid: CID, account: FileSystem.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
-      beforeLoadNew: (account: FileSystem.AssociatedIdentity, dataComponents: DataComponents) => Promise<void>
+      afterLoadExisting: (fs: FS, depot: Depot.Implementation) => Promise<void>
+      afterLoadNew: (fs: FS, depot: Depot.Implementation) => Promise<
+        null | {
+          path: Path.Distinctive<Path.Segments>
+          capsuleKey: Uint8Array
+        }
+      >
+      beforeLoadExisting: (cid: CID, depot: Depot.Implementation) => Promise<void>
+      beforeLoadNew: (depot: Depot.Implementation) => Promise<void>
     }
+  }
+
+  /**
+   * Program manners.
+   */
+  program: {
+    eventEmitter: EventEmitter<Events.Program>
+
+    /**
+     * Is the Program online or not?
+     */
+    online: () => boolean
   }
 }

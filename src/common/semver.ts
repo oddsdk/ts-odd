@@ -1,5 +1,6 @@
-// TYPES
-
+////////
+// 🧩 //
+////////
 
 export type SemVer = {
   major: number
@@ -7,16 +8,15 @@ export type SemVer = {
   patch: number
 }
 
-
-
-// FUNCTIONS
-
+////////
+// 🛠️ //
+////////
 
 export const encode = (major: number, minor: number, patch: number): SemVer => {
   return {
     major,
     minor,
-    patch
+    patch,
   }
 }
 
@@ -26,9 +26,9 @@ export const fromString = (str: string): SemVer | null => {
     return null
   }
   return {
-    major: parts[ 0 ],
-    minor: parts[ 1 ],
-    patch: parts[ 2 ]
+    major: parts[0],
+    minor: parts[1],
+    patch: parts[2],
   }
 }
 

@@ -74,7 +74,7 @@ You will likely receive feedback or requests for changes to your pull request. D
 The primary goals for a pull request are to improve the codebase and for the contributor to succeed. Some pull requests may not be merged at the end of the day, but that does not indicate failure. If your pull request is not merged, please know that your efforts are appreciated and will have an impact on how we think about the codebase in the long run.
 
 [coc]: ./CODE_OF_CONDUCT.md
-[discord]: https://fission.codes/discord/ 
+[discord]: https://fission.codes/discord/
 [discussions]: https://github.com/oddsdk/ts-odd/discussions
 [docs]: https://docs.odd.dev/
 [issue]: https://github.com/oddsdk/ts-odd/issues

@@ -1,109 +1,63 @@
 import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill"
-import { globby } from "globby"
 import esbuild from "esbuild"
+import { wasmLoader } from "esbuild-plugin-wasm"
 import fs from "fs"
+import { globby } from "globby"
 import zlib from "zlib"
 
+// CONFIG
 
 const globalName = "oddjs"
 
+const CONFIG = {
+  entryPoints: ["src/index.ts", "src/compositions/fission.ts"],
+  outdir: "dist",
+  bundle: true,
+  splitting: true,
+  minify: true,
+  sourcemap: true,
+  platform: "browser",
+  format: "esm",
+  target: "es2022",
+  globalName,
+  define: {
+    "global": "globalThis",
+    "globalThis.process.env.NODE_ENV": "production",
+  },
+  plugins: [
+    NodeGlobalsPolyfillPlugin({
+      buffer: true,
+    }),
+    wasmLoader(),
+  ],
+}
+
+// REGULAR BUILD
 
 console.log("📦 Bundling & minifying...")
 
-await esbuild.build({
-    entryPoints: [ "src/index.ts" ],
-    outdir: "dist",
-    bundle: true,
-    splitting: true,
-    minify: true,
-    sourcemap: true,
-    platform: "browser",
-    format: "esm",
-    target: "es2020",
-    globalName,
-    define: {
-        "global": "globalThis",
-        "globalThis.process.env.NODE_ENV": "production"
-    },
-    plugins: [
-        NodeGlobalsPolyfillPlugin({
-            buffer: true
-        })
-    ]
-})
-
+await esbuild.build(CONFIG)
 
 fs.renameSync("dist/index.js", "dist/index.esm.min.js")
 fs.renameSync("dist/index.js.map", "dist/index.esm.min.js.map")
-
-
-
-// UMD
-
-
-const UMD = {
-    banner:
-        `(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define([], factory);
-    } else if (typeof module === 'object' && module.exports) {
-        // Node. Does not work with strict CommonJS, but
-        // only CommonJS-like environments that support module.exports,
-        // like Node.
-        module.exports = factory();
-    } else {
-        // Browser globals (root is window)
-        root.${globalName} = factory();
-  }
-}(typeof self !== 'undefined' ? self : this, function () {  `,
-    footer:
-        `return ${globalName};
-}));`
-}
-
-await esbuild.build({
-    entryPoints: [ "src/index.ts" ],
-    outfile: "dist/index.umd.min.js",
-    bundle: true,
-    minify: true,
-    sourcemap: true,
-    platform: "browser",
-    format: "iife",
-    target: "es2020",
-    globalName,
-    define: {
-        "global": "globalThis",
-        "globalThis.process.env.NODE_ENV": "production"
-    },
-    plugins: [
-        NodeGlobalsPolyfillPlugin({
-            buffer: true
-        })
-    ],
-    banner: { js: UMD.banner },
-    footer: { js: UMD.footer },
-})
-
-
+fs.renameSync("dist/compositions/fission.js", "dist/compositions/fission.esm.min.js")
+fs.renameSync("dist/compositions/fission.js.map", "dist/compositions/fission.esm.min.js.map")
 
 // GZIP
 
-
-const glob = await globby("dist/*.js")
-
+const glob = await globby("dist/**/*.(js|wasm)")
 
 glob.forEach(jsFile => {
-    const outfile = jsFile
-    const outfileGz = `${outfile}.gz`
+  const outfile = jsFile
+  const outfileGz = `${outfile}.gz`
 
-    console.log(`📝 Wrote ${outfile} and ${outfile}.map`)
-    console.log("💎 Compressing into .gz")
-    const fileContents = fs.createReadStream(outfile)
-    const writeStream = fs.createWriteStream(outfileGz)
-    const gzip = zlib.createGzip()
+  console.log(`📝 Wrote ${outfile} and ${outfile}.map`)
+  console.log("💎 Compressing into .gz")
+  const fileContents = fs.createReadStream(outfile)
+  const writeStream = fs.createWriteStream(outfileGz)
+  const gzip = zlib.createGzip()
 
-    fileContents.pipe(gzip).pipe(writeStream)
+  fileContents.pipe(gzip).pipe(writeStream)
 
-    console.log(`📝 Wrote ${outfileGz}`)
+  console.log(`📝 Wrote ${outfileGz}`)
 })

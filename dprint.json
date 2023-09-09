@@ -1,0 +1,25 @@
+{
+  "typescript": {
+    "semiColons": "asi",
+    "importDeclaration.sortNamedImports": "caseSensitive",
+    "module.sortExportDeclarations": "caseSensitive",
+    "arguments.trailingCommas": "never",
+    "parameters.trailingCommas": "never"
+  },
+  "json": {},
+  "markdown": {},
+  "includes": [
+    "**/*.{ts,tsx,js,jsx,cjs,mjs,json,md}"
+  ],
+  "excludes": [
+    "dist",
+    "lib",
+    "**/node_modules",
+    "**/*-lock.json"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/typescript-0.86.2.wasm",
+    "https://plugins.dprint.dev/json-0.17.4.wasm",
+    "https://plugins.dprint.dev/markdown-0.15.3.wasm"
+  ]
+}

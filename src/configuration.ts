@@ -1,26 +1,19 @@
 import { AppInfo } from "./appInfo.js"
 import { isString } from "./common/type-checks.js"
-import { appId, Permissions, ROOT_FILESYSTEM_PERMISSIONS } from "./permissions.js"
 
+///////////////////
+// CONFIGURATION //
+///////////////////
 
-// CONFIGURATION
-
-
+/** @group Configuration */
 export type Configuration = {
   namespace: string | AppInfo
 
   /**
-   * Enable debug mode.
-   *
-   * @default false
+   * Enable debug mode and configure it if needed.
    */
-  debug?: boolean
-
-  /**
-   * Debugging settings.
-   */
-  debugging?: {
-     /**
+  debug?: boolean | {
+    /**
      * Should I emit window post messages with session and filesystem information?
      *
      * @default true
@@ -40,13 +33,6 @@ export type Configuration = {
    */
   fileSystem?: {
     /**
-     * Should I load the filesystem immediately?
-     *
-     * @default true
-     */
-    loadImmediately?: boolean
-
-    /**
      * Set the file system version.
      *
      * This will only affect new file systems created.
@@ -59,26 +45,21 @@ export type Configuration = {
   }
 
   /**
-   * Permissions to ask a root authority.
-   */
-  permissions?: Permissions
-
-  /**
    * Configure messages that the ODD SDK sends to users.
    *
    * `versionMismatch.newer` is shown when the ODD SDK detects
-   *  that the user's filesystem is newer than what this version of the ODD SDK supports.
+   *  that the user's file system is newer than what this version of the ODD SDK supports.
    * `versionMismatch.older` is shown when the ODD SDK detects that the user's
-   *  filesystem is older than what this version of the ODD SDK supports.
+   *  file system is older than what this version of the ODD SDK supports.
    */
   userMessages?: UserMessages
 }
 
+////////////
+// PIECES //
+////////////
 
-
-// PIECES
-
-
+/** @group Configuration */
 export type UserMessages = {
   versionMismatch: {
     newer(version: string): Promise<void>
@@ -86,18 +67,39 @@ export type UserMessages = {
   }
 }
 
+////////
+// 🛠 //
+////////
 
-
-// 🛠
-
-
-export function addRootFileSystemPermissions(config: Configuration): Configuration {
-  return { ...config, permissions: { ...config.permissions, ...ROOT_FILESYSTEM_PERMISSIONS } }
+/**
+ * App identifier.
+ *
+ * @group Configuration
+ */
+export function appId(app: AppInfo): string {
+  return `${app.creator}/${app.name}`
 }
 
+/**
+ * Extract a `Configuration` from an object containing one.
+ *
+ * @group Configuration
+ */
+export function extract(
+  obj: Record<string, unknown> & Configuration
+): Configuration {
+  return {
+    namespace: obj.namespace,
+    debug: obj.debug,
+    fileSystem: obj.fileSystem,
+    userMessages: obj.userMessages,
+  }
+}
 
 /**
  * Generate a namespace string based on a configuration.
+ *
+ * @group Configuration
  */
 export function namespace(config: Configuration): string {
   return isString(config.namespace) ? config.namespace : appId(config.namespace)

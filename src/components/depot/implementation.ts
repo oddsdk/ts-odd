@@ -1,30 +1,34 @@
+import { Blockstore } from "interface-blockstore"
 import { CID } from "multiformats/cid"
-import { CodecIdentifier } from "../../dag/codecs.js"
 
+import { CodecIdentifier } from "../../dag/codecs.js"
+import * as Path from "../../path/index.js"
+import { Ticket } from "../../ticket/types.js"
 
 export type Implementation = {
-  // Get the data behind a CID
+  blockstore: Blockstore
+
+  /**
+   * Get the data behind a CID
+   */
   getBlock: (cid: CID) => Promise<Uint8Array>
-  getUnixFile: (cid: CID) => Promise<Uint8Array>
-  getUnixDirectory: (cid: CID) => Promise<DirectoryItem[]>
 
-  // Keep data around
+  /**
+   * Keep data around
+   */
   putBlock: (data: Uint8Array, codec: CodecIdentifier) => Promise<CID>
-  putChunked: (data: Uint8Array) => Promise<PutResult>
 
-  // Stats
-  size: (cid: CID) => Promise<number>
-}
+  /**
+   * Flush, called when the data root is updated (storage of top-level fs pointer).
+   * Here you could set up an IPFS peer connection,
+   * or simply push all "changed" blocks to some other block store.
+   */
+  flush: (dataRoot: CID, proofs: Ticket[]) => Promise<void>
 
-export type DirectoryItem = {
-  isFile: boolean
-  cid: CID
-  name: string
-  size: number
-}
-
-export type PutResult = {
-  cid: CID
-  size: number
-  isFile: boolean
+  /**
+   * Create a permalink to some public file system content.
+   *
+   * NOTE: This is optional and does not need to be implemented.
+   */
+  permalink?: (dataRoot: CID, path: Path.Distinctive<Path.Partitioned<Path.Partition>>) => string
 }

@@ -1,254 +1,274 @@
+import { strict as assert } from "assert"
 import * as fc from "fast-check"
 import * as check from "./type-checks.js"
-import expect from "expect"
-
 
 const IT_FC = "property tests"
-
 
 describe("is defined", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isDefined(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          assert.equal(check.isDefined(data), true)
+        }
+      )
     )
   })
 
   it("returns true when passed true", () => {
-    expect(check.isDefined(true)).toBe(true)
+    assert.equal(check.isDefined(true), true)
   })
 
   it("returns true when passed false", () => {
-    expect(check.isDefined(false)).toBe(true)
+    assert.equal(check.isDefined(false), true)
   })
 
   it("returns true when passed a null", () => {
-    expect(check.isDefined(null)).toBe(true)
+    assert.equal(check.isDefined(null), true)
   })
 
   it("returns false when passed undefined", () => {
-    expect(check.isDefined(undefined)).toBe(false)
+    assert.equal(check.isDefined(undefined), false)
   })
 })
-
 
 describe("not null", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.notNull(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          assert.equal(check.notNull(data), true)
+        }
+      )
     )
   })
 
   it("returns true when passed true", () => {
-    expect(check.notNull(true)).toBe(true)
+    assert.equal(check.notNull(true), true)
   })
 
   it("returns true when passed false", () => {
-    expect(check.notNull(false)).toBe(true)
+    assert.equal(check.notNull(false), true)
   })
 
   it("returns true when passed undefined", () => {
-    expect(check.notNull(undefined)).toBe(true)
+    assert.equal(check.notNull(undefined), true)
   })
 
   it("returns false when passed a null", () => {
-    expect(check.notNull(null)).toBe(false)
+    assert.equal(check.notNull(null), false)
   })
 })
 
 describe("is just", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isJust(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          assert.equal(check.isJust(data), true)
+        }
+      )
     )
   })
 
   it("returns true when passed true", () => {
-    expect(check.isJust(true)).toBe(true)
+    assert.equal(check.isJust(true), true)
   })
 
   it("returns true when passed false", () => {
-    expect(check.isJust(false)).toBe(true)
+    assert.equal(check.isJust(false), true)
   })
 
   it("returns true when passed undefined", () => {
-    expect(check.isJust(undefined)).toBe(true)
+    assert.equal(check.isJust(undefined), true)
   })
 
   it("returns false when passed a null", () => {
-    expect(check.isJust(null)).toBe(false)
+    assert.equal(check.isJust(null), false)
   })
 })
 
 describe("is value", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isValue(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          assert.equal(check.isValue(data), true)
+        }
+      )
     )
   })
 
   it("returns true when passed true", () => {
-    expect(check.isValue(true)).toBe(true)
+    assert.equal(check.isValue(true), true)
   })
 
   it("returns true when passed false", () => {
-    expect(check.isValue(false)).toBe(true)
+    assert.equal(check.isValue(false), true)
   })
 
   it("returns false when passed undefined", () => {
-    expect(check.isValue(undefined)).toBe(false)
+    assert.equal(check.isValue(undefined), false)
   })
 
   it("returns false when passed a null", () => {
-    expect(check.isValue(null)).toBe(false)
+    assert.equal(check.isValue(null), false)
   })
 })
 
 describe("is boolean", () => {
   it("returns true when passed true", () => {
-    expect(check.isBool(true)).toBe(true)
+    assert.equal(check.isBool(true), true)
   })
 
   it("returns true when passed false", () => {
-    expect(check.isBool(false)).toBe(true)
+    assert.equal(check.isBool(false), true)
   })
 
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isBool(data)).toEqual(false)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          assert.equal(check.isBool(data), false)
+        }
+      )
     )
   })
 
   it("returns false when passed a null", () => {
-    expect(check.isBool(null)).toBe(false)
+    assert.equal(check.isBool(null), false)
   })
 
   it("returns false when passed a undefined", () => {
-    expect(check.isBool(undefined)).toBe(false)
+    assert.equal(check.isBool(undefined), false)
   })
 })
 
 describe("is num", () => {
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.float(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isNum(data)).toEqual(true)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.float(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          assert.equal(check.isNum(data), true)
+        }
+      )
     )
   })
 
   it("returns true when passed infinity", () => {
-    expect(check.isNum(Infinity)).toBe(true)
+    assert.equal(check.isNum(Infinity), true)
   })
 
   it("returns true when passed negative infinity", () => {
-    expect(check.isNum(-Infinity)).toBe(true)
+    assert.equal(check.isNum(-Infinity), true)
   })
 
   it("returns true when passed a NaN", () => {
-    expect(check.isNum(NaN)).toBe(true)
+    assert.equal(check.isNum(NaN), true)
   })
 
   it(IT_FC, () => {
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.string(), weight: 5 },
-      ), data => {
-        expect(check.isNum(data)).toEqual(false)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.string(), weight: 5 }
+        ),
+        data => {
+          assert.equal(check.isNum(data), false)
+        }
+      )
     )
   })
 
   it("returns false when passed true", () => {
-    expect(check.isNum(true)).toBe(false)
+    assert.equal(check.isNum(true), false)
   })
 
   it("returns false when passed false", () => {
-    expect(check.isNum(false)).toBe(false)
+    assert.equal(check.isNum(false), false)
   })
 
   it("returns false when passed undefined", () => {
-    expect(check.isNum(undefined)).toBe(false)
+    assert.equal(check.isNum(undefined), false)
   })
 
   it("returns false when passed null", () => {
-    expect(check.isNum(null)).toBe(false)
+    assert.equal(check.isNum(null), false)
   })
 })
-
 
 describe("is string", () => {
   it(IT_FC, () => {
     fc.assert(
       fc.property(fc.string(), data => {
-        expect(check.isString(data)).toEqual(true)
+        assert.equal(check.isString(data), true)
       })
     )
 
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.object(), weight: 10 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isString(data)).toEqual(false)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.object(), weight: 10 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          assert.equal(check.isString(data), false)
+        }
+      )
     )
   })
 
   it("returns false when passed true", () => {
-    expect(check.isString(true)).toBe(false)
+    assert.equal(check.isString(true), false)
   })
 
   it("returns false when passed false", () => {
-    expect(check.isString(false)).toBe(false)
+    assert.equal(check.isString(false), false)
   })
 
   it("returns false when passed undefined ", () => {
-    expect(check.isString(undefined)).toBe(false)
+    assert.equal(check.isString(undefined), false)
   })
 
   it("returns false when passed null", () => {
-    expect(check.isString(null)).toBe(false)
+    assert.equal(check.isString(null), false)
   })
 })
 
@@ -256,34 +276,37 @@ describe("is object", () => {
   it(IT_FC, () => {
     fc.assert(
       fc.property(fc.object(), data => {
-        expect(check.isObject(data)).toEqual(true)
+        assert.equal(check.isObject(data), true)
       })
     )
 
     fc.assert(
-      fc.property(fc.oneof(
-        { arbitrary: fc.string(), weight: 5 },
-        { arbitrary: fc.integer(), weight: 1 },
-        { arbitrary: fc.double(), weight: 1 }
-      ), data => {
-        expect(check.isObject(data)).toEqual(false)
-      })
+      fc.property(
+        fc.oneof(
+          { arbitrary: fc.string(), weight: 5 },
+          { arbitrary: fc.integer(), weight: 1 },
+          { arbitrary: fc.double(), weight: 1 }
+        ),
+        data => {
+          assert.equal(check.isObject(data), false)
+        }
+      )
     )
   })
 
   it("returns false when passed true", () => {
-    expect(check.isObject(true)).toBe(false)
+    assert.equal(check.isObject(true), false)
   })
 
   it("returns false when passed false", () => {
-    expect(check.isObject(false)).toBe(false)
+    assert.equal(check.isObject(false), false)
   })
 
   it("returns false when passed undefined ", () => {
-    expect(check.isObject(undefined)).toBe(false)
+    assert.equal(check.isObject(undefined), false)
   })
 
   it("returns false when passed null", () => {
-    expect(check.isObject(null)).toBe(false)
+    assert.equal(check.isObject(null), false)
   })
 })
