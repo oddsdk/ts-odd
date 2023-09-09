@@ -1,8 +1,8 @@
 import { Channel, ChannelOptions } from "../../channel.js"
 
-export type Implementation<Context> = {
+export type Implementation = {
   /**
    * Creates a `Channel` which can be used to transfer data over.
    */
-  establish: (options: ChannelOptions<Context>) => Promise<Channel>
+  establish: (options: ChannelOptions) => Promise<Channel>
 }

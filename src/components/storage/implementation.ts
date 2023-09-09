@@ -9,6 +9,7 @@ export type Implementation = {
   KEYS: {
     CABINET: string
     CID_LOG: string
+    NAMES: string
   }
 
   getItem: <T>(key: string) => Promise<T | null>

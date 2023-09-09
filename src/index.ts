@@ -16,9 +16,11 @@
  */
 
 import * as Auth from "./auth.js"
+import * as AuthorityEvents from "./events/authority.js"
 import * as Events from "./events/program.js"
 import * as Path from "./path/index.js"
 import * as Cabinet from "./repositories/cabinet.js"
+import * as Names from "./repositories/names.js"
 
 import { FileSystemQuery, Query } from "./authority/query.js"
 import { CID } from "./common/cid.js"
@@ -27,12 +29,13 @@ import { Components } from "./components.js"
 import { AnnexParentType } from "./components/account/implementation.js"
 import { RequestOptions } from "./components/authority/implementation.js"
 import { Configuration, namespace } from "./configuration.js"
+import { createEmitter } from "./events/emitter.js"
 import { ListenTo, listenTo } from "./events/listen.js"
 import { loadFileSystem } from "./fileSystem.js"
 import { FileSystem } from "./fs/class.js"
 import { addSampleData } from "./fs/data/sample.js"
-import { Inventory } from "./ticket/inventory.js"
-import { Ticket } from "./ticket/types.js"
+import { DataRootUpdater, FileSystemCarrier } from "./fs/types.js"
+import { Inventory } from "./inventory.js"
 
 ////////////////
 // RE-EXPORTS //
@@ -56,7 +59,7 @@ export { RequestOptions } from "./components/authority/implementation.js"
 export { CodecIdentifier } from "./dag/codecs.js"
 export { FileSystem } from "./fs/class.js"
 export { TransactionContext } from "./fs/transaction.js"
-export { Inventory } from "./ticket/inventory.js"
+export { Inventory } from "./inventory.js"
 export { Ticket } from "./ticket/types.js"
 
 ///////////////////////
@@ -76,7 +79,11 @@ export { Ticket } from "./ticket/types.js"
  *
  * @group 🚀
  */
-export type Program<Annex extends Account.AnnexParentType, ChannelContext> =
+export type Program<
+  Annex extends Account.AnnexParentType,
+  AuthorityProvideResponse,
+  AuthorityRequestResponse,
+> =
   & {
     /**
      * {@inheritDoc AccountCategory}
@@ -86,12 +93,19 @@ export type Program<Annex extends Account.AnnexParentType, ChannelContext> =
     /**
      * {@inheritDoc AuthorityCategory}
      */
-    authority: AuthorityCategory
+    authority: AuthorityCategory<
+      AuthorityProvideResponse,
+      AuthorityRequestResponse
+    >
 
     /**
      * Components used to build this program.
      */
-    components: Components<Annex, ChannelContext>
+    components: Components<
+      Annex,
+      AuthorityProvideResponse,
+      AuthorityRequestResponse
+    >
 
     /**
      * Configuration used to build this program.
@@ -131,11 +145,9 @@ export type AccountCategory<Annex extends AnnexParentType> = ReturnType<Account.
 /**
  * Authority system.
  *
- * TODO: Unfinished
- *
  * @group Program
  */
-export type AuthorityCategory = {
+export type AuthorityCategory<ProvideResponse, RequestResponse> = {
   /**
    * Does my program have the authority to work with these part of the file system?
    * And does the configured account system have the required authority?
@@ -144,9 +156,9 @@ export type AuthorityCategory = {
     { has: true } | { has: false; reason: string }
   >
 
-  provide: () => Promise<void>
-  request: (options: RequestOptions) => Promise<void>
-}
+  provide: (queries: Query | (Query | Query[])[]) => Promise<ProvideResponse>
+  request: (queries: Query | (Query | Query[])[], options: RequestOptions) => Promise<RequestResponse | null>
+} & ListenTo<AuthorityEvents.Authority>
 
 /**
  * File system.
@@ -174,14 +186,7 @@ export type FileSystemCategory = {
    * program.fileSystem.load({ dataRoot: cid, dataRootUpdater: updateFn, did: "did:some-identifier" })
    * ```
    */
-  load: (params: {
-    dataRoot?: CID
-    dataRootUpdater?: (
-      dataRoot: CID,
-      proofs: Ticket[]
-    ) => Promise<{ updated: true } | { updated: false; reason: string }>
-    did: string
-  }) => Promise<FileSystem>
+  load: (params: FileSystemCarrier) => Promise<FileSystem>
 }
 
 /**
@@ -221,11 +226,25 @@ export type IdentityCategory = {
  *
  * @group 🚀
  */
-export async function program<Annex extends AnnexParentType, ChannelContext>(
+export async function program<
+  Annex extends AnnexParentType,
+  AuthorityProvideResponse,
+  AuthorityRequestResponse,
+>(
   config: Configuration,
-  components: Components<Annex, ChannelContext>
-): Promise<Program<Annex, ChannelContext>> {
-  const { account, agent, authority, identifier } = components
+  components: Components<
+    Annex,
+    AuthorityProvideResponse,
+    AuthorityRequestResponse
+  >
+): Promise<
+  Program<
+    Annex,
+    AuthorityProvideResponse,
+    AuthorityRequestResponse
+  >
+> {
+  const { account, agent, authority, channel, identifier } = components
 
   // Is supported?
   await Promise.all(
@@ -237,7 +256,9 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
 
   // Create repositories
   const cabinet = await Cabinet.create({ storage: components.storage })
-  const tickets = new Inventory(components.authority, cabinet)
+  const names = await Names.create({ storage: components.storage })
+
+  const inventory = new Inventory(components.authority.clerk, cabinet)
 
   cabinet.events.on("collection:changed", async ({ collection }) => {
     // TODO: emit authority:inventory-changed event
@@ -245,16 +266,19 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
   })
 
   // Authority
-  const authorityCategory = {
+  const authorityEmitter = createEmitter<AuthorityEvents.Authority>()
+  const authorityCategory: AuthorityCategory<
+    AuthorityProvideResponse,
+    AuthorityRequestResponse
+  > = {
     async has(
       query: Query | (Query | Query[])[]
     ): Promise<{ has: true } | { has: false; reason: string }> {
-      const audience = await identifier.did()
       const queries = (Array.isArray(query) ? query : [query]).flat()
 
       // Account access
       if (queries.some(q => q.query === "account")) {
-        const accountAccess = await account.hasSufficientAuthority(identifier, tickets)
+        const accountAccess = await account.hasSufficientAuthority(identifier, inventory)
         if (!accountAccess.suffices) {
           return {
             has: false,
@@ -275,7 +299,9 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
       const hasAccessToFsPaths = fsQueries.filter(q => Path.isPartition("private", q.path)).reduce(
         (acc, query) => {
           if (acc === false) return false
-          return cabinet.hasAccessKey(audience, query.path)
+          const did = names.resolveId(query.id)
+          if (!did) return false
+          return cabinet.hasAccessKey(did, query.path)
         },
         true
       )
@@ -291,33 +317,74 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
       return { has: true }
     },
 
-    // TODO:
-    async provide() {},
-    async request() {},
+    async provide(query: Query | (Query | Query[])[]): Promise<AuthorityProvideResponse> {
+      const queries = (Array.isArray(query) ? query : [query]).flat()
+
+      return authority.provide({
+        dependencies: {
+          account,
+          channel,
+          identifier,
+        },
+        eventEmitter: authorityEmitter,
+        inventory,
+        queries,
+        names,
+      })
+    },
+
+    async request(
+      query: Query | (Query | Query[])[],
+      options: RequestOptions
+    ): Promise<AuthorityRequestResponse | null> {
+      const queries = (Array.isArray(query) ? query : [query]).flat()
+      const response = await authority.request({
+        dependencies: {
+          channel,
+          identifier,
+        },
+        eventEmitter: authorityEmitter,
+        options,
+        queries,
+      })
+
+      if (response) {
+        const accountTickets = response.accountTickets.map(i => i.tickets).flat()
+        const fileSystemTickets = response.fileSystemTickets.map(i => i.tickets).flat()
+
+        await cabinet.addTickets("account", accountTickets)
+        await cabinet.addTickets("file_system", fileSystemTickets)
+        await cabinet.addAccessKeys(response.accessKeys)
+
+        names.add(
+          Object.entries(response.resolvedNames).map(([k, v]) => {
+            return { name: k, subject: v }
+          })
+        )
+
+        await authorityEmitter.emit("request:authorised", { queries: response.authorisedQueries })
+        await authorityEmitter.emit("request:authorized", { queries: response.authorisedQueries })
+
+        return response.requestResponse
+      }
+
+      return null
+    },
+
+    ...listenTo(authorityEmitter),
   }
 
   // Other categories
-  const fileSystemCategory: Program<Annex, ChannelContext>["fileSystem"] = {
+  const fileSystemCategory: FileSystemCategory = {
     addSampleData: (fs: FileSystem) => addSampleData(fs),
-    load: async (params: {
-      dataRoot?: CID
-      dataRootUpdater?: (
-        dataRoot: CID,
-        proofs: Ticket[]
-      ) => Promise<{ updated: true } | { updated: false; reason: string }>
-      did: string
-    }) => {
-      const dataRoot = params.dataRoot
-      const dataRootUpdater = params.dataRootUpdater
-      const did = params.did
-
-      return loadFileSystem({ cabinet, dataRoot, dataRootUpdater, dependencies: components, did })
+    load: async (params: FileSystemCarrier) => {
+      return loadFileSystem({ cabinet, names, carrier: params, dependencies: components })
     },
   }
 
-  const identityCategory: Program<Annex, ChannelContext>["identity"] = {
+  const identityCategory: IdentityCategory = {
     async account(): Promise<string | null> {
-      return account.did(identifier, tickets)
+      return account.did(identifier, inventory)
     },
     async agent() {
       return agent.did()
@@ -341,10 +408,10 @@ export async function program<Annex extends AnnexParentType, ChannelContext>(
     fileSystem: fileSystemCategory,
 
     account: {
-      register: Auth.register({ account, agent, authority, identifier, cabinet }),
+      register: Auth.register({ account, agent, authority, identifier, cabinet, names }),
       canRegister: account.canRegister,
 
-      ...components.account.annex(identifier, tickets),
+      ...components.account.annex(identifier, inventory, names),
     },
   }
 

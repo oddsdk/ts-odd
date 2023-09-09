@@ -5,22 +5,25 @@ import { Manners } from "../components.js"
 // 🛠️ //
 ////////
 
-export const createWebsocketChannel = async <Context, FS>(
+export const createWebsocketChannel = async <FS>(
   manners: Manners.Implementation<FS>,
   socketEndpoint: string,
-  options: ChannelOptions<Context>
+  options: ChannelOptions
 ): Promise<Channel> => {
   const { onmessage } = options
 
   const socket = new WebSocket(socketEndpoint)
   await waitForOpenConnection(socket)
-  socket.onmessage = onmessage
   manners.log("📣 Channel established", socket)
 
-  return {
+  const channel = {
     send: publish(socket),
     close: close(socket),
   }
+
+  socket.onmessage = event => onmessage(event, channel)
+
+  return channel
 }
 
 const waitForOpenConnection = async (socket: WebSocket): Promise<void> => {
@@ -31,7 +34,7 @@ const waitForOpenConnection = async (socket: WebSocket): Promise<void> => {
 }
 
 export const close = (socket: WebSocket): () => void => {
-  return () => socket.close(1000)
+  return () => socket.close()
 }
 
 export const publish = (socket: WebSocket): (data: ChannelData) => void => {

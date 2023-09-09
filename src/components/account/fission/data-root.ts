@@ -103,7 +103,7 @@ export async function update<FS>(
           },
 
           proofs: await Promise.all(proofs.map(
-            async proof => ticketCID(proof).toString()
+            async proof => (await ticketCID(proof)).toString()
           )),
         })
       )

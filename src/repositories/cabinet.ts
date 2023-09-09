@@ -3,22 +3,22 @@ import * as Uint8Arrays from "uint8arrays"
 import * as Storage from "../components/storage/implementation.js"
 import * as Path from "../path/index.js"
 
-import { CID, decodeCID, encodeCID } from "../common/cid.js"
+import { AccessKeyWithContext } from "../accessKey.js"
+import { decodeCID, encodeCID } from "../common/cid.js"
 import { isObject, isString } from "../common/type-checks.js"
 import Repository, { RepositoryOptions } from "../repository.js"
 import { cid as ticketCID } from "../ticket/index.js"
-import { Category, Ticket, isCategory } from "../ticket/types.js"
+import { Category, Ticket, TicketWithContext, isCategory } from "../ticket/types.js"
 
 ////////
 // 🧩 //
 ////////
 
 export type CabinetItem =
-  | { type: "access-key"; did: string; key: Uint8Array; path: Path.Distinctive<Path.Segments> }
+  | { type: "access-key" } & AccessKeyWithContext
   | { type: "ticket" } & TicketWithContext
 
 export type CabinetCollection = Record<string, CabinetItem>
-export type TicketWithContext = { category: Category; cid: CID; ticket: Ticket }
 
 ////////
 // 🛠️ //
@@ -163,7 +163,7 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
   }
 
   async addTickets(category: Category, tickets: Ticket[]): Promise<void> {
-    const items: Array<{ type: "ticket" } & TicketWithContext> = await Promise.all(
+    const ticketsWithContext: Array<{ type: "ticket" } & TicketWithContext> = await Promise.all(
       tickets.map(async t => ({
         type: "ticket",
         category,
@@ -172,14 +172,19 @@ export class Repo extends Repository<CabinetCollection, CabinetItem> {
       }))
     )
 
-    return this.add(items)
+    return this.add(
+      // Only add tickets we don't have yet
+      ticketsWithContext.filter(t => {
+        return !this.ticketsIndexedByCID[t.cid.toString()]
+      })
+    )
   }
 
-  addAccessKey(item: { did: string; key: Uint8Array; path: Path.Distinctive<Path.Segments> }) {
+  addAccessKey(item: AccessKeyWithContext) {
     return this.addAccessKeys([item])
   }
 
-  addAccessKeys(items: { did: string; key: Uint8Array; path: Path.Distinctive<Path.Segments> }[]) {
+  addAccessKeys(items: AccessKeyWithContext[]) {
     // Delete old access keys matching the same DID and path,
     // in case we want to make a new file system.
     items.forEach(item => {

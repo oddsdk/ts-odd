@@ -14,11 +14,15 @@ import { FileSystem } from "./fs/class.js"
 // COMPONENTS //
 ////////////////
 
-export type Components<Annex extends Account.AnnexParentType, ChannelContext> = {
+export type Components<
+  Annex extends Account.AnnexParentType,
+  AuthorityProvideResponse,
+  AuthorityRequestResponse,
+> = {
   account: Account.Implementation<Annex>
   agent: Agent.Implementation
-  authority: Authority.Implementation
-  channel: Channel.Implementation<ChannelContext>
+  authority: Authority.Implementation<AuthorityProvideResponse, AuthorityRequestResponse>
+  channel: Channel.Implementation
   depot: Depot.Implementation
   dns: DNS.Implementation
   identifier: Identifier.Implementation

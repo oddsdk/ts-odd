@@ -1,10 +1,16 @@
-export type AuthorityRequestor = {
-  "challenge": undefined // TODO
-}
+import { Query } from "../authority/query.js"
 
-export type AuthorityProvider = {
-  "approved": undefined
-  "challenge": undefined // TODO
-  "dismissed": undefined
-  "query": Record<string, any> // TODO
+export type Authority = {
+  "provide:authorised": { queries: Query[] }
+  "provide:authorized": { queries: Query[] }
+  "provide:dismissed": undefined
+  "provide:query": {
+    approve: (queries: Query[]) => void
+    dismiss: () => void
+    queries: Query[]
+  }
+
+  "request:authorised": { queries: Query[] }
+  "request:authorized": { queries: Query[] }
+  "request:dismissed": undefined
 }
