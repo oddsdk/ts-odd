@@ -1,7 +1,8 @@
 import * as Fission from "../../../../common/fission.js"
+import * as Identifier from "../../../identifier/implementation.js"
 import * as Common from "./common.js"
 
-import { AccountQuery } from "../../../../authority/query.js"
+import { Names } from "../../../../repositories/names.js"
 import { Ticket } from "../../../../ticket/types.js"
 import { Implementation } from "../../implementation.js"
 import { Annex, Dependencies } from "./common.js"
@@ -26,8 +27,9 @@ export async function canRegister(
 }
 
 export async function register(
-  formValues: Record<string, string>,
-  identifierTicket: Ticket
+  identifier: Identifier.Implementation,
+  names: Names,
+  formValues: Record<string, string>
 ): Promise<
   | { registered: true; tickets: Ticket[] }
   | { registered: false; reason: string }
@@ -36,14 +38,6 @@ export async function register(
     registered: false,
     reason: "This implementation does not support registration",
   }
-}
-
-////////////////////////////
-// IDENTIFIER & AUTHORITY //
-////////////////////////////
-
-export async function provideAuthority(accountQuery: AccountQuery): Promise<Ticket[]> {
-  return [] // TODO
 }
 
 ////////
@@ -57,8 +51,8 @@ export function implementation<FS>(
   const endpoints = optionalEndpoints || Fission.PRODUCTION
 
   return {
-    annex: (identifier, ucanDictionary) => ({
-      volume: (...args) => Common.volume(endpoints, dependencies, identifier, ucanDictionary, ...args),
+    annex: (identifier, inventory, names) => ({
+      volume: (...args) => Common.volume(endpoints, dependencies, identifier, inventory, names, ...args),
     }),
 
     canRegister,
@@ -66,6 +60,6 @@ export function implementation<FS>(
 
     did: (...args) => Common.did(dependencies, ...args),
     hasSufficientAuthority: (...args) => Common.hasSufficientAuthority(dependencies, ...args),
-    provideAuthority,
+    provideAuthority: Common.provideAuthority,
   }
 }

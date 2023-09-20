@@ -1,4 +1,6 @@
-const CATEGORIES = ["account", "file_system", "misc"] as const
+import { CID } from "../common/cid.js"
+
+const CATEGORIES = ["account", "agent", "file_system"] as const
 
 /**
  * A ticket is a [UCAN](https://github.com/ucan-wg/spec) or UCAN-like token.
@@ -19,3 +21,8 @@ export type Category = typeof CATEGORIES[number]
 export function isCategory(string: string): string is Category {
   return CATEGORIES.includes(string as Category)
 }
+
+/**
+ * Ticket with context.
+ */
+export type TicketWithContext = { category: Category; cid: CID; ticket: Ticket }

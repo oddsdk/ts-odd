@@ -7,7 +7,9 @@ import { exportPublicKey } from "../../common/crypto.js"
 import { Store } from "../../common/crypto/store.js"
 import { Implementation } from "./implementation.js"
 
-// 🛳️
+////////
+// 🛳️ //
+////////
 
 export async function implementation(
   { store }: { store: Store }
@@ -21,8 +23,8 @@ export async function implementation(
   const exportedKey = await exportPublicKey(signingKey).then(spki.decode)
 
   return {
-    did: async () => DIDKey.fromPublicKey("RSA", exportedKey).toString(),
+    did: () => DIDKey.fromPublicKey("RSA", exportedKey).toString(),
     sign: async data => WebCryptoAPIAgent.sign(data, signingKey),
-    ucanAlgorithm: async () => "RS256",
+    ucanAlgorithm: () => "RS256",
   }
 }

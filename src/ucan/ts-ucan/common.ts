@@ -1,5 +1,6 @@
 import * as Ucans from "@ucans/core"
 import * as UcanCaps from "@ucans/core/capability/index"
+import * as Raw from "multiformats/codecs/raw"
 import * as Uint8arrays from "uint8arrays"
 
 import * as ECDSA from "iso-signatures/verifiers/ecdsa"
@@ -13,6 +14,7 @@ import { DIDKey } from "iso-did/key"
 import * as AgentDID from "../../agent/did.js"
 import * as Agent from "../../components/agent/implementation.js"
 
+import { sha256 } from "multiformats/hashes/sha2"
 import { CID, decodeCID } from "../../common/cid.js"
 import { Ticket } from "../../ticket/types.js"
 import { BuildParams, Keypair } from "./types.js"
@@ -88,7 +90,7 @@ export function encode(ucan: Ucan): string {
 
 export async function isValid(agent: Agent.Implementation, ucan: Ucan): Promise<boolean> {
   const plugs = await plugins()
-  const jwtAlg = await agent.ucanAlgorithm()
+  const jwtAlg = agent.ucanAlgorithm()
 
   const signature = Uint8arrays.fromString(ucan.signature, "base64url")
   const signedData = Uint8arrays.fromString(ucan.signedData, "utf8")
@@ -104,13 +106,21 @@ export async function keyPair(agent: Agent.Implementation): Promise<Keypair> {
 
   return {
     did: () => did,
-    jwtAlg: await agent.ucanAlgorithm(),
+    jwtAlg: agent.ucanAlgorithm(),
     sign: data => agent.sign(data),
   }
 }
 
 export async function plugins(): Promise<Ucans.Plugins> {
   return new Plugins([], {})
+}
+
+export async function ticketCID(ticket: Ticket): Promise<CID> {
+  const multihash = await sha256.digest(
+    Uint8arrays.fromString(ticket.token, "utf8")
+  )
+
+  return CID.createV1(Raw.code, multihash)
 }
 
 export function ticketProofResolver(ticket: Ticket): CID[] {

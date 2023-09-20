@@ -46,8 +46,8 @@ export default abstract class Repository<C, I> {
     return repo
   }
 
-  async add(newItems: I[]): Promise<void> {
-    const col = await newItems.reduce(
+  async add(newItems: I[] | I): Promise<void> {
+    const col = await (Array.isArray(newItems) ? newItems : [newItems]).reduce(
       async (acc: Promise<C>, item) => this.mergeCollections(await acc, await this.toCollection(item)),
       Promise.resolve(this.collection)
     )

@@ -4,7 +4,8 @@ import { sha256 } from "multiformats/hashes/sha2"
 
 import * as LocalAccount from "../../src/components/account/local.js"
 import * as WebCryptoAgent from "../../src/components/agent/web-crypto-api.js"
-import * as TsUcanAuthority from "../../src/components/authority/ts-ucan.js"
+import * as BrowserUrlAuthority from "../../src/components/authority/browser-url.js"
+import * as DefaultClerk from "../../src/components/clerk/default.js"
 import * as DOH from "../../src/components/dns/dns-over-https/cloudflare-google.js"
 import * as WebCryptoIdentifier from "../../src/components/identifier/web-crypto-api.js"
 import * as ProperManners from "../../src/components/manners/default.js"
@@ -18,6 +19,7 @@ import {
   Agent,
   Authority,
   Channel,
+  Clerk,
   Components,
   DNS,
   Depot,
@@ -96,10 +98,8 @@ const manners: Manners.Implementation<FileSystem> = {
 // CHANNEL //
 /////////////
 
-export type ChannelContext = []
-
-const channel: Channel.Implementation<ChannelContext> = {
-  establish: (options: ChannelOptions<ChannelContext>) => {
+const channel: Channel.Implementation = {
+  establish: (options: ChannelOptions) => {
     throw new Error("Channels are not implemented for tests")
   },
 }
@@ -136,13 +136,27 @@ const identifier: Identifier.Implementation = await WebCryptoIdentifier.implemen
 // IDENTIFIER //
 ////////////////
 
-const authority: Authority.Implementation = TsUcanAuthority.implementation(identifier)
+const authority: Authority.Implementation<
+  BrowserUrlAuthority.ProvideResponse,
+  BrowserUrlAuthority.RequestResponse
+> = BrowserUrlAuthority.implementation()
+
+///////////
+// CLERK //
+///////////
+
+const clerk: Clerk.Implementation = DefaultClerk.implementation()
 
 ////////
 // 🛳 //
 ////////
 
-const components: Components<LocalAccount.Annex, ChannelContext> = {
+const components: Components<
+  LocalAccount.Annex,
+  BrowserUrlAuthority.ProvideResponse,
+  BrowserUrlAuthority.RequestResponse
+> = {
+  clerk,
   depot,
   manners,
   storage,
@@ -154,4 +168,4 @@ const components: Components<LocalAccount.Annex, ChannelContext> = {
   authority,
 }
 
-export { account, agent, authority, channel, components, depot, dns, identifier, manners, storage }
+export { account, agent, authority, channel, clerk, components, depot, dns, identifier, manners, storage }

@@ -6,29 +6,48 @@ import * as Cabinet from "../repositories/cabinet.js"
 import * as CIDLog from "../repositories/cid-log.js"
 import * as Unix from "./unix.js"
 
-import { account, agent, authority, depot, identifier, manners, storage } from "../../tests/helpers/components.js"
+import {
+  account,
+  agent,
+  authority,
+  clerk,
+  depot,
+  identifier,
+  manners,
+  storage,
+} from "../../tests/helpers/components.js"
 import { CID } from "../common/cid.js"
-import { Inventory } from "../ticket/inventory.js"
+import { Inventory } from "../inventory.js"
 import { Ticket } from "../ticket/types.js"
 import { FileSystem } from "./class.js"
 
 describe("File System Class", async () => {
   let fs: FileSystem
+  let mounts: {
+    path: Path.Distinctive<Path.Segments>
+    capsuleKey: Uint8Array
+  }[]
 
   const fsOpts = {
     dependencies: { account, agent, depot, identifier, manners },
     settleTimeBeforePublish: 250,
   }
 
+  const fsTicket = await clerk.tickets.fileSystem.origin(
+    Path.root(),
+    identifier.did()
+  )
+
+  const did = fsTicket.issuer
+
   // HOOKS
   // -----
 
   beforeEach(async () => {
-    const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
 
     const cabinet = await Cabinet.create({ storage })
-    const tickets = new Inventory(authority, cabinet)
+    const inventory = new Inventory(clerk, cabinet)
 
     const updateDataRoot = async (
       dataRoot: CID,
@@ -37,18 +56,16 @@ describe("File System Class", async () => {
       return { updated: true }
     }
 
-    fs = await FileSystem.empty({ ...fsOpts, cidLog, did, tickets, updateDataRoot })
+    fs = await FileSystem.empty({ ...fsOpts, cidLog, did, inventory, updateDataRoot })
 
-    const mounts = await fs.mountPrivateNodes([
+    mounts = await fs.mountPrivateNodes([
       { path: Path.root() },
     ])
 
     await cabinet.addTicket(
       "file_system",
-      await authority.clerk.tickets.fileSystem.create(
-        Path.root(),
-        did
-      )
+      fsTicket,
+      clerk.tickets.cid
     )
   })
 
@@ -69,15 +86,15 @@ describe("File System Class", async () => {
       "public"
     )
 
-    const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
-
     const cabinet = await Cabinet.create({ storage })
-    const tickets = new Inventory(authority, cabinet)
+    const inventory = new Inventory(clerk, cabinet)
 
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, tickets })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, inventory })
     await loadedFs.mountPrivateNodes([
-      { path: Path.removePartition(privatePath), capsuleKey },
+      // TODO: Needs to be fixed in rs-wnfs
+      // { path: Path.removePartition(privatePath), capsuleKey },
+      { path: Path.root(), capsuleKey: mounts[0].capsuleKey },
     ])
 
     assert.equal(await loadedFs.read(publicPath, "utf8"), "public")
@@ -95,13 +112,11 @@ describe("File System Class", async () => {
     const { dataRoot } = await fs.write(Path.file("private", "part.two"), "utf8", "private-2")
     const capsuleKey = await fs.capsuleKey(Path.directory("private"))
 
-    const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
-
     const cabinet = await Cabinet.create({ storage })
-    const tickets = new Inventory(authority, cabinet)
+    const inventory = new Inventory(clerk, cabinet)
 
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, tickets })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, inventory })
 
     if (capsuleKey) {
       await loadedFs.mountPrivateNodes([
@@ -119,14 +134,12 @@ describe("File System Class", async () => {
     const privatePath = Path.file("private", "nested-private", "private.txt")
     const oldCapsuleKey = await fs.capsuleKey(Path.directory("private"))
 
-    const did = await identifier.did()
     const cidLog = await CIDLog.create({ did, storage })
-
     const cabinet = await Cabinet.create({ storage })
-    const tickets = new Inventory(authority, cabinet)
+    const inventory = new Inventory(clerk, cabinet)
 
     const { dataRoot } = await fs.write(privatePath, "utf8", "private")
-    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, tickets })
+    const loadedFs = await FileSystem.fromCID(dataRoot, { ...fsOpts, cidLog, did, inventory })
 
     if (oldCapsuleKey) {
       await loadedFs.mountPrivateNodes([
@@ -137,6 +150,10 @@ describe("File System Class", async () => {
     }
 
     assert.equal(await loadedFs.read(privatePath, "utf8"), "private")
+
+    await loadedFs.write(privatePath, "utf8", "new content")
+
+    assert.equal(await loadedFs.read(privatePath, "utf8"), "new content")
   })
 
   // READING & WRITING

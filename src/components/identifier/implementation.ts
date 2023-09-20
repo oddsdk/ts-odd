@@ -4,7 +4,7 @@ export type Implementation = {
    *
    * This'll be associated with your account and file system.
    */
-  did: () => Promise<string>
+  did: () => string
 
   /**
    * For signing the agent delegation UCAN.
@@ -19,5 +19,5 @@ export type Implementation = {
   /**
    * The JWT `alg` used in the agent delegation UCAN.
    */
-  ucanAlgorithm: () => Promise<string>
+  ucanAlgorithm: () => string
 }

@@ -12,8 +12,8 @@ import * as Store from "./store.js"
 
 import { EventEmitter, createEmitter } from "../events/emitter.js"
 import { EventListener } from "../events/listen.js"
+import { Inventory } from "../inventory.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
-import { Inventory } from "../ticket/inventory.js"
 import { Ticket } from "../ticket/types.js"
 import { searchLatest } from "./common.js"
 import { findPrivateNode, partition as determinePartition } from "./mounts.js"
@@ -22,6 +22,7 @@ import {
   AnySupportedDataType,
   DataForType,
   DataRootChange,
+  DataRootUpdater,
   DataType,
   Dependencies,
   DirectoryItem,
@@ -40,9 +41,9 @@ export type FileSystemOptions<FS> = {
   cidLog: CIDLog
   dependencies: Dependencies<FS>
   did: string
+  inventory: Inventory
   settleTimeBeforePublish?: number
-  tickets: Inventory
-  updateDataRoot?: (dataRoot: CID, proofs: Ticket[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+  updateDataRoot?: DataRootUpdater
 }
 
 /** @group File System */
@@ -51,10 +52,10 @@ export class FileSystem {
   #cidLog: CIDLog
   #dependencies: Dependencies<FileSystem>
   #eventEmitter: EventEmitter<Events.FileSystem>
-  #settleTimeBeforePublish: number
+  #inventory: Inventory
   #rootTree: RootTree.RootTree
-  #tickets: Inventory
-  #updateDataRoot?: (dataRoot: CID, proofs: Ticket[]) => Promise<{ updated: true } | { updated: false; reason: string }>
+  #settleTimeBeforePublish: number
+  #updateDataRoot?: DataRootUpdater
 
   #privateNodes: MountedPrivateNodes = {}
   #rng: Rng.Rng
@@ -67,9 +68,9 @@ export class FileSystem {
     cidLog: CIDLog,
     dependencies: Dependencies<FileSystem>,
     did: string,
-    settleTimeBeforePublish: number,
+    inventory: Inventory,
     rootTree: RootTree.RootTree,
-    tickets: Inventory,
+    settleTimeBeforePublish: number,
     updateDataRoot?: (
       dataRoot: CID,
       proofs: Ticket[]
@@ -78,9 +79,9 @@ export class FileSystem {
     this.#blockStore = blockStore
     this.#cidLog = cidLog
     this.#dependencies = dependencies
+    this.#inventory = inventory
     this.#settleTimeBeforePublish = settleTimeBeforePublish
     this.#rootTree = rootTree
-    this.#tickets = tickets
     this.#updateDataRoot = updateDataRoot
 
     this.#eventEmitter = createEmitter<Events.FileSystem>()
@@ -97,7 +98,7 @@ export class FileSystem {
    * @internal
    */
   static async empty(opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cidLog, dependencies, did, settleTimeBeforePublish, tickets, updateDataRoot } = opts
+    const { cidLog, dependencies, did, inventory, settleTimeBeforePublish, updateDataRoot } = opts
 
     const blockStore = Store.fromDepot(dependencies.depot)
     const rootTree = await RootTree.empty()
@@ -107,9 +108,9 @@ export class FileSystem {
       cidLog,
       dependencies,
       did,
-      settleTimeBeforePublish || 2500,
+      inventory,
       rootTree,
-      tickets,
+      settleTimeBeforePublish || 2500,
       updateDataRoot
     )
   }
@@ -119,7 +120,7 @@ export class FileSystem {
    * @internal
    */
   static async fromCID(cid: CID, opts: FileSystemOptions<FileSystem>): Promise<FileSystem> {
-    const { cidLog, dependencies, did, settleTimeBeforePublish, tickets, updateDataRoot } = opts
+    const { cidLog, dependencies, did, inventory, settleTimeBeforePublish, updateDataRoot } = opts
 
     const blockStore = Store.fromDepot(dependencies.depot)
     const rootTree = await RootTree.fromCID({ blockStore, cid, depot: dependencies.depot })
@@ -129,9 +130,9 @@ export class FileSystem {
       cidLog,
       dependencies,
       did,
-      settleTimeBeforePublish || 2500,
+      inventory,
       rootTree,
-      tickets,
+      settleTimeBeforePublish || 2500,
       updateDataRoot
     )
   }
@@ -674,10 +675,10 @@ export class FileSystem {
       this.#blockStore,
       this.#dependencies,
       this.did,
+      this.#inventory,
       { ...this.#privateNodes },
       this.#rng,
-      { ...this.#rootTree },
-      this.#tickets
+      { ...this.#rootTree }
     )
   }
 
@@ -692,7 +693,7 @@ export class FileSystem {
     async (args: [dataRoot: CID, proofs: Ticket[]][]): Promise<PublishingStatus[]> => {
       const [dataRoot, proofs] = args[args.length - 1]
 
-      await this.#dependencies.depot.flush(dataRoot, proofs)
+      await this.#dependencies.depot.flush(dataRoot, proofs, this.#inventory)
 
       let status: PublishingStatus
 

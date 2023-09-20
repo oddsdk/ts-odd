@@ -1,7 +1,8 @@
 import * as Identifier from "../identifier/implementation.js"
 
 import { AccountQuery } from "../../authority/query.js"
-import { Inventory } from "../../ticket/inventory.js"
+import { Inventory } from "../../inventory.js"
+import { Names } from "../../repositories/names.js"
 import { Ticket } from "../../ticket/types.js"
 import { Implementation } from "./implementation.js"
 
@@ -22,8 +23,9 @@ export async function canRegister(): Promise<
 }
 
 export async function register(
-  formValues: Record<string, string>,
-  identifierTicket: Ticket
+  identifier: Identifier.Implementation,
+  names: Names,
+  formValues: Record<string, string>
 ): Promise<
   { registered: true; tickets: Ticket[] } | { registered: false; reason: string }
 > {
@@ -36,14 +38,14 @@ export async function register(
 
 export async function did(
   identifier: Identifier.Implementation,
-  tickets: Inventory
+  inventory: Inventory
 ): Promise<string> {
   return identifier.did()
 }
 
 export async function hasSufficientAuthority(
   identifier: Identifier.Implementation,
-  tickets: Inventory
+  inventory: Inventory
 ): Promise<
   { suffices: true } | { suffices: false; reason: string }
 > {

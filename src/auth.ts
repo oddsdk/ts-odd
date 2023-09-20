@@ -1,33 +1,39 @@
 import { Cabinet } from "./repositories/cabinet.js"
 
-import { Account, Agent, Authority, Identifier } from "./components.js"
+import { Account, Agent, Clerk, Identifier } from "./components.js"
 import { AnnexParentType } from "./components/account/implementation.js"
+import { Names } from "./repositories/names.js"
 
 //////////////
 // REGISTER //
 //////////////
 
 export const register = <Annex extends AnnexParentType>(
-  { account, agent, authority, identifier, cabinet }: {
+  { account, agent, clerk, identifier, cabinet, names }: {
     account: Account.Implementation<Annex>
     agent: Agent.Implementation
-    authority: Authority.Implementation
+    clerk: Clerk.Implementation
     identifier: Identifier.Implementation
     cabinet: Cabinet
+    names: Names
   }
 ) =>
 async (formValues: Record<string, string>): Promise<
   { registered: true } | { registered: false; reason: string }
 > => {
-  // Do delegation from identifier to agent
-  const agentDelegation = await authority.clerk.tickets.misc.identifierToAgentDelegation(identifier, agent)
-  await cabinet.addTicket("misc", agentDelegation)
-
   // Call account register implementation
-  const result = await account.register(formValues, agentDelegation)
+  const result = await account.register(identifier, names, formValues)
 
   if (result.registered) {
-    await cabinet.addTickets("account", result.tickets)
+    // Do delegation from identifier to agent
+    const agentDelegation = await clerk.tickets.misc.identifierToAgentDelegation(
+      identifier,
+      agent,
+      result.tickets
+    )
+
+    await cabinet.addTicket("agent", agentDelegation, clerk.tickets.cid)
+    await cabinet.addTickets("account", result.tickets, clerk.tickets.cid)
     return { registered: true }
   } else {
     return result

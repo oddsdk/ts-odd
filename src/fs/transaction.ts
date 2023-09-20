@@ -6,8 +6,8 @@ import * as Queries from "./queries.js"
 import * as Unix from "./unix.js"
 
 import { CID } from "../common/cid.js"
+import { Inventory } from "../inventory.js"
 import { Partition, Partitioned, PartitionedNonEmpty, Private, Public } from "../path/index.js"
-import { Inventory } from "../ticket/inventory.js"
 import { Ticket } from "../ticket/types.js"
 import { addOrIncreaseNameNumber, pathSegmentsWithoutPartition, searchLatest } from "./common.js"
 import { dataFromBytes, dataToBytes } from "./data.js"
@@ -31,10 +31,10 @@ export class TransactionContext<FS> {
   #blockStore: BlockStore
   #dependencies: Dependencies<FS>
   #did: string
+  #inventory: Inventory
   #privateNodes: MountedPrivateNodes
   #rng: Rng
   #rootTree: RootTree
-  #tickets: Inventory
 
   #changes: Set<{
     type: MutationType
@@ -46,10 +46,10 @@ export class TransactionContext<FS> {
     blockStore: BlockStore,
     dependencies: Dependencies<FS>,
     did: string,
+    inventory: Inventory,
     privateNodes: MountedPrivateNodes,
     rng: Rng,
-    rootTree: RootTree,
-    tickets: Inventory
+    rootTree: RootTree
   ) {
     this.#blockStore = blockStore
     this.#dependencies = dependencies
@@ -57,7 +57,7 @@ export class TransactionContext<FS> {
     this.#privateNodes = privateNodes
     this.#rng = rng
     this.#rootTree = rootTree
-    this.#tickets = tickets
+    this.#inventory = inventory
 
     this.#changes = new Set()
   }
@@ -75,7 +75,7 @@ export class TransactionContext<FS> {
     const proofs = await changes.reduce(
       async (accPromise: Promise<Ticket[]>, change): Promise<Ticket[]> => {
         const acc = await accPromise
-        const proof = context.#tickets.lookupFileSystemTicket(
+        const proof = await context.#inventory.lookupFileSystemTicket(
           change.path,
           context.#did
         )
@@ -108,7 +108,7 @@ export class TransactionContext<FS> {
         )
 
         if (maybeNode) {
-          const [_, newForest] = await maybeNode.node.store(oldForest, context.#blockStore, context.#rng)
+          const [_newAccessKey, newForest] = await maybeNode.node.store(oldForest, context.#blockStore, context.#rng)
           return newForest
         } else {
           return oldForest
@@ -615,7 +615,7 @@ export class TransactionContext<FS> {
     // Mark node as changed
     this.#changes.add({
       type: mutType,
-      path: Path.withPartition("private", path),
+      path: path,
     })
 
     // Replace forest
@@ -623,9 +623,10 @@ export class TransactionContext<FS> {
 
     // Replace private node
     const nodePosix = Path.toPosix(priv.path, { absolute: true })
+    const node = result.rootDir.asNode()
 
     this.#privateNodes[nodePosix] = {
-      node: result.rootDir.asNode(),
+      node,
       path: priv.path,
     }
   }

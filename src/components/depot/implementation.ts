@@ -2,6 +2,7 @@ import { Blockstore } from "interface-blockstore"
 import { CID } from "multiformats/cid"
 
 import { CodecIdentifier } from "../../dag/codecs.js"
+import { Inventory } from "../../index.js"
 import * as Path from "../../path/index.js"
 import { Ticket } from "../../ticket/types.js"
 
@@ -23,7 +24,7 @@ export type Implementation = {
    * Here you could set up an IPFS peer connection,
    * or simply push all "changed" blocks to some other block store.
    */
-  flush: (dataRoot: CID, proofs: Ticket[]) => Promise<void>
+  flush: (dataRoot: CID, proofs: Ticket[], inventory: Inventory) => Promise<void>
 
   /**
    * Create a permalink to some public file system content.
